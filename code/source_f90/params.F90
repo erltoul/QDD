@@ -98,6 +98,9 @@ REAL(DP),ALLOCATABLE :: xt2(:),yt2(:),zt2(:)           !  coordinates**2
 REAL(DP),ALLOCATABLE :: enonlo(:)               !  non-local s.p.energy
 REAL(DP),ALLOCATABLE :: amoy(:)                 !  single particle energies
 REAL(DP),ALLOCATABLE :: spvariance(:)           !  s.p. energy variances
+REAL(DP),ALLOCATABLE :: spvariancep(:)          !  s.p. en.varian. projected
+REAL(DP),ALLOCATABLE :: spvariancebi(:)         !  s.p. en.varian. boost-inv.
+REAL(DP),ALLOCATABLE :: spenergybi(:)           !  s.p. energy boost-inv.
 REAL(DP),ALLOCATABLE :: spnorm(:)               !  norm of s.p. wf
 REAL(DP),ALLOCATABLE :: occup(:)                !  occupation weight
 INTEGER :: nstate=1,nspdw=0                     !  Nr. of states
@@ -165,7 +168,7 @@ INTEGER :: jovlp=100000000,jnorms=0
 INTEGER :: iscatterelectron=0,jcharges=0
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
-REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0
+REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
 REAL(DP) :: trequest=0D0,timefrac=0.98D0
 REAL(DP) :: rheatclust
 REAL(DP) :: igeneratesurffile
@@ -188,13 +191,14 @@ INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
 INTEGER :: jinfo=10,jdip=10,jquad=0,jang=0,jspdp=0,jenergy=10
-INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10
+INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
 INTEGER :: init_lcao=0,ipsptyp=0,iterat,ivdw=0,itersicp6
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
 INTEGER :: ifrhoint_time=0,iangmo=0,ifspemoms=0,iftransme=0
+LOGICAL :: tstinf
 REAL(DP) :: rheattemp=0D0        ! re-heat temperature
 REAL(DP) :: tempion=0D0,dt1=0D0
 REAL(DP) :: centfx=0D0,centfy=0D0,centfz=0D0
@@ -386,6 +390,9 @@ amoy=0D0
 ALLOCATE(enonlo(kstate))                        !  single particle energies
 enonlo=0D0
 ALLOCATE(spvariance(kstate))                  !  s.p. energy variances
+ALLOCATE(spvariancep(kstate))                 !  s.p. energy variances
+ALLOCATE(spvariancebi(kstate))                !  s.p. energy variances
+ALLOCATE(spenergybi(kstate))
 ALLOCATE(spnorm(kstate))                      !  norm of s.p. wf
 ALLOCATE(occup(kstate))                       !  occupation weight
 

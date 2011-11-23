@@ -289,6 +289,7 @@ IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
 ELSE
   ecorr = energ_ions()
 END IF
+  WRITE(*,*) '5.:cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 
 OPEN(660,STATUS='unknown',FILE='progstatus')
 WRITE(660,*) 'electronic initialization done'
@@ -298,6 +299,9 @@ CLOSE(660)
 IF(ionmdtyp == 1 .AND. irest == 0)THEN
 ! leap frog first step : propagation of momenta by half a time step
   CALL lffirststep(rho,psi)
+  OPEN(660,STATUS='unknown',FILE='progstatus')
+  WRITE(660,*) 'leap-frog initialized'
+  CLOSE(660)
 END IF
 
 !GB
@@ -309,16 +313,14 @@ END IF
 
 ekionold=0D0
 
-OPEN(660,STATUS='unknown',FILE='progstatus')
-WRITE(660,*) 'leap-frog initialized'
-CLOSE(660)
 
 IF(myn == 0 .OR. knode == 1) CALL open_protok_el(0)
 
 
 !---           here starts true propagation  --------------
 
-
+WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
+!cpx=0D0;cpy=0D0;cpz=0D0
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step

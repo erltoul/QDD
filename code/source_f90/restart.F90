@@ -214,9 +214,14 @@ IF(mynact==0) THEN
 !  END DO
 
 !  read protonic coordinates and momenta
-  IF(nion > 0) &
-    READ(60) cx(1:nion),cy(1:nion),cz(1:nion), &
-             cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
+  IF(nion > 0) THEN
+    IF(trealin) THEN
+      READ(60) dummy
+    ELSE
+      READ(60) cx(1:nion),cy(1:nion),cz(1:nion), &
+               cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
+    END IF
+  END IF
 
   IF(ttest) WRITE(*,*) ' ions read in. nion=',nion
 !  read substrate coordinates and momenta

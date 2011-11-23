@@ -1,0 +1,35 @@
+&GLOBAL
+nclust=8,nion=2,
+nspdw=4,
+temp=0.0,
+dx=0.70644601374885230,dy=0.70644601374885230,dz=0.70644601374885230,
+kxbox=48,kybox=48,kzbox=48,kstate=8,
+init_lcao=0,
+epsoro=1.0e-6,
+epswf=0.2,e0dmp=5.0,
+b2occ=0.5,gamocc=30,deocc=-0.0,
+&END
+&DYNAMIC
+dt1=0.025,
+centfx=0.00,centfy=0.00,centfz=0.00,
+istinf=10,
+jenergy=10,
+ismax=400,
+isave=100,istat=0,
+itmax=0000,
+ifsicp=2,
+ipsptyp=1,ionmdtyp=2,
+jinfo=10,jdip=10,jstinf=10,jvel=10,jpos=10,
+&END
+&SURFACE
+&END
+&PERIO    
+ cc1(6)   =-0.4842988,
+ cc2(6)   =-0.6363824,
+ crloc(6) = 0.6,
+ r0g(6)=0.6,
+ r1g(6)=0.6,
+ radiong(6)=2.6,
+ h0_11g(6)= 1.215075,
+&END
+

@@ -411,6 +411,7 @@ COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 
 ! what time is it ?
 tfs = it*dt1*0.0484/(2.0*ame)
+WRITE(*,*) ' ITSTEP entered. tfs=',tfs
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -510,7 +511,19 @@ END IF
 !mb      if(nc+ne+nk.gt.0 .and. isurf.ne.0)then
 
 !     compute forces on rare gas cores with new positions
+WRITE(*,*) ' before GETFORCES, time=',time
 CALL getforces(rho,psi,0)
+  IF(tfs < taccel-1D-6) THEN
+    fx(nion) = fx(nion)+vpx/taccel
+    fy(nion) = fy(nion)+vpy/taccel
+    fz(nion) = fz(nion)+vpz/taccel
+    IF(nion>1) THEN
+      fx(1:nion-1)=fx(1:nion-1)-vpx/(taccel*(nion-1))
+      fy(1:nion-1)=fy(1:nion-1)-vpy/(taccel*(nion-1))
+      fz(1:nion-1)=fz(1:nion-1)-vpz/(taccel*(nion-1))
+    END IF
+  END IF
+
 
 !mb      endif
 
@@ -619,6 +632,7 @@ COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 
 ! what time is it ?
 tfs = it*dt1*0.0484/(2.0*ame)
+WRITE(*,*) 'enter ITSTEPV: tfs,cpx,cpy,cpz=',tfs,cpx(nion),cpy(nion),cpz(nion)
 
 #if(raregas)
 !                    zero im mobile atoms
@@ -711,6 +725,28 @@ END IF
 
 !     compute forces on rare gas cores with new positions
 CALL getforces(rho,psi,0)
+!WRITE(*,*) ' ITSTEPV: after GETFORCES'
+  IF(tfs < taccel-1D-6) THEN
+    WRITE(*,*) 'FZ:',fz(1:nion)
+    tfac = ame*amu(np(nion))*1836.0*0.048/taccel
+!    fx(nion) = fx(nion)+vpx*tfac
+!    fy(nion) = fy(nion)+vpy*tfac
+!    fz(nion) = fz(nion)+vpz*tfac
+!    IF(nion>1) THEN
+!      fx(1:nion-1)=fx(1:nion-1)-vpx*tfac/(nion-1)
+!      fy(1:nion-1)=fy(1:nion-1)-vpy*tfac/(nion-1)
+!      fz(1:nion-1)=fz(1:nion-1)-vpz*tfac/(nion-1)
+!    END IF
+    fx(nion) = vpx*tfac
+    fy(nion) = vpy*tfac
+    fz(nion) = vpz*tfac
+    IF(nion>1) THEN
+      fx(1:nion-1)=-vpx*tfac/(nion-1)
+      fy(1:nion-1)=-vpy*tfac/(nion-1)
+      fz(1:nion-1)=-vpz*tfac/(nion-1)
+    END IF
+    WRITE(*,*) 'FZ:',fz(1:nion)
+  END IF
 
 
 !     second half of propagation of momenta

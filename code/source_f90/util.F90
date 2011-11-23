@@ -3045,6 +3045,43 @@ END DO
 
 RETURN
 END SUBROUTINE project
+!     ******************************
+
+SUBROUTINE cproject(qin,qout,ispact,q0)
+
+!     ******************************
+
+
+!     projects all occupied states 'q0' out of 'qin'.
+
+!      q0     = set of s.p. wavefunctions (real)
+!      qin    = wavefunction from which 'q0' are to be removed (real)
+!      qout   = resulting wavefunction
+!      ispact = spin of 'qin'
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN)   :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
+COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
+INTEGER, INTENT(IN)    :: ispact
+COMPLEX(DP) :: ovl
+
+!*********************************************************
+
+qout=qin
+
+DO nbe=1,nstate
+  IF(ispin(nbe) == ispact .AND.occup(nbe) > 0.99999999D0) THEN
+    ovl=dvol*SUM(CONJG(q0(:,nbe))*qout)
+    qout(:)=qout(:)-q0(:,nbe)*ovl
+  END IF
+END DO
+
+RETURN
+END SUBROUTINE cproject
 #endif
 
 #if(parayes)
@@ -4082,7 +4119,62 @@ END IF
 
 RETURN
 
+
 END SUBROUTINE dipole_qp
+
+
+
+! ******************************
+
+SUBROUTINE testgradient(wfin)
+
+! ******************************
+
+
+!  Tests the routines for gradients in x, y, and z direction.
+!  The test-field 'wfin' is a complex field.
+!  
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)                      :: wfin(kdfull2)
+
+COMPLEX(DP), ALLOCATABLE :: wftest(:)
+
+REAL(DP) :: ekintestx,ekintesty,ekintestz,ekintot
+
+ALLOCATE(wftest(kdfull2))
+
+CALL xgradient_rspace(wfin,wftest)
+CALL xgradient_rspace(wftest,wftest)
+ekintestx = dvol*SUM(wfin*wftest)
+
+CALL ygradient_rspace(wfin,wftest)
+CALL ygradient_rspace(wftest,wftest)
+ekintesty = dvol*SUM(wfin*wftest)
+
+CALL zgradient_rspace(wfin,wftest)
+CALL zgradient_rspace(wftest,wftest)
+ekintestz = dvol*SUM(wfin*wftest)
+
+CALL fftf(wfin,wftest)
+wftest = akv*wftest
+CALL fftback(wftest,wftest)
+ekintot = dvol*SUM(wfin*wftest)
+
+WRITE(6,'(a,5(1pg13.5))') ' test gradients:', &
+  ekintestx,ekintesty,ekintestz,ekintestx+ekintesty+ekintestz, &
+  ekintot
+WRITE(7,'(a,5(1pg13.5))') ' test gradients:', &
+  ekintestx,ekintesty,ekintestz,ekintestx+ekintesty+ekintestz, &
+  ekintot
+
+
+DEALLOCATE(wftest)
+
+END SUBROUTINE testgradient
 
 
 COMPLEX(8) FUNCTION determinant(a,n,np)

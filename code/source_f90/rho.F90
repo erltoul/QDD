@@ -129,3 +129,48 @@ END SUBROUTINE calcrhor
 END SUBROUTINE calcrho
 #endif
 
+#ifdef COMPLEXSWITCH 
+!-----calc_current------------------------------------------------------
+
+SUBROUTINE calc_current(current,q0)
+
+!  current 'current' for set of complex wavefunctions 'q0'
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+#if(parayes)
+STOP "CALC_CURRENT presently not suited for parallel computing"
+#endif
+
+COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
+REAL(DP), INTENT(OUT) :: current(kdfull2,3)
+
+COMPLEX(DP), ALLOCATABLE :: dq0(:)
+
+
+!-----------------------------------------------------------------
+
+ALLOCATE(dq0(kdfull2))
+
+! reset 
+current=0D0
+
+! cumulate
+DO nb=1,nstate
+  CALL xgradient_rspace(q0(1,nb),dq0)
+  current(:,1) = current(:,1) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))
+  CALL ygradient_rspace(q0(1,nb),dq0)
+  current(:,2) = current(:,2) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))
+  CALL zgradient_rspace(q0(1,nb),dq0)
+  current(:,3) = current(:,3) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))
+END DO
+
+DEALLOCATE(dq0)
+
+RETURN
+
+END SUBROUTINE calc_current
+#endif
+

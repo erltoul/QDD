@@ -57,13 +57,9 @@ ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   RETURN
 END IF
 
-
+WRITE(*,*) ' GETFORCES: iflag,taccel,vpx,vpy,vpz=',iflag,taccel,vpx,vpy,vpz
 IF (iflag == 0) THEN
-  DO ii=1,nion
-    fx(ii)=0.0D0
-    fy(ii)=0.0D0
-    fz(ii)=0.0D0
-  END DO
+  fx(1:nion)=0D0;fy(1:nion)=0D0;fz(1:nion)=0D0
 #if(raregas)
   DO ii=1,nc
     fxc(ii)=0.0D0
@@ -96,6 +92,7 @@ IF (iflag == 0) THEN
   
   CALL getforcenana(rho)
 !test         write(*,*) ' NaNa'
+
   
 END IF
 

@@ -34,8 +34,8 @@
 ! allow for SIC-KLI or exact exchange
 !  kli or exchange or fullsic cannot be used simultaneously !!
 !
-#define kli 1
-#define directenergy 1
+#define kli 0
+#define directenergy 0
 #define exchange 0
 #define fullsic 0
 #define symmcond 0

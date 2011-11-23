@@ -11,7 +11,7 @@ CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # debugging option
-DEBUG   = NO
+DEBUG   = YES
 
 #####################################################################
 #                             Options                               #
@@ -62,9 +62,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT"
-	OPT1  = -fpp -pg -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -pg -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -pg -w        -g               -align all -autodouble -static
+	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  = -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  = -fpp -w -g -CB -traceback -align all -autodouble

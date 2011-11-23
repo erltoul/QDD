@@ -321,6 +321,170 @@ END SUBROUTINE  gradient
 
 
 
+! ******************************
+
+SUBROUTINE  xgradient_rspace(fin,gradfout)
+
+! ******************************
+
+
+!  The gradient of the complex field 'fin' in x-direction.
+!  The fields are given in coordinate space. The gradient is
+!  evaluated in k_x space.
+!  
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+
+! ************************************************************
+
+dkx=pi/(dx*nx)
+DO i3=1,nz2
+  DO i2=1,ny2
+!                 forward transform along x
+    DO i1=1,nx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      fftax(MOD(i1+nx,nx2)+1)=fin(ind)  ! copy to workspace
+    END DO
+    CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
+!                 multiply by k_x factor in k_x space
+    DO i1=1,nx2
+      IF(i1 >= (nx+1)) THEN
+        zkx=(i1-nx2-1)*dkx
+      ELSE
+        zkx=(i1-1)*dkx
+      END IF
+      fftax(i1) = fftax(i1)*eye*zkx
+    END DO
+!                 backward transform along x
+    CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
+    DO i1=1,nx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      gradfout(ind)= fftax(MOD(i1+nx,nx2)+1)/nx2
+    END DO
+  END DO
+END DO
+
+RETURN
+
+END SUBROUTINE  xgradient_rspace
+
+
+! ******************************
+
+SUBROUTINE  ygradient_rspace(fin,gradfout)
+
+! ******************************
+
+
+!  The gradient of the complex field 'fin' in y-direction.
+!  The fields are given in coordinate space. The gradient is
+!  evaluated in k_y space.
+!  
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+
+! ************************************************************
+
+dky=pi/(dy*ny)
+DO i3=1,nz2
+  DO i1=1,nx2
+!                 forward transform along y
+    DO i2=1,ny2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      fftay(MOD(i2+ny,ny2)+1) = fin(ind)
+    END DO
+    CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+!                 multiply by k_y factor in k_y space
+    DO i2=1,ny2
+      IF(i2 >= (ny+1)) THEN
+        zky=(i2-ny2-1)*dky
+      ELSE
+        zky=(i2-1)*dky
+      END IF
+      fftay(i2) = fftay(i2)*eye*zky
+    END DO
+!                 backward transform along y
+    CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+    DO i2=1,ny2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      gradfout(ind)= fftay(MOD(i2+ny,ny2)+1)/ny2
+    END DO
+  END DO
+END DO
+
+RETURN
+
+END SUBROUTINE  ygradient_rspace
+
+
+! ******************************
+
+SUBROUTINE  zgradient_rspace(fin,gradfout)
+
+! ******************************
+
+
+!  The gradient of the complex field 'fin' in z-direction.
+!  The fields are given in coordinate space. The gradient is
+!  evaluated in k_z space.
+!  
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+COMPLEX(DP), ALLOCATABLE :: fftaz(:)
+
+
+
+! ************************************************************
+
+ALLOCATE(fftaz(nz2))
+
+dkz=pi/(dz*nz)
+DO i2=1,ny2
+  DO i1=1,nx2
+!                 forward transform along z
+    DO i3=1,nz2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      i3m = MOD(i3+nz,nz2)+1
+      fftaz(i3m) = fin(ind)
+    END DO
+    CALL dcftf1 (nz2,fftaz,wrkz,wsavez,ifacz)
+!                 multiply by k_z factor in k_z space
+    DO i3=1,nz2
+      IF(i3 >= (nz+1)) THEN
+        zkz=(i3-nz2-1)*dkz
+      ELSE
+        zkz=(i3-1)*dkz
+      END IF
+      fftaz(i3) = fftaz(i3)*eye*zkz
+    END DO
+!                 backward transform along z
+    CALL dcftb1 (nz2,fftaz,wrkz,wsavez,ifacz)
+    DO i3=1,nz2                  ! copy back
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      gradfout(ind)= fftaz(MOD(i3+nz,nz2)+1)/nz2
+    END DO
+!
+  END DO
+END DO
+
+DEALLOCATE(fftaz)
+
+RETURN
+
+END SUBROUTINE  zgradient_rspace
+
 
 
 ! ******************************
