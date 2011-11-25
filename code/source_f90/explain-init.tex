@@ -212,6 +212,12 @@ states)\\
 {\tt shiftWFx         }& shift of initial wavefunctions in x direction \\
 {\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to origin\\
 {\tt ispinsep         }& initialize wavefunctiosn with some spin asymmetry\\
+{\tt init\_lcao       }& switches the basis functions to start from\\
+& =0 $\Longrightarrow$ harmonic oscillator functions (center can be
+moved
+  by {\tt shiftWFx})
+\\
+& =1 $\Longrightarrow$ atomic orbitals = WFs centered at ionic sites
 \\
 \hline
 \multicolumn{2}{c}{\it convergence issues} \\
@@ -305,6 +311,15 @@ equations\\
 {\tt nhstate,npstate}& nr. of hole and particle state for $1ph$
                       excitation\\
                      & this $1ph$ option can only be run from {\tt istat=1}
+\\
+{\tt eproj}& energy of incoming projectile (= last ion in the list)
+\\
+{\tt vpx,vpy,vpz}& direction of the incoming projectile
+\\
+{\tt taccel}& time span over which the projectile is accelerated to
+             {\tt eproj}
+\\
+& for {\tt taccel=0} one has to use {\tt init\_lcao=1}
 \\
 \hline
 \end{tabular}

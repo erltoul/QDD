@@ -452,20 +452,29 @@ DO ith=1,nmptheta+1
     
     
     imps(nmps) = getnearestgridpoint(x,y,z)
-    impsact = imps(nmps)
-    impsx = mod(impsact-1,nx2)+1
-    impsy = mod(impsact/nx2,ny2)+1
-    impsz = mod(impsact/(nx2*ny2),nz2)+1
-    WRITE(*,*) ' analyzing pts: nmps,imps=',nmps,impsact
-    WRITE(*,*) ' nx,ny,nz=',impsx,impsy,impsz
-    WRITE(*,*) ' x,y,z=',x,y,z
-    WRITE(*,*) ' theta,phi=',t,p
+    DO ik=1,nmps-1                              ! cPW
+      IF(imps(nmps) == imps(ik)) THEN           ! cPW
+       nmps = nmps - 1                          ! cPW
+      END IF                                    ! cPW
+    END DO                                      ! cPW
     
   END DO
 END DO
 
 !WRITE(*,*) ' mask in INITMEASUREPOINTS'
 !CALL prifld(sphermask,' mask ')
+
+DO ik=1,nmps                                    ! cPW
+ impsact = imps(nmps)
+ impsx = mod(impsact-1,nx2)+1
+ impsy = mod(impsact/nx2,ny2)+1
+ impsz = mod(impsact/(nx2*ny2),nz2)+1
+ WRITE(*,*) ' analyzing pts: nmps,imps=',nmps,impsact
+ WRITE(*,*) ' nx,ny,nz=',impsx,impsy,impsz
+ WRITE(*,*) ' x,y,z=',x,y,z
+ WRITE(*,*) ' theta,phi=',t,p
+END DO                                          ! cPW
+
 
 
 RETURN

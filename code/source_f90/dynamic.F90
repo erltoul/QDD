@@ -1902,7 +1902,7 @@ IF(irest <= 0) THEN                    !  write file headers
       CLOSE(323)
     END IF
     
-    IF(iangabso /= 0 .AND. jangabso /= 0) THEN                              ! cPW
+    IF(iangabso /= 0 .AND. jangabso /= 0) THEN
       OPEN(47,STATUS='unknown',FORM='formatted', FILE='pangabso.'//outnam)
       WRITE(47,'(a)') ' & '
       CLOSE(47)
@@ -2855,13 +2855,13 @@ END IF
 
 !     Time-dependent Electron Localization Function (TD-ELF)
 
-#if(!parayes) 
 IF(jelf > 0 .AND. MOD(it,jelf) == 0) THEN
+#if(!parayes) 
   CALL localize(rho,psi)
-END IF
 #else
   STOP ' LOCALIZE (switch JELF) should not be invoked in parallele code'
 #endif
+END IF
 
 
 !     everything about single particles

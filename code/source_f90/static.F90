@@ -199,7 +199,13 @@ END IF
 
 !     compute and print localization
 
-IF(iflocaliz == 1)  CALL localizer(rho,psir)
+IF(iflocaliz == 1) THEN                                 
+#if(!parayes)
+  CALL localizer(rho,psir)          
+#else
+  STOP ' LOCALIZER (switch IFLOCALIZ) should not be invoked in parallele code'   ! cPW
+#endif
+END IF
 
 #if(twostsic)
 
@@ -225,7 +231,7 @@ IF(tspinprint) CLOSE(12)          ! ???
 !       call printSurfPot(592)
 
 IF(tp_prints .AND. (myn == 0 .OR. knode == 1)) THEN
-  CALL printfield(491,aloc,'tp.aloc')                  ! cPW
+  CALL printfield(491,aloc,'tp.aloc')
   CALL printfield(492,rho,'tp.density')
   CALL printfield(496,chpcoul,'tp.coulomb')
   CALL printfield(497,potion,'tp.potion')

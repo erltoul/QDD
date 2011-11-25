@@ -1058,20 +1058,20 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !      iz0 = nint(zpos/dz) + nz
 
 x0=xpos/dx
-ix0=INT(x0)
-xt=x0-ix0
+ix0=NINT(x0) ! cPW
+!xt=x0-ix0   ! cPW
 
 y0=ypos/dy
-iy0=INT(y0)
-yt=y0-iy0
+iy0=NINT(y0) ! cPW
+!yt=y0-iy0   ! cPW
 
 z0=zpos/dz
-iz0=INT(z0)
-zt=z0-iz0
+iz0=NINT(z0) ! cPW
+!zt=z0-iz0   ! cPW
 
-IF (xt > 00.5D0) ix0=ix0+1
-IF (yt > 00.5D0) iy0=iy0+1
-IF (zt > 00.5D0) iz0=iz0+1
+!IF (xt > 00.5D0) ix0=ix0+1     ! cPW
+!IF (yt > 00.5D0) iy0=iy0+1     ! cPW
+!IF (zt > 00.5D0) iz0=iz0+1     ! cPW
 
 ix0=ix0+nx
 iy0=iy0+ny
