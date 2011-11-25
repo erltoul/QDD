@@ -242,15 +242,30 @@ IF(mynact==0) THEN
   IF(nclust > 0) THEN
     READ(60) qe(1:kmom),se(1:3)
     IF(ttest) WRITE(*,*) ' moments read in'
+#ifdef COMPLEXSWITCH                                          !new
     IF (nabsorb > 0) THEN
-      READ(60) rhoabso(1:kdfull2)
+      IF(trealin) THEN
+        rhoabso = 0D0
+      ELSE
+        READ(60) rhoabso(1:kdfull2)
+      END IF
       IF(jescmaskorb /=0) THEN
-        DO nbe=1,nstate
-          READ(60) rhoabsoorb(1:kdfull2,nbe)
-        END DO
+        IF(trealin) THEN
+           rhoabsoOrb = 0D0
+        ELSE
+          DO nbe=1,nstate
+            READ(60) rhoabsoOrb(1:kdfull2,nbe)
+          END DO
+        END IF
       END IF
       IF(ttest) WRITE(*,*) ' abso read in'
     END IF
+!   reading cumulators for laser field
+    IF(.NOT.trealin) THEN
+      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+!      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
+    END IF
+#endif                                                        !new
   END IF
 
 END IF
@@ -264,6 +279,13 @@ IF(knode > 1) THEN
   IF (nabsorb > 0) &
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
                    mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(foft2old,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(fpulseinteg1,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,ic)
 END IF
 #endif
 
@@ -503,14 +525,19 @@ IF(mynact==0) THEN
     IF(nclust > 0) THEN 
       WRITE(60) qe(1:kmom),se(1:3)
     
+#ifdef COMPLEXSWITCH
       IF (nabsorb > 0) THEN
         WRITE(60) rhoabso(1:kdfull2)
         IF(jescmaskorb /=0) THEN
           DO nbe=1,nstate
-            WRITE(60) rhoabsoorb(1:kdfull2,nbe)
+            WRITE(60) rhoabsoOrb(1:kdfull2,nbe)
           END DO
         END IF
       END IF
+!     writing cumulators for laser field
+      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+      WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
+#endif
     END IF
 END IF    
     

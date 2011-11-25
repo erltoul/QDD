@@ -323,7 +323,7 @@ IF(nc+NE+nk.gt.ngpar) STOP ' not enough NGPAR for substrate'
 
 #if(parayes)
 IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
-IF(jmp /=0) STOP ' evaluation of PES not possible in parallele code'
+!IF(jmp /=0) STOP ' evaluation of PES not possible in parallele code'     cPW
 !IF(istat /= 0) STOP ' static restart not possible in parallele code'
 #endif
 
@@ -2264,9 +2264,9 @@ IF(iturn == 1) THEN
   END IF
   
   WRITE(6,'(/a,3f8.3)')  &
-      ' jellium background rotated by anglex,angley,anglez=', vecalpha*180D0/PI     !  cPW
+      ' jellium background rotated by anglex,angley,anglez=', vecalpha*180D0/PI    
   WRITE(7,'(/a,3f8.3)')  &
-      ' jellium background rotated by anglex,angley,anglez=', vecalpha*180D0/PI     !  cPW
+      ' jellium background rotated by anglex,angley,anglez=', vecalpha*180D0/PI    
   
 ELSE IF(iturn == 0) THEN
 !  case for static iteration
@@ -2346,35 +2346,35 @@ DO iter=1,itback
       DO i1=minx,maxx
         xact = (i1-nxsh)*dx
         ii    = ii+1
-        IF(abs(rotclustx)+abs(rotclusty)+abs(rotclustz)>0D0) THEN    ! cPW
-         vecalp(1)=rotclustx/180D0*pi                                ! cPW
-         vecalp(2)=rotclusty/180D0*pi                                ! cPW
-         vecalp(3)=rotclustz/180D0*pi                                ! cPW
-         vecin(1) = xact                                             ! cPW
-         vecin(2) = yact                                             ! cPW
-         vecin(3) = zact                                             ! cPW
-         CALL rotatevec3D(vecin,vecout,vecalp)                       ! cPW
-         xac = vecout(1)                                             ! cPW
-         yac = vecout(2)                                             ! cPW
-         zac = vecout(3)                                             ! cPW
-        ELSE                                                         ! cPW
-         xac = xact                                                  ! cPW
-         yac = yact                                                  ! cPW
-         zac = zact                                                  ! cPW
-        END IF                                                       ! cPW
+        IF(abs(rotclustx)+abs(rotclusty)+abs(rotclustz)>0D0) THEN    
+         vecalp(1)=rotclustx/180D0*pi                                
+         vecalp(2)=rotclusty/180D0*pi                                
+         vecalp(3)=rotclustz/180D0*pi                                
+         vecin(1) = xact                                             
+         vecin(2) = yact                                             
+         vecin(3) = zact                                             
+         CALL rotatevec3D(vecin,vecout,vecalp)                       
+         xac = vecout(1)                                             
+         yac = vecout(2)                                             
+         zac = vecout(3)                                             
+        ELSE                                                         
+         xac = xact                                                  
+         yac = yact                                                  
+         zac = zact                                                  
+        END IF                                                       
         IF(iturn == 1) THEN
 !          CALL rotxyz(xact,yact,zact,x,y,z,anglex,angley,anglez)
-          vecin(1) = xac    !  cPW
-          vecin(2) = yac    !  cPW
-          vecin(3) = zac    !  cPW
+          vecin(1) = xac    
+          vecin(2) = yac    
+          vecin(3) = zac    
           CALL rotatevec3D(vecin,vecout,vecalpha)
           x = vecout(1)
           y = vecout(2)
           z = vecout(3)
         ELSE IF(iturn == 0) THEN
-          x=xac             !  cPW
-          y=yac             !  cPW
-          z=zac             !  cPW
+          x=xac             
+          y=yac             
+          z=zac             
         END IF
         xx=x*x
         yy=y*y

@@ -171,6 +171,15 @@ END DO
 nksp=ii
 
 CALL fourf(akv2r(1),akv2i(1))
+!  CALL prifld(akv2r,'k**2 for Co')
+!  CALL prifld(akv2i,'k**2 for Co')
+!nxyf=nx2*ny2
+!nyf=nx2
+ind=0 !nz*nxyf+ny*nyf
+WRITE(6,*) 'k**2 along x'
+DO i1=1,nxi
+  WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2r(i1+ind),akv2i(i1+ind)
+END DO
 
 
 
@@ -200,7 +209,9 @@ ALLOCATE(rhokr(kdred),rhoki(kdred))
 !     remember not to send your original density array to the fcs.
 !     in this case we have a homogeneously charged sphere .
 
+
 CALL rhofld(rhoinp,rhokr,rhoki)
+
 
 !     call coufou, which contains the fcs procedure.
 
@@ -212,6 +223,8 @@ CALL coufou2(rhokr,rhoki)
 CALL result(chpfalr,rhokr,rhoki)
 
 DEALLOCATE(rhokr,rhoki)
+
+
 
 END SUBROUTINE falr
 
@@ -229,20 +242,16 @@ REAL(DP), INTENT(OUT)                        :: rhokr(kdred)
 REAL(DP), INTENT(OUT)                        :: rhoki(kdred)
 
 
-
-ii=0
+rhokr=0D0
+rhoki=0D0
 i0=0
-DO i3=1,nzi
-  DO i2=1,nyi
-    DO i1=1,nxi
+DO i3=1,nz
+  DO i2=1,ny
+    ii = (i3-1)*nxi*nyi+(i2-1)*nxi
+    DO i1=1,nx
       ii=ii+1
-      IF(i3 <= nz .AND. i2 <= ny .AND. i1 <= nx) THEN
-        i0 = i0+1
-        rhokr(ii)=rhoinp(i0)
-      ELSE
-        rhokr(ii)=0D0
-      END IF
-      rhoki(ii)=0D0
+      i0 = i0+1
+      rhokr(ii)=rhoinp(i0)
     END DO
   END DO
 END DO
@@ -341,7 +350,6 @@ DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
 !----------------------------------------------------------------------
 
 
-
 !     check initialization
 
 IF(mxini == 0) THEN
@@ -380,6 +388,8 @@ DO i1=1,nkxyz
   pskr(i1)=tnorm*pskr(i1)
   pski(i1)=tnorm*pski(i1)
 END DO
+CALL cpu_time(time_fin)
+!WRITE(*,*) 'FOURF end: time=',time_fin-time_ini
 
 RETURN
 END SUBROUTINE fourf
@@ -412,6 +422,7 @@ END DO
 CALL ffbz(pskr,pski)
 CALL ffby(pskr,pski)
 CALL ffbx(pskr,pski)
+
 
 RETURN
 END SUBROUTINE fourb

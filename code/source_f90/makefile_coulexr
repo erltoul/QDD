@@ -7,11 +7,11 @@
 # Insert the date
 DATE    = 180610
 # the compiler is set here 
-CF90    = IFORT
+CF90    = GFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # debugging option
-DEBUG   = NO
+DEBUG   = YES
 
 #####################################################################
 #                             Options                               #
@@ -50,9 +50,9 @@ endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -ffast-math -finline-functions -funroll-loops          
-	OPT2  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8                                      
+	OPT1  =  -w -pg -O3 -msse2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops          
+	OPT2  =  -w -pg -O3 -msse2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
+	OPT3  =  -w -g  -pg                                    
 ifeq "$(DEBUG)" "YES"
 	OPT1  = -cpp -w -g -fbacktrace                 
 	OPT2  = -cpp -w -g -fbacktrace -fdefault-real-8
@@ -191,7 +191,7 @@ EXEC = essai.seq
 #EXEC = ntdks3D_v$(DATE)_$(MPI_NAME).bin
 
 OBJS = main.o params.o kinetic.o restart.o restartc.o init.o\
-       generlcgo.o fftpack.o coulsolv.o\
+       generlcgo.o fftpack.o coulsolvr.o\
        static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o subgrids.o analyse.o\
@@ -202,7 +202,7 @@ OBJS = main.o params.o kinetic.o restart.o restartc.o init.o\
        pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o
 
-OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile
+OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile_coulexr
 
 all:$(EXEC)
 $(EXEC): $(OBJS)
@@ -210,74 +210,74 @@ $(EXEC): $(OBJS)
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)
 	mv $(EXEC) ../
 
-$(OBJS):  define.h makefile params.F90
+$(OBJS):  define.h makefile_coulexr params.F90
 
 %.o: %.mod
 
 .F90.o:
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
-main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
+main.o: main.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
 
-kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftpack.o
+kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile_coulexr params.o fftpack.o
 
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
+coulsolvr.o: coulsolvr.F90 falr.F90 coulexr.F90 findiff-sinft.F90 define.h makefile_coulexr params.o kinetic.o fftpack.o
 
-loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o coulsolv.o
+loc_mfield.o: loc_mfield.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o
 
-pseudosoft.o: pseudosoft.F90 define.h makefile params.o kinetic.o coulsolv.o
+pseudosoft.o: pseudosoft.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o
 
-static.o: pseudosoft.F90 define.h makefile params.o kinetic.o localize_rad.o 2stUT.o
+static.o: pseudosoft.F90 define.h makefile_coulexr params.o kinetic.o localize_rad.o 2stUT.o
 
-localize_rad.o: localize_rad.F90 define.h makefile params.o kinetic.o
+localize_rad.o: localize_rad.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-rho.o: rho.F90 define.h makefile params.o
+rho.o: rho.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-rhoc.o: rho.F90 define.h makefile params.o
+rhoc.o: rho.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-localizer.o: localize.F90 define.h makefile params.o
+localizer.o: localize.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-localize.o: localize.F90 define.h makefile params.o
+localize.o: localize.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnew.o: sicnew.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnewc.o: sicnew.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
+nonloc.o: nonloc.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
+nonlocc.o: nonloc.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUT.o: 2stUT.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUTc.o: 2stUT.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-fftpack.o: fftpack.F90 fftpack2.F90 define.h makefile params.o
+fftpack.o: fftpack.F90 fftpack2.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS2) -c $<
 
-givens.o: givens.F90 define.h makefile params.o
+givens.o: givens.F90 define.h makefile_coulexr params.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-init.o: init.F90 define.h makefile params.o kinetic.o coulsolv.o
+init.o: init.F90 define.h makefile_coulexr params.o kinetic.o coulsolv.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-restart.o: restart.F90 define.h makefile params.o kinetic.o
+restart.o: restart.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-restartc.o: restart.F90 define.h makefile params.o kinetic.o
+restartc.o: restart.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-parallele.o: parallele.F90 define.h makefile params.o kinetic.o
+parallele.o: parallele.F90 define.h makefile_coulexr params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 clean:

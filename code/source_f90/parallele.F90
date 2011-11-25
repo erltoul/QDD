@@ -22,7 +22,7 @@ myn=0
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(icode)
 WRITE(*,*) ' before mpi_comm_size'
-CALL  mpi_comm_size(mpi_comm_world,nprocs,ic)
+CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 WRITE(*,*) nprocs,knode
 #if(parayes)
 !IF(nprocs /= knode) STOP
@@ -36,6 +36,9 @@ CALL  mpi_comm_rank(mpi_comm_world,n,icode)
 nn=n                           ! ?
 nb=n+1                           ! ?
 myn=n
+#else             
+knode = 1         
+nprocs= 1         
 #endif
 
 
@@ -96,6 +99,8 @@ CALL i_scatter(ihome)
 
 
 CALL i_scatter(iemomsrel)
+CALL i_scatter(ifspemoms)
+CALL i_scatter(iffastpropag)
 CALL i_scatter(iflocaliz)
 CALL i_scatter(jgeomion)
 CALL i_scatter(jangabso)

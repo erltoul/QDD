@@ -523,7 +523,7 @@ IF (jescmaskorb /=0 .AND. MOD(it,jescmaskorb) == 0) THEN
 END IF
 
 IF(myn == 0) THEN
-  IF (MOD(it,jescmask) == 0) THEN
+  IF (jescmask .NE. 0 .AND. MOD(it,jescmask) == 0) THEN
     IF (itof == 0) THEN
       OPEN(589,STATUS='unknown',FILE='pescmask.'//outnam)
     ELSE

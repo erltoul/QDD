@@ -737,10 +737,11 @@ CALL FLUSH(441)
 
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
 IF(tstinf) then
-  ALLOCATE(qtmp(kdfull2))
 #if(exchange)
   psisavex = psi
 #endif
+#if(!parayes)
+  ALLOCATE(qtmp(kdfull2))
   DO nb=1,nstate
     qtmp = psi(:,nb)
     CALL hpsi(qtmp,aloc,nb,1)  
@@ -748,6 +749,7 @@ IF(tstinf) then
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp)))
   END DO
   DEALLOCATE(qtmp)
+#endif
 
 #if(!parayes)
   CALL safeopen(77,it,jstinf,'pspenergies')
@@ -909,7 +911,7 @@ IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
 etot = energy + ekion + ekinion + ekinel + ekinkat
 
-IF (myn == 0 .AND. MOD(it,jenergy) == 0 ) THEN
+IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
   CALL safeopen(163,it,jenergy,'penergies')
   WRITE(163,'(1f14.6,22e24.15)') tfs, &
      &                eshell*2.-esh1,     &
@@ -1858,6 +1860,7 @@ IF(irest <= 0) THEN                    !  write file headers
     IF(jelf /= 0) THEN
       OPEN(33,STATUS='unknown',FORM='formatted', FILE='pelf.'//outnam)
       WRITE(33,'(a)') '# TD electron localization function along axes'
+      CLOSE(33)
       OPEN(33,STATUS='unknown',FORM='formatted', FILE='pelf2Dxy.'//outnam)
       WRITE(33,'(a)') '# TD electron localization function in z=0 plane'
       CLOSE(33)
@@ -1899,7 +1902,7 @@ IF(irest <= 0) THEN                    !  write file headers
       CLOSE(323)
     END IF
     
-    IF(iangabso /= 0) THEN
+    IF(iangabso /= 0 .AND. jangabso /= 0) THEN                              ! cPW
       OPEN(47,STATUS='unknown',FORM='formatted', FILE='pangabso.'//outnam)
       WRITE(47,'(a)') ' & '
       CLOSE(47)
@@ -2511,11 +2514,12 @@ IF(nclust > 0 .AND. myn == 0)THEN
   CALL safeopen(8,it,jdip,'pdip')
   CALL safeopen(9,it,jquad,'pquad')
   CALL safeopen(17,it,jinfo,'infosp')
-  CALL safeopen(47,0,iangabso,'pangabso')
+  CALL safeopen(47,0,jangabso,'pangabso')
   CALL safeopen(68,it,jang,'pangmo')
   CALL safeopen(78,it,jspdp,'pspdip')
   CALL safeopen(608,it,jgeomel,'pgeomel')
   CALL safeopen(806,it,jnorms,'pescOrb')
+  CALL safeopen(808,it,jnorms,'pproba')
   CALL safeopen(803,it,jmp,'pMP')
   
 END IF
@@ -2851,8 +2855,32 @@ END IF
 
 !     Time-dependent Electron Localization Function (TD-ELF)
 
+#if(!parayes) 
 IF(jelf > 0 .AND. MOD(it,jelf) == 0) THEN
   CALL localize(rho,psi)
+END IF
+#else
+  STOP ' LOCALIZE (switch JELF) should not be invoked in parallele code'
+#endif
+
+
+!     everything about single particles
+
+
+IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
+   .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
+   .OR. (jenergy > 0 .AND. MOD(it,jenergy)==0) & 
+   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0)) THEN
+#if(parayes) 
+  IF(ttest) WRITE(*,*) ' ANALYZE before INFO: myn=',myn
+#endif
+#if(parano)
+  IF(ttest) WRITE(6,'(a,i4)') ' INFO from ANALYZE. it=',it
+#endif
+  CALL info(psi,rho,aloc,it)
+#if(parayes) 
+  IF(ttest) WRITE(*,*) ' ANALYZE after INFO: myn=',myn
+#endif
 END IF
 
 
@@ -2865,29 +2893,12 @@ IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 !    rtmp(i,1)=REAL(cscal)**2+imag(cscal)**2
 !    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
 !  END DO
+!call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'
   WRITE(806,'(500f12.8)') tfs,1D0-spnorm(1:nstate)
   CALL probab(psi)
 END IF
 #endif
 
-
-!     everything about single particles
-
-
-IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
-   .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
-   .OR. (jenergy > 0 .AND. MOD(it,jenergy)==0) ) THEN
-#if(parayes) 
-  IF(ttest) WRITE(*,*) ' ANALYZE before INFO: myn=',myn
-#endif
-#if(parano)
-  IF(ttest) WRITE(6,'(a,i4)') ' INFO from ANALYZE. it=',it
-#endif
-  CALL info(psi,rho,aloc,it)
-#if(parayes) 
-  IF(ttest) WRITE(*,*) ' ANALYZE after INFO: myn=',myn
-#endif
-END IF
 
 
 IF(iangmo==1 .AND. iexcit == 1)  CALL instit (psi) !notes

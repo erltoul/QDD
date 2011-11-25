@@ -829,15 +829,15 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 IF (iax == 1) THEN ! rotate along x-axis
   rvectmp(1)=x
-  rvectmp(2)=COS(alpha)*y-SIN(alpha)*z     !  cPW
-  rvectmp(3)=SIN(alpha)*y+COS(alpha)*z     !  cPW
+  rvectmp(2)=COS(alpha)*y-SIN(alpha)*z     
+  rvectmp(3)=SIN(alpha)*y+COS(alpha)*z     
 ELSE IF (iax == 2) THEN
   rvectmp(1)=COS(alpha)*x+SIN(alpha)*z
   rvectmp(2)=y
   rvectmp(3)=-SIN(alpha)*x+COS(alpha)*z
 ELSE IF (iax == 3) THEN
-  rvectmp(1)=COS(alpha)*x-SIN(alpha)*y     !  cPW
-  rvectmp(2)=SIN(alpha)*x+COS(alpha)*y     !  cPW
+  rvectmp(1)=COS(alpha)*x-SIN(alpha)*y     
+  rvectmp(2)=SIN(alpha)*x+COS(alpha)*y     
   rvectmp(3)=z
 ELSE
   STOP 'Error in subroutine rotateVec'
@@ -867,7 +867,7 @@ REAL(DP) :: absalpha,sa,c,c2a2
 absalpha = SQRT(SUM(vecalpha**2))
 c = COS(absalpha)
 sa = SIN(absalpha)/absalpha
-c2a2 = (c-1D0)/(absalpha*absalpha)           !  cPW
+c2a2 = (c-1D0)/(absalpha*absalpha)
 
 ! compute transformation
 
@@ -1821,8 +1821,7 @@ REAL(DP), INTENT(OUT)                        :: vlaser(kdfull2)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
 !old        common /ilaser/ ilas
-DATA ilas /0/
-REAL(DP),SAVE :: acc1old,acc2old,foft1old,foft2old,timeold
+!DATA ilas /0/
 LOGICAL,PARAMETER :: TTESTPRINT=.FALSE.
 
 
@@ -1841,7 +1840,7 @@ END IF
 !old      if (e0.eq.0) return
 
 
-IF(ilas == 0) THEN
+IF(ilas == 0) THEN     ! switch 'ilas' is maintained in 'params.F90'
   ilas=1
   ascal=e1x*e2x+e1y*e2y+e1z*e2z
 !  sx=e1x+e2x*COS(phi)
@@ -1925,7 +1924,7 @@ fpulseinteg1 = fpulseinteg1 + (foft1+foft1old)*0.5D0*(tfs/0.0484-timeold)
 fpulseinteg2 = fpulseinteg2 + (foft2+foft2old)*0.5D0*(tfs/0.0484-timeold)
 
       write(7,'(a,2f9.3,2(1pg12.4))') &
-         ' time,tfs,foft1,foft2=',time,tfs/0.048,foft1,foft2
+         ' tfs,tRy,foft1,foft2=',tfs,tfs/0.048,foft1,foft2
 ind = 0
 acc1 = 0D0
 acc2 = 0D0
@@ -2587,7 +2586,7 @@ END IF
 
 IF(i3dstate == 1) THEN
   DO nb=1,nstate
-    ishift = (ispin(nrel2abs(nb))>-1)*nxyz
+    ishift = (ispin(nrel2abs(nb))-1)*nxyz
     DO ind=1,nxyz
       rho(ind+ishift)= occup(nb)*(CONJG(psi(ind,nb)))*psi(ind,nb)
     END DO
@@ -3113,6 +3112,36 @@ STOP ' subroutine PROJECT not yet for parallel'
 
 RETURN
 END SUBROUTINE project
+!     ******************************
+
+SUBROUTINE cproject(qin,qout,ispact,q0)                                   ! cPW
+
+!     ******************************
+
+
+!     projects all occupied states 'q0' out of 'qin'.
+
+!      q0     = set of s.p. wavefunctions (real)
+!      qin    = wavefunction from which 'q0' are to be removed (real)
+!      qout   = resulting wavefunction
+!      ispact = spin of 'qin'
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN)   :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
+COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
+INTEGER, INTENT(IN)    :: ispact
+COMPLEX(DP) :: ovl
+
+!*********************************************************
+
+STOP ' subroutine CPROJECT not yet for parallel'
+
+RETURN
+END SUBROUTINE cproject
 #endif
 
 

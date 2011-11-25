@@ -190,8 +190,8 @@ IF (surftemp > 0) CALL init_surftemp()
 
 IF(nclust > 0)THEN
   
-IF(nclust > 0 .AND. nabsorb > 0) CALL init_absbc(rho)
-IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
+  IF(nabsorb > 0) CALL init_absbc(rho)
+  IF(jmp > 0) CALL initmeasurepoints
 
 !      if (nabsorb.gt.0 .and. ispherAbso.ne.0)
 !     &    call spherAbso(psi,-1)
@@ -207,7 +207,7 @@ IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
   
   IF(irest == 0) THEN
     CALL init_dynwf(psi)
-    IF(nclust > 0 .AND. nabsorb > 0) CALL  init_abs_accum()
+    IF(nabsorb > 0) CALL  init_abs_accum()
   ELSE
     IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi,iflag)
 !                   ??: 'evaluate' should come after 'restart2' ??
@@ -218,15 +218,13 @@ IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
   END IF
 !                                           refresh potentials
   IF(irest > 0 .OR. istat > 0) THEN
-    IF(nclust > 0)THEN
-      CALL calcpseudo()
-      CALL calclocal(rho,aloc)                          !  ??
-      IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
-      IF(ipsptyp == 1) THEN
-        DO ion=1,nion
-          CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-        END DO
-      END IF
+    CALL calcpseudo()
+    CALL calclocal(rho,aloc)                          !  ??
+    IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
+    IF(ipsptyp == 1) THEN
+      DO ion=1,nion
+        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+      END DO
     END IF
   END IF
   
@@ -267,28 +265,25 @@ IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
 #if(!simpara)
   END IF
 #endif
-  IF(myn == 0 .OR. knode == 1) THEN
-    CALL safeopen(8,0,1,'pdip')
-    CALL safeopen(9,0,1,'pquad')
-    CALL safeopen(17,0,1,'infosp')
-    CALL safeopen(78,0,1,'pspdip')
-    CALL safeopen(68,0,1,'pangmo')
-    CALL safeopen(163,0,1,'penergies')
-    CALL safeopen(47,0,1,'pangabso')     ! cPW
-    IF(jnorms /= 0) CALL safeopen(806,0,1,'pescOrb')     ! cPW
-    IF(jgeomel /= 0) CALL safeopen(608,0,1,'pgeomel')     ! cPW
-    IF(jmp /= 0) CALL safeopen(803,0,1,'pMP')         ! cPW
-!    OPEN(8,FILE='pdip.'//outnam)
-!    OPEN(9,FILE='pquad.'//outnam)
-!    OPEN(17,FILE='infosp.'//outnam)
-!    OPEN(78,FILE='pspdip.'//outnam)
-!    OPEN(68,FILE='pangmo.'//outnam)
-!    OPEN(163,FILE='penergies.'//outnam)
-  END IF
+
+  IF(myn == 0 .OR. knode == 1) CALL open_protok_el(0)
+
+!  IF(myn == 0 .OR. knode == 1) THEN
+!    IF(jdip /= 0)     CALL safeopen(8,0,1,'pdip')           ! cPW     ueberflue!ssig?
+!    IF(jquad /= 0)    CALL safeopen(9,0,1,'pquad')          ! cPW            "
+!    IF(jinfo /= 0)    CALL safeopen(17,0,1,'infosp')        ! cPW            "
+!    IF(jspdp /= 0)    CALL safeopen(78,0,1,'pspdip')        ! cPW            "
+!    IF(jang /= 0)     CALL safeopen(68,0,1,'pangmo')        ! cPW            "
+!    IF(jenergy /= 0)  CALL safeopen(163,0,1,'penergies')    ! cPW            "
+!    IF(jangabso /= 0) CALL safeopen(47,0,1,'pangabso')      ! cPW            "
+!    IF(jnorms /= 0)   CALL safeopen(806,0,1,'pescOrb')      ! cPW            " !  
+!    IF(jgeomel /= 0)  CALL safeopen(608,0,1,'pgeomel')      ! cPW            "
+!    IF(jmp /= 0)      CALL safeopen(803,0,1,'pMP')          ! cPW            "
+!  END IF
   
 ELSE
   ecorr = energ_ions()
-END IF
+END IF                           ! end if nclust
   WRITE(*,*) '5.:cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 
 OPEN(660,STATUS='unknown',FILE='progstatus')
@@ -314,8 +309,6 @@ END IF
 ekionold=0D0
 
 
-IF(myn == 0 .OR. knode == 1) CALL open_protok_el(0)
-
 
 !---           here starts true propagation  --------------
 
@@ -326,11 +319,6 @@ DO it=irest,itmax   ! time-loop
   iterat = it      ! to communicate time step
   ijel=it
   tfs=it*dt1*0.0484  !/(2.0*ame)
-  
-  
-! ! check for messages sent by the user
-!   IF (icheckformessages /= 0 .AND. it > 0 .AND.  &
-!       MOD(it,jcheckformessages) == 0) CALL checkformessages
   
   CALL print_densdiff(rho,it)       ! right place here ???
   

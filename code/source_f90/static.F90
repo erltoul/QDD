@@ -8,6 +8,7 @@ SUBROUTINE statit(psir,rho,aloc)
 
 USE params
 ! USE kinetic
+USE coulsolv, ONLY:falr
 #if(twostsic)
 USE twostr
 #endif
@@ -38,6 +39,11 @@ REAL(DP) :: qaux(1,1)       ! dummy array
 #endif
 !MB/
 
+! test Coulomb
+CALL calcrhor(rho,psir)
+WRITE(*,*) 'for charge=',SUM(rho)*dvol
+CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
+  CALL prifld(chpcoul,'coulomb pot')
 
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
@@ -218,7 +224,8 @@ IF(tspinprint) CLOSE(12)          ! ???
 
 !       call printSurfPot(592)
 
-IF(tp_prints) THEN
+IF(tp_prints .AND. (myn == 0 .OR. knode == 1)) THEN
+  CALL printfield(491,aloc,'tp.aloc')                  ! cPW
   CALL printfield(492,rho,'tp.density')
   CALL printfield(496,chpcoul,'tp.coulomb')
   CALL printfield(497,potion,'tp.potion')
@@ -549,7 +556,7 @@ DO nbe=1,nstate
   END IF
 #endif
   
-  
+
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
@@ -567,6 +574,12 @@ ALLOCATE(psipr(kdfull2))
   
 !        action of the kinetic energy in momentum space
   CALL rftf(q0(1,nbe),psipr)
+!    ALLOCATE(w4(kdfull2))
+!    CALL rfftback(psipr,w4)
+!    WRITE(*,*) 'test RFTF: norms=',SUM(w4),SUM(q0(:,nbe))
+!    CALL prifld(q0(1,nbe),'wavefct. in ')
+!    CALL prifld(w4,'wavefct. out')
+!    DEALLOCATE(w4)
   
 !        FFT of V*psi
   CALL rftf(q1,q2)
@@ -586,6 +599,7 @@ ALLOCATE(psipr(kdfull2))
     
 #if(parano)
     ALLOCATE(w4(kdfull2))
+    CALL rfftback(psipr,w4)
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))

@@ -7,11 +7,11 @@
 # Insert the date
 DATE    = 180610
 # the compiler is set here 
-CF90    = IFORT
+CF90    = GFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # debugging option
-DEBUG   = YES
+DEBUG   = NO
 
 #####################################################################
 #                             Options                               #
@@ -50,9 +50,9 @@ endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops          
-	OPT2  =  -w -O3 -msse2 -mfpmath=sse -ffast-math -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -w -g                                      
+	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -ffast-math -finline-functions -funroll-loops          
+	OPT2  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
+	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8                                      
 ifeq "$(DEBUG)" "YES"
 	OPT1  = -cpp -w -g -fbacktrace                 
 	OPT2  = -cpp -w -g -fbacktrace -fdefault-real-8
@@ -62,9 +62,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT"
-	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -fpp -pg -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -pg -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  = -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  = -fpp -w -g -CB -traceback -align all -autodouble

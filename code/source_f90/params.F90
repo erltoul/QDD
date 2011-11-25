@@ -20,6 +20,7 @@ INTEGER :: knode=1
 INTEGER :: kstate=0
 ! max. total nr. electron  states
 INTEGER :: ksttot
+INTEGER,PRIVATE :: ksttot2
 
 
 ! maximum number of ions
@@ -238,6 +239,8 @@ LOGICAL,ALLOCATABLE :: tgridabso(:)       !  array tagging absorbing points
 REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 
 
+
+
 !     common fields for the spatial moments
 
 !      common /moment/ ql(kmom),
@@ -304,6 +307,8 @@ REAL(DP) :: e1x=1D0,e1y=0D0,e1z=0D0,e2x=0D0,e2y=0D0,e2z=0D0,phi=0D0
 REAL(DP) :: fl(6),power
 REAL(DP) :: elaser
 INTEGER :: ijel
+REAL(DP),SAVE :: acc1old,acc2old,foft1old,foft2old,timeold
+INTEGER,SAVE :: ilas=0
 REAL(DP) :: fpulseinteg1        ! integrated pulse for gauge trasnf
 REAL(DP) :: fpulseinteg2        ! integrated pulse for gauge trasnf.
 REAL(DP) :: projcharge=0D0                   ! projectile charge
@@ -335,7 +340,14 @@ SUBROUTINE init_baseparams()
  nxyz=nx2*ny2*nz2;nyf=nx2;nxyf=nx2*ny2
  kdfull2=kxbox*kybox*kzbox
  nx=nx2/2;ny=ny2/2;nz=nz2/2
- ksttot = knode*kstate
+! deduce nr. of states per node, readjust total nr. of states
+! note: the input variable 'kstate' means total nr. of states
+!       and is copied first to the correct variable 'ksttot'.
+ ksttot = kstate
+ kstate = ksttot/knode
+ ksttot2 = knode*kstate    ! trial value
+ if(ksttot2 < ksttot) kstate=1+kstate
+ ksttot = knode*kstate    ! final value
  knodem=knode-1
 #if(gridfft)
 ! bounds of loops

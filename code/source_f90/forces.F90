@@ -57,7 +57,7 @@ ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   RETURN
 END IF
 
-WRITE(*,*) ' GETFORCES: iflag,taccel,vpx,vpy,vpz=',iflag,taccel,vpx,vpy,vpz
+!WRITE(*,*) ' GETFORCES: iflag,taccel,vpx,vpy,vpz=',iflag,taccel,vpx,vpy,vpz
 IF (iflag == 0) THEN
   fx(1:nion)=0D0;fy(1:nion)=0D0;fz(1:nion)=0D0
 #if(raregas)

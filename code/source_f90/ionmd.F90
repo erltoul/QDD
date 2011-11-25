@@ -411,7 +411,7 @@ COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 
 ! what time is it ?
 tfs = it*dt1*0.0484/(2.0*ame)
-WRITE(*,*) ' ITSTEP entered. tfs=',tfs
+!WRITE(*,*) ' ITSTEP entered. tfs=',tfs
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -511,7 +511,7 @@ END IF
 !mb      if(nc+ne+nk.gt.0 .and. isurf.ne.0)then
 
 !     compute forces on rare gas cores with new positions
-WRITE(*,*) ' before GETFORCES, time=',time
+!WRITE(*,*) ' before GETFORCES, time=',time
 CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
     fx(nion) = fx(nion)+vpx/taccel
@@ -550,8 +550,8 @@ END IF
 IF (nion > 0 .AND. imob /= 0) CALL leapfr(cpx(1),cpy(1),cpz(1),  &
     fx(1),fy(1),fz(1), dt1,1D0,nion,4)
 
-WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)
-WRITE(6,'(a,3f15.6)') 'pix,piy,piz',cpx(1),cpy(1),cpz(1)
+!WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)
+!WRITE(6,'(a,3f15.6)') 'pix,piy,piz',cpx(1),cpy(1),cpz(1)
 
 RETURN
 END SUBROUTINE itstep

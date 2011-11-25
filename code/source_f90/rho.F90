@@ -24,7 +24,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
 #else
-COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 #endif
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
 
@@ -140,15 +140,14 @@ USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-#if(parayes)
-STOP "CALC_CURRENT presently not suited for parallel computing"
-#endif
-
 COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT) :: current(kdfull2,3)
 
 COMPLEX(DP), ALLOCATABLE :: dq0(:)
 
+#if(parayes)
+STOP "CALC_CURRENT presently not suited for parallel computing"              ! cPW
+#endif
 
 !-----------------------------------------------------------------
 

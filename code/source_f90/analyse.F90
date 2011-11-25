@@ -76,11 +76,6 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)                  :: iflag
 
 
-
-
-
-
-
 WRITE(6,*) 'Doing some postrun evaluation only...'
 
 
