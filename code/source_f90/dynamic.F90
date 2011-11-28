@@ -35,7 +35,7 @@ IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
 
 IF (ekin0pp > 0D0) CALL init_velocel(psi)
 
-IF ( eproj > 0D0 .and. init_lcao==1 ) CALL init_projwf(psi)
+IF ( eproj > 0D0) CALL init_projwf(psi)
 
 !     optionally add scattering electron
 
@@ -201,6 +201,10 @@ vpz = vpz/rnorm*v0*ame
 
 IF(taccel>0D0) RETURN               ! boost is done adiabatically
 
+IF(init_lcao.NE.1) THEN
+  WRITE(*,*) ' instantaneous acceleration only for INIT_LCAO==1'
+  STOP  ' instantaneous acceleration only for INIT_LCAO==1'
+END IF
 ind = 0
 DO iz=minz,maxz
   z1=(iz-nzsh)*dz
