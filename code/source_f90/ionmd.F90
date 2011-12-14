@@ -404,7 +404,7 @@ REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 
-
+LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
 !INTEGER, PARAMETER :: mm=ng
 !REAL(DP) :: px(ng),py(ng),pz(ng)
 
@@ -516,6 +516,12 @@ CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
     tfac = ame*amu(np(nion))*1836.0*0.048/taccel
+    IF(tsmooth) THEN
+      dtaccel=taccel/10D0
+      tfac = tfac*taccel/(taccel-dtaccel/2D0)
+      IF(tfs>taccel-dtaccel) tfac=tfac*sin(PI*(taccel-tfs)/(dtaccel*2D0))**2
+    END IF
+    WRITE(*,*) ' tfs,tfac=',tfs,tfac
     fx(nion) = fx(nion)+vpx*tfac
     fy(nion) = fy(nion)+vpy*tfac
     fz(nion) = fz(nion)+vpz*tfac
@@ -631,6 +637,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
 
 
 ! what time is it ?
@@ -732,6 +739,12 @@ CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
     tfac = ame*amu(np(nion))*1836.0*0.048/taccel
+    IF(tsmooth) THEN
+      dtaccel=taccel/10D0
+      tfac = tfac*taccel/(taccel-dtaccel/2D0)
+      IF(tfs>taccel-dtaccel) tfac=tfac*sin(PI*(taccel-tfs)/(dtaccel*2D0))**2
+    END IF
+    WRITE(*,*) ' tfs,tfac=',tfs,tfac
 !    fx(nion) = fx(nion)+vpx*tfac
 !    fy(nion) = fy(nion)+vpy*tfac
 !    fz(nion) = fz(nion)+vpz*tfac
