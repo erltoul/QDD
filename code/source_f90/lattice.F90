@@ -9,7 +9,8 @@ USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-REAL(DP) :: potouter(kdfull2)
+REAL(DP),ALLOCATABLE :: potouter(:)
+ALLOCATE(potouter(kdfull2))
 
 ind=0
 DO iz=minz,maxz
@@ -27,6 +28,7 @@ DO iz=minz,maxz
   END DO
 END DO
 
+DEALLOCATE(potouter)
 
 RETURN
 END SUBROUTINE createouterpot

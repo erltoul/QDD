@@ -9,8 +9,7 @@
 #define findiff 0
 #define numerov 0
 !
-! coulomb solver	(counet not yet active)
-!                     (set all to 0 for 'findiff' or 'numerov')
+! coulomb solver  (set all to 0 for 'findiff' or 'numerov')
 !
 #define coufou 0
 #define coudoub 1

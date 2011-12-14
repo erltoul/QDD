@@ -1,7 +1,7 @@
 # for Linux
 COMPILER       = ifort
-COMPILERFLAGS  =   -g -CB  -align all -w -autodouble -fpp -traceback
-#COMPILERFLAGS  =   -O3 -xW -p -align all -no-prec-div -w -fpp 
+#COMPILERFLAGS  =   -g -CB  -align all -w -autodouble -fpp -traceback
+COMPILERFLAGS  =   -O3 -xW -p -align all -no-prec-div -w -fpp 
 #COMPILERFLAGS  =   -O3 -xW -qp -traceback -no-prec-div -w -autodouble -fpp 
 #COMPILERFLAGS  =   -O3 -CB -traceback -no-prec-div -w -autodouble -fpp 
 #COMPILERFLAGS  =   -O1  -autodouble 
@@ -10,8 +10,8 @@ COMPILERFLAGS  =   -g -CB  -align all -w -autodouble -fpp -traceback
 #COMPILERFLAGS  =   -O2 -w -autodouble -ipo -fpp
 #COMPILERFLAGS2  =  -O3 -xW -traceback -ip  -w -autodouble  -fpp
 #COMPILERFLAGS2  =  -O3 -xW -traceback -ip -align all -w -autodouble  -fpp
-#COMPILERFLAGS2  =  -O3 -xW -ip -p -w -fpp
-COMPILERFLAGS2  =  -g -CB  -w -autodouble  -fpp -traceback
+COMPILERFLAGS2  =  -O3 -xW -ip -p -w -fpp
+#COMPILERFLAGS2  =  -g -CB  -w -autodouble  -fpp -traceback
 #COMPILERFLAGS2  =  -O1  -w -autodouble  -fpp
 
 #  setting for critical soubroutines which do not stand optimization

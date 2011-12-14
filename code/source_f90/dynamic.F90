@@ -881,8 +881,8 @@ ekinkat=0D0      ! kinetic energy of kations
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
-    xm=1836.0*amu(np(ion))*ame
-    ek=ek/2.0/xm
+    xm=1836.0D0*amu(np(ion))*ame
+    ek=ek/2D0/xm
     ekion=ekion+ek
   END DO
 #if(raregas)
@@ -1730,8 +1730,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 
-
-
 LOGICAL :: topenf
 
 !---------------------------------------------------------------------
@@ -1759,16 +1757,24 @@ IF(irest <= 0) THEN                    !  write file headers
 #else
   IF(jmp /= 0 .AND. myn == 0) THEN
 #endif
-    OPEN(803,STATUS='unknown',FILE='pMP.'//outnam)
-    WRITE(803,'(a)') '# nr. of meas.points, nr. of state'
-    WRITE(803,'(a,2i6)') '# ',nmps,nstate_all
-    DO i=1,nmps
-      WRITE(803,'(a,i6,a,3f12.1,3i4)') '# Point ',i , ' at : ',  &
+!    OPEN(803,STATUS='unknown',FILE='pMP.'//outnam)
+!    WRITE(803,'(a)') '# nr. of meas.points, nr. of state'
+!    WRITE(803,'(a,2i6)') '# ',nmps,nstate_all
+!    DO i=1,nmps
+!      WRITE(803,'(a,i6,a,3f12.1,3i4)') '# Point ',i , ' at : ',  &
+!          getxval(imps(i)),getyval(imps(i)),getzval(imps(i)), &
+!          nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
+!          nint(getzval(imps(i))/dz)
+!    END DO
+    OPEN(803,STATUS='unknown',FORM='unformatted',FILE='pMP.'//outnam)    ! cPW
+    WRITE(803) nmps,nstate_all                                           ! cPW
+    DO i=1,nmps                                                          ! cPW
+      WRITE(803) i,  &                                                   ! cPW
           getxval(imps(i)),getyval(imps(i)),getzval(imps(i)), &
           nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
           nint(getzval(imps(i))/dz)
     END DO
-!    CLOSE(803)
+    CLOSE(803)
   END IF
   
   IF(jnorms /= 0) THEN
@@ -2524,7 +2530,7 @@ IF(nclust > 0 .AND. myn == 0)THEN
   CALL safeopen(608,it,jgeomel,'pgeomel')
   CALL safeopen(806,it,jnorms,'pescOrb')
   CALL safeopen(808,it,jnorms,'pproba')
-  CALL safeopen(803,it,jmp,'pMP')
+!  CALL safeopen(803,it,jmp,'pMP')
   
 END IF
   
@@ -2975,7 +2981,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-#if(simpara)
+#if(simpara||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
@@ -3003,7 +3009,7 @@ END IF
 !     prepare for restart and stop:
 
 !      iiii=etime(tarray,trun)
-IF(trequest > 0D0) THEN
+IF(trequest > 0D0 .AND. myn==0) THEN
   !iiii=etime(tarray)
   CALL cpu_time(time_act)
   time_elapse=time_act-time_absinit
@@ -3011,13 +3017,22 @@ IF(trequest > 0D0) THEN
   ! ' etime: trequest,timefrac,tarray=',trequest,timefrac,tarray,time_elapse
   CALL FLUSH(6)
   !IF ((tarray(1)+tarray(2)) > trequest*timefrac) THEN
-  IF (time_elapse > trequest*timefrac) THEN
-    CALL SAVE(psi,it,outnam)
+END IF
+#if(parayes)
+  CALL pi_scatter(time_elapse)                                              ! cPW
+#endif
+IF (time_elapse > trequest*timefrac) THEN
+  CALL SAVE(psi,it,outnam)
+  IF(myn == 0) THEN                                                       ! cPW
     OPEN(660,STATUS='unknown',FILE='progstatus')
     WRITE(660,*) '0'
     CLOSE(660)
-    STOP ' finish at TREQUEST'
-  END IF
+  END IF                                                                  ! cPW
+#if(parayes)
+  CALL mpi_barrier (mpi_comm_world, mpi_ierror)                           ! cPW
+  CALL mpi_finalize (icode)                                               ! cPW
+#endif
+  STOP ' finish at TREQUEST'
 END IF
 !     if program has received user message to shut down program, make it so!
 IF (ishutdown /= 0) THEN

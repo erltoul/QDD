@@ -459,6 +459,11 @@ IF(icooltyp == 3) ALLOCATE(eloc(0:ng),enoloc(0:ng),eion(ng,ng),eiinew(ng))
 
 #if(raregas)
 IF(ivdw == 1) ALLOCATE(potvdw(kdfull2),frho(ng,3))
+ALLOCATE(rfieldtmp(kdfull2))
+ALLOCATE(potstat(kdfull2),potesfixed(kdfull2))
+ALLOCATE(potesmob(kdfull2), phim(kdfull2),phimv(kdfull2),phimd(kdfull2))
+ALLOCATE(fxt(ng),fyt(ng),fzt(ng))
+maxpar = MAX(ng,ngpar) ! max of any used particle
 #endif
 
 RETURN
