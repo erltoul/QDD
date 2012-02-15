@@ -107,10 +107,8 @@ ELSE IF(ifsicp == 2) THEN
   CALL calc_adsicr(rho,aloc,q0)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slaterr(rho,aloc,q0)
-#if(kli)
 ELSE IF(ifsicp == 4) THEN
   CALL calc_sicklir(rho,aloc,q0)
-#endif
 ELSE
   RETURN
 END IF
@@ -121,10 +119,8 @@ ELSE IF(ifsicp == 2) THEN
   CALL calc_adsic(rho,aloc,q0)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slater(rho,aloc,q0)
-#if(kli)
 ELSE IF(ifsicp == 4) THEN
   CALL calc_sickli(rho,aloc,q0)
-#endif
 ELSE
   RETURN
 END IF
@@ -707,7 +703,6 @@ END SUBROUTINE calc_slater
 
 
 
-#if(kli)
 
 !     ******************************
 
@@ -1013,7 +1008,7 @@ END SUBROUTINE calc_sicklir
 #else
 END SUBROUTINE calc_sickli
 #endif
-#endif
+
 
 !  presently only static version of 'calc_fullsicr'
 #ifdef REALSWITCH
@@ -1613,7 +1608,6 @@ END SUBROUTINE calc_sicspr
 END SUBROUTINE calc_sicsp
 #endif
 
-#if(exchange)
 
 
 !     ******************************
@@ -1769,5 +1763,5 @@ END SUBROUTINE exchgr
 END SUBROUTINE exchg
 #endif
 
-#endif
+
 

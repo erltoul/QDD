@@ -16,10 +16,8 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
 
-#if(exchange)
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
    STOP ' exact exchange requires exponential evolution'
-#endif
 IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) ALLOCATE(psisavex(kdfull2,kstate))
 
 !     use of saved real wavefunctions, read and copy to complex
@@ -703,9 +701,7 @@ END IF
 
 !     compute single-particle energies and related quantities
 
-#if(exchange)
-  psisavex = psi
-#endif
+IF(ifsicp==5)  psisavex = psi
 
 eshell=0D0
 esh1=0D0
@@ -741,9 +737,7 @@ CALL FLUSH(441)
 
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
 IF(tstinf) then
-#if(exchange)
-  psisavex = psi
-#endif
+  IF(ifsicp==5)  psisavex = psi
 #if(!parayes)
   ALLOCATE(qtmp(kdfull2))
   DO nb=1,nstate
@@ -1119,14 +1113,12 @@ END IF
 #endif
 !JM
 
-#if(exchange)
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
   CALL exchg(psin,qex,nb)
   psi2 = psi2 + qex
   DEALLOCATE(qex)
 END IF
-#endif
 
 epot = REAL(wfovlp(psin,psi2))   ! develop real overlap
 

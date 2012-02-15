@@ -340,8 +340,8 @@ IF(directenergy .AND.  &
 IF(ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 #endif
 
-#if(exchange&fullsic)
-STOP ' do not compile EXCHANGE and FULLSIC simultaneously'
+#if(fullsic)
+IF(ifsicp==5) STOP ' EXCHANGE doe not run with FULLSIC'
 #endif
 
 #if(twostsic)
@@ -551,13 +551,8 @@ ELSE IF(ifsicp == 3)  THEN
   WRITE(iu,'(a)') 'sic activated: Slater'
 ELSE IF(ifsicp == 4)  THEN
   WRITE(iu,'(a)') 'sic activated: KLI'
-#if(exchange)
-ELSE IF(ifsicp == 5)  THEN
+ELSE IF(ifsicp == 5) THEN
   WRITE(iu,'(a)') 'sic activated: exact exchange'
-#else
-ELSE IF(ifsicp == 5)  THEN
-  STOP ' code not compiled for exact exchange'
-#endif
 #if(fullsic)
 ELSE IF(ifsicp == 6)  THEN
   WRITE(iu,'(a)') 'sic activated: full SIC'
@@ -590,7 +585,7 @@ WRITE(iu,'(a,3i6)') ' kxbox,kybox,kzbox=',kxbox,kybox,kzbox
 #if(raregas)
 WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
-WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,nstate
+WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
@@ -2949,26 +2944,19 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(findiff|numerov)
 STOP ' parallele computing not active with finite differences'
 #endif
-#if(exchange)
-STOP ' exact exchange not compatible with parallele code'
-#endif
+IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
-#if(kli && exchange)
-STOP ' exact exchange and KLI not compatible '
+#if(symmcond)
+IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible! allow for exact exchange
+!  kli or exchange or fullsic cannot be used simultaneously !! '
 #endif
-#if(kli && symmcond)
-STOP ' propagated symm.cond. and KLI not compatible '
-#endif
-#if(kli)
-IF(!directenergy) STOP ' KLI requires directenergy=1 in "define.h" '
-#endif
+IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
 #if(!pw92)
-IF(directenergy) STOP ' directenergy=1 requires Perdew&Wang functional '
+IF(directenergy) STOP ' directenergy=.true. requires Perdew&Wang functional '
 #endif
-#if(exchange)
-IF(directenergy) STOP ' directenergy=1 not yet prepared for exact exchange '
-#endif
+IF(directenergy .AND. ifsicp==5) &
+   STOP ' directenergy=.true. not yet prepared for exact exchange '
 #if(!raregas)
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"
 #endif

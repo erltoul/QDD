@@ -1,7 +1,7 @@
 !
 !       code version:
 !
-#define IVERSION 30
+#define IVERSION 71
 !
 ! grid: FFT or finite difference
 !
@@ -30,11 +30,8 @@
 #define parano 1
 #define simpara 0
 !
-! allow for SIC-KLI or exact exchange
-!  kli or exchange or fullsic cannot be used simultaneously !!
+! full SIC and variants (outdated)
 !
-#define kli 0
-#define exchange 0
 #define fullsic 0
 #define symmcond 0
 #define twostsic 0

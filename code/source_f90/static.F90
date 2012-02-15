@@ -509,12 +509,10 @@ IF(tcpu) CALL cpu_time(time_init)
 
 !     exact exchange, to be completed before wavefunctions are modified
 
-#if(exchange && parano)
 IF(ifsicp == 5) THEN
   ALLOCATE(qex(kdfull2,kstate))
   CALL exchgr(q0,qex)
 END IF
-#endif
 
 
 ALLOCATE(q1(kdfull2))
@@ -556,11 +554,9 @@ DO nbe=1,nstate
     END DO
   END IF
   
-#if(exchange && parano)
   IF(ifsicp == 5) THEN
     q1=q1+qex(:,nbe)
   END IF
-#endif
   
 
 !JM : subtract SIC potential for state NBE
@@ -715,9 +711,7 @@ END DO                                            ! end loop over states
 
 DEALLOCATE(q1)
 DEALLOCATE(q2)
-#if(exchange && parano)
 IF(ifsicp == 5)  DEALLOCATE(qex)
-#endif
 
 
 #if(parano)
