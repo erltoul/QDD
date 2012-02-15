@@ -63,7 +63,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,  &
 
 !*************************************************************
 
-NAMELIST /dynamic/ nabsorb,  &
+NAMELIST /dynamic/ directenergy,nabsorb,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
@@ -332,10 +332,9 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
 #endif
 
 
-#if(directenergy)
-IF(ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
+IF(directenergy .AND.  &
+   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
     STOP ' directenergy=1 only for Slater and KLI'
-#endif
 
 #if(!fullspin)
 IF(ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
@@ -534,6 +533,12 @@ ELSE IF(icooltyp == 2) THEN
   WRITE(iu,'(a)') 'cooling with steepest descent '
 ELSE IF(icooltyp == 3) THEN
   WRITE(iu,'(a)') 'cooling with Monte Carlo '
+END IF
+
+IF(directenergy) THEN
+  WRITE(iu,'(a)') ' energy computed directly'
+ELSE
+  WRITE(iu,'(a)') ' energy computed using s.p. energies'
 END IF
 
 IF(ifsicp == 0) THEN
@@ -2955,14 +2960,14 @@ STOP ' exact exchange and KLI not compatible '
 #if(kli && symmcond)
 STOP ' propagated symm.cond. and KLI not compatible '
 #endif
-#if(kli && !directenergy)
-STOP ' KLI requires directenergy=1 in "define.h" '
+#if(kli)
+IF(!directenergy) STOP ' KLI requires directenergy=1 in "define.h" '
 #endif
-#if(directenergy && !pw92)
-STOP ' directenergy=1 requires Perdew&Wang functional '
+#if(!pw92)
+IF(directenergy) STOP ' directenergy=1 requires Perdew&Wang functional '
 #endif
-#if(directenergy && exchange)
-STOP ' directenergy=1 not yet prepared for exact exchange '
+#if(exchange)
+IF(directenergy) STOP ' directenergy=1 not yet prepared for exact exchange '
 #endif
 #if(!raregas)
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"

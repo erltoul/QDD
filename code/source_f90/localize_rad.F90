@@ -380,13 +380,13 @@ DO nb=1,nstate
       enpw1=enpw1+enerpw*occup(nb)
     ELSE
       enrear2=enrear2+enrear*occup(nb)
-#if(directenergy)
-      enpw2=enpw2+enerpw*occup(nb)
-#endif
+      IF(directenergy) THEN
+        enpw2=enpw2+enerpw*occup(nb)
+      END IF
     END IF
-#if(directenergy)
-    encadd=encadd+encoulsp*occup(nb)
-#endif
+    IF(directenergy) THEN
+      encadd=encadd+encoulsp*occup(nb)
+    END IF
     
     IF (ispin(nrel2abs(nb)) == 1) THEN
       DO ind=1,nxyz
@@ -402,9 +402,9 @@ DO nb=1,nstate
 END DO
 encadd=encadd/2.0
 enrear   = enrearsave-enrear1-enrear2
-#if(directenergy)
-enerpw   = enerpwsave-enpw1-enpw2-encadd
-#endif
+IF(directenergy) THEN
+  enerpw   = enerpwsave-enpw1-enpw2-encadd
+END IIF
 
 DEALLOCATE(usicsp,rhosp)
 

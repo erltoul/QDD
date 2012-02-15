@@ -943,9 +943,8 @@ eshell=eshell/2D0  !(=t+v/2)
 
 CALL energ_dielec(rho)
 energy = espnb/2.+esh1/2.+enrear+ecback+ecorr+enonlc/2. -ecrhoimage
-#if(directenergy)
-energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
-#endif
+IF(directenergy) &
+     energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
 IF(ivdw == 1) energy = energy + evdw
 binerg = energy
 #if(parayes)
@@ -966,14 +965,13 @@ IF(myn == 0) THEN
   IF (isurf /= 0) THEN
     WRITE(6,*)  'adsorption energy = ', energy-enerinfty
   END IF
-#if(directenergy)
-  WRITE(6,*)  'binding energy2 =',energ2
-  WRITE(6,*)  'potential energ =',enerpw
-!test        write(6,*)  'compensation    =',encomp
-  ensav  = energ2
-  energ2 = energy
-  energy = ensav
-#endif
+  IF(directenergy) THEN
+    WRITE(6,*)  'binding energy2 =',energ2
+    WRITE(6,*)  'potential energ =',enerpw
+    ensav  = energ2
+    energ2 = energy
+    energy = ensav
+  END IF
   WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
   WRITE(6,'(a)') ' '
   
@@ -1129,15 +1127,15 @@ CALL prispe_parallele(42,-1)
 
 IF(myn == 0) THEN
   IF(temp == 0D0) THEN
-#if(directenergy)
-    WRITE(42,'(a,2f13.7)') 'binding energy  =',energ2,energy
-#else
-    WRITE(42,'(a,f13.7)') 'binding energy  =',energy
-#endif
+    IF(directenergy) THEN
+      WRITE(42,'(a,2f13.7)') 'binding energy  =',energ2,energy
+    ELSE
+      WRITE(42,'(a,f13.7)') 'binding energy  =',energy
+    END IF
   ELSE
-#if(directenergy)
-    energy = energ2
-#endif
+    IF(directenergy) THEN
+      energy = energ2
+    END IF
     WRITE(42,'(a,4f13.7)')  'energies:E,TS,F,T =',  &
         energy,temp*entrop,energy-temp*entrop,temp
   END IF

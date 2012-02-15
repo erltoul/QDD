@@ -372,9 +372,9 @@ DATA b4  /0.023592917D0/
 DATA db4 /0.004200005D0 /
 
 enrear = 0D0
-#if(directenergy)
-enerpw = 0D0
-#endif
+IF(directenergy) THEN
+  enerpw = 0D0
+END IF
 ec=0D0
 DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
@@ -506,9 +506,9 @@ DO ii=1,nxyz
   t4=ABS((t1-t2)/2.0)   !  *e2
   t5= chpdft(ii)*t3+chpdft(ii+nxyz)*t4
   
-#if(directenergy)
-  enerpw = -t70*e2 + enerpw
-#endif
+  IF(directenergy) THEN
+    enerpw = -t70*e2 + enerpw
+  END IF
   
   
   ec = (-t70*e2 - 0.5D0*t5) + ec
@@ -520,9 +520,9 @@ END DO
 
 enrear=ec*dvol
 
-#if(directenergy)
-enerpw = enerpw*dvol
-#endif
+IF(directenergy) THEN
+  enerpw = enerpw*dvol
+END IF
 
 
 RETURN

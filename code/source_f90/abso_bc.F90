@@ -88,7 +88,7 @@ IF(jescmaskorb /=0) THEN
   END DO
 END IF
 
-DO nbe=1,nstate                                            ! cPW diesen Teil verschoben
+DO nbe=1,nstate
 !  WRITE(*,*) ' ABSBC: nbe=',nbe
   DO ind=1,kdfull2
     IF(tgridabso(ind)) THEN
@@ -741,7 +741,8 @@ LOGICAL,PARAMETER :: ttestpar=.FALSE.
 IF(myn==0) THEN
   INQUIRE(803,OPENED=topenf)
   IF(.NOT.topenf) &
-    OPEN(803,POSITION='append',FORM='unformatted',FILE='pMP.'//outnam)
+    OPEN(803,POSITION='append',FILE='pMP.'//outnam)                         ! cPW
+!    OPEN(803,POSITION='append',FORM='unformatted',FILE='pMP.'//outnam)
 END IF
 
 
@@ -763,8 +764,8 @@ DO nbe=1,nstate
     j=j+1
     rp(j)=imag(q0phase)
   END DO
-!  WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                       ! cPW: maxmps = 500
-  WRITE(iunit) tfs,rp(1:2*nmps)                                             ! cPW
+  WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                       ! cPW: maxmps = 500
+!  WRITE(iunit) tfs,rp(1:2*nmps)                                             ! cPW
 END DO
 #endif
 
@@ -803,8 +804,8 @@ DO nba=1,nstate_all
                      mpi_comm_world,is,ic)
        IF(ttestpar) WRITE(*,*) ' received: nba,from node=',nba,mynact
     END IF
-!    WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500
-    WRITE(iunit) tfs,rp(1:2*nmps)                                           ! cPW
+    WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500
+!    WRITE(iunit) tfs,rp(1:2*nmps)                                           ! cPW
   END IF
 END DO
 IF(ttestpar) WRITE(*,*) ' all done. before last barrier'
@@ -817,5 +818,7 @@ IF(myn==0) CLOSE(iunit)
 RETURN
 END SUBROUTINE evalmp
 !------------------------------------------------------------
+
+
 
 

@@ -123,7 +123,8 @@ INTEGER,ALLOCATABLE ::  ispin_node(:,:)
 
 !     basic parameters
 
-REAL(DP) :: omeg,eferm                           !  initial Gaussians
+LOGICAL :: directenergy=.false.            ! to compute energy directly
+REAL(DP) :: omeg,eferm                     !  initial Gaussians
 REAL(DP) :: dInMargin=6D0
 INTEGER :: iforce=0
 INTEGER :: ipseudo=1          ! swich on/off subgrids and pseudo-densities
