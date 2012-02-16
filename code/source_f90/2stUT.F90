@@ -241,7 +241,7 @@ END SUBROUTINE calc_fullsicr
 #else
 END SUBROUTINE calc_fullsic
 #endif
-
+#endif
 
 #ifdef COMPLEXSWITCH
 !-----init_vecs-------------------------------------------------
