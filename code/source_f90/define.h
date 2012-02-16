@@ -14,12 +14,6 @@
 #define coufou 0
 #define coudoub 1
 !
-! ex-cor functional:
-!
-#define gunnar 0
-#define exonly 0
-#define pw92 1
-!
 ! spin explicitely
 !
 #define fullspin 1

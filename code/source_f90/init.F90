@@ -63,7 +63,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,  &
 
 !*************************************************************
 
-NAMELIST /dynamic/ directenergy,nabsorb,  &
+NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
@@ -256,6 +256,24 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 CHARACTER (LEN=80) :: title
+INTERFACE 
+  SUBROUTINE calc_lda_gunnar(rho,chpdft)
+  USE params, ONLY: DP,kdfull2
+  REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+  REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+!  REAL(DPA), INTENT(IN)                         :: rho(*)
+!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
+  END SUBROUTINE calc_lda_gunnar
+END INTERFACE
+INTERFACE 
+  SUBROUTINE calc_lda_pw92(rho,chpdft)
+  USE params, ONLY: DP,kdfull2
+  REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+  REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+!  REAL(DPA), INTENT(IN)                         :: rho(*)
+!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
+  END SUBROUTINE calc_lda_pw92
+END INTERFACE
 
 !--------------------------------------------------------------
 
@@ -287,11 +305,6 @@ WRITE(6,*) 'jekion=',jekion
 IF(iftransme ==1) STOP ' IFTRANSME needs full spin'
 #endif
 
-#if(exonly)
-#if(!gunnar)
-  STOP ' option EXONLY requires functional GUNNAR'
-#endif
-#endif
 
 #if(raregas)
 DO i=1,5
@@ -390,6 +403,15 @@ END if
 IF(ABS(phangle) > small .AND. istat /= 1) &
   STOP ' ph rotation only with ISTAT=1'
 
+! set the pointer for the energy-density functional
+IF(idenfunc==1) THEN
+  calc_lda => calc_lda_pw92
+ELSE IF(idenfunc==2 .OR. idenfunc==3) THEN
+  calc_lda => calc_lda_gunnar
+ELSE
+  STOP ' invalid value for density-functional selector IDENFUNC'
+END IF
+
 
 RETURN
 END SUBROUTINE iparams
@@ -412,16 +434,16 @@ IF(iu == 8) OPEN(8,STATUS='unknown',FORM='formatted',  &
 
 WRITE(iu,'(a)') 'the following options are used:'
 WRITE(iu,*)
-#if(gunnar)
-#if(exonly)
-WRITE(iu,'(a)') 'pure exchange functional in LDA'
-#else
-WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
-#endif
-#endif
-#if(pw92)
-WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
-#endif
+IF(idenfunc==1) THEN
+  WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
+ELSE IF(idenfunc==2) THEN
+  WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
+ELSE IF(idenfunc==3) THEN
+  WRITE(iu,'(a)') 'pure exchange functional in LDA'
+ELSE
+  STOP ' invalid value for density-functional selector IDENFUNC'
+END IF
+
 ! parallel or serial:
 #if(parayes)
 WRITE(iu,*) 'parallel code: number of nodes=',knode

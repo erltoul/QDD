@@ -149,10 +149,6 @@ in section \ref{sec:inputs}.
 {\tt simpara} & pseudo-parallel code, runs different inputs
 simultaneously\\
 \hline
-\multicolumn{2}{l}{\underline{functional and handling of electrons:}}\\
-{\tt gunnar} & Gunnarson \& Lundquist\\
-{\tt exonly} & only exchange in  LDA (requires {\tt gunnar=1})\\
-{\tt pw92} & Perdew \& Wang (mostly used standard)\\
 {\tt fullspin} & with or without explicit electron  spin\\
 \hline
 \multicolumn{2}{l}{\underline{versions of SIC for electrons:}}\\
@@ -250,6 +246,10 @@ equations\\
 {\tt istat            }& switch to read wavefunctions from file 'rsave'\\
 {\tt } &\hspace*{1em}it continues static iteration for 'ismax$>$0' \\
 {\tt } &\hspace*{1em}it starts dynamics from these wf's for 'ismax=0' \\
+{\tt idenfunc} & choice of density functional for LDA\\
+               & 1 $\rightarrow$ Perdew \& Wang 1992 (default setting)\\
+               & 2 $\rightarrow$ Gunnarson \& Lundquist\\
+               & 3  $\rightarrow$ only exchange in  LDA \\
 {\tt isave            }& saves results after every 'isave' steps \\
 {\tt                  }& on file 'rsave' in and after static iteration\\
 {\tt                  }& on file 'save' in dynamic propagation\\

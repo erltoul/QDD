@@ -161,12 +161,6 @@ COMPLEX(DP) :: qsic(kdfull2,kstate)
 !       workspaces
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
-!#if(twostsic)
-!COMMON /sicsav/usicall(kdfull2,kstate)
-!#endif
-!COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2)  &
-!    ,chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-!EQUIVALENCE (rhospu,rhosp),(rhospd,usicsp)
 
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -1575,7 +1569,7 @@ END SUBROUTINE spmomsmatrix
 #endif
 
 
-#endif
+!#endif
 
 
 #ifdef REALSWITCH

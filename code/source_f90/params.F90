@@ -8,11 +8,6 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 ! general settings for dimensions, part.numbers etc
 !
 
-!INCLUDE "com.inc"
-
-
-
-
 ! number of nodes (=1 for serial version)
 INTEGER :: knode=1
 ! max. nr. electron states per node
@@ -196,10 +191,11 @@ INTEGER :: jinfo=10,jdip=10,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
-INTEGER :: init_lcao=0,ipsptyp=0,iterat,ivdw=0,itersicp6
+INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
 INTEGER :: ifrhoint_time=0,iangmo=0,ifspemoms=0,iftransme=0
+INTEGER :: iterat,itersicp6
 LOGICAL :: tstinf
 REAL(DP) :: rheattemp=0D0        ! re-heat temperature
 REAL(DP) :: tempion=0D0,dt1=0D0
@@ -323,6 +319,10 @@ REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile positi
 REAL(DP) :: rvectmp2(3),rvectmp(3)
 INTEGER :: iindtmp(3)
 
+! pointer for energy-density functional
+PROCEDURE(),POINTER :: calc_lda
+
+
 
 !                          these includes should be shifted to own modules
 #if(raregas)
@@ -334,6 +334,7 @@ INTEGER :: iindtmp(3)
 CONTAINS
 
 SUBROUTINE init_baseparams()
+
 
 ! deduced grid paramaters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
