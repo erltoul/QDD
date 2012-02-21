@@ -28,7 +28,7 @@
 
 \title{Handling of the cluster 3D Fortran90-code}
 \author{Instructions and status reprot}
-\date{Started 23 April 2010; status 28. June 2011}
+\date{Started 23 April 2010; status 21. February 2012}
 \maketitle
 
 \tableofcontents
@@ -149,8 +149,6 @@ in section \ref{sec:inputs}.
 {\tt simpara} & pseudo-parallel code, runs different inputs
 simultaneously\\
 \hline
-{\tt fullspin} & with or without explicit electron  spin\\
-\hline
 \multicolumn{2}{l}{\underline{versions of SIC for electrons:}}\\
 {\tt fullsic} & old full SIC  \\
 {\tt symmcond} & old full SIC with double set technique \\
@@ -175,6 +173,8 @@ simultaneously\\
 {\tt kybox            }& nr. of grid points in $y$ direction\\
 {\tt kzbox            }& nr. of grid points in $z$ direction\\
 & box sizes must fulfill {\tt kxbox}$\geq${\tt kybox}$\geq$ {\tt kzbox}\\
+{\tt numspin}          & number of spin components (2=full spin treatment)\\
+                       & (1=spin averaged, possible problem for ADSIC)\\
 {\tt kstate           }& maximum nr. of s.p. states\\
 {\tt nclust           }& number of QM electrons\\
 {\tt nion             }& number of cluster ions\\

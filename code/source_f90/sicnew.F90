@@ -169,17 +169,6 @@ REAL(DP), INTENT(IN OUT) :: aloc(*),rho(*)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
-!DIMENSION rhosp(2*kdfull2),chpdftsp(2*kdfull2)
-!DIMENSION coulsum(kdfull2),couldif(kdfull2)
-!DIMENSION rho1(kdfull2),rho2(kdfull2)
-!#if(fullspin)
-!      common /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),
-!     &                 chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-!#endif
-!EQUIVALENCE (coulsum,w1),(couldif,w2)
-!EQUIVALENCE (rhosp,w1)
-!EQUIVALENCE (chpdftsp,w3)
-!EQUIVALENCE (rho2,rhosp)
 LOGICAL,PARAMETER :: testprint=.false.
 INTEGER,PARAMETER :: itmaxkli=200
 
@@ -263,61 +252,60 @@ DEALLOCATE(rhosp)
 
 !     correct Coulomb potential by 1/N
 
-#if(fullspin)
-ALLOCATE(coulsum(kdfull2))
-ALLOCATE(couldif(kdfull2))
-ALLOCATE(rho2(kdfull2))
+IF(numspin==2) THEN
+  ALLOCATE(coulsum(kdfull2))
+  ALLOCATE(couldif(kdfull2))
+  ALLOCATE(rho2(kdfull2))
 
 !       compute Coulomb
 
-DO ind=1,nxyz
-  rho2(ind)=  rho(ind)
-  rho1(ind)=  rho(ind)*rho(ind+nxyz)
-END DO
+  DO ind=1,nxyz
+    rho2(ind)=  rho(ind)
+    rho1(ind)=  rho(ind)*rho(ind+nxyz)
+  END DO
 #if(gridfft)
-CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
 !                 new computation of total Coul not needed - check
 !      call falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
 #endif
 #if(findiff|numerov)
-CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
 !      call solv_FFT(rho2(1),coulsum,dx,dy,dz)
 #endif
-facup = 1.0/npartup
-facdw = 1.0/npartdw
+  facup = 1.0/npartup
+  facdw = 1.0/npartdw
 
 
-DO ind=1,nxyz
+  DO ind=1,nxyz
 !        coulup    = 0.5*(coulsum(ind)+couldif(ind))
 !        couldw    = 0.5*(coulsum(ind)-couldif(ind))
-  coulup    = 0.5*(chpcoul(ind)+couldif(ind))    ! reuse total Coul
-  couldw    = 0.5*(chpcoul(ind)-couldif(ind))
-  aloc(ind) = aloc(ind) - coulup*facup
-  idx       = ind + nxyz
-  aloc(idx) = aloc(idx) - facdw*couldw
-END DO
-DEALLOCATE(coulsum)
-DEALLOCATE(couldif)
-DEALLOCATE(rho2)
-#else
+    coulup    = 0.5*(chpcoul(ind)+couldif(ind))    ! reuse total Coul
+    couldw    = 0.5*(chpcoul(ind)-couldif(ind))
+    aloc(ind) = aloc(ind) - coulup*facup
+    idx       = ind + nxyz
+    aloc(idx) = aloc(idx) - facdw*couldw
+  END DO
+  DEALLOCATE(coulsum)
+  DEALLOCATE(couldif)
+  DEALLOCATE(rho2)
+
+ELSE
 
 !     recalculate coulomb part for jellium
 
 #if(gridfft)
-IF(nion2 == 0) THEN
-  CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
-END IF
+  IF(nion2 == 0) CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
 #endif
 #if(findiff|numerov)
-STOP ' SIC-GAM not yet ready for nospin and finite diff.'
+  STOP ' SIC-GAM not yet ready for nospin and finite diff.'
 #endif
 
-fac = 1.0/npartto
-DO ind=1,nxyz
-  aloc(ind) = aloc(ind) - fac*chpcoul(ind)
-END DO
-!usew1 = .false.
-#endif
+  fac = 1.0/npartto
+  DO ind=1,nxyz
+    aloc(ind) = aloc(ind) - fac*chpcoul(ind)
+  END DO
+
+END IF
 
 RETURN
 #ifdef REALSWITCH
@@ -364,14 +352,7 @@ COMPLEX :: q0(kdfull2,kstate)
 REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
-!DIMENSION rhosp(2*kdfull2),chpdftsp(2*kdfull2)
-!DIMENSION coulsum(kdfull2),couldif(kdfull2)
-!DIMENSION rho1(kdfull2),rho2(kdfull2)
-#if(fullspin)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd,chpdftspu,chpdftspd
-!COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-!    chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-#endif
 !EQUIVALENCE (coulsum,w1),(couldif,w2)
 !EQUIVALENCE (rhosp,w1)
 !EQUIVALENCE (chpdftsp,w3)
@@ -398,153 +379,153 @@ enrear2=0D0
 enpw1  = 0D0
 enpw2  = 0D0
 encadd = 0D0
-#if(fullspin)
+IF(numspin==2) THEN
 
 !     averaged spinup and spindown density
 
-IF(npartup > 0) THEN
-  facuph = 0.5/npartup
+  IF(npartup > 0) THEN
+    facuph = 0.5/npartup
   
-  DO ind=1,nxyz
-    rhospu(ind)=rho(ind)*(1.0+rho(ind+nxyz))*facuph
-    rhospu(ind+nxyz)=1.0
-  END DO
-END IF
-IF(npartdw > 0) THEN
-  facdwh = 0.5/npartdw
+    DO ind=1,nxyz
+      rhospu(ind)=rho(ind)*(1.0+rho(ind+nxyz))*facuph
+      rhospu(ind+nxyz)=1.0
+    END DO
+  END IF
+  IF(npartdw > 0) THEN
+    facdwh = 0.5/npartdw
   
-  DO ind=1,nxyz
-    rhospd(ind)=rho(ind)*(1.0-rho(ind+nxyz))*facdwh
-    rhospd(ind+nxyz)=-1.0
-  END DO
-END IF
+    DO ind=1,nxyz
+      rhospd(ind)=rho(ind)*(1.0-rho(ind+nxyz))*facdwh
+      rhospd(ind+nxyz)=-1.0
+    END DO
+  END IF
 
 !     DFT for averaged spinup and spindown density
 
-IF(npartup > 0) THEN
-  CALL calc_lda(rhospu,chpdftspu)
-  enrear1=enrear
-END IF
-IF(npartdw > 0) THEN
-  CALL calc_lda(rhospd,chpdftspd)
-  enrear2=enrear
-END IF
+  IF(npartup > 0) THEN
+    CALL calc_lda(rhospu,chpdftspu)
+    enrear1=enrear
+  END IF
+  IF(npartdw > 0) THEN
+    CALL calc_lda(rhospd,chpdftspd)
+    enrear2=enrear
+  END IF
 
-enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
+  enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
 
-IF(npartup > 0) THEN
+  IF(npartup > 0) THEN
+    DO ind=1,nxyz
+      aloc(ind) = aloc(ind) - chpdftspu(ind)
+    END DO
+  END IF
+
+
+
+  IF(npartdw > 0) THEN
+    DO idx=nxyz+1,2*nxyz
+      aloc(idx) = aloc(idx) - chpdftspd(idx)
+    END DO
+  END IF
+
+
+  DEALLOCATE(rhospu,rhospd,chpdftspu,chpdftspd)
+
+ELSE
+
+  ALLOCATE(chpdftsp(2*kdfull2))
+  ALLOCATE(rhosp(2*kdfull2))
+
+  factotal=1.0/npartto
+
   DO ind=1,nxyz
-    aloc(ind) = aloc(ind) - chpdftspu(ind)
+    rhosp(ind)=rho(ind)*factotal
   END DO
-END IF
-
-
-
-IF(npartdw > 0) THEN
-  DO idx=nxyz+1,2*nxyz
-    aloc(idx) = aloc(idx) - chpdftspd(idx)
-  END DO
-END IF
-
-
-DEALLOCATE(rhospu,rhospd,chpdftspu,chpdftspd)
-
-
-#else
-
-ALLOCATE(chpdftsp(2*kdfull2))
-ALLOCATE(rhosp(2*kdfull2))
-
-factotal=1.0/npartto
-
-DO ind=1,nxyz
-  rhosp(ind)=rho(ind)*factotal
-END DO
 
 !     DFT for averaged s.p. state
 
-CALL calc_lda(rhosp,chpdftsp)
+  CALL calc_lda(rhosp,chpdftsp)
 
 !     subtract from pure LDA potential
 
-DO ind=1,nxyz
-  aloc(ind) = aloc(ind) - chpdftsp(ind)
-END DO
-enrear   = enrearsave-enrear*npartto
-DEALLOCATE(chpdftsp)
-DEALLOCATE(rhosp)
-#endif
+  DO ind=1,nxyz
+    aloc(ind) = aloc(ind) - chpdftsp(ind)
+  END DO
+  enrear   = enrearsave-enrear*npartto
+  DEALLOCATE(chpdftsp)
+  DEALLOCATE(rhosp)
+
+END IF
 
 
 !     correct Coulomb potential by 1/N
 
-#if(fullspin)
-ALLOCATE(coulsum(kdfull2))
-ALLOCATE(couldif(kdfull2))
-ALLOCATE(rho1(kdfull2))
-ALLOCATE(rho2(kdfull2))
+IF(numspin==2) THEN
+  ALLOCATE(coulsum(kdfull2))
+  ALLOCATE(couldif(kdfull2))
+  ALLOCATE(rho1(kdfull2))
+  ALLOCATE(rho2(kdfull2))
 
 !       compute Coulomb
 
-DO ind=1,nxyz
-  rho2(ind)=  rho(ind)
-  rho1(ind)=  rho(ind)*rho(ind+nxyz)
-END DO
+  DO ind=1,nxyz
+    rho2(ind)=  rho(ind)
+    rho1(ind)=  rho(ind)*rho(ind+nxyz)
+  END DO
 #if(gridfft)
-CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
-IF(idielec == 0 .AND. nion2 > 0) THEN
-  coulsum = chpcoul
-ELSE
-  CALL falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
-END IF
+  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+  IF(idielec == 0 .AND. nion2 > 0) THEN
+    coulsum = chpcoul
+  ELSE
+    CALL falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
+  END IF
 #endif
 #if(findiff|numerov)
-CALL solv_fft(rho1(1),couldif,dx,dy,dz)
-CALL solv_fft(rho2(1),coulsum,dx,dy,dz)
+  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+  CALL solv_fft(rho2(1),coulsum,dx,dy,dz)
 #endif
-facup = 1.0/npartup
+  facup = 1.0/npartup
 
-DO ind=1,nxyz
-  coulup    = 0.5*(coulsum(ind)+couldif(ind))
-  aloc(ind) = aloc(ind) - coulup*facup
-END DO
-
-
-IF (npartdw > 0) THEN
-  
-  facdw = 1.0/npartdw
   DO ind=1,nxyz
-    couldw    = 0.5*(coulsum(ind)-couldif(ind))
-    idx       = ind + nxyz
-    aloc(idx) = aloc(idx) - facdw*couldw
+    coulup    = 0.5*(coulsum(ind)+couldif(ind))
+    aloc(ind) = aloc(ind) - coulup*facup
   END DO
+
+
+  IF (npartdw > 0) THEN
   
-END IF
+    facdw = 1.0/npartdw
+    DO ind=1,nxyz
+      couldw    = 0.5*(coulsum(ind)-couldif(ind))
+      idx       = ind + nxyz
+      aloc(idx) = aloc(idx) - facdw*couldw
+    END DO
+  
+  END IF
 
-DEALLOCATE(coulsum)
-DEALLOCATE(couldif)
-DEALLOCATE(rho1)
-DEALLOCATE(rho2)
+  DEALLOCATE(coulsum)
+  DEALLOCATE(couldif)
+  DEALLOCATE(rho1)
+  DEALLOCATE(rho2)
 
-
-#else
+ELSE
 
 !     recalculate coulomb part for jellium
 
 #if(gridfft)
-IF(nion2 == 0) THEN
-  CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
-END IF
+  IF(nion2 == 0) THEN
+    CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
+  END IF
 #endif
 #if(findiff|numerov)
-STOP ' ADSIC not yet ready for nospin and finite diff.'
+  STOP ' ADSIC not yet ready for nospin and finite diff.'
 #endif
 
-fac = 1.0/npartto
-DO ind=1,nxyz
-  aloc(ind) = aloc(ind) - fac*chpcoul(ind)
-END DO
-#endif
+  fac = 1.0/npartto
+  DO ind=1,nxyz
+    aloc(ind) = aloc(ind) - fac*chpcoul(ind)
+  END DO
+
+END IF
 
 
 RETURN
@@ -589,19 +570,13 @@ COMPLEX(DP) :: q0(kdfull2,kstate)
 REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp
-! DIMENSION usicsp(2*kdfull2),rhosp(2*kdfull2)
-! EQUIVALENCE (rhosp,w1)
-#if(fullspin)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
-!COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-!    chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-#endif
 LOGICAL :: testprint
 DATA testprint/.false./
 
 !-------------------------------------------------------------------
 
-#if(fullspin)
+IF(numspin.NE.2) STOP ' SIC-Slater requires full spin code'
 IF(ifsicp /= 3) STOP ' CALC_SLATER called with wrong option IFSICP'
 
 CALL act_part_num(npartup,npartdw,npartto)
@@ -689,10 +664,6 @@ DEALLOCATE(usicsp)
 DEALLOCATE(rhospu,rhospd)
 
 
-#else
-STOP ' SIC-Slater requires full spin code'
-#endif
-
 RETURN
 #ifdef REALSWITCH
 END SUBROUTINE calc_slaterr
@@ -735,15 +706,8 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT) :: aloc(2*kdfull2),rho(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp,rho1,rho2
-! DIMENSION rhosp(2*kdfull2),usicsp(2*kdfull2)
-! DIMENSION rho1(kdfull2),rho2(kdfull2)
-#if(fullspin)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
-!COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-!    chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
 REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
-!COMMON /kliwork/ rhokli(kdfull2,kstate), uslater(2*kdfull2),ukli(2*kdfull2)/
-#endif
 ! EQUIVALENCE (rhosp,w1)
 LOGICAL :: testprint
 DATA testprint/.false./
@@ -751,7 +715,7 @@ DATA itmaxkli/200/
 
 !--------------------------------------------------------------------
 
-#if(fullspin)
+IF(numspin.NE.2) STOP ' SIC-KLI requires full spin code'
 IF(ifsicp /= 4) STOP ' CALC_SICKLI called with wrong option IFSICP'
 
 ALLOCATE(rhokli(kdfull2,kstate),uslater(2*kdfull2),ukli(2*kdfull2))
@@ -998,10 +962,6 @@ IF(testprint) CALL prifld(ukli,' SIC-KLI  ')
 
 DEALLOCATE(rhokli,uslater,ukli)
 
-#else
-STOP ' IFSICP=4: KLI requires fullspin code'
-#endif
-
 RETURN
 #ifdef REALSWITCH
 END SUBROUTINE calc_sicklir
@@ -1013,8 +973,6 @@ END SUBROUTINE calc_sickli
 !  presently only static version of 'calc_fullsicr'
 #ifdef REALSWITCH
 #if(fullsic)
-#if(fullspin)
-
 
 !     ******************************
 
@@ -1049,6 +1007,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp
 LOGICAL :: ttest
 DATA ttest/.false./
 
+IF(numspin.NE.2) STOP ' full SIC requires full spin code'
 
 !mb
 enrearsave=enrear
@@ -1371,14 +1330,6 @@ RETURN
 END SUBROUTINE sstep_sic
 
 
-#else
-
-SUBROUTINE calc_fullsicr(q0,qsic)
-
-STOP ' fullsic requires fullspin code'
-RETURN
-END SUBROUTINE calc_fullsicr
-#endif
 #endif
 #endif
 
@@ -1496,7 +1447,7 @@ DATA testprint/.false./
 
 !--------------------------------------------------------------------
 
-#if(fullspin)
+IF(numspin.NE.2) STOP ' CALC_SICSP requires fullspin code'
 
 ALLOCATE(chpdftsp(2*kdfull2))
 ALLOCATE(couldif(kdfull2))
@@ -1597,9 +1548,6 @@ END IF
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)
 DEALLOCATE(rho1)
-#else
-STOP ' CALC_SICSP requires fullspin code'
-#endif
 
 RETURN
 #ifdef REALSWITCH

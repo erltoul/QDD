@@ -170,9 +170,8 @@ DO iter1=1,ismax
       WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
           ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
           qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
-#if(fullspin)
-      WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
-#endif
+
+IF(nusmpin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
 !            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
 !            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
     END IF
@@ -437,7 +436,7 @@ SUBROUTINE sstep(q0,aloc,iter)
 USE params
 USE kinetic
 !USE localize_rad
-#if(fullspin&&fullsic)
+#if(fullsic)
 USE localize_rad
 #endif
 #if(twostsic)
@@ -472,14 +471,7 @@ COMPLEX(DP) :: csum
 
 
 !REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-#if(fullspin)
-INTEGER :: nelecs(2)
-!DATA nph,ph/1,ksttot*1D0/
-INTEGER :: nph=1
-#else
-!DATA nph,ph/2,ksttot*2D0/
-INTEGER :: nph=2
-#endif
+INTEGER :: nph
 LOGICAL :: tocc,tcpu
 #if(parano)
 DATA tocc,tcpu/.false.,.true./
@@ -501,6 +493,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 !-------------------------------------------------------------------------
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
+
+nph=3-numspin
 
 !     set timer
 
@@ -856,15 +850,15 @@ ecorr=energ_ions()
 #if(parano)
 DO nb=1,nstate
   ekin = ekinsp(nb)
-#if(fullspin)
-  WRITE(6,'(a,i2,a,i3,3f9.5,2(1pg12.4))')  &
+  IF(numspin==2) THEN
+    WRITE(6,'(a,i2,a,i3,3f9.5,2(1pg12.4))')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,var=',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekin,amoy(nb), evarsp(nb),evarsp2(nb)
-#else
-  WRITE(6,'(a,i2,a,3f9.5,1pg12.4)')  &
+  ELSE
+    WRITE(6,'(a,i2,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,var=',  &
       occup(nb),ekin,amoy(nb),evarsp(nb)
-#endif
+  END IF
 END DO
 #endif
 
@@ -1104,15 +1098,15 @@ CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
 
 #if(parano)
 DO nb=1,nstate
-#if(fullspin)
-  WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
+  IF(numspin==2) THEN
+    WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,variance =',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekinsp(nb), amoy(nb),evarsp(nb)
-#else
-  WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
+  ELSE
+    WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,variance=',  &
       occup(nb),ekinsp(nb),amoy(nb),evarsp(nb)
-#endif
+  END IF
 END DO
 #endif
 #if(parayes)
@@ -1250,12 +1244,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-!#if(fullspin)
 INTEGER :: nelecs(2)
-!DATA nph,ph/1,ksttot*1D0/
-!#else
-!DATA nph,ph/2,ksttot*2D0/
-!#endif
 
 !--------------------------------------------------------------------
 
@@ -1265,34 +1254,34 @@ DO nbe=1,nstate
 END DO
 epstmp = 1D-8
 occo = 1D0-occmix
-#if(fullspin)
-nelecs(1) = nclust-nspdw
-nelecs(2) = nspdw
-DO is=1,2
-  DO nbe=1,nstate
-    IF(ispin(nbe) == is) THEN
-      ph(nbe) = 1D0
-    ELSE
-      ph(nbe) = 0D0
-    END IF
+IF(numspin==2) THEN
+  nelecs(1) = nclust-nspdw
+  nelecs(2) = nspdw
+  DO is=1,numspin
+    DO nbe=1,nstate
+      IF(ispin(nbe) == is) THEN
+        ph(nbe) = 1D0
+      ELSE
+        ph(nbe) = 0D0
+      END IF
+    END DO
+    eferm  = 0D0         ! restart search of eferm from scratch
+    CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
+        partnm,200,4,epstmp,-1,ksttot)
+    DO nbe=1,nstate
+      IF(ispin(nbe) == is) THEN
+        occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
+      END IF
+    END DO
   END DO
+ELSE
   eferm  = 0D0         ! restart search of eferm from scratch
-  CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
-      partnm,200,4,epstmp,-1,ksttot)
+  CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
+      60,4,epstmp,-1,ksttot)
   DO nbe=1,nstate
-    IF(ispin(nbe) == is) THEN
-      occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
-    END IF
+    occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
   END DO
-END DO
-#else
-eferm  = 0D0         ! restart search of eferm from scratch
-CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
-    60,4,epstmp,-1,ksttot)
-DO nbe=1,nstate
-  occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
-END DO
-#endif
+END IF
 RETURN
 END SUBROUTINE reocc
 

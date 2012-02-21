@@ -41,11 +41,7 @@ ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
 !     loop over spin-up and spin-down
 
-#if(fullspin)
-DO is=1,2
-#else
-  DO is=1,1
-#endif
+DO is=1,numspin
     ishift = (is-1)*nxyz
     
 !       Fourier transformation
@@ -184,11 +180,7 @@ REAL(DP), ALLOCATABLE :: potwork(:)
 
 ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
-#if(fullspin)
-DO is=1,2
-#else
-  DO is=1,1
-#endif
+DO is=1,numspin
     ishift = (is-1)*nxyz
     
 !       Fourier transformation

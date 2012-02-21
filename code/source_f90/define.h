@@ -1,7 +1,7 @@
 !
 !       code version:
 !
-#define IVERSION 72
+#define IVERSION 73
 !
 ! grid: FFT or finite difference
 !
@@ -13,10 +13,6 @@
 !
 #define coufou 0
 #define coudoub 1
-!
-! spin explicitely
-!
-#define fullspin 1
 !
 ! parallel or serial:
 !

@@ -367,11 +367,7 @@ dt = dt1*0.5D0
 !     half time step in coordinate space
 !     local phase field on workspace 'q1'
 
-#if(fullspin)
-  nlocact = 2*nxyz
-#else
-  nlocact = nxyz
-#endif
+nlocact = numspin*nxyz
 DO ind=1,nlocact
   pr=-dt*aloc(ind)
   q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
@@ -453,11 +449,7 @@ ALLOCATE(q1(2*kdfull2))
 
 !     half time step in coordinate space:
 
-#if(fullspin)
-nup = 2*nxyz
-#else
-nup = nxyz
-#endif
+nup = numspin*nxyz
 DO ind=1,nup
   pr=-dt*aloc(ind)
   q1(ind)=CMPLX(COS(pr),SIN(pr),DP)

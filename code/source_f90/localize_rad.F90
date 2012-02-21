@@ -3,7 +3,7 @@
 
 !  presently only static version of 'sstep_lsic'
 #ifdef REALSWITCH
-#if(fullspin&&fullsic)
+#if(fullsic)
 MODULE localize_rad
 
 USE params

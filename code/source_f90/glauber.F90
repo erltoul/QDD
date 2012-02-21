@@ -172,11 +172,11 @@ END DO
 
 !     finally compose result
 
-#if(fullspin)
-coll_total = sumdir-sumex
-#else
-coll_total = sumdir-sumex/2.0
-#endif
+IF(numspin==2) THEN
+  coll_total = sumdir-sumex
+ELSE
+  coll_total = sumdir-sumex/2.0
+END IF
 
 !     release workspace
 

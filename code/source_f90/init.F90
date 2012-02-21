@@ -26,7 +26,7 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
 
-NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,  &
+NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
@@ -301,9 +301,7 @@ WRITE(6,*) 'jekion=',jekion
 
 !     ceck consistency of input options
 
-#if(!fullspin)
-IF(iftransme ==1) STOP ' IFTRANSME needs full spin'
-#endif
+IF(numspin.NE.2 .AND. iftransme ==1) STOP ' IFTRANSME needs full spin'
 
 
 #if(raregas)
@@ -349,12 +347,11 @@ IF(directenergy .AND.  &
    ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
     STOP ' directenergy=1 only for Slater and KLI'
 
-#if(!fullspin)
-IF(ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
-#endif
+IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
 #if(fullsic)
 IF(ifsicp==5) STOP ' EXCHANGE doe not run with FULLSIC'
+IF(numspin.NE.2) STOP ' full SIC requires full spin'
 #endif
 
 #if(twostsic)
@@ -452,11 +449,13 @@ WRITE(iu,*) 'max. number of wf per node',kstate
 #if(parano)
 WRITE(iu,*) 'serial code: max. number of wf=',kstate
 #endif
-#if(fullspin)
-WRITE(iu,'(a)') ' spin code '
-#else
-WRITE(iu,'(a)') ' no-spin code '
-#endif
+IF(numspin==2) THEN
+  WRITE(iu,'(a)') ' spin code '
+ELSE IF(numspin==1) THEN
+  WRITE(iu,'(a)') ' no-spin code '
+ELSE
+  STOP "invalid uinput parameter NUMSPIN"
+END IF
 IF(ifhamdiag == 1) THEN
   WRITE(iu,'(a)') ' static step: Hamiltonian in subspace diagonalized'
 ELSE
@@ -1892,12 +1891,14 @@ DATA tocc/.false./
 !-----------------------------------------------------------------------
 
 ALLOCATE(ph(2*ksttot))
-#if(fullspin)
-ph = 1D0
-#else
-ph=0D0
-ph(1:ksttot) = 2D0
-#endif
+IF(numspin==2) THEN
+  ph = 1D0
+ELSE IF(numspin==1) THEN
+  ph=0D0
+  ph(1:ksttot) = 2D0
+ELSE
+  STOP "invalid value for input parameter NUMSPIN"
+END IF
 
 
 !     prepare initial parameters
@@ -1910,35 +1911,35 @@ ph(1:ksttot) = 2D0
 !     this relation is resolved approximately for N.
 
 q20fac = SQRT(5.0/(16.0*pi))
-#if(fullspin)
-nelup  = nelect-nspdw
-neldw  = nspdw
-!test
-WRITE(6,*) 'nelup',nelup
-WRITE(6,*) 'neldw',nspdw
-!test
-#else
-IF(MOD(nelect,2) == 1)  &
+IF(numspin==2) THEN
+  nelup  = nelect-nspdw
+  neldw  = nspdw
+  !test
+  WRITE(6,*) 'nelup',nelup
+  WRITE(6,*) 'neldw',nspdw
+  !test
+ELSE
+  IF(MOD(nelect,2) == 1)  &
     STOP ' nr. of electrons must be even for spin degeneracy'
-nelup  = nclust/2
-#endif
+  nelup  = nclust/2
+END IF
 efacto = 0.25/(1D0*nelect)**0.3333333
 efrmup = (6.0*nelup)**0.3333333
 efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**0.3333333-1.5
 ecutup = efrmup+deoccin
 nomxup = ecutup*(1D0+2.0*q20fac*betain)+0.5
 ecutup = efacto*ecutup
-#if(fullspin)
-IF(neldw > 0) THEN
-  efrmdw = (6.0*neldw)**0.3333333
-  efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
-ELSE
-  efrmdw = -0.00001
+IF(numspin==2) THEN
+  IF(neldw > 0) THEN
+    efrmdw = (6.0*neldw)**0.3333333
+    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
+  ELSE
+    efrmdw = -0.00001
+  END IF
+  ecutdw = efrmdw+deoccin
+  nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
+  ecutdw = efacto*ecutdw
 END IF
-ecutdw = efrmdw+deoccin
-nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
-ecutdw = efacto*ecutdw
-#endif
 cosfac = q20fac*COS(gamin)
 sinfac = q20fac*SQRT(2.0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
@@ -2003,61 +2004,56 @@ lb1: DO noscz=0,nomxup
 WRITE(6,*) 'n(nelup)',n
 !test
 IF(n < nelup) STOP ' not enough states to reach (spin-up) particle number'
-#if(fullspin)
+IF(numspin==2) THEN
 
 !     select spin down states
 !     distribute preliminary occupation numbers
 
-mspindw = 0
-lb2: DO noscz=0,nomxdw
-     DO noscy=0,nomxdw
-     DO noscx=0,nomxdw
-      speact = noscz*zfac+noscy*yfac+noscx*xfac
-      IF(nelup /= neldw) speact = speact*1.01    ! enhance for spin asymmetry
-      IF(speact <= ecutdw) THEN
-        n     = 1+n
-!test
-!        WRITE(6,*) 'n,neldw,ksttot',n,neldw,ksttot
-!test
-!GB          if(n.gt.ksttot)
-        nq(1,n)  = noscx
-        nq(2,n)  = noscy
-        nq(3,n)  = noscz
-        ispin(n) = 2
-        mspindw = mspindw + 1
-        IF(mspindw <= neldw) THEN
-          occu(n) = 1D0
-        ELSE
-          occu(n) = 0D0
-        END IF
-        esp(n)   = efacto*speact
+  mspindw = 0
+  lb2: DO noscz=0,nomxdw
+       DO noscy=0,nomxdw
+       DO noscx=0,nomxdw
+        speact = noscz*zfac+noscy*yfac+noscx*xfac
+        IF(nelup /= neldw) speact = speact*1.01    ! enhance for spin asymmetry
+        IF(speact <= ecutdw) THEN
+          n     = 1+n
+          nq(1,n)  = noscx
+          nq(2,n)  = noscy
+          nq(3,n)  = noscz
+          ispin(n) = 2
+          mspindw = mspindw + 1
+          IF(mspindw <= neldw) THEN
+            occu(n) = 1D0
+          ELSE
+            occu(n) = 0D0
+          END IF
+          esp(n)   = efacto*speact
         
-        IF(n > ksttot) STOP ' deocc or part.number to large for given ksttot'
+          IF(n > ksttot) STOP ' deocc or part.number to large for given ksttot'
         
 !old?        IF(mspindw >= (neldw+nmaxdiff)) THEN
-        IF(mspindw > (neldw+nmaxdiff)) THEN
-           WRITE(6,*) 'mspindw=',mspindw,&
+          IF(mspindw > (neldw+nmaxdiff)) THEN
+             WRITE(6,*) 'mspindw=',mspindw,&
                 ' greater than neldw+dnmax=',neldw+nmaxdiff
-          mspindw=mspindw-1                                   ! new by MD
-          EXIT lb2
-        ENDIF
-        WRITE(6,'(a,3i5,3f10.3)') 'check spin down:', &
-                ispin(n),n,mspindw,occu(n),speact,ecutdw
-        WRITE(7,*)
-        WRITE(7,*) 'speact',speact,'n',n,'isp',ispin(n)
-        WRITE(7,*) 'no',noscx,noscy,noscz,zfac,yfac,xfac
-      END IF
-     END DO
-     END DO
-     END DO lb2
-!29   CONTINUE
+            mspindw=mspindw-1                                   ! new by MD
+            EXIT lb2
+          ENDIF
+          WRITE(6,'(a,3i5,3f10.3)') 'check spin down:', &
+                 ispin(n),n,mspindw,occu(n),speact,ecutdw
+          WRITE(7,*)
+          WRITE(7,*) 'speact',speact,'n',n,'isp',ispin(n)
+          WRITE(7,*) 'no',noscx,noscy,noscz,zfac,yfac,xfac
+        END IF
+       END DO
+       END DO
+       END DO lb2
 !test
 WRITE(6,*) 'mspindw',mspindw
 WRITE(6,*) 'neldw',neldw
 !test
-IF(mspindw < neldw)  &
-    STOP ' not enough states to reach spin-down particle number'
-#endif
+  IF(mspindw < neldw)  &
+      STOP ' not enough states to reach spin-down particle number'
+END IF
 
 nstate=n
 WRITE(7,*) 'nstate ininqb',nstate
@@ -2743,24 +2739,24 @@ REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 
 !----------------------------------------------------------------------
 
-#if(fullspin)
-WRITE(*,*) ' SPINSEP invoked'
-DO nb=1,nstate
-  sgeps = (3-2*ispin(nb))*0.01
-  ii  = 0
-  DO iz=minz,maxz
-    z1=(iz-nzsh)*dz
-    DO iy=miny,maxy
-      y1=(iy-nysh)*dy
-      DO ix=minx,maxx
-        x1=(ix-nxsh)*dx
-        ii = ii+1
-        psir(ii,nb) = psir(ii,nb)*(1D0+sgeps*(x1+y1+z1))
+IF(numspin==2) THEN
+  WRITE(*,*) ' SPINSEP invoked'
+  DO nb=1,nstate
+    sgeps = (3-2*ispin(nb))*0.01
+    ii  = 0
+    DO iz=minz,maxz
+      z1=(iz-nzsh)*dz
+      DO iy=miny,maxy
+        y1=(iy-nysh)*dy
+        DO ix=minx,maxx
+          x1=(ix-nxsh)*dx
+          ii = ii+1
+          psir(ii,nb) = psir(ii,nb)*(1D0+sgeps*(x1+y1+z1))
+        END DO
       END DO
     END DO
   END DO
-END DO
-#endif
+END IF
 RETURN
 END SUBROUTINE spinsep
 

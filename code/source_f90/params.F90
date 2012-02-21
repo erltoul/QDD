@@ -119,6 +119,7 @@ INTEGER,ALLOCATABLE ::  ispin_node(:,:)
 !     basic parameters
 
 LOGICAL :: directenergy=.false.            ! to compute energy directly
+INTEGER :: numspin=2                       ! number of spin components
 REAL(DP) :: omeg,eferm                     !  initial Gaussians
 REAL(DP) :: dInMargin=6D0
 INTEGER :: iforce=0

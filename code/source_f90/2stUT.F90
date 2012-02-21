@@ -124,7 +124,6 @@ RETURN
 END SUBROUTINE init_fsic
 #endif
 
-#if(fullspin)
 
 
 
@@ -164,6 +163,7 @@ REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
 
 LOGICAL,PARAMETER :: ttest=.false.
 
+IF(numspin.NE.2) STOP "CALC_FULLSIC requires full spin"
 
 !mb
 enrearsave=enrear
@@ -235,7 +235,7 @@ END SUBROUTINE calc_fullsicr
 #else
 END SUBROUTINE calc_fullsic
 #endif
-#endif
+
 
 #ifdef COMPLEXSWITCH
 !-----init_vecs-------------------------------------------------
