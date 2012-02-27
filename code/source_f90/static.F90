@@ -171,7 +171,7 @@ DO iter1=1,ismax
           ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
           qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
 
-IF(nusmpin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
+IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
 !            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
 !            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
     END IF
