@@ -43,7 +43,7 @@ REAL(DP) :: qaux(1,1)       ! dummy array
 CALL calcrhor(rho,psir)
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
-  CALL prifld(chpcoul,'coulomb pot')
+CALL prifld(chpcoul,'coulomb pot')
 
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
