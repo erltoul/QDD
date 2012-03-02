@@ -1,0 +1,16 @@
+The changes in the branch 'dev-pgr' were mainly concerned with
+elimintaing compile-time switches in 'define.h' and replacing them by
+run-time options. The following changes were done so far:
+
+compile-time switch                      run-time variable
+---------------------                    ------------------------------
+gunnar,exonly,pw92            -->        'idenfunc'
+                                          (1 = P&W, 2=G&L, 3=x only)
+fullspin                      -->        'numspin' (2= full spin code)
+kli                           -->        already contained in 'ifsicp'
+exchange                      -->        already contained in 'ifsicp'
+directenergy                  -->        'directenergy' (.true./.false.)
+
+For the usage of the new run-time variables see the file
+'explain-init.pdf'. 
+
