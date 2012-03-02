@@ -369,8 +369,8 @@ CALL act_part_num(npartup,npartdw,npartto)
 
 
 
-ALLOCATE(rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-         chpdftspu(2*kdfull2),chpdftspd(2*kdfull2))
+IF(numspin==2) ALLOCATE(rhospu(2*kdfull2),rhospd(2*kdfull2),  &
+                        chpdftspu(2*kdfull2),chpdftspd(2*kdfull2))
 
 enrearsave=enrear
 enerpwsave=enerpw
