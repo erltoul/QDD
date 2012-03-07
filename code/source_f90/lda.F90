@@ -1,5 +1,4 @@
 #include "define.h"
- 
 
 !       ******************************
 
@@ -317,11 +316,7 @@ RETURN
 END SUBROUTINE calc_lda
 #endif
 
-
 #if(pw92)
-
-!     ******************************
-
 SUBROUTINE calc_lda(rho,chpdft)
 
 !     ******************************
@@ -338,6 +333,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+REAL,SAVE                                    :: et
 
 !        parameter (pi=3.141592654)
 
@@ -376,6 +372,12 @@ enrear = 0D0
 enerpw = 0D0
 #endif
 ec=0D0
+
+!write(6,*)rho(1),rho(1+nxyz)
+!write(6,*)chpdft(1)
+
+!CALL cpu_time(time_start)
+
 DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
   xi     = rho(ii+nxyz)
@@ -513,10 +515,13 @@ DO ii=1,nxyz
   
   ec = (-t70*e2 - 0.5D0*t5) + ec
 !old        ec=-t70/2.0*e2+ec
-  
-  
-  
+
 END DO
+!  CALL cpu_time(time_end)
+!  write (6,*)ec
+!  et=et+time_end-time_start
+!  write(6,*)"Time lda:",et
+!  STOP
 
 enrear=ec*dvol
 

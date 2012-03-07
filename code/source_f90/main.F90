@@ -96,8 +96,6 @@ ALLOCATE(aloc(2*kdfull2),rho(2*kdfull2))
 aloc=0D0
 rho=0D0
 
-
-
 IF(myn == 0) CALL ocoption(7)   ! output compiled options
 IF(myn == 0) CALL ocoption(8)   ! output compiled options
 CALL init_output()              ! headers for basic output files
@@ -475,6 +473,11 @@ CLOSE(806)
 
 DEALLOCATE(psi)
 
+#if(fftw_cpu)
+CALL fft_end()
+CALL coulex_end()
+#endif
+
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
@@ -487,6 +490,21 @@ CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
 #endif
+
+CALL cpu_time(time_absfin)
+OPEN(123,ACCESS='append',STATUS='unknown',FILE='Time')
+#if(netlib_fft)
+WRITE(123,*)'NETLIB'
+#endif
+#if(fftw_cpu)
+WRITE(123,*)'FFTW'
+#endif
+#if(fftw_gpu)
+WRITE(123,*)'cuFFT'
+#endif
+WRITE(123,*)'Box :',nx2,ny2,nz2
+WRITE(123,*)'Walltime =',time_absfin-time_absinit
+CLOSE(123)
 
 END PROGRAM tdlda_m
 

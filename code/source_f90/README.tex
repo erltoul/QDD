@@ -1,0 +1,43 @@
+Modified make commands :
+
+./make.sh (./make.sh 1) (./make.sh 1 netlib) 
+Compile with netlib fftpack, sequential. The executable is called tdks_v000000_Mono_NETLIB.bin (000000 is the version number)
+
+./make.sh np (./make.sh np netlib)
+Compile with netlib fftpack, parallel with np proc 
+
+./make.sh 1 fftw
+Compile with FFTW functions (need FFTW 3.3.2), sequential (parallel has not been test) The executable is called tdks_v000000_Mono_FFTW.bin
+
+./make.sh 1 gpu
+Compile with cuFFT function (FFT on GPU) and calc_ldu function ported on GPU, single processor (use parallel version at your own risks...)
+The executable is called tdks_v000000_Mono_cuFFT.bin
+nvcc compiler is required as wall as a 1.3 compute capability GPU (A small program to obtain info from your GPU is include in get_GPU_info)
+
+Some word on wisdom (from the FFTW manual):
+
+"FFTW implements a method for saving plans to disk and restoring them. In fact, what
+FFTW does is more general than just saving and loading plans. The mechanism is called
+wisdom. [...]
+Plans created with the FFTW_MEASURE, FFTW_PATIENT, or FFTW_EXHAUSTIVE options produce
+near-optimal FFT performance, but may require a long time to compute because FFTW
+must measure the runtime of many possible plans and select the best one. This setup is
+designed for the situations where so many transforms of the same size must be computed
+that the start-up time is irrelevant. For short initialization times, but slower transforms,
+we have provided FFTW_ESTIMATE. The wisdom mechanism is a way to get the best of both
+worlds: you compute a good plan once, save it to disk, and later reload it as many times as
+necessary. The wisdom mechanism can actually save and reload many plans at once, not
+just one.
+Whenever you create a plan, the FFTW planner accumulates wisdom, which is information
+sufficient to reconstruct the plan. After planning, you can save this information to disk
+[...]
+The next time you run the program, you can restore the wisdom and then recreate the plan using
+the same flags as before.
+Wisdom is automatically used for any size to which it is applicable, as long as the planner
+flags are not more “patient” than those with which the wisdom was created. For example,
+wisdom created with FFTW_MEASURE can be used if you later plan with FFTW_ESTIMATE or
+FFTW_MEASURE, but not with FFTW_PATIENT."
+
+In the code, FFTW_EXHAUSTIVE is used, and wisdom is stored in wisdom_fftw.dat file.
+The first time the code is launched with FFTW activated, it will warn you that wisdom_fftw.dat does not exist and it will create it.
+So for each new FFT grid size, the program will compute a good plan (it could take a long time), and then it will re-use it every time the program is launched with such grid size. A wisdom file can be exported from one computer to another, but the optimal way to do FFT is depending of the architecture.

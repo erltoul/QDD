@@ -187,7 +187,7 @@ INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=1,ifexpevol=0
+INTEGER :: iffastpropag=0,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
