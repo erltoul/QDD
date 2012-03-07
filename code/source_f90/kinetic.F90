@@ -18,6 +18,18 @@ INCLUDE "fft.fftw3d.F90"
 INCLUDE "fft.F90"
 #endif
 
+#if(fftw_gpu)
+INCLUDE "fft.fftw3dgpu.F90"
+#endif
+
+!#if(fftw_gpu)
+!INCLUDE "fft.fftw1dgpu.F90"
+!#endif
+
+!#if(fftw3d_gpu)
+!INCLUDE "fft.fftw3dgpu.F90"
+!#endif
+
 #endif !gridfft
 
 #if(findiff|numerov)

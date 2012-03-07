@@ -47,8 +47,14 @@
 #define raregas 0
 !
 !choose fft solver (only one !)
+!For the moment, don't use iffastpropag with GPU
 !
 #define netlib_fft 0
-#define fftw_cpu 1
-!#define fftw3d_cpu 0 !Used only to determine wich 1d or 3d FFTS are the fastest
+#define fftw_cpu 0
+!#define fftw3d_cpu 0
+#define fftw_gpu 1
+!#define fftw3d_gpu 0
+
+!For the moment compute lda on GPU seems to be unstable and can freeze the computer
+#define lda_gpu 0
 

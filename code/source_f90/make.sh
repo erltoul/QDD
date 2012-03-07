@@ -28,6 +28,8 @@ fi
 sed -i -e 's/netlib_fft.*/netlib_fft 0/' define.h
 sed -i -e 's/fftw_cpu.*/fftw_cpu 0/' define.h
 #sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 0/' define.h
+sed -i -e 's/fftw_gpu.*/fftw_gpu 0/' define.h
+#sed -i -e 's/fftw3d_gpu.*/fftw3d_gpu 0/' define.h
 
 if [ $nb_procs = 1 ] ; then
     sed -i -e 's/parano.*/parano 1/' define.h
@@ -54,6 +56,17 @@ if [ $nb_procs = 1 ] ; then
 #        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
 #    	fi
         sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
+    fi
+    if [ $type_check = gpu ] ; then
+#    	if [ $dim_check = 1d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+        sed -i -e 's/fftw_gpu.*/fftw_gpu 1/' define.h
+#    	fi
+#    	if [ $dim_check = 3d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 3d/' makefile
+#        	sed -i -e 's/fftw3d_gpu.*/fftw3d_gpu 1/' define.h
+#	fi
+        sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = cuFFT/' makefile
     fi
 else
     sed -i -e 's/parano.*/parano 0/' define.h

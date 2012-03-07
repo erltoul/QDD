@@ -11,7 +11,7 @@ CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = FFTW
+TYPE_FFT = cuFFT
 # debugging option
 DEBUG   = NO
 
@@ -164,6 +164,11 @@ ifeq "$(USE_MPI)" "YES"
 endif
 endif
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+	GPUCOMPILER = nvcc
+	GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_13 -maxrregcount=32 -I/opt/cuda/include -I/opt/cuda/src
+endif
+
 COMPILERFLAGS1 =  $(LDLIBS)$(OPT1)
 COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) 
 COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) 
@@ -207,6 +212,10 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+OBJS = $(OBJINT) cuda.o alloc_cuda.o
+endif
+
 ifeq "$(TYPE_FFT)" "NETLIB"
 OBJS = $(OBJINT) fftpack.o
 endif
@@ -220,7 +229,10 @@ OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile
 all:$(EXEC)
 $(EXEC): $(OBJS)
 	@echo Linking executable $@
-
+#	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -pg -lfftw3 -lm -L/usr/local/bibliotheques/fftw-3.2.2/lib/ #Hyperion
+ifeq "$(TYPE_FFT)" "cuFFT"
+	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -L/opt/cuda/lib64 -lcufft -lcudart
+endif
 ifeq "$(TYPE_FFT)" "FFTW"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3 -lm
 endif
@@ -238,6 +250,14 @@ $(OBJS):  define.h makefile params.F90
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
 main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+#ifeq "$(DIM)" "1d"
+#kinetic.o : kinetic.F90 fft.fftw1dgpu.F90 findiff.F90 define.h makefile params.o cuda.o alloc_cuda.o
+#else
+kinetic.o : kinetic.F90 fft.fftw3dgpu.F90 findiff.F90 define.h makefile params.o cuda.o alloc_cuda.o
+#endif
+endif
+
 ifeq "$(TYPE_FFT)" "NETLIB"
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftpack.o
 endif
@@ -248,6 +268,10 @@ ifeq "$(TYPE_FFT)" "FFTW"
 #else
 kinetic.o : kinetic.F90 fft.fftw3d.F90 findiff.F90 define.h makefile params.o fftw.o
 #endif
+endif
+
+ifeq "$(TYPE_FFT)" "cuFFT"
+coulsolv.o: coulsolv.F90 falr.F90 coulex.fftwgpu3d.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o cuda.o alloc_cuda.o
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
@@ -268,6 +292,7 @@ localize_rad.o: localize_rad.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 rho.o: rho.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
+
 rhoc.o: rho.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
@@ -315,6 +340,11 @@ restartc.o: restart.F90 define.h makefile params.o kinetic.o
 
 parallele.o: parallele.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
+
+ifeq "$(TYPE_FFT)" "cuFFT"
+cuda.o: cuda.cu define.h makefile
+	$(GPUCOMPILER) $(GPUCOMPILERFLAGS) -c $< 
+endif
 
 clean:
 	@rm -rf *.o *.mod *.il *.i *.f
