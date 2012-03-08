@@ -342,26 +342,26 @@ REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
 !REAL(DP)                                     :: int_ec(2*kdfull2)
 
 enrear = 0D0
-#if(directenergy)
-enerpw = 0D0
-#endif
+IF(directenergy) THEN
+  enerpw = 0D0
+END IF
 ec=0D0
 et=0.0
 
-#if(directenergy)
-CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec,enerpw)
-#else
-CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec)
-#endif
+IF(directenergy) THEN
+  CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec,enerpw)
+ELSE
+  CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec)
+END IF
 
 !write (6,*)ec
 !STOP
 
 enrear=ec*dvol
 
-#if(directenergy)
-enerpw = enerpw*dvol
-#endif
+IF(directenergy) THEN
+  enerpw = enerpw*dvol
+END IF
 
 RETURN
 END SUBROUTINE calc_lda_pw92
