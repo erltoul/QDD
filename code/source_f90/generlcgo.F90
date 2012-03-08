@@ -75,17 +75,17 @@ numstate = 0
 DO ion=1,nion
   DO natlevel=1,nmxst(ion)
     numstate = 1 + numstate
-#if(fullspin)
-    nactst(ion) = nactst(ion)+MOD(natlevel,2)
-    ispin(numstate) = 2-MOD(natlevel,2)
-         if (ipol(ion).eq.-1) then
-            ispin(numstate) = 2-mod(ispin(numstate)+1,2)
-         endif
-        write(6,*) 'ion,natlev,numst,ispin', &
+    IF(numspin==2) THEN
+      nactst(ion) = nactst(ion)+MOD(natlevel,2)
+      ispin(numstate) = 2-MOD(natlevel,2)
+      if (ipol(ion).eq.-1) then
+        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
+      endif
+      write(6,*) 'ion,natlev,numst,ispin', &
                   ion,natlevel,numstate,ispin(numstate)
-#else
-    nactst(ion) = nactst(ion)+1
-#endif
+    ELSE
+      nactst(ion) = nactst(ion)+1
+    END IF
     IF(nactst(ion) > 10) STOP 'GENERMOWF: too high atomic level'
     IF(numstate > nstate) GO TO 99
 !                                                 select nodes

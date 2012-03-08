@@ -43,7 +43,7 @@ REAL(DP) :: qaux(1,1)       ! dummy array
 CALL calcrhor(rho,psir)
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
-  CALL prifld(chpcoul,'coulomb pot')
+CALL prifld(chpcoul,'coulomb pot')
 
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
@@ -170,9 +170,8 @@ DO iter1=1,ismax
       WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
           ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
           qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
-#if(fullspin)
-      WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
-#endif
+
+IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
 !            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
 !            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
     END IF
@@ -437,7 +436,7 @@ SUBROUTINE sstep(q0,aloc,iter)
 USE params
 USE kinetic
 !USE localize_rad
-#if(fullspin&&fullsic)
+#if(fullsic)
 USE localize_rad
 #endif
 #if(twostsic)
@@ -472,14 +471,7 @@ COMPLEX(DP) :: csum
 
 
 !REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-#if(fullspin)
-INTEGER :: nelecs(2)
-!DATA nph,ph/1,ksttot*1D0/
-INTEGER :: nph=1
-#else
-!DATA nph,ph/2,ksttot*2D0/
-INTEGER :: nph=2
-#endif
+INTEGER :: nph
 LOGICAL :: tocc,tcpu
 #if(parano)
 DATA tocc,tcpu/.false.,.true./
@@ -502,6 +494,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
 
+nph=3-numspin
+
 !     set timer
 
 IF(tcpu) CALL cpu_time(time_init)
@@ -509,12 +503,10 @@ IF(tcpu) CALL cpu_time(time_init)
 
 !     exact exchange, to be completed before wavefunctions are modified
 
-#if(exchange && parano)
 IF(ifsicp == 5) THEN
   ALLOCATE(qex(kdfull2,kstate))
   CALL exchgr(q0,qex)
 END IF
-#endif
 
 
 ALLOCATE(q1(kdfull2))
@@ -556,11 +548,9 @@ DO nbe=1,nstate
     END DO
   END IF
   
-#if(exchange && parano)
   IF(ifsicp == 5) THEN
     q1=q1+qex(:,nbe)
   END IF
-#endif
   
 
 !JM : subtract SIC potential for state NBE
@@ -715,9 +705,7 @@ END DO                                            ! end loop over states
 
 DEALLOCATE(q1)
 DEALLOCATE(q2)
-#if(exchange && parano)
 IF(ifsicp == 5)  DEALLOCATE(qex)
-#endif
 
 
 #if(parano)
@@ -862,15 +850,15 @@ ecorr=energ_ions()
 #if(parano)
 DO nb=1,nstate
   ekin = ekinsp(nb)
-#if(fullspin)
-  WRITE(6,'(a,i2,a,i3,3f9.5,2(1pg12.4))')  &
+  IF(numspin==2) THEN
+    WRITE(6,'(a,i2,a,i3,3f9.5,2(1pg12.4))')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,var=',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekin,amoy(nb), evarsp(nb),evarsp2(nb)
-#else
-  WRITE(6,'(a,i2,a,3f9.5,1pg12.4)')  &
+  ELSE
+    WRITE(6,'(a,i2,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,var=',  &
       occup(nb),ekin,amoy(nb),evarsp(nb)
-#endif
+  END IF
 END DO
 #endif
 
@@ -943,9 +931,8 @@ eshell=eshell/2D0  !(=t+v/2)
 
 CALL energ_dielec(rho)
 energy = espnb/2.+esh1/2.+enrear+ecback+ecorr+enonlc/2. -ecrhoimage
-#if(directenergy)
-energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
-#endif
+IF(directenergy) &
+     energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
 IF(ivdw == 1) energy = energy + evdw
 binerg = energy
 #if(parayes)
@@ -966,14 +953,13 @@ IF(myn == 0) THEN
   IF (isurf /= 0) THEN
     WRITE(6,*)  'adsorption energy = ', energy-enerinfty
   END IF
-#if(directenergy)
-  WRITE(6,*)  'binding energy2 =',energ2
-  WRITE(6,*)  'potential energ =',enerpw
-!test        write(6,*)  'compensation    =',encomp
-  ensav  = energ2
-  energ2 = energy
-  energy = ensav
-#endif
+  IF(directenergy) THEN
+    WRITE(6,*)  'binding energy2 =',energ2
+    WRITE(6,*)  'potential energ =',enerpw
+    ensav  = energ2
+    energ2 = energy
+    energy = ensav
+  END IF
   WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
   WRITE(6,'(a)') ' '
   
@@ -1112,15 +1098,15 @@ CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
 
 #if(parano)
 DO nb=1,nstate
-#if(fullspin)
-  WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
+  IF(numspin==2) THEN
+    WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,variance =',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekinsp(nb), amoy(nb),evarsp(nb)
-#else
-  WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
+  ELSE
+    WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,variance=',  &
       occup(nb),ekinsp(nb),amoy(nb),evarsp(nb)
-#endif
+  END IF
 END DO
 #endif
 #if(parayes)
@@ -1129,15 +1115,15 @@ CALL prispe_parallele(42,-1)
 
 IF(myn == 0) THEN
   IF(temp == 0D0) THEN
-#if(directenergy)
-    WRITE(42,'(a,2f13.7)') 'binding energy  =',energ2,energy
-#else
-    WRITE(42,'(a,f13.7)') 'binding energy  =',energy
-#endif
+    IF(directenergy) THEN
+      WRITE(42,'(a,2f13.7)') 'binding energy  =',energ2,energy
+    ELSE
+      WRITE(42,'(a,f13.7)') 'binding energy  =',energy
+    END IF
   ELSE
-#if(directenergy)
-    energy = energ2
-#endif
+    IF(directenergy) THEN
+      energy = energ2
+    END IF
     WRITE(42,'(a,4f13.7)')  'energies:E,TS,F,T =',  &
         energy,temp*entrop,energy-temp*entrop,temp
   END IF
@@ -1258,12 +1244,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-!#if(fullspin)
 INTEGER :: nelecs(2)
-!DATA nph,ph/1,ksttot*1D0/
-!#else
-!DATA nph,ph/2,ksttot*2D0/
-!#endif
 
 !--------------------------------------------------------------------
 
@@ -1273,34 +1254,34 @@ DO nbe=1,nstate
 END DO
 epstmp = 1D-8
 occo = 1D0-occmix
-#if(fullspin)
-nelecs(1) = nclust-nspdw
-nelecs(2) = nspdw
-DO is=1,2
-  DO nbe=1,nstate
-    IF(ispin(nbe) == is) THEN
-      ph(nbe) = 1D0
-    ELSE
-      ph(nbe) = 0D0
-    END IF
+IF(numspin==2) THEN
+  nelecs(1) = nclust-nspdw
+  nelecs(2) = nspdw
+  DO is=1,numspin
+    DO nbe=1,nstate
+      IF(ispin(nbe) == is) THEN
+        ph(nbe) = 1D0
+      ELSE
+        ph(nbe) = 0D0
+      END IF
+    END DO
+    eferm  = 0D0         ! restart search of eferm from scratch
+    CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
+        partnm,200,4,epstmp,-1,ksttot)
+    DO nbe=1,nstate
+      IF(ispin(nbe) == is) THEN
+        occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
+      END IF
+    END DO
   END DO
+ELSE
   eferm  = 0D0         ! restart search of eferm from scratch
-  CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
-      partnm,200,4,epstmp,-1,ksttot)
+  CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
+      60,4,epstmp,-1,ksttot)
   DO nbe=1,nstate
-    IF(ispin(nbe) == is) THEN
-      occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
-    END IF
+    occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
   END DO
-END DO
-#else
-eferm  = 0D0         ! restart search of eferm from scratch
-CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
-    60,4,epstmp,-1,ksttot)
-DO nbe=1,nstate
-  occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
-END DO
-#endif
+END IF
 RETURN
 END SUBROUTINE reocc
 

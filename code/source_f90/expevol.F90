@@ -62,9 +62,8 @@ IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not apppropriate for rare gas'
 !     one half time step to define new mean field
 !     use exponential evolution to second order
 
-#if(exchange)
-psisavex = q0
-#endif
+IF(ifsicp==5) psisavex = q0
+
 DO nb=1,nstate
   DO ind=1,nxyz
     qwork(ind,nb) = q0(ind,nb)
@@ -209,9 +208,7 @@ REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN)                    :: akv(kdfull2)
 INTEGER, INTENT(IN OUT)                  :: nbe
 INTEGER, INTENT(IN OUT)                  :: itpri
-#if(exchange)
 COMPLEX(DP),ALLOCATABLE :: qex(:)
-#endif
 
 COMPLEX(DP) :: wfovlp
 !                                   workspaces
@@ -262,7 +259,6 @@ ELSE
   END DO
 END IF
 
-#if(exchange)
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
   IF(tpri) epotbefore = wfovlp(qact,q1)
@@ -276,7 +272,7 @@ IF(ifsicp==5) THEN
 !  END IF
   DEALLOCATE(qex)
 END IF
-#endif
+
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)

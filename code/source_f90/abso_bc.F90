@@ -74,16 +74,6 @@ END IF
 
 !     apply mask function (and accumulate absorption per state)
 
-DO nbe=1,nstate
-!  WRITE(*,*) ' ABSBC: nbe=',nbe
-  DO ind=1,kdfull2
-    IF(tgridabso(ind)) THEN
-      psi(ind,nbe)=sphermask(ind)*psi(ind,nbe)
-    END IF
-  END DO
-!  WRITE(*,*) ' ABSBC: nbe=',nbe
-END DO
-
 IF(jescmaskorb /=0) THEN
   DO nbe=1,nstate
 !  WRITE(*,*) ' ABSBC-escmascorb: nbe=',nbe
@@ -97,6 +87,16 @@ IF(jescmaskorb /=0) THEN
 !  WRITE(*,*) ' ABSBC-escmaskorb: nbe=',nbe
   END DO
 END IF
+
+DO nbe=1,nstate
+!  WRITE(*,*) ' ABSBC: nbe=',nbe
+  DO ind=1,kdfull2
+    IF(tgridabso(ind)) THEN
+      psi(ind,nbe)=sphermask(ind)*psi(ind,nbe)
+    END IF
+  END DO
+!  WRITE(*,*) ' ABSBC: nbe=',nbe
+END DO
 
 !         call abso(psi)
 
@@ -452,11 +452,11 @@ DO ith=1,nmptheta+1
     
     
     imps(nmps) = getnearestgridpoint(x,y,z)
-    DO ik=1,nmps-1                              ! cPW
-      IF(imps(nmps) == imps(ik)) THEN           ! cPW
-       nmps = nmps - 1                          ! cPW
-      END IF                                    ! cPW
-    END DO                                      ! cPW
+    DO ik=1,nmps-1                              
+      IF(imps(nmps) == imps(ik)) THEN           
+       nmps = nmps - 1                          
+      END IF                                    
+    END DO                                      
     
   END DO
 END DO
@@ -464,7 +464,7 @@ END DO
 !WRITE(*,*) ' mask in INITMEASUREPOINTS'
 !CALL prifld(sphermask,' mask ')
 
-DO ik=1,nmps                                    ! cPW
+DO ik=1,nmps                                    
  impsact = imps(nmps)
  impsx = mod(impsact-1,nx2)+1
  impsy = mod(impsact/nx2,ny2)+1
@@ -473,7 +473,7 @@ DO ik=1,nmps                                    ! cPW
  WRITE(*,*) ' nx,ny,nz=',impsx,impsy,impsz
  WRITE(*,*) ' x,y,z=',x,y,z
  WRITE(*,*) ' theta,phi=',t,p
-END DO                                          ! cPW
+END DO                                          
 
 
 
@@ -731,11 +731,19 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP) :: rp(2*maxmps)
 !REAL(DP) :: cp(10000)
 COMPLEX(DP) :: q0phase
+LOGICAL :: topenf
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 LOGICAL,PARAMETER :: ttestpar=.FALSE.
 #endif
+
+IF(myn==0) THEN
+  INQUIRE(803,OPENED=topenf)
+  IF(.NOT.topenf) &
+    OPEN(803,POSITION='append',FILE='pMP.'//outnam)                         ! cPW
+!    OPEN(803,POSITION='append',FORM='unformatted',FILE='pMP.'//outnam)
+END IF
 
 
 #if(parano)
@@ -756,7 +764,8 @@ DO nbe=1,nstate
     j=j+1
     rp(j)=imag(q0phase)
   END DO
-  WRITE(iunit,'(1f14.5,500e18.8)') tfs,rp(1:2*nmps)
+  WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                       ! cPW: maxmps = 500
+!  WRITE(iunit) tfs,rp(1:2*nmps)                                             ! cPW
 END DO
 #endif
 
@@ -795,16 +804,21 @@ DO nba=1,nstate_all
                      mpi_comm_world,is,ic)
        IF(ttestpar) WRITE(*,*) ' received: nba,from node=',nba,mynact
     END IF
-    WRITE(iunit,'(1f14.5,500e18.8)') tfs,rp(1:2*nmps)
+    WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500
+!    WRITE(iunit) tfs,rp(1:2*nmps)                                           ! cPW
   END IF
 END DO
 IF(ttestpar) WRITE(*,*) ' all done. before last barrier'
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 #endif
 
+IF(myn==0) CLOSE(iunit)
+
 
 RETURN
 END SUBROUTINE evalmp
 !------------------------------------------------------------
+
+
 
 

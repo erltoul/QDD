@@ -46,6 +46,18 @@ CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
 CALL solv_fft(rho,chpcoul,dx,dy,dz)
 #endif
 
+!WRITE(6,'(/2a)') 'along x:  x  rho rho_image  coul'
+!ind = 0
+!DO jz=minz,maxz
+!  DO jy=miny,maxy
+!    DO jx=minx,maxx
+!      ind    = 1 + ind
+!      IF(jz == nzsh .AND. jy == nysh)  &
+!          WRITE(6,'(1x,f6.2,3(1pg13.5))') (jx-nxsh)*dx,rhotmp(ind), &
+!           rho(ind),chpcoul(ind)   
+!    END DO
+!  END DO
+!END DO
 
 ! computation of the coulomb potential from the electronic density
 ! before adjustdip or vstep for pseudodensity description
@@ -72,6 +84,19 @@ IF(idielec == 1) THEN
   CALL solv_fft(rho,chpcoul,dx,dy,dz)
 #endif
   
+
+!WRITE(6,'(/2a)') 'along x:  x  rho_image coul_imag'
+!ind = 0
+!DO jz=minz,maxz
+!  DO jy=miny,maxy
+!    DO jx=minx,maxx
+!      ind    = 1 + ind
+!      IF(jz == nzsh .AND. jy == nysh)  &
+!          WRITE(6,'(1x,f6.2,3(1pg13.5))') (jx-nxsh)*dx, &
+!           rho(ind),chpcoul(ind)   
+!    END DO
+!  END DO
+!END DO
   
   DO ii=1,kdfull2
     CALL conv1to3(ii)

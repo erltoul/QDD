@@ -13,9 +13,9 @@ PARAMETER (escl=13.6)          ! conversion energy from Ry to eV
 !      parameter (escl=1.0)          ! conversion energy from Ry to ...
 !                                     e.g. from Ry to eV  --> 13.6
 !                                     set 1 to leave output as is
-PARAMETER (ncosfilt=8)          ! order of cosine filtering
+PARAMETER (ncosfilt=12)          ! order of cosine filtering
 !     ! 0 ==> Gaussian filtering with 'twidth'
-PARAMETER (twidth=12.0/0.048)        ! time width for filtering (input units)
+PARAMETER (twidth=33.0/0.048)        ! time width for filtering (input units)
 !      parameter (twidth=12.0/0.048)        ! time width for filtering (input units)
 
 !     Fourier transforms the columns of input data on file 5
