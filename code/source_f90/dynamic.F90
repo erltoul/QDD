@@ -16,10 +16,8 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
 
-#if(exchange)
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
    STOP ' exact exchange requires exponential evolution'
-#endif
 IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) ALLOCATE(psisavex(kdfull2,kstate))
 
 !     use of saved real wavefunctions, read and copy to complex
@@ -369,11 +367,7 @@ dt = dt1*0.5D0
 !     half time step in coordinate space
 !     local phase field on workspace 'q1'
 
-#if(fullspin)
-  nlocact = 2*nxyz
-#else
-  nlocact = nxyz
-#endif
+nlocact = numspin*nxyz
 DO ind=1,nlocact
   pr=-dt*aloc(ind)
   q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
@@ -455,11 +449,7 @@ ALLOCATE(q1(2*kdfull2))
 
 !     half time step in coordinate space:
 
-#if(fullspin)
-nup = 2*nxyz
-#else
-nup = nxyz
-#endif
+nup = numspin*nxyz
 DO ind=1,nup
   pr=-dt*aloc(ind)
   q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
@@ -703,9 +693,7 @@ END IF
 
 !     compute single-particle energies and related quantities
 
-#if(exchange)
-  psisavex = psi
-#endif
+IF(ifsicp==5)  psisavex = psi
 
 eshell=0D0
 esh1=0D0
@@ -741,9 +729,7 @@ CALL FLUSH(441)
 
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
 IF(tstinf) then
-#if(exchange)
-  psisavex = psi
-#endif
+  IF(ifsicp==5)  psisavex = psi
 #if(!parayes)
   ALLOCATE(qtmp(kdfull2))
   DO nb=1,nstate
@@ -881,8 +867,8 @@ ekinkat=0D0      ! kinetic energy of kations
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
-    xm=1836.0*amu(np(ion))*ame
-    ek=ek/2.0/xm
+    xm=1836.0D0*amu(np(ion))*ame
+    ek=ek/2D0/xm
     ekion=ekion+ek
   END DO
 #if(raregas)
@@ -1119,14 +1105,12 @@ END IF
 #endif
 !JM
 
-#if(exchange)
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
   CALL exchg(psin,qex,nb)
   psi2 = psi2 + qex
   DEALLOCATE(qex)
 END IF
-#endif
 
 epot = REAL(wfovlp(psin,psi2))   ! develop real overlap
 
@@ -1730,8 +1714,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 
-
-
 LOGICAL :: topenf
 
 !---------------------------------------------------------------------
@@ -1768,7 +1750,15 @@ IF(irest <= 0) THEN                    !  write file headers
           nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
           nint(getzval(imps(i))/dz)
     END DO
-!    CLOSE(803)
+!    OPEN(803,STATUS='unknown',FORM='unformatted',FILE='pMP.'//outnam)    ! cPW
+!    WRITE(803) nmps,nstate_all                                           
+!    DO i=1,nmps                                                          
+!      WRITE(803) i,  &                                                   
+!          getxval(imps(i)),getyval(imps(i)),getzval(imps(i)), &
+!          nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
+!          nint(getzval(imps(i))/dz)
+!    END DO
+    CLOSE(803)
   END IF
   
   IF(jnorms /= 0) THEN
@@ -2524,7 +2514,7 @@ IF(nclust > 0 .AND. myn == 0)THEN
   CALL safeopen(608,it,jgeomel,'pgeomel')
   CALL safeopen(806,it,jnorms,'pescOrb')
   CALL safeopen(808,it,jnorms,'pproba')
-  CALL safeopen(803,it,jmp,'pMP')
+!  CALL safeopen(803,it,jmp,'pMP')
   
 END IF
   
@@ -2975,7 +2965,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-#if(simpara)
+#if(simpara||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
@@ -3004,6 +2994,7 @@ END IF
 
 !      iiii=etime(tarray,trun)
 IF(trequest > 0D0) THEN
+ IF(myn == 0) THEN                                                        ! cPW
   !iiii=etime(tarray)
   CALL cpu_time(time_act)
   time_elapse=time_act-time_absinit
@@ -3011,14 +3002,24 @@ IF(trequest > 0D0) THEN
   ! ' etime: trequest,timefrac,tarray=',trequest,timefrac,tarray,time_elapse
   CALL FLUSH(6)
   !IF ((tarray(1)+tarray(2)) > trequest*timefrac) THEN
-  IF (time_elapse > trequest*timefrac) THEN
-    CALL SAVE(psi,it,outnam)
+ END IF
+#if(parayes)
+ CALL pi_scatter(time_elapse)
+#endif
+ IF (time_elapse > trequest*timefrac) THEN
+  CALL SAVE(psi,it,outnam)
+  IF(myn == 0) THEN
     OPEN(660,STATUS='unknown',FILE='progstatus')
     WRITE(660,*) '0'
     CLOSE(660)
-    STOP ' finish at TREQUEST'
   END IF
-END IF
+#if(parayes)
+  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+  CALL mpi_finalize (icode)
+#endif
+  STOP ' finish at TREQUEST'
+ END IF
+END IF                                                                    ! cPW
 !     if program has received user message to shut down program, make it so!
 IF (ishutdown /= 0) THEN
   CALL SAVE(psi,it,outnam)
@@ -3147,3 +3148,5 @@ CALL velverlet2(pxe(1),pye(1),pze(1),fxe(1),fye(1),fze(1),dt,ne,2)
 RETURN
 END SUBROUTINE vstepv
 #endif
+
+

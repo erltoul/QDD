@@ -2366,7 +2366,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)             :: field(kdfull2)
-CHARACTER (LEN=12), INTENT(IN)   :: comment
+CHARACTER (LEN=*), INTENT(IN)   :: comment
 
 LOGICAL :: tnopri
 DATA tnopri/.false./

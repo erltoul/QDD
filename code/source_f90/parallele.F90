@@ -1074,13 +1074,14 @@ ELSE
     DO nb=1,nstate_node(nod2)
       nact = nrel2abs_other(nb,nod2) 
       prisav_all(nact,:) = prisav(nb,:)
-#if(fullspin)
-      WRITE(iunit,'(a,i3,a,i3,3f9.5,1pg12.4)') 'level:',iprisav(nb,1),  &
+      IF(numspin==2) THEN
+        WRITE(iunit,'(a,i3,a,i3,3f9.5,1pg12.4)') 'level:',iprisav(nb,1),  &
           '  spin,occup,ekin,esp,variance =', iprisav(nb,2),(prisav(nb,k),k=1,4)
-#else
-      WRITE(iunit,'(a,i3,a,3f9.5,1pg12.4)')  &
-          'level:',nrel2abs(nb),'  occup,ekin,esp,variance=', (prisav(nb,k),k=1,4)
-#endif
+      ELSE
+        WRITE(iunit,'(a,i3,a,3f9.5,1pg12.4)')  &
+          'level:',nrel2abs(nb), &
+          '  occup,ekin,esp,variance=', (prisav(nb,k),k=1,4)
+      END IF
     END DO
   END DO
 

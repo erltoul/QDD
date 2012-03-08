@@ -100,13 +100,13 @@ DEALLOCATE(rh)
 
 !GB      sum1=0D0
 DO ind=1,nxyz
-#if(fullspin)
-  rhotot      = rho(ind) + rho(ind+nxyz)
-  rhodif      = rho(ind) - rho(ind+nxyz)
-#else
-  rhotot      = rho(ind)
-  rhodif      = 0D0
-#endif
+  IF(numspin==2) THEN
+    rhotot      = rho(ind) + rho(ind+nxyz)
+    rhodif      = rho(ind) - rho(ind+nxyz)
+  ELSE
+    rhotot      = rho(ind)
+    rhodif      = 0D0
+  END IF
   rho(ind)      = rhotot
   rho(ind+nxyz) = rhodif/MAX(rhotot,1D-8)
 !GB        sum1 = sum1 + rho(ind)

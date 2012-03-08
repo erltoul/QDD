@@ -26,7 +26,7 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
 
-NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,  &
+NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
@@ -63,7 +63,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,  &
 
 !*************************************************************
 
-NAMELIST /dynamic/ nabsorb,  &
+NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
@@ -256,6 +256,24 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 CHARACTER (LEN=80) :: title
+INTERFACE 
+  SUBROUTINE calc_lda_gunnar(rho,chpdft)
+  USE params, ONLY: DP,kdfull2
+  REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+  REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+!  REAL(DPA), INTENT(IN)                         :: rho(*)
+!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
+  END SUBROUTINE calc_lda_gunnar
+END INTERFACE
+INTERFACE 
+  SUBROUTINE calc_lda_pw92(rho,chpdft)
+  USE params, ONLY: DP,kdfull2
+  REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+  REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+!  REAL(DPA), INTENT(IN)                         :: rho(*)
+!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
+  END SUBROUTINE calc_lda_pw92
+END INTERFACE
 
 !--------------------------------------------------------------
 
@@ -283,15 +301,8 @@ WRITE(6,*) 'jekion=',jekion
 
 !     ceck consistency of input options
 
-#if(!fullspin)
-IF(iftransme ==1) STOP ' IFTRANSME needs full spin'
-#endif
+IF(numspin.NE.2 .AND. iftransme ==1) STOP ' IFTRANSME needs full spin'
 
-#if(exonly)
-#if(!gunnar)
-  STOP ' option EXONLY requires functional GUNNAR'
-#endif
-#endif
 
 #if(raregas)
 DO i=1,5
@@ -332,17 +343,15 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
 #endif
 
 
-#if(directenergy)
-IF(ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
+IF(directenergy .AND.  &
+   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
     STOP ' directenergy=1 only for Slater and KLI'
-#endif
 
-#if(!fullspin)
-IF(ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
-#endif
+IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
-#if(exchange&fullsic)
-STOP ' do not compile EXCHANGE and FULLSIC simultaneously'
+#if(fullsic)
+IF(ifsicp==5) STOP ' EXCHANGE doe not run with FULLSIC'
+IF(numspin.NE.2) STOP ' full SIC requires full spin'
 #endif
 
 #if(twostsic)
@@ -391,6 +400,15 @@ END if
 IF(ABS(phangle) > small .AND. istat /= 1) &
   STOP ' ph rotation only with ISTAT=1'
 
+! set the pointer for the energy-density functional
+IF(idenfunc==1) THEN
+  calc_lda => calc_lda_pw92
+ELSE IF(idenfunc==2 .OR. idenfunc==3) THEN
+  calc_lda => calc_lda_gunnar
+ELSE
+  STOP ' invalid value for density-functional selector IDENFUNC'
+END IF
+
 
 RETURN
 END SUBROUTINE iparams
@@ -413,16 +431,16 @@ IF(iu == 8) OPEN(8,STATUS='unknown',FORM='formatted',  &
 
 WRITE(iu,'(a)') 'the following options are used:'
 WRITE(iu,*)
-#if(gunnar)
-#if(exonly)
-WRITE(iu,'(a)') 'pure exchange functional in LDA'
-#else
-WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
-#endif
-#endif
-#if(pw92)
-WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
-#endif
+IF(idenfunc==1) THEN
+  WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
+ELSE IF(idenfunc==2) THEN
+  WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
+ELSE IF(idenfunc==3) THEN
+  WRITE(iu,'(a)') 'pure exchange functional in LDA'
+ELSE
+  STOP ' invalid value for density-functional selector IDENFUNC'
+END IF
+
 ! parallel or serial:
 #if(parayes)
 WRITE(iu,*) 'parallel code: number of nodes=',knode
@@ -431,11 +449,13 @@ WRITE(iu,*) 'max. number of wf per node',kstate
 #if(parano)
 WRITE(iu,*) 'serial code: max. number of wf=',kstate
 #endif
-#if(fullspin)
-WRITE(iu,'(a)') ' spin code '
-#else
-WRITE(iu,'(a)') ' no-spin code '
-#endif
+IF(numspin==2) THEN
+  WRITE(iu,'(a)') ' spin code '
+ELSE IF(numspin==1) THEN
+  WRITE(iu,'(a)') ' no-spin code '
+ELSE
+  STOP "invalid uinput parameter NUMSPIN"
+END IF
 IF(ifhamdiag == 1) THEN
   WRITE(iu,'(a)') ' static step: Hamiltonian in subspace diagonalized'
 ELSE
@@ -536,6 +556,12 @@ ELSE IF(icooltyp == 3) THEN
   WRITE(iu,'(a)') 'cooling with Monte Carlo '
 END IF
 
+IF(directenergy) THEN
+  WRITE(iu,'(a)') ' energy computed directly'
+ELSE
+  WRITE(iu,'(a)') ' energy computed using s.p. energies'
+END IF
+
 IF(ifsicp == 0) THEN
   WRITE(iu,'(a)') 'no sic'
 ELSE IF(ifsicp == 1)  THEN
@@ -546,13 +572,8 @@ ELSE IF(ifsicp == 3)  THEN
   WRITE(iu,'(a)') 'sic activated: Slater'
 ELSE IF(ifsicp == 4)  THEN
   WRITE(iu,'(a)') 'sic activated: KLI'
-#if(exchange)
-ELSE IF(ifsicp == 5)  THEN
+ELSE IF(ifsicp == 5) THEN
   WRITE(iu,'(a)') 'sic activated: exact exchange'
-#else
-ELSE IF(ifsicp == 5)  THEN
-  STOP ' code not compiled for exact exchange'
-#endif
 #if(fullsic)
 ELSE IF(ifsicp == 6)  THEN
   WRITE(iu,'(a)') 'sic activated: full SIC'
@@ -585,7 +606,7 @@ WRITE(iu,'(a,3i6)') ' kxbox,kybox,kzbox=',kxbox,kybox,kzbox
 #if(raregas)
 WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
-WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,nstate
+WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
@@ -1870,12 +1891,14 @@ DATA tocc/.false./
 !-----------------------------------------------------------------------
 
 ALLOCATE(ph(2*ksttot))
-#if(fullspin)
-ph = 1D0
-#else
-ph=0D0
-ph(1:ksttot) = 2D0
-#endif
+IF(numspin==2) THEN
+  ph = 1D0
+ELSE IF(numspin==1) THEN
+  ph=0D0
+  ph(1:ksttot) = 2D0
+ELSE
+  STOP "invalid value for input parameter NUMSPIN"
+END IF
 
 
 !     prepare initial parameters
@@ -1888,35 +1911,35 @@ ph(1:ksttot) = 2D0
 !     this relation is resolved approximately for N.
 
 q20fac = SQRT(5.0/(16.0*pi))
-#if(fullspin)
-nelup  = nelect-nspdw
-neldw  = nspdw
-!test
-WRITE(6,*) 'nelup',nelup
-WRITE(6,*) 'neldw',nspdw
-!test
-#else
-IF(MOD(nelect,2) == 1)  &
+IF(numspin==2) THEN
+  nelup  = nelect-nspdw
+  neldw  = nspdw
+  !test
+  WRITE(6,*) 'nelup',nelup
+  WRITE(6,*) 'neldw',nspdw
+  !test
+ELSE
+  IF(MOD(nelect,2) == 1)  &
     STOP ' nr. of electrons must be even for spin degeneracy'
-nelup  = nclust/2
-#endif
+  nelup  = nclust/2
+END IF
 efacto = 0.25/(1D0*nelect)**0.3333333
 efrmup = (6.0*nelup)**0.3333333
 efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**0.3333333-1.5
 ecutup = efrmup+deoccin
 nomxup = ecutup*(1D0+2.0*q20fac*betain)+0.5
 ecutup = efacto*ecutup
-#if(fullspin)
-IF(neldw > 0) THEN
-  efrmdw = (6.0*neldw)**0.3333333
-  efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
-ELSE
-  efrmdw = -0.00001
+IF(numspin==2) THEN
+  IF(neldw > 0) THEN
+    efrmdw = (6.0*neldw)**0.3333333
+    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
+  ELSE
+    efrmdw = -0.00001
+  END IF
+  ecutdw = efrmdw+deoccin
+  nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
+  ecutdw = efacto*ecutdw
 END IF
-ecutdw = efrmdw+deoccin
-nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
-ecutdw = efacto*ecutdw
-#endif
 cosfac = q20fac*COS(gamin)
 sinfac = q20fac*SQRT(2.0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
@@ -1981,61 +2004,56 @@ lb1: DO noscz=0,nomxup
 WRITE(6,*) 'n(nelup)',n
 !test
 IF(n < nelup) STOP ' not enough states to reach (spin-up) particle number'
-#if(fullspin)
+IF(numspin==2) THEN
 
 !     select spin down states
 !     distribute preliminary occupation numbers
 
-mspindw = 0
-lb2: DO noscz=0,nomxdw
-     DO noscy=0,nomxdw
-     DO noscx=0,nomxdw
-      speact = noscz*zfac+noscy*yfac+noscx*xfac
-      IF(nelup /= neldw) speact = speact*1.01    ! enhance for spin asymmetry
-      IF(speact <= ecutdw) THEN
-        n     = 1+n
-!test
-!        WRITE(6,*) 'n,neldw,ksttot',n,neldw,ksttot
-!test
-!GB          if(n.gt.ksttot)
-        nq(1,n)  = noscx
-        nq(2,n)  = noscy
-        nq(3,n)  = noscz
-        ispin(n) = 2
-        mspindw = mspindw + 1
-        IF(mspindw <= neldw) THEN
-          occu(n) = 1D0
-        ELSE
-          occu(n) = 0D0
-        END IF
-        esp(n)   = efacto*speact
+  mspindw = 0
+  lb2: DO noscz=0,nomxdw
+       DO noscy=0,nomxdw
+       DO noscx=0,nomxdw
+        speact = noscz*zfac+noscy*yfac+noscx*xfac
+        IF(nelup /= neldw) speact = speact*1.01    ! enhance for spin asymmetry
+        IF(speact <= ecutdw) THEN
+          n     = 1+n
+          nq(1,n)  = noscx
+          nq(2,n)  = noscy
+          nq(3,n)  = noscz
+          ispin(n) = 2
+          mspindw = mspindw + 1
+          IF(mspindw <= neldw) THEN
+            occu(n) = 1D0
+          ELSE
+            occu(n) = 0D0
+          END IF
+          esp(n)   = efacto*speact
         
-        IF(n > ksttot) STOP ' deocc or part.number to large for given ksttot'
+          IF(n > ksttot) STOP ' deocc or part.number to large for given ksttot'
         
 !old?        IF(mspindw >= (neldw+nmaxdiff)) THEN
-        IF(mspindw > (neldw+nmaxdiff)) THEN
-           WRITE(6,*) 'mspindw=',mspindw,&
+          IF(mspindw > (neldw+nmaxdiff)) THEN
+             WRITE(6,*) 'mspindw=',mspindw,&
                 ' greater than neldw+dnmax=',neldw+nmaxdiff
-          mspindw=mspindw-1                                   ! new by MD
-          EXIT lb2
-        ENDIF
-        WRITE(6,'(a,3i5,3f10.3)') 'check spin down:', &
-                ispin(n),n,mspindw,occu(n),speact,ecutdw
-        WRITE(7,*)
-        WRITE(7,*) 'speact',speact,'n',n,'isp',ispin(n)
-        WRITE(7,*) 'no',noscx,noscy,noscz,zfac,yfac,xfac
-      END IF
-     END DO
-     END DO
-     END DO lb2
-!29   CONTINUE
+            mspindw=mspindw-1                                   ! new by MD
+            EXIT lb2
+          ENDIF
+          WRITE(6,'(a,3i5,3f10.3)') 'check spin down:', &
+                 ispin(n),n,mspindw,occu(n),speact,ecutdw
+          WRITE(7,*)
+          WRITE(7,*) 'speact',speact,'n',n,'isp',ispin(n)
+          WRITE(7,*) 'no',noscx,noscy,noscz,zfac,yfac,xfac
+        END IF
+       END DO
+       END DO
+       END DO lb2
 !test
 WRITE(6,*) 'mspindw',mspindw
 WRITE(6,*) 'neldw',neldw
 !test
-IF(mspindw < neldw)  &
-    STOP ' not enough states to reach spin-down particle number'
-#endif
+  IF(mspindw < neldw)  &
+      STOP ' not enough states to reach spin-down particle number'
+END IF
 
 nstate=n
 WRITE(7,*) 'nstate ininqb',nstate
@@ -2721,24 +2739,24 @@ REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 
 !----------------------------------------------------------------------
 
-#if(fullspin)
-WRITE(*,*) ' SPINSEP invoked'
-DO nb=1,nstate
-  sgeps = (3-2*ispin(nb))*0.01
-  ii  = 0
-  DO iz=minz,maxz
-    z1=(iz-nzsh)*dz
-    DO iy=miny,maxy
-      y1=(iy-nysh)*dy
-      DO ix=minx,maxx
-        x1=(ix-nxsh)*dx
-        ii = ii+1
-        psir(ii,nb) = psir(ii,nb)*(1D0+sgeps*(x1+y1+z1))
+IF(numspin==2) THEN
+  WRITE(*,*) ' SPINSEP invoked'
+  DO nb=1,nstate
+    sgeps = (3-2*ispin(nb))*0.01
+    ii  = 0
+    DO iz=minz,maxz
+      z1=(iz-nzsh)*dz
+      DO iy=miny,maxy
+        y1=(iy-nysh)*dy
+        DO ix=minx,maxx
+          x1=(ix-nxsh)*dx
+          ii = ii+1
+          psir(ii,nb) = psir(ii,nb)*(1D0+sgeps*(x1+y1+z1))
+        END DO
       END DO
     END DO
   END DO
-END DO
-#endif
+END IF
 RETURN
 END SUBROUTINE spinsep
 
@@ -2944,26 +2962,19 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(findiff|numerov)
 STOP ' parallele computing not active with finite differences'
 #endif
-#if(exchange)
-STOP ' exact exchange not compatible with parallele code'
-#endif
+IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
-#if(kli && exchange)
-STOP ' exact exchange and KLI not compatible '
+#if(symmcond)
+IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible! allow for exact exchange
+!  kli or exchange or fullsic cannot be used simultaneously !! '
 #endif
-#if(kli && symmcond)
-STOP ' propagated symm.cond. and KLI not compatible '
+IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
+#if(!pw92)
+IF(directenergy) STOP ' directenergy=.true. requires Perdew&Wang functional '
 #endif
-#if(kli && !directenergy)
-STOP ' KLI requires directenergy=1 in "define.h" '
-#endif
-#if(directenergy && !pw92)
-STOP ' directenergy=1 requires Perdew&Wang functional '
-#endif
-#if(directenergy && exchange)
-STOP ' directenergy=1 not yet prepared for exact exchange '
-#endif
+IF(directenergy .AND. ifsicp==5) &
+   STOP ' directenergy=.true. not yet prepared for exact exchange '
 #if(!raregas)
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"
 #endif

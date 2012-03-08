@@ -37,22 +37,6 @@ DO nb=1,nstate
   END SELECT 
 END DO
 
-!     reorder to total density in lower block (1-nxyz)
-!     and difference density in upper block (nxyz+1-2nxyz)
-!DO ind=1,nxyz
-!#if(fullspin)
-!  rhootot      = rhoo(ind) + rhoo(ind+nxyz)
-!  rhoodif      = rhoo(ind) - rhoo(ind+nxyz)
-!#else
-!  rhootot      = rhoo(ind)
-!  rhoodif      = 0D0
-!#endif
-!  rhoo(ind)      = rhootot
-!  rhoo(ind+nxyz) = rhoodif/MAX(rhootot,1D-8)
-!END DO
-!
-!CALL emoms(rhoo)
-
 
 
 RETURN

@@ -19,17 +19,9 @@ REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,homoe,Vproj
-!DIMENSION rhon(kdfull2),chpdft(2*kdfull2)
-!DIMENSION vlaser(kdfull2)
-!DIMENSION homoe(kdfull2)
-!        equivalence (aloc,chpdft)       !   be careful
-!EQUIVALENCE (vlaser,w1)
-!EQUIVALENCE (rhon,w1)
-!        equivalence (chpcoul,w4)
 
 
 IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
-
 
 !     check workspace
 
@@ -165,11 +157,11 @@ IF (izforcecorr == 1) CALL zeroforce(aloc,rho)
 
 RETURN
 END SUBROUTINE calclocal
-#if(gunnar)
+!#if(gunnar)
 
 !     ******************************
 
-SUBROUTINE calc_lda(rho,chpdft)
+SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
 !     ******************************
 
@@ -194,13 +186,15 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
 !     the gunnarson lundqvist parameters
 
 !      data small/1.0e-20/
-#if(exonly)
-DATA cppar,rppar,expar /0D0,11.400D0,0.916D0/
-DATA cfpar,rfpar,exfpar/0D0,15.900D0,1.154D0/
-#else
-DATA cppar,rppar,expar /0.0666D0,11.400D0,0.916D0/
-DATA cfpar,rfpar,exfpar/0.0406D0,15.900D0,1.154D0/
-#endif
+!#if(exonly)
+!DATA cppar,rppar,expar /0D0,11.400D0,0.916D0/
+!DATA cfpar,rfpar,exfpar/0D0,15.900D0,1.154D0/
+!#else
+!DATA cppar,rppar,expar /0.0666D0,11.400D0,0.916D0/
+!DATA cfpar,rfpar,exfpar/0.0406D0,15.900D0,1.154D0/
+!#endif
+REAL(DP) :: cppar=0.0666D0,rppar=11.400D0,expar=0.916D0
+REAL(DP) :: cfpar=0.0406D0,rfpar=15.900D0,exfpar=1.154D0
 
 !     check workspace
 
@@ -208,6 +202,13 @@ DATA cfpar,rfpar,exfpar/0.0406D0,15.900D0,1.154D0/
 ALLOCATE(p1(kdfull2))
 ALLOCATE(p2(kdfull2))
 #endif
+
+!     optionally override correlation functional
+
+IF(idenfunc==3) THEN
+  cppar = 0D0
+  cfpar = 0D0
+END IF
 
 !        nxyz=nx2*ny2*nz2
 trd4pi = 3D0/(4D0*3.141592653589793D0)
@@ -313,11 +314,15 @@ DEALLOCATE(p2)
 #endif
 
 RETURN
-END SUBROUTINE calc_lda
-#endif
+END SUBROUTINE calc_lda_gunnar
+!#endif
 
-#if(pw92)
-SUBROUTINE calc_lda(rho,chpdft)
+
+!#if(pw92)
+
+!     ******************************
+
+SUBROUTINE calc_lda_pw92(rho,chpdft)
 
 !     ******************************
 
@@ -368,9 +373,9 @@ DATA b4  /0.023592917D0/
 DATA db4 /0.004200005D0 /
 
 enrear = 0D0
-#if(directenergy)
-enerpw = 0D0
-#endif
+IF(directenergy) THEN
+  enerpw = 0D0
+END IF
 ec=0D0
 
 !write(6,*)rho(1),rho(1+nxyz)
@@ -508,9 +513,9 @@ DO ii=1,nxyz
   t4=ABS((t1-t2)/2.0)   !  *e2
   t5= chpdft(ii)*t3+chpdft(ii+nxyz)*t4
   
-#if(directenergy)
-  enerpw = -t70*e2 + enerpw
-#endif
+  IF(directenergy) THEN
+    enerpw = -t70*e2 + enerpw
+  END IF
   
   
   ec = (-t70*e2 - 0.5D0*t5) + ec
@@ -525,14 +530,14 @@ END DO
 
 enrear=ec*dvol
 
-#if(directenergy)
-enerpw = enerpw*dvol
-#endif
+IF(directenergy) THEN
+  enerpw = enerpw*dvol
+END IF
 
 
 RETURN
-END SUBROUTINE calc_lda
-#endif
+END SUBROUTINE calc_lda_pw92
+!#endif
 
 
 

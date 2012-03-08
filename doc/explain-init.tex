@@ -28,7 +28,7 @@
 
 \title{Handling of the cluster 3D Fortran90-code}
 \author{Instructions and status reprot}
-\date{Started 23 April 2010; status 28. June 2011}
+\date{Started 23 April 2010; status 21. February 2012}
 \maketitle
 
 \tableofcontents
@@ -149,19 +149,10 @@ in section \ref{sec:inputs}.
 {\tt simpara} & pseudo-parallel code, runs different inputs
 simultaneously\\
 \hline
-\multicolumn{2}{l}{\underline{functional and handling of electrons:}}\\
-{\tt gunnar} & Gunnarson \& Lundquist\\
-{\tt exonly} & only exchange in  LDA (requires {\tt gunnar=1})\\
-{\tt pw92} & Perdew \& Wang (mostly used standard)\\
-{\tt fullspin} & with or without explicit electron  spin\\
-\hline
 \multicolumn{2}{l}{\underline{versions of SIC for electrons:}}\\
-{\tt kli} & enables KLI (incompatible with {\tt exchange} and {\tt fullsic})\\
-{\tt directenergy} & direct computation of energy (neede for {\tt kli})\\
-{\tt exchange} & exact exchange (incompatible with {\tt kli} and {\tt fullsic})\\
-{\tt fullsic} & old full SIC  (incompatible with {\tt exchange} and {\tt kli})\\
-{\tt symmcond} & old full SIC with double set technique\\
-{\tt twostsic} & new full SIC from PhD Messud\\
+{\tt fullsic} & old full SIC  \\
+{\tt symmcond} & old full SIC with double set technique \\
+{\tt twostsic} & new full SIC from PhD Messud (obsolete)\\
 \hline
 \multicolumn{2}{c}{Compile time settings in {\tt define.h} -- part 2} \\
 \hline
@@ -182,6 +173,8 @@ simultaneously\\
 {\tt kybox            }& nr. of grid points in $y$ direction\\
 {\tt kzbox            }& nr. of grid points in $z$ direction\\
 & box sizes must fulfill {\tt kxbox}$\geq${\tt kybox}$\geq$ {\tt kzbox}\\
+{\tt numspin}          & number of spin components (2=full spin treatment)\\
+                       & (1=spin averaged, possible problem for ADSIC)\\
 {\tt kstate           }& maximum nr. of s.p. states\\
 {\tt nclust           }& number of QM electrons\\
 {\tt nion             }& number of cluster ions\\
@@ -253,11 +246,17 @@ equations\\
 {\tt istat            }& switch to read wavefunctions from file 'rsave'\\
 {\tt } &\hspace*{1em}it continues static iteration for 'ismax$>$0' \\
 {\tt } &\hspace*{1em}it starts dynamics from these wf's for 'ismax=0' \\
+{\tt idenfunc} & choice of density functional for LDA\\
+               & 1 $\rightarrow$ Perdew \& Wang 1992 (default setting)\\
+               & 2 $\rightarrow$ Gunnarson \& Lundquist\\
+               & 3  $\rightarrow$ only exchange in  LDA \\
 {\tt isave            }& saves results after every 'isave' steps \\
 {\tt                  }& on file 'rsave' in and after static iteration\\
 {\tt                  }& on file 'save' in dynamic propagation\\
 {\tt ipseudo          }& switch for using pseudo-densities to represent substrate\\
 {\tt                  }& atoms \\
+{\tt directenergy}   & {\tt .true.} = direct computation of energy \\
+                       & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
 {\tt ifsicp           }& selects type of self-interaction correction\\
     &  0 = pure LDA, 1 = SIC-GAM, 2 = ADSIC; 3 = SIC-Slater; \\
     &  4 = SIC-KLI; 5 = exact exchange; 6 = old SIC (?);\\
@@ -439,8 +438,9 @@ localization in statics
 {\tt h1\_11g,h1\_22g,h2\_11g}&
   strenghts for non-local parts of  Goedecker PsP\\
 {\tt radiong}& carrier radius for projecteor in non-local Goedecker PsP\\
-{\tt nrow}& 
-  ``row'' of element $\longrightarrow$ defines level  of projectors\\ 
+%deprecated option
+%{\tt nrow}&
+%  ``row'' of element $\longrightarrow$ defines level  of projectors\\
 \hline
 \end{tabular}
 
@@ -532,6 +532,9 @@ localization in statics
   \item Present parallele version  still needs to specify the number
         of nodes at compile time. This should be 
         changed to allow dynamical adjustment of number of nodes.
+  \item Spin-averaged code ({\tt numspin}=1) does not reproduce 
+        the results from full spin calculation in ase of ADSIC.
+        Check.
 \end{itemize}
 
 

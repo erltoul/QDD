@@ -2,7 +2,7 @@
  
 PROGRAM testcoul
 
-!     test spped of Coulomb solver
+!     test speed of Coulomb solver
 
 
 !     *******************************************

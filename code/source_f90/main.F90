@@ -18,7 +18,7 @@ PROGRAM tdlda_m
 USE params
 USE kinetic
 USE coulsolv
-#if(fullspin&&fullsic)
+#if(fullsic)
 USE localize_rad
 #endif
 #if(twostsic)
@@ -86,8 +86,8 @@ CALL init_grid()
 
 CALL init_fields()
 
-#if(fullspin&&fullsic)
-CALL init_radmatrix()
+#if(fullsic)
+IF(numspin==2) CALL init_radmatrix()
 #endif
 
 ALLOCATE(psir(kdfull2,kstate))

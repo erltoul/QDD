@@ -409,11 +409,11 @@ SUBROUTINE pseudosoft2()
 
 !------------------------------------------------------------
 USE params
-!USE kinetic
+!USE kineticx
 USE coulsolv
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension rho(2*kdfull2)
-REAL(DP) :: pseudorho(kdfull2)
+REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP) :: potsave(kdfull2)
 REAL(DP) :: potshort(kdfull2)
 REAL(DP) :: ri(3)
@@ -421,13 +421,13 @@ INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 
 EXTERNAL v_soft
-
-DO ind=1,nxyz
-  potion(ind)=0D0
-  potsave(ind)=0D0
-  potshort(ind)=0D0
-  IF(ipseudo == 1) pseudorho(ind) = 0D0
-END DO
+ALLOCATE(pseudorho(kdfull2))
+!DO ind=1,kdfull2
+  potion=0D0
+  potsave=0D0
+  potshort=0D0
+  IF(ipseudo == 1) pseudorho = 0D0
+!END DO
 
 
 IF(ipseudo == 1) THEN
@@ -736,6 +736,8 @@ DO ind=1,kdfull2
 END DO
 
 !      call testImage(potion,pseudorho)
+
+DEALLOCATE(pseudorho)
 
 RETURN
 END SUBROUTINE pseudosoft2

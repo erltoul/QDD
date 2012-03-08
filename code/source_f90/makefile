@@ -7,7 +7,7 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = IFORT
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
@@ -64,9 +64,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT"
-#	OPT1  =  -p -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT2  =  -p -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT3  =  -p -fpp -w        -g               -align all -autodouble -static
+#	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
 	OPT1  =  -pg -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  =  -pg -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  =  -pg -fpp -w        -g               -align all -autodouble
@@ -79,6 +79,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
+#	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT3  = -fpp -w        -g               -align all -autodouble -static
 	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static

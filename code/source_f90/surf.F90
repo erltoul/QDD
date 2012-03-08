@@ -1,12 +1,14 @@
 INTEGER,PARAMETER :: klmax=2     !  ????
 REAL(DP),PARAMETER :: varelcorelimit=1E-8  ! limiting value for V_elArcore [Ry]
 
-INTEGER,PARAMETER :: kfermi=kxbox*17330  ! length of interpolation table
+!INTEGER,PARAMETER :: kfermi=kxbox*17330  ! length of interpolation table
+INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
+                                      ! uises here fixed length -- check!
 
 
 !  surface part:
-INTEGER,PARAMETER :: ngpar = 2
-INTEGER,PARAMETER :: maxpar = MAX(ng,ngpar) ! max of any used particle
+INTEGER,PARAMETER :: ngpar = 400
+INTEGER :: maxpar 
 INTEGER,PARAMETER :: maxnlayers=3
 INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
 
@@ -15,7 +17,7 @@ INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
 INTEGER :: nsg_arelcore,imobtmp
 INTEGER :: isubgcenter(3*ngpar),ioutofbox(3*ngpar)
 REAL(DP) :: c_dipmod=3.387D0
-REAL(DP) :: rfieldtmp(kdfull2)
+REAL(DP),ALLOCATABLE :: rfieldtmp(:)
 REAL(DP) :: rscaltmp,chgtmp,sigtmp
 
 
@@ -51,7 +53,8 @@ REAL(DP) :: fxk(ngpar),fyk(ngpar),fzk(ngpar), fxe(ngpar),fye(ngpar),fze(ngpar)
 REAL(DP) :: fxeold(ngpar),fyeold(ngpar),fzeold(ngpar)
 REAL(DP) :: chgc(ngpar),chge(ngpar),chgk(ngpar)
 REAL(DP) :: forcesx(3*ngpar),forcesy(3*ngpar),forcesz(3*ngpar)
-REAL(DP) :: fxt(ng),fyt(ng),fzt(ng), rtransvec(3,3)
+REAL(DP),ALLOCATABLE :: fxt(:),fyt(:),fzt(:)
+REAL(DP) :: rtransvec(3,3)
 REAL(DP) :: celldipole(3),cellquad(3,3),cellmult(klmax,2*klmax+1)
 REAL(DP) :: shiftx=0D0,shifty=0D0,shiftz=0D0,fermiac,fermibc,fermicc
 REAL(DP) :: fermiae,fermibe,fermice,fermiak,fermibk,fermick
@@ -73,8 +76,8 @@ REAL(DP),ALLOCATABLE :: potvdw(:),frho(:,:)
 
 
 #if(raregas)
-REAL(DP) :: potstat(kdfull2),potesfixed(kdfull2)
-REAL(DP) :: potesmob(kdfull2), phim(kdfull2),phimv(kdfull2),phimd(kdfull2)
+REAL(DP),ALLOCATABLE :: potstat(:),potesfixed(:)
+REAL(DP),ALLOCATABLE :: potesmob(:), phim(:),phimv(:),phimd(:)
 #endif
 
 REAL(DP) :: forx,fory,forz
@@ -109,8 +112,8 @@ REAL(DP) :: surftemp=0D0, scaledist=1D0,scaledistx,scaledisty,scaledistz
 REAL(DP) :: chgc0,chge0,chgk0
 REAL(DP) :: unfixcrad=-1D0,unfixerad=-1D0,unfixkrad=-1D0
 REAL(DP) :: unfixclateralrad=-1D0,unfixelateralrad=-1D0,unfixklateralrad=-1D0
-REAL(DP) :: unfixclateralrady=-1D0,unfixelateralrady=-1D0, unfixklateralrady=-1D0
-REAL(DP) :: unfixclateralradx=-1D0,unfixelateralradx=-1D0, unfixklateralradx=-1D0
+REAL(DP) :: unfixclateralrady=-1D0,unfixelateralrady=-1D0,unfixklateralrady=-1D0
+REAL(DP) :: unfixclateralradx=-1D0,unfixelateralradx=-1D0,unfixklateralradx=-1D0
 REAL(DP) :: fixcbelow=-1D6,fixebelow=-1D6,fixkbelow=-1D6
 REAL(DP) :: fixcbelowy=-1D6,fixebelowy=-1D6,fixkbelowy=-1D6 
 REAL(DP) :: fixcbelowx=-1D6,fixebelowx=-1D6,fixkbelowx=-1D6
