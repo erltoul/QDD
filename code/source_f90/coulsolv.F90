@@ -11,14 +11,6 @@ INCLUDE 'falr.fftw.F90'
 !INCLUDE 'falr.fftw.F90'
 !#endif
 
-#if(fftw_gpu)
-INCLUDE 'falr.fftw.F90'
-#endif
-
-!#if(fftw3d_gpu)
-!INCLUDE 'falr.fftw.F90'
-!#endif
-
 #if(netlib_fft)
 INCLUDE 'falr.F90'
 #endif
@@ -31,18 +23,6 @@ INCLUDE 'coulex.fftw.F90'
 
 !#if(fftw3d_cpu)
 !INCLUDE 'coulex.fftw3d.F90'
-!#endif
-
-#if(fftw_gpu)
-INCLUDE 'coulex.fftwgpu3d.F90'
-#endif
-
-!#if(fftw_gpu)
-!INCLUDE 'coulex.fftwgpu.F90'
-!#endif
-
-!#if(fftw3d_gpu)
-!INCLUDE 'coulex.fftwgpu3d.F90'
 !#endif
 
 #if(netlib_fft)

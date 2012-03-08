@@ -499,9 +499,6 @@ WRITE(123,*)'NETLIB'
 #if(fftw_cpu)
 WRITE(123,*)'FFTW'
 #endif
-#if(fftw_gpu)
-WRITE(123,*)'cuFFT'
-#endif
 WRITE(123,*)'Box :',nx2,ny2,nz2
 WRITE(123,*)'Walltime =',time_absfin-time_absinit
 CLOSE(123)
