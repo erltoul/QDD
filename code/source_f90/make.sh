@@ -63,7 +63,7 @@ else
     sed -i -e 's/madelungonly.*/madelungonly 0/' define.h
     sed -i -e 's/knode=.*/knode='$nb_procs'/' params.F90
     sed -i -e 's/EXEC = essai\..*/EXEC = essai\.par/' makefile
-    sed -i -e 's/CF90    = .*/CF90    = GFORT/' makefile
+    sed -i -e 's/CF90    = .*/CF90    = IFORT/' makefile
     sed -i -e 's/USE_MPI = .*/USE_MPI = YES/' makefile
 fi
 
