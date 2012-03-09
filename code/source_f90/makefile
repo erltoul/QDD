@@ -79,12 +79,12 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-#	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT3  = -fpp -w        -g               -align all -autodouble -static
-	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -w        -g               -align all -autodouble -static
+#	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
