@@ -7,7 +7,7 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = IFORT1
+CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
@@ -216,7 +216,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        short.o image.o lattice.o
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-OBJS = $(OBJINT) cuda.o alloc_cuda.o
+OBJS = $(OBJINT) cuda.o cuda_alloc.o
 endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
@@ -255,9 +255,9 @@ main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 #ifeq "$(DIM)" "1d"
-#kinetic.o : kinetic.F90 fft.fftw1dgpu.F90 findiff.F90 define.h makefile params.o cuda.o alloc_cuda.o
+#kinetic.o : kinetic.F90 fft.fftw1dgpu.F90 findiff.F90 define.h makefile params.o cuda.o cuda_alloc.o
 #else
-kinetic.o : kinetic.F90 fft.fftw3dgpu.F90 findiff.F90 define.h makefile params.o cuda.o alloc_cuda.o
+kinetic.o : kinetic.F90 fft.fftw3dgpu.F90 findiff.F90 define.h makefile params.o cuda.o cuda_alloc.o
 #endif
 endif
 
@@ -274,7 +274,7 @@ kinetic.o : kinetic.F90 fft.fftw3d.F90 findiff.F90 define.h makefile params.o ff
 endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.fftwgpu3d.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o cuda.o alloc_cuda.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.fftwgpu3d.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o cuda.o cuda_alloc.o
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"

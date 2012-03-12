@@ -31,7 +31,7 @@
 !
 #define raregas 0
 !
-!choose fft solver (only one !)
+!choose fft solver (choose only one)
 !For the moment, don't use iffastpropag with GPU
 !
 #define netlib_fft 0

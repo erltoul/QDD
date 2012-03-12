@@ -364,7 +364,8 @@ COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 
 ! ************************************************************
-
+WRITE(6,*)'xgradient'
+STOP
 dkx=pi/(dx*nx)
 DO i3=1,nz2
   DO i2=1,ny2
