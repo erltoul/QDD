@@ -2565,8 +2565,9 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
   sumy=0D0
   sumz=0D0
   DO ion=1,nion
+    r2iona = SQRT(cx(ion)**2+cy(ion)**2+cz(ion)**2)
     IF(MOD(it,jpos) == 0) WRITE(21,'(1f13.5,3e17.8,1pg13.5)')  &
-        tfs,cx(ion),cy(ion),cz(ion),r2ion   !  ecorr
+        tfs,cx(ion),cy(ion),cz(ion),r2iona   !  ecorr
     IF(MOD(it,jvel) == 0) WRITE(22,'(1f13.5,3e17.8,1pg13.5)')  &
         tfs,cpx(ion),cpy(ion),cpz(ion),ekion
     sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836.

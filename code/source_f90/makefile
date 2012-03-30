@@ -11,7 +11,7 @@ CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = FFTW
+TYPE_FFT = NETLIB
 # debugging option
 DEBUG   = NO
 
@@ -79,9 +79,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -fpp -pg -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -pg -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -pg -w        -g               -align all -autodouble -static
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
@@ -258,7 +258,7 @@ coulsolv.o: coulsolv.F90 falr.F90 coulex.fftw.F90 findiff-sinft.F90 define.h mak
 endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 coulex.fftw.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
 endif
 
 loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o coulsolv.o

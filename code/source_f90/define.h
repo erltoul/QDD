@@ -33,7 +33,7 @@
 !
 !choose fft solver (only one !)
 !
-#define netlib_fft 0
-#define fftw_cpu 1
+#define netlib_fft 1
+#define fftw_cpu 0
 !#define fftw3d_cpu 0 !Used only to determine wich 1d or 3d FFTS are the fastest
 
