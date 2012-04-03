@@ -249,7 +249,7 @@ ifeq "$(TYPE_FFT)" "FFTW"
 #ifeq "$(DIM)" "1d"
 #kinetic.o : kinetic.F90 fft.fftw1d.F90 findiff.F90 define.h makefile params.o fftw.o
 #else
-kinetic.o : kinetic.F90 fft.fftw3d.F90 findiff.F90 define.h makefile params.o fftw.o
+kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftw.o
 #endif
 endif
 

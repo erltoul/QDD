@@ -2,9 +2,9 @@
 
 #if(gridfft)
 
-#if(fftw_cpu)
-INCLUDE "fft.fftw3d.F90"
-#endif
+!#if(fftw_cpu)
+!INCLUDE "fft.fftw3d.F90"
+!#endif
 
 !#if(fftw_cpu)
 !INCLUDE "fft.fftw1d.F90"
@@ -14,8 +14,8 @@ INCLUDE "fft.fftw3d.F90"
 !INCLUDE "fft.fftw3d.F90"
 !#endif
 
-#if(netlib_fft)
-INCLUDE "fft.F90"
+#if(netlib_fft|fftw_cpu)
+#include "fft.F90"
 #endif
 
 #endif !gridfft

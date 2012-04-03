@@ -1,4 +1,7 @@
 MODULE kinetic
+#if(fftw_cpu)
+USE, intrinsic :: iso_c_binding
+#endif
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -16,10 +19,18 @@ REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
 INTEGER, PRIVATE :: kfft,kfft2,kdfull2
 
+#if(netlib_fft)
 COMPLEX(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
+#endif
+#if(fftw_cpu)
+COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:)
+type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
+type(C_PTR), PRIVATE :: pforw,pback
+INTEGER(C_INT), PRIVATE :: wisdomtest
+#endif
 
 CONTAINS
 !-----init_grid_fft-----------------------------------------------------
@@ -28,7 +39,14 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 
 !     initialize details for FFT
 
+#if(fftw_cpu)
+USE FFTW
+#endif
+
 REAL(DP) :: dt1,h2m
+#if(fftw_cpu)
+INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
+#endif
 
 nx2=nx0;ny2=ny0;nz2=nz0
 kxmax=nx0;kymax=ny0;kzmax=nz0
@@ -46,9 +64,14 @@ dkz=pi/(dz0*nz)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
+#if(netlib_fft)
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
+#endif
+#if(fftw_cpu)
+ALLOCATE(ffta(kxmax,kymax,kzmax))
+#endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
 WRITE(7,*) ' testprint EYE=',eye
@@ -113,6 +136,64 @@ DO i1=1,nx2
   akpropx(i1)=EXP(-eye*dt1*zkx**2*h2m)
 END DO
 
+#if(fftw_cpu)
+IF (nini==0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+  END IF
+  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  nini  = nx2*ny2*nz2
+  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  nini  = nx2*ny2*nz2
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  END IF
+  nini  = nx2*ny2*nz2
+ELSE IF(nini /= nx2*ny2*nz2) THEN
+  STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
+END IF
+IF(nxini == 0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+  END IF
+  pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  nxini  = nx2
+!       write(6,'(a)') ' x-fft initialized '
+ELSE IF(nxini /= nx2) THEN
+  STOP ' nx2 in four3d not as initialized!'
+END IF
+IF(nyini == 0) THEN
+  pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  nyini  = ny2
+!       write(6,'(a)') ' y-fft initialized '
+ELSE IF(nyini /= ny2) THEN
+  STOP ' ny2 in four3d not as initialized!'
+END IF
+IF(nzini == 0) THEN
+  pforwz=fftw_plan_dft_1d(nz2,fftb(1,i1),fftb(1,i1),FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz=fftw_plan_dft_1d(nz2,fftb(1,i1),fftb(1,i1),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  nzini  = nz2
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  END IF
+!       write(6,'(a)') ' z-fft initialized '
+ELSE IF(nzini /= nz2) THEN
+  STOP ' nz2 in four3d not as initialized!'
+END IF
+#endif
+
 END SUBROUTINE init_grid_fft
 
 
@@ -126,13 +207,19 @@ SUBROUTINE  kinprop(q1,q2)
 !       propagation with exp(-i*dt*e_kin)
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 
+#if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
+#endif
 
+#if(netlib_fft)
 !       check initialization
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
@@ -157,6 +244,7 @@ IF(nzini == 0) THEN
 ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
+#endif
 
 !       propagation in x-direction
 
@@ -167,11 +255,21 @@ DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
     END DO
+#if(netlib_fft)
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic fft
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwx,fftax,fftax)
+#endif
     DO i1=1,nx2
       fftax(i1) = akpropx(i1)*fftax(i1)
     END DO
+#if(netlib_fft)
     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic back fft
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackx,fftax,fftax)
+#endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       q2(ind)= fftax(MOD(i1+nx,nx2)+1)*xfnorm
@@ -188,11 +286,21 @@ DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftay(MOD(i2+ny,ny2)+1) = q2(ind)
     END DO
+#if(netlib_fft)
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwy,fftay,fftay)
+#endif
     DO i2=1,ny2
       fftay(i2) = akpropy(i2)*fftay(i2)
     END DO
+#if(netlib_fft)
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+#endif
+#if(fftw_cpu)
+      CALL fftw_execute_dft(pbacky,fftay,fftay)
+#endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       q2(ind)= fftay(MOD(i2+ny,ny2)+1)*yfnorm
@@ -212,11 +320,21 @@ DO i2=1,ny2
     END DO
   END DO
   DO i1=1,nx2
+#if(netlib_fft)
     CALL dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
+#endif
     DO i3=1,nz2
       fftb(i3,i1) = akpropz(i3)*fftb(i3,i1)
     END DO
+#if(netlib_fft)
     CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+      CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
+#endif
   END DO
   DO i3=1,nz2
     i3m = MOD(i3+nz,nz2)+1
@@ -242,9 +360,12 @@ SUBROUTINE  gradient(fin,gradfout,idirec)
 !  'idirec' (x =1, y=2, z=3).
 !  The fields are given in Fourier space and the gradient is
 !   applied as product with 'kx', 'ky', 'kz'.
-!  
+!
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -257,7 +378,7 @@ INTEGER, INTENT(IN)                          :: idirec
 
   IF(idirec == 1) THEN
 !       x-derivative
-   
+
     dkx=pi/(dx*REAL(nx,DP))
     ind=0
     DO i3=1,nz2
@@ -274,9 +395,9 @@ INTEGER, INTENT(IN)                          :: idirec
       END DO
     END DO
 
-  ELSEIF(idirec == 2) THEN    
+  ELSEIF(idirec == 2) THEN
 !       y-derivative
-    
+
     dky=pi/(dy*REAL(ny,DP))
     ind=0
     DO i3=1,nz2
@@ -293,9 +414,9 @@ INTEGER, INTENT(IN)                          :: idirec
       END DO
     END DO
 
-  ELSEIF(idirec == 3) THEN          
+  ELSEIF(idirec == 3) THEN
 !       z-derivative
-    
+
     ind=0
     dkz=pi/(dz*REAL(nz,DP))
     DO i3=1,nz2
@@ -311,7 +432,7 @@ INTEGER, INTENT(IN)                          :: idirec
         END DO
       END DO
     END DO
-    
+
   ELSE
     STOP ' RGRADIENT called with invalid IDIREC'
   ENDIF
@@ -331,9 +452,12 @@ SUBROUTINE  xgradient_rspace(fin,gradfout)
 !  The gradient of the complex field 'fin' in x-direction.
 !  The fields are given in coordinate space. The gradient is
 !  evaluated in k_x space.
-!  
+!
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -349,7 +473,12 @@ DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftax(MOD(i1+nx,nx2)+1)=fin(ind)  ! copy to workspace
     END DO
+#if(netlib_fft)
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwx,fftax,fftax)    ! basic fft
+#endif
 !                 multiply by k_x factor in k_x space
     DO i1=1,nx2
       IF(i1 >= (nx+1)) THEN
@@ -360,7 +489,12 @@ DO i3=1,nz2
       fftax(i1) = fftax(i1)*eye*zkx
     END DO
 !                 backward transform along x
+#if(netlib_fft)
     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackx,fftax,fftax)
+#endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       gradfout(ind)= fftax(MOD(i1+nx,nx2)+1)/nx2
@@ -383,9 +517,12 @@ SUBROUTINE  ygradient_rspace(fin,gradfout)
 !  The gradient of the complex field 'fin' in y-direction.
 !  The fields are given in coordinate space. The gradient is
 !  evaluated in k_y space.
-!  
+!
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -401,7 +538,12 @@ DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftay(MOD(i2+ny,ny2)+1) = fin(ind)
     END DO
+#if(netlib_fft)
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwy,fftay,fftay)
+#endif
 !                 multiply by k_y factor in k_y space
     DO i2=1,ny2
       IF(i2 >= (ny+1)) THEN
@@ -412,7 +554,12 @@ DO i3=1,nz2
       fftay(i2) = fftay(i2)*eye*zky
     END DO
 !                 backward transform along y
+#if(netlib_fft)
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbacky,fftay,fftay)
+#endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       gradfout(ind)= fftay(MOD(i2+ny,ny2)+1)/ny2
@@ -435,20 +582,27 @@ SUBROUTINE  zgradient_rspace(fin,gradfout)
 !  The gradient of the complex field 'fin' in z-direction.
 !  The fields are given in coordinate space. The gradient is
 !  evaluated in k_z space.
-!  
+!
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+#if(netlib_fft)
 COMPLEX(DP), ALLOCATABLE :: fftaz(:)
+#endif
 
 
 
 ! ************************************************************
 
+#if(netlib_fft)
 ALLOCATE(fftaz(nz2))
+#endif
 
 dkz=pi/(dz*nz)
 DO i2=1,ny2
@@ -459,7 +613,12 @@ DO i2=1,ny2
       i3m = MOD(i3+nz,nz2)+1
       fftaz(i3m) = fin(ind)
     END DO
+#if(netlib_fft)
     CALL dcftf1 (nz2,fftaz,wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwz,fftaz,fftaz)
+#endif
 !                 multiply by k_z factor in k_z space
     DO i3=1,nz2
       IF(i3 >= (nz+1)) THEN
@@ -470,7 +629,12 @@ DO i2=1,ny2
       fftaz(i3) = fftaz(i3)*eye*zkz
     END DO
 !                 backward transform along z
+#if(netlib_fft)
     CALL dcftb1 (nz2,fftaz,wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwz,fftaz,fftaz)
+#endif
     DO i3=1,nz2                  ! copy back
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       gradfout(ind)= fftaz(MOD(i3+nz,nz2)+1)/nz2
@@ -479,7 +643,9 @@ DO i2=1,ny2
   END DO
 END DO
 
+#if(netlib_fft)
 DEALLOCATE(fftaz)
+#endif
 
 RETURN
 
@@ -494,6 +660,9 @@ SUBROUTINE  fftf(q1,q2)
 ! ******************************
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
@@ -506,9 +675,14 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 !    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
 !    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
 
+#if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
+#endif
+#if(fftw_cpu)
+INTEGER,SAVE :: nini=0
+#endif
 
-
+#if(netlib_fft)
 !     check initialization
 
 ! nx=nx2/2
@@ -608,6 +782,17 @@ DO i2=1,ny2
     END DO
   END DO
 END DO
+#endif
+
+#if(fftw_cpu)
+tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
+
+CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
+
+CALL fftw_execute_dft(pforw,ffta,ffta)
+
+CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+#endif
 
 RETURN
 END SUBROUTINE  fftf
@@ -619,6 +804,9 @@ SUBROUTINE  fftback(q1,q2)
 ! ******************************
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
@@ -631,7 +819,9 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 !    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
 !    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
 
+#if(netlib_fft)
 !      data  nxini,nyini,nzini/0,0,0/ ! flag for initialization
+#endif
 ! nxyf=nx2*ny2
 !      nyf=nx2
 !      nx=nx2/2
@@ -639,6 +829,7 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 ! nz=nz2/2
 facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
 
+#if(netlib_fft)
 !     transformation in z-direction
 
 DO i2=1,ny2
@@ -691,6 +882,15 @@ DO i3=1,nz2
     END DO
   END DO
 END DO
+#endif
+#if(fftw_cpu)
+CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
+
+CALL fftw_execute_dft(pback,ffta,ffta)
+
+CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+#endif
+
 RETURN
 END SUBROUTINE  fftback
 
@@ -704,6 +904,9 @@ SUBROUTINE  rftf(q1,q2)
 ! ******************************
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: q1(kdfull2)
@@ -716,11 +919,13 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 !    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
 !    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
 
+#if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
+#endif
 
 
+#if(netlib_fft)
 !     check initialization
-
 ! nx=nx2/2
 ! ny=ny2/2
 ! nz=nz2/2
@@ -821,6 +1026,16 @@ DO i2=1,ny2
     END DO
   END DO
 END DO
+#endif
+#if(fftw_cpu)
+tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
+
+CALL copyr1dto3d(q1,ffta,nx2,ny2,nz2)
+
+CALL fftw_execute_dft(pforw,ffta,ffta)
+
+CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+#endif
 
 RETURN
 END SUBROUTINE  rftf
@@ -833,6 +1048,9 @@ SUBROUTINE  rfftback(q1,q3)
 ! ******************************
 
 USE params
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
@@ -847,7 +1065,9 @@ REAL(DP), INTENT(OUT)                        :: q3(kdfull2)
 !    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
 
 
+#if(netlib_fft)
 COMPLEX(DP),ALLOCATABLE :: q2(:)
+#endif
 
 
 
@@ -858,6 +1078,7 @@ COMPLEX(DP),ALLOCATABLE :: q2(:)
 ! ny=ny2/2
 ! nz=nz2/2
 facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
+#if(netlib_fft)
 !oldc
 !oldc     transformation in z-direction
 !oldc
@@ -932,13 +1153,185 @@ DO i3=1,nz2
 END DO
 
 DEALLOCATE(q2)
+#endif
+#if(fftw_cpu)
+CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
 
+CALL fftw_execute_dft(pback,ffta,ffta)
+
+CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
+#endif
 
 RETURN
 END SUBROUTINE  rfftback
 !INCLUDE 'fftpack.F90'
 !INCLUDE 'fftpack2.F90'
 
+#if(fftw_cpu)
+
+SUBROUTINE copy1dto3d(q1,ffta,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copy1dto3d
+
+! ******************************
+
+SUBROUTINE copy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      q2(ind)=coef*ffta(i1,i2,i3)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copy3dto1d
+
+! ******************************
+
+SUBROUTINE copyr1dto3d(q1,ffta,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+REAL(DP), INTENT(IN)                      :: q1(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: ffta(nbx2,nby2,nbz2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=CMPLX(q1(ind),0D0,DP)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr1dto3d
+
+! ******************************
+
+SUBROUTINE copyr3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: ffta(nbx2,nby2,nbz2)
+REAL(DP), INTENT(OUT)                     :: q2(kdfull2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      q2(ind)=REAL(ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)*coef
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr3dto1d
+
+! ******************************
+
+SUBROUTINE secopy1dto3d(q1,ffta,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      ffta(i1,i2,i3)=q1(ind)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE secopy1dto3d
+
+! ******************************
+
+SUBROUTINE secopy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE secopy3dto1d
+
+! ******************************
+
+SUBROUTINE fft_end()
+
+! ******************************
+
+USE FFTW
+
+CALL fftw_destroy_plan(pforw)
+CALL fftw_destroy_plan(pback)
+CALL fftw_destroy_plan(pforwx)
+CALL fftw_destroy_plan(pforwy)
+CALL fftw_destroy_plan(pforwz)
+CALL fftw_destroy_plan(pforwz1)
+CALL fftw_destroy_plan(pbackx)
+CALL fftw_destroy_plan(pbacky)
+CALL fftw_destroy_plan(pbackz)
+CALL fftw_destroy_plan(pbackz1)
+
+DEALLOCATE(ak,akv)
+DEALLOCATE(akpropx,akpropy,akpropz)
+DEALLOCATE(fftax,fftay,fftb,ffta)
+
+RETURN
+END SUBROUTINE fft_end
+
+#endif
 
 END MODULE kinetic
 
