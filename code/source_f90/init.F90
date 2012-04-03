@@ -464,7 +464,12 @@ END IF
 ! fft:
 #if(gridfft)
 WRITE(iu,'(a)') 'fourier propagation'
+#if(netlib_fft)
 WRITE(iu,'(a)') 'using netlib ffts'
+#endif
+#if(fftw_cpu)
+WRITE(iu,'(a)') 'using fftw@cpu'
+#endif
 #endif
 #if(coufou)
 WRITE(iu,'(a)') 'falr coulomb solver'
