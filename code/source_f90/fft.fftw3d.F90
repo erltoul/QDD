@@ -1,7 +1,6 @@
 MODULE kinetic
 USE, intrinsic :: iso_c_binding
 USE params, ONLY: DP
-USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -30,7 +29,6 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 
 !     initialize details for FFT
 
-USE, intrinsic :: iso_c_binding
 USE FFTW
 
 REAL(DP) :: dt1,h2m
@@ -181,7 +179,6 @@ SUBROUTINE  kinprop(q1,q2)
 !       propagation with exp(-i*dt*e_kin)
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -308,7 +305,6 @@ SUBROUTINE  gradient(fin,gradfout,idirec)
 !  
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -395,6 +391,7 @@ SUBROUTINE  xgradient_rspace(fin,gradfout)
 !  
 
 USE params
+USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -446,6 +443,7 @@ SUBROUTINE  ygradient_rspace(fin,gradfout)
 !  
 
 USE params
+USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -497,6 +495,7 @@ SUBROUTINE  zgradient_rspace(fin,gradfout)
 !  
 
 USE params
+USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
@@ -548,7 +547,6 @@ SUBROUTINE  fftf(q1,q2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -586,7 +584,6 @@ SUBROUTINE  fftback(q1,q2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -625,7 +622,6 @@ SUBROUTINE  rftf(q1,q2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -664,7 +660,6 @@ SUBROUTINE  rfftback(q1,q3)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -703,7 +698,6 @@ SUBROUTINE copy1dto3d(q1,ffta,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
@@ -727,7 +721,6 @@ SUBROUTINE copy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
@@ -751,7 +744,6 @@ SUBROUTINE copyr1dto3d(q1,ffta,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 REAL(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: ffta(nbx2,nby2,nbz2)
@@ -775,7 +767,6 @@ SUBROUTINE copyr3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: ffta(nbx2,nby2,nbz2)
 REAL(DP), INTENT(OUT)                     :: q2(kdfull2)
@@ -799,7 +790,6 @@ SUBROUTINE secopy1dto3d(q1,ffta,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
@@ -823,7 +813,6 @@ SUBROUTINE secopy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
-USE, intrinsic :: iso_c_binding
 
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
@@ -845,6 +834,8 @@ END SUBROUTINE secopy3dto1d
 SUBROUTINE fft_end()
 
 ! ******************************
+
+USE FFTW
 
 CALL fftw_destroy_plan(pforw)
 CALL fftw_destroy_plan(pback)
