@@ -475,7 +475,7 @@ DEALLOCATE(psi)
 
 #if(fftw_cpu)
 CALL fft_end()
-CALL coulex_end()
+CALL coulsolv_end()
 #endif
 
 !                                       ! ends 'else' of 'if(ifscan)'
