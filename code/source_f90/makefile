@@ -37,9 +37,9 @@ DEBUG   = NO
 
 
 ifeq "$(CF90)" "GFORT"
-	OPT1  =  -pg -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
-	OPT2  =  -pg -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -pg -w -g  -fdefault-real-8 -fdefault-double-8
+	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 #	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse                 
 #	OPT2  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse -fdefault-real-8
 #	OPT3  = -cpp -w -g                                              
@@ -52,9 +52,9 @@ endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -pg -w -O3 -msse4.2 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -ffast-math -finline-functions -funroll-loops
-	OPT2  =  -pg -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -pg -w -g  -fdefault-real-8 -fdefault-double-8
+	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -ffast-math -finline-functions -funroll-loops
+	OPT2  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
+	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -cpp -w -g -fbacktrace                 
 	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8
@@ -67,9 +67,9 @@ ifeq "$(CF90)" "IFORT"
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
-	OPT1  =  -pg -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  =  -pg -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT3  =  -pg -fpp -w        -g               -align all -autodouble
+	OPT1  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT3  =  -fpp -w        -g               -align all -autodouble
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
@@ -94,9 +94,9 @@ endif
 
 
 ifeq "$(CF90)" "MPIF90"
-        OPT1  =  -pg -fpp -w -O2 -no-prec-div -align all -autodouble -static
-        OPT2  =  -pg -fpp -w -O2 -no-prec-div -align all -autodouble -static
-        OPT3  =  -pg -fpp -w -g               -align all -autodouble -static
+        OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble -static
+        OPT2  =  -fpp -w -O2 -no-prec-div -align all -autodouble -static
+        OPT3  =  -fpp -w -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
         OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
         OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
@@ -254,11 +254,11 @@ kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftw.o
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.fftw.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o
 endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 coulex.fftw.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
 endif
 
 loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o coulsolv.o
