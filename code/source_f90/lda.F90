@@ -320,53 +320,6 @@ END SUBROUTINE calc_lda_gunnar
 
 !#if(pw92)
 
-#if(lda_gpu)
-!     ******************************
-
-SUBROUTINE calc_lda_pw92(rho,chpdft)
-
-!     ******************************
-
-
-!    computes the lsda potential and the rear.energ.
-!    with the perdew-wang functional
-!    attention: the rearrangement energy for e-tot has to be computed
-!               the same way as for gunnarsson & lundqvist
-!               the mean-field part is o.k.!!!!!
-
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!REAL(DP)                                     :: int_ec(2*kdfull2)
-
-enrear = 0D0
-IF(directenergy) THEN
-  enerpw = 0D0
-END IF
-ec=0D0
-et=0.0
-
-IF(directenergy) THEN
-  CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec,enerpw)
-ELSE
-  CALL calc_lda_gpu(rho,chpdft,nxyz,e2,ec)
-END IF
-
-!write (6,*)ec
-!STOP
-
-enrear=ec*dvol
-
-IF(directenergy) THEN
-  enerpw = enerpw*dvol
-END IF
-
-RETURN
-END SUBROUTINE calc_lda_pw92
-
-#else
 !     ******************************
 
 SUBROUTINE calc_lda_pw92(rho,chpdft)
@@ -584,7 +537,6 @@ END IF
 
 RETURN
 END SUBROUTINE calc_lda_pw92
-#endif !lda_gpu
 !#endif
 
 

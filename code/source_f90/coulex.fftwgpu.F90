@@ -292,7 +292,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: rhokr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
 
-!INTEGER,SAVE :: fini=0
 LOGICAL,PARAMETER :: tprint=.false.
 LOGICAL,PARAMETER :: rqplot=.false.
 

@@ -464,7 +464,12 @@ END IF
 ! fft:
 #if(gridfft)
 WRITE(iu,'(a)') 'fourier propagation'
+#if(netlib_fft)
 WRITE(iu,'(a)') 'using netlib ffts'
+#endif
+#if(fftw_cpu)
+WRITE(iu,'(a)') 'using fftw@cpu'
+#endif
 #endif
 #if(coufou)
 WRITE(iu,'(a)') 'falr coulomb solver'
@@ -1494,6 +1499,9 @@ IF(myn == 0)THEN
         STOP 'element not provided with erf pseudo potential'
       END IF
     END IF
+    WRITE(6,'(a,i4,a,3(g12.4),i4,1x,2(1pg13.5))')  &
+      ' ion nr.',ion,':  x,y,z,type,params=',  &
+        cx(ion),cy(ion),cz(ion),np(ion),amu(np(ion)),crloc(np(ion))
     IF(np(ion) > 92) STOP 'element out of range'
     IF(amu(np(ion)) == 0D0) STOP 'unknown elem. found'
 

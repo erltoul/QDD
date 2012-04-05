@@ -1,10 +1,16 @@
 MODULE coulsolv
+#if(fftw_cpu|fftw_gpu)
+USE, intrinsic :: iso_c_binding
+#endif
 USE params, ONLY: DP
+#if(fftw_gpu)
+USE cuda_alloc
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
-INTEGER,PRIVATE :: kxmax,kymax,kzmax, ksmax
-! kxamx must be the largest
+INTEGER,PRIVATE :: kxmax,kymax,kzmax,ksmax
+! kxmax must be the largest
 INTEGER,PRIVATE :: kdfull
 INTEGER,PRIVATE :: kdred
 INTEGER,PRIVATE :: kfft2
@@ -28,17 +34,37 @@ INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz
 !COMMON /kgrid/ akv2r,akv2i, dkx,dky,dkz,akmax,dksp,  &
 !    ikm,nxk,nxklo,nxkhi,nksp,nkxyz,ecut
 
-REAL(DP),ALLOCATABLE,PRIVATE :: wrkx(:),wrky(:),wrkz(:)
-REAL(DP),ALLOCATABLE,PRIVATE :: wsavex(:),wsavey(:),wsavez(:)
-INTEGER,ALLOCATABLE,PRIVATE :: ifacx(:),ifacy(:),ifacz(:)
 !COMMON /fftini/wrkx,wrky,wrkz,wsavex,wsavey,wsavez,ifacx,ifacy,ifacz
 
 ! include block: option
 REAL(DP),PARAMETER,PRIVATE :: zero=0D0
 REAL(DP),PARAMETER,PRIVATE :: pi=3.141592653589793D0
 
-COMPLEX(DP),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
 !COMMON /fftcom/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax)
+
+#if(netlib_fft)
+REAL(DP),ALLOCATABLE,PRIVATE :: wrkx(:),wrky(:),wrkz(:)
+REAL(DP),ALLOCATABLE,PRIVATE :: wsavex(:),wsavey(:),wsavez(:)
+INTEGER,ALLOCATABLE,PRIVATE :: ifacx(:),ifacy(:),ifacz(:)
+COMPLEX(DP),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
+#endif
+
+#if(fftw_cpu)
+type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
+INTEGER(C_INT), PRIVATE :: wisdomtest
+COMPLEX(C_DOUBLE_COMPLEX),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
+#endif
+
+#if(fftw_gpu)
+INTEGER*8, PRIVATE :: pfft
+INTEGER,PARAMETER,PRIVATE :: batch=1
+COMPLEX(C_DOUBLE_COMPLEX),PRIVATE, POINTER :: fftac(:,:,:)
+TYPE(C_PTR), PRIVATE :: c_p_fftac
+COMPLEX(C_DOUBLE_COMPLEX),PRIVATE,POINTER :: gpu_fftac(:,:,:)
+TYPE(C_PTR),PRIVATE :: c_gpu_fftac
+INTEGER, PRIVATE :: res
+COMPLEX(DP), PARAMETER :: size_cmplx=CMPLX(0D0,0D0,DP)
+#endif
 
 CONTAINS
 
@@ -64,13 +90,20 @@ dz=dz0
 
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
+ALLOCATE(akv2r(kdred),akv2i(kdred))
+ALLOCATE(ikm(kxmax,kymax))
+#if(netlib_fft)
+ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
+#endif
+#if(fftw_cpu)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
-ALLOCATE(akv2r(kdred),akv2i(kdred))
-ALLOCATE(ikm(kxmax,kymax))
-
+#endif
+#if(fftw_gpu)
+CALL my_cuda_allocate_coulex() ! Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
+#endif
 
 !     call input routine fftinp, which initializes the grid and fft tabl
 
@@ -180,8 +213,6 @@ WRITE(6,*) 'k**2 along x'
 DO i1=1,nxi
   WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2r(i1+ind),akv2i(i1+ind)
 END DO
-
-
 
 RETURN
 END SUBROUTINE fftinp
@@ -334,6 +365,9 @@ END SUBROUTINE coufou2
 !-----fourf-------------------------------------------------------fourf
 
 SUBROUTINE fourf(pskr,pski)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -345,13 +379,13 @@ REAL(DP), INTENT(OUT)                        :: pski(kdred)
 !     I/O: pskr   real part of the wave-function
 !          pski   imaginary part of the wave-function
 
-DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+DATA  mxini,myini,mzini,mini/0,0,0/              ! flag for initialization
 
 !----------------------------------------------------------------------
 
 
 !     check initialization
-
+#if(netlib_fft)
 IF(mxini == 0) THEN
   CALL dcfti1 (kfftx,wsavex,ifacx)
   mxini  = kfftx
@@ -373,15 +407,68 @@ IF(mzini == 0) THEN
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
+#endif
+
+#if(fftw_cpu)
+IF(mxini == 0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+  END IF
+  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  mxini  = kfftx
+  WRITE(7,'(a)') ' x-fft initialized '
+ELSE IF(mxini /= kfftx) THEN
+  STOP ' nx2 in four3d not as initialized!'
+END IF
+IF(myini == 0) THEN
+  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  myini  = kffty
+  WRITE(7,'(a)') ' y-fft initialized '
+ELSE IF(myini /= kffty) THEN
+  STOP ' ny2 in four3d not as initialized!'
+END IF
+IF(mzini == 0) THEN
+  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  mzini  = kfftz
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  END IF
+  WRITE(7,'(a)') ' z-fft initialized '
+ELSE IF(mzini /= kfftz) THEN
+  STOP ' nz2 in four3d not as initialized!'
+END IF
+#endif
+
+#if(fftw_gpu)
+IF(mini == 0) THEN
+  CALL cuda_plan_3d(pfft,kxmax,kymax,kzmax)
+  mini  = kxmax*kymax*kzmax
+  WRITE(7,'(a)') ' fft initialized '
+ELSE IF(mini /= kxmax*kymax*kzmax) THEN
+  STOP ' n2 in four3d not as initialized!'
+END IF
+#endif
+
 nzzh=(nzi-1)*nxy1
 nyyh=(nyi-1)*nxi
 !test      sqh=sqrt(0.5)
 tnorm=grnorm*fnorm
 
+#if(netlib_fft|fftw_cpu)
 CALL fftx(pskr,pski)
 CALL ffty(pskr,pski)
 CALL fftz(pskr,pski)
-
+#endif
+#if(fftw_gpu)
+CALL fft(pskr,pski)
+#endif
 
 !test2      write(6,'(a)') ' TNORM=',tnorm
 DO i1=1,nkxyz
@@ -418,19 +505,25 @@ DO i=1,nkxyz
   pski(i)=tnorm*pski(i)
 END DO
 
-
+#if(netlib_fft|fftw_cpu)
 CALL ffbz(pskr,pski)
 CALL ffby(pskr,pski)
 CALL ffbx(pskr,pski)
-
+#endif
+#if(fftw_gpu)
+CALL ffb(pskr,pski)
+#endif
 
 RETURN
 END SUBROUTINE fourb
 
-
+#if(netlib_fft|fftw_cpu)
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
@@ -469,9 +562,13 @@ DO i3=1,nzi
     END DO
     
 !         execution of the fourier-transformation
-    
+
+#if(netlib_fft)
     CALL dcftf1 (kfftx,fftax,wrkx,wsavex,ifacx)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwx,fftax,fftax)
+#endif
 !         decomposition of the wave-function
 !        positive space
     
@@ -500,6 +597,9 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -543,8 +643,14 @@ DO i3=1,nzi
     END DO
     
 !         execution of the fourier-transformation
+
+#if(netlib_fft)
     CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwy,fftay,fftay)
+#endif
+
 !         decomposition of the wave-function
 !         positive space
     ii=i0+nxi*(ny-2)
@@ -571,6 +677,9 @@ END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
 SUBROUTINE fftz(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -600,7 +709,12 @@ DO i2=1,kffty
   END DO
 !test        do i1=1,kfftx
   DO i1=nx,nxi ! 1,nx1
+#if(netlib_fft)
     CALL dcftf1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
+#endif
   END DO
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -622,6 +736,9 @@ END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
 SUBROUTINE ffbz(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -645,7 +762,12 @@ DO i2=1,kffty
     END DO
   END DO
   DO i1=nx,nxi ! 1,nx1
+#if(netlib_fft)
     CALL dcftb1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
+#endif
   END DO
   DO i3=1,kfftz                  ! copy back
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -662,6 +784,9 @@ END SUBROUTINE ffbz
 !-----ffby-------------------------------------------------------------
 
 SUBROUTINE ffby(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -702,8 +827,12 @@ DO i3=1,nz1
     END DO
     
 !         execution
+#if(netlib_fft)
     CALL dcftb1 (kffty,fftay,wrky,wsavey,ifacy)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbacky,fftay,fftay)
+#endif
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nxi*(ny-2)
@@ -729,6 +858,9 @@ END SUBROUTINE ffby
 !-----ffbx-------------------------------------------------------------
 
 SUBROUTINE ffbx(psxr,psxi)
+#if(fftw_cpu)
+USE FFTW
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -761,8 +893,12 @@ DO i3=1,nz1
     END DO
     
 !        execution
+#if(netlib_fft)
     CALL dcftb1 (kfftx,fftax,wrkx,wsavex,ifacx)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackx,fftax,fftax)
+#endif
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nx-1
@@ -778,13 +914,224 @@ DO i3=1,nz1
       psxr(ii)=REAL(fftax(i1))
       psxi(ii)=AIMAG(fftax(i1))
     END DO
-    
-    
   END DO  
-  END DO
+END DO
   
-  
-  RETURN
+RETURN
 END SUBROUTINE ffbx
+#endif
+
+#if(fftw_gpu)
+!-----fft--------------------------------------------------------------
+
+SUBROUTINE fft(psxr,psxi)
+
+USE, intrinsic :: iso_c_binding
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
+REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
+
+CALL copyr1dto3d(psxr,fftac,kfftx,kffty,kfftz)
+
+CALL run_fft_for3d(pfft,fftac,fftac,gpu_fftac,kdred)
+
+CALL copy3dto1d(fftac,psxr,psxi,kfftx,kffty,kfftz)
+
+RETURN
+END SUBROUTINE fft
+
+!-----ffb--------------------------------------------------------------
+
+SUBROUTINE ffb(psxr,psxi)
+
+USE, intrinsic :: iso_c_binding
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
+REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
+
+!----------------------------------------------------------------------
+
+CALL secopy1dto3d(psxr,psxi,fftac,kfftx,kffty,kfftz)
+
+CALL run_fft_back3d(pfft,fftac,fftac,gpu_fftac,kdred)
+
+CALL copyr3dto1d(fftac,psxr,psxi,kfftx,kffty,kfftz)
+
+RETURN
+END SUBROUTINE ffb
+
+! ******************************
+
+SUBROUTINE copyr1dto3d(psxr,fftac,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+USE, intrinsic :: iso_c_binding
+
+REAL(DP), INTENT(IN)                      :: psxr(kdred)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: fftac(nbx2,nby2,nbz2)
+INTEGER :: nxyfn,nyfn,nnx,nny,nnz
+
+nxyfn = nbx2*nbz2
+nyfn  = kfftx
+nnx2=nx+nx
+nny2=ny+ny
+nnz2=nz+nz
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyfn+(i2-1)*nyfn+i1
+      fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nny2,nby2)+1,MOD(i3+nnz2,nbz2)+1)=CMPLX(psxr(ind),0D0,DP)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr1dto3d
+
+! ******************************
+
+SUBROUTINE copy3dto1d(fftac,psxr,psxi,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+USE, intrinsic :: iso_c_binding
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: fftac(nbx2,nby2,nbz2)
+REAL(DP), INTENT(OUT)                     :: psxr(kdred),psxi(kdred)
+INTEGER :: nxyfn,nyfn,nnx,nny,nnz
+
+nxyfn = nbx2*nbz2
+nyfn  = kfftx
+nnx2=nx+nx
+nny2=ny+ny
+nnz2=nz+nz
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyfn+(i2-1)*nyfn+i1
+      psxr(ind)=REAL(fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nny2,nby2)+1,MOD(i3+nnz2,nbz2)+1))
+      psxi(ind)=AIMAG(fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nny2,nby2)+1,MOD(i3+nnz2,nbz2)+1))
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copy3dto1d
+
+! ******************************
+
+SUBROUTINE secopy1dto3d(psxr,psxi,fftac,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+USE, intrinsic :: iso_c_binding
+
+REAL(DP), INTENT(IN)                      :: psxr(kdred),psxi(kdred)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: fftac(nbx2,nby2,nbz2)
+INTEGER :: nxyfn,nyfn,nnx,nny,nnz
+
+nxyfn = nbx2*nbz2
+nyfn  = kfftx
+nnx2=nx+nx
+nny2=ny+ny
+nnz2=nz+nz
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyfn+(i2-1)*nyfn+i1
+      fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nny2,nby2)+1,MOD(i3+nnz2,nbz2)+1)=CMPLX(psxr(ind),psxi(ind),DP)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE secopy1dto3d
+
+! ******************************
+
+SUBROUTINE copyr3dto1d(fftac,psxr,psxi,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+USE, intrinsic :: iso_c_binding
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: fftac(nbx2,nby2,nbz2)
+REAL(DP), INTENT(OUT)                     :: psxr(kdred),psxi(kdred)
+INTEGER :: nxyfn,nyfn,nnx,nny,nnz
+
+nxyfn = nbx2*nbz2
+nyfn  = kfftx
+nnx2=nx+nx
+nny2=ny+ny
+nnz2=nz+nz
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyfn+(i2-1)*nyfn+i1
+      psxr(ind)=REAL(fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nny2,nby2)+1,MOD(i3+nnz2,nbz2)+1))
+      psxi(ind)=AIMAG(fftac(MOD(i1+nnx2,nbx2)+1,MOD(i2+nyy2,nby2)+1,MOD(i3+nnz2,nbz2)+1))
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr3dto1d
+
+! ******************************
+#endif
+
+#if(fftw_cpu|fftw_gpu)
+SUBROUTINE coulsolv_end()
+#if(fftw_cpu)
+USE FFTW
+
+CALL fftw_destroy_plan(pforwx)
+CALL fftw_destroy_plan(pforwy)
+CALL fftw_destroy_plan(pforwz)
+CALL fftw_destroy_plan(pbackx)
+CALL fftw_destroy_plan(pbacky)
+CALL fftw_destroy_plan(pbackz)
+#endif
+
+#if(fftw_gpu)
+res = cudaFreeHost(c_p_fftac)
+res = cudaFree(c_gpu_fftac)
+CALL kill_plan(pfft)
+#endif
+
+#if(fftw_cpu)
+DEALLOCATE(fftax,fftay,fftb)
+#endif
+DEALLOCATE(xval,yval,zval)
+DEALLOCATE(xt2,yt2,zt2)
+DEALLOCATE(ikm)
+
+RETURN
+END SUBROUTINE coulsolv_end
+#endif
+
+#if(fftw_gpu)
+SUBROUTINE my_cuda_allocate_coulex()
+
+! ******************************
+
+res = cudaMallocHost (c_p_fftac,kdred*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftac,fftac,[kxmax,kymax,kzmax])
+res = cudaMalloc(c_gpu_fftac,kdred*sizeof(size_cmplx))
+CALL c_f_pointer(c_gpu_fftac,gpu_fftac,[kxmax,kymax,kzmax])
+
+END SUBROUTINE my_cuda_allocate_coulex
+#endif
 
 END MODULE coulsolv
