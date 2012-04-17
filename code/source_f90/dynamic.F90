@@ -322,7 +322,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
-
+LOGICAL,PARAMETER :: copyback=.true.
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
 ! 
@@ -397,7 +397,7 @@ DO nb=1,nstate
   IF(iffastpropag == 1) THEN
     CALL kinprop(q0(1,nb),q1)
   ELSE
-    CALL fftf(q0(1,nb),q1)
+    CALL fftf(q0(1,nb),q1,copyback)
 !    CALL cmult3d(q1,ak)
     q1 = ak*q1
     CALL fftback(q1,q0(1,nb))
@@ -995,13 +995,21 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
 !COMPLEX(DP) :: psi2(kdfull2)
 COMPLEX(DP) :: wfovlp
 !EQUIVALENCE(psi2(1),w1(1))
+LOGICAL,PARAMETER :: copyback=.true.
 
 !------------------------------------------------------------------
 
 ALLOCATE(psi2(kdfull2))
 
 #if(gridfft)
+#if(netlib_fft|fftw_cpu)
 CALL fftf(psin,psi2)
+#endif
+#if(fftw_gpu)
+CALL fftf(psin,psi2,copyback)
+#endif
+
+
 sum0 = 0D0
 sumk = 0D0
 DO ii=1,kdfull2
@@ -1470,7 +1478,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:),q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
-
+LOGICAL,PARAMETER :: copyback=.true.
 !------------------------------------------------------------------
 
 ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
@@ -1526,7 +1534,7 @@ END DO
 DO nb=1,nstate
   o=occup(nb)
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akx(ind)
   END DO
@@ -1539,7 +1547,7 @@ DO nb=1,nstate
   END DO
   
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*aky(ind)
   END DO
@@ -1551,7 +1559,7 @@ DO nb=1,nstate
   END DO
   
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akz(ind)
   END DO

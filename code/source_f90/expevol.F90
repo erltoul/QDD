@@ -215,6 +215,7 @@ COMPLEX(DP) :: wfovlp
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
 LOGICAL :: tpri
+LOGICAL,PARAMETER :: copyback=.true.
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -232,7 +233,7 @@ ALLOCATE(q1(kdfull2),q2(kdfull2))
 !     action of kinetic energy
 
 #if(gridfft)
-CALL fftf(qact,q1)
+CALL fftf(qact,q1,copyback)
 DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO

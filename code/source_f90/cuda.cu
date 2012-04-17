@@ -134,7 +134,7 @@ extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDou
 	Check_CUDA_Error(error);
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_FORWARD) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z forward in fft failed\n");
+	  printf("CUFFT error : Exec Z2Z forward failed\n");
 	  exit(-1);
 	}
         cudaMemcpy(out,d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH, cudaMemcpyDeviceToHost);
@@ -145,6 +145,7 @@ extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDou
 extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out,int *Np)
 {
         int N = *Np;
+
         //Allocate device memory
         cufftDoubleComplex *d_ffta_kin;
 
@@ -154,7 +155,7 @@ extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDo
 	Check_CUDA_Error(error);
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_INVERSE) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z backward in fft failed\n");
+	  printf("CUFFT error : Exec Z2Z backward failed\n");
 	  exit(-1);
 	}
         cudaMemcpy(out, d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyDeviceToHost);
@@ -162,36 +163,105 @@ extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDo
         cudaFree(d_ffta_kin); //free the signal on the device.
 }
 
-extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *in,cufftDoubleComplex *out,cufftDoubleComplex *d_ffta,int *N)
+__global__ void multiply_device(cufftDoubleComplex *d_ffta,int nxyz,double norm)
 {
-        int nxyz = *N;
-	int size_cp = nxyz*sizeof(cufftDoubleComplex);
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
 
-        cudaMemcpyAsync(d_ffta,in,size_cp,cudaMemcpyHostToDevice,stream1);
-	Check_CUDA_Error(error);
-        if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_FORWARD) != CUFFT_SUCCESS)
+	if (ind<nxyz)
 	{
-	  printf("CUFFT error : Exec Z2Z forward in fft failed\n");
-	  exit(-1);
+		d_ffta[ind].x=norm*d_ffta[ind].x;
+		d_ffta[ind].y=norm*d_ffta[ind].y;
 	}
-        cudaMemcpy(out,d_ffta,size_cp,cudaMemcpyDeviceToHost);
+}
+
+__global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
+{
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+	cufftDoubleReal SAVE2;
+
+	if (ind<nxyz)
+	{
+		SAVE2         = d_ak[ind].x*d_ffta[ind].x+d_ak[ind].y*d_ffta[ind].y;
+		d_ffta[ind].y = d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x;
+		d_ffta[ind].x = SAVE2;
+	}
+}
+
+extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
+{
+	int nxyz = *N;
+	double norm = *tnorm;
+	int blocksize=512;
+	int gridx=(int)ceil(nxyz/(float)blocksize);
+	dim3 dimgrid(gridx,1,1);
+	dim3 dimblock(blocksize,1,1);
+
+        multiply_device<<<dimgrid,dimblock>>>(d_ffta,nxyz,norm);
 	Check_CUDA_Error(error);
 }
 
-extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *in,cufftDoubleComplex *out,cufftDoubleComplex *d_ffta,int *N)
+extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
 {
-        int nxyz = *N;
+	int nxyz = *N;
+	int blocksize=512;
+	int gridx=(int)ceil(nxyz/(float)blocksize);
+	dim3 dimgrid(gridx,1,1);
+	dim3 dimblock(blocksize,1,1);
+
+        multiply_ak_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
+{
+	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-        cudaMemcpyAsync(d_ffta,in,size_cp,cudaMemcpyHostToDevice,stream1);
+	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
 	Check_CUDA_Error(error);
-        if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_INVERSE) != CUFFT_SUCCESS)
+}
+
+extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
+{
+	int nxyz = *N;
+	int size_cp = nxyz*sizeof(cufftDoubleComplex);
+
+	cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
+{
+	int type = *ty;
+
+        if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_FORWARD) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z backward in fft failed\n");
+	  printf("CUFFT error : Exec Z2Z forward failed\n");
+	  if(type==1){
+	    printf("From fftf\n");}
+	  if(type==2){
+	    printf("From rftf\n");}
+	  if(type==3){
+	    printf("From coulexf\n");}
 	  exit(-1);
 	}
-        cudaMemcpy(out,d_ffta,size_cp,cudaMemcpyDeviceToHost);
-	Check_CUDA_Error(error);
+}
+
+extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
+{
+	int type = *ty;
+
+        if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_INVERSE) != CUFFT_SUCCESS)
+	{
+	  printf("CUFFT error : Exec Z2Z backward failed\n");
+	  if(type==1){
+	    printf("From fftback\n");}
+	  if(type==2){
+	    printf("From rfftback\n");}
+	  if(type==3){
+	    printf("From coulexback\n");}
+	  exit(-1);
+	}
 }
 
 #if(lda_gpu)

@@ -1299,6 +1299,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: akkx,akky,akkz
 
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
 COMPLEX(DP) :: test
+LOGICAL,PARAMETER :: copyback=.true.
 
 CHARACTER (LEN=6) :: ext
 #if(parayes)
@@ -1365,7 +1366,7 @@ DO nb=1,nstate
   exjy(nb)=0D0
   exjz(nb)=0D0
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkx(ind)*eye
   END DO
@@ -1377,7 +1378,7 @@ DO nb=1,nstate
     ajtx(ind)=ajtx(ind)+ajalpha
   END DO
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akky(ind)*eye
   END DO
@@ -1389,7 +1390,7 @@ DO nb=1,nstate
     ajty(ind)=ajty(ind)+ajalpha
   END DO
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkz(ind)*eye
   END DO
@@ -1456,7 +1457,7 @@ END DO
 tel=0D0
 DO nb=1,nstate
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkx(ind)*eye
   END DO
@@ -1469,7 +1470,7 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajtx(ind))**2
   END DO
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akky(ind)*eye
   END DO
@@ -1482,7 +1483,7 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajty(ind))**2
   END DO
   
-  CALL fftf(psi(1,nb),q2)
+  CALL fftf(psi(1,nb),q2,copyback)
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkz(ind)*eye
   END DO

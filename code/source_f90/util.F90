@@ -4028,11 +4028,12 @@ REAL(DP), INTENT(IN)                         :: shiz
 
 COMPLEX(DP),ALLOCATABLE ::  q1(:)
 COMPLEX(DP) :: akx,aky,akz
+LOGICAL,PARAMETER :: copyback=.true.
 
 #if(gridfft)
 ALLOCATE(q1(kdfull2))
 
-CALL fftf(q0,q1)
+CALL fftf(q0,q1,copyback)
 
 
 dkx=pi/(dx*REAL(nx))
@@ -4173,6 +4174,7 @@ COMPLEX(DP), INTENT(IN OUT)                      :: wfin(kdfull2)
 COMPLEX(DP), ALLOCATABLE :: wftest(:)
 
 REAL(DP) :: ekintestx,ekintesty,ekintestz,ekintot
+LOGICAL,PARAMETER :: copyback=.true.
 
 ALLOCATE(wftest(kdfull2))
 
@@ -4188,7 +4190,7 @@ CALL zgradient_rspace(wfin,wftest)
 CALL zgradient_rspace(wftest,wftest)
 ekintestz = dvol*SUM(wfin*wftest)
 
-CALL fftf(wfin,wftest)
+CALL fftf(wfin,wftest,copyback)
 wftest = akv*wftest
 CALL fftback(wftest,wftest)
 ekintot = dvol*SUM(wfin*wftest)

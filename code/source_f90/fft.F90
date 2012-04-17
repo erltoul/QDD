@@ -40,11 +40,19 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, POINTER :: fftax(:),fftay(:),fftaz(:),fftb(:
 TYPE(C_PTR), PRIVATE :: c_p_fftax,c_p_fftay,c_p_fftaz,c_p_fftb,c_p_ffta
 COMPLEX(C_DOUBLE_COMPLEX),PRIVATE,POINTER :: gpu_ffta(:,:,:)
 TYPE(C_PTR),PRIVATE :: c_gpu_ffta
+COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, POINTER :: ak3d(:,:,:)
+TYPE(C_PTR), PRIVATE :: c_p_ak3d
+REAL(C_DOUBLE), PRIVATE, POINTER :: akv3d(:,:,:)
+TYPE(C_PTR), PRIVATE :: c_p_akv3d
+REAL(C_DOUBLE),PRIVATE,POINTER :: gpu_akv3dfft(:,:,:)
+TYPE(C_PTR),PRIVATE :: c_gpu_akv3dfft
+COMPLEX(C_DOUBLE_COMPLEX),PRIVATE,POINTER :: gpu_ak3d(:,:,:)
+TYPE(C_PTR),PRIVATE :: c_gpu_ak3d
 INTEGER, PRIVATE :: res
 COMPLEX(DP), PARAMETER :: size_cmplx=CMPLX(0D0,0D0,DP)
+REAL(DP), PARAMETER :: size_double=(0D0,DP)
 INTEGER*8, PRIVATE :: px,py,pz
 INTEGER*8,PRIVATE :: p
-INTEGER(C_INT), PRIVATE :: wisdomtest
 #endif
 
 CONTAINS
@@ -125,6 +133,15 @@ DO i3=1,nz2
   END DO
 END DO
 
+#if(fftw_gpu)
+!CALL copy1dto3d(ak,ak3d,nx2,ny2,nz2)
+!CALL copyr1dtor3d(akv,akv3d,nx2,ny2,nz2)
+!CALL copy_on_gpu(ak3d,gpu_ak3d,kdfull2)
+!CALL copy_on_gpu(akv3d,gpu_akv3dfft,kdfull2)
+!res = cudaFreeHost(c_p_ak3d)
+!res = cudaFreeHost(c_p_akv3d)
+!DEALLOCATE(ak,akv)        !Only gpu_ak3d and gpu_akv3dfft will be used from now
+#endif
 !     prepare kinetic propagation factors in 1D momentum spaces
 
 DO i3=1,nz2
@@ -714,11 +731,13 @@ RETURN
 
 END SUBROUTINE  zgradient_rspace
 
-
-
 ! ******************************
-
+#if(netlib_fft|fftw_cpu)
 SUBROUTINE  fftf(q1,q2)
+#endif
+#if(fftw_gpu)
+SUBROUTINE  fftf(q1,q2,copyback)
+#endif
 
 ! ******************************
 
@@ -730,6 +749,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+#if(fftw_gpu)
+LOGICAL, INTENT(IN)                          :: copyback
+INTEGER :: typefft=1
+#endif
 !INTEGER, PARAMETER :: kfft=2*kxmax
 !INTEGER, PARAMETER :: kfft2=kfft*2+1
 !COMPLEX(DP) :: fftax,fftay,fftb
@@ -856,9 +879,17 @@ CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
 #if(fftw_gpu)
 CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
 
-CALL run_fft_for3d(p,ffta,ffta,gpu_ffta,kdfull2)
+CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
 
-CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+CALL run_fft_for3d(p,gpu_ffta,typefft)
+
+CALL multiply_gpu(gpu_ffta,kdfull2,tnorm)
+
+IF(copyback) THEN
+  CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+
+  CALL copy3dto1d(ffta,q2,nx2,ny2,nz2)
+END IF
 #endif
 
 RETURN
@@ -878,6 +909,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+#if(fftw_gpu)
+INTEGER :: typefft=1
+#endif
 !INTEGER, PARAMETER :: kfft=2*kxmax
 !INTEGER, PARAMETER :: kfft2=kfft*2+1
 !COMPLEX(DP) :: fftax,fftay,fftb
@@ -960,9 +994,15 @@ CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
 #if(fftw_gpu)
 CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
 
-CALL run_fft_back3d(p,ffta,ffta,gpu_ffta,kdfull2)
+CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
 
-CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+CALL run_fft_back3d(p,gpu_ffta,typefft)
+
+CALL multiply_gpu(gpu_ffta,kdfull2,facnr)
+
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+
+CALL secopy3dto1d(ffta,q2,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -995,6 +1035,9 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 
 #if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
+#endif
+#if(fftw_gpu)
+INTEGER :: typefft=2
 #endif
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
@@ -1114,9 +1157,15 @@ CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
 #if(fftw_gpu)
 CALL copyr1dto3d(q1,ffta,nx2,ny2,nz2)
 
-CALL run_fft_for3d(p,ffta,ffta,gpu_ffta,kdfull2)
+CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
 
-CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+CALL run_fft_for3d(p,gpu_ffta,typefft)
+
+CALL multiply_gpu(gpu_ffta,kdfull2,tnorm)
+
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+
+CALL copy3dto1d(ffta,q2,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -1149,7 +1198,9 @@ REAL(DP), INTENT(OUT)                        :: q3(kdfull2)
 #if(netlib_fft)
 COMPLEX(DP),ALLOCATABLE :: q2(:)
 #endif
-
+#if(fftw_gpu)
+INTEGER :: typefft=2
+#endif
 !      data  nxini,nyini,nzini/0,0,0/  ! flag for initialization
 ! nxyf=nx2*ny2
 !      nyf=nx2
@@ -1247,9 +1298,15 @@ CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
 #if(fftw_gpu)
 CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
 
-CALL run_fft_back3d(p,ffta,ffta,gpu_ffta,kdfull2)
+CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
 
-CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
+CALL run_fft_back3d(p,gpu_ffta,typefft)
+
+CALL multiply_gpu(gpu_ffta,kdfull2,facnr)
+
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+
+CALL copyr3dto1d(ffta,q3,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -1259,20 +1316,20 @@ END SUBROUTINE  rfftback
 
 #if(fftw_cpu|fftw_gpu)
 
-SUBROUTINE copy1dto3d(q1,ffta,nbx2,nby2,nbz2)
+SUBROUTINE copy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
 ! ******************************
 
 USE params
 
-COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(IN)                      :: vec1d(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: vec3d(nbx2,nby2,nbz2)
 
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
+      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=vec1d(ind)
     END DO
   END DO
 END DO
@@ -1282,43 +1339,20 @@ END SUBROUTINE copy1dto3d
 
 ! ******************************
 
-SUBROUTINE copy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
+SUBROUTINE copyr1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
 ! ******************************
 
 USE params
 
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
-COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
-
-DO i3=1,nbz2
-  DO i2=1,nby2
-    DO i1=1,nbx2
-      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)=coef*ffta(i1,i2,i3)
-    END DO
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE copy3dto1d
-
-! ******************************
-
-SUBROUTINE copyr1dto3d(q1,ffta,nbx2,nby2,nbz2)
-
-! ******************************
-
-USE params
-
-REAL(DP), INTENT(IN)                      :: q1(kdfull2)
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: ffta(nbx2,nby2,nbz2)
+REAL(DP), INTENT(IN)                      :: vec1d(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2)
        
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=CMPLX(q1(ind),0D0,DP) 
+      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=CMPLX(vec1d(ind),0D0,DP) 
     END DO
   END DO
 END DO
@@ -1328,20 +1362,104 @@ END SUBROUTINE copyr1dto3d
 
 ! ******************************
 
-SUBROUTINE copyr3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
+SUBROUTINE secopy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
 ! ******************************
 
 USE params
 
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: ffta(nbx2,nby2,nbz2)
-REAL(DP), INTENT(OUT)                     :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN)                      :: vec1d(kdfull2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: vec3d(nbx2,nby2,nbz2)
 
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)=REAL(ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)*coef
+      vec3d(i1,i2,i3)=vec1d(ind)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE secopy1dto3d
+
+! ******************************
+#if(fftw_gpu)
+SUBROUTINE copyr1dtor3d(vec1d,vec3d,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE params
+
+REAL(DP), INTENT(IN)                      :: vec1d(kdfull2)
+REAL(C_DOUBLE), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2)
+       
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=vec1d(ind)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr1dtor3d
+
+! ******************************
+#endif
+#if(fftw_cpu)
+SUBROUTINE copy3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
+#else
+SUBROUTINE copy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
+#endif
+
+! ******************************
+
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: vec3d(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(fftw_cpu)
+      vec1d(ind)=coef*ffta(i1,i2,i3)
+#else
+      vec1d(ind)=vec3d(i1,i2,i3)
+#endif
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copy3dto1d
+
+! ******************************
+
+#if(fftw_cpu)
+SUBROUTINE copyr3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
+#else
+SUBROUTINE copyr3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
+#endif
+! ******************************
+
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: vec3d(nbx2,nby2,nbz2)
+REAL(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+
+DO i3=1,nbz2
+  DO i2=1,nby2
+    DO i1=1,nbx2
+      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(fftw_cpu)
+      vec1d(ind)=REAL(vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)*coef
+#else
+      vec1d(ind)=REAL(vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)
+#endif
     END DO
   END DO
 END DO
@@ -1351,43 +1469,28 @@ END SUBROUTINE copyr3dto1d
 
 ! ******************************
 
-SUBROUTINE secopy1dto3d(q1,ffta,nbx2,nby2,nbz2)
+#if(fftw_cpu)
+SUBROUTINE secopy3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
+#else
+SUBROUTINE secopy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
+#endif
 
 ! ******************************
 
 USE params
 
-COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: vec3d(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(OUT)                     :: vec1d(kdfull2)
 
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffta(i1,i2,i3)=q1(ind)
-    END DO
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE secopy1dto3d
-
-! ******************************
-
-SUBROUTINE secopy3dto1d(ffta,q2,coef,nbx2,nby2,nbz2)
-
-! ******************************
-
-USE params
-
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
-COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
-
-DO i3=1,nbz2
-  DO i2=1,nby2
-    DO i1=1,nbx2
-      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+#if(fftw_cpu)
+      vec1d(ind)=vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+#else
+      vec1d(ind)=vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)
+#endif
     END DO
   END DO
 END DO
@@ -1424,7 +1527,11 @@ res = cudaFreeHost(c_p_fftay)
 res = cudaFreeHost(c_p_fftaz)
 res = cudaFreeHost(c_p_fftb)
 res = cudaFreeHost(c_p_ffta)
+res = cudaFreeHost(c_p_ak3d)
+res = cudaFreeHost(c_p_akv3d)
 res = cudaFree(c_gpu_ffta)
+res = cudaFree(c_gpu_ak3d)
+res = cudaFree(c_gpu_akv3dfft)
 
 CALL kill_plan(px)
 CALL kill_plan(py)
@@ -1461,8 +1568,20 @@ CALL c_f_pointer(c_p_fftb,fftb,[nbz2,nbx2])
 res = cudaMallocHost(c_p_ffta,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_p_ffta,ffta,[nbx2,nby2,nbz2])
 
+res = cudaMallocHost(c_p_ak3d,kdfull2*sizeof(size_double))
+CALL c_f_pointer(c_p_ak3d,ak3d,[nbx2,nby2,nbz2])
+
+res = cudaMallocHost(c_p_akv3d,kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_ak3d,akv3d,[nbx2,nby2,nbz2])
+
 res = cudaMalloc(c_gpu_ffta,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_ffta,gpu_ffta,[nbx2,nby2,nbz2])
+CALL c_f_pointer(c_gpu_ffta,gpu_ffta,[kdfull2])
+
+res = cudaMalloc(c_gpu_ak3d,kdfull2*sizeof(size_double))
+CALL c_f_pointer(c_gpu_ak3d,gpu_ak3d,[kdfull2])
+
+res = cudaMalloc(c_gpu_akv3dfft,kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_gpu_akv3dfft,gpu_akv3dfft,[kdfull2])
 
 END SUBROUTINE my_cuda_allocate
 

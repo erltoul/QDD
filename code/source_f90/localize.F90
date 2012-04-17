@@ -34,6 +34,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: tau
 
 
 LOGICAL,PARAMETER :: tupdate=.true.
+LOGICAL,PARAMETER :: copyback=.true.
 
 IF(.NOT.tupdate) STOP ' LOCALIZE not up to date '
 
@@ -129,7 +130,7 @@ DO is=2,1,-1
 #ifdef REALSWITCH
       CALL rftf(psi(1,nb),q2)
 #else
-      CALL fftf(psi(1,nb),q2)
+      CALL fftf(psi(1,nb),q2,copyback)
 #endif
       DO ind=1,kdfull2
         q2(ind)=q2(ind)*akk(ind)*eye

@@ -169,7 +169,7 @@ endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 	GPUCOMPILER = nvcc
-	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_13 -maxrregcount=32 -I/opt/cuda/include -I/opt/cuda/src
+	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_13 -I/opt/cuda/include
 #	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20
 endif
 
