@@ -4033,7 +4033,12 @@ LOGICAL,PARAMETER :: copyback=.true.
 #if(gridfft)
 ALLOCATE(q1(kdfull2))
 
+#if(netlib_fft|fftw_cpu)
+CALL fftf(q0,q1)
+#endif
+#if(fftw_gpu)
 CALL fftf(q0,q1,copyback)
+#endif
 
 
 dkx=pi/(dx*REAL(nx))
@@ -4190,7 +4195,12 @@ CALL zgradient_rspace(wfin,wftest)
 CALL zgradient_rspace(wftest,wftest)
 ekintestz = dvol*SUM(wfin*wftest)
 
+#if(netlib_fft|fftw_cpu)
+CALL fftf(wfin,wftest)
+#endif
+#if(fftw_gpu)
 CALL fftf(wfin,wftest,copyback)
+#endif
 wftest = akv*wftest
 CALL fftback(wftest,wftest)
 ekintot = dvol*SUM(wfin*wftest)

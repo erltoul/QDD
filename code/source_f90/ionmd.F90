@@ -1366,7 +1366,12 @@ DO nb=1,nstate
   exjy(nb)=0D0
   exjz(nb)=0D0
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkx(ind)*eye
   END DO
@@ -1378,7 +1383,12 @@ DO nb=1,nstate
     ajtx(ind)=ajtx(ind)+ajalpha
   END DO
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akky(ind)*eye
   END DO
@@ -1390,7 +1400,12 @@ DO nb=1,nstate
     ajty(ind)=ajty(ind)+ajalpha
   END DO
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkz(ind)*eye
   END DO
@@ -1457,7 +1472,12 @@ END DO
 tel=0D0
 DO nb=1,nstate
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkx(ind)*eye
   END DO
@@ -1470,7 +1490,12 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajtx(ind))**2
   END DO
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akky(ind)*eye
   END DO
@@ -1483,7 +1508,12 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajty(ind))**2
   END DO
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akkz(ind)*eye
   END DO

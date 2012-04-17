@@ -130,7 +130,12 @@ DO is=2,1,-1
 #ifdef REALSWITCH
       CALL rftf(psi(1,nb),q2)
 #else
-      CALL fftf(psi(1,nb),q2,copyback)
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,copyback)
+#endif
 #endif
       DO ind=1,kdfull2
         q2(ind)=q2(ind)*akk(ind)*eye

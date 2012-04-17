@@ -233,7 +233,12 @@ ALLOCATE(q1(kdfull2),q2(kdfull2))
 !     action of kinetic energy
 
 #if(gridfft)
+#if(netlib_fft|fftw_cpu)
+CALL fftf(qact,q1)
+#endif
+#if(fftw_gpu)
 CALL fftf(qact,q1,copyback)
+#endif
 DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO

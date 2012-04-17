@@ -397,7 +397,12 @@ DO nb=1,nstate
   IF(iffastpropag == 1) THEN
     CALL kinprop(q0(1,nb),q1)
   ELSE
+#if(netlib_fft|fftw_cpu)
+    CALL fftf(q0(1,nb),q1)
+#endif
+#if(fftw_gpu)
     CALL fftf(q0(1,nb),q1,copyback)
+#endif
 !    CALL cmult3d(q1,ak)
     q1 = ak*q1
     CALL fftback(q1,q0(1,nb))
@@ -1534,7 +1539,12 @@ END DO
 DO nb=1,nstate
   o=occup(nb)
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akx(ind)
   END DO
@@ -1547,7 +1557,12 @@ DO nb=1,nstate
   END DO
   
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*aky(ind)
   END DO
@@ -1559,7 +1574,12 @@ DO nb=1,nstate
   END DO
   
   
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,copyback)
+#endif
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akz(ind)
   END DO
