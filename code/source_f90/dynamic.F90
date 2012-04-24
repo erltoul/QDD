@@ -322,7 +322,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
-LOGICAL,PARAMETER :: copyback=.true.
+LOGICAL,PARAMETER :: copyback=.false.
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
 ! 
@@ -399,13 +399,17 @@ DO nb=1,nstate
   ELSE
 #if(netlib_fft|fftw_cpu)
     CALL fftf(q0(1,nb),q1)
-#endif
-#if(fftw_gpu)
-    CALL fftf(q0(1,nb),q1,copyback)
-#endif
 !    CALL cmult3d(q1,ak)
     q1 = ak*q1
     CALL fftback(q1,q0(1,nb))
+#endif
+#if(fftw_gpu)
+    CALL fftf(q0(1,nb),q1,copyback)
+!    CALL cmult3d(q1,ak)
+!    q1 = ak*q1
+    CALL multiply(1)
+    CALL fftback(q1,q0(1,nb))
+#endif
   END IF
 #endif
 #if(findiff|numerov)
@@ -1480,14 +1484,16 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
-COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:),q2(:)
+!COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
+COMPLEX(DP), ALLOCATABLE :: q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
-LOGICAL,PARAMETER :: copyback=.true.
+LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.
 !------------------------------------------------------------------
 
-ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
-         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
+!ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
+!         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
+ALLOCATE(q2(kdfull2),jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
@@ -1496,35 +1502,35 @@ dkz=pi/(dz*REAL(nz))
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
-ind=0
-DO i3=1,nz2
-  IF(i3 >= (nz+1)) THEN
-    zkz=(i3-nz2-1)*dkz
-  ELSE
-    zkz=(i3-1)*dkz
-  END IF
-  
-  DO i2=1,ny2
-    IF(i2 >= (ny+1)) THEN
-      zky=(i2-ny2-1)*dky
-    ELSE
-      zky=(i2-1)*dky
-    END IF
-    
-    DO i1=1,nx2
-      IF(i1 >= (nx+1)) THEN
-        zkx=(i1-nx2-1)*dkx
-      ELSE
-        zkx=(i1-1)*dkx
-      END IF
-      
-      ind=ind+1
-      akx(ind)=-zkx*eye
-      aky(ind)=-zky*eye
-      akz(ind)=-zkz*eye
-    END DO
-  END DO
-END DO
+!ind=0
+!DO i3=1,nz2
+!  IF(i3 >= (nz+1)) THEN
+!    zkz=(i3-nz2-1)*dkz
+!  ELSE
+!    zkz=(i3-1)*dkz
+!  END IF
+!  
+!  DO i2=1,ny2
+!    IF(i2 >= (ny+1)) THEN
+!      zky=(i2-ny2-1)*dky
+!    ELSE
+!      zky=(i2-1)*dky
+!    END IF
+!    
+!    DO i1=1,nx2
+!      IF(i1 >= (nx+1)) THEN
+!        zkx=(i1-nx2-1)*dkx
+!      ELSE
+!        zkx=(i1-1)*dkx
+!      END IF
+!      
+!      ind=ind+1
+!      akx(ind)=-zkx*eye
+!      aky(ind)=-zky*eye
+!      akz(ind)=-zkz*eye
+!    END DO
+!  END DO
+!END DO
 
 !  we going to calc. jx,jy,jz
 
@@ -1541,14 +1547,26 @@ DO nb=1,nstate
   
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
-#endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
-#endif
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akx(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,copyback)
+
+!  DO ind=1,kdfull2
+!    q2(ind)=q2(ind)*akx(ind)
+!  END DO
+
+  CALL multiply(3)
+
+!  CALL fftback(q2,q2)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     
@@ -1556,17 +1574,27 @@ DO nb=1,nstate
     jtx(ind)=jtx(ind)-o*jalpha
   END DO
   
-  
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
-#endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
-#endif
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*aky(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,copyback)
+
+!  DO ind=1,kdfull2
+!    q2(ind)=q2(ind)*aky(ind)
+!  END DO
+
+  CALL multiply(4)
+
+  CALL fftback(q2,q2)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
@@ -1576,14 +1604,25 @@ DO nb=1,nstate
   
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
-#endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
-#endif
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akz(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,copyback)
+
+!  DO ind=1,kdfull2
+!    q2(ind)=q2(ind)*akz(ind)
+!  END DO
+
+  CALL multiply(5)
+
+  CALL fftback(q2,q2)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
@@ -1622,8 +1661,7 @@ ajz=ajz*dvol
 WRITE(6,'(a,3f12.4)') 'moments',ajx,ajy,ajz
 WRITE(6,*)
 
-DEALLOCATE(akx,q2,aky,akz,jtx,jty,jtz)
-
+DEALLOCATE(q2,jtx,jty,jtz)
 
 RETURN
 END SUBROUTINE instit

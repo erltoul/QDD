@@ -25,7 +25,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP) :: p(kdfull2)
 #endif
 COMPLEX(DP) :: q2(kdfull2)
-REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
+!REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
 COMPLEX(DP) :: test
 REAL(DP) :: average_localization(2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajt
@@ -34,11 +34,11 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: tau
 
 
 LOGICAL,PARAMETER :: tupdate=.true.
-LOGICAL,PARAMETER :: copyback=.true.
+LOGICAL,PARAMETER :: copyback=.false.
 
 IF(.NOT.tupdate) STOP ' LOCALIZE not up to date '
 
-ALLOCATE(akk(kdfull2))
+!ALLOCATE(akk(kdfull2))
 ALLOCATE(ajt(kdfull2))
 ALLOCATE(drho(kdfull2))
 ALLOCATE(arho(kdfull2))
@@ -68,52 +68,52 @@ DO is=2,1,-1
   DO idirection=1,3
 
 !         prepare momentum-space factor for actual direction
-    IF(idirection.EQ.1) THEN
-      ind=0
-      DO i3=1,nz2
-        DO i2=1,ny2
-          DO i1=1,nx2
-            IF(i1 >= (nx+1)) THEN
-              zkx=(i1-nx2-1)*dkx
-            ELSE
-              zkx=(i1-1)*dkx
-            END IF
-            ind=ind+1
-            akk(ind)=-zkx
-          END DO
-        END DO
-      END DO
-    ELSEIF(idirection.EQ.2) THEN
-      ind=0
-      DO i3=1,nz2
-        DO i2=1,ny2
-          IF(i2 >= (ny+1)) THEN
-            zky=(i2-ny2-1)*dky
-          ELSE
-            zky=(i2-1)*dky
-          END IF
-          DO i1=1,nx2
-            ind=ind+1
-            akk(ind)=-zky
-          END DO
-        END DO
-      END DO
-    ELSEIF(idirection.EQ.3) THEN
-      ind=0
-      DO i3=1,nz2
-        IF(i3 >= (nz+1)) THEN
-          zkz=(i3-nz2-1)*dkz
-        ELSE
-          zkz=(i3-1)*dkz
-        END IF
-        DO i2=1,ny2
-          DO i1=1,nx2
-            ind=ind+1
-            akk(ind)=-zkz
-          END DO
-        END DO
-      END DO
-    END IF
+!    IF(idirection.EQ.1) THEN
+!      ind=0
+!      DO i3=1,nz2
+!        DO i2=1,ny2
+!          DO i1=1,nx2
+!            IF(i1 >= (nx+1)) THEN
+!              zkx=(i1-nx2-1)*dkx
+!            ELSE
+!              zkx=(i1-1)*dkx
+!            END IF
+!            ind=ind+1
+!            akk(ind)=-zkx
+!          END DO
+!        END DO
+!      END DO
+!    ELSEIF(idirection.EQ.2) THEN
+!      ind=0
+!      DO i3=1,nz2
+!        DO i2=1,ny2
+!          IF(i2 >= (ny+1)) THEN
+!            zky=(i2-ny2-1)*dky
+!          ELSE
+!            zky=(i2-1)*dky
+!          END IF
+!          DO i1=1,nx2
+!            ind=ind+1
+!            akk(ind)=-zky
+!          END DO
+!        END DO
+!      END DO
+!    ELSEIF(idirection.EQ.3) THEN
+!      ind=0
+!      DO i3=1,nz2
+!        IF(i3 >= (nz+1)) THEN
+!          zkz=(i3-nz2-1)*dkz
+!        ELSE
+!          zkz=(i3-1)*dkz
+!        END IF
+!        DO i2=1,ny2
+!          DO i1=1,nx2
+!            ind=ind+1
+!            akk(ind)=-zkz
+!          END DO
+!        END DO
+!      END DO
+!    END IF
   
     DO i=1,kdfull2
       ajt(i)=0D0
@@ -131,19 +131,49 @@ DO is=2,1,-1
       CALL rftf(psi(1,nb),q2)
 #else
 #if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
+      CALL fftf(psi(1,nb),q2)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
+      CALL fftf(psi(1,nb),q2,copyback)
 #endif
 #endif
-      DO ind=1,kdfull2
-        q2(ind)=q2(ind)*akk(ind)*eye
-      END DO
+      IF(idirection.EQ.1) THEN
+        DO ind=1,kdfull2
+#if(netlib_fft|fftw_cpu)
+          q2(ind)=q2(ind)*akx(ind)
+#endif
+#if(fftw_gpu)
+!          q2(ind)=q2(ind)*akx(ind)
+           CALL multiply(3)
+#endif
+        END DO
+      ELSEIF(idirection.EQ.2) THEN
+        DO ind=1,kdfull2
+#if(netlib_fft|fftw_cpu)
+          q2(ind)=q2(ind)*aky(ind)
+#endif
+#if(fftw_gpu)
+!          q2(ind)=q2(ind)*aky(ind)
+          CALL multiply(4)
+#endif
+        END DO
+      ELSEIF(idirection.EQ.3) THEN
+        DO ind=1,kdfull2
+#if(netlib_fft|fftw_cpu)
+          q2(ind)=q2(ind)*akz(ind)
+#endif
+#if(fftw_gpu)
+!          q2(ind)=q2(ind)*akz(ind)
+          CALL multiply(5)
+#endif
+        END DO
+      ENDIF
 #ifdef REALSWITCH
       CALL rfftback(q2,p)
 #else
-      CALL fftback(q2,p)
+
+  CALL fftback(q2,p)
+
 #endif
       DO ind=1,kdfull2
 #ifdef REALSWITCH
@@ -204,7 +234,7 @@ DO is=2,1,-1
 
 END DO  ! loop over spins
 
-DEALLOCATE(akk)
+!DEALLOCATE(akk)
 DEALLOCATE(ajt)
 DEALLOCATE(drho)
 DEALLOCATE(arho)

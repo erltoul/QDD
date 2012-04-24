@@ -95,11 +95,11 @@ extern "C" void cuda_plan_1d_(cufftHandle *plan, int *dim, int *batch)
 	  printf("CUFFT error : Plan Creation failed\n");
 	  exit(-1);
 	}
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        /*if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
 	  printf("CUFFT error : Streamed FFT Creation failed\n");
 	  exit(-1);
-	}
+	}*/
 }
 
 extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
@@ -109,11 +109,11 @@ extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
 	  printf("CUFFT error : Plan Creation failed\n");
 	  exit(-1);
 	}
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        /*if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
 	  printf("CUFFT error : Streamed FFT Creation failed\n");
 	  exit(-1);
-	}
+	}*/
 }
 
 extern "C" void kill_plan_(cufftHandle *plan)
@@ -187,6 +187,59 @@ __global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
 	}
 }
 
+__global__ void multiply_ak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
+{
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+	cufftDoubleReal SAVE2;
+
+	if (ind<nxyz)
+	{
+		SAVE2         = d_ak[ind].x*d_ffta[ind].x-d_ak[ind].y*d_ffta[ind].y;
+		d_ffta[ind].y = d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x;
+		d_ffta[ind].x = SAVE2;
+	}
+}
+
+__global__ void multiply_ak_real_gpu(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int nxyz)
+{
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+
+	if (ind<nxyz)
+	{
+		d_ffta[ind].x = d_ak[ind]*d_ffta[ind].x;
+		d_ffta[ind].y = d_ak[ind]*d_ffta[ind].y;
+	}
+}
+
+__global__ void multiply_shift_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,cufftDoubleComplex shix,cufftDoubleComplex shiy,cufftDoubleComplex shiz,int nxyz)
+{
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+	cufftDoubleReal SAVE2;
+
+	if (ind<nxyz)
+	{
+                shix.x = shix.x*d_akx[ind].x;
+		shiy.x = shiy.x*d_aky[ind].x;
+		shiz.x = shiz.x*d_akz[ind].x;
+                shix.y = shix.y*d_akx[ind].y;
+		shiy.y = shiy.y*d_aky[ind].y;
+		shiz.y = shiz.y*d_akz[ind].y;
+
+		//multiplication by shix
+		SAVE2         = exp(shix.x)*(d_ffta[ind].x*cos(shix.y)-sin(shix.y)*d_ffta[ind].y);
+		d_ffta[ind].y = exp(shix.x)*(d_ffta[ind].x*sin(shix.y)+cos(shix.y)*d_ffta[ind].y);
+		d_ffta[ind].x = SAVE2;
+		//multiplication by shiy
+		SAVE2         = exp(shiy.x)*(d_ffta[ind].x*cos(shiy.y)-sin(shiy.y)*d_ffta[ind].y);
+		d_ffta[ind].y = exp(shiy.x)*(d_ffta[ind].x*sin(shiy.y)+cos(shiy.y)*d_ffta[ind].y);
+		d_ffta[ind].x = SAVE2;
+		//multiplication by shiz
+		SAVE2         = exp(shiz.x)*(d_ffta[ind].x*cos(shiz.y)-sin(shiz.y)*d_ffta[ind].y);
+		d_ffta[ind].y = exp(shiz.x)*(d_ffta[ind].x*sin(shiz.y)+cos(shiz.y)*d_ffta[ind].y);
+		d_ffta[ind].x = SAVE2;
+	}
+}
+
 extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 {
 	int nxyz = *N;
@@ -212,12 +265,65 @@ extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak
 	Check_CUDA_Error(error);
 }
 
+extern "C" void multiply_ak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
+{
+	int nxyz = *N;
+	int blocksize=512;
+	int gridx=(int)ceil(nxyz/(float)blocksize);
+	dim3 dimgrid(gridx,1,1);
+	dim3 dimblock(blocksize,1,1);
+
+        multiply_ak_gpu2<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void multiply_ak_real_(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int *N)
+{
+	int nxyz = *N;
+	int blocksize=512;
+	int gridx=(int)ceil(nxyz/(float)blocksize);
+	dim3 dimgrid(gridx,1,1);
+	dim3 dimblock(blocksize,1,1);
+
+        multiply_ak_real_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,double *sx,double *sy,double *sz,int *N)
+{
+	int nxyz = *N;
+	cufftDoubleComplex shix,shiy,shiz;
+	int blocksize=512;
+	int gridx=(int)ceil(nxyz/(float)blocksize);
+	dim3 dimgrid(gridx,1,1);
+	dim3 dimblock(blocksize,1,1);
+
+	shix.x = *sx;
+	shix.y = *sx;
+	shiy.x = *sy;
+	shiy.y = *sy;
+	shiz.x = *sz;
+	shiz.y = *sz;
+
+        multiply_shift_gpu<<<dimgrid,dimblock>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
+	Check_CUDA_Error(error);
+}
+
 extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
 {
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+	cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
+{
+	int nxyz = *N;
+	int size_cp = nxyz*sizeof(cufftDoubleReal);
+
+	cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
 	Check_CUDA_Error(error);
 }
 
@@ -225,6 +331,15 @@ extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat
 {
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
+
+	cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
+	Check_CUDA_Error(error);
+}
+
+extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
+{
+	int nxyz = *N;
+	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
 	cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);

@@ -215,7 +215,7 @@ COMPLEX(DP) :: wfovlp
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
 LOGICAL :: tpri
-LOGICAL,PARAMETER :: copyback=.true.
+LOGICAL,PARAMETER :: copyback=.false.
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -235,14 +235,24 @@ ALLOCATE(q1(kdfull2),q2(kdfull2))
 #if(gridfft)
 #if(netlib_fft|fftw_cpu)
 CALL fftf(qact,q1)
-#endif
-#if(fftw_gpu)
-CALL fftf(qact,q1,copyback)
-#endif
+
 DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO
+
 CALL fftback(q1,q2)
+#endif
+#if(fftw_gpu)
+CALL fftf(qact,q1,copyback)
+
+!DO  i=1,nxyz
+!  q1(i) = akv(i)*q1(i)
+!END DO
+
+CALL multiply(2)
+
+CALL fftback(q1,q2)
+#endif
 IF(tpri) ekinsp(nbe) = wfovlp(qact,q2)
 #else
 STOP ' HPSI not yet appropriate for finite differences'

@@ -404,7 +404,7 @@ encadd=encadd/2.0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd
-END IIF
+END IF
 
 DEALLOCATE(usicsp,rhosp)
 

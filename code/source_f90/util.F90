@@ -4027,8 +4027,8 @@ REAL(DP), INTENT(IN)                         :: shiy
 REAL(DP), INTENT(IN)                         :: shiz
 
 COMPLEX(DP),ALLOCATABLE ::  q1(:)
-COMPLEX(DP) :: akx,aky,akz
-LOGICAL,PARAMETER :: copyback=.true.
+!COMPLEX(DP) :: akx,aky,akz
+LOGICAL,PARAMETER :: copyback=.false.
 
 #if(gridfft)
 ALLOCATE(q1(kdfull2))
@@ -4048,39 +4048,53 @@ dkz=pi/(dz*REAL(nz))
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
-ind=0
-DO i3=1,nz2
-  IF(i3 >= (nz+1)) THEN
-    zkz=(i3-nz2-1)*dkz
-  ELSE
-    zkz=(i3-1)*dkz
-  END IF
-  
-  DO i2=1,ny2
-    IF(i2 >= (ny+1)) THEN
-      zky=(i2-ny2-1)*dky
-    ELSE
-      zky=(i2-1)*dky
-    END IF
-    
-    DO i1=1,nx2
-      IF(i1 >= (nx+1)) THEN
-        zkx=(i1-nx2-1)*dkx
-      ELSE
-        zkx=(i1-1)*dkx
-      END IF
-      
-      ind=ind+1
-      akx=-zkx*eye
-      aky=-zky*eye
-      akz=-zkz*eye
-      q1(ind) = q1(ind)*EXP((shix*akx+shiy*aky+shiz*akz))
-    END DO
-  END DO
-END DO
+!ind=0
+!DO i3=1,nz2
+!  IF(i3 >= (nz+1)) THEN
+!    zkz=(i3-nz2-1)*dkz
+!  ELSE
+!    zkz=(i3-1)*dkz
+!  END IF
+!  
+!  DO i2=1,ny2
+!    IF(i2 >= (ny+1)) THEN
+!      zky=(i2-ny2-1)*dky
+!    ELSE
+!      zky=(i2-1)*dky
+!    END IF
+!    
+!    DO i1=1,nx2
+!      IF(i1 >= (nx+1)) THEN
+!        zkx=(i1-nx2-1)*dkx
+!      ELSE
+!        zkx=(i1-1)*dkx
+!      END IF
+!      
+!      ind=ind+1
+!      akx=-zkx*eye
+!      aky=-zky*eye
+!      akz=-zkz*eye
+!      q1(ind) = q1(ind)*EXP((shix*akx+shiy*aky+shiz*akz))
+!    END DO
+!  END DO
+!END DO
 
+#if(netlib_fft|fftw_cpu)
+DO ind=1,kdfull2
+  q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
+ENDDO
 
 CALL fftback(q1,q0)
+#endif
+#if(fftw_gpu)
+!DO ind=1,kdfull2
+!  q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
+!ENDDO
+
+CALL multiply_shift(shix,shiy,shiz)
+
+CALL fftback(q1,q0)
+#endif
 
 DEALLOCATE(q1)
 
@@ -4197,12 +4211,19 @@ ekintestz = dvol*SUM(wfin*wftest)
 
 #if(netlib_fft|fftw_cpu)
 CALL fftf(wfin,wftest)
+
+wftest = akv*wftest
+
+CALL fftback(wftest,wftest)
 #endif
 #if(fftw_gpu)
 CALL fftf(wfin,wftest,copyback)
-#endif
-wftest = akv*wftest
+
+!wftest = akv*wftest
+CALL multiply(2)
+
 CALL fftback(wftest,wftest)
+#endif
 ekintot = dvol*SUM(wfin*wftest)
 
 WRITE(6,'(a,5(1pg13.5))') ' test gradients:', &

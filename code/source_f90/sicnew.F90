@@ -1170,7 +1170,7 @@ DO nbe=1,nstate
   CALL rftf(q0(1,nbe),psipr)
   CALL rftf(q1,q2)
   DO  i=1,nxyz
-    q2(i) = psipr(i)*akv(i)
+    q2(i) = psipr(i)*akv(i) ! Why is q2 overwritten in that way ?
   END DO
   IF(MOD(iter,istinf) == 0) THEN
     sum0 = 0D0
