@@ -34,7 +34,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: tau
 
 
 LOGICAL,PARAMETER :: tupdate=.true.
-LOGICAL,PARAMETER :: copyback=.false.
+LOGICAL,PARAMETER :: copyback=.false.,copyback2=.false.,recopy=.false.
 
 IF(.NOT.tupdate) STOP ' LOCALIZE not up to date '
 
@@ -128,13 +128,18 @@ DO is=2,1,-1
 
 
 #ifdef REALSWITCH
+#if(netlib_fft|fftw_cpu)
       CALL rftf(psi(1,nb),q2)
+#endif
+#if(fftw_gpu)
+      CALL rftf(psi(1,nb),q2,ffta,gpu_ffta,copyback2)
+#endif
 #else
 #if(netlib_fft|fftw_cpu)
       CALL fftf(psi(1,nb),q2)
 #endif
 #if(fftw_gpu)
-      CALL fftf(psi(1,nb),q2,copyback)
+      CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 #endif
 #endif
       IF(idirection.EQ.1) THEN
@@ -144,7 +149,8 @@ DO is=2,1,-1
 #endif
 #if(fftw_gpu)
 !          q2(ind)=q2(ind)*akx(ind)
-           CALL multiply(3)
+!          CALL multiply(3)
+          CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 #endif
         END DO
       ELSEIF(idirection.EQ.2) THEN
@@ -154,7 +160,8 @@ DO is=2,1,-1
 #endif
 #if(fftw_gpu)
 !          q2(ind)=q2(ind)*aky(ind)
-          CALL multiply(4)
+!          CALL multiply(4)
+          CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 #endif
         END DO
       ELSEIF(idirection.EQ.3) THEN
@@ -164,15 +171,26 @@ DO is=2,1,-1
 #endif
 #if(fftw_gpu)
 !          q2(ind)=q2(ind)*akz(ind)
-          CALL multiply(5)
+!          CALL multiply(5)
+          CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 #endif
         END DO
       ENDIF
 #ifdef REALSWITCH
+#if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,p)
+#endif
+#if(fftw_gpu)
+      CALL rfftback(q2,p,ffta,gpu_ffta,recopy)
+#endif
 #else
 
-  CALL fftback(q2,p)
+#if(netlib_fft|fftw_cpu)
+      CALL fftback(q2,p)
+#endif
+#if(fftw_gpu)
+      CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
 
 #endif
       DO ind=1,kdfull2

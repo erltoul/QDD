@@ -486,6 +486,10 @@ REAL(DP),ALLOCATABLE :: qex(:,:)
 #if(gridfft)
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
+#if(fftw_gpu)
+COMPLEX(C_DOUBLE_COMPLEX),DIMENSION(:),ALLOCATABLE :: q3
+LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.,recopy2=.false.
+#endif
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 #endif
@@ -511,6 +515,9 @@ END IF
 
 ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
+#if(fftw_gpu)
+ALLOCATE(q3(kdfull2))
+#endif
 
 
 #if(parano)
@@ -569,6 +576,7 @@ DO nbe=1,nstate
 ALLOCATE(psipr(kdfull2))
   
 !        action of the kinetic energy in momentum space
+#if(netlib_fft|fftw_cpu)
   CALL rftf(q0(1,nbe),psipr)
 !    ALLOCATE(w4(kdfull2))
 !    CALL rfftback(psipr,w4)
@@ -579,11 +587,21 @@ ALLOCATE(psipr(kdfull2))
   
 !        FFT of V*psi
   CALL rftf(q1,q2)
-  
+#endif
+#if(fftw_gpu)
+  CALL rftf(q0(1,nbe),psipr,ffta,gpu_ffta,copyback)
+
+  CALL rftf(q1,q2,ffta2,gpu_ffta2,copyback)
+#endif
   
 !       compose to h|psi>
+#if(netlib_fft|fftw_cpu)
   q2 = psipr*akv+q2
-  
+#endif
+#if(fftw_gpu)
+!  q2 = psipr*akv+q2
+  CALL hpsi_cuda(gpu_ffta,gpu_ffta2,gpu_akvfft,kdfull2)
+#endif
   
 !       Optionally compute expectation value of kinetic energy
 !       and variance of mean field Hamiltonian.
@@ -594,18 +612,12 @@ ALLOCATE(psipr(kdfull2))
   IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
-    ALLOCATE(w4(kdfull2))
-    CALL rfftback(psipr,w4)
-    CALL rfftback(q2,w4)
-    CALL project(w4,w4,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
-    DEALLOCATE(w4)
-#endif
     
     sum0 = 0D0
     sumk = 0D0
     sume = 0D0
     sum2 = 0D0
+#if(netlib_fft|fftw_cpu)
     DO  i=1,nxyz
       vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
       sum0  = vol + sum0
@@ -613,12 +625,35 @@ ALLOCATE(psipr(kdfull2))
       sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
       sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
     END DO
+#endif
+#if(fftw_gpu)
+    CALL sum_calc(sum0,sumk,sume,sum2,gpu_ffta,gpu_ffta2,gpu_akvfft,nxyz)
+#endif
+
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
 !          write(6,*) ' norm,spe=',sum0,sume
 !          amoy(nbe)   = sume
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+
+    ALLOCATE(w4(kdfull2))
+
+#if(netlib_fft|fftw_cpu)
+    CALL rfftback(psipr,w4)
+    CALL rfftback(q2,w4)
+#endif
+#if(fftw_gpu)
+    CALL gpu_to_gpu(gpu_ffta,gpu_ffta_int,kdfull2) !save gpu_ffta (psipr on GPU) for later
+    CALL rfftback(psipr,w4,ffta,gpu_ffta_int,recopy)
+    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
+    CALL rfftback(q2,w4,ffta2,gpu_ffta_int,recopy)
+#endif
+    CALL project(w4,w4,ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
+    DEALLOCATE(w4)
+#endif
+
 #if(parayes)
     evarsp2(nbe) = evarsp(nbe)
 #endif
@@ -630,7 +665,13 @@ ALLOCATE(psipr(kdfull2))
 !       for later diagonalization
 
     IF(iter > 0) THEN  
+#if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,q1)
+#endif
+#if(fftw_gpu)
+      CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
+      CALL rfftback(q2,q1,ffta2,gpu_ffta_int,recopy)
+#endif
       iactsp = ispin(nbe)
       nstsp(iactsp) = 1+nstsp(iactsp)
       npoi(nstsp(iactsp),iactsp) = nbe
@@ -649,11 +690,10 @@ ALLOCATE(psipr(kdfull2))
   END IF
 #endif
   
-  
 !     perform the damped gradient step and orthogonalise the new basis
   
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-  
+#if(netlib_fft|fftw_cpu)    
 !  IF(iter > 0) THEN  
     IF(e0dmp > small) THEN
 !       DO i=1,nxyz
@@ -663,8 +703,18 @@ ALLOCATE(psipr(kdfull2))
     ELSE
       psipr = psipr - epswf*q2
     END IF
-    
     CALL rfftback(psipr,q0(1,nbe))
+#endif
+#if(fftw_gpu)
+    IF(e0dmp > small) THEN
+!      psipr = psipr - q2*epswf/(akv+e0dmp)
+      CALL d_grad1(gpu_ffta,gpu_ffta2,gpu_akvfft,epswf,e0dmp,kdfull2)
+    ELSE
+!      psipr = psipr - epswf*q2
+      CALL d_grad2(gpu_ffta,gpu_ffta2,epswf,kdfull2)
+    END IF
+    CALL rfftback(psipr,q0(1,nbe),ffta,gpu_ffta,recopy)
+#endif
 !  END IF
   
 DEALLOCATE(psipr)
@@ -705,6 +755,9 @@ END DO                                            ! end loop over states
 
 DEALLOCATE(q1)
 DEALLOCATE(q2)
+#if(fftw_gpu)
+DEALLOCATE(q3)
+#endif
 IF(ifsicp == 5)  DEALLOCATE(qex)
 
 

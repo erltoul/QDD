@@ -404,11 +404,12 @@ DO nb=1,nstate
     CALL fftback(q1,q0(1,nb))
 #endif
 #if(fftw_gpu)
-    CALL fftf(q0(1,nb),q1,copyback)
+    CALL fftf(q0(1,nb),q1,ffta,gpu_ffta,copyback)
 !    CALL cmult3d(q1,ak)
 !    q1 = ak*q1
-    CALL multiply(1)
-    CALL fftback(q1,q0(1,nb))
+!    CALL multiply(1)
+    CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
+    CALL fftback(q1,q0(1,nb),ffta,gpu_ffta)
 #endif
   END IF
 #endif
@@ -420,11 +421,6 @@ END DO
 
 
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
-
-
-
-
-
 
 !     half non-local step
 
@@ -1015,7 +1011,7 @@ ALLOCATE(psi2(kdfull2))
 CALL fftf(psin,psi2)
 #endif
 #if(fftw_gpu)
-CALL fftf(psin,psi2,copyback)
+CALL fftf(psin,psi2,ffta,gpu_ffta,copyback)
 #endif
 
 
@@ -1166,6 +1162,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE            :: arhop
 REAL(DP) :: fact,factgrad
 
 LOGICAL,PARAMETER :: extendedTF=.TRUE.
+LOGICAL :: copyback=.false.,recopy=.false.
 REAL(DP),PARAMETER :: rholimit=1D-10
 
 !------------------------------------------------------------
@@ -1226,9 +1223,18 @@ IF(extendedTF) THEN
 ! x derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,1)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
+!  CALL gradient(gradrhok,gradrhok,1)
+!  CALL multiply(6)
+  CALL multiply_ak2(gpu_ffta,gpu_rakxfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1239,9 +1245,18 @@ IF(extendedTF) THEN
 ! y derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,2)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
+!  CALL gradient(gradrhok,gradrhok,2)
+!  CALL multiply(7)
+  CALL multiply_ak2(gpu_ffta,gpu_rakyfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1252,9 +1267,18 @@ IF(extendedTF) THEN
 ! z derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,3)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
+!  CALL gradient(gradrhok,gradrhok,3)
+!  CALL multiply(8)
+  CALL multiply_ak2(gpu_ffta,gpu_rakzfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1556,15 +1580,16 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
 !  DO ind=1,kdfull2
 !    q2(ind)=q2(ind)*akx(ind)
 !  END DO
 
-  CALL multiply(3)
+!  CALL multiply(3)
+  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 
-!  CALL fftback(q2,q2)
+  CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
 
   DO ind=1,kdfull2
@@ -1584,15 +1609,16 @@ DO nb=1,nstate
   CALL fftback(q2,q2)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
 !  DO ind=1,kdfull2
 !    q2(ind)=q2(ind)*aky(ind)
 !  END DO
 
-  CALL multiply(4)
+!  CALL multiply(4)
+  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 
-  CALL fftback(q2,q2)
+  CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
 
   DO ind=1,kdfull2
@@ -1612,15 +1638,16 @@ DO nb=1,nstate
   CALL fftback(q2,q2)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
 !  DO ind=1,kdfull2
 !    q2(ind)=q2(ind)*akz(ind)
 !  END DO
 
-  CALL multiply(5)
+!  CALL multiply(5)
+  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 
-  CALL fftback(q2,q2)
+  CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
 
   DO ind=1,kdfull2

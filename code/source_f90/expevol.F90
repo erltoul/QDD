@@ -243,15 +243,16 @@ END DO
 CALL fftback(q1,q2)
 #endif
 #if(fftw_gpu)
-CALL fftf(qact,q1,copyback)
+CALL fftf(qact,q1,ffta,gpu_ffta,copyback)
 
 !DO  i=1,nxyz
 !  q1(i) = akv(i)*q1(i)
 !END DO
 
-CALL multiply(2)
+!CALL multiply(2)
+CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
 
-CALL fftback(q1,q2)
+CALL fftback(q1,q2,ffta,gpu_ffta)
 #endif
 IF(tpri) ekinsp(nbe) = wfovlp(qact,q2)
 #else

@@ -4037,7 +4037,7 @@ ALLOCATE(q1(kdfull2))
 CALL fftf(q0,q1)
 #endif
 #if(fftw_gpu)
-CALL fftf(q0,q1,copyback)
+CALL fftf(q0,q1,ffta,gpu_ffta,copyback)
 #endif
 
 
@@ -4091,9 +4091,9 @@ CALL fftback(q1,q0)
 !  q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
 !ENDDO
 
-CALL multiply_shift(shix,shiy,shiz)
+CALL multiply_shift(gpu_ffta,gpu_akxfft,gpu_akyfft,gpu_akzfft,shix,shiy,shiz)
 
-CALL fftback(q1,q0)
+CALL fftback(q1,q0,ffta,gpu_ffta)
 #endif
 
 DEALLOCATE(q1)
@@ -4217,12 +4217,14 @@ wftest = akv*wftest
 CALL fftback(wftest,wftest)
 #endif
 #if(fftw_gpu)
-CALL fftf(wfin,wftest,copyback)
+CALL fftf(wfin,wftest,ffta,gpu_ffta,copyback)
 
 !wftest = akv*wftest
-CALL multiply(2)
 
-CALL fftback(wftest,wftest)
+!CALL multiply(2)
+CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
+
+CALL fftback(wftest,wftest,ffta,gpu_ffta)
 #endif
 ekintot = dvol*SUM(wfin*wftest)
 
