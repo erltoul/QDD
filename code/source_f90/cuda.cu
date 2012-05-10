@@ -93,11 +93,11 @@ extern "C" void cuda_plan_1d_(cufftHandle *plan, int *dim, int *batch)
 	  printf("CUFFT error : Plan Creation failed\n");
 	  exit(-1);
 	}
-        /*if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
 	  printf("CUFFT error : Streamed FFT Creation failed\n");
 	  exit(-1);
-	}*/
+	}
 }
 
 extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
@@ -107,11 +107,11 @@ extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
 	  printf("CUFFT error : Plan Creation failed\n");
 	  exit(-1);
 	}
-        /*if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
 	  printf("CUFFT error : Streamed FFT Creation failed\n");
 	  exit(-1);
-	}*/
+	}
 }
 
 extern "C" void kill_plan_(cufftHandle *plan)
@@ -416,7 +416,7 @@ extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpy(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice);
+	cudaMemcpyAsync(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
@@ -425,7 +425,7 @@ extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,i
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
@@ -434,7 +434,7 @@ extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,in
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
-	cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
