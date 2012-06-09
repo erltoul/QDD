@@ -412,6 +412,7 @@ IF(numspin==2) THEN
   END IF
 
   enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
+  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
 
   IF(npartup > 0) THEN
     DO ind=1,nxyz

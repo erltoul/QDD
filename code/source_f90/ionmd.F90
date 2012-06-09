@@ -80,43 +80,33 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 sumekinion=0D0
 !      if (nion.gt.0) then
 DO ion=1,nion
-  xm=1836D0*amu(np(ion))*ame
-  ek=0D0
-  ek=ek+cpx(ion)*cpx(ion)
-  ek=ek+cpy(ion)*cpy(ion)
-  ek=ek+cpz(ion)*cpz(ion)
-  ek=ek/2.0/xm
+  ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
+  ek=ek/(2D0*1836D0*amu(np(ion))*ame)
   sumekinion=sumekinion+ek
 END DO
 !      endif
 #if(raregas)
-xm=1836D0*mion*ame
 DO  ion=1,nc
-  ek=0D0
-  ek=ek+pxc(ion)*pxc(ion)
+  ek=pxc(ion)*pxc(ion)
   ek=ek+pyc(ion)*pyc(ion)
   ek=ek+pzc(ion)*pzc(ion)
-  ek=ek/2.0/xm
+  ek=ek/(2D0*1836D0*mion*ame)
   sumekinion=sumekinion+ek
 END DO
 
-xm=1836D0*me*ame
 DO  ion=1,NE
-  ek=0D0
-  ek=ek+pxe(ion)*pxe(ion)
+  ek=pxe(ion)*pxe(ion)
   ek=ek+pye(ion)*pye(ion)
   ek=ek+pze(ion)*pze(ion)
-  ek=ek/2.0/xm
+  ek=ek/(2D0*1836D0*me*ame)
   sumekinion=sumekinion+ek
 END DO
 
-xm=1836D0*mkat*ame
 DO  ion=1,nk
-  ek=0D0
-  ek=ek+pxk(ion)*pxk(ion)
+  ek=pxk(ion)*pxk(ion)
   ek=ek+pyk(ion)*pyk(ion)
   ek=ek+pzk(ion)*pzk(ion)
-  ek=ek/2.0/xm
+  ek=ek/(2D0*1836D0*mkat*ame)
   sumekinion=sumekinion+ek
 END DO
 #endif
@@ -403,6 +393,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
+REAL(DP),ALLOCATABLE :: tfac(:)     ! array acceleration factors
 
 LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
 !INTEGER, PARAMETER :: mm=ng
@@ -445,22 +437,26 @@ END IF
 
 #if(raregas)
 IF (isurf /= 0 .AND. nc > 0) THEN
+  ALLOCATE(xm(1:nc))
   xm = mion*1836D0*ame
   CALL leapfr(xc(1),yc(1),zc(1),pxc(1),pyc(1),pzc(1),dt1,xm,nc,1)
+  DEALLOCATE(xm)
 END IF
 
 IF (nk > 0) THEN
-  xm = mkat*1836D0*ame
 ! correction of velocities to fox c.m.
-   IF(ifixcmion == 1) THEN
-     pxcmion = SUM(pxk(1:nion))/nion
-     pycmion = SUM(pyk(1:nion))/nion
-     pzcmion = SUM(pzk(1:nion))/nion
-     pxk = pxk - pxcmion
-     pyk = pyk - pycmion
-     pzk = pzk - pzcmion
-   END IF
+  IF(ifixcmion == 1) THEN
+    pxcmion = SUM(pxk(1:nion))/nion
+    pycmion = SUM(pyk(1:nion))/nion
+    pzcmion = SUM(pzk(1:nion))/nion
+    pxk = pxk - pxcmion
+    pyk = pyk - pycmion
+    pzk = pzk - pzcmion
+  END IF
+  ALLOCATE(xm(1:nk))
+  xm = mkat*1836D0*ame
   CALL leapfr(xk(1),yk(1),zk(1),pxk(1),pyk(1),pzk(1),dt1,xm,nk,3)
+  DEALLOCATE(xm)
 END IF
 #endif
 
@@ -475,9 +471,11 @@ IF (nion > 0 .AND.imob /= 0) THEN
    END IF
 
 !     propagation of cluster ions
-  xm=amu(np(nion))*1836D0*ame
+  ALLOCATE(xm(1:nion))
+  xm(:)=amu(np(:))*1836D0*ame
   CALL leapfr(cx(1),cy(1),cz(1), cpx(1),cpy(1),cpz(1),  &
       dt1,xm,nion,4)
+  DEALLOCATE(xm)
 
 ! correct ionic c.m. to restore value before step
    IF(ifixcmion == 1) THEN
@@ -515,22 +513,24 @@ END IF
 CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
-    tfac = ame*amu(np(nion))*1836.0*0.048/taccel
+    ALLOCATE(tfac(1:nion))
+    tfac(:) = ame*amu(np(:))*1836.0*0.048/taccel
     IF(tsmooth) THEN
       dtaccel=taccel/10D0
       tfac = tfac*taccel/(taccel-dtaccel/2D0)
       IF(tfs>taccel-dtaccel) tfac=tfac*sin(PI*(taccel-tfs)/(dtaccel*2D0))**2
     END IF
     WRITE(*,*) ' tfs,tfac=',tfs,tfac
-    fx(nion) = fx(nion)+vpx*tfac
-    fy(nion) = fy(nion)+vpy*tfac
-    fz(nion) = fz(nion)+vpz*tfac
+    fx(nion) = fx(nion)+vpx*tfac(nion)
+    fy(nion) = fy(nion)+vpy*tfac(nion)
+    fz(nion) = fz(nion)+vpz*tfac(nion)
     IF(nion>1) THEN
-      fx(1:nion-1)=fx(1:nion-1)-vpx*tfac/(nion-1)
-      fy(1:nion-1)=fy(1:nion-1)-vpy*tfac/(nion-1)
-      fz(1:nion-1)=fz(1:nion-1)-vpz*tfac/(nion-1)
+      fx(1:nion-1)=fx(1:nion-1)-vpx*tfac(1:nion-1)/(nion-1)
+      fy(1:nion-1)=fy(1:nion-1)-vpy*tfac(1:nion-1)/(nion-1)
+      fz(1:nion-1)=fz(1:nion-1)-vpz*tfac(1:nion-1)/(nion-1)
     END IF
 !    WRITE(*,*) 'FZ:',fz(1:nion)
+    DEALLOCATE(tfac)
   END IF
 
 
@@ -543,21 +543,31 @@ CALL getforces(rho,psi,0)
 IF (isurf /= 0) THEN
 !     propagation of rare gas cores
   IF(nc > 0)THEN
+    ALLOCATE(xm(1:nc))
+    xm = 1D0               ! setting for propagation of momenta
     CALL leapfr(pxc(1),pyc(1),pzc(1), fxc(1),fyc(1),fzc(1),  &
-        dt1,1D0,nc,1)
+        dt1,xm,nc,1)
+    DEALLOCATE(xm)
   END IF
   
   IF (nk > 0) THEN
+    ALLOCATE(xm(1:nk))
+    xm = 1D0               ! setting for propagation of momenta
     CALL leapfr(pxk(1),pyk(1),pzk(1), fxk(1),fyk(1),fzk(1),  &
-        dt1,1D0,nk,3)
+        dt1,xm,nk,3)
+    DEALLOCATE(xm)
   END IF
 END IF
 #endif
 
 
 !     propagation of cluster ions
-IF (nion > 0 .AND. imob /= 0) CALL leapfr(cpx(1),cpy(1),cpz(1),  &
-    fx(1),fy(1),fz(1), dt1,1D0,nion,4)
+IF (nion > 0 .AND. imob /= 0) THEN
+  ALLOCATE(xm(1:nion))
+  xm = 1D0               ! setting for propagation of momenta
+  CALL leapfr(cpx(1),cpy(1),cpz(1),fx(1),fy(1),fz(1),dt1,1D0,nion,4)
+  DEALLOCATE(xm)
+END IF
 
 !WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)
 !WRITE(6,'(a,3f15.6)') 'pix,piy,piz',cpx(1),cpy(1),cpz(1)
@@ -578,14 +588,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !INTEGER, PARAMETER :: mm=maxpar
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: x(n)
-REAL(DP), INTENT(OUT)                        :: y(n)
-REAL(DP), INTENT(OUT)                        :: z(n)
-REAL(DP), INTENT(IN)                         :: xprop(n)
-REAL(DP), INTENT(IN)                         :: yprop(n)
-REAL(DP), INTENT(IN)                         :: zprop(n)
-REAL(DP), INTENT(IN)                         :: ddt
-REAL(DP), INTENT(IN)             :: xm
+REAL(DP), INTENT(OUT)                    :: x(n)
+REAL(DP), INTENT(OUT)                    :: y(n)
+REAL(DP), INTENT(OUT)                    :: z(n)
+REAL(DP), INTENT(IN)                     :: xprop(n)
+REAL(DP), INTENT(IN)                     :: yprop(n)
+REAL(DP), INTENT(IN)                     :: zprop(n)
+REAL(DP), INTENT(IN)                     :: ddt
+REAL(DP), INTENT(IN)                     ::  xm(1:n)   
 INTEGER, INTENT(IN OUT)                  :: ityp
 
 
@@ -599,22 +609,22 @@ INTEGER, INTENT(IN OUT)                  :: ityp
 #if(raregas)
 DO i = 1,n
   
-  IF ((ityp == 1 .AND. imobc(i) == 1) .OR.  &
+  IF ((ityp == 4) .OR. (ityp == 1 .AND. imobc(i) == 1) .OR.  &
         (ityp == 2 .AND. imobe(i) == 1) .OR.  &
-        (ityp == 3 .AND. imobk(i) == 1) .OR. (ityp == 4)           ) THEN
+        (ityp == 3 .AND. imobk(i) == 1)) THEN
     
-    x(i) = x(i) + ddt * xprop(i) / xm
-    y(i) = y(i) + ddt * yprop(i) / xm
-    z(i) = z(i) + ddt * zprop(i) / xm
+    x(i) = x(i) + ddt * xprop(i) / xm(i)
+    y(i) = y(i) + ddt * yprop(i) / xm(i)
+    z(i) = z(i) + ddt * zprop(i) / xm(i)
     
   END IF
 END DO
 #else
 IF (ityp == 4) THEN
   DO i = 1,n
-    x(i) = x(i) + ddt * xprop(i) / xm
-    y(i) = y(i) + ddt * yprop(i) / xm
-    z(i) = z(i) + ddt * zprop(i) / xm
+    x(i) = x(i) + xprop(i) * (ddt/xm(i))
+    y(i) = y(i) + yprop(i) * (ddt/xm(i))
+    z(i) = z(i) + zprop(i) * (ddt/xm(i))
   END DO
 END IF
 #endif
@@ -637,6 +647,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+
+REAL(DP),ALLOCATABLE :: xm(:)          ! array for particle masses
+REAL(DP),ALLOCATABLE :: tfac(:)        ! acceleration factors
 LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
 
 
@@ -670,23 +683,27 @@ END IF
 
 #if(raregas)
 IF (isurf /= 0 .AND. nc > 0) THEN
+  ALLOCATE(xm(1:nc))
   xm = mion*1836D0*ame
   CALL velverlet1(xc(1),yc(1),zc(1),pxc(1),pyc(1),pzc(1), &
                   fxc(1),fyc(1),fzc(1),dt1,xm,nc,1)
+  DEALLOCATE(xm)
 END IF
 IF (nk > 0) THEN
-  xm = mkat*1836D0*ame
-! correction of velocities to fox c.m.
+! correction of velocities to fix c.m.
    IF(ifixcmion == 1) THEN
-     pxcmion = SUM(pxk(1:nion))/nion
-     pycmion = SUM(pyk(1:nion))/nion
-     pzcmion = SUM(pzk(1:nion))/nion
+     pxcmion = SUM(pxk(1:nk))/nk
+     pycmion = SUM(pyk(1:nk))/nk
+     pzcmion = SUM(pzk(1:nk))/nk
      pxk = pxk - pxcmion
      pyk = pyk - pycmion
      pzk = pzk - pzcmion
    END IF
+  ALLOCATE(xm(1:nk))
+  xm = mkat*1836D0*ame
   CALL velverlet1(xk(1),yk(1),zk(1),pxk(1),pyk(1),pzk(1), &
                   fxk(1),fyk(1),fzk(1),dt1,xm,nk,3)
+  DEALLOCATE(xm)
 END IF
 #endif
 
@@ -701,9 +718,11 @@ IF (nion > 0 .AND.imob /= 0) THEN
    END IF
 
 !   propagation of cluster ions, first half of momenta
-  xm=amu(np(nion))*1836D0*ame
+  ALLOCATE(xm(1:nion))
+  xm(:)=amu(np(:))*1836D0*ame
   CALL velverlet1(cx(1),cy(1),cz(1), cpx(1),cpy(1),cpz(1), &
                   fx(1),fy(1),fz(1),dt1,xm,nion,4)
+  DEALLOCATE(xm)
 
 ! correct ionic c.m. to restore value before step
    IF(ifixcmion == 1) THEN
@@ -738,29 +757,23 @@ CALL getforces(rho,psi,0)
 !WRITE(*,*) ' ITSTEPV: after GETFORCES'
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
-    tfac = ame*amu(np(nion))*1836.0*0.048/taccel
+    ALLOCATE(tfac(1:nion))
+    tfac(:) = ame*amu(np(:))*1836.0*0.048/taccel
     IF(tsmooth) THEN
       dtaccel=taccel/10D0
       tfac = tfac*taccel/(taccel-dtaccel/2D0)
       IF(tfs>taccel-dtaccel) tfac=tfac*sin(PI*(taccel-tfs)/(dtaccel*2D0))**2
     END IF
     WRITE(*,*) ' tfs,tfac=',tfs,tfac
-!    fx(nion) = fx(nion)+vpx*tfac
-!    fy(nion) = fy(nion)+vpy*tfac
-!    fz(nion) = fz(nion)+vpz*tfac
-!    IF(nion>1) THEN
-!      fx(1:nion-1)=fx(1:nion-1)-vpx*tfac/(nion-1)
-!      fy(1:nion-1)=fy(1:nion-1)-vpy*tfac/(nion-1)
-!      fz(1:nion-1)=fz(1:nion-1)-vpz*tfac/(nion-1)
-!    END IF
-    fx(nion) = vpx*tfac
-    fy(nion) = vpy*tfac
-    fz(nion) = vpz*tfac
+    fx(nion) = vpx*tfac(nion)
+    fy(nion) = vpy*tfac(nion)
+    fz(nion) = vpz*tfac(nion)
     IF(nion>1) THEN
-      fx(1:nion-1)=-vpx*tfac/(nion-1)
-      fy(1:nion-1)=-vpy*tfac/(nion-1)
-      fz(1:nion-1)=-vpz*tfac/(nion-1)
+      fx(1:nion-1)=-vpx*tfac(1:nion-1)/(nion-1)
+      fy(1:nion-1)=-vpy*tfac(1:nion-1)/(nion-1)
+      fz(1:nion-1)=-vpz*tfac(1:nion-1)/(nion-1)
     END IF
+    DEALLOCATE(tfac)
 !    WRITE(*,*) 'FZ:',fz(1:nion)
   END IF
 
@@ -821,10 +834,11 @@ REAL(DP), INTENT(IN OUT)   :: x(n),y(n),z(n)
 REAL(DP), INTENT(IN OUT)   :: px(n),py(n),pz(n)
 REAL(DP), INTENT(IN)       :: fox(n),foy(n),foz(n)
 REAL(DP), INTENT(IN)       :: ddt
-REAL(DP), INTENT(IN)       :: xm
+REAL(DP), INTENT(IN)       :: xm(1:n)
 INTEGER, INTENT(IN)        :: ityp
 
 
+ddth = 0.5D0*ddt
 #if(raregas)
 DO i = 1,n
   
@@ -832,24 +846,24 @@ DO i = 1,n
         (ityp == 2 .AND. imobe(i) == 1) .OR.  &
         (ityp == 3 .AND. imobk(i) == 1) .OR. (ityp == 4)           ) THEN
     
-    x(i) = x(i) + ddt * (px(i)+0.5D0*ddt*fox(i))/xm
-    y(i) = y(i) + ddt * (py(i)+0.5D0*ddt*foy(i))/xm
-    z(i) = z(i) + ddt * (pz(i)+0.5D0*ddt*foz(i))/xm
-    px(i) = px(i) + ddt * 0.5D0*fox(i)
-    py(i) = py(i) + ddt * 0.5D0*foy(i)
-    pz(i) = pz(i) + ddt * 0.5D0*foz(i)
+    x(i) = x(i) + (px(i)+ddth*fox(i))*ddt/xm(i)
+    y(i) = y(i) + (py(i)+ddth*foy(i))*ddt/xm(i)
+    z(i) = z(i) + (pz(i)+ddth*foz(i))*ddt/xm(i)
+    px(i) = px(i) + ddth*fox(i)
+    py(i) = py(i) + ddth*foy(i)
+    pz(i) = pz(i) + ddth*foz(i)
     
   END IF
 END DO
 #else
 IF (ityp == 4) THEN
   DO i = 1,n
-    x(i) = x(i) + ddt * (px(i)+0.5D0*ddt*fox(i))/xm
-    y(i) = y(i) + ddt * (py(i)+0.5D0*ddt*foy(i))/xm
-    z(i) = z(i) + ddt * (pz(i)+0.5D0*ddt*foz(i))/xm
-    px(i) = px(i) + ddt * 0.5D0*fox(i)
-    py(i) = py(i) + ddt * 0.5D0*foy(i)
-    pz(i) = pz(i) + ddt * 0.5D0*foz(i)
+    x(i) = x(i) + (px(i)+ddth*fox(i))*(ddt/xm(i))
+    y(i) = y(i) + (py(i)+ddth*foy(i))*(ddt/xm(i))
+    z(i) = z(i) + (pz(i)+ddth*foz(i))*(ddt/xm(i))
+    px(i) = px(i) + ddth*fox(i)
+    py(i) = py(i) + ddth*foy(i)
+    pz(i) = pz(i) + ddth*foz(i)
   END DO
 END IF
 #endif
@@ -879,6 +893,8 @@ REAL(DP), INTENT(IN)       :: ddt
 INTEGER, INTENT(IN)        :: ityp
 
 
+ddth = 0.5D0*ddt
+
 #if(raregas)
 DO i = 1,n
   
@@ -886,18 +902,18 @@ DO i = 1,n
         (ityp == 2 .AND. imobe(i) == 1) .OR.  &
         (ityp == 3 .AND. imobk(i) == 1) .OR. (ityp == 4)           ) THEN
     
-    px(i) = px(i) + ddt * 0.5D0*fox(i)
-    py(i) = py(i) + ddt * 0.5D0*foy(i)
-    pz(i) = pz(i) + ddt * 0.5D0*foz(i)
+    px(i) = px(i) + ddth*fox(i)
+    py(i) = py(i) + ddth*foy(i)
+    pz(i) = pz(i) + ddth*foz(i)
     
   END IF
 END DO
 #else
 IF (ityp == 4) THEN
   DO i = 1,n
-    px(i) = px(i) + ddt * 0.5D0*fox(i)
-    py(i) = py(i) + ddt * 0.5D0*foy(i)
-    pz(i) = pz(i) + ddt * 0.5D0*foz(i)
+    px(i) = px(i) + ddth*fox(i)
+    py(i) = py(i) + ddth*foy(i)
+    pz(i) = pz(i) + ddth*foz(i)
   END DO
 END IF
 #endif
@@ -918,7 +934,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 tfs = 0D0
 
@@ -937,22 +953,39 @@ CALL getforces(rho,psi,0)
 IF (isurf /= 0) THEN
   IF(nc+NE > 0)THEN
 !     propagation of cores
-    CALL leapfr(pxc(1),pyc(1),pzc(1), fxc(1),fyc(1),fzc(1),dt1/2.,1D0,nc,1)
+    ALLOCATE(xm(1:nc))
+    xm = 1D0
+    CALL leapfr(pxc(1),pyc(1),pzc(1), fxc(1),fyc(1),fzc(1),dt1/2.,xm,nc,1)
 !     propagation of clouds
-    IF(ifadiadip /= 1) &
-      CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/4.,1D0,NE,2)
+    DEALLOCATE(xm)
+    IF(ifadiadip /= 1) THEN
+      ALLOCATE(xm(1:ne))
+      xm = 1D0
+      CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/4.,xm,ne,2)
+      DEALLOCATE(xm)
+    END IF
   END IF
 !     propagation of kation
-  IF(nk > 0) CALL leapfr(pxk(1),pyk(1),pzk(1),  &
-      fxk(1),fyk(1),fzk(1),dt1/2.,1D0,nk,3)
+  IF(nk > 0) THEN
+     ALLOCATE(xm(1:nk))
+     xm = 1D0
+     CALL leapfr(pxk(1),pyk(1),pzk(1),  &
+                 fxk(1),fyk(1),fzk(1),dt1/2.,xm,nk,3)
+     DEALLOCATE(xm)
+  END IF
   
 END IF
 #endif
 
 
 !     propagation of cluster ions
-IF(nion > 0)CALL leapfr(cpx(1),cpy(1),cpz(1),  &
-    fx(1),fy(1),fz(1),dt1/2.,1D0,nion,4)
+IF(nion > 0) THEN
+  ALLOCATE(xm(1:nion))
+  xm = 1D0
+  CALL leapfr(cpx(1),cpy(1),cpz(1),  &
+              fx(1),fy(1),fz(1),dt1/2.,1D0,nion,4)
+  DEALLOCATE(xm)
+END IF
 
 WRITE(6,*)'initial momenta and kinetic energy'
 ekion =  enerkin_ions()

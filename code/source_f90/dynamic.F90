@@ -900,10 +900,13 @@ energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
 etot = energy + ekion + ekinion + ekinel + ekinkat
+energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
+WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, &
+  eshell+enrear+ecback+ecorr,ecback+ecorr
 
 IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
   CALL safeopen(163,it,jenergy,'penergies')
-  WRITE(163,'(1f14.6,22e24.15)') tfs, &
+  WRITE(163,'(1f14.6,25e24.15)') tfs, &
      &                eshell*2.-esh1,     &
      &                enrear,             &
      &                ekion,              &
@@ -922,7 +925,10 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &                energy,            &
      &                etot, &
      &                elaser, &
-     &                estar,estarETF
+     &                estar,&
+     &                estarETF,&
+     &                energ2,&
+     &                esh1
   CALL flush(163)
   CLOSE(163)
 END IF
@@ -1009,7 +1015,9 @@ DO ii=1,kdfull2
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
-ekinout = sumk/sum0
+sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
+ekinout = sumk/sum0ex
+!WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
 #endif
 #if(findiff|numerov)
 
@@ -1837,6 +1845,7 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 18: total en. [Ry]'
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
     WRITE(163,*) 'col 20/21: internal exc. energy (spin up/down)'
+    WRITE(163,*) 'col 24/25: direct energy, kinetic energy'
     CLOSE(163)
   END IF
   
@@ -3048,8 +3057,7 @@ REAL(DP), INTENT(IN OUT)         :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3068,14 +3076,12 @@ END DO
 !     propagation of positions first
 
 !      xm=amu(np(nrare+1))*1836.0*ame
-
-xm=amu(-18)*1836.0*ame
-
 !      call leapfr(cx(nrare+1),cy(nrare+1),cz(nrare+1),
 !     &     cpx(nrare+1),cpy(nrare+1),cpz(nrare+1),dt,xm,nrare)
 
-CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,NE,2)
-
+ALLOCATE(xm(1:ne)
+xm=amu(-18)*1836.0*ame
+CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,ne,2)
 
 !     update subgrids in case of pseudo-densities
 
@@ -3088,8 +3094,9 @@ END IF
 
 CALL getforces(rho,psi,0) ! forces on valences with new positions
 
-
-CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,1D0,NE,2)
+xm = 1D0
+CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 RETURN
 END SUBROUTINE vstep
@@ -3107,8 +3114,7 @@ REAL(DP), INTENT(IN)             :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3128,9 +3134,11 @@ END DO
 
 !      xm=amu(np(nrare+1))*1836.0*ame
 
+ALLOCATE(xm(1:ne)
 xm=amu(-18)*1836.0*ame
 CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
                 fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 !     update subgrids in case of pseudo-densities
 
