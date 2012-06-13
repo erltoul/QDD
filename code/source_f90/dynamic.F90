@@ -874,19 +874,19 @@ IF(ionmdtyp > 0) THEN
 #if(raregas)
   DO ion=1,nc
     ek=pxc(ion)*pxc(ion)+pyc(ion)*pyc(ion)+pzc(ion)*pzc(ion)
-    xm=1836.0*mion*ame
+    xm=1836.0D0*mion*ame
     ek=ek/2.0/xm
     ekinion=ekinion+ek
   END DO
   DO ion=1,NE
     ek=pxe(ion)*pxe(ion)+pye(ion)*pye(ion)+pze(ion)*pze(ion)
-    xm=1836.0*me*ame
+    xm=1836.0D0*me*ame
     ek=ek/2.0/xm
     ekinel=ekinel+ek
   END DO
   DO ion=1,nk
     ek=pxk(ion)*pxk(ion)+pyk(ion)*pyk(ion)+pzk(ion)*pzk(ion)
-    xm=1836.0*mkat*ame
+    xm=1836.0D0*mkat*ame
     ek=ek/2.0/xm
     ekinkat=ekinkat+ek
   END DO
@@ -3079,8 +3079,8 @@ END DO
 !      call leapfr(cx(nrare+1),cy(nrare+1),cz(nrare+1),
 !     &     cpx(nrare+1),cpy(nrare+1),cpz(nrare+1),dt,xm,nrare)
 
-ALLOCATE(xm(1:ne)
-xm=amu(-18)*1836.0*ame
+ALLOCATE(xm(1:ne))
+xm=amu(-18)*1836.0D0*ame
 CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,ne,2)
 
 !     update subgrids in case of pseudo-densities
@@ -3134,7 +3134,7 @@ END DO
 
 !      xm=amu(np(nrare+1))*1836.0*ame
 
-ALLOCATE(xm(1:ne)
+ALLOCATE(xm(1:ne))
 xm=amu(-18)*1836.0*ame
 CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
                 fxe(1),fye(1),fze(1),dt,xm,ne,2)
