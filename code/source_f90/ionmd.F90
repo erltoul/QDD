@@ -565,7 +565,7 @@ END IF
 IF (nion > 0 .AND. imob /= 0) THEN
   ALLOCATE(xm(1:nion))
   xm = 1D0               ! setting for propagation of momenta
-  CALL leapfr(cpx(1),cpy(1),cpz(1),fx(1),fy(1),fz(1),dt1,1D0,nion,4)
+  CALL leapfr(cpx(1),cpy(1),cpz(1),fx(1),fy(1),fz(1),dt1,xm,nion,4)
   DEALLOCATE(xm)
 END IF
 
@@ -983,7 +983,7 @@ IF(nion > 0) THEN
   ALLOCATE(xm(1:nion))
   xm = 1D0
   CALL leapfr(cpx(1),cpy(1),cpz(1),  &
-              fx(1),fy(1),fz(1),dt1/2.,1D0,nion,4)
+              fx(1),fy(1),fz(1),dt1/2.,xm,nion,4)
   DEALLOCATE(xm)
 END IF
 
