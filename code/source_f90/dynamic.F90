@@ -2988,6 +2988,7 @@ IF(isave > 0 .AND. it /= 0) THEN
   ELSE
     CALL SAVE(psi,it,outnam)
   END IF
+ END IF
 END IF
 
 !     if walltime has almost expired, save all relevant data to
