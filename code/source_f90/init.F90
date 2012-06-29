@@ -641,16 +641,19 @@ SUBROUTINE init_output()
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-CHARACTER (LEN=2) :: num
+CHARACTER (LEN=3) :: num
 
 !------------------------------------------------------------------
 
-IF(myn < 9) THEN
+IF(myn < 10) THEN
   WRITE(num,'(i1)') myn
   maxnum = 1
-ELSE
+ELSE IF(myn < 100 .AND. myn > 9) THEN
   WRITE(num,'(i2)') myn
   maxnum=2
+ELSE
+  WRITE(num,'(i3)') myn
+  maxnum=3
 END IF
 OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
 
