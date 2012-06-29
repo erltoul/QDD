@@ -346,9 +346,9 @@ WRITE(33,'(/a)')  '# localization after static iteration'
 !#else
 !WRITE(33,'(/a,1f13.5)')  '# localization at time=',tfs
 #endif
-DO ix=minx,maxx
-  DO iy=minz,maxz
-    DO iz=minz,maxz
+DO iz=minz,maxz
+  DO ix=minx,maxx
+    DO iy=minz,maxz
       indadd  = (iy-1)*nyf+ix+(iz-1)*nxyf
       WRITE(33,'(1x,3f10.2,3g13.5)')  &
           (ix-nxsh)*dx,(iy-nysh)*dy,(iz-nzsh)*dz, &
