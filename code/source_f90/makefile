@@ -7,9 +7,9 @@
 # Insert the date
 DATE    = 180610
 # the compiler is set here 
-CF90    = IFORT
+CF90    = MPIF90
 # the option for parallel processing (only for some compilers)
-USE_MPI = NO
+USE_MPI = YES
 # debugging option
 DEBUG   = NO
 
@@ -187,7 +187,7 @@ endif
 
 .SUFFIXES: .F90 .o
 
-EXEC = essai.seq
+EXEC = essai.sim
 #EXEC = ntdks3D_v$(DATE)_$(MPI_NAME).bin
 
 OBJS = main.o params.o kinetic.o restart.o restartc.o init.o\
