@@ -2519,6 +2519,11 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
+
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
@@ -2595,7 +2600,17 @@ DO nb=1,nstate
   
 END DO
 
+#if(parayes)
+CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+WRITE(*,*) ' wfs initialized: myn=',myn
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+WRITE(6,*) 'myn=',myn,' before SCHMID'
+#endif
 CALL schmidt(psir)
+#if(parayes)
+WRITE(6,*) 'myn=',myn,' after SCHMID'
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+#endif
 
 
 RETURN

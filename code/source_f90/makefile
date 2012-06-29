@@ -7,7 +7,7 @@
 # Insert the date
 DATE    = 180610
 # the compiler is set here 
-CF90    = IFORT1
+CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # debugging option
