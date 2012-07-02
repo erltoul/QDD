@@ -7,7 +7,7 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = IFORT1
+CF90    = MPIF90
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver

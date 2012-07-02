@@ -18,7 +18,7 @@
 !
 #define parayes 0
 #define parano 1
-#define simpara 0
+#define simpara 1
 !
 ! full SIC and variants (outdated)
 !

@@ -2991,12 +2991,14 @@ REAL(DP) :: trun
 
 
 
-IF(isave > 0 .AND. it /= 0 .AND. MOD(it,isave) == 0) THEN
+IF(isave > 0 .AND. it /= 0) THEN
+ IF(MOD(it,isave) == 0 .OR. it == itmax) THEN
   IF (irest /= 0 .AND. ABS(it-irest) <= 2) THEN
 ! do nothing, change later if needed
   ELSE
     CALL SAVE(psi,it,outnam)
   END IF
+ END IF
 END IF
 
 !     if walltime has almost expired, save all relevant data to
