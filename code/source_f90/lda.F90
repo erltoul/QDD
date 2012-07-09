@@ -12,7 +12,9 @@ SUBROUTINE calclocal(rho,aloc)
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)

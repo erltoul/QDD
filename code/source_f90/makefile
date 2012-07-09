@@ -67,9 +67,9 @@ ifeq "$(CF90)" "IFORT"
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
-	OPT1  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT3  =  -fpp -w        -g               -align all -autodouble
+	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT3  = -fpp -w        -g               -align all -autodouble
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
@@ -169,7 +169,7 @@ endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 	GPUCOMPILER = nvcc
-	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_13 -I/opt/cuda/include
+	GPUCOMPILERFLAGS =  --gpu-architecture sm_13 -I/opt/cuda/include
 #	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20
 endif
 
@@ -205,7 +205,7 @@ endif
 EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
-       generlcgo.o coulsolv.o\
+       generlcgo.o\
        static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o subgrids.o analyse.o\
@@ -221,11 +221,11 @@ OBJS = $(OBJINT) cuda.o cuda_alloc.o
 endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-OBJS = $(OBJINT) fftpack.o
+OBJS = $(OBJINT) fftpack.o coulsolv.o
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
-OBJS = $(OBJINT) fftw.o
+OBJS = $(OBJINT) fftw.o coulsolv.o
 endif
 
 OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile
@@ -252,7 +252,12 @@ $(OBJS):  define.h makefile params.F90
 
 .F90.o:
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
+
+ifeq "$(TYPE_FFT)" "cuFFT"
+main.o: main.F90 define.h makefile params.o kinetic.o cuda.o 2stUT.o 2stUTc.o localize_rad.o
+else
 main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
+endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 #ifeq "$(DIM)" "1d"
@@ -275,7 +280,8 @@ kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftw.o
 endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o cuda.o cuda_alloc.o
+coulsolv.o: coulsolv.cu falr.F90 coulex.cu findiff-sinft.F90 define.h define_cuda.h makefile params.o kinetic.o cuda.o cuda_alloc.o
+	$(GPUCOMPILER) $(GPUCOMPILERFLAGS) -c $< 
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
@@ -286,9 +292,15 @@ ifeq "$(TYPE_FFT)" "NETLIB"
 coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
 endif
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o cuda.o
+
+pseudosoft.o: pseudosoft.F90 define.h makefile params.o kinetic.o cuda.o
+else
 loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o coulsolv.o
 
 pseudosoft.o: pseudosoft.F90 define.h makefile params.o kinetic.o coulsolv.o
+endif
 
 static.o: pseudosoft.F90 define.h makefile params.o kinetic.o localize_rad.o 2stUT.o
 
@@ -306,11 +318,21 @@ localizer.o: localize.F90 define.h makefile params.o
 localize.o: localize.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+
+sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o cuda.o symmcond_step.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
+
+sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o cuda.o symmcond_step.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
+
+else
 sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
 sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
+endif
 
 nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
@@ -318,12 +340,21 @@ nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
 nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+
+2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o cuda.o symmcond_step.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
+ 
+2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o cuda.o symmcond_step.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
+
+else
 2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
  
 2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
-
+endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
 fftpack.o: fftpack.F90 fftpack2.F90 define.h makefile params.o
@@ -333,8 +364,15 @@ endif
 givens.o: givens.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
 
+ifeq "$(TYPE_FFT)" "cuFFT"
+
+init.o: init.F90 define.h makefile params.o kinetic.o cuda.o
+	$(COMPILER) $(COMPILERFLAGS3) -c $< 
+
+else
 init.o: init.F90 define.h makefile params.o kinetic.o coulsolv.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
+endif
 
 restart.o: restart.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
@@ -346,7 +384,7 @@ parallele.o: parallele.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-cuda.o: cuda.cu define_cuda.h makefile
+cuda.o: cuda.cu define_cuda.h params_gpu.h static_gpu.cu makefile
 	$(GPUCOMPILER) $(GPUCOMPILERFLAGS) -c $< 
 endif
 

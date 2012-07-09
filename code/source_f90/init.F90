@@ -3037,7 +3037,9 @@ SUBROUTINE init_grid()
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

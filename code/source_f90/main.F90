@@ -17,7 +17,9 @@ PROGRAM tdlda_m
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 #if(fullsic)
 USE localize_rad
 #endif
@@ -85,6 +87,10 @@ CALL iparams()               ! check dynamic  parameters
 CALL init_grid()
 
 CALL init_fields()
+
+#if(fftw_gpu)
+CALL cuda_gpu_init(kxmax,kymax,kzmax)
+#endif
 
 #if(fullsic)
 IF(numspin==2) CALL init_radmatrix()
@@ -533,7 +539,9 @@ SUBROUTINE loc_mfield_dummy(rho,aloc)
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

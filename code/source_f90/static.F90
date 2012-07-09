@@ -1,14 +1,16 @@
 #include "define.h"
  
 !-----statit---------------------------------------------------------
-
+#if(netlib_fft|fftw_cpu)
 SUBROUTINE statit(psir,rho,aloc)
 
 !     master routine for static iteration
 
 USE params
 ! USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY:falr
+#endif
 #if(twostsic)
 USE twostr
 #endif
@@ -350,9 +352,15 @@ IF(itmax <= 0) STOP ' terminate with static iteration '
 
 RETURN
 END SUBROUTINE statit
+#endif
 !-----static_mfield------------------------------------------------
 
-SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
+#if(netlib_fft|fftw_cpu)
+SUBROUTINE static_mfield(rho,aloc,psir,psiaux,int_pass)
+#endif
+#if(fftw_gpu)
+SUBROUTINE static_mfield(rho,aloc,psir,psiaux)
+#endif
 
 !     The Coulomb part of the mean field.
 
@@ -376,8 +384,9 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)                  :: iter1
-
+#if(netlib_fft|fftw_cpu)
+INTEGER , INTENT(IN OUT)                      :: int_pass
+#endif
 
 
 
@@ -403,8 +412,8 @@ ELSE IF(ifsicp == 6) THEN
   CALL calc_fullsicr(psir,psiaux)
 #endif
 #if(twostsic)
-ELSE IF(ifsicp >= 7 .AND. iter1 > 0) THEN
-  CALL static_sicfield(rho,aloc,psir,iter1)
+ELSE IF(ifsicp >= 7 .AND. int_pass > 0) THEN
+  CALL static_sicfield(rho,aloc,psir,int_pass)
 #endif
 END IF
 
@@ -414,8 +423,12 @@ END SUBROUTINE static_mfield
 
 !#if(parano)
 !-----sstep----------------------------------------------------------
-
-SUBROUTINE sstep(q0,aloc,iter)
+#if(netlib_fft|fftw_cpu)
+SUBROUTINE sstep(q0,aloc,int_pass)
+#endif
+#if(fftw_gpu)
+SUBROUTINE sstep(q0,aloc)
+#endif
 
 !     Performs one static step for all wavefunctions and for given
 !     mean fields.
@@ -447,7 +460,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                      :: iter
+#if(netlib_fft|fftw_cpu)
+INTEGER, INTENT(IN)                      :: int_pass
+#endif
 
 
 REAL(DP) :: occold(kstate),ocwork(kstate)
@@ -569,7 +584,7 @@ DO nbe=1,nstate
   
 !       optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(int_pass,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -609,7 +624,7 @@ ALLOCATE(psipr(kdfull2))
 !       Variance 'evarsp2' excludes non-diagonal elements within
 !       occupied space.
   
-  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
+  IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
     
@@ -629,7 +644,6 @@ ALLOCATE(psipr(kdfull2))
 #if(fftw_gpu)
     CALL sum_calc(sum0,sumk,sume,sum2,gpu_ffta,gpu_ffta2,gpu_akvfft,nxyz)
 #endif
-
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
@@ -664,7 +678,7 @@ ALLOCATE(psipr(kdfull2))
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
-    IF(iter > 0) THEN  
+    IF(int_pass > 0) THEN  
 #if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,q1)
 #endif
@@ -692,9 +706,9 @@ ALLOCATE(psipr(kdfull2))
   
 !     perform the damped gradient step and orthogonalise the new basis
   
-  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
+  IF(idyniter /= 0 .AND. int_pass > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
 #if(netlib_fft|fftw_cpu)    
-!  IF(iter > 0) THEN  
+!  IF(int_pass > 0) THEN  
     IF(e0dmp > small) THEN
 !       DO i=1,nxyz
 !         psipr(i)=psipr(i)-q2(i)*epswf / (akv(i) + e0dmp )
@@ -826,8 +840,8 @@ IF(tcpu) THEN
 !        write(6,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 !        write(7,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 END IF
-WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
-WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
+WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
+WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
 
 
 
@@ -836,8 +850,12 @@ END SUBROUTINE sstep
 !#endif
 
 !-----infor--------------------------------------------------------
-
-SUBROUTINE infor(psi,rho,i)
+#if(netlib_fft|fftw_cpu)
+SUBROUTINE infor(psi,rho,int_pass)
+#endif
+#if(fftw_gpu)
+SUBROUTINE infor(psi,rho)
+#endif
 
 !     Computes observables (energies, radii, ...)
 !     and prints to standard output.
@@ -850,7 +868,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: i
+#if(netlib_fft|fftw_cpu)
+INTEGER, INTENT(IN)                      :: int_pass
+#endif
 REAL(DP), PARAMETER :: alpha_ar=10.6
 REAL(DP),SAVE :: energyold=0D0
 
@@ -870,7 +890,6 @@ REAL(DP) :: en(kstate)
 ALLOCATE(psipr(kdfull2))
 ALLOCATE(psi2(kdfull2))
 
-
 !   compute h*psi
 
 eshell=0D0
@@ -880,6 +899,7 @@ sumvar = 0D0
 sumvar2 = 0D0
 espnb  = 0D0
 enonlc = 0D0
+
 DO nb=1,nstate
   
   ekin     = ekinsp(nb)
@@ -1013,14 +1033,14 @@ IF(myn == 0) THEN
     energ2 = energy
     energy = ensav
   END IF
-  WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
+  WRITE(6,'(a,i5,a,f12.6)') 'iter= ',int_pass,'  binding energy',binerg
   WRITE(6,'(a)') ' '
   
-  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
+  IF(jinfo > 0 .AND. MOD(int_pass,jinfo) == 0) THEN
     CALL cleanfile(17)
     OPEN(17,POSITION='append',FILE='infosp.'//outnam)
     WRITE(17,'(a,i5,4(1pg13.5))') 'iteration,energy,variances=',  &
-        i,energy,(energy-energyold)/jinfo,sumvar,sumvar2
+        int_pass,energy,(energy-energyold)/jinfo,sumvar,sumvar2
     CALL flush(17)
     energyold = energy
   END IF
@@ -1068,7 +1088,7 @@ END IF
 
 !mb for creating the potential energy curve of Na on MgO
 #if(raregas)
-IF (i == -1 .AND. myn == 0) THEN ! static iteration ended, print out binding energies
+IF (int_pass == -1 .AND. myn == 0) THEN ! static iteration ended, print out binding energies
   OPEN(221,POSITION='append',FILE='penerstat')
   WRITE(221,'(1f15.5,8e20.10)') zc(1),energy,ecorr,2*ecback, ecrho-ecback,  &
       amoy(1)
@@ -1083,19 +1103,26 @@ RETURN
 END SUBROUTINE infor
 
 !-----pri_pstat----------------------------------------------------
-
-SUBROUTINE pri_pstat(psi,i,rho)
-
+#if(netlib_fft|fftw_cpu)
+SUBROUTINE pri_pstat(psi,int_pass,rho)
+#endif
+#if(fftw_gpu)
+SUBROUTINE pri_pstat(psi,rho)
+#endif
 !     print short protocol on file 'pstat.*'
 
 
 USE params
 ! USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)              :: i
+#if(netlib_fft|fftw_cpu)
+INTEGER, INTENT(IN OUT)              :: int_pass
+#endif
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
@@ -1338,4 +1365,124 @@ END IF
 RETURN
 END SUBROUTINE reocc
 
+#if(fftw_gpu)
+!print routines.
 
+SUBROUTINE printone(rho,aloc)
+USE params
+  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+  REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+
+  CALL prifld(rho,'density    ')
+  CALL prifld(aloc,'potential   ')
+  IF(nion2 /= 0) CALL prifld(potion,'potential_io')
+  WRITE(7,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
+  WRITE(6,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
+  WRITE(7,*)
+  
+  WRITE(6,'(a)')'+++ start of static iteration +++'
+  WRITE(7,'(a)')'+++ start of static iteration +++'
+  
+  IF(dpolx*dpolx+dpoly*dpoly*dpolz*dpolz > 0D0) WRITE(7,'(a,3f8.4)')  &
+      ' static dipole potential: dpolx,dpoly,dpolz=', dpolx,dpoly,dpolz
+  WRITE(7,*)
+  WRITE(6,*) 'ismax=',ismax
+
+END SUBROUTINE printone
+
+SUBROUTINE printtwo()
+USE params
+   WRITE(7,'(a,i5)') 'iter= ',int_pass
+   WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
+          ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
+          qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
+
+  IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
+!            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
+!            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
+
+END SUBROUTINE printtwo
+
+SUBROUTINE printthree(rho,aloc)
+USE params
+  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+  REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+
+  WRITE(7,*) ' static iteration terminated with ', int_pass,' iterations'
+  
+  CALL prifld(rho,'density    ')
+  CALL prifld(aloc,'potential   ')
+  CALL prifld(chpcoul,'Coul-potent.')
+
+END SUBROUTINE printthree
+
+SUBROUTINE print_densdiffc(rho)
+USE params
+
+  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+
+  OPEN(590,STATUS='unknown',FILE='densdiff')
+  DO i=1,kdfull2*2
+    WRITE(590,*) rho(i)
+  END DO
+  CLOSE(590)
+
+END SUBROUTINE print_densdiffc
+
+SUBROUTINE print_orb(psir)
+USE params
+
+  REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+
+  OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
+  DO i=1,nstate
+    WRITE(522,'(a,i3)') '# state nr: ',i
+    WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
+    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
+    CALL printfield(522,psir(1,i),'tp.psir')
+    WRITE(522,*)  ! separate blocks for gnuplot
+    WRITE(522,*)  !
+  END DO
+  CLOSE(522)
+
+END SUBROUTINE print_orb
+
+SUBROUTINE print_surf(rho)
+USE params
+
+  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+
+  IF (iuselast == -1) THEN
+    IF (myn == 0) THEN
+      OPEN(308,STATUS='unknown',FILE='for005surf.init')
+      WRITE(308,*) nc,nk
+      DO i=1,nc
+        WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
+            ze(i),imobc(i),imobe(i)
+      END DO
+      DO i=1,nk
+        WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
+      END DO
+      CLOSE(308)
+    END IF
+    STOP
+  ELSE IF (iuselast == -2) THEN
+    WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
+    CALL adjustdip(rho)
+    IF (myn == 0) THEN
+      OPEN(308,STATUS='unknown',FILE='for005surf.init')
+      WRITE(308,*) nc,nk
+      DO i=1,nc
+        WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
+            ze(i),imobc(i),imobe(i)
+      END DO
+      DO i=1,nk
+        WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
+      END DO
+      CLOSE(308)
+    END IF
+    STOP
+  END IF
+
+END SUBROUTINE print_surf
+#endif

@@ -1,5 +1,9 @@
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include <math.h>
+#include <functional>
+#include <numeric>
 #include <cufft.h>
 #include <math_functions.h>
 //#include <cutil.h>
@@ -8,13 +12,20 @@
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 #include <thrust/device_free.h>
+#if(parayes)
+#include "mpif.h"
+#endif
 
+using namespace std;
+
+#include "params_gpu.h"
+#include "gpu_compute.cu"
+#include "coulex.cu"
+#include "static_gpu.cu"
 #define BATCH 1 //The number of batched ffts 
 
-cudaError_t error;
-cudaStream_t stream1,stream2;
-
 #if(lda_gpu)
+//Work in progress for lda_gpu
 __device__ __constant__ double a0  = 0.458165293;
 __device__ __constant__ double da0 = 0.119086804;
 
@@ -51,21 +62,11 @@ thrust::device_vector<double> d_enerpw(1);
 #endif*/
 #endif
 
-void Check_CUDA_Error(cudaError_t error)
+extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some variables usefull for GPU computing
 {
-	if(error!=cudaSuccess) 
-	{
-		printf("Cuda error: %s\n",cudaGetErrorString(error));
-		exit(-1);
-	}
-}
-
-extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz)
-{
-
 #if(lda_gpu)
+//Work in progress for lda_gpu
 	int size_lda= sizeof(double)*Nx*Ny*Nz*2;
-
         error = cudaMalloc((void**)&d_chpdft,size_lda);
 	Check_CUDA_Error(error);
 	/*d_ec.resize(nxyz);
@@ -77,7 +78,7 @@ extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz)
 	cudaStreamCreate(&stream2);
 }
 
-extern "C" void cuda_end_()
+extern "C" void cuda_end_() //Destroy variables set above
 {
 #if(lda_gpu)
 	cudaFree(d_chpdft);
@@ -88,330 +89,92 @@ extern "C" void cuda_end_()
 
 extern "C" void cuda_plan_1d_(cufftHandle *plan, int *dim, int *batch)
 {
+	//Creation of a 1D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan1d(plan,*dim,CUFFT_Z2Z,*batch) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Plan Creation failed\n");
+	  cout<<"CUFFT error : Plan Creation failed"<<endl;
 	  exit(-1);
 	}
+	//Associate the plan to a stream
         if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Streamed FFT Creation failed\n");
+	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
 }
 
 extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
 {
+	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_Z2Z) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Plan Creation failed\n");
+	  cout<<"CUFFT error : Plan Creation failed"<<endl;
 	  exit(-1);
 	}
+	//Associate the plan to a stream
         if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Streamed FFT Creation failed\n");
+	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
 }
 
 extern "C" void kill_plan_(cufftHandle *plan)
 {
+	//Destroy FFT plan
         cufftDestroy(*plan);
 }
 
-extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out, int *Np)
+extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out, int *Np) //1D FFT FORWARD
 {
         int N = *Np;
-
-        //Allocate device memory
         cufftDoubleComplex *d_ffta_kin;
 
+	//Allocate device memory
         cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
+	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
         cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
+	//Perform 1D FFT FORWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_FORWARD) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z forward failed\n");
+	  cout<<"CUFFT error : Exec Z2Z forward failed"<<endl;
 	  exit(-1);
 	}
+	//Copy data from GPU to CPU
         cudaMemcpy(out,d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH, cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
+	//Free device memory
         cudaFree(d_ffta_kin);
 }
 
 extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out,int *Np)
 {
         int N = *Np;
-
-        //Allocate device memory
         cufftDoubleComplex *d_ffta_kin;
 
+        //Allocate device memory
         cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
+	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
         cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
+	//Perform 1D FFT BACKWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_INVERSE) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z backward failed\n");
+	  cout<<("CUFFT error : Exec Z2Z backward failed")<<endl;
 	  exit(-1);
 	}
+	//Copy data from GPU to CPU
         cudaMemcpy(out, d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
-        cudaFree(d_ffta_kin); //free the signal on the device.
-}
-
-__global__ void multiply_device(cufftDoubleComplex *d_ffta,int nxyz,double norm)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_ffta[ind].x=norm*d_ffta[ind].x;
-		d_ffta[ind].y=norm*d_ffta[ind].y;
-	}
-}
-
-__global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-	cufftDoubleReal SAVE2;
-
-	if (ind<nxyz)
-	{
-		SAVE2         = d_ak[ind].x*d_ffta[ind].x+d_ak[ind].y*d_ffta[ind].y;
-		d_ffta[ind].y = d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x;
-		d_ffta[ind].x = SAVE2;
-	}
-}
-
-__global__ void multiply_ak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-	cufftDoubleReal SAVE2;
-
-	if (ind<nxyz)
-	{
-		SAVE2         = d_ak[ind].x*d_ffta[ind].x-d_ak[ind].y*d_ffta[ind].y;
-		d_ffta[ind].y = d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x;
-		d_ffta[ind].x = SAVE2;
-	}
-}
-
-__global__ void multiply_ak_real_gpu(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_ffta[ind].x = d_ak[ind]*d_ffta[ind].x;
-		d_ffta[ind].y = d_ak[ind]*d_ffta[ind].y;
-	}
-}
-
-__global__ void multiply_shift_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,cufftDoubleComplex shix,cufftDoubleComplex shiy,cufftDoubleComplex shiz,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-	cufftDoubleReal SAVE2;
-
-	if (ind<nxyz)
-	{
-                shix.x = shix.x*d_akx[ind].x;
-		shiy.x = shiy.x*d_aky[ind].x;
-		shiz.x = shiz.x*d_akz[ind].x;
-                shix.y = shix.y*d_akx[ind].y;
-		shiy.y = shiy.y*d_aky[ind].y;
-		shiz.y = shiz.y*d_akz[ind].y;
-
-		//multiplication by shix
-		SAVE2         = exp(shix.x)*(d_ffta[ind].x*cos(shix.y)-sin(shix.y)*d_ffta[ind].y);
-		d_ffta[ind].y = exp(shix.x)*(d_ffta[ind].x*sin(shix.y)+cos(shix.y)*d_ffta[ind].y);
-		d_ffta[ind].x = SAVE2;
-		//multiplication by shiy
-		SAVE2         = exp(shiy.x)*(d_ffta[ind].x*cos(shiy.y)-sin(shiy.y)*d_ffta[ind].y);
-		d_ffta[ind].y = exp(shiy.x)*(d_ffta[ind].x*sin(shiy.y)+cos(shiy.y)*d_ffta[ind].y);
-		d_ffta[ind].x = SAVE2;
-		//multiplication by shiz
-		SAVE2         = exp(shiz.x)*(d_ffta[ind].x*cos(shiz.y)-sin(shiz.y)*d_ffta[ind].y);
-		d_ffta[ind].y = exp(shiz.x)*(d_ffta[ind].x*sin(shiz.y)+cos(shiz.y)*d_ffta[ind].y);
-		d_ffta[ind].x = SAVE2;
-	}
-}
-
-__global__ void hpsi_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_ffta2[ind].x = d_akv[ind]*d_ffta[ind].x+d_ffta2[ind].x;
-		d_ffta2[ind].y = d_akv[ind]*d_ffta[ind].y+d_ffta2[ind].y;
-	}
-}
-
-__global__ void d_grad_gpu1(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double epswf,double e0dmp,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_ffta[ind].x = d_ffta[ind].x-((epswf*d_ffta2[ind].x)/(d_akv[ind]+e0dmp));
-		d_ffta[ind].y = d_ffta[ind].y-((epswf*d_ffta2[ind].y)/(d_akv[ind]+e0dmp));
-	}
-}
-
-__global__ void d_grad_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double epswf,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_ffta[ind].x = d_ffta[ind].x-epswf*d_ffta2[ind].x;
-		d_ffta[ind].y = d_ffta[ind].y-epswf*d_ffta2[ind].y;
-	}
-}
-
-extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
-{
-	int nxyz = *N;
-	double norm = *tnorm;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        multiply_device<<<dimgrid,dimblock>>>(d_ffta,nxyz,norm);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
-{
-	int nxyz = *N;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        multiply_ak_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void multiply_ak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
-{
-	int nxyz = *N;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        multiply_ak_gpu2<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void multiply_ak_real_(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int *N)
-{
-	int nxyz = *N;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        multiply_ak_real_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,double *sx,double *sy,double *sz,int *N)
-{
-	int nxyz = *N;
-	cufftDoubleComplex shix,shiy,shiz;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-	shix.x = *sx;
-	shix.y = *sx;
-	shiy.x = *sy;
-	shiy.y = *sy;
-	shiz.x = *sz;
-	shiz.y = *sz;
-
-        multiply_shift_gpu<<<dimgrid,dimblock>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int *N)
-{
-	int nxyz = *N;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        hpsi_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ffta2,d_akv,nxyz);
-	Check_CUDA_Error(error);
-}
-
-extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *ep,double *e0,int *N)
-{
-	int nxyz = *N;
-	double epswf = *ep, e0dmp = *e0;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        d_grad_gpu1<<<dimgrid,dimblock>>>(d_ffta,d_ffta2,d_akv,epswf,e0dmp,nxyz);
-	Check_CUDA_Error(error);
-}
-
-__global__ void d_sum_calc(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *d_sum0,double *d_sumk,double *d_sume,double *d_sum2,int nxyz)
-{
-	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
-
-	if (ind<nxyz)
-	{
-		d_sum0[ind] = d_ffta[ind].x*d_ffta[ind].x + d_ffta[ind].y*d_ffta[ind].y;
-		d_sumk[ind] = d_sum0[ind]*d_akv[ind];
-		d_sume[ind] = d_ffta2[ind].x*d_ffta[ind].x + d_ffta2[ind].y*d_ffta[ind].y;
-		d_sum2[ind] = d_ffta2[ind].x*d_ffta2[ind].x + d_ffta2[ind].y*d_ffta2[ind].y;
-	}
-}
-
-extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2, cufftDoubleReal *d_akv,int *N)
-{
-	int nxyz = *N;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-	thrust::device_vector<double> d_sum0(nxyz);
-	thrust::device_vector<double> d_sumk(nxyz);
-	thrust::device_vector<double> d_sume(nxyz);
-	thrust::device_vector<double> d_sum2(nxyz);
-
-        d_sum_calc<<<dimgrid,dimblock>>>(d_ffta,d_ffta2,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
-	Check_CUDA_Error(error);
-	*s0=thrust::reduce(d_sum0.begin(),d_sum0.end(),(double)0.0);
-	*sk=thrust::reduce(d_sumk.begin(),d_sumk.end(),(double)0.0);
-	*se=thrust::reduce(d_sume.begin(),d_sume.end(),(double)0.0);
-	*s2=thrust::reduce(d_sum2.begin(),d_sum2.end(),(double)0.0);
-}
-
-extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double *ep,int *N)
-{
-	int nxyz = *N;
-	double epswf = *ep;
-	int blocksize=512;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
-
-        d_grad_gpu2<<<dimgrid,dimblock>>>(d_ffta,d_ffta2,epswf,nxyz);
-	Check_CUDA_Error(error);
+	//Free device memory
+        cudaFree(d_ffta_kin);
 }
 
 extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta_int,int *N)
+//Copy a complex array from GPU to another array on GPU
 {
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
@@ -421,7 +184,9 @@ extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 }
 
 extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
+//Copy a complex array from CPU to GPU
 {
+
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
@@ -430,6 +195,7 @@ extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,i
 }
 
 extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
+//Copy a real array from CPU to GPU
 {
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
@@ -440,6 +206,7 @@ extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,in
 
 extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
 {
+//Copy a complex array from GPU to CPU
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
@@ -448,6 +215,7 @@ extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat
 }
 
 extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
+//Copy a real array from CPU to GPU
 {
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
@@ -459,16 +227,16 @@ extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,
 extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
 {
 	int type = *ty;
-
+	//Perform 3D FTT FORWARD on the GPU, with different error messages to localize easily a problem
         if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_FORWARD) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z forward failed\n");
+	  cout<<"CUFFT error : Exec Z2Z forward failed ";
 	  if(type==1){
-	    printf("From fftf\n");}
+	    cout<<"from fftf"<<endl;}
 	  if(type==2){
-	    printf("From rftf\n");}
+	    cout<<"from rftf"<<endl;}
 	  if(type==3){
-	    printf("From coulexf\n");}
+	    cout<<"from coulexf"<<endl;}
 	  exit(-1);
 	}
 }
@@ -477,20 +245,22 @@ extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 {
 	int type = *ty;
 
+	//Perform 3D FTT BACKWARD on the GPU, with different error messages to localize easily a problem
         if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_INVERSE) != CUFFT_SUCCESS)
 	{
-	  printf("CUFFT error : Exec Z2Z backward failed\n");
+	  cout<<"CUFFT error : Exec Z2Z backward failed ";
 	  if(type==1){
-	    printf("From fftback\n");}
+	    cout<<"from fftback"<<endl;}
 	  if(type==2){
-	    printf("From rfftback\n");}
+	    cout<<"from rfftback"<<endl;}
 	  if(type==3){
-	    printf("From coulexback\n");}
+	    cout<<"from coulexback"<<endl;}
 	  exit(-1);
 	}
 }
 
 #if(lda_gpu)
+//Work in progress
 __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int nxyz,double e2)
 {
 
@@ -570,7 +340,7 @@ extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,int *N,double *e
         //double *d_rho;
         double e=*e2;
         //double enerpw = *d_enerpw;
-        int blocksize=512;
+        int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
         dim3 dimblock(blocksize,1,1);
@@ -690,7 +460,7 @@ extern "C" void calc_lda_gpu_(double *rho,double *chpdft,int *N,double *e2,doubl
 	//double *d_ec;
         //double *d_rho;
         double e=*e2;
-        int blocksize=512;
+        int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
         dim3 dimblock(blocksize,1,1);

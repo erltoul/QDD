@@ -343,13 +343,20 @@ END SUBROUTINE restart2
 
 
 !     **************************
-
+#if(netlib_fft|fftw_cpu)
 #ifdef REALSWITCH
-SUBROUTINE RSAVE(psi,isa,outna)
+SUBROUTINE RSAVE(psi,int_pass)
 #else
-SUBROUTINE SAVE(psi,isa,outna)
+SUBROUTINE SAVE(psi,int_pass)
 #endif
-
+#endif
+#if(fftw_gpu)
+#ifdef REALSWITCH
+SUBROUTINE RSAVE(psi)
+#else
+SUBROUTINE SAVE(psi)
+#endif
+#endif
 !     **************************
 
 !  writes out the data if mod(iter,isave)=0
@@ -369,9 +376,9 @@ REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #endif
-
-INTEGER, INTENT(IN OUT)                     :: isa
-CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
+#if(netlib_fft|fftw_cpu)
+INTEGER, INTENT(IN OUT)                     :: int_pass
+#endif
 LOGICAL,PARAMETER :: ttest = .FALSE.
 
 
@@ -419,7 +426,7 @@ IF(ttest) WRITE(*,*) ' SAVE-BEFORE: myn=',myn
 
 IF(mynact==0) THEN
   IF(isave > 0) THEN
-    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna) 
+    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outnam) 
     WRITE(*,*) ' RSAVE opened'
   ELSE
     OPEN(UNIT=60,STATUS='scratch',FORM='unformatted') 
@@ -430,18 +437,18 @@ END IF
 #else
 
 IF(mynact==0) &
-  OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
+  OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outnam)   
 
 #endif
   
   
 !  write iteration at which the data is saved
 IF(mynact==0) THEN
-  WRITE(60) isa,nstate_all,nclust,nion,nspdw
+  WRITE(60) int_pass,nstate_all,nclust,nion,nspdw
   IF(TTEST) WRITE(6,*)' SAVE: isa written at myn=',myn
 END IF
   
-  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',isa,myn
+  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',int_pass,myn
   
 !  write wavefunctions:
 #if(parano)
@@ -571,7 +578,7 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
   
   
   IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
-    WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
+    WRITE(17,'(a,i6,a)') '** data saved at ',int_pass,' iterations**'
   END IF
   
   RETURN

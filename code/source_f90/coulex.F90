@@ -162,10 +162,10 @@ dkz=pi/(dz*REAL(nz))
 
 dxsp=dx*dy*dz
 dksp=dkx*dky*dkz
-WRITE(*,*) ' dkx,dky,dkz,dksp=',dkx,dky,dkz,dksp
 
 grnorm=SQRT(dxsp/dksp)
 fnorm=1.0/SQRT(REAL(nx*ny*nz))
+
 !test      akmax=sqrt(3*(nx*nx)*dx*dx)+2.0
 !test      nxk=int(akmax/dkx)+1
 !test      if(nxk.gt.nx1) nxk=nx1

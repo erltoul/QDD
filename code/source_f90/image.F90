@@ -141,7 +141,9 @@ SUBROUTINE pseudosoft_dielec()
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension rho(2*kdfull2)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
@@ -410,7 +412,9 @@ SUBROUTINE pseudosoft2()
 !------------------------------------------------------------
 USE params
 !USE kineticx
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension rho(2*kdfull2)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
@@ -1147,7 +1151,9 @@ SUBROUTINE energ_dielec(rho)
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)

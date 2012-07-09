@@ -314,7 +314,10 @@ REAL(DP) :: projvelx=0D0,projvely=0D0,projvelz=0D0   ! projectile velocity
 REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile position
                    ! impact parameter = min(projinix,projiniy,projiniz)
 
-
+#if(fftw_gpu)
+! params for gpu computation
+INTEGER  :: int_pass
+#endif
 
 ! workspace for communication
 REAL(DP) :: rvectmp2(3),rvectmp(3)

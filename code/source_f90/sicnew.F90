@@ -152,7 +152,9 @@ SUBROUTINE calc_sicgam(rho,aloc,q0)
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),PARAMETER :: sgnkli=-1D0
 #if(parayes)
@@ -334,7 +336,9 @@ SUBROUTINE calc_adsic(rho,aloc,q0)
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),PARAMETER :: sgnkli=-1D0
@@ -1418,7 +1422,9 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #if(parayes)
@@ -1580,7 +1586,9 @@ SUBROUTINE exchg(q0,qex,nbe)
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
