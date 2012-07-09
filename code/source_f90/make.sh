@@ -11,6 +11,7 @@ if [ ! -f define.h ] || [ ! -f params.F90 ] || [ ! -f makefile ] ; then
     exit 0
 fi
 
+# For parallel setups: if mpif90 is available, use it; else, use ifort.
 if [ $para = 1 ] || [ $para = 2 ] ; then
     if which mpif90 ; then
         PCF=MPIF90
@@ -18,6 +19,16 @@ if [ $para = 1 ] || [ $para = 2 ] ; then
         PCF=IFORT
     fi
 fi
+
+# This should detect the Message Passing Toolkit (MPT) of SGI.  MPT
+# provides SGI's own implementation of MPI, which cannot be linked
+# with -static.
+case "$LD_LIBRARY_PATH" in
+    *sgi?mpt*)
+        sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' makefile
+        echo '*** SGI cluster detected, LINK_STATIC set to NO ***'
+        ;;
+esac
 
 if [ $para = 0 ] ; then
     echo '*** serial compilation, simpara = no ***'
