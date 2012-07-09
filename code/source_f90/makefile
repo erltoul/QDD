@@ -12,6 +12,8 @@ CF90    = MPIF90
 USE_MPI = YES
 # debugging option
 DEBUG   = NO
+# Link static or not.
+LINK_STATIC = YES
 
 #####################################################################
 #                             Options                               #
@@ -164,7 +166,12 @@ COMPILERFLAGS2 = $(LDLIBS) $(OPT2)
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3)
 
 LINKER         = $(COMPILER)
-LINKERFLAGS    = $(COMPILERFLAGS1)
+
+ifeq "$(LINK_STATIC)" "YES"
+	LINKERFLAGS = $(COMPILERFLAGS1)
+else
+	LINKERFLAGS = $(COMPILERFLAGS1:-static=)
+endif
 
 
 #####################################################################
