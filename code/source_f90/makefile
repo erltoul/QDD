@@ -4,8 +4,8 @@
 #         XLF_R (serial & parallel version)
 #         MPIF90 (parallel version only)
 
-# Insert the date
-DATE    = 180610
+# Set the date
+DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
 CF90    = MPIF90
 # the option for parallel processing (only for some compilers)
