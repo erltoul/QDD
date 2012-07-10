@@ -166,8 +166,8 @@ ELSE IF(nyini /= ny2) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(nzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(nz2,fftb(1,i1),fftb(1,i1),FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackz=fftw_plan_dft_1d(nz2,fftb(1,i1),fftb(1,i1),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
   pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nzini  = nz2
