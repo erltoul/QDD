@@ -23,12 +23,14 @@ fi
 # This should detect the Message Passing Toolkit (MPT) of SGI.  MPT
 # provides SGI's own implementation of MPI, which cannot be linked
 # with -static.
-case "$LD_LIBRARY_PATH" in
-    *sgi?mpt*)
-        sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' makefile
-        echo '*** SGI cluster detected, LINK_STATIC set to NO ***'
-        ;;
-esac
+if [ $para = 1 ] || [ $para = 2 ] ; then
+  case "$LD_LIBRARY_PATH" in
+      *sgi?mpt*)
+          sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' makefile
+          echo '*** SGI cluster detected, LINK_STATIC set to NO ***'
+          ;;
+  esac
+fi
 
 if [ $para = 0 ] ; then
     echo '*** serial compilation, simpara = no ***'
