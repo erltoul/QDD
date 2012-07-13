@@ -14,6 +14,8 @@ USE_MPI = YES
 DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
+# For large boxe sizes, try option
+# '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
 #####################################################################
 #                             Options                               #
