@@ -279,8 +279,10 @@ IF(knode > 1) THEN
   IF (nabsorb > 0) &
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
                    mpi_double_precision,0,mpi_comm_world,ic)
+#if COMPLEXSWITCH
     CALL mpi_bcast(rhoabsoorb(1:kdfull2,1:nstate),kdfull2*nstate, &
                    mpi_double_precision,0,mpi_comm_world,ic)
+#endif
     CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,ic)
