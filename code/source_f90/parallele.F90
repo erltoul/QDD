@@ -217,6 +217,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(istat,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(jdip,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(jdiporb,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jquad,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jang,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jspdp,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -390,6 +391,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(istat,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(jdip,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(jdiporb,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jquad,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jang,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jspdp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)

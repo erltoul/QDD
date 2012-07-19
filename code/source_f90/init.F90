@@ -71,7 +71,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     irotat,phirot,i3dz,i3dx,i3dstate,istream,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
-    jdip,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
+    jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
     tempion,idenspl,ekmat,nfix,  &

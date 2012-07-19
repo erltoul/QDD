@@ -188,7 +188,7 @@ INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
-INTEGER :: jinfo=10,jdip=10,jquad=0,jang=0,jspdp=0,jenergy=10
+INTEGER :: jinfo=10,jdip=10,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
@@ -245,6 +245,7 @@ REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 INTEGER,PARAMETER :: kmom=35
 INTEGER :: nrmom
 REAL(DP) :: qe(kmom),se(5),ajx,ajy,ajz
+REAL(DP),ALLOCATABLE :: qeorb_all(:,:)
 !COMMON /moment/ qe,se,ajx,ajy,ajz,nrmom
 
 ! storage for the case of 1ph rotation (see 'phangle')
@@ -407,6 +408,7 @@ enonlo=0D0
 ALLOCATE(spvariance(kstate))                  !  s.p. energy variances
 ALLOCATE(spvariancep(kstate))                 !  s.p. energy variances
 ALLOCATE(spvariancebi(kstate))                !  s.p. energy variances
+ALLOCATE(qeorb_all(ksttot,11))                !  s.p. dipole moments
 ALLOCATE(spenergybi(kstate))
 ALLOCATE(spnorm(kstate))                      !  norm of s.p. wf
 ALLOCATE(occup(kstate))                       !  occupation weight
