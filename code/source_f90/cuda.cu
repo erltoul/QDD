@@ -66,6 +66,9 @@ extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some var
 {
 #if(lda_gpu)
 //Work in progress for lda_gpu
+        int Nx=*Npx;
+	int Ny=*Npy;
+	int Nz=*Npz;
 	int size_lda= sizeof(double)*Nx*Ny*Nz*2;
         error = cudaMalloc((void**)&d_chpdft,size_lda);
 	Check_CUDA_Error(error);
