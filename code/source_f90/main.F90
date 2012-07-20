@@ -474,8 +474,10 @@ CLOSE(806)
 DEALLOCATE(psi)
 
 #if(fftw_cpu)
+IF (myn == 0) THEN
 CALL fft_end()
 CALL coulsolv_end()
+ENDIF
 #endif
 
 !                                       ! ends 'else' of 'if(ifscan)'

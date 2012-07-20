@@ -27,6 +27,7 @@ WRITE(*,*) nprocs,knode
 #if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
+IF(knode /= kstate) STOP "knode must be equal to kstate !"
 #else
 knode = 1
 nprocs= 1

@@ -7,9 +7,9 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = IFORT
+CF90    = MPIF90
 # the option for parallel processing (only for some compilers)
-USE_MPI = NO
+USE_MPI = YES
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
@@ -124,7 +124,7 @@ endif
 
 
 ifeq "$(CF90)" "MPIF90"
-	COMPILER  = mpif90
+	COMPILER  = /opt/mpich2-intel/bin/mpif90
 	LDLIBS    = 
 endif
 
@@ -152,7 +152,7 @@ ifeq "$(CF90)" "IFORT1"
 	COMPILER  = ifort
 	LDLIBS    =  
 ifeq "$(USE_MPI)" "YES"
-	LDLIBS    = -lmpi 
+	LDLIBS    = -lmpi
 endif
 endif
 
@@ -195,7 +195,7 @@ endif
 
 .SUFFIXES: .F90 .o
 
-#EXEC = essai.seq
+#EXEC = essai.par
 EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\

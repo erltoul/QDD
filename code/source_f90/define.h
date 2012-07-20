@@ -16,8 +16,8 @@
 !
 ! parallel or serial:
 !
-#define parayes 0
-#define parano 1
+#define parayes 1
+#define parano 0
 #define simpara 0
 !
 ! full SIC and variants (outdated)

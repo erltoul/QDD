@@ -348,8 +348,14 @@ SUBROUTINE fourf(pskr,pski)
 #if(fftw_cpu)
 USE FFTW
 #endif
+#if(parayes)
+USE params, only : myn
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
-
+#if(parayes)
+INCLUDE 'mpif.h'
+REAL(DP) :: is(mpi_status_size)
+#endif
 
 REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
@@ -390,6 +396,7 @@ END IF
 #endif
 
 #if(fftw_cpu)
+#if(parano)
 IF(mxini == 0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
@@ -424,7 +431,83 @@ IF(mzini == 0) THEN
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
+CALL fftw_forget_wisdom
 #endif
+
+#if(parayes)
+IF(mxini == 0) THEN
+  IF(myn == 0) THEN
+    !Master node creates wisdom if necessary...
+    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    IF (wisdomtest == 0) THEN
+      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    END IF
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    mxini  = kfftx
+    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    IF (wisdomtest == 0) THEN
+      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    END IF
+  ENDIF
+  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
+  !... then other nodes use it
+  IF(myn /=0 ) THEN
+    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    mxini  = kfftx
+  ENDIF
+ELSE IF(mxini /= kfftx) THEN
+  STOP ' nx2 in four3d not as initialized!'
+END IF
+IF(myini == 0) THEN
+  IF(myn == 0) THEN
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    myini  = kffty
+    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    IF (wisdomtest == 0) THEN
+      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    END IF
+  ENDIF
+  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
+  IF(myn /= 0) THEN
+    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    myini  = kffty
+  ENDIF
+ELSE IF(myini /= kffty) THEN
+  STOP ' ny2 in four3d not as initialized!'
+END IF
+IF(mzini == 0) THEN
+  IF(myn == 0) THEN
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    mzini  = kfftz
+    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    IF (wisdomtest == 0) THEN
+      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    END IF
+  ENDIF
+  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
+  IF(myn /= 0) THEN
+    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    mzini  = kfftz
+  ENDIF
+ELSE IF(mzini /= kfftz) THEN
+  STOP ' nz2 in four3d not as initialized!'
+END IF
+#endif
+#endif
+
 
 nzzh=(nzi-1)*nxy1
 nyyh=(nyi-1)*nxi
@@ -885,9 +968,8 @@ END SUBROUTINE ffbx
 
 #if(fftw_cpu)
 SUBROUTINE coulsolv_end()
-#if(fftw_cpu)
+
 USE FFTW
-#endif
 
 CALL fftw_destroy_plan(pforwx)
 CALL fftw_destroy_plan(pforwy)
