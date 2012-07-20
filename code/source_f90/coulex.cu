@@ -26,7 +26,7 @@ double zero=0.0;
 double pi=3.141592653589793;
 
 
-double *akv2r,*akv2i,*pakv2r,*pakv2i;
+//double *akv2r,*akv2i,*pakv2r,*pakv2i;
 cufftHandle pfft;
 int batch=1;
 cufftDoubleComplex *fftac,*akvc,*pfftac,*pakvc;
@@ -35,7 +35,7 @@ int res;
 
 //-----fourfakv---------------------------------------------------------
 
-void fourfakv(double *pskr,double *pski){
+void fourfakv(){
 
 //     fourier forward transformation
 //     I/O: pskr   real part of the wave-function
@@ -49,38 +49,9 @@ int gridx=(int)ceil(nxyz/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
 dim3 dimblock(blocksize,1,1);
 
-//int nxyfn,nyfn,nnx2,nny2,nnz2,ind1,ind2;
-
 //test      sqh=sqrt(0.5)
 
 tnorm=grnorm*fnorm;
-
-/*nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;*/
-
-/*ind1=0;
-
-for (int i3=1;i3<=kfftz;i3++){
-  for (int i2=1;i2<=kffty;i2++){
-    for (int i1=1;i1<=kfftx;i1++){
-      ind1++;
-      ind2=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nyc)%nnz2+1;
-      akvc[ind2].x=pskr[ind1];
-      akvc[ind2].y=pski[ind1];
-    }
-  }
-}*/
-
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,pakvc[ii].x,pakvc[ii].y);
-}
-fclose(pFile);
-exit(-1);*/
 
 cudaMemcpyAsync(gpu_akvc,pakvc,kdred*sizeof(cufftDoubleComplex),cudaMemcpyHostToDevice,stream1);
 Check_CUDA_Error(error);
@@ -109,7 +80,7 @@ void fftinp() {
 
 int ikzero,ii;
 double xz1,xz2,xy1,xy2,xx1,xx2,ak2;
-int nxyfn,ind;//,nyfn,nnx2,nny2,nnz2,ind1,ind2;
+int nxyfn,ind;
 
 //test      sqh=sqrt(0.5)
 
@@ -182,45 +153,22 @@ for (int i3=1;i3<=nzi;i3++){
 //        cout<< " i1,i2,i3,ii= "<<i1<<" "<<i2<<" "<<i3<<" "ii;
       ind=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage in a flatten 3D complex array for FFT on GPU
       if(ii != ikzero) {
-        //akv2r[ii] =  1.0/sqrt(ak2);
         akvc[ind].x =  1.0/sqrt(ak2);
       }
       else {
 //              akv2r(ii) = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
 //              akv2r(ii) = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
-        //akv2r[ii] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
         akvc[ind].x = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
       }
-      //akv2i[ii] = 0.0;
       akvc[ind].y = 0.0;
     }
   }
 }
 nksp=ii;
 
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=1;ii<=kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,akv2r[ii],akv2i[ii]);
-}
-fclose(pFile);
-exit(-1);*/
+fourfakv();
 
-fourfakv(&akv2r[0],&akv2i[0]);
-
-/*cudaMemcpy(pakvc,gpu_akvc,kdred*sizeof(cufftDoubleComplex),cudaMemcpyDeviceToHost);
-Check_CUDA_Error(error);
-
-FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=1;ii<=kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,akvc[ii].x,akvc[ii].y);
-}
-fclose(pFile);
-exit(-1);*/
 cudaFreeHost(pakvc);
-free(pakv2r);
-free(pakv2i);       //Only gpu_akvc will be used from now
 
 }
 
@@ -259,12 +207,6 @@ if(cufftSetStream(pfft,stream2) != CUFFT_SUCCESS)
   exit(-1);
 }
 
-//pakv2r = (double *) calloc(kdred,sizeof(double));
-//pakv2i = (double *) calloc(kdred,sizeof(double));
-
-//akv2r=pakv2r-1;
-//akv2i=pakv2i-1;
-
 // Pinned memory allocation on the CPU to make CPU>GPU and GPU>CPU transfers faster
 
 cudaMallocHost (&pfftac,kdred*sizeof(cufftDoubleComplex));
@@ -284,45 +226,14 @@ fftinp();
 
 //-----fft--------------------------------------------------------------
 
-void fft(double *psxr,double *psxi) {
+void fft() {
 
 int blocksize=192;
 int gridx=(int)ceil(nxyz/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
 dim3 dimblock(blocksize,1,1);
 
-int nxyfn,nyfn,nnx2,nny2,nnz2,ind1,ind2;
-//int nxyfn,nyfn,ind1,ind2;
-
 tnorm=grnorm*fnorm;
-
-//copyr1dto3d(&psxr,&psxi,*fftac,kfftx,kffty,kfftz);
-
-nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;
-
-ind1=0;
-  for (int i3=1;i3<=kfftz;i3++){
-    for (int i2=1;i2<=kffty;i2++){
-      for (int i1=1;i1<=kfftx;i1++){
-      ind1++;
-      ind2=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
-      fftac[ind2].x=psxr[ind1];
-      fftac[ind2].y=psxi[ind1];
-    }
-  }
-}
-
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,pfftac[ii].x,pfftac[ii].y);
-}
-fclose(pFile);
-exit(-1);*/
 
 cudaMemcpyAsync(gpu_fftac,pfftac,kdred*sizeof(cufftDoubleComplex),cudaMemcpyHostToDevice,stream1);
 Check_CUDA_Error(error);
@@ -332,15 +243,6 @@ if(cufftExecZ2Z(pfft,gpu_fftac,gpu_fftac, CUFFT_FORWARD) != CUFFT_SUCCESS)
   cout<<"CUFFT error : Exec Z2Z forward failed in coulex"<<endl;
   exit(-1);
 }
-/*cudaMemcpy(fftac,gpu_fftac,kdred*sizeof(cufftDoubleComplex),cudaMemcpyDeviceToHost);
-Check_CUDA_Error(error);
-FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,fftac[ii].x,fftac[ii].y);
-}
-fclose(pFile);
-exit(-1);*/
 
 multiply_device<<<dimgrid,dimblock,0,stream2>>>(gpu_fftac,nxyz,tnorm);
 Check_CUDA_Error(error);
@@ -349,7 +251,7 @@ Check_CUDA_Error(error);
 
 //-----ffb--------------------------------------------------------------
 
-void ffb(double *psxr,double *psxi) {
+void ffb() {
 
 //----------------------------------------------------------------------
 
@@ -357,8 +259,6 @@ int blocksize=192;
 int gridx=(int)ceil(nxyz/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
 dim3 dimblock(blocksize,1,1);
-
-int nxyfn,nyfn,nnx2,nny2,nnz2,ind1,ind2;
 
 tnorm=fnorm/(8.0*grnorm)*pow(pi,1.5);
 
@@ -374,41 +274,11 @@ Check_CUDA_Error(error);
 cudaMemcpy(pfftac,gpu_fftac,kdred*sizeof(cufftDoubleComplex),cudaMemcpyDeviceToHost);
 Check_CUDA_Error(error);
 
-nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;
-
-ind1=0;
-  for (int i3=1;i3<=kfftz;i3++){
-    for (int i2=1;i2<=kffty;i2++){
-      for (int i1=1;i1<=kfftx;i1++){
-      ind1++;
-      ind2=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
-//      psxr[ind]=fftac[(i1+nnx2)%kfftx+1][(i2+nny2)%kffty+1][(i3+nnz2)%kfftz+1].x;
-//      psxi[ind]=fftac[(i1+nnx2)%kfftx+1][(i2+nny2)%kffty+1][(i3+nnz2)%kfftz+1].y;
-      psxr[ind1]=fftac[ind2].x;
-      psxi[ind1]=fftac[ind2].y;
-    }
-  }
-}
-
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=1;ii<=kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,fftac[ii].x,fftac[ii].y);
-}
-fclose(pFile);
-exit(-1);*/
-
-//copyr3dto1d(*fftac,&psxr,&psxi,kfftx,kffty,kfftz);
-
 }
 
 //-----cofows------------------------------------------------------------
 
-void coufou2(double *rhokr,double *rhoki){
+void coufou2(){
 
 int blocksize=192;
 int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -419,15 +289,7 @@ dim3 dimblock(blocksize,1,1);
 
 //     fourier transformation of the density
 
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,rhokr[ii],rhoki[ii]);
-}
-fclose(pFile);
-exit(-1);*/
-
-fft(rhokr,rhoki);
+fft();
 
 //     calculation of the coulomb field (writing on the density field)
 
@@ -436,112 +298,92 @@ Check_CUDA_Error(error);
 
 //     fourier back transformation
 
-ffb(rhokr,rhoki);
+ffb();
 
 }
 
 //-----rhofld------------------------------------------------------------
 
-void rhofld(double *rhoinp,double *rhokr,double *rhoki){
+void rhofld(double *rhoinp){
 
 //     copy density on complex array of double extnesion in x,y,z
 
-int i0,ii;
+int nxyfn,nyfn,nnx2,nny2,nnz2,i0,ii;
+
+nxyfn = kfftx*kfftz;
+nyfn  = kfftx;
+nnx2=nxc+nxc;
+nny2=nyc+nyc;
+nnz2=nzc+nzc;
 
 i0=0;
-//FILE * pFile;
-//pFile = fopen ("Test","w");
-for (int i3=1;i3<=nzc;i3++){
-  for (int i2=1;i2<=nyc;i2++){
-    ii = (i3-1)*nxi*nyi+(i2-1)*nxi;
-    for (int i1=1;i1<=nxc;i1++){
-      ii=ii+1;
-      i0 = i0+1;
-      rhokr[ii]=rhoinp[i0];
-      rhoki[ii]=0.0;
-//      fprintf(pFile,"%d\t%1.10e\t%d\t%1.10e\n",ii,rhokr[ii],i0,rhoinp[i0]);
+for (int i3=1;i3<=kfftz;i3++){
+  for (int i2=1;i2<=kffty;i2++){
+    for (int i1=1;i1<=kfftx;i1++){
+      ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+      if(i3 <= nzc && i2 <= nyc && i1 <= nxc) {
+        i0 = i0+1;
+        fftac[ii].x=rhoinp[i0];
+      }
+      else fftac[ii].x=0.0;
+      fftac[ii].y=0.0;
     }
   }
 }
-//fclose(pFile);
-//exit(-1);
+
 }
 
 
 //-----result------------------------------------------------------------
 
-void result(double *chpfalr,double *rhokr){
+void result(double *chpfalr){
 
 //     copy Coulomb field back to standard grid
+int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
 
-int ii=0;
 int i0=0;
-//FILE * pFile;
-//pFile = fopen ("Test","w");
-for (int i3=1;i3<=nzi;i3++){
-  for (int i2=1;i2<=nyi;i2++){
-    for (int i1=1;i1<=nxi;i1++){
-      ii++;
-      if(i3 <= nzc && i2 <= nyc && i1 <= nxc) {
+
+nxyfn = kfftx*kfftz;
+nyfn  = kfftx;
+nnx2=nxc+nxc;
+nny2=nyc+nyc;
+nnz2=nzc+nzc;
+
+for (int i3=1;i3<=nzc;i3++){
+  for (int i2=1;i2<=nyc;i2++){
+    for (int i1=1;i1<=nxc;i1++){
         i0++;
-        chpfalr[i0] = 2.0*rhokr[ii];
-	//fprintf(pFile,"%d\t%lf\t%d\t%lf\n",i0,chpfalr[i0],ii,rhokr[ii]);
-      }
+        ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+        chpfalr[i0] = 2.0*fftac[ii].x;
     }
   }
 }
-//fclose(pFile);
+
 }
 
 //-------------------------------------------------------------------
 
 extern "C" void falr_(double *prhoinp,double *pchpfalr,int nxdum,int nydum,int nzdum,int kdum) {
 
-double *rhokr,*rhoki,*prhokr,*prhoki,*rhoinp,*chpfalr;
+double *rhoinp,*chpfalr;
 
-prhokr = (double *) calloc(kdred,sizeof(double));
-prhoki = (double *) calloc(kdred,sizeof(double));
-
-rhokr=prhokr-1;
-rhoki=prhoki-1;
-
-rhoinp=prhoinp-1;
-chpfalr=pchpfalr-1;
+rhoinp=prhoinp-1; //rhoinp points one location before pfftac, so rhoinp[1]...rhoinp[kdred] all exist (just sticks with the fortran convention)
+chpfalr=pchpfalr-1; //same trick as above
 
 //     call a routine written by you which writes your density field
 //     on the array rho.
 //     remember not to send your original density array to the fcs.
 //     in this case we have a homogeneously charged sphere .
 
-
-rhofld(rhoinp,rhokr,rhoki);
-
+rhofld(rhoinp);
 
 //     call coufou, which contains the fcs procedure.
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,rhokr[ii],rhoki[ii]);
-}
-fclose(pFile);
-exit(-1);*/
-coufou2(rhokr,rhoki);
-
-/*FILE * pFile;
-pFile = fopen ("Test","w");
-for (int ii=0;ii<kdred;ii++){
-  fprintf(pFile,"%d\t%1.10e\t%1.10e\n",ii,rhokr[ii],rhoki[ii]);
-}
-fclose(pFile);
-exit(-1);*/
+coufou2();
 
 //     call a routine written by you which outputs the results of the fcs
 //     and maybe some other things to an output file or the screen.
 
-result(chpfalr,rhokr);
-
-free(prhokr);
-free(prhoki);
+result(chpfalr);
 
 }
 
