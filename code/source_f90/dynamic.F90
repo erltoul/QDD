@@ -2936,9 +2936,9 @@ IF(myn==0) THEN
   END IF
 
   IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN
-    WRITE(810,'(1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
-    WRITE(811,'(1000e17.8)') tfs,(qeorb_all(nbe,4),nbe=1,nstate_all)
-    WRITE(812,'(1000e17.8)') tfs,(qeorb_all(nbe,5),nbe=1,nstate_all)
+    WRITE(810,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
+    WRITE(811,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,4),nbe=1,nstate_all)
+    WRITE(812,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,5),nbe=1,nstate_all)
     CALL flush(810)
     CALL flush(811)
     CALL flush(812)

@@ -201,7 +201,7 @@ COMPLEX(DP), INTENT(IN)                  :: wf(kdfull2,kstate)
 #endif
 
 LOGICAL, PARAMETER :: ttest=.false.
-REAL(DP) :: qeorb(kstate,11)
+REAL(DP), ALLOCATABLE :: qeorb(:,:)
 INTEGER, INTENT(IN OUT)                  :: iunit
 #if(parayes)
 INTEGER  :: iprisav(kstate,2)     ! printing communication
@@ -211,6 +211,8 @@ INTEGER  :: iprisav(kstate,2)     ! printing communication
 !      data tfirst/.true./
 
 !----------------------------------------------------------------------
+
+ALLOCATE(qeorb(kstate,11))
 
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
@@ -321,6 +323,8 @@ ELSE
   END DO
 END IF
 #endif
+
+DEALLOCATE(qeorb)
 
 #if(parayes)
 IF(myn == 0) THEN
