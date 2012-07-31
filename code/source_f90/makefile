@@ -4,8 +4,8 @@
 #         XLF_R (serial & parallel version)
 #         MPIF90 (parallel version only)
 
-# Insert the date
-DATE    = 030112
+# Set the date
+DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
 CF90    = MPIF90
 # the option for parallel processing (only for some compilers)
@@ -14,6 +14,10 @@ USE_MPI = NO
 TYPE_FFT = NETLIB
 # debugging option
 DEBUG   = NO
+# Link static or not.
+LINK_STATIC = YES
+# For large boxe sizes, try option
+# '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
 #####################################################################
 #                             Options                               #
@@ -79,12 +83,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -pg -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -pg -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -pg -w        -g               -align all -autodouble -static
-#	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
@@ -172,7 +173,13 @@ COMPILERFLAGS2 =  $(LDLIBS)$(OPT2)
 COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) 
 
 LINKER         = $(COMPILER)
-LINKERFLAGS    = $(COMPILERFLAGS1) 
+
+ifeq "$(LINK_STATIC)" "YES"
+	LINKERFLAGS = $(COMPILERFLAGS1)
+else
+	LINKERFLAGS = $(COMPILERFLAGS1:-static=)
+endif
+
 
 
 #####################################################################

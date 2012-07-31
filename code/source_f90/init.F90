@@ -625,7 +625,7 @@ IF (isurf /= 0) THEN
 END IF
 
 
-WRITE(iu,*) 'CODE VERSION: ',iversion
+WRITE(iu,*) 'CODE VERSION: ', IVERSION
 
 IF(iu == 8) CLOSE(8)
 
