@@ -18,6 +18,7 @@ REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
 
 INTEGER, PRIVATE :: kfft,kfft2,kdfull2
+INTEGER, PRIVATE :: kxmax,kymax,kzmax
 
 #if(netlib_fft)
 COMPLEX(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
@@ -45,8 +46,8 @@ USE FFTW
 USE params, only : myn
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
-INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
+INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 
 #endif
 
@@ -312,6 +313,7 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 #if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
 #endif
+COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:),fftta(:,:,:)
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
@@ -341,32 +343,35 @@ END IF
 #endif
 
 !       propagation in x-direction
+#if(fftw_cpu)
+ALLOCATE(ffttax(nx2),ffttay(ny2),ffttaz(nz2),ffttb(nz2,nx2),fftta(nx2,ny2,nz2))
+#endif
 
 xfnorm = 1D0/nx2
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
+      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
     END DO
 #if(netlib_fft)
-    CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic fft
+    CALL dcftf1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic fft
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwx,fftax,fftax)
+    CALL fftw_execute_dft(pforwx,ffttax,ffttax)
 #endif
     DO i1=1,nx2
-      fftax(i1) = akpropx(i1)*fftax(i1)
+      ffttax(i1) = akpropx(i1)*ffttax(i1)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic back fft
+    CALL dcftb1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic back fft
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbackx,fftax,fftax)
+    CALL fftw_execute_dft(pbackx,ffttax,ffttax)
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(MOD(i1+nx,nx2)+1)*xfnorm
+      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
     END DO
   END DO
 END DO
@@ -378,26 +383,26 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
+      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
     END DO
 #if(netlib_fft)
-    CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+    CALL dcftf1 (ny2,ffttay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwy,fftay,fftay)
+    CALL fftw_execute_dft(pforwy,ffttay,ffttay)
 #endif
     DO i2=1,ny2
-      fftay(i2) = akpropy(i2)*fftay(i2)
+      ffttay(i2) = akpropy(i2)*ffttay(i2)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+    CALL dcftb1 (ny2,ffttay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbacky,fftay,fftay)
+    CALL fftw_execute_dft(pbacky,ffttay,ffttay)
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)*yfnorm
+      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
     END DO
   END DO
 END DO
@@ -410,34 +415,35 @@ DO i2=1,ny2
     i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(i3m,i1) = q2(ind)
+      ffttb(i3m,i1) = q2(ind)
     END DO
   END DO
   DO i1=1,nx2
 #if(netlib_fft)
-    CALL dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftf1 (nz2,ffttb(1,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
+    CALL fftw_execute_dft(pforwz,ffttb(1,i1),ffttb(1,i1))
 #endif
     DO i3=1,nz2
-      fftb(i3,i1) = akpropz(i3)*fftb(i3,i1)
+      ffttb(i3,i1) = akpropz(i3)*ffttb(i3,i1)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftb1 (nz2,ffttb(1,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
+    CALL fftw_execute_dft(pbackz,ffttb(1,i1),ffttb(1,i1))
 #endif
   END DO
   DO i3=1,nz2
     i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q1(ind)= fftb(i3m,i1)*zfnorm
+      q1(ind)= ffttb(i3m,i1)*zfnorm
     END DO
   END DO
 END DO
+DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
 
 RETURN
 END SUBROUTINE  kinprop

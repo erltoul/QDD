@@ -11,7 +11,7 @@ SAVE
 !     ak   = fourier-field for exp(i*dt*(h^2/2m)*k^2)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
-COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:)
+COMPLEX(DP),ALLOCATABLE,PRIVATE :: akpropx(:),akpropy(:),akpropz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
 REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 

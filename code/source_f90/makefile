@@ -7,13 +7,15 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = MPIF90
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
-USE_MPI = YES
+USE_MPI = NO
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
+# invoke openmp
+OPMP = YES
 
 #####################################################################
 #                             Options                               #
@@ -79,16 +81,16 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -openmp -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -Dparopenmp=1 -reentrancy threaded
+	OPT2  = -openmp -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -reentrancy threaded
+	OPT3  = -openmp -fpp -w        -g               -align all -autodouble -static -reentrancy threaded
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-	OPT3  =  -pg -fpp -w -g                -align all -autodouble
+	OPT1  =  -openmp -fpp -w -g -CB -traceback -align all -autodouble -Dparopenmp=1 -reentrancy threaded
+	OPT2  =  -openmp -fpp -w -g -CB -traceback -align all -autodouble -Dparopenmp=1 -reentrancy threaded
+	OPT3  =  -openmp -fpp -w -g                -align all -autodouble -Dparopenmp=1 -reentrancy threaded
 endif
 endif
 
