@@ -352,7 +352,7 @@ myn = 0
 #endif
 
 #if(paropenmp)
-CALL OMP_SET_NUM_THREADS(4)
+CALL OMP_SET_NUM_THREADS(2)
 WRITE(*,*) ' BEFORE OMP:  Nr. threads=',OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
 nthr = OMP_GET_MAX_THREADS()-1
 WRITE(*,*) ' nthr=',nthr

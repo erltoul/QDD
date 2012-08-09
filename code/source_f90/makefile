@@ -15,7 +15,7 @@ TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
 # invoke openmp
-OPMP = YES
+OPMP = NO
 
 #####################################################################
 #                             Options                               #
@@ -81,9 +81,9 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -openmp -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -Dparopenmp=1 -reentrancy threaded
-	OPT2  = -openmp -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -reentrancy threaded
-	OPT3  = -openmp -fpp -w        -g               -align all -autodouble -static -reentrancy threaded
+	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -Dparopenmp=0
+	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -fpp -w        -g               -align all -autodouble -static
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
