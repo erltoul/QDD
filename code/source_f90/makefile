@@ -13,7 +13,7 @@ USE_MPI = NO
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
-DEBUG   = YES
+DEBUG   = NO
 # OMP paralleization
 OMP     = YES
 
@@ -52,7 +52,7 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD = -fopenmp -Dparopenmp
+	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
@@ -67,7 +67,7 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -cpp -w -g                             
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD = -fopenmp -Dparopenmp
+	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
@@ -85,15 +85,15 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD =  -openmp -Dparopenmp
+	OMPADD =  -openmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT3  = -fpp -w        -g               -align all -autodouble -static
+	OPT1  = -pg -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -pg -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT3  = -pg -fpp -w        -g               -align all -autodouble -static
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
@@ -166,7 +166,7 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	COMPILER  = ifort
-	LDLIBS    =  
+	LDLIBS    = 
 ifeq "$(USE_MPI)" "YES"
 	LDLIBS    = -lmpi
 endif
@@ -241,7 +241,7 @@ $(EXEC): $(OBJS)
 	@echo Linking executable $@
 
 ifeq "$(TYPE_FFT)" "FFTW"
-	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3 -lm
+	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)
