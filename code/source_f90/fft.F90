@@ -12,7 +12,7 @@ SAVE
 !     ak   = fourier-field for exp(i*dt*(h^2/2m)*k^2)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
-COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:)
+COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
 REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
@@ -68,6 +68,7 @@ dkz=pi/(dz0*nz)
 
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
+ALLOCATE(akprop(kxmax,kymax,kzmax))
 #if(netlib_fft)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
@@ -107,6 +108,7 @@ DO i3=1,nz2
       END IF
       ind=ind+1
       ak(ind)=EXP(-eye*dt1*(zkx**2+zky**2+zkz**2)*h2m)
+      akprop(i1,i2,i3)=ak(ind)
       akv(ind)=(zkx**2+zky**2+zkz**2)*h2m
     END DO
   END DO
@@ -317,6 +319,16 @@ COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
+!  here version using 3D FFTW
+#if(fftw_cpu)
+facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
+CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
+CALL fftw_execute_dft(pforw,ffta,ffta)
+ffta = akprop*ffta
+CALL fftw_execute_dft(pback,ffta,ffta)
+CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+#else
+
 !       check initialization
 #if(netlib_fft)
 IF(nxini == 0) THEN
@@ -444,6 +456,8 @@ DO i2=1,ny2
   END DO
 END DO
 DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
+
+#endif
 
 RETURN
 END SUBROUTINE  kinprop

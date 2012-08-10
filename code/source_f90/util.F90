@@ -3802,6 +3802,41 @@ END SUBROUTINE timer
 
 
 
+!-----stimer------------------------------------------------------
+
+SUBROUTINE stimer(iaction)
+
+!     Initializes timer and retrieves CPU times
+!       iaction  = 1  for initial call
+!                  2  for subsequent call
+!     The relative time is taken between step 2 and 1.
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+INTEGER, INTENT(IN) :: iaction
+
+INTEGER, SAVE :: itimeold=0,itimenew=0
+
+!-----------------------------------------------------------------
+
+
+IF(iaction == 1) THEN
+  CALL system_clock(itimeold)
+ELSE IF(iaction == 2) THEN
+  CALL system_clock(itimenew)
+  IF(myn == 0) WRITE(6,'(a,1pg13.5)') 'sys.time for step in node 0=',  &
+      (itimenew-itimeold)*1D-4
+  itimeold = itimenew
+ELSE
+  STOP 'SYS.TIMER: this IACTION is not valid'
+END IF
+
+RETURN
+END SUBROUTINE stimer
+
+
 
 !---probab----------------------------------------------------------
 
