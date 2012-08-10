@@ -1,0 +1,92 @@
+The following benchmarks show computng time per dynamic step
+in seconds. The CPU time seems to accumulate consumption in 
+case of multi-threading. The CLOCK time measures the actual
+time needed. The cases are named almost self explanatory.
+Still, a few words are in order: OMP means an implementation
+at the level of 'subroutine tstep' where wavefunctions are
+propagated in parallel. FFTW-OMP uses just the built-in OMP
+option of FFTW3. "FFTW 3D kinprop" means a newly written
+variant of 'subroutine kinprop' which emplays FFTW3's direct
+3D FFT. All tests were run with 'iffastpropag=1' except the
+one explcititly showing 'fastpropag=0'.
+
+The code version which uses FFTW-OMP (the OMP implementation
+of FFTW3) is found in the branch 'dev-FFTW-omp2'. 
+The code version with explicit parallelization of wavefunctions
+in 'tstep' is found in the branch 'dev-FFTW-omp'. 
+
+
+
+Test case Na_40, jellium, no SIC, 64**3 grid
+--------------------------------------------
+
+                                                           %gain
+                        CPU(cumul.)     CLOCK    vs. NETLIB   vs.'3D kinprop'
+NETLIB                    1.02           1.02
+FFTW fastpropag=0         0.92           0.92
+FFTW old kinprop          0.88           0.88         14        -6
+FFTW 3D kinprop           0.83           0.83         20 
+FFTW-OMP 1 thread         0.83           0.83         20         0
+FFTW-OMP 2 threads        0.85           0.67         34        20
+FFTW-OMP 4 threads        0.90           0.60         41        28
+OMP in tstep 2 threads    1.01           0.60         41        28
+OMP in tstep 4 threads    1.05           0.46         55        45
+
+
+Test case Na_40, jellium, no SIC, 128**3 grid
+---------------------------------------------
+
+                                                           %gain
+                        CPU(cumul.)     CLOCK    vs. NETLIB   vs.'3D kinprop'
+NETLIB                     8.9           8.9
+FFTW fastpropag=0          9.3           9.3
+FFTW old kinprop           8.4           8.4           6        -1
+FFTW 3D  kinprop           8.3           8.3           7
+FFTW-OMP 1 thread          8.3           8.3           7         0
+FFTW-OMP 2 threads         8.7           6.4          28        23
+FFTW-OMP 4 threads         9.9           5.6          37        33
+OMP in tstep 2 threads     8.6           5.7          36        31
+OMP in tstep 4 threads     9.1           4.4          51        53
+
+
+
+Comments and observations:
+---------------------------
+
+1) The step from NETLIB to FFTW shows the typical moderate gains.
+   For 64**3 grid, FFTW yields a 14% gain as compared to NETLIB. 
+   It becomes even 20% when invoking the 3D FFTW3 in 'kinprop'. 
+   It is somewhat strange that large grids, as 128**3, reduced these
+   gains to as little as 6-7%. It is not clear whether this strange
+   results shows a general trend or whether it is a fluctuation due
+   to cache misses. At this place we need a bit more systematics.
+
+2) The step from 1 thread to 2 or 4 threads shows slightly more gain
+   for the 64**3 grid than for the 128**3 grid. This is plausible as
+   the book-keeping overhead is the same in both cases. In fact, the
+   extra gain for the large grid looks even a bit small.
+
+3) The gain from FFTW-OMP is frustratingly small. One could have
+   expected more from a educated package. It is probably worth
+   trying an own OMP implementation on the basis of the 1D FFTW3
+   (the 'old kinprop' option).
+
+4) More can be gained by explicitely coding a parallel propagation
+   of the wavefunctions. In fact, one would have expected even more
+   gain. Further optimizations should still be checked.
+   Note that this coding did not yet care about a parallel Coulomb 
+   and LDA. This, however, is probably ignorable for a case with 
+   40 wavefunctions. 
+
+5) Scheduling with 'gprof' shows that the copying of the wavefunctions
+   to the FFT workspaces in 'fftf', 'fftback', and 'kinprop' can make
+   as much as 15% of the computing time. This is an ugly bottle-neck.
+   The problem is rooted in the remapping with the modulo function
+   as, e.g., in 
+                 q2(ind)= fftay(MOD(i2+ny,ny2)+1)  .
+   The present coding seems to resist vectorization. One may gain
+   here about 5-10% speed with clever coding (yet to be invented).
+
+
+
+

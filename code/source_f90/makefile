@@ -5,7 +5,7 @@
 #         MPIF90 (parallel version only)
 
 # Insert the date
-DATE    = 030112
+DATE    = 100812
 # the compiler is set here 
 CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
@@ -15,7 +15,7 @@ TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
 # OMP paralleization
-OMP     = YES
+OMP     = NO
 
 #####################################################################
 #                             Options                               #

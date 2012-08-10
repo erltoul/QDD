@@ -148,7 +148,7 @@ END DO
 #if(parano)
 #if(paropenmp)
   call dfftw_init_threads(iret)
-  numthr = 2
+  numthr = 1
   call dfftw_plan_with_nthreads(numthr)
   WRITE(*,*) ' init FFTW threads: iret=',iret,', nr. of threads=',numthr
 #endif
@@ -158,8 +158,9 @@ IF (nini==0) THEN
     WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
     WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
   END IF
-  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nini  = nx2*ny2*nz2
   WRITE(*,*) ' initialized nini=',nini,nx2,ny2,nz2
 ELSE IF(nini /= nx2*ny2*nz2) THEN
@@ -167,26 +168,26 @@ ELSE IF(nini /= nx2*ny2*nz2) THEN
   STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
 END IF
 IF(nxini == 0) THEN
-  pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+  pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nxini  = nx2
 !       write(6,'(a)') ' x-fft initialized '
 ELSE IF(nxini /= nx2) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(nyini == 0) THEN
-  pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+  pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nyini  = ny2
 !       write(6,'(a)') ' y-fft initialized '
 ELSE IF(nyini /= ny2) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(nzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+  pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nzini  = nz2
   wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
@@ -209,8 +210,8 @@ IF (nini==0) THEN
       WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
       WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
     END IF
-    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nini  = nx2*ny2*nz2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -222,8 +223,8 @@ IF (nini==0) THEN
   !... then other nodes use it
   IF(myn/=0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nini  = nx2*ny2*nz2
   ENDIF
 ELSE IF(nini /= nx2*ny2*nz2) THEN
@@ -231,8 +232,8 @@ ELSE IF(nini /= nx2*ny2*nz2) THEN
 END IF
 IF(nxini == 0) THEN
   IF(myn == 0) THEN
-    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nxini  = nx2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -243,8 +244,8 @@ IF(nxini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nxini  = nx2
   ENDIF
 !       write(6,'(a)') ' x-fft initialized '
@@ -253,8 +254,8 @@ ELSE IF(nxini /= nx2) THEN
 END IF
 IF(nyini == 0) THEN
   IF(myn == 0) THEN
-    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nyini  = ny2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -265,8 +266,8 @@ IF(nyini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nyini  = ny2
   ENDIF
 !       write(6,'(a)') ' y-fft initialized '
@@ -275,10 +276,10 @@ ELSE IF(nyini /= ny2) THEN
 END IF
 IF(nzini == 0) THEN
   IF(myn == 0) THEN
-    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nzini  = nz2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -289,10 +290,10 @@ IF(nzini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
+    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
     nzini  = nz2
   ENDIF
 !       write(6,'(a)') ' z-fft initialized '
