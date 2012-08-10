@@ -45,8 +45,8 @@ USE FFTW
 USE params, only : myn
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
-INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
+INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 
 #endif
 
@@ -74,6 +74,7 @@ ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
+WRITE(*,*) ' allocate with: kxmax,kymax,kzmax=',kxmax,kymax,kzmax
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
 #endif
 
@@ -151,7 +152,9 @@ IF (nini==0) THEN
   pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
   pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   nini  = nx2*ny2*nz2
+  WRITE(*,*) ' initialized nini=',nini,nx2,ny2,nz2
 ELSE IF(nini /= nx2*ny2*nz2) THEN
+  WRITE(*,*) ' nini,nx2,ny2,nz2=',nini,nx2,ny2,nz2
   STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
 END IF
 IF(nxini == 0) THEN
@@ -290,6 +293,8 @@ END IF
 #endif
 #endif
 
+WRITE(*,*) ' end: fftay:',fftay
+
 END SUBROUTINE init_grid_fft
 
 ! ******************************
@@ -308,6 +313,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+INTEGER :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
+INTEGER :: nprocs, maxthreads,nthr,ithr
+INTEGER :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+COMPLEX(DP) ::ffftax(nx2,0:3),ffftay(ny2,0:3),ffftb(nz2,nx2,0:3)
 
 #if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
@@ -340,104 +349,132 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 #endif
 
+#if(paropenmp)
+CALL OMP_SET_NUM_THREADS(4)
+WRITE(*,*) ' BEFORE OMP:  Nr. threads=',OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
+nthr = OMP_GET_MAX_THREADS()-1
+WRITE(*,*) ' nthr=',nthr
+#else
+nthr = 0
+#endif
+!DEALLOCATE(fftay)
+
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(i1,i2,i3,ind) 
+!ALLOCATE(fftay(ny2))
+ithr=OMP_GET_THREAD_NUM()
+
 !       propagation in x-direction
 
 xfnorm = 1D0/nx2
+!WRITE(*,*) 'fftax:',ffftax
+!$OMP DO SCHEDULE(STATIC)
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
+      ffftax(MOD(i1+nx,nx2)+1,ithr)=q1(ind) ! copy to workspace
     END DO
 #if(netlib_fft)
-    CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic fft
+    CALL dcftf1 (nx2,ffftax,wrkx,wsavex,ifacx) ! basic fft
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwx,fftax,fftax)
+    CALL fftw_execute_dft(pforwx,ffftax(1,ithr),ffftax(1,ithr))
 #endif
     DO i1=1,nx2
-      fftax(i1) = akpropx(i1)*fftax(i1)
+      ffftax(i1,ithr) = akpropx(i1)*ffftax(i1,ithr)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic back fft
+    CALL dcftb1 (nx2,ffftax,wrkx,wsavex,ifacx) ! basic back fft
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbackx,fftax,fftax)
+    CALL fftw_execute_dft(pbackx,ffftax(1,ithr),ffftax(1,ithr))
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(MOD(i1+nx,nx2)+1)*xfnorm
+      q2(ind)= ffftax(MOD(i1+nx,nx2)+1,ithr)*xfnorm
     END DO
   END DO
 END DO
+!WRITE(*,*) ' thread nr.,fftax=',OMP_GET_THREAD_NUM(),ffftax(10)
+!$OMP END DO
 
 !      transformation in y-direction
 
 yfnorm = 1D0/ny2
+!WRITE(*,*) 'fftay:',ffftay
+!$OMP DO SCHEDULE(STATIC)
 DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
+      ffftay(MOD(i2+ny,ny2)+1,ithr) = q2(ind)
     END DO
 #if(netlib_fft)
-    CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+    CALL dcftf1 (ny2,ffftay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwy,fftay,fftay)
+    CALL fftw_execute_dft(pforwy,ffftay(1,ithr),ffftay(1,ithr))
 #endif
     DO i2=1,ny2
-      fftay(i2) = akpropy(i2)*fftay(i2)
+      ffftay(i2,ithr) = akpropy(i2)*ffftay(i2,ithr)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+    CALL dcftb1 (ny2,ffftay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbacky,fftay,fftay)
+    CALL fftw_execute_dft(pbacky,ffftay(1,ithr),ffftay(1,ithr))
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)*yfnorm
+      q2(ind)= ffftay(MOD(i2+ny,ny2)+1,ithr)*yfnorm
     END DO
   END DO
 END DO
+!WRITE(*,*) ' thread nr.,fftay=',OMP_GET_THREAD_NUM(),ffftay(10)
+!$OMP END DO
 
 !       propagation in z-direction
 
 zfnorm = 1D0/nz2
+!$OMP DO SCHEDULE(STATIC)
 DO i2=1,ny2
   DO i3=1,nz2
     i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(i3m,i1) = q2(ind)
+      ffftb(i3m,i1,ithr) = q2(ind)
     END DO
   END DO
   DO i1=1,nx2
 #if(netlib_fft)
-    CALL dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftf1 (nz2,ffftb(1,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
+    CALL fftw_execute_dft(pforwz,ffftb(1,i1,ithr),ffftb(1,i1,ithr))
 #endif
     DO i3=1,nz2
-      fftb(i3,i1) = akpropz(i3)*fftb(i3,i1)
+      ffftb(i3,i1,ithr) = akpropz(i3)*ffftb(i3,i1,ithr)
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftb1 (nz2,ffftb(1,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
-    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
+    CALL fftw_execute_dft(pbackz,ffftb(1,i1,ithr),ffftb(1,i1,ithr))
 #endif
   END DO
   DO i3=1,nz2
     i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q1(ind)= fftb(i3m,i1)*zfnorm
+      q1(ind)= ffftb(i3m,i1,ithr)*zfnorm
     END DO
   END DO
 END DO
+!$OMP END DO
+
+!$OMP END PARALLEL
+!DEALLOCATE(fftay)
+!ALLOCATE(fftay(ny2))
 
 RETURN
 END SUBROUTINE  kinprop

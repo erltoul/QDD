@@ -7,13 +7,15 @@
 # Insert the date
 DATE    = 030112
 # the compiler is set here 
-CF90    = MPIF90
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
-USE_MPI = YES
+USE_MPI = NO
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
-DEBUG   = NO
+DEBUG   = YES
+# OMP paralleization
+OMP     = YES
 
 #####################################################################
 #                             Options                               #
@@ -35,6 +37,7 @@ DEBUG   = NO
 # endif
 # endif
 
+	OMPADD =
 
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
@@ -48,6 +51,9 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD = -fopenmp -Dparopenmp
+endif        
 endif
 
 
@@ -60,6 +66,9 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8
 	OPT3  =  -pg -cpp -w -g                             
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD = -fopenmp -Dparopenmp
+endif        
 endif
 
 
@@ -75,6 +84,9 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD =  -openmp -Dparopenmp
+endif        
 endif
 
 
@@ -90,6 +102,9 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD =  -openmp -Dparopenmp
+endif        
 endif
 
 
@@ -110,6 +125,7 @@ ifeq "$(CF90)" "XLF_R"
 	OPT2  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
 	OPT3  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6                                 
 endif
+
 
 
 #####################################################################
@@ -167,9 +183,9 @@ ifeq "$(USE_MPI)" "YES"
 endif
 endif
 
-COMPILERFLAGS1 =  $(LDLIBS)$(OPT1)
-COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) 
-COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) 
+COMPILERFLAGS1 =  $(LDLIBS)$(OPT1) $(OMPADD)
+COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) $(OMPADD)
+COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) $(OMPADD)
 
 LINKER         = $(COMPILER)
 LINKERFLAGS    = $(COMPILERFLAGS1) 
