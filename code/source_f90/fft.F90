@@ -2,7 +2,7 @@ MODULE kinetic
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 #endif
-USE params, ONLY: DP
+USE params, ONLY: DP,numthr
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -144,19 +144,29 @@ DO i1=1,nx2
   akpropx(i1)=EXP(-eye*dt1*zkx**2*h2m)
 END DO
 
+
+DO i3=1,nz2;  DO i2=1,ny2;    DO i1=1,nx2
+  akprop(i1,i2,i3) = akpropx(i1)*akpropy(i2)*akpropz(i3)
+END DO;  END DO;  END DO
+
 #if(fftw_cpu)
 #if(parano)
 #if(paropenmp)
   call dfftw_init_threads(iret)
-  numthr = 1
+!  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
   WRITE(*,*) ' init FFTW threads: iret=',iret,', nr. of threads=',numthr
 #endif
 IF (nini==0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
-    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
-    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    wisdomtest = fftw_import_system_wisdom()
+    IF(wisdomtest == 0) THEN
+      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    ELSE
+      WRITE(*,*) 'wisdom from system'
+    END IF
   END IF
 !  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
   pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
@@ -193,6 +203,8 @@ IF(nzini == 0) THEN
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
     WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  ELSE
+    WRITE(*,*) ' suuccessfull export of wisdom to  wisdom_fftw.dat'
   ENDIF
 !       write(6,'(a)') ' z-fft initialized '
 ELSE IF(nzini /= nz2) THEN
@@ -332,13 +344,16 @@ DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 !  here version using 3D FFTW
-#if(fftw_cpu)
-facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
-CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
+#if(fftw_cpu2)
+facnr = 1D0/(nx2*ny2*nz2)
+!CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
+ffta=reshape(q1,(/nx2,ny2,nz2/))
 CALL fftw_execute_dft(pforw,ffta,ffta)
 ffta = akprop*ffta
 CALL fftw_execute_dft(pback,ffta,ffta)
-CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+!CALL secopy3dto1d(ffta,q1,facnr,nx2,ny2,nz2)
+q1=reshape(ffta,(/kdfull2/))*facnr
+!WRITE(*,*) ' norms q1,q2=',SUM(CONJG(Q1)*Q1)*dvol,SUM(CONJG(Q2)*Q2)*dvol
 #else
 
 !       check initialization
@@ -1289,16 +1304,16 @@ USE params
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+INTEGER,INTENT(IN) :: nbx2,nby2,nbz2
 
+ind=0
 DO i3=1,nbz2
-  i3f = MOD(i3+nz,nbz2)+1
   DO i2=1,nby2
-    i2f = MOD(i2+ny,nby2)+1
-    ind = (i3-1)*nxyf+(i2-1)*nyf
     DO i1=1,nbx2
 !      ind=((i3-1)*nxyf+(i2-1)*nyf)+i1
       ind = 1+ind
-      ffta(MOD(i1+nx,nbx2)+1,i2f,i3f)=q1(ind)
+      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
+!      ffta(i1,i2,i3)=q1(ind)
     END DO
   END DO
 END DO
@@ -1408,16 +1423,17 @@ USE params
 
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+REAL(DP),INTENT(IN) :: coef
+INTEGER,INTENT(IN) :: nbx2,nby2,nbz2
 
+ind=0
 DO i3=1,nbz2
-  i3f = MOD(i3+nz,nbz2)+1
   DO i2=1,nby2
-    i2f = MOD(i2+ny,nby2)+1
-    ind = (i3-1)*nxyf+(i2-1)*nyf
     DO i1=1,nbx2
 !      ind=(i3-1)*nxyf+((i2-1)*nyf+i1)
       ind = 1 + ind
-      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,i2f,i3f)*coef
+      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+!      q2(ind)=ffta(i1,i2,i3)*coef
     END DO
   END DO
 END DO

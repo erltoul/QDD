@@ -43,10 +43,10 @@ FFTW fastpropag=0          9.3           9.3
 FFTW old kinprop           8.4           8.4           6        -1
 FFTW 3D  kinprop           8.3           8.3           7
 FFTW-OMP 1 thread          8.3           8.3           7         0
-FFTW-OMP 2 threads         8.7           6.4          28        23
-FFTW-OMP 4 threads         9.9           5.6          37        33
+FFTW-OMP 2 threads         8.7           6.4(6.1)     28        23(27)
+FFTW-OMP 4 threads         9.9           5.6(5.2)     37        33(37)
 OMP in tstep 2 threads     8.6           5.7          36        31
-OMP in tstep 4 threads     9.1           4.4          51        53
+OMP in tstep 4 threads     9.1           4.4          51        47
 
 
 
@@ -88,5 +88,16 @@ Comments and observations:
    here about 5-10% speed with clever coding (yet to be invented).
 
 
+Na_40:
 
-
+                                                           %gain
+                        CPU(cumul.)     CLOCK    vs. NETLIB   vs.'3D kinprop'
+NETLIB                     9.0           9.0
+FFTW fastpropag=0          9.2           9.2
+FFTW old coudoub           8.4           8.4      
+FFTW 3D  coudoub           7.6           7.6
+FFTW-OMP 1 thread          7.6           7.6
+FFTW-OMP 2 threads         7.9           7.4
+FFTW-OMP 4 threads         7.8           6.9
+OMP in tstep 2 threads    
+OMP in tstep 4 threads    

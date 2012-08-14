@@ -38,6 +38,11 @@ OMP     = NO
 # endif
 
 	OMPADD =
+ifeq "$(OMP)" "YES"
+	TYPE_OMP = OMP
+else
+	TYPE_OMP = 
+endif
 
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
@@ -212,7 +217,7 @@ endif
 .SUFFIXES: .F90 .o
 
 #EXEC = essai.par
-EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
+EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT)_$(TYPE_OMP).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        generlcgo.o coulsolv.o\
