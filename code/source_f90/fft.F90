@@ -326,7 +326,7 @@ CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
 CALL fftw_execute_dft(pforw,ffta,ffta)
 ffta = akprop*ffta
 CALL fftw_execute_dft(pback,ffta,ffta)
-CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+CALL secopy3dto1d(ffta,q1,facnr,nx2,ny2,nz2)
 #else
 
 !       check initialization
@@ -1281,11 +1281,14 @@ USE params
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
 
+ind=0
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
-      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
+!      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+       ind=1+ind
+!      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
+      ffta(i1,i2,i3)=q1(ind)
     END DO
   END DO
 END DO
@@ -1396,11 +1399,14 @@ USE params
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 
+ind=0
 DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
-      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+!      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+!      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
+      ind=1+ind
+      q2(ind)=ffta(i1,i2,i3)*coef
     END DO
   END DO
 END DO
