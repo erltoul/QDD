@@ -16,7 +16,7 @@ INTEGER :: kstate=0
 ! max. total nr. electron  states
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
-INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
+INTEGER,PARAMETER :: numthr = 4  ! actual number of threads in openmp
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8

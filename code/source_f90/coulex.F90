@@ -44,6 +44,7 @@ COMPLEX(DP),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
 #endif
 
 #if(fftw_cpu)
+INTEGER,PRIVATE,SAVE :: FFTW_planflag
 INTEGER,PRIVATE,SAVE :: nini=0
 INTEGER(C_INT), PRIVATE :: wisdomtest
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
@@ -71,6 +72,7 @@ REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 !     read grid parameters from file or simply initialize them
 !     note that the Coulomb solver doubles the grid internally
+
 kxmax=2*nx0;kymax=2*ny0;kzmax=2*nz0;ksmax=kxmax
 kdfull=nx0*ny0*nz0
 kdred=kxmax*kymax*kzmax
@@ -83,6 +85,8 @@ nz=nz0  !/2
 dx=dx0
 dy=dy0
 dz=dz0
+!  FFTW_planflag = FFTW_MEASURE  
+  FFTW_planflag = FFTW_EXHAUSTIVE
 
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
@@ -105,31 +109,38 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
   call dfftw_init_threads(iret)
 !  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
-  WRITE(*,*) ' init FFTW threads: iret=',iret,', nr. of threads=',numthr
+  WRITE(*,*) ' init Coul FFTW threads: iret=',iret,', nr. of threads=',numthr
 #endif
 IF (nini==0) THEN
-!  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
     wisdomtest = fftw_import_system_wisdom()
     IF(wisdomtest == 0 ) THEN
       WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
       WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
     ELSE
-      WRITE(*,*) 'wisdom from system'  
+      WRITE(*,*) 'Coulex: wisdom from system'  
     END IF
   END IF
-!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-!  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-!  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
-  pforw=fftw_plan_dft_r2c_3d(kxmax,kymax,kzmax,rffta,ffta,FFTW_EXHAUSTIVE)
-  pback=fftw_plan_dft_c2r_3d(kxmax,kymax,kzmax,ffta,rffta,FFTW_EXHAUSTIVE)
-  pforwc=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
+!  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
+!  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_planflag)
+  pforw=fftw_plan_dft_r2c_3d(kxmax,kymax,kzmax,rffta,ffta,FFTW_planflag)
+  pback=fftw_plan_dft_c2r_3d(kxmax,kymax,kzmax,ffta,rffta,FFTW_planflag)
+  pforwc=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
   nini  = kxmax*kymax*kzmax
   WRITE(*,*) ' Coul-Solv initialized nini=',nini,kxmax,kymax,kzmax
 ELSE IF(nini /= kxmax*kymax*kzmax) THEN
   WRITE(*,*) ' nini,nx2,ny2,nz2=',nini,nx2,ny2,nz2
   STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
 END IF
+wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+IF(wisdomtest==0) THEN
+  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
+ELSE
+  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
+END IF
+CALL fftw_forget_wisdom
 #endif
 
 !     call input routine fftinp, which initializes the grid and fft tabl
@@ -343,7 +354,7 @@ INTEGER, INTENT(IN)                  :: kdum
 
 ! map density to 2**3 larger grid, immediately on FFTW3 work space
 
-rffta = CMPLX(0D0,0D0)
+rffta = 0D0
 i0=0
 DO i3=1,nz
   DO i2=1,ny
@@ -587,26 +598,25 @@ IF(mxini == 0) THEN
     WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
     WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
   END IF
-  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
   mxini  = kfftx
   WRITE(7,'(a)') ' x-fft initialized '
 ELSE IF(mxini /= kfftx) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(myini == 0) THEN
-  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
   myini  = kffty
   WRITE(7,'(a)') ' y-fft initialized '
 ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
   mzini  = kfftz
-  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
     WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
@@ -614,6 +624,12 @@ IF(mzini == 0) THEN
   WRITE(7,'(a)') ' z-fft initialized '
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
+END IF
+wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+IF(wisdomtest==0) THEN
+  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
+ELSE
+  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
 END IF
 CALL fftw_forget_wisdom
 #endif
@@ -627,8 +643,8 @@ IF(mxini == 0) THEN
       WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
       WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
     END IF
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     mxini  = kfftx
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -640,8 +656,8 @@ IF(mxini == 0) THEN
   !... then other nodes use it
   IF(myn /=0 ) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     mxini  = kfftx
   ENDIF
 ELSE IF(mxini /= kfftx) THEN
@@ -649,8 +665,8 @@ ELSE IF(mxini /= kfftx) THEN
 END IF
 IF(myini == 0) THEN
   IF(myn == 0) THEN
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     myini  = kffty
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -661,8 +677,8 @@ IF(myini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     myini  = kffty
   ENDIF
 ELSE IF(myini /= kffty) THEN
@@ -670,8 +686,8 @@ ELSE IF(myini /= kffty) THEN
 END IF
 IF(mzini == 0) THEN
   IF(myn == 0) THEN
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -682,8 +698,8 @@ IF(mzini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
   ENDIF
 ELSE IF(mzini /= kfftz) THEN

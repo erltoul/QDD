@@ -15,7 +15,7 @@ TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
 # OMP paralleization
-OMP     = NO
+OMP     = YES
 
 #####################################################################
 #                             Options                               #

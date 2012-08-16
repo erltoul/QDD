@@ -27,6 +27,7 @@ REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
 #endif
 #if(fftw_cpu)
+INTEGER,PRIVATE,SAVE :: FFTW_planflag
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:)
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
 type(C_PTR), PRIVATE :: pforw,pback
@@ -43,7 +44,7 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 #if(fftw_cpu)
 USE FFTW
 #if(parayes)
-USE params, only : myn
+USE params, only : myn,numthr
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
@@ -52,6 +53,7 @@ INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
 
 REAL(DP) :: dt1,h2m
+INTEGER :: omp_get_num_threads
 
 nx2=nx0;ny2=ny0;nz2=nz0
 kxmax=nx0;kymax=ny0;kzmax=nz0
@@ -78,6 +80,8 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #if(fftw_cpu)
 WRITE(*,*) ' allocate with: kxmax,kymax,kzmax=',kxmax,kymax,kzmax
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
+!  FFTW_planflag = FFTW_MEASURE  
+  FFTW_planflag = FFTW_EXHAUSTIVE
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
@@ -153,9 +157,11 @@ END DO;  END DO;  END DO
 #if(parano)
 #if(paropenmp)
   call dfftw_init_threads(iret)
+  WRITE(*,*) ' dfftw_init_threads: iret=',iret
 !  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
-  WRITE(*,*) ' init FFTW threads: iret=',iret,', nr. of threads=',numthr
+  WRITE(*,*) ' init FFT FFTW threads: iret=',iret,', nr. of threads=',numthr,&
+   omp_get_num_threads()
 #endif
 IF (nini==0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
@@ -169,8 +175,8 @@ IF (nini==0) THEN
     END IF
   END IF
 !  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE+FFTW_UNALIGNED)
-  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_MEASURE)
+  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_MEASURE)
   nini  = nx2*ny2*nz2
   WRITE(*,*) ' initialized nini=',nini,nx2,ny2,nz2
 ELSE IF(nini /= nx2*ny2*nz2) THEN
@@ -344,7 +350,7 @@ DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 !  here version using 3D FFTW
-#if(fftw_cpu2)
+#if(fftw_cpu)
 facnr = 1D0/(nx2*ny2*nz2)
 !CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
 ffta=reshape(q1,(/nx2,ny2,nz2/))
