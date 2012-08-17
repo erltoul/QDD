@@ -3801,7 +3801,6 @@ RETURN
 END SUBROUTINE timer
 
 
-
 !-----stimer------------------------------------------------------
 
 SUBROUTINE stimer(iaction)

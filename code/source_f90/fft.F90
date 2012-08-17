@@ -2,7 +2,7 @@ MODULE kinetic
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 #endif
-USE params, ONLY: DP
+USE params, ONLY: DP,numthr
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -19,6 +19,8 @@ REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
 INTEGER, PRIVATE :: kfft,kfft2,kdfull2
 INTEGER, PRIVATE :: kxmax,kymax,kzmax
+INTEGER, PRIVATE :: iret
+
 
 #if(netlib_fft)
 COMPLEX(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
@@ -26,11 +28,16 @@ REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
 #endif
+INTEGER,PUBLIC,SAVE :: FFTW_planflag
 #if(fftw_cpu)
-COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:)
+COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:)
+COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:,:)
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
-type(C_PTR), PRIVATE :: pforw,pback
+type(C_PTR), PRIVATE,ALLOCATABLE :: pforw(:),pback(:)
 INTEGER(C_INT), PRIVATE :: wisdomtest
+#endif
+#if(paropenmp)
+INTEGER,PRIVATE,SAVE :: nacthr
 #endif
 
 CONTAINS
@@ -43,7 +50,7 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 #if(fftw_cpu)
 USE FFTW
 #if(parayes)
-USE params, only : myn
+USE params, only : myn,numthr,nthr
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
@@ -52,6 +59,7 @@ INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
 
 REAL(DP) :: dt1,h2m
+INTEGER :: omp_get_num_threads
 
 nx2=nx0;ny2=ny0;nz2=nz0
 kxmax=nx0;kymax=ny0;kzmax=nz0
@@ -76,7 +84,20 @@ ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
-ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
+WRITE(*,*) ' allocate with: kxmax,kymax,kzmax=',kxmax,kymax,kzmax
+ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax))
+#if(paropenmp && dynopenmp)
+  nacthr = numthr-1
+#else
+  nacthr = 0
+#endif
+ALLOCATE(ffta(kxmax,kymax,kzmax,0:nacthr),pforw(0:nacthr),pback(0:nacthr))
+WRITE(*,*) ' FFTA allocated with NACTHR=',nacthr
+!
+!  central setting of FFTW planning expense --> edit here
+!
+  FFTW_planflag = FFTW_MEASURE  
+!  FFTW_planflag = FFTW_EXHAUSTIVE
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
@@ -143,51 +164,77 @@ DO i1=1,nx2
   akpropx(i1)=EXP(-eye*dt1*zkx**2*h2m)
 END DO
 
+
+DO i3=1,nz2;  DO i2=1,ny2;    DO i1=1,nx2
+  akprop(i1,i2,i3) = akpropx(i1)*akpropy(i2)*akpropz(i3)
+END DO;  END DO;  END DO
+
 #if(fftw_cpu)
 #if(parano)
+#if(paropenmp && !dynopenmp)
+  call dfftw_init_threads(iret)
+  WRITE(*,*) ' dfftw_init_threads: iret=',iret
+!  numthr = 4
+  call dfftw_plan_with_nthreads(numthr)
+  WRITE(*,*) ' init fft FFTW threads: iret=',iret,', nr. of threads=',numthr,&
+   omp_get_num_threads()
+#endif
 IF (nini==0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
-    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
-    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    wisdomtest = fftw_import_system_wisdom()
+    IF(wisdomtest == 0) THEN
+      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    ELSE
+      WRITE(*,*) 'wisdom from system'
+    END IF
   END IF
-  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
+!      initialitze 3D plans, take care for independence in OpenMP
+  DO i=0,nacthr
+    pforw(i)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,i),ffta(:,:,:,i),FFTW_FORWARD,FFTW_planflag)
+    pback(i)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,i),ffta(:,:,:,i),FFTW_BACKWARD,FFTW_planflag)
+  END DO
   nini  = nx2*ny2*nz2
+  WRITE(*,*) ' initialized nini=',nini,nx2,ny2,nz2
 ELSE IF(nini /= nx2*ny2*nz2) THEN
+  WRITE(*,*) ' nini,nx2,ny2,nz2=',nini,nx2,ny2,nz2
   STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
 END IF
 IF(nxini == 0) THEN
-  pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+  pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
   nxini  = nx2
 !       write(6,'(a)') ' x-fft initialized '
 ELSE IF(nxini /= nx2) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(nyini == 0) THEN
-  pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+  pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
   nyini  = ny2
 !       write(6,'(a)') ' y-fft initialized '
 ELSE IF(nyini /= ny2) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(nzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
-  pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_planflag)
+  pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_planflag)
+  pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_planflag)
+  pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_planflag)
   nzini  = nz2
-  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-  IF (wisdomtest == 0) THEN
-    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-  ENDIF
 !       write(6,'(a)') ' z-fft initialized '
 ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
+wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+IF (wisdomtest == 0) THEN
+  WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+ELSE
+  WRITE(*,*) ' suuccessfull export of wisdom to  wisdom_fftw.dat'
+ENDIF
 CALL fftw_forget_wisdom
 #endif
 
@@ -200,8 +247,8 @@ IF (nini==0) THEN
       WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
       WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
     END IF
-    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforw(0)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,0),ffta(:,:,:,0),FFTW_FORWARD,FFTW_planflag)
+    pback(0)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,0),ffta(:,:,:,0),FFTW_BACKWARD,FFTW_planflag)
     nini  = nx2*ny2*nz2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -213,8 +260,8 @@ IF (nini==0) THEN
   !... then other nodes use it
   IF(myn/=0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pback=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforw(0)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,0),ffta(:,:,:,0),FFTW_FORWARD,FFTW_planflag)
+    pback(0)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,0),ffta(:,:,:,0),FFTW_BACKWARD,FFTW_planflag)
     nini  = nx2*ny2*nz2
   ENDIF
 ELSE IF(nini /= nx2*ny2*nz2) THEN
@@ -222,8 +269,8 @@ ELSE IF(nini /= nx2*ny2*nz2) THEN
 END IF
 IF(nxini == 0) THEN
   IF(myn == 0) THEN
-    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     nxini  = nx2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -234,8 +281,8 @@ IF(nxini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(nx2,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     nxini  = nx2
   ENDIF
 !       write(6,'(a)') ' x-fft initialized '
@@ -244,8 +291,8 @@ ELSE IF(nxini /= nx2) THEN
 END IF
 IF(nyini == 0) THEN
   IF(myn == 0) THEN
-    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     nyini  = ny2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -256,8 +303,8 @@ IF(nyini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(ny2,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     nyini  = ny2
   ENDIF
 !       write(6,'(a)') ' y-fft initialized '
@@ -266,10 +313,10 @@ ELSE IF(nyini /= ny2) THEN
 END IF
 IF(nzini == 0) THEN
   IF(myn == 0) THEN
-    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
-    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_planflag)
+    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_planflag)
+    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_planflag)
     nzini  = nz2
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -280,10 +327,10 @@ IF(nzini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_EXHAUSTIVE)
-    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(nz2,fftb(1,nx2),fftb(1,nx2),FFTW_BACKWARD,FFTW_planflag)
+    pforwz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_FORWARD,FFTW_planflag)
+    pbackz1=fftw_plan_dft_1d(nz2,fftaz,fftaz,FFTW_BACKWARD,FFTW_planflag)
     nzini  = nz2
   ENDIF
 !       write(6,'(a)') ' z-fft initialized '
@@ -292,6 +339,8 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 #endif
 #endif
+
+WRITE(*,*) ' end: fftay:',fftay
 
 END SUBROUTINE init_grid_fft
 
@@ -311,22 +360,40 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+!COMPLEX(DP) ::ffftax(nx2,0:3),ffftay(ny2,0:3),ffftb(nz2,nx2,0:3)
+INTEGER :: ithr
 
 #if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
 #endif
-COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:),fftta(:,:,:)
+COMPLEX(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:),fftta(:,:,:)
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 !  here version using 3D FFTW
-#if(fftw_cpu)
-facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
-CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
-CALL fftw_execute_dft(pforw,ffta,ffta)
-ffta = akprop*ffta
-CALL fftw_execute_dft(pback,ffta,ffta)
-CALL secopy3dto1d(ffta,q1,facnr,nx2,ny2,nz2)
+#if(fftw_cpu && !oldkinprop)
+#if(paropenmp && dynopenmp)
+  ithr = OMP_GET_THREAD_NUM()
+  IF(ithr>nacthr) THEN
+    WRITE(*,*) ' in kinprop: ithr,nacthr=',ithr,nacthr
+    STOP "too large ITHR"
+  END IF
+!  WRITE(*,*) ' KINPROP: ithr=',ithr,nacthr
+#else
+  ithr = 0
+#endif
+facnr = 1D0/(nx2*ny2*nz2)
+CALL copy1dto3d(q1,ffta(:,:,:,ithr),nx2,ny2,nz2)
+!ffta(:,:,:,ithr)=reshape(q1,(/nx2,ny2,nz2/))
+CALL fftw_execute_dft(pforw(ithr),ffta(:,:,:,ithr),ffta(:,:,:,ithr))
+ffta(:,:,:,ithr) = akprop*ffta(:,:,:,ithr)
+CALL fftw_execute_dft(pback(ithr),ffta(:,:,:,ithr),ffta(:,:,:,ithr))
+!#if(paropenmp && dynopenmp)
+CALL secopy3dto1d(ffta(:,:,:,ithr),q1,facnr,nx2,ny2,nz2)
+!#else
+!q1=reshape(ffta(:,:,:,ithr),(/kdfull2/))*facnr
+!#endif
+!WRITE(*,*) ' norms q1,q2=',SUM(CONJG(Q1)*Q1)*dvol,SUM(CONJG(Q2)*Q2)*dvol
 #else
 
 !       check initialization
@@ -354,12 +421,12 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 #endif
 
+
 !       propagation in x-direction
-#if(fftw_cpu)
 ALLOCATE(ffttax(nx2),ffttay(ny2),ffttaz(nz2),ffttb(nz2,nx2),fftta(nx2,ny2,nz2))
-#endif
 
 xfnorm = 1D0/nx2
+
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
@@ -371,6 +438,7 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwx,ffttax,ffttax)
+!    CALL fftw_execute_dft(pforwx,fftax(1),fftax(1))
 #endif
     DO i1=1,nx2
       ffttax(i1) = akpropx(i1)*ffttax(i1)
@@ -380,6 +448,7 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackx,ffttax,ffttax)
+!    CALL fftw_execute_dft(pbackx,fftax(1),fftax(1))
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
@@ -402,6 +471,7 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwy,ffttay,ffttay)
+!    CALL fftw_execute_dft(pforwy,fftay(1),fftay(1))
 #endif
     DO i2=1,ny2
       ffttay(i2) = akpropy(i2)*ffttay(i2)
@@ -411,6 +481,7 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbacky,ffttay,ffttay)
+!    CALL fftw_execute_dft(pbacky,fftay(1),fftay(1))
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
@@ -451,10 +522,11 @@ DO i2=1,ny2
     i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q1(ind)= ffttb(i3m,i1)*zfnorm
+      q1(ind)=ffttb(i3m,i1)*zfnorm
     END DO
   END DO
 END DO
+
 DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
 
 #endif
@@ -891,11 +963,11 @@ END DO
 #endif
 
 #if(fftw_cpu)
-CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
+CALL copy1dto3d(q1,ffta(:,:,:,0),nx2,ny2,nz2)
 
-CALL fftw_execute_dft(pforw,ffta,ffta)
+CALL fftw_execute_dft(pforw(0),ffta,ffta)
 
-CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+CALL copy3dto1d(ffta(:,:,:,0),q2,tnorm,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -987,11 +1059,11 @@ END DO
 #endif
 
 #if(fftw_cpu)
-CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
+CALL secopy1dto3d(q1,ffta(:,:,:,0),nx2,ny2,nz2)
 
-CALL fftw_execute_dft(pback,ffta,ffta)
+CALL fftw_execute_dft(pback(0),ffta(:,:,:,0),ffta(:,:,:,0))
 
-CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
+CALL secopy3dto1d(ffta(:,:,:,0),q2,facnr,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -1133,11 +1205,11 @@ END DO
 #endif
 
 #if(fftw_cpu)
-CALL copyr1dto3d(q1,ffta,nx2,ny2,nz2)
+CALL copyr1dto3d(q1,ffta(:,:,:,0),nx2,ny2,nz2)
 
-CALL fftw_execute_dft(pforw,ffta,ffta)
+CALL fftw_execute_dft(pforw(0),ffta(:,:,:,0),ffta(:,:,:,0))
 
-CALL copy3dto1d(ffta,q2,tnorm,nx2,ny2,nz2)
+CALL copy3dto1d(ffta(:,:,:,0),q2,tnorm,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -1258,11 +1330,11 @@ DEALLOCATE(q2)
 #endif
 
 #if(fftw_cpu)
-CALL secopy1dto3d(q1,ffta,nx2,ny2,nz2)
+CALL secopy1dto3d(q1,ffta(:,:,:,0),nx2,ny2,nz2)
 
-CALL fftw_execute_dft(pback,ffta,ffta)
+CALL fftw_execute_dft(pback(0),ffta(:,:,:,0),ffta(:,:,:,0))
 
-CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
+CALL copyr3dto1d(ffta(:,:,:,0),q3,facnr,nx2,ny2,nz2)
 #endif
 
 RETURN
@@ -1280,6 +1352,7 @@ USE params
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: ffta(nbx2,nby2,nbz2)
+INTEGER,INTENT(IN) :: nbx2,nby2,nbz2
 
 ind=0
 DO i3=1,nbz2
@@ -1398,6 +1471,8 @@ USE params
 
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: ffta(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+REAL(DP),INTENT(IN) :: coef
+INTEGER,INTENT(IN) :: nbx2,nby2,nbz2
 
 ind=0
 DO i3=1,nbz2
@@ -1422,8 +1497,8 @@ SUBROUTINE fft_end()
 
 USE FFTW
 
-CALL fftw_destroy_plan(pforw)
-CALL fftw_destroy_plan(pback)
+CALL fftw_destroy_plan(pforw(0))
+CALL fftw_destroy_plan(pback(0))
 CALL fftw_destroy_plan(pforwx)
 CALL fftw_destroy_plan(pforwy)
 CALL fftw_destroy_plan(pforwz)

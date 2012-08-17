@@ -1,8 +1,10 @@
 MODULE coulsolv
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
+USE FFTW
 #endif
-USE params, ONLY: DP
+USE params, ONLY: DP,numthr
+USE kinetic, ONLY: FFTW_planflag
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -24,7 +26,11 @@ INTEGER,PRIVATE :: nxhigh,nxlow,nyhigh,nylow,nzhigh,nzlow
 !    nx,ny,nz,nx1,ny1,nz1, nxr,nxi,nyr,nyi,nzr,nzi,nxy1,nxyz,  &
 !    nxhigh,nxlow,nyhigh,nylow,nzhigh,nzlow
 
+#if(coudoub3D && fftw_cpu)
+COMPLEX(DP),ALLOCATABLE,PRIVATE :: akv2(:,:,:)
+#else
 REAL(DP),ALLOCATABLE,PRIVATE :: akv2r(:),akv2i(:)
+#endif
 INTEGER,ALLOCATABLE,PRIVATE :: ikm(:,:)
 REAL(DP),PRIVATE :: dkx,dky,dkz,akmax,dksp,ecut
 INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz
@@ -39,12 +45,15 @@ COMPLEX(DP),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
 #endif
 
 #if(fftw_cpu)
-type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
+INTEGER,PRIVATE,SAVE :: nini=0
 INTEGER(C_INT), PRIVATE :: wisdomtest
+type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
 COMPLEX(C_DOUBLE_COMPLEX),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
+type(C_PTR), PRIVATE :: pforw,pback,pforwc
+COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:)
+REAL(DP), PRIVATE, ALLOCATABLE :: rffta(:,:,:)
 #endif
 
-!COMMON /fftini/wrkx,wrky,wrkz,wsavex,wsavey,wsavez,ifacx,ifacy,ifacz
 
 ! include block: option
 REAL(DP),PARAMETER,PRIVATE :: zero=0D0
@@ -58,9 +67,12 @@ SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
 
 !-----------------------------------------------------------------------
 
+LOGICAL,PARAMETER :: tcoultest=.false.
+REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 !     read grid parameters from file or simply initialize them
 !     note that the Coulomb solver doubles the grid internally
+
 kxmax=2*nx0;kymax=2*ny0;kzmax=2*nz0;ksmax=kxmax
 kdfull=nx0*ny0*nz0
 kdred=kxmax*kymax*kzmax
@@ -77,7 +89,12 @@ dz=dz0
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
+#if(coudoub3D && fftw_cpu)
+ALLOCATE(ffta(kxmax,kymax,kzmax),akv2(kxmax,kymax,kzmax))
+ALLOCATE(rffta(kxmax,kymax,kzmax))
+#else
 ALLOCATE(akv2r(kdred),akv2i(kdred))
+#endif
 ALLOCATE(ikm(kxmax,kymax))
 #if(netlib_fft)
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
@@ -85,9 +102,70 @@ ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 
+#if(coudoub3D && fftw_cpu)
+#if(paropenmp)
+  call dfftw_init_threads(iret)
+!  numthr = 4
+  call dfftw_plan_with_nthreads(numthr)
+  WRITE(*,*) ' init Coul FFTW threads: iret=',iret,', nr. of threads=',numthr
+#endif
+IF (nini==0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    wisdomtest = fftw_import_system_wisdom()
+    IF(wisdomtest == 0 ) THEN
+      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    ELSE
+      WRITE(*,*) 'Coulex: wisdom from system'  
+    END IF
+  END IF
+!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
+!  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
+!  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_planflag)
+  pforw=fftw_plan_dft_r2c_3d(kxmax,kymax,kzmax,rffta,ffta,FFTW_planflag)
+  pback=fftw_plan_dft_c2r_3d(kxmax,kymax,kzmax,ffta,rffta,FFTW_planflag)
+  pforwc=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
+  nini  = kxmax*kymax*kzmax
+  WRITE(*,*) ' Coul-Solv initialized nini=',nini,kxmax,kymax,kzmax
+ELSE IF(nini /= kxmax*kymax*kzmax) THEN
+  WRITE(*,*) ' nini,nx2,ny2,nz2=',nini,nx2,ny2,nz2
+  STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
+END IF
+wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+IF(wisdomtest==0) THEN
+  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
+ELSE
+  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
+END IF
+CALL fftw_forget_wisdom
+#endif
+
 !     call input routine fftinp, which initializes the grid and fft tabl
 
 CALL fftinp
+
+! test section
+IF(tcoultest) THEN
+  ALLOCATE(rhotest(nx*ny*nz),ctest(nx*ny*nz))
+  rhotest = 0D0
+  ii = 0
+  DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
+    ii=ii+1
+    IF(i3== nz/2 .AND. i2==ny/2 .AND. i1==nx/2) rhotest(ii) =1D0/(dx*dy*dz)
+  END DO; END DO; END DO
+  charge = SUM(rhotest)*(dx*dy*dz)
+  WRITE(*,*) '# test Coulomb for point charge:',charge
+  CALL falr(rhotest,ctest,nxdum,nydum,nzdum,kdum)
+  ii = 0
+  DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
+    ii=ii+1
+    IF(i3== nz/2 .AND. i2==ny/2)  WRITE(*,*) (i1-nx/2)*dx,rhotest(ii), &
+      ctest(ii) ! *(i1-nx/2)*dx/2D0
+  END DO; END DO; END DO
+  STOP
+  DEALLOCATE(rhotest,ctest)  
+END IF
 
 RETURN
 END SUBROUTINE init_coul
@@ -154,6 +232,45 @@ nxk=nx1
 
 ikzero = nxy1*(nz-1)+nxi*(ny-1)+nx
 write(*,*) ' nzi,nyi,nxi,nx,ny,nz,ikzero=',nzi,nyi,nxi,nx,ny,nz,ikzero
+#if(coudoub3D && fftw_cpu)
+factor = 2D0*(dx*dy*dz)/(nx*ny*nz*8D0)  ! 2D0 for e**2
+ii=0
+DO i3=1,nzi
+  IF(i3<=nz) THEN
+    xz1=(i3-1)*dz
+  ELSE
+    xz1=(i3-nzi-1)*dz
+  END IF
+  xz2=xz1*xz1
+  DO i2=1,nyi
+    IF(i2<=ny) THEN
+      xy1=(i2-1)*dy
+    ELSE
+      xy1=(i2-nyi-1)*dy
+    END IF
+    xy2=xy1*xy1
+    DO i1=1,nxi
+      IF(i1<=nx) THEN
+        xx1=(i1-1)*dx
+      ELSE
+        xx1=(i1-nxi-1)*dx
+      END IF
+      xx2=xx1*xx1
+      ak2=xx2+xy2+xz2
+      ii=ii+1
+!        write(*,*) ' i1,i2,i3,ii=',i1,i2,i3,ii
+      IF(ak2>dx**2/10D0) THEN
+        akv2(i1,i2,i3) =  factor/SQRT(ak2) 
+        rffta(i1,i2,i3) =  factor/SQRT(ak2) 
+      ELSE
+        akv2(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
+        rffta(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
+      END IF
+    END DO
+  END DO
+END DO
+nksp=ii
+#else
 ii=0
 xz1=-nz*dz
 DO i3=1,nzi
@@ -182,21 +299,95 @@ DO i3=1,nzi
   END DO
 END DO
 nksp=ii
+#endif
 
+#if(coudoub3D && fftw_cpu)
+!ffta=akv2
+CALL fftw_execute_dft_r2c(pforw,rffta,ffta)
+akv2=ffta
+#else
 CALL fourf(akv2r(1),akv2i(1))
+#endif
 !  CALL prifld(akv2r,'k**2 for Co')
 !  CALL prifld(akv2i,'k**2 for Co')
 !nxyf=nx2*ny2
 !nyf=nx2
 ind=0 !nz*nxyf+ny*nyf
-WRITE(6,*) 'k**2 along x'
+#if(coudoub3D && fftw_cpu)
+WRITE(6,*) '1/k**2 along x'
+DO i1=1,nxi
+  WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2(i1,1,1)
+END DO
+WRITE(6,*) '1/k**2 along z'
+DO i3=1,nzi
+  WRITE(6,'(f8.2,2(1pg13.5))') (i3-nz)*dz,akv2(1,1,i3)
+END DO
+#else
+WRITE(6,*) '1/k**2 along x'
 DO i1=1,nxi
   WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2r(i1+ind),akv2i(i1+ind)
 END DO
+#endif
 
 RETURN
 END SUBROUTINE fftinp
 
+#if(coudoub3D && fftw_cpu)
+!-------------------------------------------------------------------
+
+SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+! Coulomb solver using FFTW
+
+
+REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
+REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
+INTEGER, INTENT(IN)                  :: nxdum
+INTEGER, INTENT(IN)                  :: nydum
+INTEGER, INTENT(IN)                  :: nzdum
+INTEGER, INTENT(IN)                  :: kdum
+
+!WRITE(*,*) ' running new Coulomb'
+
+! map density to 2**3 larger grid, immediately on FFTW3 work space
+
+rffta = 0D0
+i0=0
+DO i3=1,nz
+  DO i2=1,ny
+    DO i1=1,nx
+      i0 = i0+1
+      rffta(i1,i2,i3)=rhoinp(i0)
+    END DO
+  END DO
+END DO
+
+! FFT forward, multiply with Green's function, FFT backward
+
+CALL fftw_execute_dft_r2c(pforw,rffta,ffta)
+
+ffta = akv2*ffta
+
+CALL fftw_execute_dft_c2r(pback,ffta,rffta)
+
+! map back to standard grid, augment with normalization factor
+
+
+!facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(kxmax*kymax*kzmax,DP)) * 2D0
+i0=0
+DO i3=1,nz
+  DO i2=1,ny
+    DO i1=1,nx
+      i0 = i0+1
+      chpfalr(i0) = rffta(i1,i2,i3)   ! *facnr   ! all scaling in 'akv2'
+    END DO
+  END DO
+END DO
+
+
+END SUBROUTINE falr
+#else
 !-------------------------------------------------------------------
 
 SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
@@ -212,6 +403,8 @@ INTEGER, INTENT(IN)                  :: nzdum
 INTEGER, INTENT(IN)                  :: kdum
 
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)
+
+!WRITE(*,*) ' running old Coulomb'
 
 ALLOCATE(rhokr(kdred),rhoki(kdred))
 
@@ -238,7 +431,6 @@ DEALLOCATE(rhokr,rhoki)
 
 
 END SUBROUTINE falr
-
 
 !-----rhofld------------------------------------------------------------
 
@@ -339,6 +531,7 @@ RETURN
 
 END SUBROUTINE coufou2
 
+#endif
 
 
 
@@ -403,26 +596,25 @@ IF(mxini == 0) THEN
     WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
     WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
   END IF
-  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
   mxini  = kfftx
   WRITE(7,'(a)') ' x-fft initialized '
 ELSE IF(mxini /= kfftx) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(myini == 0) THEN
-  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
   myini  = kffty
   WRITE(7,'(a)') ' y-fft initialized '
 ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
   mzini  = kfftz
-  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
     WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
@@ -430,6 +622,12 @@ IF(mzini == 0) THEN
   WRITE(7,'(a)') ' z-fft initialized '
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
+END IF
+wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+IF(wisdomtest==0) THEN
+  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
+ELSE
+  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
 END IF
 CALL fftw_forget_wisdom
 #endif
@@ -443,8 +641,8 @@ IF(mxini == 0) THEN
       WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
       WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
     END IF
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     mxini  = kfftx
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -456,8 +654,8 @@ IF(mxini == 0) THEN
   !... then other nodes use it
   IF(myn /=0 ) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
+    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     mxini  = kfftx
   ENDIF
 ELSE IF(mxini /= kfftx) THEN
@@ -465,8 +663,8 @@ ELSE IF(mxini /= kfftx) THEN
 END IF
 IF(myini == 0) THEN
   IF(myn == 0) THEN
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     myini  = kffty
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -477,8 +675,8 @@ IF(myini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
+    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     myini  = kffty
   ENDIF
 ELSE IF(myini /= kffty) THEN
@@ -486,8 +684,8 @@ ELSE IF(myini /= kffty) THEN
 END IF
 IF(mzini == 0) THEN
   IF(myn == 0) THEN
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
     wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
     IF (wisdomtest == 0) THEN
@@ -498,8 +696,8 @@ IF(mzini == 0) THEN
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
     wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
+    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
   ENDIF
 ELSE IF(mzini /= kfftz) THEN

@@ -313,6 +313,7 @@ ekionold=0D0
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
+CALL stimer(1)
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step

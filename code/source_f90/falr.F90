@@ -2,6 +2,7 @@
 
 MODULE coulsolv
 #if(fftw_cpu)
+USE FFTW
 USE, intrinsic :: iso_c_binding
 #endif
 USE params, ONLY: DP
@@ -1597,6 +1598,7 @@ REAL(DP) ::  a(kdfull)
 !             pski   imaginary part of the wave-function
 
 DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+INTEGER wisdomtest
 
 !----------------------------------------------------------------------
 

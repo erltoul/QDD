@@ -3087,17 +3087,6 @@ DO iz=1,nz2
   zt2(iz)=z1*z1
 END DO
 
-
-!     init coulomb solver
-
-#if(findiff|numerov)
-CALL d3sinfinit (dx,dy,dz)
-#else
-#if(coufou || coudoub)
-CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
-#endif
-#endif
-
 !     init kinetic energy array
 
 #if(findiff)
@@ -3109,6 +3098,17 @@ CALL inv5p_ini(dt1)
 #if(gridfft)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #endif
+
+!     init coulomb solver
+
+#if(findiff|numerov)
+CALL d3sinfinit (dx,dy,dz)
+#else
+#if(coufou || coudoub)
+CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
+#endif
+#endif
+
 
 RETURN
 END SUBROUTINE init_grid

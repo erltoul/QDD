@@ -322,10 +322,8 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
+!INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
 
-INTEGER :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
-INTEGER :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
-INTEGER :: nthr                  ! max number of threads -- 1
 
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
@@ -351,15 +349,7 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 myn = 0
 #endif
 
-#if(paropenmp)
-CALL OMP_SET_NUM_THREADS(2)
-WRITE(*,*) ' BEFORE OMP:  Nr. threads=',OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
-nthr = OMP_GET_MAX_THREADS()-1
-WRITE(*,*) ' nthr=',nthr
-#else
-nthr = 0
-#endif
-
+!WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
 ALLOCATE(q1(2*kdfull2,0:nthr))
 ALLOCATE(q2(kdfull2,0:nthr))
 
@@ -392,19 +382,27 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb=1,nstate
     tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 
 !       one full time step for the kinetic energy
 
 ithr=0
+#if(dynopenmp)
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,ishift,ithr) SCHEDULE(STATIC)
+#endif
 DO nb=1,nstate
-#if(paropenmp)
+#if(paropenmp && dynopenmp)
   ithr = OMP_GET_THREAD_NUM()
 !  WRITE(*,*) ' actual thread:',ithr
 !  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
@@ -413,7 +411,7 @@ DO nb=1,nstate
   IF(iffastpropag == 1) THEN
     CALL kinprop(q0(1,nb),q1(1,ithr))
   ELSE
-    CALL fftf(q0(1,nb),q1)
+    CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
     q1(:,ithr) = ak*q1(:,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
@@ -422,14 +420,15 @@ DO nb=1,nstate
 #if(findiff|numerov)
   CALL d3mixpropag (q0(1,nb),dt1)
 #endif
-#if(paropenmp)
+!#if(paropenmp)
 !WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
 !WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
-#endif 
+!#endif 
   
 END DO
+#if(dynopenmp)
 !$OMP END PARALLEL DO
-
+#endif
 
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
 
@@ -441,10 +440,16 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb = 1,nstate
     tenerg = .false. !   itsub.eq.ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 

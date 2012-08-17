@@ -17,6 +17,16 @@ INTEGER :: kstate=0
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
 
+!  settings ad definitions for openmp parallel computing
+#if(paropenmp)
+INTEGER,PARAMETER :: numthr = 2  ! actual number of threads in openmp
+INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
+INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+EXTERNAL :: OMP_SET_NUM_THREADS
+#else
+INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
+#endif
+INTEGER :: nthr=0                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8

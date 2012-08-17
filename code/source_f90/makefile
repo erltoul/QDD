@@ -5,7 +5,7 @@
 #         MPIF90 (parallel version only)
 
 # Insert the date
-DATE    = 030112
+DATE    = 150812
 # the compiler is set here 
 CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
@@ -15,7 +15,7 @@ TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
 # invoke openmp
-OPMP = NO
+OMP = NO
 
 #####################################################################
 #                             Options                               #
@@ -37,6 +37,13 @@ OPMP = NO
 # endif
 # endif
 
+	OMPADD = 
+ifeq "$(TYPE_FFT)" "FFTW"
+	FFTWADD = -Dfftw_cpu 
+endif
+ifeq "$(TYPE_FFT)" "NETLIB"
+	FFTWADD = -Dnetlib_fft 
+endif
 
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
@@ -50,18 +57,24 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
+endif        
 endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -ffast-math -finline-functions -funroll-loops
-	OPT2  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops -fdefault-real-8 -fdefault-double-8
+	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
+	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -cpp -w -g -fbacktrace                 
 	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8
 	OPT3  =  -pg -cpp -w -g                             
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
+endif        
 endif
 
 
@@ -77,31 +90,37 @@ ifeq "$(DEBUG)" "YES"
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD =  -openmp -Dparopenmp -lfftw3_threads
+endif        
 endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static -Dparopenmp=0
-	OPT2  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = $(OPT1) -autodouble
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
-	OPT1  =  -openmp -fpp -w -g -CB -traceback -align all -autodouble -Dparopenmp=1 -reentrancy threaded
-	OPT2  =  -openmp -fpp -w -g -CB -traceback -align all -autodouble -Dparopenmp=1 -reentrancy threaded
-	OPT3  =  -openmp -fpp -w -g                -align all -autodouble -Dparopenmp=1 -reentrancy threaded
+	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
+	OPT2  =   $(OPT1) -autodouble 
+	OPT3  =  -fpp -w -g -align all -autodouble
 endif
+ifeq "$(OMP)" "YES"
+	OMPADD =  -openmp -Dparopenmp
+endif        
 endif
 
 
 ifeq "$(CF90)" "MPIF90"
         OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble -static
-        OPT2  =  -fpp -w -O2 -no-prec-div -align all -autodouble -static
+        OPT2  =  $(OPT1) -autodouble
         OPT3  =  -fpp -w -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
         OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-        OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+        OPT2  =  $(OPT1) -autodouble
         OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
 endif
@@ -112,6 +131,7 @@ ifeq "$(CF90)" "XLF_R"
 	OPT2  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
 	OPT3  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6                                 
 endif
+
 
 
 #####################################################################
@@ -152,7 +172,7 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	COMPILER  = ifort
-	LDLIBS    =  
+	LDLIBS    = 
 ifeq "$(USE_MPI)" "YES"
 	LDLIBS    = -lmpi
 endif
@@ -169,9 +189,9 @@ ifeq "$(USE_MPI)" "YES"
 endif
 endif
 
-COMPILERFLAGS1 =  $(LDLIBS)$(OPT1)
-COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) 
-COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) 
+COMPILERFLAGS1 =  $(LDLIBS)$(OPT1) $(OMPADD) $(FFTWADD)
+COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) $(OMPADD) $(FFTWADD)
+COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) $(OMPADD) $(FFTWADD)
 
 LINKER         = $(COMPILER)
 LINKERFLAGS    = $(COMPILERFLAGS1) 
@@ -181,8 +201,13 @@ LINKERFLAGS    = $(COMPILERFLAGS1)
 #                              Rules                                #
 #####################################################################
 
+
 ifeq "$(USE_MPI)" "NO"
+ifeq "$(OMP)" "YES"
+	MPI_NAME = OMP
+else
 	MPI_NAME = Mono
+endif
 endif
 ifeq "$(USE_MPI)" "YES"
 	MPI_NAME = Mpi
@@ -227,7 +252,7 @@ $(EXEC): $(OBJS)
 	@echo Linking executable $@
 
 ifeq "$(TYPE_FFT)" "FFTW"
-	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3 -lm
+	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)
@@ -310,7 +335,7 @@ givens.o: givens.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
 
 init.o: init.F90 define.h makefile params.o kinetic.o coulsolv.o
-	$(COMPILER) $(COMPILERFLAGS3) -c $< 
+	$(COMPILER) $(COMPILERFLAGS1) -c $< 
 
 restart.o: restart.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $< 

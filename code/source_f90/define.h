@@ -13,12 +13,18 @@
 !
 #define coufou 0
 #define coudoub 1
+!   switch to 3D FFTW in Coulomb solver (preliminary option)
+#define coudoub3D 1
 !
 ! parallel or serial:
+!   paropenmp    activates openMP parallelity, requires parano=1
+!   dynopenmp    uses parallele comp. of wfs., only for paropenmp=1
 !
 #define parayes 0
 #define parano 1
 #define simpara 0
+!#define paropenmp 1    set in 'makefile'
+#define dynopenmp 0
 !
 ! full SIC and variants (outdated)
 !
@@ -33,7 +39,9 @@
 !
 !choose fft solver (only one !)
 !
-#define netlib_fft 0
-#define fftw_cpu 1
-!#define fftw3d_cpu 0 !Used only to determine wich 1d or 3d FFTS are the fastest
+! #define netlib_fft 0   set in 'makefile'
+! #define fftw_cpu 1     set in 'makefile'
+!
+! switch to old version of 'kinprop' wiith interlaced 1D FFT
+#define oldkinprop 0
 
