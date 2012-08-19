@@ -13,9 +13,9 @@ USE_MPI = NO
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
-DEBUG   = NO
+DEBUG   = YES
 # invoke openmp
-OMP = NO
+OMP = YES
 
 #####################################################################
 #                             Options                               #
@@ -68,8 +68,8 @@ ifeq "$(CF90)" "GFORT1"
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -cpp -w -g -fbacktrace                 
-	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8
+	OPT1  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
+	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -pg -cpp -w -g                             
 endif
 ifeq "$(OMP)" "YES"
@@ -97,7 +97,7 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -axaxv -msse4.2 -O3 -ip -no-prec-div -align all -static
 	OPT2  = $(OPT1) -autodouble
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
 #	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static

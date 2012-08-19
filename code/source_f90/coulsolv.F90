@@ -9,7 +9,7 @@
 
 #if(coudoub)
 
-#include 'coulex.F90'
+#include "coulex.F90"
 
 #endif !coudoub
 #endif !gridfft

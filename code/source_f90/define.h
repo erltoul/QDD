@@ -24,7 +24,7 @@
 #define parano 1
 #define simpara 0
 !#define paropenmp 1    set in 'makefile'
-#define dynopenmp 0
+#define dynopenmp 1
 !
 ! full SIC and variants (outdated)
 !

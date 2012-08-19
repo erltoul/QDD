@@ -3152,6 +3152,7 @@ END SUBROUTINE cproject
 SUBROUTINE pair(e,gw,ph,nz,nmax,gp,eferm,delta,partnm,  &
     iter,ipair,eps,iab,kstate)
 USE params, ONLY: DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     the include file 'params.inc' communicates the dimensioning of
 !     the fields 'e' and 'gw' with the parameter 'ksl2'. it allows

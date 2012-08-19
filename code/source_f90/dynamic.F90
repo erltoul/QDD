@@ -404,7 +404,7 @@ ithr=0
 DO nb=1,nstate
 #if(paropenmp && dynopenmp)
   ithr = OMP_GET_THREAD_NUM()
-!  WRITE(*,*) ' actual thread:',ithr
+  WRITE(*,*) ' actual thread:',ithr
 !  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
 #endif 
 #if(gridfft)
@@ -413,6 +413,7 @@ DO nb=1,nstate
   ELSE
     CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
+!    WRITE(*,*) ak(1),q1(1,ithr)
     q1(:,ithr) = ak*q1(:,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
   END IF
@@ -433,7 +434,7 @@ END DO
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
 
 
-
+CALL flush(7)
 
 
 
@@ -509,6 +510,8 @@ END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
+
+CALL flush(7)
 
 RETURN
 END SUBROUTINE tstep

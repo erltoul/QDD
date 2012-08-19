@@ -310,6 +310,7 @@ ekionold=0D0
 
 !---           here starts true propagation  --------------
 
+CALL flush(7)
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
