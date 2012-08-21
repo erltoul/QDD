@@ -11,6 +11,16 @@ __global__ void multiply_device(cufftDoubleComplex *d_ffta,int nxyz,double norm)
 	}
 }
 
+__global__ void multiply_device_real(cufftDoubleReal *d_ffta,int nxyz,double norm)
+{
+	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+
+	if (ind<nxyz)
+	{
+		d_ffta[ind]=norm*d_ffta[ind];
+	}
+}
+
 extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 {
 	int nxyz = *N;

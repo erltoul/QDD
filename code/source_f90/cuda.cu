@@ -122,6 +122,38 @@ extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
 	}
 }
 
+extern "C" void cuda_plan_3d_r2c_(cufftHandle *plan, int *n1, int *n2, int *n3)
+{
+	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
+        if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_D2Z) != CUFFT_SUCCESS)
+	{
+	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  exit(-1);
+	}
+	//Associate the plan to a stream
+        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+	{
+	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
+	  exit(-1);
+	}
+}
+
+extern "C" void cuda_plan_3d_c2r_(cufftHandle *plan, int *n1, int *n2, int *n3)
+{
+	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
+        if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_Z2D) != CUFFT_SUCCESS)
+	{
+	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  exit(-1);
+	}
+	//Associate the plan to a stream
+        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+	{
+	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
+	  exit(-1);
+	}
+}
+
 extern "C" void kill_plan_(cufftHandle *plan)
 {
 	//Destroy FFT plan
