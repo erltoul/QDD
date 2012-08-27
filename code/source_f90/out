@@ -1,0 +1,477 @@
+diff --git a/code/source_f90/coulex.cu b/code/source_f90/coulex.cu
+index fc69db7..fac841d 100644
+--- a/code/source_f90/coulex.cu
++++ b/code/source_f90/coulex.cu
+@@ -14,6 +14,7 @@ unsigned int nxlow,nyhigh,nylow,nzhigh,nzlow;
+ 
+ double dkx,dky,dkz,akmax,dksp,ecut;
+ unsigned int nxk,nxklo,nxkhi,nksp,nkxyz;
++int *inde,*pindex,*indebis,*pindexbis;
+ 
+ double zero=0.0;
+ double pi=3.141592653589793;
+@@ -73,7 +74,7 @@ void fftinp() {
+ 
+ int ikzero,ii;
+ double xz1,xz2,xy1,xy2,xx1,xx2,ak2;
+-int nxyfn,ind;
++int nxyfn,nyfn,nnx2,nny2,nnz2;//ind;
+ 
+ //test      sqh=sqrt(0.5)
+ 
+@@ -90,6 +91,10 @@ nxyz=nxi*nyi*nzi;
+ nkxyz=nxi*nyi*nzi;
+ 
+ nxyfn = kfftx*kfftz;
++nyfn  = kfftx;
++nnx2=nxc+nxc;
++nny2=nyc+nyc;
++nnz2=nzc+nzc;
+ 
+ //     grid lengths must match with parameters in incs
+ 
+@@ -144,18 +149,29 @@ for (int i3=1;i3<=nzi;i3++){
+       ak2=xx2+xy2+xz2;
+       ii=ii+1;
+ //        cout<< " i1,i2,i3,ii= "<<i1<<" "<<i2<<" "<<i3<<" "ii;
+-      ind=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage in a flatten 3D complex array for FFT on GPU
++      inde[ii]=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage of the indices of the flatten 3D array
+       if(ii != ikzero) {
+-        akvr[ind] =  1.0/sqrt(ak2);
++        akvr[inde[ii]] =  1.0/sqrt(ak2);
+       }
+       else {
+-//              akv2r(ii) = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
+-//              akv2r(ii) = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
+-        akvr[ind] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
++//              akvr[inde[ii]] = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
++//              akvr[inde[ii]] = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
++        akvr[inde[ii]] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
+       }
+     }
+   }
+ }
++
++ii=0;
++for (int i3=1;i3<=nzc;i3++){
++  for (int i2=1;i2<=nyc;i2++){
++    for (int i1=1;i1<=nxc;i1++){
++      ii++;
++      indebis[ii]=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
++    }
++  }
++}
++
+ nksp=ii;
+ 
+ fourfakv();
+@@ -171,7 +187,7 @@ extern "C" void init_coul_(double *dx0,double *dy0,double *dz0,unsigned int *nx0
+ 
+ //-----------------------------------------------------------------------
+ 
+-
++//int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
+ //     read grid parameters from file or simply initialize them
+ //     note that the Coulomb solver doubles the grid internally
+ nxc=*nx0;  ///2;
+@@ -223,6 +239,11 @@ cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
+ cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
+ cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
+ 
++pindex = (int*)malloc(kdred*sizeof(int));
++inde=pindex-1;
++pindexbis = (int*)malloc(kdfull*sizeof(int));
++indebis=pindexbis-1;
++
+ //     call input routine fftinp, which initializes the grid and fft tabl
+ 
+ fftinp();
+@@ -312,52 +333,19 @@ void rhofld(double *rhoinp){
+ 
+ //     copy density on complex array of double extnesion in x,y,z
+ 
+-int nxyfn,nyfn,nnx2,nny2,nnz2,i0,ii;
+-
+-nxyfn = kfftx*kfftz;
+-nyfn  = kfftx;
+-nnx2=nxc+nxc;
+-nny2=nyc+nyc;
+-nnz2=nzc+nzc;
++int i0,ii;
+ 
++ii=0;
+ i0=0;
+ for (int i3=1;i3<=kfftz;i3++){
+   for (int i2=1;i2<=kffty;i2++){
+     for (int i1=1;i1<=kfftx;i1++){
+-      ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
++      ii++;
+       if(i3 <= nzc && i2 <= nyc && i1 <= nxc) {
+-        i0 = i0+1;
+-        rfftac[ii]=rhoinp[i0];
+-      }
+-      else rfftac[ii]=0.0;
+-    }
+-  }
+-}
+-
+-}
+-
+-
+-//-----result------------------------------------------------------------
+-
+-void result(double *chpfalr){
+-
+-//     copy Coulomb field back to standard grid
+-int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
+-
+-int i0=0;
+-
+-nxyfn = kfftx*kfftz;
+-nyfn  = kfftx;
+-nnx2=nxc+nxc;
+-nny2=nyc+nyc;
+-nnz2=nzc+nzc;
+-
+-for (int i3=1;i3<=nzc;i3++){
+-  for (int i2=1;i2<=nyc;i2++){
+-    for (int i1=1;i1<=nxc;i1++){
+         i0++;
+-        ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+-        chpfalr[i0] = 2.0*rfftac[ii];
++        rfftac[inde[ii]]=rhoinp[i0];
++      }
++      else rfftac[inde[ii]]=0.0;
+     }
+   }
+ }
+@@ -386,7 +374,8 @@ coufou2();
+ //     call a routine written by you which outputs the results of the fcs
+ //     and maybe some other things to an output file or the screen.
+ 
+-result(chpfalr);
++//result(chpfalr);
++for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[indebis[i0]];
+ }
+ 
+ extern "C" void coulsolv_end_() {
+diff --git a/code/source_f90/fft.F90 b/code/source_f90/fft.F90
+index a24a65b..6b2283c 100644
+--- a/code/source_f90/fft.F90
++++ b/code/source_f90/fft.F90
+@@ -38,6 +38,7 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),ff
+ type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
+ type(C_PTR), PRIVATE :: pforw,pback
+ INTEGER(C_INT), PRIVATE :: wisdomtest
++INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
+ #endif
+ #if(fftw_gpu)
+ COMPLEX(C_DOUBLE_COMPLEX), POINTER :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:),ffta2(:,:,:)
+@@ -72,6 +73,7 @@ COMPLEX(C_DOUBLE_COMPLEX), POINTER :: rakx(:),raky(:),rakz(:)
+ TYPE(C_PTR), PRIVATE :: c_p_rakxfft,c_p_rakyfft,c_p_rakzfft
+ COMPLEX(C_DOUBLE_COMPLEX),POINTER :: gpu_rakxfft(:),gpu_rakyfft(:),gpu_rakzfft(:)
+ TYPE(C_PTR),PRIVATE :: c_gpu_rakxfft,c_gpu_rakyfft,c_gpu_rakzfft
++INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
+ #endif
+ 
+ CONTAINS
+@@ -116,9 +118,11 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
+ ALLOCATE(ak(kdfull2),akv(kdfull2))
+ ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2),rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
+ ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
++ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
+ #endif
+ #if(fftw_gpu)
+ CALL my_cuda_allocate(nx2,ny2,nz2) !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
++ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
+ #endif
+ 
+ WRITE(7,*) 'h bar squared over two m electron',h2m
+@@ -282,6 +286,20 @@ ELSE IF(nzini /= nz2) THEN
+ END IF
+ #endif
+ 
++#if(fftw_cpu||fftw_gpu)
++DO i1=1,nx2
++  modx(i1)=MOD(i1+nx,nx2)+1
++END DO
++
++DO i2=1,ny2
++  mody(i2)=MOD(i2+ny,ny2)+1
++END DO
++
++DO i3=1,nz2
++  modz(i3)=MOD(i3+nz,nz2)+1
++END DO
++#endif
++
+ END SUBROUTINE init_grid_fft
+ 
+ ! ******************************
+@@ -342,7 +360,7 @@ DO i3=1,nz2
+   DO i2=1,ny2
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
++      fftax(modx(i1))=q1(ind) ! copy to workspace
+     END DO
+ #if(netlib_fft)
+     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx) ! basic fft
+@@ -367,7 +385,7 @@ DO i3=1,nz2
+ #endif
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftax(MOD(i1+nx,nx2)+1)*xfnorm
++      q2(ind)= fftax(modx(i1))*xfnorm
+     END DO
+   END DO
+ END DO
+@@ -379,7 +397,7 @@ DO i3=1,nz2
+   DO i1=1,nx2
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
++      fftay(mody(i2)) = q2(ind)
+     END DO
+ #if(netlib_fft)
+     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+@@ -404,7 +422,7 @@ DO i3=1,nz2
+ #endif
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)*yfnorm
++      q2(ind)= fftay(mody(i2))*yfnorm
+     END DO
+   END DO
+ END DO
+@@ -414,7 +432,7 @@ END DO
+ zfnorm = 1D0/nz2
+ DO i2=1,ny2
+   DO i3=1,nz2
+-    i3m = MOD(i3+nz,nz2)+1
++    i3m = modz(i3)
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+       fftb(i3m,i1) = q2(ind)
+@@ -444,7 +462,7 @@ DO i2=1,ny2
+ #endif
+   END DO
+   DO i3=1,nz2
+-    i3m = MOD(i3+nz,nz2)+1
++    i3m = modz(i3)
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+       q1(ind)= fftb(i3m,i1)*zfnorm
+@@ -580,7 +598,7 @@ DO i3=1,nz2
+ !                 forward transform along x
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftax(MOD(i1+nx,nx2)+1)=fin(ind)  ! copy to workspace
++      fftax(modx(i1))=fin(ind)  ! copy to workspace
+     END DO
+ #if(netlib_fft)
+     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
+@@ -612,7 +630,7 @@ DO i3=1,nz2
+ #endif
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      gradfout(ind)= fftax(MOD(i1+nx,nx2)+1)/nx2
++      gradfout(ind)= fftax(modx(i1))/nx2
+     END DO
+   END DO
+ END DO
+@@ -651,7 +669,7 @@ DO i3=1,nz2
+ !                 forward transform along y
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftay(MOD(i2+ny,ny2)+1) = fin(ind)
++      fftay(mody(i2)) = fin(ind)
+     END DO
+ #if(netlib_fft)
+     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+@@ -683,7 +701,7 @@ DO i3=1,nz2
+ #endif
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      gradfout(ind)= fftay(MOD(i2+ny,ny2)+1)/ny2
++      gradfout(ind)= fftay(mody(i2))/ny2
+     END DO
+   END DO
+ END DO
+@@ -731,7 +749,7 @@ DO i2=1,ny2
+ !                 forward transform along z
+     DO i3=1,nz2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      i3m = MOD(i3+nz,nz2)+1
++      i3m = modz(i3)
+       fftaz(i3m) = fin(ind)
+     END DO
+ #if(netlib_fft)
+@@ -764,7 +782,7 @@ DO i2=1,ny2
+ #endif
+     DO i3=1,nz2                  ! copy back
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      gradfout(ind)= fftaz(MOD(i3+nz,nz2)+1)/nz2
++      gradfout(ind)= fftaz(modz(i3))/nz2
+     END DO
+   END DO
+ END DO
+@@ -851,7 +869,7 @@ DO i3=1,nz2
+   DO i2=1,ny2
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftax(MOD(i1+nx,nx2)+1)=q1(ind)  ! copy to workspace
++      fftax(modx(i1))=q1(ind)  ! copy to workspace
+     END DO
+     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
+     DO i1=1,nx2
+@@ -867,7 +885,7 @@ DO i3=1,nz2
+   DO i1=1,nx2
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
++      fftay(mody(i2)) = q2(ind)
+     END DO
+     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+     DO i2=1,ny2
+@@ -898,7 +916,7 @@ END DO
+ 
+ DO i2=1,ny2
+   DO i3=1,nz2
+-    i3m = MOD(i3+nz,nz2)+1
++    i3m = modz(i3)
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+       fftb(i3m,i1) = q2(ind)
+@@ -998,7 +1016,7 @@ DO i2=1,ny2
+   DO i3=1,nz2                  ! copy back
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftb(MOD(i3+nz,nz2)+1,i1)
++      q2(ind)= fftb(modz(i3),i1)
+     END DO
+   END DO
+ END DO
+@@ -1014,7 +1032,7 @@ DO i3=1,nz2
+     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)
++      q2(ind)= fftay(mody(i2))
+     END DO
+   END DO
+ END DO
+@@ -1031,7 +1049,7 @@ DO i3=1,nz2
+     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftax(MOD(i1+nx,nx2)+1)
++      q2(ind)= fftax(modx(i1))
+     END DO
+   END DO
+ END DO
+@@ -1140,7 +1158,7 @@ DO i3=1,nz2
+   DO i2=1,ny2
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftax(MOD(i1+nx,nx2)+1)=CMPLX(q1(ind),0D0,DP) ! copy to workspace
++      fftax(modx(i1))=CMPLX(q1(ind),0D0,DP) ! copy to workspace
+     END DO
+     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
+     DO i1=1,nx2
+@@ -1156,7 +1174,7 @@ DO i3=1,nz2
+   DO i1=1,nx2
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
++      fftay(mody(i2)) = q2(ind)
+     END DO
+     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
+     DO i2=1,ny2
+@@ -1193,7 +1211,7 @@ DO i2=1,ny2
+   DO i3=1,nz2
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      fftb(MOD(i3+nz,nz2)+1,i1) = q2(ind)
++      fftb(modx(i1),i1) = q2(ind)
+     END DO
+   END DO
+   DO i1=1,nx2
+@@ -1317,7 +1335,7 @@ DO i2=1,ny2
+   DO i3=1,nz2                  ! copy back
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftb(MOD(i3+nz,nz2)+1,i1)
++      q2(ind)= fftb(modz(i1),i1)
+     END DO
+   END DO
+ END DO
+@@ -1333,7 +1351,7 @@ DO i3=1,nz2
+     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
+     DO i2=1,ny2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)
++      q2(ind)= fftay(mody(i2))
+     END DO
+   END DO
+ END DO
+@@ -1351,7 +1369,7 @@ DO i3=1,nz2
+     DO i1=1,nx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+ !      q2(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
+-      q3(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
++      q3(ind)= REAL(fftax(modx(i1)),DP)
+     END DO
+   END DO
+ END DO
+@@ -1401,7 +1419,7 @@ DO i3=1,nbz2
+   DO i2=1,nby2
+     DO i1=1,nbx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=vec1d(ind)
++      vec3d(modx(i1),mody(i2),modz(i3))=vec1d(ind)
+     END DO
+   END DO
+ END DO
+@@ -1424,7 +1442,7 @@ DO i3=1,nbz2
+   DO i2=1,nby2
+     DO i1=1,nbx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=CMPLX(vec1d(ind),0D0,DP) 
++      vec3d(modx(i1),mody(i2),modz(i3))=CMPLX(vec1d(ind),0D0,DP) 
+     END DO
+   END DO
+ END DO
+@@ -1470,7 +1488,7 @@ DO i3=1,nbz2
+   DO i2=1,nby2
+     DO i1=1,nbx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+-      vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=vec1d(ind)
++      vec3d(modx(i1),mody(i2),modz(i3))=vec1d(ind)
+     END DO
+   END DO
+ END DO
+@@ -1528,9 +1546,9 @@ DO i3=1,nbz2
+     DO i1=1,nbx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+ #if(fftw_cpu)
+-      vec1d(ind)=REAL(vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)*coef
++      vec1d(ind)=REAL(vec3d(modx(i1),mody(i2),modz(i3)),DP)*coef
+ #else
+-      vec1d(ind)=REAL(vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)
++      vec1d(ind)=REAL(vec3d(modx(i1),mody(i2),modz(i3)),DP)
+ #endif
+     END DO
+   END DO
+@@ -1559,9 +1577,9 @@ DO i3=1,nbz2
+     DO i1=1,nbx2
+       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+ #if(fftw_cpu)
+-      vec1d(ind)=vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
++      vec1d(ind)=vec3d(modx(i1),mody(i2),modz(i3))*coef
+ #else
+-      vec1d(ind)=vec3d(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)
++      vec1d(ind)=vec3d(modx(i1),mody(i2),modz(i3))
+ #endif
+     END DO
+   END DO

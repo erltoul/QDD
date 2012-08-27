@@ -14,6 +14,7 @@ unsigned int nxlow,nyhigh,nylow,nzhigh,nzlow;
 
 double dkx,dky,dkz,akmax,dksp,ecut;
 unsigned int nxk,nxklo,nxkhi,nksp,nkxyz;
+int *inde,*pindex,*indebis,*pindexbis;
 
 double zero=0.0;
 double pi=3.141592653589793;
@@ -73,7 +74,7 @@ void fftinp() {
 
 int ikzero,ii;
 double xz1,xz2,xy1,xy2,xx1,xx2,ak2;
-int nxyfn,ind;
+int nxyfn,nyfn,nnx2,nny2,nnz2;//ind;
 
 //test      sqh=sqrt(0.5)
 
@@ -90,6 +91,10 @@ nxyz=nxi*nyi*nzi;
 nkxyz=nxi*nyi*nzi;
 
 nxyfn = kfftx*kfftz;
+nyfn  = kfftx;
+nnx2=nxc+nxc;
+nny2=nyc+nyc;
+nnz2=nzc+nzc;
 
 //     grid lengths must match with parameters in incs
 
@@ -144,18 +149,29 @@ for (int i3=1;i3<=nzi;i3++){
       ak2=xx2+xy2+xz2;
       ii=ii+1;
 //        cout<< " i1,i2,i3,ii= "<<i1<<" "<<i2<<" "<<i3<<" "ii;
-      ind=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage in a flatten 3D complex array for FFT on GPU
+      inde[ii]=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage of the indices of the flatten 3D array
       if(ii != ikzero) {
-        akvr[ind] =  1.0/sqrt(ak2);
+        akvr[inde[ii]] =  1.0/sqrt(ak2);
       }
       else {
-//              akv2r(ii) = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
-//              akv2r(ii) = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
-        akvr[ind] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
+//              akvr[inde[ii]] = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
+//              akvr[inde[ii]] = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
+        akvr[inde[ii]] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
       }
     }
   }
 }
+
+ii=0;
+for (int i3=1;i3<=nzc;i3++){
+  for (int i2=1;i2<=nyc;i2++){
+    for (int i1=1;i1<=nxc;i1++){
+      ii++;
+      indebis[ii]=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+    }
+  }
+}
+
 nksp=ii;
 
 fourfakv();
@@ -171,7 +187,7 @@ extern "C" void init_coul_(double *dx0,double *dy0,double *dz0,unsigned int *nx0
 
 //-----------------------------------------------------------------------
 
-
+//int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
 //     read grid parameters from file or simply initialize them
 //     note that the Coulomb solver doubles the grid internally
 nxc=*nx0;  ///2;
@@ -222,6 +238,11 @@ cudaMalloc((void**)&gpu_fftac,kdred*sizeof(cufftDoubleComplex));
 cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
 cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
 cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
+
+pindex = (int*)malloc(kdred*sizeof(int));
+inde=pindex-1;
+pindexbis = (int*)malloc(kdfull*sizeof(int));
+indebis=pindexbis-1;
 
 //     call input routine fftinp, which initializes the grid and fft tabl
 
@@ -312,52 +333,19 @@ void rhofld(double *rhoinp){
 
 //     copy density on complex array of double extnesion in x,y,z
 
-int nxyfn,nyfn,nnx2,nny2,nnz2,i0,ii;
+int i0,ii;
 
-nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;
-
+ii=0;
 i0=0;
 for (int i3=1;i3<=kfftz;i3++){
   for (int i2=1;i2<=kffty;i2++){
     for (int i1=1;i1<=kfftx;i1++){
-      ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+      ii++;
       if(i3 <= nzc && i2 <= nyc && i1 <= nxc) {
-        i0 = i0+1;
-        rfftac[ii]=rhoinp[i0];
-      }
-      else rfftac[ii]=0.0;
-    }
-  }
-}
-
-}
-
-
-//-----result------------------------------------------------------------
-
-void result(double *chpfalr){
-
-//     copy Coulomb field back to standard grid
-int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
-
-int i0=0;
-
-nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;
-
-for (int i3=1;i3<=nzc;i3++){
-  for (int i2=1;i2<=nyc;i2++){
-    for (int i1=1;i1<=nxc;i1++){
         i0++;
-        ii=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
-        chpfalr[i0] = 2.0*rfftac[ii];
+        rfftac[inde[ii]]=rhoinp[i0];
+      }
+      else rfftac[inde[ii]]=0.0;
     }
   }
 }
@@ -386,7 +374,7 @@ coufou2();
 //     call a routine written by you which outputs the results of the fcs
 //     and maybe some other things to an output file or the screen.
 
-result(chpfalr);
+for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[indebis[i0]];
 }
 
 extern "C" void coulsolv_end_() {
