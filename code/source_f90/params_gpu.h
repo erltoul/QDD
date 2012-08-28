@@ -325,7 +325,7 @@ extern int params_mp_iindtmp_[3];
 extern int params_mp_int_pass_;
 
 cudaError_t error;
-cudaStream_t stream1,stream2;
+cudaStream_t stream1,stream2,stream3;
 
 void Check_CUDA_Error(cudaError_t error)
 {

@@ -35,7 +35,7 @@ extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 	Check_CUDA_Error(error);
 }
 
-__global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
+__global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz, double tnorm)
 {
 	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
 	cufftDoubleReal SAVE2;
@@ -43,8 +43,8 @@ __global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
 	if (ind<nxyz)
 	{
 		SAVE2         = d_ak[ind].x*d_ffta[ind].x+d_ak[ind].y*d_ffta[ind].y;
-		d_ffta[ind].y = d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x;
-		d_ffta[ind].x = SAVE2;
+		d_ffta[ind].y = (d_ak[ind].x*d_ffta[ind].y+d_ak[ind].y*d_ffta[ind].x)*tnorm;
+		d_ffta[ind].x = SAVE2*tnorm;
 	}
 }
 
@@ -57,7 +57,7 @@ extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*d_ak on the GPU
-        multiply_ak_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz);
+        multiply_ak_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz,1.0);
 	Check_CUDA_Error(error);
 }
 

@@ -1,20 +1,16 @@
 // Conversion from fortran to C++/Cuda still in progressC
 
-unsigned int kxmax,kymax,kzmax,ksmax;
+unsigned int kxmax,kymax,kzmax;
 // kxmax must be the largest
 unsigned int kdfull;
 unsigned int kdred;
-unsigned int kfft2;
-unsigned int kfft,kfftx,kffty,kfftz;
 double dx,dy,dz,dxsp,grnorm,fnorm,tnorm;
-unsigned int nxc,nyc,nzc,nx1,ny1,nz1;
+unsigned int nxc,nyc,nzc;
 unsigned int nxi,nyi,nzi;
-unsigned int nxy1,nxyz,nxhigh;
-unsigned int nxlow,nyhigh,nylow,nzhigh,nzlow;
+unsigned int nxy1;
 
 double dkx,dky,dkz,akmax,dksp,ecut;
-unsigned int nxk,nxklo,nxkhi,nksp,nkxyz;
-int *inde,*pindex,*indebis,*pindexbis;
+int *inde,*pindex;
 
 double zero=0.0;
 double pi=3.141592653589793;
@@ -39,7 +35,7 @@ void fourfakv(){
 //----------------------------------------------------------------------
 
 int blocksize=192;
-int gridx=(int)ceil(nxyz/(float)blocksize);
+int gridx=(int)ceil(kdred/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
 dim3 dimblock(blocksize,1,1);
 
@@ -56,7 +52,7 @@ if(cufftExecD2Z(pfftforw,gpu_akvr,gpu_akvc) != CUFFT_SUCCESS)
   exit(-1);
 }
 
-multiply_device<<<dimgrid,dimblock,0,stream2>>>(gpu_akvc,kdred,tnorm);
+multiply_device<<<dimgrid,dimblock,0,stream3>>>(gpu_akvc,kdred,tnorm);
 Check_CUDA_Error(error);
 
 }
@@ -74,27 +70,17 @@ void fftinp() {
 
 int ikzero,ii;
 double xz1,xz2,xy1,xy2,xx1,xx2,ak2;
-int nxyfn,nyfn,nnx2,nny2,nnz2;//ind;
+int nxyfn,ind;
 
 //test      sqh=sqrt(0.5)
 
 //     initialize grid in coordinate space
 
-nx1=nxc+1;
-ny1=nyc+1;
-nz1=nzc+1;
 nxi=nxc+nxc;
 nyi=nyc+nyc;
 nzi=nzc+nzc;
 nxy1=nxi*nyi;
-nxyz=nxi*nyi*nzi;
-nkxyz=nxi*nyi*nzi;
-
-nxyfn = kfftx*kfftz;
-nyfn  = kfftx;
-nnx2=nxc+nxc;
-nny2=nyc+nyc;
-nnz2=nzc+nzc;
+nxyfn = kxmax*kzmax;
 
 //     grid lengths must match with parameters in incs
 
@@ -126,7 +112,6 @@ cout<< " dkx,dky,dkz,dksp= "<<dkx<<" "<<dky<<" "<<dkz<<" "<<dksp<<endl;
 
 grnorm=sqrt(dxsp/dksp);
 fnorm=1.0/sqrt(double(nxc*nyc*nzc));
-nxk=nx1;
 
 //     built Greens function in Fourier space
 //     by Fourier transformation from real space
@@ -149,14 +134,14 @@ for (int i3=1;i3<=nzi;i3++){
       ak2=xx2+xy2+xz2;
       ii=ii+1;
 //        cout<< " i1,i2,i3,ii= "<<i1<<" "<<i2<<" "<<i3<<" "ii;
-      inde[ii]=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kfftx+(i1+nyc)%nzi+1; //storage of the indices of the flatten 3D array
+      ind=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kxmax+(i1+nyc)%nzi+1; //storage of the indices of the flatten 3D array
       if(ii != ikzero) {
-        akvr[inde[ii]] =  1.0/sqrt(ak2);
+        akvr[ind] =  1.0/sqrt(ak2);
       }
       else {
 //              akvr[inde[ii]] = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  // spherical approx
 //              akvr[inde[ii]] = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
-        akvr[inde[ii]] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
+        akvr[ind] = 2.34*1.19003868*pow((dx*dy*dz),(-1.0/3.0));  // empirical
       }
     }
   }
@@ -167,12 +152,10 @@ for (int i3=1;i3<=nzc;i3++){
   for (int i2=1;i2<=nyc;i2++){
     for (int i1=1;i1<=nxc;i1++){
       ii++;
-      indebis[ii]=((i3+nxc)%nnx2)*nxyfn+((i2+nyc)%nny2)*nyfn+(i1+nzc)%nnz2+1;
+      inde[ii]=((i3+nxc)%nxi)*nxyfn+((i2+nyc)%nyi)*kxmax+(i1+nzc)%nzi+1;
     }
   }
 }
-
-nksp=ii;
 
 fourfakv();
 
@@ -187,7 +170,6 @@ extern "C" void init_coul_(double *dx0,double *dy0,double *dz0,unsigned int *nx0
 
 //-----------------------------------------------------------------------
 
-//int nxyfn,nyfn,nnx2,nny2,nnz2,ii;
 //     read grid parameters from file or simply initialize them
 //     note that the Coulomb solver doubles the grid internally
 nxc=*nx0;  ///2;
@@ -197,11 +179,9 @@ dx=*dx0;
 dy=*dy0;
 dz=*dz0;
 
-kxmax=2*nxc;kymax=2*nyc;kzmax=2*nzc;ksmax=kxmax;
+kxmax=2*nxc;kymax=2*nyc;kzmax=2*nzc;
 kdfull=nxc*nyc*nzc;
 kdred=kxmax*kymax*kzmax;
-kfft=ksmax;kfftx=kxmax;kffty=kymax;kfftz=kzmax;
-kfft2=kfft*2;
 
 //     check initialization
 
@@ -220,7 +200,7 @@ if(cufftPlan3d(&pfftback,kxmax,kymax,kzmax,CUFFT_Z2D) != CUFFT_SUCCESS)
   cout<<"CUFFT error : Plan Creation failed"<<endl;
   exit(-1);
 }
-if(cufftSetStream(pfftback,stream2) != CUFFT_SUCCESS)
+if(cufftSetStream(pfftback,stream1) != CUFFT_SUCCESS)
 {
   cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
   exit(-1);
@@ -239,24 +219,26 @@ cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
 cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
 cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
 
-pindex = (int*)malloc(kdred*sizeof(int));
+pindex = (int*)malloc(kdfull*sizeof(int));
 inde=pindex-1;
-pindexbis = (int*)malloc(kdfull*sizeof(int));
-indebis=pindexbis-1;
 
 //     call input routine fftinp, which initializes the grid and fft tabl
 
 fftinp();
 }
 
-//-----fft--------------------------------------------------------------
+//-----cofows------------------------------------------------------------
 
-void fft() {
+void coufou2(){
 
 int blocksize=192;
-int gridx=(int)ceil(nxyz/(float)blocksize);
+int gridx=(int)ceil(kdred/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
 dim3 dimblock(blocksize,1,1);
+
+//------------------------------------------------------------------------------
+
+//     fourier transformation of the density
 
 tnorm=grnorm*fnorm;
 
@@ -269,21 +251,12 @@ if(cufftExecD2Z(pfftforw,gpu_rfftac,gpu_fftac) != CUFFT_SUCCESS)
   exit(-1);
 }
 
-multiply_device<<<dimgrid,dimblock,0,stream2>>>(gpu_fftac,nxyz,tnorm);
+//     calculation of the coulomb field (writing on the density field)
+
+multiply_ak_gpu<<<dimgrid,dimblock,0,stream3>>>(gpu_fftac,gpu_akvc,kdred,tnorm);
 Check_CUDA_Error(error);
 
-}
-
-//-----ffb--------------------------------------------------------------
-
-void ffb() {
-
-//----------------------------------------------------------------------
-
-int blocksize=192;
-int gridx=(int)ceil(nxyz/(float)blocksize);
-dim3 dimgrid(gridx,1,1);
-dim3 dimblock(blocksize,1,1);
+//     fourier back transformation
 
 tnorm=fnorm/(8.0*grnorm)*pow(pi,1.5);
 
@@ -301,59 +274,6 @@ Check_CUDA_Error(error);
 
 }
 
-//-----cofows------------------------------------------------------------
-
-void coufou2(){
-
-int blocksize=192;
-int gridx=(int)ceil(nxyz/(float)blocksize);
-dim3 dimgrid(gridx,1,1);
-dim3 dimblock(blocksize,1,1);
-
-//------------------------------------------------------------------------------
-
-//     fourier transformation of the density
-
-fft();
-
-//     calculation of the coulomb field (writing on the density field)
-
-multiply_ak_gpu<<<dimgrid,dimblock,0,stream2>>>(gpu_fftac,gpu_akvc,kdred);
-Check_CUDA_Error(error);
-
-//     fourier back transformation
-
-ffb();
-
-}
-
-//-----rhofld------------------------------------------------------------
-
-void rhofld(double *rhoinp){
-
-//     copy density on complex array of double extnesion in x,y,z
-
-int i0,ii;
-
-ii=0;
-i0=0;
-for (int i3=1;i3<=kfftz;i3++){
-  for (int i2=1;i2<=kffty;i2++){
-    for (int i1=1;i1<=kfftx;i1++){
-      ii++;
-      if(i3 <= nzc && i2 <= nyc && i1 <= nxc) {
-        i0++;
-        rfftac[inde[ii]]=rhoinp[i0];
-      }
-      else rfftac[inde[ii]]=0.0;
-    }
-  }
-}
-
-}
-
-//-------------------------------------------------------------------
-
 extern "C" void falr_(double *prhoinp,double *pchpfalr,int nxdum,int nydum,int nzdum,int kdum) {
 
 double *rhoinp,*chpfalr;
@@ -361,20 +281,20 @@ double *rhoinp,*chpfalr;
 rhoinp=prhoinp-1; //rhoinp points one location before pfftac, so rhoinp[1]...rhoinp[kdred] all exist (just sticks with the fortran convention)
 chpfalr=pchpfalr-1; //same trick as above
 
-//     call a routine written by you which writes your density field
-//     on the array rho.
+//     Write your density field on the array rfftac.
 //     remember not to send your original density array to the fcs.
 //     in this case we have a homogeneously charged sphere .
 
-rhofld(rhoinp);
+for (int ii=1;ii<=kdred;ii++) rfftac[ii]=0.0;
+for (int ii=1;ii<=kdfull;ii++) rfftac[inde[ii]]=rhoinp[ii];
 
 //     call coufou, which contains the fcs procedure.
 coufou2();
 
-//     call a routine written by you which outputs the results of the fcs
-//     and maybe some other things to an output file or the screen.
+//     Write the result of the fcs on the array chpfalr
 
-for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[indebis[i0]];
+for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[inde[i0]];
+
 }
 
 extern "C" void coulsolv_end_() {
@@ -385,5 +305,6 @@ cudaFree(gpu_rfftac);
 cudaFree(gpu_akvc);
 cufftDestroy(pfftforw);
 cufftDestroy(pfftback);
+free(pindex);
 
 }
