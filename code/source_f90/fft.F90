@@ -13,6 +13,7 @@ SAVE
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:)
+INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
 REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
@@ -30,7 +31,6 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),ff
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
 type(C_PTR), PRIVATE :: pforw,pback
 INTEGER(C_INT), PRIVATE :: wisdomtest
-INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 #endif
 
 CONTAINS
@@ -68,6 +68,7 @@ dkz=pi/(dz0*nz)
 
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
+ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 #if(netlib_fft)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
@@ -76,7 +77,6 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
-ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
