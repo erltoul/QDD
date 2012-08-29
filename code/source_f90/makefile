@@ -11,7 +11,7 @@ CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = cuFFT
+TYPE_FFT = NETLIB
 # debugging option
 DEBUG   = NO
 

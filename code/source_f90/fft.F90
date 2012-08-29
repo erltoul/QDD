@@ -15,6 +15,7 @@ SAVE
 !     ak   = fourier-field for exp(i*dt*(h^2/2m)*k^2)
 
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:)
+INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
 REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
@@ -38,7 +39,6 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),ff
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
 type(C_PTR), PRIVATE :: pforw,pback
 INTEGER(C_INT), PRIVATE :: wisdomtest
-INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 #endif
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX), POINTER :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:),ffta2(:,:,:)
@@ -73,7 +73,6 @@ COMPLEX(C_DOUBLE_COMPLEX), POINTER :: rakx(:),raky(:),rakz(:)
 TYPE(C_PTR), PRIVATE :: c_p_rakxfft,c_p_rakyfft,c_p_rakzfft
 COMPLEX(C_DOUBLE_COMPLEX),POINTER :: gpu_rakxfft(:),gpu_rakyfft(:),gpu_rakzfft(:)
 TYPE(C_PTR),PRIVATE :: c_gpu_rakxfft,c_gpu_rakyfft,c_gpu_rakzfft
-INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 #endif
 
 CONTAINS
@@ -105,6 +104,7 @@ dky=pi/(dy0*ny)
 dkz=pi/(dz0*nz)
 
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
+ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 
 #if(netlib_fft)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
@@ -118,11 +118,9 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2),rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
-ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 #endif
 #if(fftw_gpu)
 CALL my_cuda_allocate(nx2,ny2,nz2) !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
-ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
