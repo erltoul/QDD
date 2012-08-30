@@ -284,7 +284,6 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 #endif
 
-#if(fftw_cpu||fftw_gpu)
 DO i1=1,nx2
   modx(i1)=MOD(i1+nx,nx2)+1
 END DO
@@ -296,7 +295,6 @@ END DO
 DO i3=1,nz2
   modz(i3)=MOD(i3+nz,nz2)+1
 END DO
-#endif
 
 END SUBROUTINE init_grid_fft
 
@@ -1209,7 +1207,7 @@ DO i2=1,ny2
   DO i3=1,nz2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(modx(i1),i1) = q2(ind)
+      fftb(modz(i3),i1) = q2(ind)
     END DO
   END DO
   DO i1=1,nx2
@@ -1333,7 +1331,7 @@ DO i2=1,ny2
   DO i3=1,nz2                  ! copy back
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(modz(i1),i1)
+      q2(ind)= fftb(modz(i3),i1)
     END DO
   END DO
 END DO

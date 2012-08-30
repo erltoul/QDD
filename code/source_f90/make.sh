@@ -80,6 +80,22 @@ else
     sed -i -e 's/EXEC = essai\..*/EXEC = essai\.par/' makefile
     sed -i -e 's/CF90    = .*/CF90    = IFORT/' makefile
     sed -i -e 's/USE_MPI = .*/USE_MPI = YES/' makefile
+    if [ $type_check = netlib ] ; then
+        sed -i -e 's/netlib_fft.*/netlib_fft 1/' define.h
+        sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = NETLIB/' makefile
+#        sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+    fi
+    if [ $type_check = fftw ] ; then
+#    	if [ $dim_check = 1d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+        sed -i -e 's/fftw_cpu.*/fftw_cpu 1/' define.h
+#    	fi
+#    	if [ $dim_check = 3d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 3d/' makefile
+#        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
+#    	fi
+        sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
+    fi
     if [ $type_check = gpu ] ; then
         cp define.h define_cuda.h
         sed -i -e 's/!/\/\//g' define_cuda.h #define_cuda.h is just define.h turned into C++
