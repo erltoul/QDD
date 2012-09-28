@@ -2,11 +2,11 @@
  
 #if(gridfft)
 #if(coufou)
-#include 'falr.F90'
+#include "falr.F90"
 #endif !coufou
 
 #if(coudoub)
-#include 'coulex.F90'
+#include "coulex.F90"
 #endif !coudoub
 #endif !gridfft
 

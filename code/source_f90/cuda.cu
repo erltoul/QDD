@@ -26,6 +26,8 @@ using namespace std;
 
 #if(lda_gpu)
 //Work in progress for lda_gpu
+__device__ __constant__ double e2  = 2.0;
+
 __device__ __constant__ double a0  = 0.458165293;
 __device__ __constant__ double da0 = 0.119086804;
 
@@ -62,15 +64,13 @@ thrust::device_vector<double> d_enerpw(1);
 #endif*/
 #endif
 
-extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some variables usefull for GPU computing
+//extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some variables usefull for GPU computing
+extern "C" void cuda_gpu_init_() //initialize some variables usefull for GPU computing
 {
 #if(lda_gpu)
 //Work in progress for lda_gpu
-        int Nx=*Npx;
-	int Ny=*Npy;
-	int Nz=*Npz;
-	int size_lda= sizeof(double)*Nx*Ny*Nz*2;
-        error = cudaMalloc((void**)&d_chpdft,size_lda);
+	int size_lda = 2*params_mp_nxyz_*sizeof(double);
+        error=cudaMalloc((void**)&d_chpdft,size_lda);
 	Check_CUDA_Error(error);
 	/*d_ec.resize(nxyz);
 #if(directenergy)
@@ -79,6 +79,7 @@ extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some var
 #endif
 	cudaStreamCreate(&stream1);
 	cudaStreamCreate(&stream2);
+	cudaStreamCreate(&stream3);
 }
 
 extern "C" void cuda_end_() //Destroy variables set above
@@ -88,6 +89,7 @@ extern "C" void cuda_end_() //Destroy variables set above
 #endif
 	cudaStreamDestroy(stream1);
 	cudaStreamDestroy(stream2);
+	cudaStreamDestroy(stream3);
 }
 
 extern "C" void cuda_plan_1d_(cufftHandle *plan, int *dim, int *batch)
@@ -166,10 +168,10 @@ extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDou
         cufftDoubleComplex *d_ffta_kin;
 
 	//Allocate device memory
-        cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
+        error=cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
 	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
-        cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
+        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 	//Perform 1D FFT FORWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_FORWARD) != CUFFT_SUCCESS)
@@ -178,7 +180,7 @@ extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDou
 	  exit(-1);
 	}
 	//Copy data from GPU to CPU
-        cudaMemcpy(out,d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH, cudaMemcpyDeviceToHost);
+        error=cudaMemcpy(out,d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH, cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 	//Free device memory
         cudaFree(d_ffta_kin);
@@ -190,10 +192,10 @@ extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDo
         cufftDoubleComplex *d_ffta_kin;
 
         //Allocate device memory
-        cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
+        error=cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
 	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
-        cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
+        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 	//Perform 1D FFT BACKWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_INVERSE) != CUFFT_SUCCESS)
@@ -202,7 +204,7 @@ extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDo
 	  exit(-1);
 	}
 	//Copy data from GPU to CPU
-        cudaMemcpy(out, d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyDeviceToHost);
+        error=cudaMemcpy(out, d_ffta_kin, sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 	//Free device memory
         cudaFree(d_ffta_kin);
@@ -214,7 +216,7 @@ extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpyAsync(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice,stream1);
+	error=cudaMemcpyAsync(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
@@ -225,7 +227,7 @@ extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,i
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
+	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
@@ -235,7 +237,7 @@ extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,in
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
-	cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
+	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
 	Check_CUDA_Error(error);
 }
 
@@ -245,7 +247,7 @@ extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
+	error=cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 }
 
@@ -255,7 +257,7 @@ extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
-	cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
+	error=cudaMemcpy(mat,d_mat,size_cp,cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 }
 
@@ -296,7 +298,7 @@ extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 
 #if(lda_gpu)
 //Work in progress
-__global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int nxyz,double e2)
+__global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int nxyz)
 {
 
        double t2,t3,t4,t5,t6,t10,t13,t23,t25,t28,t29,t34,t35,t36,t37,t42,t44,t48;
@@ -367,58 +369,28 @@ __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int n
       }
 }
 
-extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,int *N,double *e2,double *ec,double *enerpw)
+extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,double *ec,double *enerpw)
 {
-        const int nxyz =*N;
-        //double *d_chpdft;
-	//double *d_ec;
-        //double *d_rho;
-        double e=*e2;
-        //double enerpw = *d_enerpw;
         int blocksize=192;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
+	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
         dim3 dimblock(blocksize,1,1);
-        //double h_ec[nxyz];
-        //unsigned int *d_ind;
-        //unsigned int *h_ind;
-	thrust::device_vector<double> d_ec(nxyz);
-	thrust::device_vector<double> d_enerpw(nxyz);
-	//thrust::host_vector<double> h_ec(nxyz);
+	thrust::device_vector<double> d_ec(params_mp_nxyz_);
+	thrust::device_vector<double> d_enerpw(params_mp_nxyz_);
 
-        //h_ec=(double*)malloc(nxyz,sizeof(double));
-        /*h_ind=(unsigned int*)calloc(nxyz,sizeof(unsigned int));
+        cudaMemcpyAsync(d_chpdft,rho,sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyHostToDevice,stream1);
+	Check_CUDA_Error(error);
 
-        cudaMalloc((void**)&d_ind,sizeof(unsigned int)*nxyz);
-        cudaMemcpy(d_ind,h_ind,sizeof(unsigned int)*(nxyz),cudaMemcpyHostToDevice);*/
-        //cudaMalloc((void**)&d_rho,sizeof(double)*(nxyz*2));
-        //cudaMemcpy(d_rho,rho,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice);
-        //cudaMalloc((void**)&d_chpdft,sizeof(double)*(nxyz*2));
-        //cudaMemcpy(d_chpdft,chpdft,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice);
-        cudaMemcpyAsync(d_chpdft,rho,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice,stream1);
-	Check_CUDA_Error(error);
-        //cudaMalloc((void**)&d_ec,sizeof(double)*nxyz);
-        //cudaMalloc((void**)&d_enerpw,sizeof(double)*nxyz);
-        //cudaMemcpy(d_ec,h_ec,sizeof(double)*(nxyz),cudaMemcpyHostToDevice);
-        lda_enerpw<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),raw_pointer_cast(&d_enerpw[0]),nxyz,e);
-	Check_CUDA_Error(error);
-        //cudaMemcpy(h_ind,d_ind, sizeof(unsigned int)*(nxyz),cudaMemcpyDeviceToHost);
-        //cudaMemcpy(h_ec,d_ec, sizeof(double)*(nxyz),cudaMemcpyDeviceToHost);
-	//h_ec=d_ec;
+        lda_enerpw<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),raw_pointer_cast(&d_enerpw[0]),params_mp_nxyz_);
+
 	*ec=thrust::reduce(d_ec.begin(),d_ec.end(),(double)0.0);
 	*enerpw=thrust::reduce(d_enerpw.begin(),d_enerpw.end(),(double)0.0);
-        cudaMemcpy(chpdft,d_chpdft, sizeof(double)*(nxyz*2),cudaMemcpyDeviceToHost);
+        cudaMemcpy(chpdft,d_chpdft, sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
-        //cudaMemcpy(rho,d_rho, sizeof(double)*(nxyz*2),cudaMemcpyDeviceToHost);
-        /*for (int ii=0;ii<nxyz;ii++){
-          *ec+=h_ec[ii];
-        }*/
-        //cudaFree(d_rho);
-        //cudaFree(d_chpdft);
-        //cudaFree(d_ec);
+
 }
 
-__global__ void lda(double *d_chpdft,double *d_ec,int nxyz,double e2)
+__global__ void lda(double *d_chpdft,double *d_ec,int nxyz)
 {
        double t2,t3,t4,t5,t6,t10,t13,t23,t25,t28,t29,t34,t35,t36,t37,t42,t44,t48;
        double t53,t58,t63,t64,t65,t,t68,t70,t71,t72,t77,t82,t83,t88,t93,t98,t102,t109,t135;
@@ -488,50 +460,23 @@ __global__ void lda(double *d_chpdft,double *d_ec,int nxyz,double e2)
       }
 }
 
-extern "C" void calc_lda_gpu_(double *rho,double *chpdft,int *N,double *e2,double *ec)
+extern "C" void calc_lda_gpu_(double *rho,double *chpdft,double *ec)
 {
-        const int nxyz =*N;
-        //double *d_chpdft;
-	//double *d_ec;
-        //double *d_rho;
-        double e=*e2;
+
         int blocksize=192;
-	int gridx=(int)ceil(nxyz/(float)blocksize);
+	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
         dim3 dimblock(blocksize,1,1);
-        //double h_ec[nxyz];
-        //unsigned int *d_ind;
-        //unsigned int *h_ind;
-	thrust::device_vector<double> d_ec(nxyz);
-	//thrust::host_vector<double> h_ec(nxyz);
+	thrust::device_vector<double> d_ec(params_mp_nxyz_);
 
-        //h_ec=(double*)malloc(nxyz,sizeof(double));
-        /*h_ind=(unsigned int*)calloc(nxyz,sizeof(unsigned int));
+        error=cudaMemcpyAsync(d_chpdft,rho,2*params_mp_nxyz_*sizeof(double),cudaMemcpyHostToDevice,stream1);
+	Check_CUDA_Error(error);
 
-        cudaMalloc((void**)&d_ind,sizeof(unsigned int)*nxyz);
-        cudaMemcpy(d_ind,h_ind,sizeof(unsigned int)*(nxyz),cudaMemcpyHostToDevice);*/
-        //cudaMalloc((void**)&d_rho,sizeof(double)*(nxyz*2));
-        //cudaMemcpy(d_rho,rho,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice);
-        //cudaMalloc((void**)&d_chpdft,sizeof(double)*(nxyz*2));
-        //cudaMemcpy(d_chpdft,chpdft,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice);
-        cudaMemcpyAsync(d_chpdft,rho,sizeof(double)*(nxyz*2),cudaMemcpyHostToDevice,stream1);
-	Check_CUDA_Error(error);
-        //cudaMalloc((void**)&d_ec,sizeof(double)*nxyz);
-        //cudaMemcpy(d_ec,h_ec,sizeof(double)*(nxyz),cudaMemcpyHostToDevice);
-        lda<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),nxyz,e);
-	Check_CUDA_Error(error);
-        //cudaMemcpy(h_ind,d_ind, sizeof(unsigned int)*(nxyz),cudaMemcpyDeviceToHost);
-        //cudaMemcpy(h_ec,d_ec, sizeof(double)*(nxyz),cudaMemcpyDeviceToHost);
-	//h_ec=d_ec;
+        lda<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),params_mp_nxyz_);
+
 	*ec=thrust::reduce(d_ec.begin(),d_ec.end(),(double)0.0);
-        cudaMemcpy(chpdft,d_chpdft, sizeof(double)*(nxyz*2),cudaMemcpyDeviceToHost);
+        error=cudaMemcpy(chpdft,d_chpdft,2*params_mp_nxyz_*sizeof(double),cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
-        //cudaMemcpy(rho,d_rho, sizeof(double)*(nxyz*2),cudaMemcpyDeviceToHost);
-        /*for (int ii=0;ii<nxyz;ii++){
-          *ec+=h_ec[ii];
-        }*/
-        //cudaFree(d_rho);
-        //cudaFree(d_chpdft);
-        //cudaFree(d_ec);
+
 }
 #endif

@@ -11,7 +11,7 @@ CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = NETLIB
+TYPE_FFT = cuFFT
 # debugging option
 DEBUG   = NO
 
@@ -169,7 +169,7 @@ endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 	GPUCOMPILER = nvcc
-	GPUCOMPILERFLAGS =  --gpu-architecture sm_13 -I/opt/cuda/include
+	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20 -I/opt/cuda/include
 #	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20
 endif
 

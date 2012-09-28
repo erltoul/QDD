@@ -89,7 +89,7 @@ CALL init_grid()
 CALL init_fields()
 
 #if(fftw_gpu)
-CALL cuda_gpu_init(kxmax,kymax,kzmax)
+CALL cuda_gpu_init()
 #endif
 
 #if(fullsic)
@@ -495,6 +495,10 @@ WRITE(7,*) ' before final barrier. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
+#endif
+
+#if(fftw_gpu)
+CALL cuda_end()
 #endif
 
 CALL cpu_time(time_absfin)
