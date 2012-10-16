@@ -280,7 +280,7 @@ IF(knode > 1) THEN
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
                    mpi_double_precision,0,mpi_comm_world,ic)
 #if COMPLEXSWITCH
-  IF (jescmaskorb /= 0) &
+  IF (nabsorb > 0 .AND. jescmaskorb /= 0) &
     CALL mpi_bcast(rhoabsoorb(1:kdfull2,1:nstate),kdfull2*nstate, &
                    mpi_double_precision,0,mpi_comm_world,ic)
 #endif
