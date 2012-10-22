@@ -1,0 +1,22 @@
+Benchmarks comparing NETLIB, FFTW3 and MKL for the 3D code:
+-----------------------------------------------------------
+
+
+The tests were run on 'hyperion'.
+FFTW3 used the option 'EXHAUSTIVE'.
+
+
+              Na_8 48**3      Na8 49**3    Na7- 160**3
+NETLIB            127            235           337
+FFTW3              82            110           256 
+FFTW3&MKL          69             80           223
+
+
+==> The gains depend on the dimensions. 
+    Well factorizable grids (48,160) let FFTW3 gain 25-30%
+    and MKL 30-50%.
+    Prime-number grids (49) let FFTW gain 55% and MKKL 65%.
+
+After all, FFTW3 is a big steo forward. MKL adds another bit
+and should be invoked if available.
+
