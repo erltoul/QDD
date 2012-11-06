@@ -450,7 +450,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     i  --->    1   --->  GSM core
 !                2   --->  GSM valence shell
-!                3   --->  GSM kation
+!                3   --->  GSM cation
 !                4   --->  Na core
 !                5   --->  DFT electron
 
@@ -889,7 +889,7 @@ IF (isrtyp(ityp1,ityp2) == 1) THEN ! MgO-case
         
       END IF
       
-      IF (ityp1 == 3) THEN ! kation - DFT
+      IF (ityp1 == 3) THEN ! cation - DFT
         
       END IF
       
@@ -1001,7 +1001,7 @@ ELSE IF (isrtyp(1,5) == 1) THEN ! the MgO-case; c-DFT
   END DO ! nc-loop
   
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-ELSE IF (isrtyp(1,5) == 3) THEN ! the general fermi function; c-DFT
+ELSE IF (isrtyp(1,5) == 3) THEN ! the general Fermi function; c-DFT
   DO is=1,nc
     
     IF (imobc(is) == iswitch) THEN
@@ -1063,10 +1063,10 @@ IF (isrtyp(3,5) == 1) THEN ! the MgO-case, k-DFT
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ELSE IF (isrtyp(3,5) == 2) THEN ! the Ar-case, k-DFT
   
-! there are no kations in this model
+! there are no cations in this model
   
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-ELSE IF (isrtyp(3,5) == 3) THEN ! k-DFT by fermi function
+ELSE IF (isrtyp(3,5) == 3) THEN ! k-DFT by Fermi function
   DO is=1,nk
     
     IF (imobk(is) == iswitch) THEN
@@ -1160,7 +1160,7 @@ ELSE IF (isrtyp(1,5) == 2) THEN ! The Argon Case, c-DFT
   DO is=1,nc
     
     IF(imobc(is) == iswitch) THEN  ! choose only cores which are
-! mobile or unmobile
+! mobile or immobile
       
 !old          call addFuncToFieldOnSubgrid(field,vArElCore,xc(is),
       CALL addtabtofieldonsubgrid(field,varelcore0,xc(is),  &
@@ -1238,7 +1238,7 @@ IF (isrtyp(3,5) == 1) THEN ! The MgO Case, k-DFT
   
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ELSE IF (isrtyp(3,5) == 2) THEN ! The Ar Case, k-DFT
-! nothing to do in this model, no kations present
+! nothing to do in this model, no cations present
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ELSE IF (isrtyp(3,5) == 3) THEN ! k-DFT, by Fermi function
   

@@ -24,7 +24,7 @@ INTEGER :: ng
 
 
 INTEGER,PARAMETER :: maxnang=100    ! max. angular bins for PAD
-INTEGER,PARAMETER :: maxmps=100    ! max. nr. analyzing points fpr PES
+INTEGER,PARAMETER :: maxmps=100    ! max. nr. analyzing points for PES
 ! parameter(drtab=1e-4)
 
 
@@ -48,7 +48,7 @@ COMPLEX(DP),PARAMETER :: eye=(0D0,1D0)
 
 !     maximum sizes of the box in x,y, and z
 INTEGER :: kxbox=0,kybox=0,kzbox=0
-! deduced grid paramaters
+! deduced grid parameters
 INTEGER :: kxmax,kymax,kzmax
 INTEGER :: nx2,ny2,nz2
 !INTEGER,PARAMETER :: nxyzf=nx2*ny2*nz2                 !?
@@ -123,7 +123,7 @@ INTEGER :: numspin=2                       ! number of spin components
 REAL(DP) :: omeg,eferm                     !  initial Gaussians
 REAL(DP) :: dInMargin=6D0
 INTEGER :: iforce=0
-INTEGER :: ipseudo=1          ! swich on/off subgrids and pseudo-densities
+INTEGER :: ipseudo=1          ! switch on/off subgrids and pseudo-densities
 REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
 REAL(DP) :: b2occ=0.4,gamocc=10.0,deocc=0D0,osfac=1D0 !  h.o.initalization
@@ -134,7 +134,7 @@ INTEGER :: itback=200                            !  jellium params
 REAL(DP) :: betatj,gammtj,bet4tj                 !      "      "
 REAL(DP) :: bbeta=0D0,gamma=0D0,beta4=0D0        !      "      "
 REAL(DP) :: falph,fbeta,fhexe                    !  jellium auxiliary
-REAL(DP) :: dpolx=0D0,dpoly=0D0,dpolz=0D0       !  static dipol potential
+REAL(DP) :: dpolx=0D0,dpoly=0D0,dpolz=0D0       !  static dipole potential
 LOGICAL :: tdipolxyz                     ! switch to dipole fields
 INTEGER :: iexcit=0,irotat=0,ispidi=0          !  dynam. initialisation
 REAL(DP) :: phirot=0D0
@@ -228,7 +228,7 @@ REAL(DP),ALLOCATABLE :: rhoabso(:)           !  storage for absorbed density
 REAL(DP),ALLOCATABLE :: spherMask(:)         !  mask for spherical absorbing bounds
 REAL(DP),ALLOCATABLE :: spherloss(:)         !  loss factor for spher. abs. bounds
 REAL(DP) :: bcrad,powabso=0.125D0           ! width & power of abs. bounds
-INTEGER :: ispherAbso=1               !  swicth to spherical abs. bounds
+INTEGER :: ispherAbso=1               !  switch to spherical abs. bounds
 INTEGER :: iangabso=0,nangtheta=1,nangphi=1
 INTEGER :: ipes=0, indicesmp(maxnang*maxnang)
 REAL(DP) :: angthetah=PI,angthetal=0D0
@@ -289,7 +289,7 @@ INTEGER,ALLOCATABLE :: nmaxst(:)
 
 
 
-!     parameters for simulated annealinig
+!     parameters for simulated annealing
 REAL(DP),ALLOCATABLE :: eloc(:),enoloc(:),eion(:,:),eiinew(:)
 REAL(DP) :: cptemp,delpos,ERR,binerg, errtot,erfac1,trfac1,prfac1
 REAL(DP) :: trfac2,prfac2,errsim,eiontot,enoloctot,facann
@@ -337,7 +337,7 @@ CONTAINS
 SUBROUTINE init_baseparams()
 
 
-! deduced grid paramaters
+! deduced grid parameters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
  nx2=kxbox;ny2=kybox;nz2=kzbox
  nxyz=nx2*ny2*nz2;nyf=nx2;nxyf=nx2*ny2
@@ -495,7 +495,7 @@ nunflayk=20
 runfrowc=20D0
 runfrowe=20D0
 runfrowk=20D0
-fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitely
+fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitly
 fermib=1D0
 fermic=1D0
 fermiac=0D0

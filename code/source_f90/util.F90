@@ -462,9 +462,9 @@ IF (iflag == 4) THEN
     ek = ek + (cpx(i)**2+cpy(i)**2+cpz(i)**2)/2./rm
   END DO
   
-  rkt = 2./(3.*nion-3.)*(ek - ekcm) ! thermische Energie kT in Ry
+  rkt = 2./(3.*nion-3.)*(ek - ekcm) ! thermal energy kT in Ry
   
-! Temperatur in Kelvin
+! Temperature in Kelvin
   
   tt = rkt/(6.507E-6)
   
@@ -505,9 +505,9 @@ ELSE IF (iflag <= 3) THEN
     ek = ek + (pxk(i)**2+pyk(i)**2+pzk(i)**2)/2./rmk
   END DO
   
-  rkt = 2./(3.*(nc+nk)-3.)*(ek - ekcm) ! thermische Energie kT in Ry
+  rkt = 2./(3.*(nc+nk)-3.)*(ek - ekcm) ! thermal energy kT in Ry
   
-! Temperatur in Kelvin
+! Temperature in Kelvin
   
   tt = rkt/(6.507E-6)
   
@@ -1802,7 +1802,7 @@ SUBROUTINE laserp(vlaser,rho)
 !          tend   < t < tvend    f(t) = sin(.5 *PI* (t - tend) / tpeak)
 !          tvend  < t < ...      f(t) = 0.
 
-!      itft = 2 --> gaussian laser pulse
+!      itft = 2 --> Gaussian laser pulse
 
 !          tmax = tnode + tpeak
 
@@ -2740,7 +2740,7 @@ INTEGER, INTENT(IN)          :: isp
 
 !*********************************************************
 
-!     orthogonalisation
+!     orthogonalization
 
 IF(temp /= 0D0) STOP ' ORTHOGWFR requires temperature 0'
 DO nbe=1,nstate
@@ -3147,7 +3147,7 @@ END SUBROUTINE cproject
 
 
 
-!-----pair  ------------ part of the hartree-fock package --------------
+!-----pair  ------------ part of the Hartree-Fock package --------------
 
 SUBROUTINE pair(e,gw,ph,nz,nmax,gp,eferm,delta,partnm,  &
     iter,ipair,eps,iab,kstate)
@@ -3163,9 +3163,9 @@ USE params, ONLY: DP
 
 !     * * * * * * * * * *     pairing iteration      * * * * * * * * * *
 
-!     determines the fermi-energy 'eferm' and the gap 'delta'
+!     determines the Fermi-energy 'eferm' and the gap 'delta'
 !     such that the "gap-equation" and the "particle number condition"
-!     are fulfilled simultanously. this is achieved by iteration
+!     are fulfilled simultaneously. this is achieved by iteration
 !     with a gradient scheme (newton's tangential formula)
 !     where the gradient is evaluated by finite differences.
 
@@ -3181,7 +3181,7 @@ USE params, ONLY: DP
 !     input via list:
 !      e       = array(1..nmax) of single particle energies.
 !      gw      = array(1..nmax) of occupation probabilities,
-!                input is used as initila guess for the iteration.
+!                input is used as initial guess for the iteration.
 !      ph      = array(1..nmax) of the multiplicities of the single
 !                particle levels.
 !      nz      = desired particle number
@@ -3190,10 +3190,10 @@ USE params, ONLY: DP
 !                 and smaller than 46, for dimensioning reasons).
 !      gp      = size of pairing-force, is input in case of
 !                "constant force" approach.
-!      eferm   = fermi-energy, input is used as initial guess;
+!      eferm   = Fermi-energy, input is used as initial guess;
 !                if eferm=0.0 is input then a suitable initial guess
 !                is computed from input 'gw'.
-!      delta   = pairing gap, is input in case of "constant gap" approac
+!      delta   = pairing gap, is input in case of "constant gap" approach
 !      iter    = number of pairing iterations,
 !                abs(iter) is the number of iterations
 !      ipair   = switch for pairing type
@@ -3217,7 +3217,7 @@ USE params, ONLY: DP
 !                "constant gap" approach.
 !      delta   = pairing gap, is output in case of
 !                "constant force" approach.
-!      eferm   = fermi-energy.
+!      eferm   = Fermi-energy.
 !      sum     = particle number, from adding 'gw' with degeneracy 'ph'.
 
 !     some auxiliary fields are:
@@ -3230,7 +3230,7 @@ USE params, ONLY: DP
 !      dgap    = array(1..3) of variation in the gap equation as
 !                consequence of 'deferm' and 'ddelta'.
 !      gr      = double array of variation of particle number and of
-!                gap equation, used for construction of the tangantial
+!                gap equation, used for construction of the tangential
 !                step
 
 REAL(DP) :: e(kstate),gw(kstate),ph(kstate)
@@ -3240,7 +3240,7 @@ REAL(DP) :: emax,emin
 DATA gr,dparn,dgap/10*0D0/
 
 !     further numerical variables are:
-!      deferm  = step in the fermi-energy, to evaluate
+!      deferm  = step in the Fermi-energy, to evaluate
 !                numerically the derivatives.
 !      ddelta  = step in the gap, to evaluate numerically the
 !                derivatives; used only in the "constant force" approach
@@ -3289,7 +3289,7 @@ IF(iab > 1) THEN
   WRITE(7,*) partnm,ipair,eps,iab
 END IF
 
-!      prepare fermi-energy 'eferm', if not yet initialised.
+!      prepare Fermi-energy 'eferm', if not yet initialised.
 
 IF(eferm == zero) THEN
   isum   = 0
@@ -3311,7 +3311,7 @@ IF(ipair == 1) THEN
 !-----------------------------------------------------------------------
   
 !     case of constant pairing-force, given by 'gp'.
-!      gap 'delta', fermi-energy 'eferm', and occupations 'gw'
+!      gap 'delta', Fermi-energy 'eferm', and occupations 'gw'
 !      are computed.
   
 !-----------------------------------------------------------------------
@@ -3324,7 +3324,7 @@ IF(ipair == 1) THEN
 !       and at 'eferm' varied (k=2) and at 'delta' varied (k=3).
     
     DO ka=1,3
-!                                          actual fermi-energy and gap
+!                                          actual Fermi-energy and gap
       k      = 4-ka
       IF(k == 1) THEN
         elam   = eferm
@@ -3558,7 +3558,7 @@ END IF
 
 RETURN
 END SUBROUTINE pair
-!-----parnm------------ part of the hartree-fock package ---------------
+!-----parnm------------ part of the Hartree-Fock package ---------------
 
 FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 
@@ -3575,7 +3575,7 @@ FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 !       ph     = array of degeneracy factors
 !       nmax   = number of states in the above three arrays
 !       delta  = pairing gap or temperature
-!       elam   = fermi energy
+!       elam   = Fermi energy
 !       ipair  = switch to pairing (0) or temperature (4).
 
 USE params
@@ -3946,7 +3946,7 @@ END SUBROUTINE phoverl
 
 SUBROUTINE stateoverl(psi1,psi2)
 
-!  Computes overlap of two Slaters states with possibly
+!  Computes overlap of two Slater states with possibly
 !  different sets of s.p. states.
 !  Both states must have the same sequence of occupation numbers.
 !  The set of s.p. states is given by 'psi1' and 'psi2'.

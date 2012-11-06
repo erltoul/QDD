@@ -3,7 +3,7 @@ REAL(DP),PARAMETER :: varelcorelimit=1E-8  ! limiting value for V_elArcore [Ry]
 
 !INTEGER,PARAMETER :: kfermi=kxbox*17330  ! length of interpolation table
 INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
-                                      ! uises here fixed length -- check!
+                                      ! uses here fixed length -- check!
 
 
 !  surface part:

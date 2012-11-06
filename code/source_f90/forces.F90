@@ -13,7 +13,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      GSM means
 !     a particle described by the Gaussian Shell Model, i.e.
-!     cores, valence shells and kations.
+!     cores, valence shells and cations.
 
 !     - calculation of the GSM-GSM forces
 !     - calculation of the forces between GSM particles and
@@ -123,7 +123,7 @@ IF (isurf /= 0) THEN
 !     van der Waals part
   IF (ivdw == 1) THEN
     CALL getvdwforce(rho)
-  END IF  ! if ivdw.eq.2 vdw is done implicitely by vArElCore
+  END IF  ! if ivdw.eq.2 vdw is done implicitly by vArElCore
 
   
 END IF
@@ -328,7 +328,7 @@ DO ii=1,nion
     CALL foldgradfunc(rho,v_soft,cx(ii),cy(ii),cz(ii), sgm1(np(ii))*sq2)
 !               call dIntFieldFunc(rho,dVsdr,cx(ii),cy(ii),cz(ii),
 !     &                    sgm1(np(ii))*SQ2)
-! contribution from first gaussian
+! contribution from first Gaussian
 ! the plus sign in the forces is really a plus because
 ! rho is positive but the electronic charge is -rho
     
@@ -341,7 +341,7 @@ DO ii=1,nion
     CALL foldgradfunc(rho,v_soft,cx(ii),cy(ii),cz(ii), sgm2(np(ii))*sq2)
 !               call dIntFieldFunc(rho,dVsdr,cx(ii),cy(ii),cz(ii),
 !     &                    sgm2(np(ii))*SQ2)
-! contribution from second gaussian
+! contribution from second Gaussian
     
     fx(ii) = fx(ii) + e2*chg2(np(ii))*rvectmp(1)
     fy(ii) = fy(ii) + e2*chg2(np(ii))*rvectmp(2)
@@ -428,7 +428,7 @@ DO ion=1,nion
   fz(ion)=0D0
 END DO
 
-!     derivatives of the n goedecker pseudos
+!     derivatives of the n Goedecker pseudos
 
 DO is=1,nion
   c1=cc1(np(is))

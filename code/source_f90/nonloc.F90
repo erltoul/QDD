@@ -123,7 +123,7 @@ sumr04=sumr04*dvol
 sumr05=sumr05*dvol
 sumr06=sumr06*dvol
 
-!  Now, the result of the r' integral is multiplicated with the
+!  Now, the result of the r' integral is multiplied with the
 !  r-dependent part and summed up over all l-contributions as well
 !  as over all the ions:
 
@@ -227,7 +227,7 @@ sumr04=sumr04*dvol
 sumr05=sumr05*dvol
 sumr06=sumr06*dvol
 !         write(*,*) ' sumr01..=',sumr01,sumr02,sumr04,sumr05,sumr06
-!  Now, the result of the r' integral is multiplicated with the
+!  Now, the result of the r' integral is multiplied with the
 !  r-dependant part and summed up over all l-contributions as well
 !  as over all the ions:
 
@@ -401,7 +401,7 @@ END IF
 
 
 
-!  Now, the result of the r' integral is multiplicated with the
+!  Now, the result of the r' integral is multiplied with the
 !  r-dependent part and summed up over all l-contributions 
 
 

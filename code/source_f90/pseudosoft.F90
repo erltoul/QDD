@@ -81,13 +81,13 @@ SUBROUTINE pseudosoft()
 !     In this routine we calculate ONLY the PsP from
 !     the cluster cores.
 !     Potentials from substrate ions are included by a call
-!     to a separate subrotine. The case of dielectric layer
+!     to a separate subroutine. The case of dielectric layer
 !     is dealt with in a different routine.
 
 !--------------------------------------------------------------
 !     ATTENTION: the definition of Gaussians
 !                used in the code:
-!                sgm() is the width of a gaussian defined like
+!                sgm() is the width of a Gaussian defined like
 !                      exp(-r**2/(2*sgm**2))
 
 !--------------------------------------------------------------
@@ -323,7 +323,7 @@ FUNCTION v_soft(r,sigma)
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     soft Coulomb potentialfrom Gaussian density,
+!     soft Coulomb potential from Gaussian density,
 !     uses error function from Chebyshev approximation.
 !       r     =  distance at which potential is computed
 !       sigma =  width parameter of underlying Gaussian
@@ -349,7 +349,7 @@ IF (z > 6D0) THEN
   RETURN
 END IF
 
-IF(z <= 1D-1)THEN             ! use taylor expansion for z < 0.1
+IF(z <= 1D-1)THEN             ! use Taylor expansion for z < 0.1
   v_soft=(2D0-2D0*z**2/3D0+z**4/5D0-z**6/21D0) /(SQRT(pi)*sigma)
 ELSE
   t=1D0/(1D0+0.5D0*z)
@@ -399,8 +399,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     effective ion-ion potential
 !       r      =  distance at which potential is computed
-!       n1     =  indice of the first ion (1<=n1<=nion)
-!       n2     =  indice of the second ion (1<=n2<=nion)
+!       n1     =  index of the first ion (1<=n1<=nion)
+!       n2     =  index of the second ion (1<=n2<=nion)
 !       (see array np(*) in 'init.F')
 
 

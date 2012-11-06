@@ -156,7 +156,7 @@ ALLOCATE(dq0(kdfull2))
 ! reset 
 current=0D0
 
-! cumulate
+! accumulate
 DO nb=1,nstate
   CALL xgradient_rspace(q0(1,nb),dq0)
   current(:,1) = current(:,1) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))

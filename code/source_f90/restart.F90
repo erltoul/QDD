@@ -260,7 +260,7 @@ IF(mynact==0) THEN
       END IF
       IF(ttest) WRITE(*,*) ' abso read in'
     END IF
-!   reading cumulators for laser field
+!   reading accumulators for laser field
     IF(.NOT.trealin) THEN
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
 !      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
@@ -526,7 +526,7 @@ IF(mynact==0) THEN
   END IF
 #endif    
     
-!  write dipol moment etc:
+!  write dipole moment etc:
     IF(nclust > 0) THEN 
       WRITE(60) qe(1:kmom),se(1:3)
     
@@ -539,7 +539,7 @@ IF(mynact==0) THEN
           END DO
         END IF
       END IF
-!     writing cumulators for laser field
+!     writing accumulators for laser field
       WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
       WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
 #endif
@@ -740,9 +740,9 @@ END SUBROUTINE addcluster
 #ifdef REALSWITCH
 SUBROUTINE send_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
-!     Both strings are double precsion and have length 'length'
+!     Both strings are double precision and have length 'length'
 
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -780,7 +780,7 @@ END SUBROUTINE send_and_receive
 
 SUBROUTINE csend_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
 !     Both strings are double complex and have length 'length'
 

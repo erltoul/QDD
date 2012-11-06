@@ -229,7 +229,7 @@ SUBROUTINE init_scattel(psi)
 
 !     Adds one electron in scattering state as Gaussian wavepacket
 !     with a certain velocity.
-!     The bookkeeping fiedls are extended accoprdingly.
+!     The bookkeeping fields are extended accordingly.
 
 
 USE params
@@ -306,7 +306,7 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 !     For pure electronic propagation one has the option to
 !     reduce the number of local unitary steps. The last half-step
-!     is omitted (exept in case of the last call 'itsub=ipasinf')
+!     is omitted (except in case of the last call 'itsub=ipasinf')
 !     and the first local step is doubled instead (except for the
 !     first call 'itsub=1'). This option is switched on by the
 !     run time switch 'iffastpropag'.
@@ -863,7 +863,7 @@ ecorr = energ_ions()
 ekion=0D0        ! kinetic energy of Na cores
 ekinion=0D0      ! kinetic energy of GSM cores
 ekinel=0D0       ! kinetic energy of GSM shells
-ekinkat=0D0      ! kinetic energy of kations
+ekinkat=0D0      ! kinetic energy of cations
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
@@ -937,7 +937,7 @@ IF(myn == 0) THEN
   WRITE(6,*) 'e_coul:ion-ion   = ',ecorr
   WRITE(6,*) 'e_coul:el-ion    = ',2.*ecback
   WRITE(6,*) 'extern. energy   = ',2.*ecback+ecorr
-  WRITE(6,*) 'hartree energy   = ',ecrho-ecback-ecrhoimage
+  WRITE(6,*) 'Hartree energy   = ',ecrho-ecback-ecrhoimage
   WRITE(6,*) 'nonlocal energy  = ',enonlc
   WRITE(6,*) 'sim.ann.energy   = ',2.*ecback+ecorr+enonlc
   WRITE(6,*) 'laser energy     = ',elaser
@@ -1282,7 +1282,7 @@ SUBROUTINE mrote
 !        irotat=3 -> rotate around z-axis
 !        irotat=4 -> rotate around diagonal axis
 !      The angle 'phirot' is to be given in degree.
-!      Conifguration and parameters are communciated via 'common'
+!      Configuration and parameters are communicated via 'common'
 
 USE params
 !USE kinetic
@@ -1345,7 +1345,7 @@ REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
 !  !        irotat=2 -> rotate around y-axis
 !  !        irotat=3 -> rotate around z-axis
 !  !        irotat=4 -> rotate around diagonal axis
-!  !      conifguration and parameters are communciated via 'common'
+!  !      configuration and parameters are communicated via 'common'
 !  
 !  USE params
 !  USE kinetic
@@ -1611,7 +1611,7 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 !     qact     = array for actual wavefunction to be propagated
 !     q1,q2    = auxiliary wavefunction  arrays
 !     ri       = size of time step
-!     tenerg   = (logical) switch to cumulate non-local energy
+!     tenerg   = (logical) switch to accumulate non-local energy
 !     nb       = number of state which is propagated
 !     norder   = order of step (up to 6, 4 or 6 recommended)
 !
@@ -1828,11 +1828,11 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 1: time (fs), col 2:  total sp en.'
     WRITE(163,*) 'col 3: rearr. en, col 4:  kin. en. Na ions'
     WRITE(163,*) 'col 5: kin. cores,col 6:  kin. en. shells'
-    WRITE(163,*) 'col 7: kin. kations,col 8:  pot. energy of ions'
+    WRITE(163,*) 'col 7: kin. cations,col 8:  pot. energy of ions'
     WRITE(163,*) 'col 9: ion-ion pot., col 10: ion-surf pot'
     WRITE(163,*) 'col 11: intra-surf. pot'
     WRITE(163,*) 'col 12: el-ion energy,col 13:  external en.'
-    WRITE(163,*) 'col 14: hartree en.,col 15:  nonloc. en'
+    WRITE(163,*) 'col 14: Hartree en.,col 15:  nonloc. en'
     WRITE(163,*) 'col 16: sim.ann. en.,col 17:  binding en.'
     WRITE(163,*) 'col 18: total en. [Ry]'
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
@@ -1915,7 +1915,7 @@ IF(irest <= 0) THEN                    !  write file headers
           CLOSE(621)
         END IF
         
-! Positions of GSM cores, clouds and kations
+! Positions of GSM cores, clouds and cations
         IF(isurf /= 0) THEN
           OPEN(24,STATUS='unknown',FORM='formatted', FILE='pposcore.'//outnam)
           WRITE(24,'(a)') ' & '

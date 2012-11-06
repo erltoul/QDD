@@ -4,7 +4,7 @@
 
 SUBROUTINE init_parallele()
 
-!     Initializes parellele computing determines actual 'myn'.
+!     Initializes parallele computing determines actual 'myn'.
 !     The actual node 'myn' is communicated via common.
 
 USE params

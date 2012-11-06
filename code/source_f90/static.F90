@@ -290,7 +290,7 @@ IF(icooltyp == 1 .AND. itmax > 0) THEN
   CALL rsave(psir,iter1,outnam)
 END IF
 
-!k check 1p-h transition matrix elements to unoccpied state:
+!k check 1p-h transition matrix elements to unoccupied state:
 !k attention: nstate must be bigger than number of electrons
 
 #if(parano)
@@ -429,7 +429,7 @@ SUBROUTINE sstep(q0,aloc,iter)
 !              the local mean field on 'aloc'
 !              the iteration number 'iter' (for switching analysis)
 !                 (only analysis, no stepping for 'iter=0') 
-!     Ouput is new new real wavefunction 'q0'
+!     Output is new new real wavefunction 'q0'
 
 !     This part for the serial version.
 
@@ -650,7 +650,7 @@ ALLOCATE(psipr(kdfull2))
 #endif
   
   
-!     perform the damped gradient step and orthogonalise the new basis
+!     perform the damped gradient step and orthogonalize the new basis
   
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
   
@@ -1141,7 +1141,7 @@ IF(myn == 0) THEN
   WRITE(42,'(a,f7.2)')    'mon.:',qe(1)
   WRITE(42,'(a,3f11.5)')  'dip.in  :',dpolx,dpoly,dpolz
   WRITE(42,'(a,3f11.5)')  'dip.out :',qe(2),qe(3),qe(4)
-  WRITE(42,'(a)')         'quadrupol moments:'
+  WRITE(42,'(a)')         'quadrupole moments:'
   WRITE(42,'(a,3f11.4)')  'xx,yy,zz:',qe(5),qe(6),qe(7)
   WRITE(42,'(a,3f11.4)')  'xy,zx,zy:',qe(8),qe(9),qe(10)
   rms = SQRT(qe(5)+qe(6)+qe(7))

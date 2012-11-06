@@ -125,7 +125,7 @@ ELSE IF(kzmax < nzi) THEN
   STOP ' error in parameter: KZMAX in COULEX too small'
 END IF
 
-!     initialize grid in fourier space
+!     initialize grid in Fourier space
 
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
@@ -254,7 +254,7 @@ END SUBROUTINE falr
 SUBROUTINE rhofld(rhoinp,rhokr,rhoki)
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     copy density on complex array of double extnesion in x,y,z
+!     copy density on complex array of double extension in x,y,z
 
 
 REAL(DP), INTENT(IN)                         :: rhoinp(kdfull)
@@ -327,15 +327,15 @@ LOGICAL,PARAMETER :: rqplot=.false.
 !------------------------------------------------------------------------------
 
 ALLOCATE(rhok(kdred))
-!     fourier transformation of the density
+!     Fourier transformation of the density
 
 CALL rftf2(rhokr,rhok)
 
-!     calculation of the coulomb field (writing on the density field)
+!     calculation of the Coulomb field (writing on the density field)
 
   rhok(:) = akv2c(:)*rhok(:)
 
-!     fourier back transformation
+!     Fourier back transformation
 
 CALL rfftback2(rhok,rhokr)
 

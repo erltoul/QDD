@@ -26,7 +26,7 @@ REAL(DP),PRIVATE :: zzmatr(kdim,kdim,2)  ! matrix of z**2
 REAL(DP),PRIVATE :: xmatr(kdim,kdim,2)   ! matrix of x
 REAL(DP),PRIVATE :: ymatr(kdim,kdim,2)   ! matrix of y
 REAL(DP),PRIVATE :: zmatr(kdim,kdim,2)   ! matrix of z
-REAL(DP) :: vecsr(kdim,kdim,2)    ! searched eigenvevtors
+REAL(DP) :: vecsr(kdim,kdim,2)    ! searched eigenvectors
 INTEGER :: ndims(2)
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecsr
@@ -55,7 +55,7 @@ COMPLEX(DP),PRIVATE :: zzmatr(kdim,kdim,2)  ! matrix of z**2
 COMPLEX(DP),PRIVATE :: xmatr(kdim,kdim,2)   ! matrix of x
 COMPLEX(DP),PRIVATE :: ymatr(kdim,kdim,2)   ! matrix of y
 COMPLEX(DP),PRIVATE :: zmatr(kdim,kdim,2)   ! matrix of z
-COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvevtors
+COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvectors
 INTEGER,PRIVATE :: ndims(2)
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecs
@@ -249,7 +249,7 @@ USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'twost.inc'
 !INCLUDE 'radmatrixr.inc'
-COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvevtors
+COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvectors
 
 !----------------------------------------------------------------
 
@@ -399,7 +399,7 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
     END IF
   END DO
   
-! lagrange mult matrix diag (necessits vect1,2 in each sp subs, instead bugs)
+! Lagrange mult matrix diag (needs vect1,2 in each sp subs, instead bugs)
   IF(is == 1)THEN
     CALL givens(a,root(1,is),vect1(1,1),ndims(is),ndims(is),ndims(is))
   ELSE IF(is == 2)THEN
@@ -559,7 +559,7 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 SUBROUTINE utgradstep(is,iprint,q0,iter1)
 #endif
 
-!c     Nonlinear gradient iteration to optmially localized states:
+!c     Nonlinear gradient iteration to optimally localized states:
 !c      'vecs'    system of eigen-vectors to be determined
 !c      'is'      isospin
 !c      'iprint'  print level: <0 --> no print at all
@@ -687,7 +687,7 @@ DO iter=1,itmax2
       WRITE(6,'(20(1pg12.4))') ((xlambda(i,j),i=1,ndims(is)),j=1,ndims(is))
     END IF
     
-!       application of radii-matrix - substract constraint
+!       application of radii-matrix - subtract constraint
     
     variance = 0.D0
     variance2 = 0.D0
@@ -970,7 +970,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
         
 !      write(*,*) ' Q0 norm:',wfovlp(q0(1,nb),q0(1,nb))
 !      write(*,*) ' QSYM norm:',wfovlp(qsym(1,nb),qsym(1,nb))
-        save1=enrear      !!! to deactivate cumulation of enrear, enerpw
+        save1=enrear      !!! to deactivate accumulation of enrear, enerpw
         save2=enerpw      !!! (else wrong total energy)
 #ifdef REALSWITCH
         CALL calc_sicspr(rhosp,usicsp,qsym(1,nb),nb)
@@ -984,7 +984,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
           uqsym(ind,nb) = usicsp(ind+ishift)*qsym(ind,nb)
         END DO
         
-! variationnal result of the UT constraint
+! variational result of the UT constraint
         
         DO na=1,nstate
           IF(ispin(nrel2abs(na)) == is)THEN
@@ -1376,7 +1376,7 @@ SUBROUTINE spmomsmatrix(wfr,PRINT)
 !     Matrix of spatial moments between single-particle states
 !     from real  wf's:
 !      wfr    = set of real single particle wavefunctions
-!     The resuls is stored in common/radmatrix/ for further
+!     The result is stored in common/radmatrix/ for further
 !     use in localization transformation.
 
 USE params
@@ -1587,7 +1587,7 @@ SUBROUTINE unitary_gradstep(symm_mat,vect,ndima,norder)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!NTEGER,PARAMETER :: kdim=kstate
+!INTEGER,PARAMETER :: kdim=kstate
 
 INTEGER,INTENT(IN) :: norder,ndima
 
@@ -1664,9 +1664,9 @@ STOP ' code not compiled for GSlat or double-set SIC'
 RETURN
 END SUBROUTINE init_fsic
 #else
-SUBROUTINE ccc  ! an unusefull subroutine so that the compilation does not abort IF twostsic=0
+SUBROUTINE ccc  ! an unuseful subroutine so that the compilation does not abort IF twostsic=0
 RETURN
-END SUBROUTINE ccc  ! an unusefull subroutine so that
+END SUBROUTINE ccc  ! an unuseful subroutine so that
 #endif
 
 #endif

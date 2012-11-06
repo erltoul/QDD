@@ -46,7 +46,7 @@ REAL(DP) FUNCTION dgaussdr(r,s)
 !------------------------------------------------------------
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!     derivation of a gaussian
+!     derivation of a Gaussian
 
 
 
@@ -157,7 +157,7 @@ END IF
 
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-!     general fermi function
+!     general Fermi function
 DO ind=1,kfermi
   r=ind*dx/1733.
   

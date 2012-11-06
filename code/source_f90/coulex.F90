@@ -119,7 +119,7 @@ ELSE IF(kzmax < nzi) THEN
   STOP ' error in parameter: KZMAX in COULEX too small'
 END IF
 
-!     initialize grid in fourier space
+!     initialize grid in Fourier space
 
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
@@ -234,7 +234,7 @@ END SUBROUTINE falr
 SUBROUTINE rhofld(rhoinp,rhokr,rhoki)
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     copy density on complex array of double extnesion in x,y,z
+!     copy density on complex array of double extension in x,y,z
 
 
 REAL(DP), INTENT(IN)                         :: rhoinp(kdfull)
@@ -308,11 +308,11 @@ LOGICAL,PARAMETER :: rqplot=.false.
 
 !------------------------------------------------------------------------------
 
-!     fourier transformation of the density
+!     Fourier transformation of the density
 
 CALL fourf(rhokr,rhoki)
 
-!     calculation of the coulomb field (writing on the density field)
+!     calculation of the Coulomb field (writing on the density field)
 
 DO ik=1,kdred
   SAVE2     = akv2r(ik)*rhokr(ik)+akv2i(ik)*rhoki(ik)
@@ -320,7 +320,7 @@ DO ik=1,kdred
   rhokr(ik) = SAVE2
 END DO
 
-!     fourier back transformation
+!     Fourier back transformation
 
 CALL fourb(rhokr,rhoki)
 
@@ -341,7 +341,7 @@ REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
 
-!     fourier forward transformation
+!     Fourier forward transformation
 !     I/O: pskr   real part of the wave-function
 !          pski   imaginary part of the wave-function
 
@@ -402,7 +402,7 @@ REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
 
-!     fourier backward transformation
+!     Fourier backward transformation
 !     I/O:  pskr   real part of the wave-function
 !           pski   imaginary part of the wave-function
 !----------------------------------------------------------------------
@@ -436,9 +436,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                        :: psxi(kdred)
 
-!     performs the fourier-transformation in x-direction
+!     performs the Fourier-transformation in x-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -468,7 +468,7 @@ DO i3=1,nzi
       fftax(i1) = psxr(ii)
     END DO
     
-!         execution of the fourier-transformation
+!         execution of the Fourier-transformation
     
     CALL dcftf1 (kfftx,fftax,wrkx,wsavex,ifacx)
     
@@ -505,9 +505,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
 
-!     performs the fourier-transformation in y-direction
+!     performs the Fourier-transformation in y-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 !     yp is the parity in y-direction (input!)
 
 !----------------------------------------------------------------------
@@ -542,7 +542,7 @@ DO i3=1,nzi
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
     END DO
     
-!         execution of the fourier-transformation
+!         execution of the Fourier-transformation
     CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
     
 !         decomposition of the wave-function
@@ -579,9 +579,9 @@ INTEGER :: nxyf
 INTEGER :: nyf  
 INTEGER :: nzh  
 
-!     performs the fourier-transformation in z-direction
+!     performs the Fourier-transformation in z-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 

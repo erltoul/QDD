@@ -50,7 +50,7 @@ REAL(DP) :: xlambda(kstate,kstate)
 
 !     outer loop over state to be propagated,
 !     the stepped step is save temporarily on 'qaux',
-!     the symmtry condition is accumulated simultaneously.
+!     the symmetry condition is accumulated simultaneously.
 
 symcond_add = 0D0
 DO nc=1,nstate
@@ -93,7 +93,7 @@ DO nc=1,nstate
   END DO
 END DO
 
-!     symmatrize Lagrangian multipliers and subtract
+!     symmetrize Lagrangian multipliers and subtract
 
 DO nc=1,nstate
   DO nb=1,nc-1

@@ -146,7 +146,7 @@ SUBROUTINE calc_sicgam(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of SIC-GAM hamiltonian
+!     computes local part of SIC-GAM Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -291,7 +291,7 @@ IF(numspin==2) THEN
 
 ELSE
 
-!     recalculate coulomb part for jellium
+!     recalculate Coulomb part for jellium
 
 #if(gridfft)
   IF(nion2 == 0) CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
@@ -328,7 +328,7 @@ SUBROUTINE calc_adsic(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -509,7 +509,7 @@ IF(numspin==2) THEN
 
 ELSE
 
-!     recalculate coulomb part for jellium
+!     recalculate Coulomb part for jellium
 
 #if(gridfft)
   IF(nion2 == 0) THEN
@@ -549,7 +549,7 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -685,7 +685,7 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -783,7 +783,7 @@ END DO
 sumslup = 0D0
 sumsldw = 0D0
 
-!     loop oover s.p. states
+!     loop over s.p. states
 ALLOCATE(rhosp(2*kdfull2))
 ALLOCATE(usicsp(2*kdfull2))
 
@@ -1139,7 +1139,7 @@ dvol=dx*dy*dz
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
-!       action of mean-field hamiltonian on 'hwfr'
+!       action of mean-field Hamiltonian on 'hwfr'
   
   
   IF(ipsptyp == 1) THEN
@@ -1205,7 +1205,7 @@ DO nbe=1,nstate
   
 END DO
 
-!       compute symmtry condition
+!       compute symmetry condition
 
 symcon = 0D0
 WRITE(6,'(a)') ' hmatrix:'
@@ -1644,7 +1644,7 @@ DO nbe=1,nstate
 #endif
       END DO
       
-!       the coulomb potential for the transition density
+!       the Coulomb potential for the transition density
 !         (warning : counet inserts the esquar factor)
       
 #if(gridfft)

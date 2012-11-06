@@ -32,7 +32,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     psi  = complex wavefunctions in coord space (for dynamics)
 !     rho  = electronic density in coord space
 !     aloc = mean-field-potential (to be initialized before dynamics)
-!     chpcoul = coulomb-potential of electrons
+!     chpcoul = Coulomb-potential of electrons
 !     c$s/cp$s = auxiliary field to store coords and momenta in between
 !              the trial protonic propagation
 !     rhojel = jel.density
@@ -150,7 +150,7 @@ IF(nclust > 0 .AND. irest == 0 .AND. ismax > 0)  THEN
 END IF
 
 
-!     using monte-carlo
+!     using Monte-Carlo
 
 IF(icooltyp == 3) THEN
   CALL simann(psir,rho,aloc)
@@ -174,7 +174,7 @@ IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
 IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 
 
-!     initialise protocol files
+!     initialize protocol files
 
 IF(nclust > 0 .AND. nabsorb > 0) CALL init_absbc(rho)
 IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints

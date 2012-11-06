@@ -45,15 +45,15 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
 !k use of parameters for dynamics:
 
 !  use of discrete ions via pseudopotentials:      nion2 not=0
-!  use of homogenous background via jellium:       nion2=0
+!  use of homogeneous background via jellium:       nion2=0
 
 !  iforce=0
 !  polarized clusters (e.g. polar. isomer of na_12)   iforce=1
 
 !  dipoleboost or spindipoleboost      iexcit=0:
 !    boost of electronic density by centfx/y/z       ispidi=0
-!    boost of spinup densitiy by +0.5*centfx/y/z     ispidi=1
-!             spindown densitiy by -0.5*centfx/y/z   ispidi=1
+!    boost of spinup density by +0.5*centfx/y/z     ispidi=1
+!             spindown density by -0.5*centfx/y/z   ispidi=1
 !  dipoleshift (iexcit=0) by shiftinix/y/z
 
 
@@ -250,7 +250,7 @@ END SUBROUTINE changeperio
 
 SUBROUTINE iparams()
 
-!     check consistency of input paramaters, do some initializations
+!     check consistency of input parameters, do some initializations
 
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -299,7 +299,7 @@ iquery4=0
 WRITE(6,*) 'jekion=',jekion
 
 
-!     ceck consistency of input options
+!     check consistency of input options
 
 IF(numspin.NE.2 .AND. iftransme ==1) STOP ' IFTRANSME needs full spin'
 
@@ -432,7 +432,7 @@ IF(iu == 8) OPEN(8,STATUS='unknown',FORM='formatted',  &
 WRITE(iu,'(a)') 'the following options are used:'
 WRITE(iu,*)
 IF(idenfunc==1) THEN
-  WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
+  WRITE(iu,'(a)') 'Perdew-Wang 92 exchange-correlation functional'
 ELSE IF(idenfunc==2) THEN
   WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
 ELSE IF(idenfunc==3) THEN
@@ -463,7 +463,7 @@ ELSE
 END IF
 ! fft:
 #if(gridfft)
-WRITE(iu,'(a)') 'fourier propagation'
+WRITE(iu,'(a)') 'Fourier propagation'
 WRITE(iu,'(a)') 'using netlib ffts'
 #endif
 #if(coufou)
@@ -513,9 +513,9 @@ WRITE(iu,*)
 IF(ipsptyp == 0) THEN
   WRITE(iu,'(a)') 'soft local pseudopotentials (errf)'
 ELSE IF(ipsptyp == 1) THEN
-  WRITE(iu,'(a)') 'full goedecker pseudopotentials'
+  WRITE(iu,'(a)') 'full Goedecker pseudopotentials'
 ELSE IF(ipsptyp == 2) THEN
-  WRITE(iu,'(a)') 'local goedecker pseudopotentials'
+  WRITE(iu,'(a)') 'local Goedecker pseudopotentials'
 ELSE
   STOP ' this type IPSPTYP not yet implemented'
 END IF
@@ -620,7 +620,7 @@ WRITE(iu,'(a/a,i3,5f8.3/a,7f8.3)') ' laser:',  &
 IF (isurf /= 0) THEN
   WRITE(iu,*) '*************************************************'
   WRITE(iu,*) 'SURFACE/MATRIX PRESENT:'
-  WRITE(iu,'(a,i4,a,i4)') 'GSM particles: ',nc,'  kations: ',nk
+  WRITE(iu,'(a,i4,a,i4)') 'GSM particles: ',nc,'  cations: ',nk
   WRITE(iu,*) '*************************************************'
 END IF
 
@@ -804,7 +804,7 @@ IF(e0 /= 0D0) THEN
     WRITE(7,*) ' on/off up to/from f(t) = 1'
   END IF
   IF(itft == 2) THEN
-    WRITE(7,*) 'gaussian laser pulse'
+    WRITE(7,*) 'Gaussian laser pulse'
   END IF
   WRITE(7,*) 'length of the pulse',deltat
   WRITE(7,*) 'peak time',tpeak
@@ -1099,7 +1099,7 @@ ELSE IF(ipsptyp == 1) THEN
   h0_22g(13)=2.679700D0
   h1_11g(13)=2.193438D0
   
-!       silicium
+!       silicon
   
   amu(14)  = 28.09D0
   ch(14)   = 4.0D0
@@ -1195,13 +1195,13 @@ ELSE IF(ipsptyp == 1) THEN
   
 ELSE IF(ipsptyp == 2) THEN
   
-!       hydrogen Gianocci PsP (approx. local goedecker)
+!       hydrogen Gianocci PsP (approx. local Goedecker)
   
   amu(1)   = 1D0
   ch(1)    = 1D0
 !  nrow(1)  = 1
   
-!       Na (approximate local pseudo built on Geodecker local part)
+!       Na (approximate local pseudo built on Goedecker local part)
   
   amu(11)  = 23.0
   ch(11)   = 1D0
@@ -1211,7 +1211,7 @@ ELSE IF(ipsptyp == 2) THEN
 !  nrow(11) = 3
 !        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
   
-!       Ar (approximate local pseudo built on Geodecker local part)
+!       Ar (approximate local pseudo built on Goedecker local part)
   
   amu(18)  = 39.95
   ch(18)   = 8.0
@@ -1564,7 +1564,7 @@ CALL comm_ionconfig()
 
 
 
-!       np(0) for use in monte-carlo
+!       np(0) for use in Monte-Carlo
 
 
 IF(icooltyp == 3)  CALL cenmass()
@@ -1574,7 +1574,7 @@ dt12=dt1
 
 
 
-!       initialize peudopotential background
+!       initialize pseudopotential background
 
 !g         call calcpseudo(rho)
 
@@ -1861,25 +1861,25 @@ INTEGER :: is(mpi_status_size)
 
 !     initialization of book-keeping arrays of states nq, ispin.
 
-!     estimates fermi energy from particle number and considers
-!     all states up "fermi-energy plus deoccin" in the ordering
+!     estimates Fermi energy from particle number and considers
+!     all states up "Fermi-energy plus deoccin" in the ordering
 !     of a deformed harmonic oscillator for given deformation.
 !     the input parameters are:
 !       nelect  = number of electrons
-!       deoccin   = number of osc. shells above fermi shell
+!       deoccin   = number of osc. shells above Fermi shell
 !       betain  = quadrupole deformation of jellium background
 !       gamin   = triaxiality angle of jellium background
 !       temp    = (via common) temperature, temp=0 cuts to occupied only
 
-!     the output goes on the occuoation fields nq and ispin on
+!     the output goes on the occupation fields nq and ispin on
 !     common /option/ .
 
 !INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
 REAL :: efacto                ! factor to get energies from h.o.
-REAL :: efermi                ! estimate for fermi shell
+REAL :: efermi                ! estimate for Fermi shell
 REAL :: q20fac                ! sqrt(5/16pi)
-REAL :: cosfac,sinfac         ! weightes deduced from 'gamin'
+REAL :: cosfac,sinfac         ! weights deduced from 'gamin'
 !     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
 REAL :: speact                ! actual s.p. energy in loop
 INTEGER :: noscmx                ! maximum oscillator number
@@ -2240,7 +2240,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     'surjel', and the deformation is adjusted to the
 !     electron deformation given on 'alphel' and 'betael'
 
-!     y40 is expressed in terms of y20_effective to turn it automaticall
+!     y40 is expressed in terms of y20_effective to turn it automatically
 !     into the principal axes.
 
 !     this version allows three-dimensional rotation of the
@@ -2513,7 +2513,7 @@ END SUBROUTINE jelbak
 
 SUBROUTINE initho(psir)
 
-!     initailizes harmonic oscillator wavefunctions
+!     initializes harmonic oscillator wavefunctions
 
 USE params
 !USE kinetic
@@ -2561,7 +2561,7 @@ DO nb=1,nstate
   
 !       nq is  relative to the proc
   
-!       this way we implicitely parallelize the computation of phix
+!       this way we implicitly parallelize the computation of phix
   
   inx=nq(1,nrel2abs(nb))
   iny=nq(2,nrel2abs(nb))
@@ -2633,7 +2633,7 @@ SUBROUTINE clust(in,b,z,x,val,n1)
 
 !     the function is
 !                sqrt(2)^n*h(sqrt(2)*x)
-!     where h(x) is the hermite polynomial as explained in rottmann, p.1
+!     where h(x) is the Hermite polynomial as explained in Rottmann, p.1
 
 USE params
 !USE kinetic
@@ -3098,7 +3098,7 @@ DO iz=1,nz2
 END DO
 
 
-!     init coulomb solver
+!     init Coulomb solver
 
 #if(findiff|numerov)
 CALL d3sinfinit (dx,dy,dz)
@@ -3319,7 +3319,7 @@ IF(iswap == 1) THEN
   aviner = 1./3. * (dminer(1) + dminer(2) + dminer(3))
   delmx  = dminer(3) - aviner
   iax    = 3
-!   check wether x or y are outstanding
+!   check whether x or y are outstanding
   delx   = dminer(1) - aviner
   IF (ABS(delx) > ABS(delmx)) THEN
     iax    = 1

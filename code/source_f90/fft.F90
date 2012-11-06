@@ -4,9 +4,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
 !     arrays for kinetic energy and electronic propagation
-!       kinetic energy coefficients in strange ordered fourier space
-!     akv  = fouier-field for 0.5*k^2
-!     ak   = fourier-field for exp(i*dt*(h^2/2m)*k^2)
+!       kinetic energy coefficients in strange ordered Fourier space
+!     akv  = Fourier-field for 0.5*k^2
+!     ak   = Fourier-field for exp(i*dt*(h^2/2m)*k^2)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:)

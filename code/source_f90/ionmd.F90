@@ -645,7 +645,7 @@ tfs = it*dt1*0.0484/(2.0*ame)
 WRITE(*,*) 'enter ITSTEPV: tfs,cpx,cpy,cpz=',tfs,cpx(nion),cpy(nion),cpz(nion)
 
 #if(raregas)
-!                    zero im mobile atoms
+!                    zero in mobile atoms
 IF (isurf /= 0) THEN
   DO i=1,nc
     IF (imobc(i) == 0) THEN
@@ -942,7 +942,7 @@ IF (isurf /= 0) THEN
     IF(ifadiadip /= 1) &
       CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/4.,1D0,NE,2)
   END IF
-!     propagation of kation
+!     propagation of cation
   IF(nk > 0) CALL leapfr(pxk(1),pyk(1),pzk(1),  &
       fxk(1),fyk(1),fzk(1),dt1/2.,1D0,nk,3)
   

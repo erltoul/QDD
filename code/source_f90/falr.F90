@@ -1,4 +1,4 @@
-!------falr coulomb solver-------------------------------------------------
+!------falr Coulomb solver-------------------------------------------------
 
 MODULE coulsolv
 USE params, ONLY: DP
@@ -69,7 +69,7 @@ SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
-!     this is an example for how to use the falr coulomb solver
+!     this is an example for how to use the falr Coulomb solver
 !     read readme.fcs first!
 
 !-----------------------------------------------------------------------
@@ -182,7 +182,7 @@ DO i3=1,nzi
   END DO
 END DO
 
-!     save the original rho data in rhozw, because rho will be overwritt
+!     save the original rho data in rhozw, because rho will be overwritten
 DO ic=1,nxyz
   rhozw(ic) = rho(ic)
 END DO
@@ -285,7 +285,7 @@ DO icase=1,7
   rq(:,icase) = rq(:,0)
 END DO
 
-! set sign for qadrants
+! set sign for quadrants
 
 rq(2,1) = -rq(2,0)
 rq(6,1) = -rq(6,0)
@@ -437,10 +437,10 @@ CALL mulmws(rho,x00,x10,x11r,x11i,x20,x21r,x21i,  &
     x40,x41r,x41i,x42r,x42i,x43r,x43i,x44r,x44i, xr2,tprint)
 !k      write(6,'(a,4g12.4)') ' x00,x10,x20,x30=',x00,x10,x20,x30
 
-!     fourier transformation of the density
+!     Fourier transformation of the density
 CALL fourf(rho,rhokr,rhoki,iprho)
 
-!     calculation of the coulomb field (writing on the density field)
+!     calculation of the Coulomb field (writing on the density field)
 
 ftpi = 4D0*pi
 ikzero = nxy1*(nz-1)+nxi*(ny-1)+nx
@@ -451,14 +451,14 @@ DO ik=1,nksp
     rhoki(ik) = ftpi/akv2(ik) * rhoki(ik)
   ELSE
 !         special treatment of the singularity at k=0:
-!         because of the special norm of the fourier fields one has to
+!         because of the special norm of the Fourier fields one has to
 !         divide the analytic term by sqrt(2*pi)**3
     rhokr(ik) = -qr2/SQRT(8D0)/(3D0*SQRT(2D0*pi))
     rhoki(ik) = 0D0
   END IF
 END DO
 
-!     fourier back transformation
+!     Fourier back transformation
 CALL fourb(potc,rhokr,rhoki,iprho)
 potcor = - potc(nxyz)
 DO i=1,nxyz
@@ -1289,7 +1289,7 @@ END SUBROUTINE mulmws
 
 SUBROUTINE expand(rhoin,rhoout,ipx,ipy,ipz)
 
-!     expands a comressed field into full 3d
+!     expands a compressed field into full 3d
 !       rhoin   = input field in upper octant
 !       rhoout  = output field in full 3d box
 !       ipx,y,z = parities in x,y,z
@@ -1484,7 +1484,7 @@ END DO
 
 nkxyz=nxi*nyi*nzi
 
-!     initialize grid in fourier space
+!     initialize grid in Fourier space
 
 dkx=pi/(dx*REAL(nx,DP))
 dky=pi/(dy*REAL(ny,DP))
@@ -1580,7 +1580,7 @@ REAL(DP) ::  a(kdfull)
 
 
 
-!     fourier forward transformation
+!     Fourier forward transformation
 !     input:  psx    input wave-function
 !             ipar   parity in x- and y-direction
 !     output: pskr   real part of the wave-function
@@ -1659,7 +1659,7 @@ REAL(DP) ::  a(kdfull)
 
 
 
-!     fourier backward transformation
+!     Fourier backward transformation
 !     input:  pskr   real part of the wave-function
 !             pski   imaginary part of the wave-function
 !             ipar   parity in x- and y-direction
@@ -1711,9 +1711,9 @@ REAL(DP), INTENT(IN OUT)                     :: xp
 
 
 
-!     performs the fourier-transformation in x-direction
+!     performs the Fourier-transformation in x-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 !     xp is the parity in x-direction (input!)
 
 !----------------------------------------------------------------------
@@ -1744,7 +1744,7 @@ DO i3=1,nzi
       fftax(i1) = psxr(ii)
     END DO
     
-!         execution of the fourier-transformation
+!         execution of the Fourier-transformation
     CALL dcftf1 (kfftx,fftax,wrkx,wsavex,ifacx)
     
 !         decomposition of the wave-function
@@ -1788,9 +1788,9 @@ REAL(DP), INTENT(IN OUT)                     :: yp
 
 
 
-!     performs the fourier-transformation in y-direction
+!     performs the Fourier-transformation in y-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 !     yp is the parity in y-direction (input!)
 
 !----------------------------------------------------------------------
@@ -1824,7 +1824,7 @@ DO i3=1,nzi
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
     END DO
     
-!         execution of the fourier-transformation
+!         execution of the Fourier-transformation
     CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
     
 !         decomposition of the wave-function
@@ -1872,9 +1872,9 @@ INTEGER :: nzh
 
 
 
-!     performs the fourier-transformation in z-direction
+!     performs the Fourier-transformation in z-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the fourier-transformed wave-function
+!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -1914,7 +1914,7 @@ nzh  = kfftz/2
 !old            ffta(i3)=cmplx(psxr(ii),psxi(ii))
 !old 40       continue
 !oldc
-!oldc         execution of the fourier-transformation
+!oldc         execution of the Fourier-transformation
 !old          call dcftf1 (kfftz,ffta,wrkz,wsavez,ifacz)
 !oldc
 !oldc         decomposition of the wave-function

@@ -56,7 +56,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-!     give every particle a subgrid whichs surrounds it
+!     give every particle a subgrid which surrounds it
 DO i=1,nc
   CALL makesubgrid(i,xc(i),yc(i),zc(i))
 !         call debuggrid
@@ -1605,14 +1605,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     calculates the integral:
 
 !             \int d^3r f(\vec{r})\cdot A exp(-|\vec{r}-\vec{R}|/(2\sigma^2))
-!     with A being the proper factor normalising the gaussian to ccharg
+!     with A being the proper factor normalising the Gaussian to ccharg
 
 !     ATTENTION: be aware that the factor e2 is NOT included here,
 !                but must be attached in the calling routine
 
 
 
-!     xx,yy,zz are the center of the gaussian, sigm its width
+!     xx,yy,zz are the center of the Gaussian, sigm its width
 !     according to the convention in this code:
 !     exp(-r**2/(2.*sigm**2)) !!!
 
@@ -1712,7 +1712,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !                  1 ---> anion core
 !                  2 ---> anion valence shell
-!                  3 ---> kation
+!                  3 ---> cation
 
 
 IF (ind <= nc) THEN

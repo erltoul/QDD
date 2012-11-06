@@ -105,7 +105,7 @@ DO jrun = 1, nrun
   
   DO loop1 = 1,nloop1
     
-!     reach convergence in kohn-sham loop
+!     reach convergence in Kohn-Sham loop
     
 !g            call calcpseudo(rho)
     CALL calcpseudo()
@@ -174,7 +174,7 @@ DO jrun = 1, nrun
     END DO
     CALL flush(27)
     
-    WRITE(6,'(A/)') '-->ROLING THE DICE COMPLETED'
+    WRITE(6,'(A/)') '-->ROLLING THE DICE COMPLETED'
   END DO
   
 !     !if you come here, energetic accuracy is finally achieved
@@ -267,7 +267,7 @@ DO loop2 = 1,nloop2
   
   ndown  = 0             ! steps downwards
   nbut   = 0             ! steps upwards although energy gets worse
-  nup    = 0             ! steps withou any success
+  nup    = 0             ! steps without any success
   oh     = 0.5D0
   
 !     the inner loop:

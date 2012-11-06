@@ -66,7 +66,7 @@ INTEGER :: ix,iy,iz
 !-----------------------------------------------------------------------
 
 
-!     inhomogenous equation with b.c. zero
+!     inhomogeneous equation with b.c. zero
 
 
 CALL  d3sinfinverse(rhoin, pot, zero)
@@ -90,7 +90,7 @@ CALL boundc(rhoin,deltax,deltay,deltaz,  &
 
 
 
-!     add homogenous solution from all six boundaries of te cube
+!     add homogeneous solution from all six boundaries of the cube
 
 
 CALL homog_sol(pot,deltax,deltay,deltaz,  &
@@ -119,14 +119,14 @@ SUBROUTINE homog_sol(pot,deltax,deltay,deltaz,  &
 
 !USE params
 
-!     Compute homogneous solution for given potentials
+!     Compute homogeneous solution for given potentials
 !     'potbcxl',...,'potbczu' at the six boundary planes of the cube.
-!     Inhomogenous solution is entered on 'pot',
-!     homogenous solution is added, and result is returned on 'pot'.
+!     Inhomogeneous solution is entered on 'pot',
+!     homogeneous solution is added, and result is returned on 'pot'.
 !     The mesh spacing is entered through 'deltax,deltay,deltaz'
 !     and the mesh size is prescribed in 'all.inc'.
 
-!     Note: This code is optimized for readibility not yet for speed.
+!     Note: This code is optimized for readability not yet for speed.
 
 
 !INCLUDE 'work3D.inc'
@@ -341,7 +341,7 @@ SUBROUTINE boundc(rhoin,deltax,deltay,deltaz,  &
 !     Additionally, an initial guess for the potential is
 !     computed and returned on 'potini'.
 
-!     Note: This code is optimized for readibility not yet for speed.
+!     Note: This code is optimized for readability not yet for speed.
 
 
 !INCLUDE 'work3D.inc'
@@ -592,12 +592,12 @@ SUBROUTINE d3sinfinit (deltax,deltay,deltaz)
 
 !     Initialization of Sine FFT in 3D.
 !     'deltax', 'deltay', and 'deltaz' are spatial mesh sizes.
-!     Actual grid sizes are givn in 'param3D.inc'.
+!     Actual grid sizes are given in 'param3D.inc'.
 !     Resulting work spaces and deduced parameters are returned
 !     via 'work3D.inc'.
 
 !     the storage of the kinetic energy in x-, y-, and z
-!     is shifted to a negative left bound. This is to accomodate
+!     is shifted to a negative left bound. This is to accommodate
 !     to loop parameters in an actual all.
 !     Note that p-space counts from 1,...,ndimx
 !     while x-space was from -maxmx,...,+maxmx
@@ -1092,7 +1092,7 @@ SUBROUTINE d3sinfinverse(field, inv_field, e0inv)
 !USE params
 !      include 'param3D.inc'
 
-!     Action of inverse Lapace operator by sine FFT:
+!     Action of inverse Laplace operator by sine FFT:
 
 !      inv_field  =  ( -Laplace + e0inv ) * field
 

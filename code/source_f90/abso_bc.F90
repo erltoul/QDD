@@ -4,15 +4,15 @@
 
 ! Editorial remarks:
 !  The treatment of spherical absorbing bounds in 'spherAbso'
-!  uses a full 3D mask array while cartesian absorbing bounds
+!  uses a full 3D mask array while Cartesian absorbing bounds
 !  in 'abso' act merely in boundary stripes. The handling of
 !  3D arrays, although somewhat more space consuming, is much
 !  simpler. The code should be modified to use only these
-!  3D array. The distinction between spherical and cartesian
+!  3D array. The distinction between spherical and Cartesian
 !  absorbing bound appears then only in the initialization
 !  of the mask array.
 
-!  One may also consider to perform the cumulation of total
+!  One may also consider to perform the accumulation of total
 !  absorbed density within the absorbing loop.
 
 
@@ -55,7 +55,7 @@ IF (firstcall) THEN
 !    WRITE(*,*) ' ABSBC spherical initialization'
   ELSE
     CALL init_abso()
-!    WRITE(*,*) ' ABSBC cartesian initialization'
+!    WRITE(*,*) ' ABSBC Cartesian initialization'
   END IF
   firstcall = .false.
 !  WRITE(*,*) ' ABSBC: first call'
@@ -232,7 +232,7 @@ IF (iangabso /= 0 .AND. ipes /= 0) THEN
   
   
 ! now make sphere of gridpoints with radius rmin
-! these grippoints shall serve as measure points for the
+! these gridpoints shall serve as measure points for the
 ! outgoing waves
   
   jj=0

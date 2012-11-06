@@ -704,7 +704,7 @@ DO k=1,ilayers
         chge(icntc) = chgval
         
         
-      ELSE ! kation
+      ELSE ! cation
         
         icntk = icntk + 1
         
