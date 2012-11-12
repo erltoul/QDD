@@ -1299,7 +1299,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
 
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
 COMPLEX(DP) :: test
-LOGICAL,PARAMETER :: copyback=.false.
 
 CHARACTER (LEN=6) :: ext
 #if(parayes)
@@ -1370,14 +1369,13 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akkx(ind)*eye
     q2(ind)=q2(ind)*akx(ind)
   END DO
 
   CALL fftback(q2,p)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 
@@ -1395,7 +1393,6 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akky(ind)*eye
     q2(ind)=q2(ind)*aky(ind)
   END DO
 
@@ -1403,7 +1400,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 
@@ -1421,7 +1418,6 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akkz(ind)*eye
     q2(ind)=q2(ind)*akz(ind)
   END DO
 
@@ -1429,7 +1425,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 
@@ -1502,7 +1498,6 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akkx(ind)*eye
     q2(ind)=q2(ind)*akx(ind)
   END DO
 
@@ -1510,7 +1505,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 
@@ -1529,7 +1524,6 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akky(ind)*eye
     q2(ind)=q2(ind)*aky(ind)
   END DO
 
@@ -1537,7 +1531,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 
@@ -1556,7 +1550,6 @@ DO nb=1,nstate
   CALL fftf(psi(1,nb),q2)
 
   DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akkz(ind)*eye
     q2(ind)=q2(ind)*akz(ind)
   END DO
 
@@ -1564,7 +1557,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 

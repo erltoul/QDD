@@ -34,7 +34,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: tau
 
 
 LOGICAL,PARAMETER :: tupdate=.true.
-LOGICAL,PARAMETER :: copyback=.false.,copyback2=.false.,recopy=.false.
 
 IF(.NOT.tupdate) STOP ' LOCALIZE not up to date '
 
@@ -132,14 +131,14 @@ DO is=2,1,-1
       CALL rftf(psi(1,nb),q2)
 #endif
 #if(fftw_gpu)
-      CALL rftf(psi(1,nb),q2,ffta,gpu_ffta,copyback2)
+      CALL rftf(psi(1,nb),q2,ffta,gpu_ffta)
 #endif
 #else
 #if(netlib_fft|fftw_cpu)
       CALL fftf(psi(1,nb),q2)
 #endif
 #if(fftw_gpu)
-      CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+      CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 #endif
 #endif
       IF(idirection.EQ.1) THEN
@@ -175,7 +174,7 @@ DO is=2,1,-1
       CALL rfftback(q2,p)
 #endif
 #if(fftw_gpu)
-      CALL rfftback(q2,p,ffta,gpu_ffta,recopy)
+      CALL rfftback(q2,p,ffta,gpu_ffta)
 #endif
 #else
 

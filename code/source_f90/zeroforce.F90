@@ -23,9 +23,6 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
 REAL(DP), ALLOCATABLE :: potwork(:)
 
-#if(fftw_gpu)
-LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.
-#endif
 !      equivalence (potwork(1),w1(1))
 !      equivalence (potk(1),w2(1))              ! occupies also w3
 
@@ -59,7 +56,7 @@ DO is=1,numspin
     CALL rfftback(dervk,potwork)
 #endif
 #if(fftw_gpu)
-    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta,copyback)
+    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
 
 !       Laplacian and integral
     
@@ -67,7 +64,7 @@ DO is=1,numspin
 !      dervk(i) = potk(i)*akv(i)
 !    END DO
     CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
 
     denominator = rwfovlp(rho(1+ishift),potwork)
@@ -101,7 +98,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -akx*potk
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
     xlambda = counter/denominator
@@ -138,7 +135,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -aky*potk
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
     ylambda = counter/denominator
@@ -175,7 +172,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -akz*potk
     CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
     zlambda = counter/denominator
@@ -214,9 +211,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
 REAL(DP), ALLOCATABLE :: potwork(:)
-#if(fftw_gpu)
-LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.
-#endif
 
 ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
@@ -228,7 +222,7 @@ DO is=1,numspin
     CALL rftf(aloc(1+ishift),potk)
 #endif
 #if(fftw_gpu)
-    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta,copyback)
+    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
 #endif
     
     
@@ -261,7 +255,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -akx*potk
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     zforcex = rwfovlp(rho(1+ishift),potwork)
     
@@ -295,7 +289,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -aky*potk
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     zforcey = rwfovlp(rho(1+ishift),potwork)
     
@@ -329,7 +323,7 @@ DO is=1,numspin
 #if(fftw_gpu)
 !    dervk = -akz*potk
     CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
     zforcez = rwfovlp(rho(1+ishift),potwork)
     
@@ -373,9 +367,6 @@ INTEGER, INTENT(IN)                      :: icoor
 
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
 REAL(DP), ALLOCATABLE :: potwork(:)
-#if(fftw_gpu)
-LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.
-#endif
 
 ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
@@ -385,7 +376,7 @@ ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 CALL rftf(fieldfrom(1+ishift*kdfull2),potk)
 #endif
 #if(fftw_gpu)
-CALL rftf(fieldfrom(1+ishift*kdfull2),potk,ffta,gpu_ffta,copyback)
+CALL rftf(fieldfrom(1+ishift*kdfull2),potk,ffta,gpu_ffta)
 #endif
 
 IF (icoor == 1) THEN
@@ -420,7 +411,7 @@ IF (icoor == 1) THEN
 #if(fftw_gpu)
 !    dervk = -akx*potk
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
   
 ELSE IF (icoor == 2) THEN
@@ -456,7 +447,7 @@ ELSE IF (icoor == 2) THEN
 #if(fftw_gpu)
 !    dervk = -aky*potk
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
   
 ELSE IF (icoor == 3) THEN
@@ -492,7 +483,7 @@ ELSE IF (icoor == 3) THEN
 #if(fftw_gpu)
 !    dervk = -akz*potk
     CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
   
 ELSE

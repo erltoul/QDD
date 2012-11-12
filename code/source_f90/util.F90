@@ -4028,7 +4028,6 @@ REAL(DP), INTENT(IN)                         :: shiz
 
 COMPLEX(DP),ALLOCATABLE ::  q1(:)
 !COMPLEX(DP) :: akx,aky,akz
-LOGICAL,PARAMETER :: copyback=.false.
 
 #if(gridfft)
 ALLOCATE(q1(kdfull2))
@@ -4037,7 +4036,7 @@ ALLOCATE(q1(kdfull2))
 CALL fftf(q0,q1)
 #endif
 #if(fftw_gpu)
-CALL fftf(q0,q1,ffta,gpu_ffta,copyback)
+CALL fftf(q0,q1,ffta,gpu_ffta)
 #endif
 
 
@@ -4193,7 +4192,6 @@ COMPLEX(DP), INTENT(IN OUT)                      :: wfin(kdfull2)
 COMPLEX(DP), ALLOCATABLE :: wftest(:)
 
 REAL(DP) :: ekintestx,ekintesty,ekintestz,ekintot
-LOGICAL,PARAMETER :: copyback=.true.
 
 ALLOCATE(wftest(kdfull2))
 
@@ -4217,7 +4215,7 @@ wftest = akv*wftest
 CALL fftback(wftest,wftest)
 #endif
 #if(fftw_gpu)
-CALL fftf(wfin,wftest,ffta,gpu_ffta,copyback)
+CALL fftf(wfin,wftest,ffta,gpu_ffta)
 
 CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
 

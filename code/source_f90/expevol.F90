@@ -215,7 +215,6 @@ COMPLEX(DP) :: wfovlp
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
 LOGICAL :: tpri
-LOGICAL,PARAMETER :: copyback=.false.
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -243,7 +242,7 @@ END DO
 CALL fftback(q1,q2)
 #endif
 #if(fftw_gpu)
-CALL fftf(qact,q1,ffta,gpu_ffta,copyback)
+CALL fftf(qact,q1,ffta,gpu_ffta)
 
 CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
 

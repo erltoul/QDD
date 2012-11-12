@@ -503,7 +503,6 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX),DIMENSION(:),ALLOCATABLE :: q3
-LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.,recopy2=.false.
 #endif
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
@@ -604,9 +603,9 @@ ALLOCATE(psipr(kdfull2))
   CALL rftf(q1,q2)
 #endif
 #if(fftw_gpu)
-  CALL rftf(q0(1,nbe),psipr,ffta,gpu_ffta,copyback)
+  CALL rftf(q0(1,nbe),psipr,ffta,gpu_ffta)
 
-  CALL rftf(q1,q2,ffta2,gpu_ffta2,copyback)
+  CALL rftf(q1,q2,ffta2,gpu_ffta2)
 #endif
   
 !       compose to h|psi>
@@ -659,9 +658,9 @@ ALLOCATE(psipr(kdfull2))
 #endif
 #if(fftw_gpu)
     CALL gpu_to_gpu(gpu_ffta,gpu_ffta_int,kdfull2) !save gpu_ffta (psipr on GPU) for later
-    CALL rfftback(psipr,w4,ffta,gpu_ffta_int,recopy)
+    CALL rfftback(psipr,w4,ffta,gpu_ffta_int)
     CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
-    CALL rfftback(q2,w4,ffta2,gpu_ffta_int,recopy)
+    CALL rfftback(q2,w4,ffta2,gpu_ffta_int)
 #endif
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
@@ -684,7 +683,7 @@ ALLOCATE(psipr(kdfull2))
 #endif
 #if(fftw_gpu)
       CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
-      CALL rfftback(q2,q1,ffta2,gpu_ffta_int,recopy)
+      CALL rfftback(q2,q1,ffta2,gpu_ffta_int)
 #endif
       iactsp = ispin(nbe)
       nstsp(iactsp) = 1+nstsp(iactsp)
@@ -727,7 +726,7 @@ ALLOCATE(psipr(kdfull2))
 !      psipr = psipr - epswf*q2
       CALL d_grad2(gpu_ffta,gpu_ffta2,epswf,kdfull2)
     END IF
-    CALL rfftback(psipr,q0(1,nbe),ffta,gpu_ffta,recopy)
+    CALL rfftback(psipr,q0(1,nbe),ffta,gpu_ffta)
 #endif
 !  END IF
   

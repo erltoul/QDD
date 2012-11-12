@@ -322,7 +322,6 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
-LOGICAL,PARAMETER :: copyback=.false.
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
 ! 
@@ -404,7 +403,7 @@ DO nb=1,nstate
     CALL fftback(q1,q0(1,nb))
 #endif
 #if(fftw_gpu)
-    CALL fftf(q0(1,nb),q1,ffta,gpu_ffta,copyback)
+    CALL fftf(q0(1,nb),q1,ffta,gpu_ffta)
 !    CALL cmult3d(q1,ak)
     CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
     CALL fftback(q1,q0(1,nb),ffta,gpu_ffta)
@@ -998,7 +997,6 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
 !COMPLEX(DP) :: psi2(kdfull2)
 COMPLEX(DP) :: wfovlp
 !EQUIVALENCE(psi2(1),w1(1))
-LOGICAL,PARAMETER :: copyback=.true.
 
 !------------------------------------------------------------------
 
@@ -1009,7 +1007,7 @@ ALLOCATE(psi2(kdfull2))
 CALL fftf(psin,psi2)
 #endif
 #if(fftw_gpu)
-CALL fftf(psin,psi2,ffta,gpu_ffta,copyback)
+CALL fftf(psin,psi2,ffta,gpu_ffta)
 #endif
 
 
@@ -1024,6 +1022,8 @@ END DO
 #endif
 #if(fftw_gpu)
 CALL sum_calc2(sum0,sumk,gpu_ffta,gpu_akvfft,kdfull2)
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+CALL copy3dto1d(ffta,psi2,nx2,ny2,nz2)
 #endif
 ekinout = sumk/sum0
 #endif
@@ -1165,7 +1165,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE            :: arhop
 REAL(DP) :: fact,factgrad
 
 LOGICAL,PARAMETER :: extendedTF=.TRUE.
-LOGICAL :: copyback=.false.,recopy=.false.
 REAL(DP),PARAMETER :: rholimit=1D-10
 
 !------------------------------------------------------------
@@ -1232,10 +1231,9 @@ IF(extendedTF) THEN
   CALL rfftback(gradrhok,gradrho)
 #endif
 #if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
-!  CALL gradient(gradrhok,gradrhok,1)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
   CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
 #endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
@@ -1253,10 +1251,9 @@ IF(extendedTF) THEN
   CALL rfftback(gradrhok,gradrho)
 #endif
 #if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
-!  CALL gradient(gradrhok,gradrhok,2)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
   CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
 #endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
@@ -1274,10 +1271,9 @@ IF(extendedTF) THEN
   CALL rfftback(gradrhok,gradrho)
 #endif
 #if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
-!  CALL gradient(gradrhok,gradrhok,3)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
   CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
 #endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
@@ -1512,7 +1508,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP), ALLOCATABLE :: q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
-LOGICAL,PARAMETER :: copyback=.false.,recopy=.false.
+LOGICAL,PARAMETER :: recopy=.false.
 !------------------------------------------------------------------
 
 !ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
@@ -1580,7 +1576,7 @@ DO nb=1,nstate
 #endif
 
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 
@@ -1604,7 +1600,7 @@ DO nb=1,nstate
   CALL fftback(q2,q2)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 
@@ -1628,7 +1624,7 @@ DO nb=1,nstate
   CALL fftback(q2,q2)
 #endif
 #if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
 
   CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 

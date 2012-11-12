@@ -770,7 +770,7 @@ END SUBROUTINE  zgradient_rspace
 SUBROUTINE  fftf(q1,q2)
 #endif
 #if(fftw_gpu)
-SUBROUTINE  fftf(q1,q2,fft,gpu_fft,copyback)
+SUBROUTINE  fftf(q1,q2,fft,gpu_fft)
 #endif
 
 ! ******************************
@@ -786,7 +786,6 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
-LOGICAL, INTENT(IN)                          :: copyback
 INTEGER :: typefft=1
 #endif
 !INTEGER, PARAMETER :: kfft=2*kxmax
@@ -920,12 +919,6 @@ CALL copy_on_gpu(fft,gpu_fft,kdfull2)
 CALL run_fft_for3d(p,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,tnorm)
-
-IF(copyback) THEN
-  CALL copy_from_gpu(fft,gpu_fft,kdfull2)
-
-  CALL copy3dto1d(fft,q2,nx2,ny2,nz2)
-END IF
 #endif
 
 RETURN
@@ -1054,7 +1047,7 @@ END SUBROUTINE  fftback
 SUBROUTINE  rftf(q1,q2)
 #endif
 #if(fftw_gpu)
-SUBROUTINE  rftf(q1,q2,fft,gpu_fft,copyback)
+SUBROUTINE  rftf(q1,q2,fft,gpu_fft)
 #endif
 ! ******************************
 
@@ -1080,7 +1073,6 @@ INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
-LOGICAL, INTENT(IN)                          :: copyback
 INTEGER :: typefft=2
 #endif
 
@@ -1206,12 +1198,6 @@ CALL copy_on_gpu(fft,gpu_fft,kdfull2)
 CALL run_fft_for3d(p,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,tnorm)
-
-IF(copyback) THEN
-  CALL copy_from_gpu(fft,gpu_fft,kdfull2)
-
-  CALL copy3dto1d(fft,q2,nx2,ny2,nz2)
-ENDIF
 #endif
 
 RETURN
@@ -1224,7 +1210,7 @@ SUBROUTINE  rfftback(q1,q3)
 !SUBROUTINE  rfftback(q1,q2)
 #endif
 #if(fftw_gpu)
-SUBROUTINE  rfftback(q1,q3,fft,gpu_fft,recopy)
+SUBROUTINE  rfftback(q1,q3,fft,gpu_fft)
 #endif
 
 ! ******************************
@@ -1252,7 +1238,6 @@ COMPLEX(DP),ALLOCATABLE :: q2(:)
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
-LOGICAL,INTENT(IN) :: recopy
 INTEGER :: typefft=2
 #endif
 !      data  nxini,nyini,nzini/0,0,0/  ! flag for initialization
@@ -1350,12 +1335,6 @@ CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
 #endif
 
 #if(fftw_gpu)
-IF(recopy) THEN
-  CALL secopy1dto3d(q1,fft,nx2,ny2,nz2)
-
-  CALL copy_on_gpu(fft,gpu_fft,kdfull2)
-ENDIF
-
 CALL run_fft_back3d(p,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,facnr)
