@@ -148,8 +148,6 @@ DO is=2,1,-1
           q2(ind)=q2(ind)*akx(ind)
 #endif
 #if(fftw_gpu)
-!          q2(ind)=q2(ind)*akx(ind)
-!          CALL multiply(3)
           CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 #endif
         END DO
@@ -159,8 +157,6 @@ DO is=2,1,-1
           q2(ind)=q2(ind)*aky(ind)
 #endif
 #if(fftw_gpu)
-!          q2(ind)=q2(ind)*aky(ind)
-!          CALL multiply(4)
           CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 #endif
         END DO
@@ -170,8 +166,6 @@ DO is=2,1,-1
           q2(ind)=q2(ind)*akz(ind)
 #endif
 #if(fftw_gpu)
-!          q2(ind)=q2(ind)*akz(ind)
-!          CALL multiply(5)
           CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 #endif
         END DO

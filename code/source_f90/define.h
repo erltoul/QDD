@@ -41,4 +41,4 @@
 !#define fftw3d_gpu 0
 
 !For the moment compute lda on GPU seems to be unstable and can freeze the computer
-#define lda_gpu 0
+#define lda_gpu 1

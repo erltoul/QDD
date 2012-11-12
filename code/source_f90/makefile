@@ -169,8 +169,9 @@ endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 	GPUCOMPILER = nvcc
+	#GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_13 -I/opt/cuda/include
 	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20 -I/opt/cuda/include
-#	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20
+	#GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_30 -I/opt/cuda/include
 endif
 
 COMPILERFLAGS1 =  $(LDLIBS)$(OPT1)

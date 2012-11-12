@@ -4219,9 +4219,6 @@ CALL fftback(wftest,wftest)
 #if(fftw_gpu)
 CALL fftf(wfin,wftest,ffta,gpu_ffta,copyback)
 
-!wftest = akv*wftest
-
-!CALL multiply(2)
 CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
 
 CALL fftback(wftest,wftest,ffta,gpu_ffta)

@@ -406,8 +406,6 @@ DO nb=1,nstate
 #if(fftw_gpu)
     CALL fftf(q0(1,nb),q1,ffta,gpu_ffta,copyback)
 !    CALL cmult3d(q1,ak)
-!    q1 = ak*q1
-!    CALL multiply(1)
     CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
     CALL fftback(q1,q0(1,nb),ffta,gpu_ffta)
 #endif
@@ -1017,11 +1015,16 @@ CALL fftf(psin,psi2,ffta,gpu_ffta,copyback)
 
 sum0 = 0D0
 sumk = 0D0
+#if(netlib_fft|fftw_cpu)
 DO ii=1,kdfull2
   vol   = REAL(psi2(ii))*REAL(psi2(ii)) +imag(psi2(ii))*imag(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
+#endif
+#if(fftw_gpu)
+CALL sum_calc2(sum0,sumk,gpu_ffta,gpu_akvfft,kdfull2)
+#endif
 ekinout = sumk/sum0
 #endif
 #if(findiff|numerov)
@@ -1231,8 +1234,7 @@ IF(extendedTF) THEN
 #if(fftw_gpu)
   CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
 !  CALL gradient(gradrhok,gradrhok,1)
-!  CALL multiply(6)
-  CALL multiply_ak2(gpu_ffta,gpu_rakxfft,kdfull2)
+  CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
   CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
 #endif
   DO i=1,kdfull2
@@ -1253,8 +1255,7 @@ IF(extendedTF) THEN
 #if(fftw_gpu)
   CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
 !  CALL gradient(gradrhok,gradrhok,2)
-!  CALL multiply(7)
-  CALL multiply_ak2(gpu_ffta,gpu_rakyfft,kdfull2)
+  CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
   CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
 #endif
   DO i=1,kdfull2
@@ -1275,8 +1276,7 @@ IF(extendedTF) THEN
 #if(fftw_gpu)
   CALL rftf(gradrho,gradrhok,ffta,gpu_ffta,copyback)
 !  CALL gradient(gradrhok,gradrhok,3)
-!  CALL multiply(8)
-  CALL multiply_ak2(gpu_ffta,gpu_rakzfft,kdfull2)
+  CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
   CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta,recopy)
 #endif
   DO i=1,kdfull2
@@ -1582,11 +1582,6 @@ DO nb=1,nstate
 #if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
-!  DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akx(ind)
-!  END DO
-
-!  CALL multiply(3)
   CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
 
   CALL fftback(q2,q2,ffta,gpu_ffta)
@@ -1611,11 +1606,6 @@ DO nb=1,nstate
 #if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
-!  DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*aky(ind)
-!  END DO
-
-!  CALL multiply(4)
   CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
 
   CALL fftback(q2,q2,ffta,gpu_ffta)
@@ -1640,11 +1630,6 @@ DO nb=1,nstate
 #if(fftw_gpu)
   CALL fftf(psi(1,nb),q2,ffta,gpu_ffta,copyback)
 
-!  DO ind=1,kdfull2
-!    q2(ind)=q2(ind)*akz(ind)
-!  END DO
-
-!  CALL multiply(5)
   CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
 
   CALL fftback(q2,q2,ffta,gpu_ffta)

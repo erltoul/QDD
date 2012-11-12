@@ -25,7 +25,7 @@ INTEGER, PRIVATE :: kfft,kfft2,kdfull2
 #if(netlib_fft)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
-COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:),rakx(:),raky(:),rakz(:)
+COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
 COMPLEX(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
@@ -34,7 +34,7 @@ INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
 #if(fftw_cpu)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
-COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:),rakx(:),raky(:),rakz(:)
+COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:)
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
 type(C_PTR), PRIVATE :: pforw,pback
@@ -54,25 +54,14 @@ INTEGER, PRIVATE :: res
 COMPLEX(DP), PARAMETER :: size_cmplx=CMPLX(0D0,0D0,DP)
 REAL(DP), PARAMETER :: size_double=(0D0,DP)
 
-COMPLEX(C_DOUBLE_COMPLEX),POINTER :: ak(:)
-TYPE(C_PTR), PRIVATE :: c_p_akfft
 COMPLEX(C_DOUBLE_COMPLEX), POINTER :: gpu_akfft(:,:,:)
 TYPE(C_PTR),PRIVATE :: c_gpu_akfft
 
-REAL(C_DOUBLE),POINTER :: akv(:)
-TYPE(C_PTR), PRIVATE :: c_p_akvfft
 REAL(C_DOUBLE),POINTER :: gpu_akvfft(:,:,:)
 TYPE(C_PTR),PRIVATE :: c_gpu_akvfft
 
-COMPLEX(C_DOUBLE_COMPLEX), POINTER :: akx(:),aky(:),akz(:)
-TYPE(C_PTR), PRIVATE :: c_p_akxfft,c_p_akyfft,c_p_akzfft
 COMPLEX(C_DOUBLE_COMPLEX),POINTER :: gpu_akxfft(:),gpu_akyfft(:),gpu_akzfft(:)
 TYPE(C_PTR),PRIVATE :: c_gpu_akxfft,c_gpu_akyfft,c_gpu_akzfft
-
-COMPLEX(C_DOUBLE_COMPLEX), POINTER :: rakx(:),raky(:),rakz(:)
-TYPE(C_PTR), PRIVATE :: c_p_rakxfft,c_p_rakyfft,c_p_rakzfft
-COMPLEX(C_DOUBLE_COMPLEX),POINTER :: gpu_rakxfft(:),gpu_rakyfft(:),gpu_rakzfft(:)
-TYPE(C_PTR),PRIVATE :: c_gpu_rakxfft,c_gpu_rakyfft,c_gpu_rakzfft
 #endif
 
 CONTAINS
@@ -108,7 +97,7 @@ ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 
 #if(netlib_fft)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
-ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2),rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
+ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))!,rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
@@ -116,7 +105,7 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
-ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2),rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
+ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))!,rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
 #endif
 #if(fftw_gpu)
@@ -130,7 +119,7 @@ WRITE(7,*) ' testprint: nx2,ny2,nz2=',nx2,ny2,nz2
 WRITE(7,*) ' testprint: kdfull2,kfft2=',kdfull2,kfft2
 
 !     prepare k**2 and kinetic propagation factor in 3D momentum space
-
+#if(netlib_fft|fftw_cpu)
 ind=0
 DO i3=1,nz2
   IF(i3 >= (nz+1)) THEN
@@ -156,28 +145,13 @@ DO i3=1,nz2
       akx(ind)=-zkx*eye
       aky(ind)=-zky*eye
       akz(ind)=-zkz*eye
-      rakx(ind)=zkx*eye
-      raky(ind)=zky*eye
-      rakz(ind)=zkz*eye
     END DO
   END DO
 END DO
+#endif
 
 #if(fftw_gpu)
-CALL copy_on_gpu(ak,gpu_akfft,kdfull2)
-CALL copy_real_on_gpu(akv,gpu_akvfft,kdfull2)
-CALL copy_on_gpu(akx,gpu_akxfft,kdfull2)
-CALL copy_on_gpu(aky,gpu_akyfft,kdfull2)
-CALL copy_on_gpu(akz,gpu_akzfft,kdfull2)
-!res = cudaFreeHost(c_p_akfft)
-!res = cudaFreeHost(c_p_akvfft)
-!res = cudaFreeHost(c_p_akxfft)
-!res = cudaFreeHost(c_p_akyfft)
-!res = cudaFreeHost(c_p_akzfft)
-!res = cudaFreeHost(c_p_rakxfft)
-!res = cudaFreeHost(c_p_rakyfft)
-!res = cudaFreeHost(c_p_rakzfft)
-!DEALLOCATE(ak,akv,akx,aky,akz,rakx,raky,rakz)        !Only gpu arrays will be used from now
+CALL build_kgpu(nx2,ny2,nz2,h2m,dt1,dkx,dky,dkz,gpu_akfft,gpu_akvfft,gpu_akxfft,gpu_akyfft,gpu_akzfft)
 #endif
 !     prepare kinetic propagation factors in 1D momentum spaces
 
@@ -1060,12 +1034,6 @@ CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
 #endif
 
 #if(fftw_gpu)
-!IF(recopy) THEN
-!  CALL secopy1dto3d(q1,fft,nx2,ny2,nz2)
-
-!  CALL copy_on_gpu(fft,gpu_fft,kdfull2)
-!ENDIF
-
 CALL run_fft_back3d(p,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,facnr)
@@ -1614,11 +1582,12 @@ res = cudaFreeHost(c_p_fftay)
 res = cudaFreeHost(c_p_fftaz)
 res = cudaFreeHost(c_p_fftb)
 res = cudaFreeHost(c_p_ffta)
-res = cudaFreeHost(c_p_akfft)
-res = cudaFreeHost(c_p_akvfft)
 res = cudaFree(c_gpu_ffta)
 res = cudaFree(c_gpu_akfft)
 res = cudaFree(c_gpu_akvfft)
+res = cudaFree(c_gpu_akxfft)
+res = cudaFree(c_gpu_akyfft)
+res = cudaFree(c_gpu_akzfft)
 
 CALL kill_plan(px)
 CALL kill_plan(py)
@@ -1657,30 +1626,6 @@ CALL c_f_pointer(c_p_ffta,ffta,[nbx2,nby2,nbz2])
 res = cudaMallocHost(c_p_ffta2,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_p_ffta2,ffta2,[nbx2,nby2,nbz2])
 
-res = cudaMallocHost(c_p_akfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_akfft,ak,[kdfull2])
-
-res = cudaMallocHost(c_p_akvfft,kdfull2*sizeof(size_double))
-CALL c_f_pointer(c_p_akvfft,akv,[kdfull2])
-
-res = cudaMallocHost(c_p_akxfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_akxfft,akx,[kdfull2])
-
-res = cudaMallocHost(c_p_akyfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_akyfft,aky,[kdfull2])
-
-res = cudaMallocHost(c_p_akzfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_akzfft,akz,[kdfull2])
-
-res = cudaMallocHost(c_p_rakxfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_rakxfft,rakx,[kdfull2])
-
-res = cudaMallocHost(c_p_rakyfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_rakyfft,raky,[kdfull2])
-
-res = cudaMallocHost(c_p_rakzfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_rakzfft,rakz,[kdfull2])
-
 res = cudaMalloc(c_gpu_ffta,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_ffta,gpu_ffta,[kdfull2])
 
@@ -1705,50 +1650,7 @@ CALL c_f_pointer(c_gpu_akyfft,gpu_akyfft,[kdfull2])
 res = cudaMalloc(c_gpu_akzfft,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_akzfft,gpu_akzfft,[kdfull2])
 
-res = cudaMalloc(c_gpu_rakxfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_rakxfft,gpu_rakxfft,[kdfull2])
-
-res = cudaMalloc(c_gpu_rakyfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_rakyfft,gpu_rakyfft,[kdfull2])
-
-res = cudaMalloc(c_gpu_rakzfft,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_rakzfft,gpu_rakzfft,[kdfull2])
-
 END SUBROUTINE my_cuda_allocate
-
-! ******************************
-
-SUBROUTINE multiply(which_ak)
-
-! ******************************
-
-INTEGER, INTENT(IN) :: which_ak
-
-IF(which_ak==1) CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
-
-IF(which_ak==2) CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
-
-IF(which_ak==3) CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-
-IF(which_ak==4) CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-
-IF(which_ak==5) CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-
-IF(which_ak==6) CALL multiply_ak2(gpu_ffta,gpu_rakxfft,kdfull2)
-
-IF(which_ak==7) CALL multiply_ak2(gpu_ffta,gpu_rakyfft,kdfull2)
-
-IF(which_ak==8) CALL multiply_ak2(gpu_ffta,gpu_rakzfft,kdfull2)
-
-END SUBROUTINE multiply
-
-SUBROUTINE hpsistatic()
-
-! ******************************
-
-CALL hpsi_cuda(gpu_ffta,gpu_ffta2,gpu_akv,kdfull2)
-
-END SUBROUTINE hpsistatic
 #endif
 
 END MODULE kinetic

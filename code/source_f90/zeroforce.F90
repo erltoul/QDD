@@ -100,7 +100,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -akx*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakxfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
@@ -137,7 +137,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -aky*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakxfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
@@ -174,7 +174,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -akz*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakzfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     counter = rwfovlp(rho(1+ishift),potwork)
@@ -260,7 +260,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -akx*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakxfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     zforcex = rwfovlp(rho(1+ishift),potwork)
@@ -294,7 +294,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -aky*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakyfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     zforcey = rwfovlp(rho(1+ishift),potwork)
@@ -328,7 +328,7 @@ DO is=1,numspin
 #endif
 #if(fftw_gpu)
 !    dervk = -akz*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakzfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
     zforcez = rwfovlp(rho(1+ishift),potwork)
@@ -419,7 +419,7 @@ IF (icoor == 1) THEN
 #endif
 #if(fftw_gpu)
 !    dervk = -akx*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakxfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
   
@@ -455,7 +455,7 @@ ELSE IF (icoor == 2) THEN
 #endif
 #if(fftw_gpu)
 !    dervk = -aky*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakyfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
   
@@ -491,7 +491,7 @@ ELSE IF (icoor == 3) THEN
 #endif
 #if(fftw_gpu)
 !    dervk = -akz*potk
-    CALL multiply_ak_real(gpu_ffta,gpu_rakzfft,kdfull2)
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta,recopy)
 #endif
   
