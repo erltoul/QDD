@@ -47,7 +47,7 @@ COMPLEX(C_DOUBLE_COMPLEX), POINTER :: gpu_ffta(:,:,:),gpu_ffta2(:,:,:),gpu_ffta_
 TYPE(C_PTR),PRIVATE :: c_gpu_ffta,c_gpu_ffta2,c_gpu_ffta_int
 
 INTEGER*8, PRIVATE :: px,py,pz
-INTEGER*8,PRIVATE :: p
+INTEGER*8,PRIVATE :: plan_3d
 
 INTEGER, PARAMETER, PRIVATE :: batch=1
 INTEGER, PRIVATE :: res
@@ -92,20 +92,21 @@ dkx=pi/(dx0*nx)
 dky=pi/(dy0*ny)
 dkz=pi/(dz0*nz)
 
-ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 
 #if(netlib_fft)
+ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(ak(kdfull2),akv(kdfull2))
-ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))!,rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
+ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
+ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(ak(kdfull2),akv(kdfull2))
-ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))!,rakx(kdfull2),raky(kdfull2),rakz(kdfull2))
+ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
 #endif
 #if(fftw_gpu)
@@ -148,12 +149,6 @@ DO i3=1,nz2
     END DO
   END DO
 END DO
-#endif
-
-#if(fftw_gpu)
-CALL build_kgpu(nx2,ny2,nz2,h2m,dt1,dkx,dky,dkz,gpu_akfft,gpu_akvfft,gpu_akxfft,gpu_akyfft,gpu_akzfft)
-#endif
-!     prepare kinetic propagation factors in 1D momentum spaces
 
 DO i3=1,nz2
   IF(i3 >= (nz+1)) THEN
@@ -181,6 +176,12 @@ DO i1=1,nx2
   END IF
   akpropx(i1)=EXP(-eye*dt1*zkx**2*h2m)
 END DO
+#endif
+
+#if(fftw_gpu)
+CALL build_kgpu(nx2,ny2,nz2,h2m,dt1,dkx,dky,dkz,gpu_akfft,gpu_akvfft,gpu_akxfft,gpu_akyfft,gpu_akzfft)
+#endif
+!     prepare kinetic propagation factors in 1D momentum spaces
 
 #if(fftw_cpu)
 IF (nini==0) THEN
@@ -230,7 +231,7 @@ END IF
 
 #if(fftw_gpu)
 IF (nini==0) THEN
-  CALL cuda_plan_3d(p,nx2,ny2,nz2)
+  CALL cuda_plan_3d(plan_3d,nx2,ny2,nz2)
   nini  = nx2*ny2*nz2
 ELSE IF(nini /= nx2*ny2*nz2) THEN
   STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
@@ -288,16 +289,15 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
-
+#if(fftw_gpu)
+INTEGER(C_INT) :: typefft=4
+#endif
 #if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
 #endif
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
-#if(fftw_gpu)
-STOP 'fastpropag not yet implemented with GPU'
-#endif
 !       check initialization
 #if(netlib_fft)
 IF(nxini == 0) THEN
@@ -324,7 +324,7 @@ END IF
 #endif
 
 !       propagation in x-direction
-
+#if(netlib_fft|fftw_cpu)
 xfnorm = 1D0/nx2
 DO i3=1,nz2
   DO i2=1,ny2
@@ -338,9 +338,6 @@ DO i3=1,nz2
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwx,fftax,fftax)
 #endif
-#if(fftw_gpu)
-    CALL run_fft_for(px,fftax,fftax,nx2)
-#endif
     DO i1=1,nx2
       fftax(i1) = akpropx(i1)*fftax(i1)
     END DO
@@ -349,9 +346,6 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackx,fftax,fftax)
-#endif
-#if(fftw_gpu)
-    CALL run_fft_back(px,fftax,fftax,nx2)
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
@@ -375,9 +369,6 @@ DO i3=1,nz2
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwy,fftay,fftay)
 #endif
-#if(fftw_gpu)
-    CALL run_fft_for(py,fftay,fftay,ny2)
-#endif
     DO i2=1,ny2
       fftay(i2) = akpropy(i2)*fftay(i2)
     END DO
@@ -386,9 +377,6 @@ DO i3=1,nz2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbacky,fftay,fftay)
-#endif
-#if(fftw_gpu)
-    CALL run_fft_back(py,fftay,fftay,ny2)
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
@@ -415,9 +403,6 @@ DO i2=1,ny2
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
 #endif
-#if(fftw_gpu)
-    CALL run_fft_for(pz,fftb(1,i1),fftb(1,i1),nz2)
-#endif
     DO i3=1,nz2
       fftb(i3,i1) = akpropz(i3)*fftb(i3,i1)
     END DO
@@ -426,9 +411,6 @@ DO i2=1,ny2
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
-#endif
-#if(fftw_gpu)
-    CALL run_fft_back(pz,fftb(1,i1),fftb(1,i1),nz2)
 #endif
   END DO
   DO i3=1,nz2
@@ -439,6 +421,19 @@ DO i2=1,ny2
     END DO
   END DO
 END DO
+#endif
+
+#if(fftw_gpu)
+facnr = 1D0/(nx2*ny2*nz2)
+ffta=reshape(q1,(/nx2,ny2,nz2/))
+CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
+CALL run_fft_for3d(plan_3d,gpu_ffta,typefft)
+CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
+CALL run_fft_back3d(plan_3d,gpu_ffta,typefft)
+CALL multiply_gpu(gpu_ffta,kdfull2,facnr)
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+q1=reshape(ffta,(/kdfull2/))
+#endif
 
 RETURN
 END SUBROUTINE  kinprop
@@ -916,7 +911,7 @@ CALL copy1dto3d(q1,fft,nx2,ny2,nz2)
 
 CALL copy_on_gpu(fft,gpu_fft,kdfull2)
 
-CALL run_fft_for3d(p,gpu_fft,typefft)
+CALL run_fft_for3d(plan_3d,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,tnorm)
 #endif
@@ -1027,7 +1022,7 @@ CALL secopy3dto1d(ffta,q2,facnr,nx2,ny2,nz2)
 #endif
 
 #if(fftw_gpu)
-CALL run_fft_back3d(p,gpu_fft,typefft)
+CALL run_fft_back3d(plan_3d,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,facnr)
 
@@ -1195,7 +1190,7 @@ CALL copyr1dto3d(q1,fft,nx2,ny2,nz2)
 
 CALL copy_on_gpu(fft,gpu_fft,kdfull2)
 
-CALL run_fft_for3d(p,gpu_fft,typefft)
+CALL run_fft_for3d(plan_3d,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,tnorm)
 #endif
@@ -1335,7 +1330,7 @@ CALL copyr3dto1d(ffta,q3,facnr,nx2,ny2,nz2)
 #endif
 
 #if(fftw_gpu)
-CALL run_fft_back3d(p,gpu_fft,typefft)
+CALL run_fft_back3d(plan_3d,gpu_fft,typefft)
 
 CALL multiply_gpu(gpu_fft,kdfull2,facnr)
 
@@ -1553,6 +1548,7 @@ CALL fftw_destroy_plan(pbackz1)
 
 DEALLOCATE(fftax,fftay,fftaz,fftb,ffta)
 DEALLOCATE(ak,akv)
+DEALLOCATE(akpropx,akpropy,akpropz)
 #endif
 
 #if(fftw_gpu)
@@ -1571,10 +1567,8 @@ res = cudaFree(c_gpu_akzfft)
 CALL kill_plan(px)
 CALL kill_plan(py)
 CALL kill_plan(pz)
-CALL kill_plan(p)
+CALL kill_plan(plan_3d)
 #endif
-
-DEALLOCATE(akpropx,akpropy,akpropz)
 
 RETURN
 END SUBROUTINE fft_end

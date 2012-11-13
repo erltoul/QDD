@@ -267,11 +267,13 @@ extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int 
 	{
 	  cout<<"CUFFT error : Exec Z2Z forward failed ";
 	  if(type==1){
-	    cout<<"from fftf"<<endl;}
+	    cout<<"in fftf"<<endl;}
 	  if(type==2){
-	    cout<<"from rftf"<<endl;}
+	    cout<<"in rftf"<<endl;}
 	  if(type==3){
-	    cout<<"from coulexf"<<endl;}
+	    cout<<"in coulexf"<<endl;}
+	  if(type==4){
+	    cout<<"in kinprop "<<endl;}
 	  exit(-1);
 	}
 }
@@ -285,11 +287,13 @@ extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 	{
 	  cout<<"CUFFT error : Exec Z2Z backward failed ";
 	  if(type==1){
-	    cout<<"from fftback"<<endl;}
+	    cout<<"in fftback"<<endl;}
 	  if(type==2){
-	    cout<<"from rfftback"<<endl;}
+	    cout<<"in rfftback"<<endl;}
 	  if(type==3){
-	    cout<<"from coulexback"<<endl;}
+	    cout<<"in coulexback"<<endl;}
+	  if(type==4){
+	    cout<<"in kinprop"<<endl;}
 	  exit(-1);
 	}
 }
