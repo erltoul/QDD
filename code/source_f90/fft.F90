@@ -110,7 +110,7 @@ ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
 #endif
 #if(fftw_gpu)
-CALL my_cuda_allocate(nx2,ny2,nz2) !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
+CALL my_cuda_allocate() !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
@@ -1102,7 +1102,7 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 
 !     transformation in x-direction
-
+copyback
 ! nxyf=nx2*ny2
 !      nyf=nx2
 DO i3=1,nz2
@@ -1577,27 +1577,29 @@ END SUBROUTINE fft_end
 #if(fftw_gpu)
 ! ******************************
 
-SUBROUTINE my_cuda_allocate(nbx2,nby2,nbz2)
+SUBROUTINE my_cuda_allocate()
 
 ! ******************************
 
-res = cudaMallocHost(c_p_fftax,nbx2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_fftax,fftax,[nbx2])
+USE params
 
-res = cudaMallocHost(c_p_fftay,nby2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_fftay,fftay,[nby2])
+res = cudaMallocHost(c_p_fftax,nx2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftax,fftax,[nx2])
 
-res = cudaMallocHost(c_p_fftaz,nbz2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_fftaz,fftaz,[nbz2])
+res = cudaMallocHost(c_p_fftay,ny2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftay,fftay,[ny2])
 
-res = cudaMallocHost(c_p_fftb,nbz2*nbx2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_fftb,fftb,[nbz2,nbx2])
+res = cudaMallocHost(c_p_fftaz,nz2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftaz,fftaz,[nz2])
+
+res = cudaMallocHost(c_p_fftb,nz2*nx2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftb,fftb,[nz2,nx2])
 
 res = cudaMallocHost(c_p_ffta,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_ffta,ffta,[nbx2,nby2,nbz2])
+CALL c_f_pointer(c_p_ffta,ffta,[nx2,ny2,nz2])
 
 res = cudaMallocHost(c_p_ffta2,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_ffta2,ffta2,[nbx2,nby2,nbz2])
+CALL c_f_pointer(c_p_ffta2,ffta2,[nx2,ny2,nz2])
 
 res = cudaMalloc(c_gpu_ffta,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_ffta,gpu_ffta,[kdfull2])

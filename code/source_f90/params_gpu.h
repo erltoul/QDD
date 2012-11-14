@@ -45,42 +45,42 @@ extern cufftDoubleComplex params_mp_eye_;
 
 
 //     maximum sizes of the box in x,y, and z
-extern unsigned int params_mp_kxbox_,params_mp_kybox_,params_mp_kzbox_;
+extern int params_mp_kxbox_,params_mp_kybox_,params_mp_kzbox_;
 // deduced grid paramaters
-extern unsigned int params_mp_kxmax_,params_mp_kymax_,params_mp_kzmax_;
-extern unsigned int params_mp_nx2_,params_mp_ny2_,params_mp_nz2_;
+extern int params_mp_kxmax_,params_mp_kymax_,params_mp_kzmax_;
+extern int params_mp_nx2_,params_mp_ny2_,params_mp_nz2_;
 //int,PARAMETER nxyzf=nx2*ny2*nz2_;                 //?
-extern unsigned int params_mp_nxyz_,params_mp_nyf_,params_mp_nxyf_;
-extern unsigned int params_mp_kdfull2_;
+extern int params_mp_nxyz_,params_mp_nyf_,params_mp_nxyf_;
+extern int params_mp_kdfull2_;
 //int,PARAMETER kfbox=kdfull2_;                    // ??
-extern unsigned int params_mp_nx_,params_mp_ny_,params_mp_nz_;
+extern int params_mp_nx_,params_mp_ny_,params_mp_nz_;
 //int,PARAMETER nx1=nx+1,ny1=ny+1,nz1=nz+1,nzi=nz1,nzr=nz+nz_;  //?
 //int,PARAMETER nxy1=nx1*ny1_;    //?
 //int,PARAMETER ksmax=nx+1,kdfull=(nx+1)*(ny+1)*(nz+1)_;    //?
-extern unsigned int params_mp_knodem_;     // =knode-1
+extern int params_mp_knodem_;     // =knode-1
 #if(gridfft)
 // bounds of loops
-extern unsigned int params_mp_minx_,params_mp_maxx_;
-extern unsigned int params_mp_miny_,params_mp_maxy_;
-extern unsigned int params_mp_minz_,params_mp_maxz_;
+extern int params_mp_minx_,params_mp_maxx_;
+extern int params_mp_miny_,params_mp_maxy_;
+extern int params_mp_minz_,params_mp_maxz_;
 // bounds of esc. el. ???
-extern unsigned int params_mp_nbnx_,params_mp_nbxx_;
-extern unsigned int params_mp_nbny_,params_mp_nbxy_;
-extern unsigned int params_mp_nbnz_,params_mp_nbxz_;
+extern int params_mp_nbnx_,params_mp_nbxx_;
+extern int params_mp_nbny_,params_mp_nbxy_;
+extern int params_mp_nbnz_,params_mp_nbxz_;
 // mid-point for x,y,z-values
-extern unsigned int params_mp_nxsh_,params_mp_nysh_,params_mp_nzsh_;
+extern int params_mp_nxsh_,params_mp_nysh_,params_mp_nzsh_;
 #endif
 #if(findiff|numerov)
 // bounds of loops
-extern unsigned int params_mp_minx_,params_mp_maxx_;
-extern unsigned int params_mp_miny_,params_mp_maxy_;
-extern unsigned int params_mp_minz_,params_mp_maxz_;
+extern int params_mp_minx_,params_mp_maxx_;
+extern int params_mp_miny_,params_mp_maxy_;
+extern int params_mp_minz_,params_mp_maxz_;
 // bounds of esc. el.
-extern unsigned int params_mp_nbnx_,params_mp_nbxx_;
-extern unsigned int params_mp_nbny_,params_mp_nbxy_;
-extern unsigned int params_mp_nbnz_,params_mp_nbxz_;
+extern int params_mp_nbnx_,params_mp_nbxx_;
+extern int params_mp_nbny_,params_mp_nbxy_;
+extern int params_mp_nbnz_,params_mp_nbxz_;
 // offset for x,y,z-values   ???
-extern unsigned int params_mp_nxsh_,params_mp_nysh,params_mp_nzsh_;
+extern int params_mp_nxsh_,params_mp_nysh,params_mp_nzsh_;
 #endif
 
 
@@ -123,7 +123,7 @@ extern double params_mp_dInMargin_;
 extern int params_mp_iforce_;
 extern int params_mp_ipseudo_;          // swich on/off subgrids and pseudo-densities
 extern double params_mp_xfac_,params_mp_yfac_,params_mp_zfac_;                       //  initial. auxiliary
-extern double params_mp_epswf_,e0dmp,epsorc_;        //  convergence
+extern double params_mp_epswf_,params_mp_e0dmp_,params_mp_epsorc_;        //  convergence
 extern double params_mp_b2occ_,params_mp_gamocc_,params_mp_deocc_,params_mp_osfac_; //  h.o.initalization
 extern double params_mp_temp_,params_mp_occmix_,params_mp_epsoro_;        //  electron temperature
 extern int params_mp_isurf_;

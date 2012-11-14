@@ -43,7 +43,7 @@ dim3 dimblock(blocksize,1,1);
 
 tnorm=grnorm*fnorm;
 
-cudaMemcpyAsync(gpu_akvr,pakvr,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
+error=cudaMemcpyAsync(gpu_akvr,pakvr,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
 Check_CUDA_Error(error);
 
 if(cufftExecD2Z(pfftforw,gpu_akvr,gpu_akvc) != CUFFT_SUCCESS)
@@ -53,7 +53,6 @@ if(cufftExecD2Z(pfftforw,gpu_akvr,gpu_akvc) != CUFFT_SUCCESS)
 }
 
 multiply_device<<<dimgrid,dimblock,0,stream3>>>(gpu_akvc,kdred,tnorm);
-Check_CUDA_Error(error);
 
 }
 
@@ -214,10 +213,14 @@ rfftac=prfftac-1; //rfftac points one location before prfftac, so rfftac[1]...rf
 akvr=pakvr-1;   //same trick as above
 
 // Memory allocation on the GPU
-cudaMalloc((void**)&gpu_fftac,kdred*sizeof(cufftDoubleComplex));
-cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
-cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
-cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
+error=cudaMalloc((void**)&gpu_fftac,kdred*sizeof(cufftDoubleComplex));
+Check_CUDA_Error(error);
+error=cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
+Check_CUDA_Error(error);
+error=cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
+Check_CUDA_Error(error);
+error=cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
+Check_CUDA_Error(error);
 
 pindex = (int*)malloc(kdfull*sizeof(int));
 inde=pindex-1;
@@ -242,7 +245,7 @@ dim3 dimblock(blocksize,1,1);
 
 tnorm=grnorm*fnorm;
 
-cudaMemcpyAsync(gpu_rfftac,prfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
+error=cudaMemcpyAsync(gpu_rfftac,prfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
 Check_CUDA_Error(error);
 
 if(cufftExecD2Z(pfftforw,gpu_rfftac,gpu_fftac) != CUFFT_SUCCESS)
@@ -254,7 +257,6 @@ if(cufftExecD2Z(pfftforw,gpu_rfftac,gpu_fftac) != CUFFT_SUCCESS)
 //     calculation of the coulomb field (writing on the density field)
 
 multiply_ak_gpu<<<dimgrid,dimblock,0,stream3>>>(gpu_fftac,gpu_akvc,kdred,tnorm);
-Check_CUDA_Error(error);
 
 //     fourier back transformation
 
@@ -267,9 +269,8 @@ if(cufftExecZ2D(pfftback,gpu_fftac,gpu_rfftac) != CUFFT_SUCCESS)
 }
 
 multiply_device_real<<<dimgrid,dimblock,0,stream2>>>(gpu_rfftac,kdred,tnorm);
-Check_CUDA_Error(error);
 
-cudaMemcpy(prfftac,gpu_rfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyDeviceToHost);
+error=cudaMemcpy(prfftac,gpu_rfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyDeviceToHost);
 Check_CUDA_Error(error);
 
 }

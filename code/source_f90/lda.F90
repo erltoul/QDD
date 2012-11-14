@@ -349,7 +349,7 @@ REAL,SAVE                                    :: et
 
 !!!!!      icount = 0
 
-
+#if(netlib_fft|fftw_cpu|(fftw_gpu && lda_gpu==0))
 DATA a0  /0.458165293D0 /
 DATA da0 /0.119086804D0 /
 
@@ -524,11 +524,19 @@ DO ii=1,nxyz
 !old        ec=-t70/2.0*e2+ec
 
 END DO
-!  CALL cpu_time(time_end)
-!  write (6,*)ec
-!  et=et+time_end-time_start
-!  write(6,*)"Time lda:",et
-!  STOP
+#endif
+
+#if(fftw_gpu && lda_gpu )
+enrear = 0D0
+ec=0D0
+
+IF(directenergy) THEN
+  enerpw = 0D0
+  CALL calc_lda_enerpw_gpu(rho,chpdft,ec,enerpw)
+ELSE
+  CALL calc_lda_gpu(rho,chpdft,ec)
+END IF
+#endif
 
 enrear=ec*dvol
 

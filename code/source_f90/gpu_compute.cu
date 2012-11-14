@@ -288,7 +288,7 @@ extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubl
 	*s2=thrust::reduce(d_sum2.begin(),d_sum2.end(),(double)0.0);
 }
 
-__global__ void d_sum_calc(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_akv,double *d_sum0,double *d_sumk,int nxyz)
+__global__ void d_sum_calc2(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_akv,double *d_sum0,double *d_sumk,int nxyz)
 {
 	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
 
@@ -310,7 +310,7 @@ extern "C" void sum_calc2_(double *s0,double *sk,cufftDoubleComplex *d_ffta,cuff
 	thrust::device_vector<double> d_sum0(nxyz);
 	thrust::device_vector<double> d_sumk(nxyz);
 
-        d_sum_calc<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),nxyz);
+        d_sum_calc2<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),nxyz);
 
 	*s0=thrust::reduce(d_sum0.begin(),d_sum0.end(),(double)0.0);
 	*sk=thrust::reduce(d_sumk.begin(),d_sumk.end(),(double)0.0);
