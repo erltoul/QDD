@@ -181,27 +181,30 @@ extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
         multiply_shift_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
 }
 
-__global__ void hpsi_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int nxyz)
+__global__ void hpsi_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int nxyz, int kdfull2)
 {
 	unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
+	unsigned int nbe = ind/kdfull2;
 
 	if (ind<nxyz)
 	{
-		d_ffta2[ind].x = d_akv[ind]*d_ffta[ind].x+d_ffta2[ind].x;
-		d_ffta2[ind].y = d_akv[ind]*d_ffta[ind].y+d_ffta2[ind].y;
+		d_ffta2[ind].x = d_akv[ind-(nbe*kdfull2)]*d_ffta[ind].x+d_ffta2[ind].x;
+		d_ffta2[ind].y = d_akv[ind-(nbe*kdfull2)]*d_ffta[ind].y+d_ffta2[ind].y;
 	}
 }
 
-extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int *N)
+extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int *N,int *kd)
 {
 	int nxyz = *N;
+	int kdfull2=*kd;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
 	dim3 dimgrid(gridx,1,1);
 	dim3 dimblock(blocksize,1,1);
 
 	//d_ffta*d_ak+d_ffta2 on the GPU
-        hpsi_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,d_akv,nxyz);
+        hpsi_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,d_akv,nxyz,kdfull2);
+	Check_CUDA_Error(error);
 }
 
 __global__ void d_grad_gpu1(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double epswf,double e0dmp,int nxyz)
@@ -215,17 +218,19 @@ __global__ void d_grad_gpu1(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 	}
 }
 
-extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *ep,double *e0,int *N)
+extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *ep,double *e0,int *N,int *nbe)
 {
 	int nxyz = *N;
 	double epswf = *ep, e0dmp = *e0;
+	int kstate=*nbe-1;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
 	dim3 dimgrid(gridx,1,1);
 	dim3 dimblock(blocksize,1,1);
 
 	//grad on the GPU
-        d_grad_gpu1<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,d_akv,epswf,e0dmp,nxyz);
+        d_grad_gpu1<<<dimgrid,dimblock,0,stream2>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,d_akv,epswf,e0dmp,nxyz);
+	Check_CUDA_Error(error);
 }
 
 __global__ void d_grad_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double epswf,int nxyz)
@@ -239,17 +244,19 @@ __global__ void d_grad_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 	}
 }
 
-extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double *ep,int *N)
+extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double *ep,int *N,int *nbe)
 {
 	int nxyz = *N;
 	double epswf = *ep;
+	int kstate=*nbe-1;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
 	dim3 dimgrid(gridx,1,1);
 	dim3 dimblock(blocksize,1,1);
 
 	//grad on the GPU
-        d_grad_gpu2<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,epswf,nxyz);
+        d_grad_gpu2<<<dimgrid,dimblock,0,stream2>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,epswf,nxyz);
+	Check_CUDA_Error(error);
 }
 
 __global__ void d_sum_calc(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *d_sum0,double *d_sumk,double *d_sume,double *d_sum2,int nxyz)
@@ -265,9 +272,10 @@ __global__ void d_sum_calc(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta
 	}
 }
 
-extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int *N)
+extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2, cufftDoubleReal *d_akv,int *N,int *nb)
 {
 	int nxyz = *N;
+	int nbe  = *nb-1;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
 	dim3 dimgrid(gridx,1,1);
@@ -279,13 +287,14 @@ extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubl
 	thrust::device_vector<double> d_sum2(nxyz);
 
 	//Computation of the d_sum vectors on the GPU
-        d_sum_calc<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
+        d_sum_calc<<<dimgrid,dimblock,0,stream2>>>(d_ffta+nbe*nxyz,d_ffta2+nbe*nxyz,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
 
 	//Reduction of the vectors
 	*s0=thrust::reduce(d_sum0.begin(),d_sum0.end(),(double)0.0);
 	*sk=thrust::reduce(d_sumk.begin(),d_sumk.end(),(double)0.0);
 	*se=thrust::reduce(d_sume.begin(),d_sume.end(),(double)0.0);
 	*s2=thrust::reduce(d_sum2.begin(),d_sum2.end(),(double)0.0);
+
 }
 
 __global__ void d_sum_calc2(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_akv,double *d_sum0,double *d_sumk,int nxyz)

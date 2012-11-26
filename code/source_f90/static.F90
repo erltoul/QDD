@@ -429,7 +429,6 @@ SUBROUTINE sstep(q0,aloc,int_pass)
 #if(fftw_gpu)
 SUBROUTINE sstep(q0,aloc)
 #endif
-
 !     Performs one static step for all wavefunctions and for given
 !     mean fields.
 !     The step involves: action of H->psi, some analysis, and damping.
@@ -464,7 +463,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: int_pass
 #endif
 
-
 REAL(DP) :: occold(kstate),ocwork(kstate)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -480,7 +478,9 @@ INTEGER,ALLOCATABLE :: npoi(:,:)
 INTEGER :: ntridig(2),nstsp(2)
 LOGICAL, PARAMETER :: tprham=.false.
 !#endif
-
+#if(fftw_gpu)
+INTEGER(C_INT) :: size_data
+#endif
 COMPLEX(DP) :: csum
 
 
@@ -496,13 +496,18 @@ DATA tocc,tcpu/.false.,.true./     ! no reoccupation in parallel
 #endif
 !       workspaces
 
+#if(netlib_fft|fftw_cpu)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
+#endif
 REAL(DP),ALLOCATABLE :: qex(:,:)
 #if(gridfft)
+#if(netlib_fft|fftw_cpu)
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
+#endif
 #if(fftw_gpu)
-COMPLEX(C_DOUBLE_COMPLEX),DIMENSION(:),ALLOCATABLE :: q3
+REAL(DP),ALLOCATABLE :: q1(:,:),rsp(:),w4(:,:)
+REAL(DP) :: sum0,sumk,sume,sum2
 #endif
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
@@ -512,6 +517,9 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
 
+#if(fftw_gpu)
+size_data=nstate*kdfull2
+#endif
 nph=3-numspin
 
 !     set timer
@@ -526,11 +534,18 @@ IF(ifsicp == 5) THEN
   CALL exchgr(q0,qex)
 END IF
 
-
+#if(netlib_fft|fftw_cpu)
 ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
+#endif
 #if(fftw_gpu)
-ALLOCATE(q3(kdfull2))
+#if(gridfft)
+ALLOCATE(q1(kdfull2,kstate))
+ALLOCATE(rsp(kstate))
+#else
+ALLOCATE(q1(kdfull2))
+ALLOCATE(q2(kdfull2))
+#endif
 #endif
 
 
@@ -548,6 +563,7 @@ END IF
 
 
 !?      dvol=dx*dy*dz
+#if(netlib_fft|fftw_cpu)
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
@@ -590,7 +606,6 @@ DO nbe=1,nstate
 ALLOCATE(psipr(kdfull2))
   
 !        action of the kinetic energy in momentum space
-#if(netlib_fft|fftw_cpu)
   CALL rftf(q0(1,nbe),psipr)
 !    ALLOCATE(w4(kdfull2))
 !    CALL rfftback(psipr,w4)
@@ -601,21 +616,9 @@ ALLOCATE(psipr(kdfull2))
   
 !        FFT of V*psi
   CALL rftf(q1,q2)
-#endif
-#if(fftw_gpu)
-  CALL rftf(q0(1,nbe),psipr,ffta,gpu_ffta)
-
-  CALL rftf(q1,q2,ffta2,gpu_ffta2)
-#endif
   
 !       compose to h|psi>
-#if(netlib_fft|fftw_cpu)
   q2 = psipr*akv+q2
-#endif
-#if(fftw_gpu)
-!  q2 = psipr*akv+q2
-  CALL hpsi_cuda(gpu_ffta,gpu_ffta2,gpu_akvfft,kdfull2)
-#endif
   
 !       Optionally compute expectation value of kinetic energy
 !       and variance of mean field Hamiltonian.
@@ -631,7 +634,6 @@ ALLOCATE(psipr(kdfull2))
     sumk = 0D0
     sume = 0D0
     sum2 = 0D0
-#if(netlib_fft|fftw_cpu)
     DO  i=1,nxyz
       vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
       sum0  = vol + sum0
@@ -639,10 +641,6 @@ ALLOCATE(psipr(kdfull2))
       sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
       sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
     END DO
-#endif
-#if(fftw_gpu)
-    CALL sum_calc(sum0,sumk,sume,sum2,gpu_ffta,gpu_ffta2,gpu_akvfft,nxyz)
-#endif
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
@@ -652,16 +650,9 @@ ALLOCATE(psipr(kdfull2))
 
     ALLOCATE(w4(kdfull2))
 
-#if(netlib_fft|fftw_cpu)
     CALL rfftback(psipr,w4)
     CALL rfftback(q2,w4)
-#endif
-#if(fftw_gpu)
-    CALL gpu_to_gpu(gpu_ffta,gpu_ffta_int,kdfull2) !save gpu_ffta (psipr on GPU) for later
-    CALL rfftback(psipr,w4,ffta,gpu_ffta_int)
-    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
-    CALL rfftback(q2,w4,ffta2,gpu_ffta_int)
-#endif
+
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
     DEALLOCATE(w4)
@@ -678,13 +669,7 @@ ALLOCATE(psipr(kdfull2))
 !       for later diagonalization
 
     IF(int_pass > 0) THEN  
-#if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,q1)
-#endif
-#if(fftw_gpu)
-      CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,kdfull2) !save gpu_ffta2 (q2 on GPU) for later
-      CALL rfftback(q2,q1,ffta2,gpu_ffta_int)
-#endif
       iactsp = ispin(nbe)
       nstsp(iactsp) = 1+nstsp(iactsp)
       npoi(nstsp(iactsp),iactsp) = nbe
@@ -706,7 +691,7 @@ ALLOCATE(psipr(kdfull2))
 !     perform the damped gradient step and orthogonalise the new basis
   
   IF(idyniter /= 0 .AND. int_pass > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-#if(netlib_fft|fftw_cpu)    
+
 !  IF(int_pass > 0) THEN  
     IF(e0dmp > small) THEN
 !       DO i=1,nxyz
@@ -717,25 +702,161 @@ ALLOCATE(psipr(kdfull2))
       psipr = psipr - epswf*q2
     END IF
     CALL rfftback(psipr,q0(1,nbe))
-#endif
-#if(fftw_gpu)
-    IF(e0dmp > small) THEN
-!      psipr = psipr - q2*epswf/(akv+e0dmp)
-      CALL d_grad1(gpu_ffta,gpu_ffta2,gpu_akvfft,epswf,e0dmp,kdfull2)
-    ELSE
-!      psipr = psipr - epswf*q2
-      CALL d_grad2(gpu_ffta,gpu_ffta2,epswf,kdfull2)
-    END IF
-    CALL rfftback(psipr,q0(1,nbe),ffta,gpu_ffta)
-#endif
+
 !  END IF
   
 DEALLOCATE(psipr)
-  
+END DO                                            ! end loop over states
 #endif
 ! end of FFT switch
+#endif
+!end of netlib/fftw switch
+
+#if(fftw_gpu)
+DO nbe=1,nstate
+  ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
   
+!       action of the potential in coordinate space
+!       plus non local part of ps
+!       plus optionally exchange part
+
+  IF(ipsptyp == 1) THEN
+    CALL nonlocalr(q0(1,nbe),q1(1,nbe))
+    enonlo(nbe)= rwfovlp(q0(1,nbe),q1(1,nbe))
+    DO  i=1,nxyz
+      q1(i,nbe)=q1(i,nbe)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
+    END DO
+  ELSE
+    DO  i=1,nxyz
+      q1(i,nbe)=q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
+    END DO
+  END IF
+  
+  IF(ifsicp == 5) THEN
+    q1(:,nbe)=q1(:,nbe)+qex(:,nbe)
+  END IF
+  
+
+!JM : subtract SIC potential for state NBE
+#if(twostsic)
+  IF(ifsicp == 8) CALL subtr_sicpot(q1(1,nbe),nbe)
+#endif
+!JM
+  
+  
+!       optionally compute Cexpectation value of potential energy
+  
+  IF(MOD(int_pass,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1(1,nbe)) + amoy(nbe)
+  
+  
+#if(gridfft)
+ENDDO !END LOOP OVER STATES
+
+!BEGINING OF THE GPU OPERATIONS
+  
+!        action of the kinetic energy in momentum space
+  CALL rftf2(q0,fftaglob,gpu_fftaglob)
+
+  CALL rftf2(q1,ffta2,gpu_ffta2)
+
+!       compose to h|psi>
+
+  CALL hpsi_cuda(gpu_fftaglob,gpu_ffta2,gpu_akvfft,size_data,kdfull2) !  q2 = psipr*akv+q2 on the GPU
+
+!       Optionally compute expectation value of kinetic energy
+!       and variance of mean field Hamiltonian.
+!       This is done in Fourier space to save FFT's.
+!       Variance 'evarsp2' excludes non-diagonal elements within
+!       occupied space.
+  
+  IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
+    
+#if(parano)
+DO nbe=1,nstate
+    sum0 = 0D0
+    sumk = 0D0
+    sume = 0D0
+    sum2 = 0D0
+    CALL sum_calc(sum0,sumk,sume,sum2,gpu_fftaglob,gpu_ffta2,gpu_akvfft,nxyz,nbe)
+    ekinsp(nbe) = sumk/sum0
+    sume = sume/sum0
+    sum2 = sum2/sum0
+!          write(6,*) ' norm,spe=',sum0,sume
+!          amoy(nbe)   = sume
+    rsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+
+ENDDO !END LOOP OVER STATES
+
+    ALLOCATE(w4(kdfull2,kstate))
+    CALL gpu_to_gpu(gpu_fftaglob,gpu_ffta_int,size_data) !save gpu_ffta for later
+    CALL rfftback2(w4,fftaglob,gpu_ffta_int)
+
+    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
+    CALL rfftback2(w4,ffta2,gpu_ffta_int)
+
+
+DO nbe=1,nstate    
+    CALL project(w4(1,nbe),w4(1,nbe),ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(rwfovlp(w4(1,nbe),w4(1,nbe)))
+ENDDO
+#endif
+
+#if(parayes)
+DO nbe=1,nstate    
+    evarsp2(nbe) = evarsp(nbe)
+ENDDO
+#endif
+
+    DEALLOCATE(w4)
+  END IF
+  
+#if(parano)
+  IF(ifhamdiag == 1) THEN
+!       accumulate mean-field Hamiltonian within occupied states,
+!       for later diagonalization
+
+    IF(int_pass > 0) THEN  
+
+      CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
+
+      CALL rfftback2(q1,ffta2,gpu_ffta_int)
+    DO nbe=1,nstate    
+      iactsp = ispin(nbe)
+      nstsp(iactsp) = 1+nstsp(iactsp)
+      npoi(nstsp(iactsp),iactsp) = nbe
+      DO nbc=1,nbe
+        IF(iactsp == ispin(nbc)) THEN
+          ntridig(iactsp) = 1+ntridig(iactsp)
+          hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1(1,nbe))
+          IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
+              hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
+          IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
+              hmatr(ntridig(iactsp),iactsp)
+        END IF
+      END DO
+    ENDDO
+    END IF
+
+  END IF
+#endif
+!     perform the damped gradient step and orthogonalise the new basis
+DO nbe=1,nstate    
+  IF(idyniter /= 0 .AND. int_pass > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
+    IF(e0dmp > small) THEN
+!      psipr = psipr - q2*epswf/(akv+e0dmp)
+      CALL d_grad1(gpu_fftaglob,gpu_ffta2,gpu_akvfft,epswf,e0dmp,kdfull2,nbe)
+    ELSE
+!      psipr = psipr - epswf*q2
+      CALL d_grad2(gpu_fftaglob,gpu_ffta2,epswf,kdfull2,nbe)
+    END IF
+ENDDO
+    CALL rfftback2(q0,fftaglob,gpu_fftaglob)
+!  END IF
+#endif
+! end of FFT switch
+#endif
+! end of fftw_gpu switch
   
 #if(findiff|numerov)
   
@@ -761,16 +882,17 @@ DEALLOCATE(psipr)
   ekinsp(nbe) = sumk
   evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
-#endif
-  
-  
 END DO                                            ! end loop over states
+#if(fftw_gpu)
+DEALLOCATE(q2)
+#endif
+#endif
 
 DEALLOCATE(q1)
+#if(netlib_fft|fftw_cpu)
 DEALLOCATE(q2)
-#if(fftw_gpu)
-DEALLOCATE(q3)
 #endif
+
 IF(ifsicp == 5)  DEALLOCATE(qex)
 
 
@@ -841,8 +963,6 @@ IF(tcpu) THEN
 END IF
 WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
 WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
-
-
 
 RETURN
 END SUBROUTINE sstep

@@ -64,7 +64,6 @@ thrust::device_vector<double> d_enerpw(1);
 #endif*/
 #endif
 
-//extern "C" void cuda_gpu_init_(int *Npx,int *Npy,int *Npz) //initialize some variables usefull for GPU computing
 extern "C" void cuda_gpu_init_() //initialize some variables usefull for GPU computing
 {
 #if(lda_gpu)
@@ -280,6 +279,21 @@ extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int 
 	}
 }
 
+extern "C" void run_fft_for3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ks,int *N)
+{
+	int kstate=*ks;
+	int nxyz=*N;
+	//Perform 3D FTT FORWARD on the GPU
+
+	for(int nbe=0;nbe<kstate;nbe++){
+        	if(cufftExecZ2Z(*plan,d_ffta+nbe*nxyz,d_ffta+nbe*nxyz, CUFFT_FORWARD) != CUFFT_SUCCESS)
+		{
+	 	 cout<<"CUFFT error : Exec Z2Z forward failed in rftf2\n";
+	 	 exit(-1);
+		}
+	}
+}
+
 extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
 {
 	int type = *ty;
@@ -297,6 +311,20 @@ extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 	  if(type==4){
 	    cout<<"in kinprop"<<endl;}
 	  exit(-1);
+	}
+}
+
+extern "C" void run_fft_back3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ks,int *N)
+{
+	int kstate=*ks;
+	int nxyz=*N;
+	//Perform 3D FTT BACKWARD on the GPU
+	for(int nbe=0;nbe<kstate;nbe++){
+        	if(cufftExecZ2Z(*plan,d_ffta+nbe*nxyz,d_ffta+nbe*nxyz, CUFFT_INVERSE) != CUFFT_SUCCESS)
+		{
+	 	 cout<<"CUFFT error : Exec Z2Z backward failed in rfftback2\n";
+	 	 exit(-1);
+		}
 	}
 }
 

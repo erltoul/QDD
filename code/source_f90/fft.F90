@@ -41,10 +41,10 @@ type(C_PTR), PRIVATE :: pforw,pback
 INTEGER(C_INT), PRIVATE :: wisdomtest
 #endif
 #if(fftw_gpu)
-COMPLEX(C_DOUBLE_COMPLEX), POINTER :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:),ffta2(:,:,:)
-TYPE(C_PTR), PRIVATE :: c_p_fftax,c_p_fftay,c_p_fftaz,c_p_fftb,c_p_ffta,c_p_ffta2
-COMPLEX(C_DOUBLE_COMPLEX), POINTER :: gpu_ffta(:,:,:),gpu_ffta2(:,:,:),gpu_ffta_int(:,:,:)
-TYPE(C_PTR),PRIVATE :: c_gpu_ffta,c_gpu_ffta2,c_gpu_ffta_int
+COMPLEX(C_DOUBLE_COMPLEX), POINTER :: fftax(:),fftay(:),fftaz(:),fftb(:,:),ffta(:,:,:),ffta2(:,:,:),fftaglob(:,:,:)
+TYPE(C_PTR), PRIVATE :: c_p_fftax,c_p_fftay,c_p_fftaz,c_p_fftb,c_p_ffta,c_p_ffta2,c_p_fftaglob
+COMPLEX(C_DOUBLE_COMPLEX), POINTER :: gpu_ffta(:,:,:),gpu_ffta2(:,:,:),gpu_ffta_int(:,:,:),gpu_fftaglob(:,:,:)
+TYPE(C_PTR),PRIVATE :: c_gpu_ffta,c_gpu_ffta2,c_gpu_ffta_int,c_gpu_fftaglob
 
 INTEGER*8, PRIVATE :: px,py,pz
 INTEGER*8,PRIVATE :: plan_3d
@@ -53,6 +53,9 @@ INTEGER, PARAMETER, PRIVATE :: batch=1
 INTEGER, PRIVATE :: res
 COMPLEX(DP), PARAMETER :: size_cmplx=CMPLX(0D0,0D0,DP)
 REAL(DP), PARAMETER :: size_double=(0D0,DP)
+
+
+REAL(DP),ALLOCATABLE :: akv(:)
 
 COMPLEX(C_DOUBLE_COMPLEX), POINTER :: gpu_akfft(:,:,:)
 TYPE(C_PTR),PRIVATE :: c_gpu_akfft
@@ -110,6 +113,7 @@ ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftaz(kzmax),fftb(kzmax,kxmax),ffta(kxmax,kymax,kzmax))
 #endif
 #if(fftw_gpu)
+ALLOCATE(akv(kdfull2))
 CALL my_cuda_allocate() !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
 #endif
 
@@ -1102,7 +1106,7 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 
 !     transformation in x-direction
-copyback
+
 ! nxyf=nx2*ny2
 !      nyf=nx2
 DO i3=1,nz2
@@ -1598,17 +1602,23 @@ CALL c_f_pointer(c_p_fftb,fftb,[nz2,nx2])
 res = cudaMallocHost(c_p_ffta,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_p_ffta,ffta,[nx2,ny2,nz2])
 
-res = cudaMallocHost(c_p_ffta2,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_p_ffta2,ffta2,[nx2,ny2,nz2])
+res = cudaMallocHost(c_p_ffta2,kstate*kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_ffta2,ffta2,[nx2,ny2,nz2*kstate])
+
+res = cudaMallocHost(c_p_fftaglob,kstate*kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_p_fftaglob,fftaglob,[nx2,ny2,nz2*kstate])
 
 res = cudaMalloc(c_gpu_ffta,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_ffta,gpu_ffta,[kdfull2])
 
-res = cudaMalloc(c_gpu_ffta2,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_ffta2,gpu_ffta2,[kdfull2])
+res = cudaMalloc(c_gpu_ffta2,kstate*kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_gpu_ffta2,gpu_ffta2,[kstate*kdfull2])
 
-res = cudaMalloc(c_gpu_ffta_int,kdfull2*sizeof(size_cmplx))
-CALL c_f_pointer(c_gpu_ffta_int,gpu_ffta_int,[kdfull2])
+res = cudaMalloc(c_gpu_ffta_int,kstate*kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_gpu_ffta_int,gpu_ffta_int,[kstate*kdfull2])
+
+res = cudaMalloc(c_gpu_fftaglob,kstate*kdfull2*sizeof(size_cmplx))
+CALL c_f_pointer(c_gpu_fftaglob,gpu_fftaglob,[kstate*kdfull2])
 
 res = cudaMalloc(c_gpu_akfft,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_akfft,gpu_akfft,[kdfull2])
@@ -1626,6 +1636,126 @@ res = cudaMalloc(c_gpu_akzfft,kdfull2*sizeof(size_cmplx))
 CALL c_f_pointer(c_gpu_akzfft,gpu_akzfft,[kdfull2])
 
 END SUBROUTINE my_cuda_allocate
+
+! ******************************
+
+SUBROUTINE  rftf2(q1,fft,gpu_fft)
+
+! ******************************
+
+USE, intrinsic :: iso_c_binding
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(IN)                         :: q1(kdfull2,kstate)
+COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2*kstate)
+COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2*kstate)
+INTEGER                                      :: size_data
+
+size_data=nstate*kdfull2
+
+tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
+
+CALL copyr1dto3d2(q1,fft,nx2,ny2,nz2) !Store all the wavefunctions in a single one-dimensional array
+
+CALL copy_on_gpu(fft,gpu_fft,size_data) !Copy all the array on the GPU
+
+CALL run_fft_for3d2(plan_3D,gpu_fft,nstate,kdfull2) !Compute the FFTs
+
+CALL multiply_gpu(gpu_fft,size_data,tnorm)
+
+RETURN
+END SUBROUTINE  rftf2
+
+! ******************************
+
+SUBROUTINE  rfftback2(q3,fft,gpu_fft)
+
+! ******************************
+
+USE, intrinsic :: iso_c_binding
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(OUT)                        :: q3(kdfull2,kstate)
+COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2*kstate)
+COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2*kstate)
+INTEGER                                      :: size_data
+
+size_data=nstate*kdfull2
+
+facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
+
+CALL run_fft_back3d2(plan_3D,gpu_fft,nstate,kdfull2)
+
+CALL multiply_gpu(gpu_fft,size_data,facnr)
+
+CALL copy_from_gpu(fft,gpu_fft,size_data)
+
+CALL copyr3dto1d2(fft,q3,nx2,ny2,nz2)
+
+RETURN
+END SUBROUTINE  rfftback2
+
+! ******************************
+
+SUBROUTINE copyr1dto3d2(vec1d,vec3d,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE, intrinsic :: iso_c_binding
+USE params
+
+REAL(DP), INTENT(IN)                      :: vec1d(kdfull2,kstate)
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2*kstate)
+
+DO nbe=1,nstate
+  indnbe=(nbe-1)*nbz2
+  DO i3=1,nbz2
+    indz=(i3-1)*nxyf
+    DO i2=1,nby2
+      indy=(i2-1)*nyf
+      DO i1=1,nbx2
+        ind=indz+indy+i1
+        vec3d(modx(i1),mody(i2),modz(i3)+indnbe)=CMPLX(vec1d(ind,nbe),0D0,DP)
+      END DO
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr1dto3d2
+
+! ******************************
+
+SUBROUTINE copyr3dto1d2(vec3d,vec1d,nbx2,nby2,nbz2)
+
+! ******************************
+
+USE, intrinsic :: iso_c_binding
+USE params
+
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: vec3d(nbx2,nby2,nbz2*kstate)
+REAL(DP), INTENT(OUT)                     :: vec1d(kdfull2,kstate)
+
+DO nbe=1,nstate
+  indnbe=(nbe-1)*nbz2
+  DO i3=1,nbz2
+    indz=(i3-1)*nxyf
+    DO i2=1,nby2
+      indy=(i2-1)*nyf
+      DO i1=1,nbx2
+        ind=indz+indy+i1
+        vec1d(ind,nbe)=REAL(vec3d(modx(i1),mody(i2),modz(i3)+indnbe),DP)
+      END DO
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE copyr3dto1d2
+
+! ******************************
 #endif
 
 END MODULE kinetic
