@@ -262,7 +262,7 @@ IF(mynact==0) THEN
     END IF
 !   reading cumulators for laser field
     IF(.NOT.trealin) THEN
-      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
 !      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
     END IF
 #endif                                                        !new
@@ -540,7 +540,7 @@ IF(mynact==0) THEN
         END IF
       END IF
 !     writing cumulators for laser field
-      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
       WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
 #endif
     END IF
