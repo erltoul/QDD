@@ -13,6 +13,7 @@ SAVE
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
+INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
 REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
@@ -77,6 +78,7 @@ dkz=pi/(dz0*nz)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(akprop(kxmax,kymax,kzmax))
+ALLOCATE(modx(kxmax),mody(kymax),modz(kzmax))
 #if(netlib_fft)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
@@ -338,6 +340,18 @@ ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
 #endif
+
+DO i1=1,nx2
+  modx(i1)=MOD(i1+nx,nx2)+1
+END DO
+
+DO i2=1,ny2
+  mody(i2)=MOD(i2+ny,ny2)+1
+END DO
+
+DO i3=1,nz2
+  modz(i3)=MOD(i3+nz,nz2)+1
+END DO
 #endif
 
 WRITE(*,*) ' end: fftay:',fftay
@@ -431,7 +445,8 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
+!      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
+      fftax(modx(i1))=q1(ind) ! copy to workspace
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic fft
@@ -452,7 +467,8 @@ DO i3=1,nz2
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
+!      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
+      q2(ind)= fftax(modx(i1))*xfnorm
     END DO
   END DO
 END DO
@@ -464,7 +480,8 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
+!      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
+      fftay(mody(i2)) = q2(ind)
     END DO
 #if(netlib_fft)
     CALL dcftf1 (ny2,ffttay,wrky,wsavey,ifacy)
@@ -485,7 +502,8 @@ DO i3=1,nz2
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
+!      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
+      q2(ind)= fftay(mody(i2))*yfnorm
     END DO
   END DO
 END DO
@@ -495,7 +513,7 @@ END DO
 zfnorm = 1D0/nz2
 DO i2=1,ny2
   DO i3=1,nz2
-    i3m = MOD(i3+nz,nz2)+1
+    i3m = modz(i3)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       ffttb(i3m,i1) = q2(ind)
@@ -519,7 +537,7 @@ DO i2=1,ny2
 #endif
   END DO
   DO i3=1,nz2
-    i3m = MOD(i3+nz,nz2)+1
+    i3m = modz(i3)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       q1(ind)=ffttb(i3m,i1)*zfnorm
@@ -651,7 +669,7 @@ DO i3=1,nz2
 !                 forward transform along x
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(MOD(i1+nx,nx2)+1)=fin(ind)  ! copy to workspace
+      fftax(modx(i1))=fin(ind)  ! copy to workspace
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
@@ -677,7 +695,7 @@ DO i3=1,nz2
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      gradfout(ind)= fftax(MOD(i1+nx,nx2)+1)/nx2
+      gradfout(ind)= fftax(modx(i1))/nx2
     END DO
   END DO
 END DO
@@ -716,7 +734,7 @@ DO i3=1,nz2
 !                 forward transform along y
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(MOD(i2+ny,ny2)+1) = fin(ind)
+      fftay(mody(i2)) = fin(ind)
     END DO
 #if(netlib_fft)
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
@@ -742,7 +760,7 @@ DO i3=1,nz2
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      gradfout(ind)= fftay(MOD(i2+ny,ny2)+1)/ny2
+      gradfout(ind)= fftay(mody(i2))/ny2
     END DO
   END DO
 END DO
@@ -790,7 +808,7 @@ DO i2=1,ny2
 !                 forward transform along z
     DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      i3m = MOD(i3+nz,nz2)+1
+      i3m = modz(i3)
       fftaz(i3m) = fin(ind)
     END DO
 #if(netlib_fft)
@@ -817,7 +835,7 @@ DO i2=1,ny2
 #endif
     DO i3=1,nz2                  ! copy back
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      gradfout(ind)= fftaz(MOD(i3+nz,nz2)+1)/nz2
+      gradfout(ind)= fftaz(modz(i3))/nz2
     END DO
 !
   END DO
@@ -897,7 +915,7 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(MOD(i1+nx,nx2)+1)=q1(ind)  ! copy to workspace
+      fftax(modx(i1))=q1(ind)  ! copy to workspace
     END DO
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
     DO i1=1,nx2
@@ -913,7 +931,7 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
+      fftay(mody(i2)) = q2(ind)
     END DO
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
@@ -944,7 +962,7 @@ END DO
 
 DO i2=1,ny2
   DO i3=1,nz2
-    i3m = MOD(i3+nz,nz2)+1
+    i3m = modz(i3)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftb(i3m,i1) = q2(ind)
@@ -1019,7 +1037,7 @@ DO i2=1,ny2
   DO i3=1,nz2                  ! copy back
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(MOD(i3+nz,nz2)+1,i1)
+      q2(ind)= fftb(modz(i3),i1)
     END DO
   END DO
 END DO
@@ -1035,7 +1053,7 @@ DO i3=1,nz2
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)
+      q2(ind)= fftay(mody(i2))
     END DO
   END DO
 END DO
@@ -1052,7 +1070,7 @@ DO i3=1,nz2
     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(MOD(i1+nx,nx2)+1)
+      q2(ind)= fftax(modx(i1))
     END DO
   END DO
 END DO
@@ -1136,7 +1154,7 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(MOD(i1+nx,nx2)+1)=CMPLX(q1(ind),0D0,DP) ! copy to workspace
+      fftax(modx(i1))=CMPLX(q1(ind),0D0,DP) ! copy to workspace
     END DO
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
     DO i1=1,nx2
@@ -1152,7 +1170,7 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(MOD(i2+ny,ny2)+1) = q2(ind)
+      fftay(mody(i2)) = q2(ind)
     END DO
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
@@ -1189,7 +1207,7 @@ DO i2=1,ny2
   DO i3=1,nz2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(MOD(i3+nz,nz2)+1,i1) = q2(ind)
+      fftb(modz(i3),i1) = q2(ind)
     END DO
   END DO
   DO i1=1,nx2
@@ -1287,7 +1305,7 @@ DO i2=1,ny2
   DO i3=1,nz2                  ! copy back
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(MOD(i3+nz,nz2)+1,i1)
+      q2(ind)= fftb(modz(i3),i1)
     END DO
   END DO
 END DO
@@ -1303,7 +1321,7 @@ DO i3=1,nz2
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(MOD(i2+ny,ny2)+1)
+      q2(ind)= fftay(mody(i2))
     END DO
   END DO
 END DO
@@ -1321,7 +1339,7 @@ DO i3=1,nz2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
 !      q2(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
-      q3(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
+      q3(ind)= REAL(modx(i1)),DP)
     END DO
   END DO
 END DO
@@ -1362,6 +1380,8 @@ DO i3=1,nbz2
        ind=1+ind
 !      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=q1(ind)
       ffta(i1,i2,i3)=q1(ind)
+!DB      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+!DB      ffta(modx(i1),mody(i2),modz(i3))=q1(ind)
     END DO
   END DO
 END DO
@@ -1407,7 +1427,7 @@ DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)=CMPLX(q1(ind),0D0,DP) 
+      ffta(modx(i1),mody(i2),modz(i3))=CMPLX(q1(ind),0D0,DP) 
     END DO
   END DO
 END DO
@@ -1430,7 +1450,7 @@ DO i3=1,nbz2
   DO i2=1,nby2
     DO i1=1,nbx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)=REAL(ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1),DP)*coef
+      q2(ind)=REAL(ffta(modx(i1),mody(i2),modz(i3)),DP)*coef
     END DO
   END DO
 END DO
@@ -1482,6 +1502,8 @@ DO i3=1,nbz2
 !      q2(ind)=ffta(MOD(i1+nx,nbx2)+1,MOD(i2+ny,nby2)+1,MOD(i3+nz,nbz2)+1)*coef
       ind=1+ind
       q2(ind)=ffta(i1,i2,i3)*coef
+!DB      ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+!DB      q2(ind)=ffta(modx(i1),mody(i2),modz(i3))*coef
     END DO
   END DO
 END DO
