@@ -723,6 +723,8 @@ DO nb=1,nstate
 #endif
 END DO
 
+CALL spmoms(psi,6)
+
 WRITE(441,'(f10.3,10(1pg13.5))') tfs,enonlo(1:nstate)
 CALL FLUSH(441)
 
@@ -1745,6 +1747,22 @@ IF(irest <= 0) THEN                    !  write file headers
   END IF
   
 #if(simpara)
+  IF(jdiporb /= 0) THEN
+#else
+  IF(myn == 0 .AND. jdiporb /= 0) THEN
+#endif
+    OPEN(810,STATUS='unknown',FORM='formatted',FILE='pdiporb.x.'//outnam)
+    WRITE(810,'(a)') 'protocol of s.p. moments: time,x-dipole of orbitals'
+    CLOSE(810)
+    OPEN(811,STATUS='unknown',FORM='formatted',FILE='pdiporb.y.'//outnam)
+    WRITE(811,'(a)') 'protocol of s.p. moments: time,y-dipole of orbitals'
+    CLOSE(811)
+    OPEN(812,STATUS='unknown',FORM='formatted',FILE='pdiporb.z.'//outnam)
+    WRITE(812,'(a)') 'protocol of s.p. moments: time,z-dipole of orbitals'
+    CLOSE(812)
+  END IF
+
+#if(simpara)
   IF(jmp /= 0) THEN
 #else
   IF(jmp /= 0 .AND. myn == 0) THEN
@@ -2515,6 +2533,9 @@ IF(nclust > 0 .AND. myn == 0)THEN
 #endif
   
   CALL safeopen(8,it,jdip,'pdip')
+  CALL safeopen(810,it,jdiporb,'pdiporb.x')
+  CALL safeopen(811,it,jdiporb,'pdiporb.y')
+  CALL safeopen(812,it,jdiporb,'pdiporb.z')
   CALL safeopen(9,it,jquad,'pquad')
   CALL safeopen(17,it,jinfo,'infosp')
   CALL safeopen(47,0,jangabso,'pangabso')
@@ -2874,7 +2895,8 @@ END IF
 IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
    .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
    .OR. (jenergy > 0 .AND. MOD(it,jenergy)==0) & 
-   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0)) THEN
+   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) &
+   .OR. (jdiporb > 0 .AND. MOD(it,jdiporb)==0)) THEN
 #if(parayes) 
   IF(ttest) WRITE(*,*) ' ANALYZE before INFO: myn=',myn
 #endif
@@ -2921,6 +2943,15 @@ IF(myn==0) THEN
   IF(jdip > 0 .AND. MOD(it,jdip) == 0) THEN
     WRITE(8,'(f10.5,3e17.8)') tfs,qe(2),qe(3),qe(4)
     CALL flush(8)
+  END IF
+
+  IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN
+    WRITE(810,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
+    WRITE(811,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,4),nbe=1,nstate_all)
+    WRITE(812,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,5),nbe=1,nstate_all)
+    CALL flush(810)
+    CALL flush(811)
+    CALL flush(812)
   END IF
   
   IF(jquad > 0 .AND. MOD(it,jquad) == 0) THEN

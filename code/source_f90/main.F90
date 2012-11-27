@@ -168,7 +168,7 @@ ALLOCATE(psi(kdfull2,kstate))
 psi=CMPLX(0D0,0D0)
 
 !     optionally initialize work arrays
-IF(jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
+IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
 IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 
 
