@@ -1,5 +1,4 @@
 #include "define.h"
- 
 
 !       ******************************
 
@@ -339,6 +338,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+REAL,SAVE                                    :: et
 
 !        parameter (pi=3.141592654)
 
@@ -377,6 +377,13 @@ IF(directenergy) THEN
   enerpw = 0D0
 END IF
 ec=0D0
+
+!write(6,*)rho(1),rho(1+nxyz)
+!write(6,*)chpdft(1)
+
+!CALL cpu_time(time_start)
+
+!!!$OMP PARALLEL DO DEFAULT(PRIVATE) SHARED(nxyz,rho,chpdft) SCHEDULE(STATIC) REDUCTION(+: ec,enerpw)
 DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
   xi     = rho(ii+nxyz)
@@ -514,12 +521,16 @@ DO ii=1,nxyz
   
   ec = (-t70*e2 - 0.5D0*t5) + ec
 !old        ec=-t70/2.0*e2+ec
-  
-  
-  
-END DO
 
+END DO
+!!!!$OMP END PARALLEL DO
 enrear=ec*dvol
+!  CALL cpu_time(time_end)
+!  write (6,*)ec
+!  et=et+time_end-time_start
+!  write(6,*)"Time lda:",et
+!  STOP
+
 
 IF(directenergy) THEN
   enerpw = enerpw*dvol

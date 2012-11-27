@@ -6,6 +6,18 @@ if [ $1 ] ; then
  para=$1
 fi
 
+if [ -z $2 ] ; then
+    type_check=""
+else
+    type_check=$2
+fi
+
+#if [ -z $3 ] ; then
+#    dim_check=1d
+#else
+#    dim_check=$3
+#fi
+
 if [ ! -f define.h ] || [ ! -f params.F90 ] || [ ! -f makefile ] ; then
     echo "some files are missing..."
     exit 0
@@ -69,6 +81,27 @@ else
     exit 0 
 fi
 
+if [ $type_check = netlib ] ; then
+    sed -i -e 's/netlib_fft.*/netlib_fft 1/' define.h
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = NETLIB/' makefile
+#        sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+elif [ $type_check = fftw ] ; then
+#    	if [ $dim_check = 1d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+        sed -i -e 's/fftw_cpu.*/fftw_cpu 1/' define.h
+#    	fi
+#    	if [ $dim_check = 3d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 3d/' makefile
+#        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
+#    	fi
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
+else
+    echo "Empty second argument, preserving FFTW lib options."
+    exit 0 
+fi
+
+
 make clean
 make
 make clean
+

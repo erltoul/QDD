@@ -27,6 +27,7 @@ WRITE(*,*) nprocs,knode
 #if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
+IF(knode /= kstate) STOP "knode must be equal to kstate !"
 #else
 knode = 1
 nprocs= 1
@@ -40,6 +41,16 @@ myn=n
 knode = 1         
 nprocs= 1         
 #endif
+
+#if(paropenmp)
+CALL OMP_SET_NUM_THREADS(numthr)
+WRITE(*,*) ' init. OMP:  Nr. threads=',numthr,OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
+nthr = OMP_GET_MAX_THREADS()-1
+#else
+nthr = 0
+#endif
+WRITE(*,*) ' INIT_PARALLELE: nthr=',nthr
+
 
 
 RETURN
@@ -217,6 +228,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(istat,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(jdip,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(jdiporb,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jquad,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jang,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jspdp,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -390,6 +402,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(istat,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(jdip,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(jdiporb,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jquad,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jang,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jspdp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)

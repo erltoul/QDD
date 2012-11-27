@@ -1,14 +1,18 @@
-#include"define.h"
+#include "define.h"
  
 #if(gridfft)
 #if(coufou)
-INCLUDE 'falr.F90'
-#endif
- 
+
+#include 'falr.F90'
+
+#endif !coufou
+
 #if(coudoub)
-INCLUDE 'coulex.F90'
-#endif
-#endif
+
+#include "coulex.F90"
+
+#endif !coudoub
+#endif !gridfft
 
 #if(findiff|numerov)
 !INCLUDE 'gridcoul.F90'

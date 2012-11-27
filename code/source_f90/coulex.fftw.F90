@@ -1,10 +1,7 @@
 MODULE coulsolv
-#if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
+USE params, ONLY: DP
 USE FFTW
-#endif
-USE params, ONLY: DP,numthr
-USE kinetic, ONLY: FFTW_planflag
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -26,39 +23,22 @@ INTEGER,PRIVATE :: nxhigh,nxlow,nyhigh,nylow,nzhigh,nzlow
 !    nx,ny,nz,nx1,ny1,nz1, nxr,nxi,nyr,nyi,nzr,nzi,nxy1,nxyz,  &
 !    nxhigh,nxlow,nyhigh,nylow,nzhigh,nzlow
 
-#if(coudoub3D && fftw_cpu)
-COMPLEX(DP),ALLOCATABLE,PRIVATE :: akv2(:,:,:)
-#else
 REAL(DP),ALLOCATABLE,PRIVATE :: akv2r(:),akv2i(:)
-#endif
 INTEGER,ALLOCATABLE,PRIVATE :: ikm(:,:)
 REAL(DP),PRIVATE :: dkx,dky,dkz,akmax,dksp,ecut
 INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz
 !COMMON /kgrid/ akv2r,akv2i, dkx,dky,dkz,akmax,dksp,  &
 !    ikm,nxk,nxklo,nxkhi,nksp,nkxyz,ecut
 
-#if(netlib_fft)
-REAL(DP),ALLOCATABLE,PRIVATE :: wrkx(:),wrky(:),wrkz(:)
-REAL(DP),ALLOCATABLE,PRIVATE :: wsavex(:),wsavey(:),wsavez(:)
-INTEGER,ALLOCATABLE,PRIVATE :: ifacx(:),ifacy(:),ifacz(:)
-COMPLEX(DP),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
-#endif
-
-#if(fftw_cpu)
-INTEGER,PRIVATE,SAVE :: nini=0
-INTEGER(C_INT), PRIVATE :: wisdomtest
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
-COMPLEX(C_DOUBLE_COMPLEX),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
-type(C_PTR), PRIVATE :: pforw,pback,pforwc
-COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:)
-REAL(DP), PRIVATE, ALLOCATABLE :: rffta(:,:,:)
-#endif
-
+INTEGER(C_INT), PRIVATE :: wisdomtest
+!COMMON /fftini/wrkx,wrky,wrkz,wsavex,wsavey,wsavez,ifacx,ifacy,ifacz
 
 ! include block: option
 REAL(DP),PARAMETER,PRIVATE :: zero=0D0
 REAL(DP),PARAMETER,PRIVATE :: pi=3.141592653589793D0
 
+COMPLEX(C_DOUBLE_COMPLEX),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
 !COMMON /fftcom/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax)
 
 CONTAINS
@@ -67,12 +47,9 @@ SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
 
 !-----------------------------------------------------------------------
 
-LOGICAL,PARAMETER :: tcoultest=.false.
-REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 !     read grid parameters from file or simply initialize them
 !     note that the Coulomb solver doubles the grid internally
-
 kxmax=2*nx0;kymax=2*ny0;kzmax=2*nz0;ksmax=kxmax
 kdfull=nx0*ny0*nz0
 kdred=kxmax*kymax*kzmax
@@ -89,83 +66,13 @@ dz=dz0
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
-#if(coudoub3D && fftw_cpu)
-ALLOCATE(ffta(kxmax,kymax,kzmax),akv2(kxmax,kymax,kzmax))
-ALLOCATE(rffta(kxmax,kymax,kzmax))
-#else
 ALLOCATE(akv2r(kdred),akv2i(kdred))
-#endif
 ALLOCATE(ikm(kxmax,kymax))
-#if(netlib_fft)
-ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
-ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
-ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
-#endif
 
-#if(coudoub3D && fftw_cpu)
-#if(paropenmp)
-  call dfftw_init_threads(iret)
-!  numthr = 4
-  call dfftw_plan_with_nthreads(numthr)
-  WRITE(*,*) ' init Coul FFTW threads: iret=',iret,', nr. of threads=',numthr
-#endif
-IF (nini==0) THEN
-  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
-  IF (wisdomtest == 0) THEN
-    wisdomtest = fftw_import_system_wisdom()
-    IF(wisdomtest == 0 ) THEN
-      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
-      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
-    ELSE
-      WRITE(*,*) 'Coulex: wisdom from system'  
-    END IF
-  END IF
-!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
-!  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
-!  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_planflag)
-  pforw=fftw_plan_dft_r2c_3d(kxmax,kymax,kzmax,rffta,ffta,FFTW_planflag)
-  pback=fftw_plan_dft_c2r_3d(kxmax,kymax,kzmax,ffta,rffta,FFTW_planflag)
-  pforwc=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
-  nini  = kxmax*kymax*kzmax
-  WRITE(*,*) ' Coul-Solv initialized nini=',nini,kxmax,kymax,kzmax
-ELSE IF(nini /= kxmax*kymax*kzmax) THEN
-  WRITE(*,*) ' nini,nx2,ny2,nz2=',nini,nx2,ny2,nz2
-  STOP ' nx2, ny2 or/and nz2 in four3d not as initialized!'
-END IF
-wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
-IF(wisdomtest==0) THEN
-  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
-ELSE
-  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
-END IF
-CALL fftw_forget_wisdom
-#endif
 
 !     call input routine fftinp, which initializes the grid and fft tabl
 
 CALL fftinp
-
-! test section
-IF(tcoultest) THEN
-  ALLOCATE(rhotest(nx*ny*nz),ctest(nx*ny*nz))
-  rhotest = 0D0
-  ii = 0
-  DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
-    ii=ii+1
-    IF(i3== nz/2 .AND. i2==ny/2 .AND. i1==nx/2) rhotest(ii) =1D0/(dx*dy*dz)
-  END DO; END DO; END DO
-  charge = SUM(rhotest)*(dx*dy*dz)
-  WRITE(*,*) '# test Coulomb for point charge:',charge
-  CALL falr(rhotest,ctest,nxdum,nydum,nzdum,kdum)
-  ii = 0
-  DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
-    ii=ii+1
-    IF(i3== nz/2 .AND. i2==ny/2)  WRITE(*,*) (i1-nx/2)*dx,rhotest(ii), &
-      ctest(ii) ! *(i1-nx/2)*dx/2D0
-  END DO; END DO; END DO
-  STOP
-  DEALLOCATE(rhotest,ctest)  
-END IF
 
 RETURN
 END SUBROUTINE init_coul
@@ -181,7 +88,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     initialized before !
 
 !-----------------------------------------------------------------------
-
+INTEGER,SAVE :: fini=0
 !     initialize grid in coordinate space
 
 nx1=nx+1
@@ -210,7 +117,7 @@ ELSE IF(kzmax < nzi) THEN
   STOP ' error in parameter: KZMAX in COULEX too small'
 END IF
 
-!     initialize grid in Fourier space
+!     initialize grid in fourier space
 
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
@@ -232,45 +139,6 @@ nxk=nx1
 
 ikzero = nxy1*(nz-1)+nxi*(ny-1)+nx
 write(*,*) ' nzi,nyi,nxi,nx,ny,nz,ikzero=',nzi,nyi,nxi,nx,ny,nz,ikzero
-#if(coudoub3D && fftw_cpu)
-factor = 2D0*(dx*dy*dz)/(nx*ny*nz*8D0)  ! 2D0 for e**2
-ii=0
-DO i3=1,nzi
-  IF(i3<=nz) THEN
-    xz1=(i3-1)*dz
-  ELSE
-    xz1=(i3-nzi-1)*dz
-  END IF
-  xz2=xz1*xz1
-  DO i2=1,nyi
-    IF(i2<=ny) THEN
-      xy1=(i2-1)*dy
-    ELSE
-      xy1=(i2-nyi-1)*dy
-    END IF
-    xy2=xy1*xy1
-    DO i1=1,nxi
-      IF(i1<=nx) THEN
-        xx1=(i1-1)*dx
-      ELSE
-        xx1=(i1-nxi-1)*dx
-      END IF
-      xx2=xx1*xx1
-      ak2=xx2+xy2+xz2
-      ii=ii+1
-!        write(*,*) ' i1,i2,i3,ii=',i1,i2,i3,ii
-      IF(ak2>dx**2/10D0) THEN
-        akv2(i1,i2,i3) =  factor/SQRT(ak2) 
-        rffta(i1,i2,i3) =  factor/SQRT(ak2) 
-      ELSE
-        akv2(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
-        rffta(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
-      END IF
-    END DO
-  END DO
-END DO
-nksp=ii
-#else
 ii=0
 xz1=-nz*dz
 DO i3=1,nzi
@@ -299,95 +167,15 @@ DO i3=1,nzi
   END DO
 END DO
 nksp=ii
-#endif
 
-#if(coudoub3D && fftw_cpu)
-!ffta=akv2
-CALL fftw_execute_dft_r2c(pforw,rffta,ffta)
-akv2=ffta
-#else
 CALL fourf(akv2r(1),akv2i(1))
-#endif
-!  CALL prifld(akv2r,'k**2 for Co')
-!  CALL prifld(akv2i,'k**2 for Co')
-!nxyf=nx2*ny2
-!nyf=nx2
-ind=0 !nz*nxyf+ny*nyf
-#if(coudoub3D && fftw_cpu)
-WRITE(6,*) '1/k**2 along x'
-DO i1=1,nxi
-  WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2(i1,1,1)
-END DO
-WRITE(6,*) '1/k**2 along z'
-DO i3=1,nzi
-  WRITE(6,'(f8.2,2(1pg13.5))') (i3-nz)*dz,akv2(1,1,i3)
-END DO
-#else
-WRITE(6,*) '1/k**2 along x'
-DO i1=1,nxi
-  WRITE(6,'(f8.2,2(1pg13.5))') (i1-nx)*dx,akv2r(i1+ind),akv2i(i1+ind)
-END DO
-#endif
+
+
+!STOP
 
 RETURN
 END SUBROUTINE fftinp
 
-#if(coudoub3D && fftw_cpu)
-!-------------------------------------------------------------------
-
-SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-! Coulomb solver using FFTW
-
-
-REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
-REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: nxdum
-INTEGER, INTENT(IN)                  :: nydum
-INTEGER, INTENT(IN)                  :: nzdum
-INTEGER, INTENT(IN)                  :: kdum
-
-!WRITE(*,*) ' running new Coulomb'
-
-! map density to 2**3 larger grid, immediately on FFTW3 work space
-
-rffta = 0D0
-i0=0
-DO i3=1,nz
-  DO i2=1,ny
-    DO i1=1,nx
-      i0 = i0+1
-      rffta(i1,i2,i3)=rhoinp(i0)
-    END DO
-  END DO
-END DO
-
-! FFT forward, multiply with Green's function, FFT backward
-
-CALL fftw_execute_dft_r2c(pforw,rffta,ffta)
-
-ffta = akv2*ffta
-
-CALL fftw_execute_dft_c2r(pback,ffta,rffta)
-
-! map back to standard grid, augment with normalization factor
-
-
-!facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(kxmax*kymax*kzmax,DP)) * 2D0
-i0=0
-DO i3=1,nz
-  DO i2=1,ny
-    DO i1=1,nx
-      i0 = i0+1
-      chpfalr(i0) = rffta(i1,i2,i3)   ! *facnr   ! all scaling in 'akv2'
-    END DO
-  END DO
-END DO
-
-
-END SUBROUTINE falr
-#else
 !-------------------------------------------------------------------
 
 SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
@@ -404,8 +192,6 @@ INTEGER, INTENT(IN)                  :: kdum
 
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)
 
-!WRITE(*,*) ' running old Coulomb'
-
 ALLOCATE(rhokr(kdred),rhoki(kdred))
 
 !     call a routine written by you which writes your density field
@@ -413,9 +199,7 @@ ALLOCATE(rhokr(kdred),rhoki(kdred))
 !     remember not to send your original density array to the fcs.
 !     in this case we have a homogeneously charged sphere .
 
-
 CALL rhofld(rhoinp,rhokr,rhoki)
-
 
 !     call coufou, which contains the fcs procedure.
 
@@ -428,16 +212,15 @@ CALL result(chpfalr,rhokr,rhoki)
 
 DEALLOCATE(rhokr,rhoki)
 
-
-
 END SUBROUTINE falr
+
 
 !-----rhofld------------------------------------------------------------
 
 SUBROUTINE rhofld(rhoinp,rhokr,rhoki)
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     copy density on complex array of double extension in x,y,z
+!     copy density on complex array of double extnesion in x,y,z
 
 
 REAL(DP), INTENT(IN)                         :: rhoinp(kdfull)
@@ -445,16 +228,20 @@ REAL(DP), INTENT(OUT)                        :: rhokr(kdred)
 REAL(DP), INTENT(OUT)                        :: rhoki(kdred)
 
 
-rhokr=0D0
-rhoki=0D0
+
+ii=0
 i0=0
-DO i3=1,nz
-  DO i2=1,ny
-    ii = (i3-1)*nxi*nyi+(i2-1)*nxi
-    DO i1=1,nx
+DO i3=1,nzi
+  DO i2=1,nyi
+    DO i1=1,nxi
       ii=ii+1
-      i0 = i0+1
-      rhokr(ii)=rhoinp(i0)
+      IF(i3 <= nz .AND. i2 <= ny .AND. i1 <= nx) THEN
+        i0 = i0+1
+        rhokr(ii)=rhoinp(i0)
+      ELSE
+        rhokr(ii)=0D0
+      END IF
+      rhoki(ii)=0D0
     END DO
   END DO
 END DO
@@ -505,17 +292,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: rhokr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
 
-
+!INTEGER,SAVE :: fini=0
 LOGICAL,PARAMETER :: tprint=.false.
 LOGICAL,PARAMETER :: rqplot=.false.
 
 !------------------------------------------------------------------------------
 
-!     Fourier transformation of the density
+!     fourier transformation of the density
 
 CALL fourf(rhokr,rhoki)
 
-!     calculation of the Coulomb field (writing on the density field)
+!     calculation of the coulomb field (writing on the density field)
 
 DO ik=1,kdred
   SAVE2     = akv2r(ik)*rhokr(ik)+akv2i(ik)*rhoki(ik)
@@ -523,7 +310,7 @@ DO ik=1,kdred
   rhokr(ik) = SAVE2
 END DO
 
-!     Fourier back transformation
+!     fourier back transformation
 
 CALL fourb(rhokr,rhoki)
 
@@ -531,30 +318,18 @@ RETURN
 
 END SUBROUTINE coufou2
 
-#endif
-
-
-
 !-----fourf-------------------------------------------------------fourf
 
 SUBROUTINE fourf(pskr,pski)
-#if(fftw_cpu)
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
-#if(parayes)
-USE params, only : myn
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
-#if(parayes)
-INCLUDE 'mpif.h'
-REAL(DP) :: is(mpi_status_size)
-#endif
 
 REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
 
-!     Fourier forward transformation
+!     fourier forward transformation
 !     I/O: pskr   real part of the wave-function
 !          pski   imaginary part of the wave-function
 
@@ -562,59 +337,34 @@ DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
 
 !----------------------------------------------------------------------
 
-
 !     check initialization
-#if(netlib_fft)
-IF(mxini == 0) THEN
-  CALL dcfti1 (kfftx,wsavex,ifacx)
-  mxini  = kfftx
-  WRITE(7,'(a)') ' x-fft initialized '
-ELSE IF(mxini /= kfftx) THEN
-  STOP ' nx2 in four3d not as initialized!'
-END IF
-IF(myini == 0) THEN
-  CALL dcfti1 (kffty,wsavey,ifacy)
-  myini  = kffty
-  WRITE(7,'(a)') ' y-fft initialized '
-ELSE IF(myini /= kffty) THEN
-  STOP ' ny2 in four3d not as initialized!'
-END IF
-IF(mzini == 0) THEN
-  CALL dcfti1 (kfftz,wsavez,ifacz)              !! here was
-  mzini  = kfftz                              !! the bug
-  WRITE(7,'(a)') ' z-fft initialized '
-ELSE IF(mzini /= kfftz) THEN
-  STOP ' nz2 in four3d not as initialized!'
-END IF
-#endif
 
-#if(fftw_cpu)
-#if(parano)
 IF(mxini == 0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
     WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
   END IF
-  pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
-  pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
+  pforwx=fftw_plan_dft_1d(kxmax,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackx=fftw_plan_dft_1d(kxmax,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   mxini  = kfftx
   WRITE(7,'(a)') ' x-fft initialized '
 ELSE IF(mxini /= kfftx) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(myini == 0) THEN
-  pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
-  pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
+  pforwy=fftw_plan_dft_1d(kymax,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbacky=fftw_plan_dft_1d(kymax,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   myini  = kffty
   WRITE(7,'(a)') ' y-fft initialized '
 ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
-  pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
-  pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
+  pforwz=fftw_plan_dft_1d(kzmax,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  pbackz=fftw_plan_dft_1d(kzmax,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   mzini  = kfftz
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
     WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
@@ -623,90 +373,6 @@ IF(mzini == 0) THEN
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
-wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
-IF(wisdomtest==0) THEN
-  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
-ELSE
-  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
-END IF
-CALL fftw_forget_wisdom
-#endif
-
-#if(parayes)
-IF(mxini == 0) THEN
-  IF(myn == 0) THEN
-    !Master node creates wisdom if necessary...
-    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    IF (wisdomtest == 0) THEN
-      WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
-      WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
-    END IF
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
-    mxini  = kfftx
-    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    IF (wisdomtest == 0) THEN
-      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    END IF
-  ENDIF
-  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
-  !... then other nodes use it
-  IF(myn /=0 ) THEN
-    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
-    pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
-    mxini  = kfftx
-  ENDIF
-ELSE IF(mxini /= kfftx) THEN
-  STOP ' nx2 in four3d not as initialized!'
-END IF
-IF(myini == 0) THEN
-  IF(myn == 0) THEN
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
-    myini  = kffty
-    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    IF (wisdomtest == 0) THEN
-      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    END IF
-  ENDIF
-  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
-  IF(myn /= 0) THEN
-    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
-    pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
-    myini  = kffty
-  ENDIF
-ELSE IF(myini /= kffty) THEN
-  STOP ' ny2 in four3d not as initialized!'
-END IF
-IF(mzini == 0) THEN
-  IF(myn == 0) THEN
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
-    mzini  = kfftz
-    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    IF (wisdomtest == 0) THEN
-      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    END IF
-  ENDIF
-  CALL mpi_barrier(mpi_comm_world,mpi_ierror)
-  IF(myn /= 0) THEN
-    wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
-    pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
-    mzini  = kfftz
-  ENDIF
-ELSE IF(mzini /= kfftz) THEN
-  STOP ' nz2 in four3d not as initialized!'
-END IF
-#endif
-#endif
-
-
 nzzh=(nzi-1)*nxy1
 nyyh=(nyi-1)*nxi
 !test      sqh=sqrt(0.5)
@@ -716,27 +382,26 @@ CALL fftx(pskr,pski)
 CALL ffty(pskr,pski)
 CALL fftz(pskr,pski)
 
-
-!test2      write(6,'(a)') ' TNORM=',tnorm
 DO i1=1,nkxyz
   pskr(i1)=tnorm*pskr(i1)
   pski(i1)=tnorm*pski(i1)
 END DO
-CALL cpu_time(time_fin)
-!WRITE(*,*) 'FOURF end: time=',time_fin-time_ini
 
 RETURN
 END SUBROUTINE fourf
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(pskr,pski)
+
+USE, intrinsic :: iso_c_binding
+USE FFTW
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
 
-!     Fourier backward transformation
+!     fourier backward transformation
 !     I/O:  pskr   real part of the wave-function
 !           pski   imaginary part of the wave-function
 !----------------------------------------------------------------------
@@ -757,7 +422,6 @@ CALL ffbz(pskr,pski)
 CALL ffby(pskr,pski)
 CALL ffbx(pskr,pski)
 
-
 RETURN
 END SUBROUTINE fourb
 
@@ -765,17 +429,17 @@ END SUBROUTINE fourb
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                        :: psxi(kdred)
 
-!     performs the Fourier-transformation in x-direction
+!     performs the fourier-transformation in x-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
+!     is overwritten by the fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -795,27 +459,25 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      fftax(i1) = psxr(ii)
+!      fftax(i1) = psxr(ii)
+      fftax(i1) = CMPLX(psxr(ii),0D0,DP)
     END DO
     
 !         negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      fftax(i1) = psxr(ii)
+!      fftax(i1) = psxr(ii)
+      fftax(i1) = CMPLX(psxr(ii),0D0,DP)
     END DO
     
-!         execution of the Fourier-transformation
-
-#if(netlib_fft)
-    CALL dcftf1 (kfftx,fftax,wrkx,wsavex,ifacx)
-#endif
-#if(fftw_cpu)
+!         execution of the fourier-transformation
+    
     CALL fftw_execute_dft(pforwx,fftax,fftax)
-#endif
+    
 !         decomposition of the wave-function
 !        positive space
-    
+
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
@@ -829,10 +491,8 @@ DO i3=1,nzi
       psxr(ii) = REAL(fftax(i1))
       psxi(ii) = AIMAG(fftax(i1))
     END DO
-    
   END DO
 END DO
-
 
 RETURN
 END SUBROUTINE fftx
@@ -841,17 +501,17 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
 
-!     performs the Fourier-transformation in y-direction
+!     performs the fourier-transformation in y-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
+!     is overwritten by the fourier-transformed wave-function
 !     yp is the parity in y-direction (input!)
 
 !----------------------------------------------------------------------
@@ -885,17 +545,9 @@ DO i3=1,nzi
       ii=ii+nxi
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
     END DO
-    
-!         execution of the Fourier-transformation
-
-#if(netlib_fft)
->>>>>>> dev
-    CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
-#endif
-#if(fftw_cpu)
+!         execution of the fourier-transformation
     CALL fftw_execute_dft(pforwy,fftay,fftay)
-#endif
-
+    
 !         decomposition of the wave-function
 !         positive space
     ii=i0+nxi*(ny-2)
@@ -922,9 +574,9 @@ END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
 SUBROUTINE fftz(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -933,9 +585,9 @@ INTEGER :: nxyf
 INTEGER :: nyf  
 INTEGER :: nzh  
 
-!     performs the Fourier-transformation in z-direction
+!     performs the fourier-transformation in z-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
+!     is overwritten by the fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -954,12 +606,7 @@ DO i2=1,kffty
   END DO
 !test        do i1=1,kfftx
   DO i1=nx,nxi ! 1,nx1
-#if(netlib_fft)
-    CALL dcftf1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)
-#endif
-#if(fftw_cpu)
     CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
-#endif
   END DO
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -981,9 +628,9 @@ END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
 SUBROUTINE ffbz(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -1007,12 +654,7 @@ DO i2=1,kffty
     END DO
   END DO
   DO i1=nx,nxi ! 1,nx1
-#if(netlib_fft)
-    CALL dcftb1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
-#endif
-#if(fftw_cpu)
-    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
-#endif
+    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))    ! basic fft
   END DO
   DO i3=1,kfftz                  ! copy back
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -1029,9 +671,9 @@ END SUBROUTINE ffbz
 !-----ffby-------------------------------------------------------------
 
 SUBROUTINE ffby(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -1072,12 +714,8 @@ DO i3=1,nz1
     END DO
     
 !         execution
-#if(netlib_fft)
-    CALL dcftb1 (kffty,fftay,wrky,wsavey,ifacy)
-#endif
-#if(fftw_cpu)
     CALL fftw_execute_dft(pbacky,fftay,fftay)
-#endif
+    
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nxi*(ny-2)
@@ -1103,9 +741,9 @@ END SUBROUTINE ffby
 !-----ffbx-------------------------------------------------------------
 
 SUBROUTINE ffbx(psxr,psxi)
-#if(fftw_cpu)
+
+USE, intrinsic :: iso_c_binding
 USE FFTW
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
@@ -1138,12 +776,8 @@ DO i3=1,nz1
     END DO
     
 !        execution
-#if(netlib_fft)
-    CALL dcftb1 (kfftx,fftax,wrkx,wsavex,ifacx)
-#endif
-#if(fftw_cpu)
     CALL fftw_execute_dft(pbackx,fftax,fftax)
-#endif
+    
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nx-1
@@ -1162,13 +796,11 @@ DO i3=1,nz1
   END DO  
 END DO
   
-RETURN
+  
+  RETURN
 END SUBROUTINE ffbx
 
-#if(fftw_cpu)
-SUBROUTINE coulsolv_end()
-
-USE FFTW
+SUBROUTINE coulex_end()
 
 CALL fftw_destroy_plan(pforwx)
 CALL fftw_destroy_plan(pforwy)
@@ -1180,10 +812,9 @@ CALL fftw_destroy_plan(pbackz)
 DEALLOCATE(xval,yval,zval)
 DEALLOCATE(xt2,yt2,zt2)
 DEALLOCATE(fftax,fftay,fftb)
+DEALLOCATE(akv2r,akv2i)
 DEALLOCATE(ikm)
 
-RETURN
-END SUBROUTINE coulsolv_end
-#endif
+END SUBROUTINE coulex_end
 
 END MODULE coulsolv

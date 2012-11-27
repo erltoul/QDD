@@ -320,8 +320,10 @@ REAL(DP), INTENT(IN)                         :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
+!INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+
 
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
@@ -347,9 +349,9 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 myn = 0
 #endif
 
-
-ALLOCATE(q1(2*kdfull2))
-ALLOCATE(q2(kdfull2))
+!WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
+ALLOCATE(q1(2*kdfull2,0:nthr))
+ALLOCATE(q2(kdfull2,0:nthr))
 
 CALL cpu_time(time_init)
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
@@ -359,23 +361,20 @@ itsub = MOD(it,ipasinf) + 1
 
 ri = -dt1*0.5D0
 dt = dt1*0.5D0
-
-
-
+nlocact = numspin*nxyz
 
 
 !     half time step in coordinate space
 !     local phase field on workspace 'q1'
 
-nlocact = numspin*nxyz
 DO ind=1,nlocact
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
 !  CALL cmult3d(q0(1,nb),q1(1+ishift))
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 
@@ -383,47 +382,75 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb=1,nstate
     tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 
 !       one full time step for the kinetic energy
 
+ithr=0
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,ishift,ithr) SCHEDULE(STATIC)
+#endif
 DO nb=1,nstate
+#if(paropenmp && dynopenmp)
+  ithr = OMP_GET_THREAD_NUM()
+  WRITE(*,*) ' actual thread:',ithr
+!  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+#endif 
 #if(gridfft)
   IF(iffastpropag == 1) THEN
-    CALL kinprop(q0(1,nb),q1)
+    CALL kinprop(q0(1,nb),q1(1,ithr))
   ELSE
-    CALL fftf(q0(1,nb),q1)
+    CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
-    q1 = ak*q1
-    CALL fftback(q1,q0(1,nb))
+!    WRITE(*,*) ak(1),q1(1,ithr)
+    q1(:,ithr) = ak*q1(:,ithr)
+    CALL fftback(q1(1,ithr),q0(1,nb))
   END IF
 #endif
 #if(findiff|numerov)
   CALL d3mixpropag (q0(1,nb),dt1)
 #endif
+!#if(paropenmp)
+!WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
+!WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+!#endif 
   
 END DO
-
+#if(dynopenmp)
+!$OMP END PARALLEL DO
+#endif
 
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
 
 
-
+CALL flush(7)
 
 
 
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb = 1,nstate
     tenerg = .false. !   itsub.eq.ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 
@@ -445,18 +472,18 @@ CALL dyn_mfield(rho,aloc,q0,dt)
 
 !     re-open workspace
 
-ALLOCATE(q1(2*kdfull2))
+ALLOCATE(q1(2*kdfull2,0:0))
 
 !     half time step in coordinate space:
 
 nup = numspin*nxyz
 DO ind=1,nup
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 !     finally release workspace
@@ -483,6 +510,8 @@ END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
+
+CALL flush(7)
 
 RETURN
 END SUBROUTINE tstep
@@ -723,6 +752,8 @@ DO nb=1,nstate
 #endif
 END DO
 
+CALL spmoms(psi,6)
+
 WRITE(441,'(f10.3,10(1pg13.5))') tfs,enonlo(1:nstate)
 CALL FLUSH(441)
 
@@ -874,19 +905,19 @@ IF(ionmdtyp > 0) THEN
 #if(raregas)
   DO ion=1,nc
     ek=pxc(ion)*pxc(ion)+pyc(ion)*pyc(ion)+pzc(ion)*pzc(ion)
-    xm=1836.0*mion*ame
+    xm=1836.0D0*mion*ame
     ek=ek/2.0/xm
     ekinion=ekinion+ek
   END DO
   DO ion=1,NE
     ek=pxe(ion)*pxe(ion)+pye(ion)*pye(ion)+pze(ion)*pze(ion)
-    xm=1836.0*me*ame
+    xm=1836.0D0*me*ame
     ek=ek/2.0/xm
     ekinel=ekinel+ek
   END DO
   DO ion=1,nk
     ek=pxk(ion)*pxk(ion)+pyk(ion)*pyk(ion)+pzk(ion)*pzk(ion)
-    xm=1836.0*mkat*ame
+    xm=1836.0D0*mkat*ame
     ek=ek/2.0/xm
     ekinkat=ekinkat+ek
   END DO
@@ -900,10 +931,13 @@ energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
 etot = energy + ekion + ekinion + ekinel + ekinkat
+energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
+WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, &
+  eshell+enrear+ecback+ecorr,ecback+ecorr
 
 IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
   CALL safeopen(163,it,jenergy,'penergies')
-  WRITE(163,'(1f14.6,22e24.15)') tfs, &
+  WRITE(163,'(1f14.6,25e24.15)') tfs, &
      &                eshell*2.-esh1,     &
      &                enrear,             &
      &                ekion,              &
@@ -922,7 +956,10 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &                energy,            &
      &                etot, &
      &                elaser, &
-     &                estar,estarETF
+     &                estar,&
+     &                estarETF,&
+     &                energ2,&
+     &                esh1
   CALL flush(163)
   CLOSE(163)
 END IF
@@ -1009,7 +1046,9 @@ DO ii=1,kdfull2
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
-ekinout = sumk/sum0
+sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
+ekinout = sumk/sum0ex
+!WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
 #endif
 #if(findiff|numerov)
 
@@ -1737,6 +1776,22 @@ IF(irest <= 0) THEN                    !  write file headers
   END IF
   
 #if(simpara)
+  IF(jdiporb /= 0) THEN
+#else
+  IF(myn == 0 .AND. jdiporb /= 0) THEN
+#endif
+    OPEN(810,STATUS='unknown',FORM='formatted',FILE='pdiporb.x.'//outnam)
+    WRITE(810,'(a)') 'protocol of s.p. moments: time,x-dipole of orbitals'
+    CLOSE(810)
+    OPEN(811,STATUS='unknown',FORM='formatted',FILE='pdiporb.y.'//outnam)
+    WRITE(811,'(a)') 'protocol of s.p. moments: time,y-dipole of orbitals'
+    CLOSE(811)
+    OPEN(812,STATUS='unknown',FORM='formatted',FILE='pdiporb.z.'//outnam)
+    WRITE(812,'(a)') 'protocol of s.p. moments: time,z-dipole of orbitals'
+    CLOSE(812)
+  END IF
+
+#if(simpara)
   IF(jmp /= 0) THEN
 #else
   IF(jmp /= 0 .AND. myn == 0) THEN
@@ -1837,6 +1892,7 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 18: total en. [Ry]'
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
     WRITE(163,*) 'col 20/21: internal exc. energy (spin up/down)'
+    WRITE(163,*) 'col 24/25: direct energy, kinetic energy'
     CLOSE(163)
   END IF
   
@@ -2506,6 +2562,9 @@ IF(nclust > 0 .AND. myn == 0)THEN
 #endif
   
   CALL safeopen(8,it,jdip,'pdip')
+  CALL safeopen(810,it,jdiporb,'pdiporb.x')
+  CALL safeopen(811,it,jdiporb,'pdiporb.y')
+  CALL safeopen(812,it,jdiporb,'pdiporb.z')
   CALL safeopen(9,it,jquad,'pquad')
   CALL safeopen(17,it,jinfo,'infosp')
   CALL safeopen(47,0,jangabso,'pangabso')
@@ -2565,8 +2624,9 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
   sumy=0D0
   sumz=0D0
   DO ion=1,nion
+    r2iona = SQRT(cx(ion)**2+cy(ion)**2+cz(ion)**2)
     IF(MOD(it,jpos) == 0) WRITE(21,'(1f13.5,3e17.8,1pg13.5)')  &
-        tfs,cx(ion),cy(ion),cz(ion),r2ion   !  ecorr
+        tfs,cx(ion),cy(ion),cz(ion),r2iona   !  ecorr
     IF(MOD(it,jvel) == 0) WRITE(22,'(1f13.5,3e17.8,1pg13.5)')  &
         tfs,cpx(ion),cpy(ion),cpz(ion),ekion
     sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836.
@@ -2864,7 +2924,8 @@ END IF
 IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
    .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
    .OR. (jenergy > 0 .AND. MOD(it,jenergy)==0) & 
-   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0)) THEN
+   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) &
+   .OR. (jdiporb > 0 .AND. MOD(it,jdiporb)==0)) THEN
 #if(parayes) 
   IF(ttest) WRITE(*,*) ' ANALYZE before INFO: myn=',myn
 #endif
@@ -2911,6 +2972,15 @@ IF(myn==0) THEN
   IF(jdip > 0 .AND. MOD(it,jdip) == 0) THEN
     WRITE(8,'(f10.5,3e17.8)') tfs,qe(2),qe(3),qe(4)
     CALL flush(8)
+  END IF
+
+  IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN
+    WRITE(810,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
+    WRITE(811,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,4),nbe=1,nstate_all)
+    WRITE(812,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,5),nbe=1,nstate_all)
+    CALL flush(810)
+    CALL flush(811)
+    CALL flush(812)
   END IF
   
   IF(jquad > 0 .AND. MOD(it,jquad) == 0) THEN
@@ -3049,8 +3119,7 @@ REAL(DP), INTENT(IN OUT)         :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3069,14 +3138,12 @@ END DO
 !     propagation of positions first
 
 !      xm=amu(np(nrare+1))*1836.0*ame
-
-xm=amu(-18)*1836.0*ame
-
 !      call leapfr(cx(nrare+1),cy(nrare+1),cz(nrare+1),
 !     &     cpx(nrare+1),cpy(nrare+1),cpz(nrare+1),dt,xm,nrare)
 
-CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,NE,2)
-
+ALLOCATE(xm(1:ne))
+xm=amu(-18)*1836.0D0*ame
+CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,ne,2)
 
 !     update subgrids in case of pseudo-densities
 
@@ -3089,8 +3156,9 @@ END IF
 
 CALL getforces(rho,psi,0) ! forces on valences with new positions
 
-
-CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,1D0,NE,2)
+xm = 1D0
+CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 RETURN
 END SUBROUTINE vstep
@@ -3108,8 +3176,7 @@ REAL(DP), INTENT(IN)             :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3129,9 +3196,11 @@ END DO
 
 !      xm=amu(np(nrare+1))*1836.0*ame
 
+ALLOCATE(xm(1:ne))
 xm=amu(-18)*1836.0*ame
 CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
                 fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 !     update subgrids in case of pseudo-densities
 

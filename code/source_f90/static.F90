@@ -1099,11 +1099,11 @@ CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
 #if(parano)
 DO nb=1,nstate
   IF(numspin==2) THEN
-    WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
+    WRITE(42,'(a,i3,a,i3,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,variance =',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekinsp(nb), amoy(nb),evarsp(nb)
   ELSE
-    WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
+    WRITE(42,'(a,i3,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,variance=',  &
       occup(nb),ekinsp(nb),amoy(nb),evarsp(nb)
   END IF

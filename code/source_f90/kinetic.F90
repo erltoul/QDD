@@ -1,8 +1,8 @@
-#include"define.h"
+#include "define.h"
 
 #if(gridfft)
-INCLUDE "fft.F90"
-#endif
+#include "fft.F90"
+#endif 
 
 #if(findiff|numerov)
 INCLUDE "findiff.F90"

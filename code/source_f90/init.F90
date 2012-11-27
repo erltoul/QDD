@@ -71,7 +71,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     irotat,phirot,i3dz,i3dx,i3dstate,istream,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
-    jdip,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
+    jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
     tempion,idenspl,ekmat,nfix,  &
@@ -464,7 +464,12 @@ END IF
 ! fft:
 #if(gridfft)
 WRITE(iu,'(a)') 'Fourier propagation'
+#if(netlib_fft)
 WRITE(iu,'(a)') 'using netlib ffts'
+#endif
+#if(fftw_cpu)
+WRITE(iu,'(a)') 'using fftw@cpu'
+#endif
 #endif
 #if(coufou)
 WRITE(iu,'(a)') 'falr coulomb solver'
@@ -1497,6 +1502,9 @@ IF(myn == 0)THEN
         STOP 'element not provided with erf pseudo potential'
       END IF
     END IF
+    WRITE(6,'(a,i4,a,3(g12.4),i4,1x,2(1pg13.5))')  &
+      ' ion nr.',ion,':  x,y,z,type,params=',  &
+        cx(ion),cy(ion),cz(ion),np(ion),amu(np(ion)),crloc(np(ion))
     IF(np(ion) > 92) STOP 'element out of range'
     IF(amu(np(ion)) == 0D0) STOP 'unknown elem. found'
 
@@ -3097,17 +3105,6 @@ DO iz=1,nz2
   zt2(iz)=z1*z1
 END DO
 
-
-!     init Coulomb solver
-
-#if(findiff|numerov)
-CALL d3sinfinit (dx,dy,dz)
-#else
-#if(coufou || coudoub)
-CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
-#endif
-#endif
-
 !     init kinetic energy array
 
 #if(findiff)
@@ -3119,6 +3116,17 @@ CALL inv5p_ini(dt1)
 #if(gridfft)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #endif
+
+!     init Coulomb solver
+
+#if(findiff|numerov)
+CALL d3sinfinit (dx,dy,dz)
+#else
+#if(coufou || coudoub)
+CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
+#endif
+#endif
+
 
 RETURN
 END SUBROUTINE init_grid

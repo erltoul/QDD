@@ -9,7 +9,7 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 !
 
 ! number of nodes (=1 for serial version)
-INTEGER :: knode=1
+INTEGER :: knode=10
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
 INTEGER :: kstate=0
@@ -17,6 +17,16 @@ INTEGER :: kstate=0
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
 
+!  settings ad definitions for openmp parallel computing
+#if(paropenmp)
+INTEGER,PARAMETER :: numthr = 2  ! actual number of threads in openmp
+INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
+INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+EXTERNAL :: OMP_SET_NUM_THREADS
+#else
+INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
+#endif
+INTEGER :: nthr=0                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8
@@ -188,7 +198,7 @@ INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
-INTEGER :: jinfo=10,jdip=10,jquad=0,jang=0,jspdp=0,jenergy=10
+INTEGER :: jinfo=10,jdip=10,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
@@ -245,6 +255,7 @@ REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 INTEGER,PARAMETER :: kmom=35
 INTEGER :: nrmom
 REAL(DP) :: qe(kmom),se(5),ajx,ajy,ajz
+REAL(DP),ALLOCATABLE :: qeorb_all(:,:)
 !COMMON /moment/ qe,se,ajx,ajy,ajz,nrmom
 
 ! storage for the case of 1ph rotation (see 'phangle')
@@ -407,6 +418,7 @@ enonlo=0D0
 ALLOCATE(spvariance(kstate))                  !  s.p. energy variances
 ALLOCATE(spvariancep(kstate))                 !  s.p. energy variances
 ALLOCATE(spvariancebi(kstate))                !  s.p. energy variances
+ALLOCATE(qeorb_all(ksttot,11))                !  s.p. dipole moments
 ALLOCATE(spenergybi(kstate))
 ALLOCATE(spnorm(kstate))                      !  norm of s.p. wf
 ALLOCATE(occup(kstate))                       !  occupation weight

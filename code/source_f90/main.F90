@@ -96,8 +96,6 @@ ALLOCATE(aloc(2*kdfull2),rho(2*kdfull2))
 aloc=0D0
 rho=0D0
 
-
-
 IF(myn == 0) CALL ocoption(7)   ! output compiled options
 IF(myn == 0) CALL ocoption(8)   ! output compiled options
 CALL init_output()              ! headers for basic output files
@@ -312,8 +310,11 @@ ekionold=0D0
 
 !---           here starts true propagation  --------------
 
+CALL flush(7)
+CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
+CALL stimer(1)
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step
@@ -390,6 +391,7 @@ DO it=irest,itmax   ! time-loop
 !     ******** compute and write observables: ********
   
   CALL timer(2)
+  CALL stimer(2)
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
@@ -475,6 +477,13 @@ CLOSE(806)
 
 DEALLOCATE(psi)
 
+#if(fftw_cpu)
+IF (myn == 0) THEN
+CALL fft_end()
+CALL coulsolv_end()
+ENDIF
+#endif
+
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
@@ -487,6 +496,18 @@ CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
 #endif
+
+CALL cpu_time(time_absfin)
+OPEN(123,ACCESS='append',STATUS='unknown',FILE='Time')
+#if(netlib_fft)
+WRITE(123,*)'NETLIB'
+#endif
+#if(fftw_cpu)
+WRITE(123,*)'FFTW'
+#endif
+WRITE(123,*)'Box :',nx2,ny2,nz2
+WRITE(123,*)'Walltime =',time_absfin-time_absinit
+CLOSE(123)
 
 END PROGRAM tdlda_m
 
