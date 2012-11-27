@@ -7,7 +7,7 @@ if [ $1 ] ; then
 fi
 
 if [ -z $2 ] ; then
-    type_check=netlib
+    type_check=""
 else
     type_check=$2
 fi
@@ -80,6 +80,26 @@ else
     echo "(0) serial; (1) parallel; (2) simpara"
     exit 0 
 fi
+
+if [ $type_check = netlib ] ; then
+    sed -i -e 's/netlib_fft.*/netlib_fft 1/' define.h
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = NETLIB/' makefile
+#        sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+elif [ $type_check = fftw ] ; then
+#    	if [ $dim_check = 1d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 1d/' makefile
+        sed -i -e 's/fftw_cpu.*/fftw_cpu 1/' define.h
+#    	fi
+#    	if [ $dim_check = 3d ] ; then
+#        	sed -i -e 's/DIM = .*/DIM = 3d/' makefile
+#        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
+#    	fi
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
+else
+    echo "Empty second argument, preserving FFTW lib options."
+    exit 0 
+fi
+
 
 make clean
 make

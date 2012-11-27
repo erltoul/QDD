@@ -1,25 +1,21 @@
-# Makefile v2.4 (2010.05.05)
+# Makefile.Mkl v2.4 (2010.05.05)
 # CF90  = GFORT (serial version only)
 #         IFORT (serial & parallel & debug version)
 #         XLF_R (serial & parallel version)
 #         MPIF90 (parallel version only)
 
-# Set the date
-DATE    =$(shell date +%d.%m.%y)
+# Insert the date
+DATE    = 150812
 # the compiler is set here 
-CF90    = MPIF90
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
-# Link static or not.
-LINK_STATIC = YES
 # invoke openmp
-OMP = YES
-# For large boxe sizes, try option
-# '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
+OMP = NO
 
 #####################################################################
 #                             Options                               #
@@ -41,9 +37,14 @@ OMP = YES
 # endif
 # endif
 
+
+ 
 	OMPADD = 
 ifeq "$(TYPE_FFT)" "FFTW"
 	FFTWADD = -Dfftw_cpu 
+	FFTWDIR=$HOME/FFTW3/mkl
+	FFTW_LIB=-L$FFTWDIR/interfaces/fftw3xf -lfftw3xf_intel 
+	FFTW_INC=-I$FFTWDIR/include/fftw
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	FFTWADD = -Dnetlib_fft 
@@ -62,7 +63,8 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
+	OMPADD = -fopenmp -Dparopenmp
+#	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
@@ -77,7 +79,8 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -cpp -w -g                             
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
+	OMPADD = -fopenmp -Dparopenmp
+#	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
@@ -95,18 +98,22 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD =  -openmp -Dparopenmp -lfftw3_threads
+	OMPADD =  -openmp -Dparopenmp 
+#	OMPADD =  -openmp -Dparopenmp -lfftw3_threads
 endif        
 endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -axSSE4.2 -msse4.2 -O3 -ip -no-prec-div -align all -static
+	OPT2  = $(OPT1) -autodouble
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
+#	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
-	OPT2  =   $(OPT1)
+	OPT2  =   $(OPT1) -autodouble 
 	OPT3  =  -fpp -w -g -align all -autodouble
 endif
 ifeq "$(OMP)" "YES"
@@ -194,15 +201,10 @@ COMPILERFLAGS1 =  $(LDLIBS)$(OPT1) $(OMPADD) $(FFTWADD)
 COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) $(OMPADD) $(FFTWADD)
 COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) $(OMPADD) $(FFTWADD)
 
+FFTWDIR	       =$HOME/FFTW3/mkl
 LINKER         = $(COMPILER)
-
-ifeq "$(LINK_STATIC)" "YES"
-	LINKERFLAGS = $(COMPILERFLAGS1)
-else
-	LINKERFLAGS = $(COMPILERFLAGS1:-static=)
-endif
-
-
+LINKERFLAGS    = $(COMPILERFLAGS1) -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -openmp -lpthread -L/users/p1238/reinhard/FFTW3/mkl/interfaces/fftw3xf -lfftw3xf_intel -L/usr/local/FFTW/fftw-3.2.2/lib -lfftw3_threads -lfftw3_omp -lfftw3 -lm
+#LINKERFLAGS    = $(COMPILERFLAGS1) -Wl,-rpath,$MKL_BASE/lib/em64t -L$MKL_BASE/lib/em64t -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -openmp -lpthread -L/users/p1238/reinhard/FFTW3/mkl/interfaces/fftw3xf -lfftw3xf_intel -I$(FFTWDIR)/include/fftw
 
 #####################################################################
 #                              Rules                                #
@@ -213,7 +215,7 @@ ifeq "$(USE_MPI)" "NO"
 ifeq "$(OMP)" "YES"
 	MPI_NAME = OMP
 else
-	MPI_NAME = Mono
+	MPI_NAME = MKL
 endif
 endif
 ifeq "$(USE_MPI)" "YES"
@@ -252,14 +254,15 @@ ifeq "$(TYPE_FFT)" "FFTW"
 OBJS = $(OBJINT) fftw.o
 endif
 
-OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile
+OBJH = define.h params.F90 kinetic.F90 coulsolv.F90 makefile.mkl
 
 all:$(EXEC)
 $(EXEC): $(OBJS)
 	@echo Linking executable $@
 
 ifeq "$(TYPE_FFT)" "FFTW"
-	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
+	$(LINKER)  -o $@ $(OBJS) $(LINKERFLAGS) -lm
+#	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)
@@ -267,90 +270,90 @@ endif
 
 	mv $(EXEC) ../
 
-$(OBJS):  define.h makefile params.F90
+$(OBJS):  define.h makefile.mkl params.F90
 
 %.o: %.mod
 
 .F90.o:
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
-main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
+main.o: main.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftpack.o
+kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile.mkl params.o fftpack.o
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
 #ifeq "$(DIM)" "1d"
-#kinetic.o : kinetic.F90 fft.fftw1d.F90 findiff.F90 define.h makefile params.o fftw.o
+#kinetic.o : kinetic.F90 fft.fftw1d.F90 findiff.F90 define.h makefile.mkl params.o fftw.o
 #else
-kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftw.o
+kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile.mkl params.o fftw.o
 #endif
 endif
 
 ifeq "$(TYPE_FFT)" "FFTW"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile.mkl params.o kinetic.o
 endif
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile params.o kinetic.o fftpack.o
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 define.h makefile.mkl params.o kinetic.o fftpack.o
 endif
 
-loc_mfield.o: loc_mfield.F90 define.h makefile params.o kinetic.o coulsolv.o
+loc_mfield.o: loc_mfield.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o
 
-pseudosoft.o: pseudosoft.F90 define.h makefile params.o kinetic.o coulsolv.o
+pseudosoft.o: pseudosoft.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o
 
-static.o: pseudosoft.F90 define.h makefile params.o kinetic.o localize_rad.o 2stUT.o
+static.o: pseudosoft.F90 define.h makefile.mkl params.o kinetic.o localize_rad.o 2stUT.o
 
-localize_rad.o: localize_rad.F90 define.h makefile params.o kinetic.o 
+localize_rad.o: localize_rad.F90 define.h makefile.mkl params.o kinetic.o 
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
-rho.o: rho.F90 define.h makefile params.o
+rho.o: rho.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
-rhoc.o: rho.F90 define.h makefile params.o
+rhoc.o: rho.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-localizer.o: localize.F90 define.h makefile params.o
+localizer.o: localize.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
-localize.o: localize.F90 define.h makefile params.o
+localize.o: localize.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnew.o: sicnew.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
-sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnewc.o: sicnew.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
+nonloc.o: nonloc.F90 define.h makefile.mkl params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
-nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
+nonlocc.o: nonloc.F90 define.h makefile.mkl params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUT.o: 2stUT.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
  
-2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUTc.o: 2stUT.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o symmcond_step.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 
 ifeq "$(TYPE_FFT)" "NETLIB"
-fftpack.o: fftpack.F90 fftpack2.F90 define.h makefile params.o
+fftpack.o: fftpack.F90 fftpack2.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS2) -c $< 
 endif
 
-givens.o: givens.F90 define.h makefile params.o
+givens.o: givens.F90 define.h makefile.mkl params.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
 
-init.o: init.F90 define.h makefile params.o kinetic.o coulsolv.o
+init.o: init.F90 define.h makefile.mkl params.o kinetic.o coulsolv.o
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
 
-restart.o: restart.F90 define.h makefile params.o kinetic.o
+restart.o: restart.F90 define.h makefile.mkl params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
-restartc.o: restart.F90 define.h makefile params.o kinetic.o
+restartc.o: restart.F90 define.h makefile.mkl params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-parallele.o: parallele.F90 define.h makefile params.o kinetic.o
+parallele.o: parallele.F90 define.h makefile.mkl params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $< 
 
 clean:

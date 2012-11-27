@@ -383,6 +383,7 @@ ec=0D0
 
 !CALL cpu_time(time_start)
 
+!!!$OMP PARALLEL DO DEFAULT(PRIVATE) SHARED(nxyz,rho,chpdft) SCHEDULE(STATIC) REDUCTION(+: ec,enerpw)
 DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
   xi     = rho(ii+nxyz)
@@ -522,13 +523,14 @@ DO ii=1,nxyz
 !old        ec=-t70/2.0*e2+ec
 
 END DO
+!!!!$OMP END PARALLEL DO
+enrear=ec*dvol
 !  CALL cpu_time(time_end)
 !  write (6,*)ec
 !  et=et+time_end-time_start
 !  write(6,*)"Time lda:",et
 !  STOP
 
-enrear=ec*dvol
 
 IF(directenergy) THEN
   enerpw = enerpw*dvol

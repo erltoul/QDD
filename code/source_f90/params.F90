@@ -9,7 +9,7 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 !
 
 ! number of nodes (=1 for serial version)
-INTEGER :: knode=1
+INTEGER :: knode=10
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
 INTEGER :: kstate=0
@@ -17,6 +17,16 @@ INTEGER :: kstate=0
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
 
+!  settings ad definitions for openmp parallel computing
+#if(paropenmp)
+INTEGER,PARAMETER :: numthr = 2  ! actual number of threads in openmp
+INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
+INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+EXTERNAL :: OMP_SET_NUM_THREADS
+#else
+INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
+#endif
+INTEGER :: nthr=0                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8
@@ -184,7 +194,7 @@ INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=0,ifexpevol=0
+INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0

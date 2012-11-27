@@ -310,8 +310,11 @@ ekionold=0D0
 
 !---           here starts true propagation  --------------
 
+CALL flush(7)
+CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
+CALL stimer(1)
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step
@@ -388,6 +391,7 @@ DO it=irest,itmax   ! time-loop
 !     ******** compute and write observables: ********
   
   CALL timer(2)
+  CALL stimer(2)
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
@@ -474,8 +478,10 @@ CLOSE(806)
 DEALLOCATE(psi)
 
 #if(fftw_cpu)
+IF (myn == 0) THEN
 CALL fft_end()
-CALL coulex_end()
+CALL coulsolv_end()
+ENDIF
 #endif
 
 !                                       ! ends 'else' of 'if(ifscan)'

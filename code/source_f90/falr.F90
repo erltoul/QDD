@@ -1,6 +1,10 @@
 !------falr coulomb solver-------------------------------------------------
 
 MODULE coulsolv
+#if(fftw_cpu)
+USE FFTW
+USE, intrinsic :: iso_c_binding
+#endif
 USE params, ONLY: DP
 !USE kinetic, ONLY:
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -31,9 +35,19 @@ INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz,ecut
 
 REAL(DP),PRIVATE,ALLOCATABLE :: xval(:),yval(:),zval(:)
 REAL(DP),PRIVATE,ALLOCATABLE :: xt2(:),yt2(:),zt2(:)
+#if(netlib_fft)
 REAL(DP),PRIVATE,ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP),PRIVATE,ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER,PRIVATE,ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
+#endif
+
+#if(fftw_cpu)
+type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pbackx,pbacky,pbackz
+INTEGER(C_INT), PRIVATE :: wisdomtest
+COMPLEX(C_DOUBLE_COMPLEX),ALLOCATABLE,PRIVATE :: fftax(:),fftay(:),fftb(:,:)
+#endif
+
 !fix! REAL(DP),PRIVATE :: xval(kdim),yval(kdim),zval(kdim)
 !fix! REAL(DP),PRIVATE :: xt2(kdim),yt2(kdim),zt2(kdim)
 !fix! REAL(DP),PRIVATE :: wrkx(kdim),wrky(kdim),wrkz(kdim)
@@ -54,8 +68,6 @@ REAL(DP),PRIVATE :: ax2(0:4),bdiv(0:4),radpow
 !REAL(DP),PRIVATE,ALLOCATABLE :: xrow(:),yrow(:),zrow(:)
 INTEGER,PRIVATE :: lpow
 
-
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
 !fix! COMPLEX(DP),PRIVATE :: fftax(kdim),fftay(kdim),fftb(kdim,kdim)
 !COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
 
@@ -92,9 +104,11 @@ kfft2=kfft*2
 
 
 ! allocate work arrays
+#if(netlib_fft)
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
+#endif
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
@@ -1411,9 +1425,6 @@ RETURN
 END SUBROUTINE qgaus_fx1
 !END SUBROUTINE qgaus
 
-
-
-
 !-----fftinp------------------------------------------------------------
 
 SUBROUTINE fftinp
@@ -1587,13 +1598,14 @@ REAL(DP) ::  a(kdfull)
 !             pski   imaginary part of the wave-function
 
 DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+INTEGER wisdomtest
 
 !----------------------------------------------------------------------
 
 
 
 !     check initialization
-
+#if(netlib_fft)
 IF(mxini == 0) THEN
   CALL dcfti1 (kfftx,wsavex,ifacx)
   mxini  = kfftx
@@ -1615,6 +1627,51 @@ IF(mzini == 0) THEN
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
+#endif
+
+#if(fftw_cpu)
+IF(mxini == 0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
+    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+  END IF
+  !pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  !pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pforwx,kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pbackx,kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  mxini  = kfftx
+  WRITE(7,'(a)') ' x-fft initialized '
+ELSE IF(mxini /= kfftx) THEN
+  STOP ' nx2 in four3d not as initialized!'
+END IF
+IF(myini == 0) THEN
+  !pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  !pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pforwy,kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pbacky,kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  myini  = kffty
+  WRITE(7,'(a)') ' y-fft initialized '
+ELSE IF(myini /= kffty) THEN
+  STOP ' ny2 in four3d not as initialized!'
+END IF
+IF(mzini == 0) THEN
+  !pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  !pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pforwz,kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
+  CALL dfftw_plan_dft_1d(pbackz,kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
+  mzini  = kfftz
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+  END IF
+  WRITE(7,'(a)') ' z-fft initialized '
+ELSE IF(mzini /= kfftz) THEN
+  STOP ' nz2 in four3d not as initialized!'
+END IF
+#endif
+
 nzzh=(nzi-1)*nxy1
 nyyh=(nyi-1)*nxi
 sqh=SQRT(0.5D0)
@@ -1745,7 +1802,12 @@ DO i3=1,nzi
     END DO
     
 !         execution of the fourier-transformation
+#if(netlib_fft)
     CALL dcftf1 (kfftx,fftax,wrkx,wsavex,ifacx)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwx,fftax,fftax)
+#endif
     
 !         decomposition of the wave-function
 !        positive space
@@ -1825,7 +1887,13 @@ DO i3=1,nzi
     END DO
     
 !         execution of the fourier-transformation
+
+#if(netlib_fft)
     CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwy,fftay,fftay)
+#endif
     
 !         decomposition of the wave-function
 !         positive space
@@ -1951,7 +2019,12 @@ DO i2=1,kffty
     END DO
   END DO
   DO i1=1,kfftx
+#if(netlib_fft)
     CALL dcftf1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
+#endif
   END DO
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -2055,7 +2128,12 @@ DO i2=1,kffty
     END DO
   END DO
   DO i1=1,kfftx
+#if(netlib_fft)
     CALL dcftb1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
+#endif
   END DO
   DO i3=1,kfftz                  ! copy back
     i3m   = MOD(i3+nzh,kfftz)+1
@@ -2119,8 +2197,12 @@ DO i3=1,nzi
     END DO
     
 !         execution
+#if(netlib_fft)
     CALL dcftb1 (kffty,fftay,wrky,wsavey,ifacy)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbacky,fftay,fftay)
+#endif
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nxi*(ny-2)
@@ -2187,8 +2269,12 @@ DO i3=1,nzi
     END DO
     
 !        execution
+#if(netlib_fft)
     CALL dcftb1 (kfftx,fftax,wrkx,wsavex,ifacx)
-    
+#endif
+#if(fftw_cpu)
+    CALL fftw_execute_dft(pbackx,fftax,fftax)
+#endif
 !         decomposition of the inverse transformed wave-function
 !         positive space
     ii=i0+nx-1
@@ -2204,12 +2290,33 @@ DO i3=1,nzi
       psxr(ii)=REAL(fftax(i1))
       psxi(ii)=AIMAG(fftax(i1))
     END DO
-    
   END DO
 END DO
 
-
 RETURN
 END SUBROUTINE ffbx
+
+#if(fftw_cpu)
+SUBROUTINE coulsolv_end()
+
+CALL fftw_destroy_plan(pforwx)
+CALL fftw_destroy_plan(pforwy)
+CALL fftw_destroy_plan(pforwz)
+CALL fftw_destroy_plan(pbackx)
+CALL fftw_destroy_plan(pbacky)
+CALL fftw_destroy_plan(pbackz)
+
+DEALLOCATE(xval,yval,zval)
+DEALLOCATE(xt2,yt2,zt2)
+DEALLOCATE(fftax,fftay,fftb)
+DEALLOCATE(ikm,indfc)
+DEALLOCATE(akv2)
+DEALLOCATE(potc,rho,rhozw)
+DEALLOCATE(qlcows,rq)
+DEALLOCATE(rokall,pcoall)
+
+RETURN
+END SUBROUTINE coulsolv_end
+#endif
 
 END MODULE coulsolv

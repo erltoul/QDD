@@ -320,8 +320,10 @@ REAL(DP), INTENT(IN)                         :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
 COMPLEX(DP) :: rii,cfac
+!INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+
 
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
@@ -347,9 +349,9 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 myn = 0
 #endif
 
-
-ALLOCATE(q1(2*kdfull2))
-ALLOCATE(q2(kdfull2))
+!WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
+ALLOCATE(q1(2*kdfull2,0:nthr))
+ALLOCATE(q2(kdfull2,0:nthr))
 
 CALL cpu_time(time_init)
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
@@ -359,23 +361,20 @@ itsub = MOD(it,ipasinf) + 1
 
 ri = -dt1*0.5D0
 dt = dt1*0.5D0
-
-
-
+nlocact = numspin*nxyz
 
 
 !     half time step in coordinate space
 !     local phase field on workspace 'q1'
 
-nlocact = numspin*nxyz
 DO ind=1,nlocact
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
 !  CALL cmult3d(q0(1,nb),q1(1+ishift))
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 
@@ -383,47 +382,75 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb=1,nstate
     tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 
 !       one full time step for the kinetic energy
 
+ithr=0
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,ishift,ithr) SCHEDULE(STATIC)
+#endif
 DO nb=1,nstate
+#if(paropenmp && dynopenmp)
+  ithr = OMP_GET_THREAD_NUM()
+  WRITE(*,*) ' actual thread:',ithr
+!  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+#endif 
 #if(gridfft)
   IF(iffastpropag == 1) THEN
-    CALL kinprop(q0(1,nb),q1)
+    CALL kinprop(q0(1,nb),q1(1,ithr))
   ELSE
-    CALL fftf(q0(1,nb),q1)
+    CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
-    q1 = ak*q1
-    CALL fftback(q1,q0(1,nb))
+!    WRITE(*,*) ak(1),q1(1,ithr)
+    q1(:,ithr) = ak*q1(:,ithr)
+    CALL fftback(q1(1,ithr),q0(1,nb))
   END IF
 #endif
 #if(findiff|numerov)
   CALL d3mixpropag (q0(1,nb),dt1)
 #endif
+!#if(paropenmp)
+!WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
+!WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+!#endif 
   
 END DO
-
+#if(dynopenmp)
+!$OMP END PARALLEL DO
+#endif
 
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
 
 
-
+CALL flush(7)
 
 
 
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
+#endif
   DO nb = 1,nstate
     tenerg = .false. !   itsub.eq.ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#if(dynopenmp)
+!$OMP END PARALLEL DO 
+#endif
 END IF
 
 
@@ -445,18 +472,18 @@ CALL dyn_mfield(rho,aloc,q0,dt)
 
 !     re-open workspace
 
-ALLOCATE(q1(2*kdfull2))
+ALLOCATE(q1(2*kdfull2,0:0))
 
 !     half time step in coordinate space:
 
 nup = numspin*nxyz
 DO ind=1,nup
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 !     finally release workspace
@@ -483,6 +510,8 @@ END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
+
+CALL flush(7)
 
 RETURN
 END SUBROUTINE tstep

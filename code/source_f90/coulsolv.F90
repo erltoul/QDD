@@ -1,33 +1,15 @@
-#include"define.h"
+#include "define.h"
  
 #if(gridfft)
 #if(coufou)
 
-#if(fftw_cpu)
-INCLUDE 'falr.fftw.F90'
-#endif
+#include 'falr.F90'
 
-!#if(fftw3d_cpu)
-!INCLUDE 'falr.fftw.F90'
-!#endif
-
-#if(netlib_fft)
-INCLUDE 'falr.F90'
-#endif
 #endif !coufou
 
 #if(coudoub)
-#if(fftw_cpu)
-INCLUDE 'coulex.fftw.F90'
-#endif
 
-!#if(fftw3d_cpu)
-!INCLUDE 'coulex.fftw3d.F90'
-!#endif
-
-#if(netlib_fft)
-INCLUDE 'coulex.F90'
-#endif
+#include "coulex.F90"
 
 #endif !coudoub
 #endif !gridfft

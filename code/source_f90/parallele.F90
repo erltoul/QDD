@@ -27,6 +27,7 @@ WRITE(*,*) nprocs,knode
 #if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
+IF(knode /= kstate) STOP "knode must be equal to kstate !"
 #else
 knode = 1
 nprocs= 1
@@ -40,6 +41,16 @@ myn=n
 knode = 1         
 nprocs= 1         
 #endif
+
+#if(paropenmp)
+CALL OMP_SET_NUM_THREADS(numthr)
+WRITE(*,*) ' init. OMP:  Nr. threads=',numthr,OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
+nthr = OMP_GET_MAX_THREADS()-1
+#else
+nthr = 0
+#endif
+WRITE(*,*) ' INIT_PARALLELE: nthr=',nthr
+
 
 
 RETURN

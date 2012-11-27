@@ -4,22 +4,18 @@
 #         XLF_R (serial & parallel version)
 #         MPIF90 (parallel version only)
 
-# Set the date
-DATE    =$(shell date +%d.%m.%y)
+# Insert the date
+DATE    = 150812
 # the compiler is set here 
-CF90    = MPIF90
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
-# Link static or not.
-LINK_STATIC = YES
 # invoke openmp
-OMP = YES
-# For large boxe sizes, try option
-# '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
+OMP = NO
 
 #####################################################################
 #                             Options                               #
@@ -101,12 +97,15 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -axSSE4.2 -msse4.2 -O3 -ip -no-prec-div -align all -static
+	OPT2  = $(OPT1) -autodouble
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
+#	OPT1  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT2  =  -pg -fpp -w -axTP -msse2 -O3 -ip -no-prec-div -align all -autodouble -static
+#	OPT3  =  -pg -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
-	OPT2  =   $(OPT1)
+	OPT2  =   $(OPT1) -autodouble 
 	OPT3  =  -fpp -w -g -align all -autodouble
 endif
 ifeq "$(OMP)" "YES"
@@ -195,13 +194,7 @@ COMPILERFLAGS2 =  $(LDLIBS)$(OPT2) $(OMPADD) $(FFTWADD)
 COMPILERFLAGS3 =  $(LDLIBS)$(OPT3) $(OMPADD) $(FFTWADD)
 
 LINKER         = $(COMPILER)
-
-ifeq "$(LINK_STATIC)" "YES"
-	LINKERFLAGS = $(COMPILERFLAGS1)
-else
-	LINKERFLAGS = $(COMPILERFLAGS1:-static=)
-endif
-
+LINKERFLAGS    = $(COMPILERFLAGS1) -L/home/mpt218/gnu/lib
 
 
 #####################################################################
@@ -259,7 +252,7 @@ $(EXEC): $(OBJS)
 	@echo Linking executable $@
 
 ifeq "$(TYPE_FFT)" "FFTW"
-	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
+	$(LINKER) -o $@ $(OBJS) $(LINKERFLAGS) -lfftw3 -lm
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)
