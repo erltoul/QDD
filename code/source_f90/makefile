@@ -7,11 +7,11 @@
 # Set the date
 DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
-CF90    = MPIF90
+CF90    = IFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 # debugging option
 DEBUG   = NO
 # Link static or not.
