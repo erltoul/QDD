@@ -52,7 +52,7 @@ esac
 if [ $para = 0 ] ; then
     echo '*** serial compilation, simpara = no ***'
     echo "*** the executable for serial code is named '$NAME.seq' ***"
-    sed -i -e 's/parano.*/parano 1/' define.h
+    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
     sed -i -e 's/parayes.*/parayes 0/' define.h
     sed -i -e 's/simpara.*/simpara 0/' define.h
     sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" makefile
@@ -61,7 +61,7 @@ if [ $para = 0 ] ; then
 elif [ $para = 1 ] ; then
     echo '*** parallel compilation, simpara = no ***'
     echo "*** the executable for parallel code is name '$NAME.par' ***"
-    sed -i -e 's/parano.*/parano 0/' define.h
+    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 0/' define.h
     sed -i -e 's/parayes.*/parayes 1/' define.h
     sed -i -e 's/simpara.*/simpara 0/' define.h
     sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.par/g" makefile
@@ -70,7 +70,7 @@ elif [ $para = 1 ] ; then
 elif [ $para = 2 ] ; then
     echo '*** parallel compilation, simpara = yes ***'
     echo "*** the executable for sim. parallel code is named '$NAME.sim' ***"
-    sed -i -e 's/parano.*/parano 1/' define.h
+    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
     sed -i -e 's/parayes.*/parayes 0/' define.h
     sed -i -e 's/simpara.*/simpara 1/' define.h
     sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.sim/g" makefile
