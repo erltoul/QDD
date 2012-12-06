@@ -205,7 +205,7 @@ states)\\
 {\tt shiftWFx         }& shift of initial wavefunctions in x direction \\
 {\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to origin\\
 {\tt ispinsep         }& initialize wavefunctiosn with some spin asymmetry\\
-{\tt init\_lcao       }& switches the basis functions to start from\\
+{\tt init\_lcao       }& choice of basis for wavefunction initialization \\
 & =0 $\Longrightarrow$ harmonic oscillator functions (center can be
 moved
   by {\tt shiftWFx})
@@ -514,7 +514,11 @@ to handle. In a first step, the total number of wavefunctions is
 estimated and it is computed how many wavefunctions have to be
 initialized then for each ion. At one given ion, initialization starts
 with the $1s$ oscillator state. The first choice of spin is taken from
-column 7 of {tt for005ion.<name>}. If more than one state is to be
+column 7 of {\tt for005ion.<name>} {which initializes the entry of the
+  actual ion in the the {\tt ipol}
+array. The value {\tt ipol=+1} sets a spin up (i.e. {\tt ispin=1} in
+the code) as the first choice, 
+while {\tt ipol=-1} sets a spin down (i.e. {\tt ispin=2}).} If more than one state is to be
 occupied, the next is then the $1s$ state with opposite spin. Next
 comes the $1p_i$ state with first spin where $i$ is the direction
 given as first entry in column 5. For example if column 5 selects
@@ -524,8 +528,10 @@ ion site is reached. Column 6 sets the oscillator radius for the
 initialization at this ion (which allows to deal efficiently with
 systems consisting of very different ions). Column 7 becomes important
 for ions associated with an odd number of electrons as, e.g.,
-hydrogen. One ought to distribute an equal collection of {\tt +1}
-and {\tt -1} entries to avoid unnaturally polarized molecules.
+hydrogen. One ought to distribute an equal collection of 
+%{\tt +1} and {\tt -1} entries
+{spins up and down over the whole system} to avoid unnaturally 
+polarized molecules.
 
 \newpage
 
@@ -615,6 +621,7 @@ and {\tt -1} entries to avoid unnaturally polarized molecules.
         the results from full spin calculation in case of ADSIC.
         Check.
 \end{itemize}
+
 
 
 
