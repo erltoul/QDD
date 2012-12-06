@@ -889,7 +889,6 @@ DO i3=1,nzi
 !         execution of the Fourier-transformation
 
 #if(netlib_fft)
->>>>>>> dev
     CALL dcftf1 (kffty,fftay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)

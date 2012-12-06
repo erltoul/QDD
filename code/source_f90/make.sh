@@ -7,7 +7,7 @@ if [ $1 ] ; then
 fi
 
 if [ -z $2 ] ; then
-    type_check=""
+    type_check=none
 else
     type_check=$2
 fi
