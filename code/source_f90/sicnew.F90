@@ -1177,7 +1177,7 @@ DO nbe=1,nstate
     sum0 = 0D0
     sumk = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
+      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
     END DO
@@ -1677,7 +1677,7 @@ DO nbe=1,nstate
 #ifdef REALSWITCH
       qex(:,nbe)=  qex(:,nbe) - q0(:,nb2)*acl(:)
 #else
-      qex(:)=  qex(:) - psisavex(:,nb2)*CMPLX(acl(:),acli(:))
+      qex(:)=  qex(:) - psisavex(:,nb2)*CMPLX(acl(:),acli(:),DP)
 #endif
 
 #ifdef REALSWITCH

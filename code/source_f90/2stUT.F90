@@ -773,7 +773,7 @@ DO iter=1,itmax2
 !#ifdef REALSWITCH
 !       sum=0.D0
 !#else
-!       sum=dcmplx(0.D0,0.D0)
+!       sum=CMPLX(0.D0,0.D0,DP)
 !#endif
 !       do i=1,ndims(is)
 !#ifdef REALSWITCH

@@ -699,7 +699,7 @@ DO iz=-maxmz,maxmz
     DO ix=-maxmx,maxmx
       n = 1 + n
       workx (n)  = REAL(fieldin(ix,iy,iz))
-      workxi (n) = imag(fieldin(ix,iy,iz))
+      workxi (n) = AIMAG(fieldin(ix,iy,iz))
     END DO
     
 !       do klt=1,ndimx
@@ -728,7 +728,7 @@ DO iz=-maxmz,maxmz
     DO iy=-maxmy,maxmy
       n = 1 + n
       worky (n)  = REAL(fieldout(ix,iy,iz))
-      workyi (n) = imag(fieldout(ix,iy,iz))
+      workyi (n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '2 ON'
     
@@ -758,7 +758,7 @@ DO iy=-maxmy,maxmy
     DO iz=-maxmz,maxmz
       n = 1 + n
       workz (n) = REAL(fieldout(ix,iy,iz))
-      workzi(n) = imag(fieldout(ix,iy,iz))
+      workzi(n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '3 ON'
     CALL sint(ndimz,workz(1),wsavez)

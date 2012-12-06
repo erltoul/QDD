@@ -607,11 +607,11 @@ ALLOCATE(psipr(kdfull2))
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
+      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
+      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0

@@ -165,7 +165,7 @@ DEALLOCATE(psir)
 !       *******************************************
 
 ALLOCATE(psi(kdfull2,kstate))
-psi=CMPLX(0D0,0D0)
+psi=CMPLX(0D0,0D0,DP)
 
 !     optionally initialize work arrays
 IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))

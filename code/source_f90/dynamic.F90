@@ -1042,7 +1042,7 @@ CALL fftf(psin,psi2)
 sum0 = 0D0
 sumk = 0D0
 DO ii=1,kdfull2
-  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +imag(psi2(ii))*imag(psi2(ii))
+  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
@@ -1058,9 +1058,9 @@ CALL ckin3d(psi(1,nb),psi2)
 sum0 = 0D0
 acc = 0D0
 DO i=1,nxyz
-  acc = REAL(psi(i,nb))*REAL(psi2(i)) + imag(psi(i,nb))*imag(psi2(i))  &
+  acc = REAL(psi(i,nb))*REAL(psi2(i)) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
       + acc
-  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + imag(psi(i,nb))*imag(psi(i,nb))  &
+  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
       + sum0
 END DO
 ekinout = REAL(wfovlp(psi(1,nb),psi2))
@@ -1518,7 +1518,7 @@ ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
-!      eye=cmplx(0.0,1.0)
+!      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
@@ -1681,7 +1681,7 @@ CALL nonlocalc(qact,q1,0)
 IF(tenerg) THEN !  add nonloc.pot energy
   sumadd = 0D0
   DO  i=1,nxyz
-    sumadd  = REAL(qact(i))*REAL(q1(i)) +imag(qact(i))*imag(q1(i))  + sumadd
+    sumadd  = REAL(qact(i))*REAL(q1(i)) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
   END DO
   enonlo(nb) = sumadd*dvol
   epotsp(nb) = sumadd*dvol + epotsp(nb)
@@ -2945,7 +2945,7 @@ END IF
 IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 !  DO i=1,nstate
 !    cscal=orbitaloverlap(psi(1,i),psi(1,i))
-!    rtmp(i,1)=REAL(cscal)**2+imag(cscal)**2
+!    rtmp(i,1)=REAL(cscal)**2+AIMAG(cscal)**2
 !    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
 !  END DO
 !call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'

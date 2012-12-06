@@ -81,7 +81,7 @@ IF(jescmaskorb /=0) THEN
       IF(tgridabso(ind)) THEN
         rhoabsoorb(ind,nbe) = rhoabsoorb(ind,nbe) + spherloss(ind)*(  &
             REAL(psi(ind,nbe))*REAL(psi(ind,nbe))  &
-            +imag(psi(ind,nbe))*imag(psi(ind,nbe))  )
+            +AIMAG(psi(ind,nbe))*AIMAG(psi(ind,nbe))  )
       END IF
     END DO
 !  WRITE(*,*) ' ABSBC-escmaskorb: nbe=',nbe
@@ -758,11 +758,11 @@ DO nbe=1,nstate
     scal1 = x1 * e1x + y1 * e1y + z1 * e1z
     scal2 = x1 * e2x + y1 * e2y + z1 * e2z
     q0phase = q0(ii,nbe)*  &
-             EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2)))
+             EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2),DP))
     j=j+1
     rp(j)=REAL(q0phase)
     j=j+1
-    rp(j)=imag(q0phase)
+    rp(j)=AIMAG(q0phase)
   END DO
   WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                       ! cPW: maxmps = 500
 !  WRITE(iunit) tfs,rp(1:2*nmps)                                             ! cPW
@@ -787,11 +787,11 @@ DO nba=1,nstate_all
       scal1 = x1 * e1x + y1 * e1y + z1 * e1z
       scal2 = x1 * e2x + y1 * e2y + z1 * e2z
       q0phase = q0(ii,nbe)*  &
-               EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2)))
+               EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2),DP))
       j=j+1
       rp(j)=REAL(q0phase)
       j=j+1
-      rp(j)=imag(q0phase)
+      rp(j)=AIMAG(q0phase)
     END DO
     IF(myn /= 0) THEN
       CALL mpi_send(rp,2*nmps,mpi_double_precision,0,nba,mpi_comm_world,ic)

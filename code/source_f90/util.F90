@@ -358,8 +358,8 @@ sumr=0.
 sumi=0.
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + imag(q1(ind))*imag(q2(ind))
-  sumi=sumi+REAL(q1(ind))*imag(q2(ind))- REAL(q2(ind))*imag(q1(ind))
+  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
+  sumi=sumi+REAL(q1(ind))*AIMAG(q2(ind))- REAL(q2(ind))*AIMAG(q1(ind))
 END DO
 
 
@@ -390,7 +390,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 sumr=0.
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + imag(q1(ind))*imag(q2(ind))
+  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
 END DO
 
 realoverlap=sumr*dvol
@@ -423,7 +423,7 @@ INTEGER, INTENT(IN OUT)                  :: ion
 sumr=0.
 DO i=1,ifin(ion)
   ii = icount(i,ion)
-  sumr = REAL(q2(ii))*REAL(q1(ii)) +imag(q2(ii))*imag(q1(ii)) + sumr
+  sumr = REAL(q2(ii))*REAL(q1(ii)) +AIMAG(q2(ii))*AIMAG(q1(ii)) + sumr
 END DO
 
 realovsubgrid=sumr*dvol
@@ -1871,7 +1871,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc   = REAL(psi(ii))*REAL(psi(ii)) +imag(psi(ii))*imag(psi(ii)) + acc
+  acc   = REAL(psi(ii))*REAL(psi(ii)) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
 END DO
 wfnorm = acc*dvol
 
@@ -1894,7 +1894,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = REAL(psi1(ii))*REAL(psi2(ii)) + imag(psi1(ii))*imag(psi2(ii)) + acc
+  acc = REAL(psi1(ii))*REAL(psi2(ii)) + AIMAG(psi1(ii))*AIMAG(psi2(ii)) + acc
 END DO
 wfnorm_r = acc*dvol
 
@@ -1917,7 +1917,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = -REAL(psi1(ii))*imag(psi2(ii)) +imag(psi1(ii))*REAL(psi2(ii)) + acc
+  acc = -REAL(psi1(ii))*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii)) + acc
 END DO
 wfnorm_i = acc*dvol
 
@@ -3690,7 +3690,7 @@ COMPLEX(DP)                            :: orbitaloverlap
 
 DO i=1,nstate
    cscal=orbitaloverlap(psitmp(1,i),psitmp(1,i))
-   rtmpuse(i)=SQRT(REAL(cscal)**2 + IMAG(cscal)**2)
+   rtmpuse(i)=SQRT(REAL(cscal)**2 + AIMAG(cscal)**2)
    prob(i)=0D0
 ENDDO
 
@@ -3758,10 +3758,10 @@ INTEGER :: i
   cb = cos(phphase/180D0*PI)
   sb = sin(phphase/180D0*PI)
   
-  psi(:,nhstate) = (ca*cb+CMPLX(0D0,sa*sb))*psi(:,nhstate) &
-                  +(sa*cb-CMPLX(0D0,ca*sb))*psi(:,npstate)
-  psi(:,npstate) = -(sa*cb+CMPLX(0D0,ca*sb))*oldhole &
-                   +(ca*cb-CMPLX(0D0,sa*sb))*psi(:,npstate)
+  psi(:,nhstate) = (ca*cb+CMPLX(0D0,sa*sb,DP))*psi(:,nhstate) &
+                  +(sa*cb-CMPLX(0D0,ca*sb,DP))*psi(:,npstate)
+  psi(:,npstate) = -(sa*cb+CMPLX(0D0,ca*sb,DP))*oldhole &
+                   +(ca*cb-CMPLX(0D0,sa*sb,DP))*psi(:,npstate)
 
   newhole = psi(:,nhstate)
 
@@ -3906,7 +3906,7 @@ CALL fftf(q0,q1)
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
-!      eye=cmplx(0.0,1.0)
+!      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
 

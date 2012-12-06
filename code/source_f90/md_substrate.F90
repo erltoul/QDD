@@ -156,7 +156,7 @@ IF(myn == 0)THEN
     END DO
     
 !$$$         do ilm=-2,2
-!$$$            cellMult(2,ilm) = cmplx(0D0,0D0)
+!$$$            cellMult(2,ilm) = CMPLX(0D0,0D0,DP)
 !$$$         enddo
     
     DO i=1,natoms
