@@ -29,8 +29,8 @@ REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
 #endif
-INTEGER,PUBLIC,SAVE :: FFTW_planflag
 #if(fftw_cpu)
+INTEGER,PUBLIC,SAVE :: FFTW_planflag
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:)
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:,:)
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
@@ -50,13 +50,14 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 
 #if(fftw_cpu)
 USE FFTW
+#endif
 #if(parayes)
 USE params, only : myn,numthr,nthr
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
+#if(fftw_cpu)
 INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
-
 #endif
 
 REAL(DP) :: dt1,h2m
@@ -340,6 +341,7 @@ ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
 #endif
+#endif
 
 DO i1=1,nx2
   modx(i1)=MOD(i1+nx,nx2)+1
@@ -352,7 +354,6 @@ END DO
 DO i3=1,nz2
   modz(i3)=MOD(i3+nz,nz2)+1
 END DO
-#endif
 
 WRITE(*,*) ' end: fftay:',fftay
 

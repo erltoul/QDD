@@ -2,9 +2,9 @@ MODULE coulsolv
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 USE FFTW
+USE kinetic, ONLY: FFTW_planflag
 #endif
 USE params, ONLY: DP,numthr
-USE kinetic, ONLY: FFTW_planflag
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
