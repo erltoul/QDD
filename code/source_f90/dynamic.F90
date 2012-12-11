@@ -10,10 +10,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     initializes dynamical wavefunctions from static solution
 
-
-
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+
+!----------------------------------------------------
+
+  itgradstep=0      !MV to have a number of iterarions in utgradstepc             
+#if(twostsic)
+  do is=1,2         !MV initialise ExpDabOld                                  
+     call MatUnite(ExpDabOld(1,1,is), kstate,ndim(is))
+  enddo
+#endif
 
 
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
@@ -542,8 +549,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: dt
 
-
-
 COMPLEX(DP) :: wfovlp
 
 !----------------------------------------------------------------
@@ -565,7 +570,7 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 #if(twostsic)
 ELSE IF(ifsicp >= 7)THEN
   IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
-  CALL calc_utwf(psi,psiut,itut)
+  CALL calc_utwfc(psi,psiut,itut)           !MV
 !ccccccJM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3

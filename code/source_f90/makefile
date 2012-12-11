@@ -242,7 +242,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        localize_rad.o symmcond_step.o loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o 2stUTc.o\
        pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o
+       short.o image.o lattice.o attachement.o Mat.o
 
 ifeq "$(TYPE_FFT)" "NETLIB"
 OBJS = $(OBJINT) fftpack.o
@@ -330,6 +330,12 @@ nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
  
 2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
+
+attachement.o: attachement.F90 define.h makefile params.o kinetic.o coulsolv.o 
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
+
+Mat.o: Mat.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 
