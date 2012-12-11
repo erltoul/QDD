@@ -305,7 +305,9 @@ REAL(DP),ALLOCATABLE :: eloc(:),enoloc(:),eion(:,:),eiinew(:)
 REAL(DP) :: cptemp,delpos,ERR,binerg, errtot,erfac1,trfac1,prfac1
 REAL(DP) :: trfac2,prfac2,errsim,eiontot,enoloctot,facann
 REAL(DP) :: eloctot,errks0,errks,sumvar,sumvar2
-INTEGER :: ionsin,nrun,nloop1,nloop2,loop1,ifall,nyes,ncon, ncsim,iknow
+INTEGER :: ionsin,nrun,nloop1,nloop2,loop1,nyes,ncon, ncsim,iknow
+INTEGER :: isize_seed
+INTEGER,ALLOCATABLE :: rand_seed(:)
 
 
 

@@ -755,7 +755,6 @@ IF(n == 0 .AND. knode /= 1)THEN
     CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(ifall,1,mpi_integer,nod,1, mpi_comm_world,ic)
     CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -765,6 +764,7 @@ IF(n == 0 .AND. knode /= 1)THEN
     CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,ic)
   END DO
   
 ELSE IF(n /= 0 .AND. knode /= 1)THEN
@@ -784,7 +784,6 @@ ELSE IF(n /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(errks0,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
-  CALL mpi_recv(ifall,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(trfac2,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(prfac2,1,mpi_double_precision,0,mpi_any_tag,  &
@@ -801,6 +800,7 @@ ELSE IF(n /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(prfac1,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
+  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
 END IF
 
 RETURN
