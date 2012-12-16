@@ -3,7 +3,7 @@
 
 !  presently only static version of 'sstep_lsic'
 #ifdef REALSWITCH
-#if(fullsic)
+#if(twostsic)
 MODULE localize_rad
 
 USE params
@@ -404,7 +404,7 @@ encadd=encadd/2.0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd
-END IIF
+END IF
 
 DEALLOCATE(usicsp,rhosp)
 
@@ -690,16 +690,16 @@ INTEGER :: i,j                ! eigenstates
 INTEGER :: na,nb              ! matrix indices
 INTEGER :: iter
 
-INTERFACE
- REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
- USE params, ONLY: DP
- IMPLICIT NONE
- INTEGER, INTENT(IN)                      :: ndim
- INTEGER, INTENT(IN)                  :: kdimin
- REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
- REAL(DP), INTENT(IN)                       :: vec(kdimin)
- END FUNCTION avermatrix
-END INTERFACE
+!INTERFACE
+! REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
+! USE params, ONLY: DP
+! IMPLICIT NONE
+! INTEGER, INTENT(IN)                      :: ndim
+! INTEGER, INTENT(IN)                  :: kdimin
+! REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
+! REAL(DP), INTENT(IN)                       :: vec(kdimin)
+! END FUNCTION avermatrix
+!END INTERFACE
 
 !-------------------------------------------------------
 

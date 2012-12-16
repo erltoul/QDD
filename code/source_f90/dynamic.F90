@@ -5,6 +5,9 @@
 SUBROUTINE init_dynwf(psi)
 !------------------------------------------------------------
 USE params
+#if(twostsic)
+USE twost
+#endif
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -18,7 +21,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
   itgradstep=0      !MV to have a number of iterarions in utgradstepc             
 #if(twostsic)
   do is=1,2         !MV initialise ExpDabOld                                  
-     call MatUnite(ExpDabOld(1,1,is), kstate,ndim(is))
+     call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
   enddo
 #endif
 
@@ -73,7 +76,7 @@ rvectmp(1)=1D0             ! ??? what for ?
 
 !JM
 #if(twostsic)
-CALL init_vecs(vecs)
+IF(ifsicp>=7) CALL init_vecs()
 #endif
 !JM
 
@@ -508,6 +511,7 @@ IF(myn == 0)THEN
   WRITE(6,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
   WRITE(7,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
   CALL FLUSH(6)
+  CALL FLUSH(7)
 END IF
 
 IF (izforcecorr /= -1) THEN
@@ -518,6 +522,7 @@ END IF
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
 
+CALL flush(6)
 CALL flush(7)
 
 RETURN
@@ -576,7 +581,7 @@ ELSE IF(ifsicp >= 7)THEN
     ifsicp=3
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
-!ccccccJM     DSIC
+!ccccccJM     2 state SIC
   ELSE IF(ifsicp == 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF

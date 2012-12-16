@@ -3,18 +3,20 @@
 
 REAL(8) FUNCTION matdorth(aa,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
 
 
-matdorth=0.0
+matdorth=0D0
 DO i=1,ndim
   DO j=i,ndim
-    DO k=1, ndim
-      matdorth=matdorth+aa(i,k)*CONJG(aa(j,k))
-    END DO
+    IF(i==j) THEN
+      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))-1D0
+    ELSE
+      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))
+    END IF
   END DO
 END DO
 END FUNCTION matdorth
@@ -24,7 +26,7 @@ END FUNCTION matdorth
 SUBROUTINE vecprint(str,vv,n,ndim)
 
 CHARACTER (LEN=*), INTENT(IN OUT)        :: str
-COMPLEX, INTENT(IN OUT)                  :: vv(n)
+COMPLEX(8), INTENT(IN OUT)                  :: vv(n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN OUT)                  :: ndim
 
@@ -32,7 +34,7 @@ INTEGER, INTENT(IN OUT)                  :: ndim
 
 WRITE (6,*) str
 
-WRITE (6, '(<Ndim>(2g13.6))') (vv(i),i=1,ndim)
+WRITE (6, '(200(2g13.6,2x))') (vv(i),i=1,ndim)
 END SUBROUTINE vecprint
 !_________________________________________Mat Print__________________________________________________
 !                                         print AA
@@ -40,7 +42,7 @@ END SUBROUTINE vecprint
 SUBROUTINE matprint(str,aa,n,ndim)
 
 CHARACTER (LEN=*), INTENT(IN OUT)        :: str
-COMPLEX, INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN OUT)                  :: ndim
 
@@ -48,7 +50,7 @@ INTEGER, INTENT(IN OUT)                  :: ndim
 
 WRITE (6,*) str
 
-WRITE (6, '(<Ndim>(2g13.6))') ((aa(i,j),j=1,ndim),i=1,ndim)
+WRITE (6, '(200(2g13.6,2x))') ((aa(i,j),j=1,ndim),i=1,ndim)
 END SUBROUTINE matprint
 
 !_________________________________________Mat cnjg__________________________________________________
@@ -56,11 +58,11 @@ END SUBROUTINE matprint
 
 SUBROUTINE matcnjg(aa,bb,n,ndim)
 
-COMPLEX, INTENT(IN OUT)                  :: aa(n,n)
-COMPLEX, INTENT(OUT)                     :: bb(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(OUT)                     :: bb(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
-COMPLEX :: cc(n,n)
+COMPLEX(8) :: cc(n,n)
 
 
 DO i=1,ndim
@@ -74,9 +76,9 @@ END SUBROUTINE matcnjg
 
 SUBROUTINE matmult(aa,bb,cc,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
-COMPLEX, INTENT(IN)                      :: bb(n,n)
-COMPLEX, INTENT(OUT)                     :: cc(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(IN)                      :: bb(n,n)
+COMPLEX(8), INTENT(OUT)                     :: cc(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -96,11 +98,11 @@ END SUBROUTINE matmult
 
 SUBROUTINE matabtoa(aa,bb,n,ndim)
 
-COMPLEX, INTENT(IN OUT)                  :: aa(n,n)
-COMPLEX, INTENT(IN OUT)                  :: bb(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: bb(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN OUT)                  :: ndim
-COMPLEX :: cc(n,n)
+COMPLEX(8) :: cc(n,n)
 
 
 CALL matmult(aa,bb,cc,n,ndim)
@@ -113,9 +115,9 @@ END SUBROUTINE matabtoa
 
 SUBROUTINE matadd(aa,bb,cc,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
-COMPLEX, INTENT(IN)                      :: bb(n,n)
-COMPLEX, INTENT(OUT)                     :: cc(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(IN)                      :: bb(n,n)
+COMPLEX(8), INTENT(OUT)                     :: cc(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -132,9 +134,9 @@ END SUBROUTINE matadd
 
 SUBROUTINE matsub(aa,bb,cc,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
-COMPLEX, INTENT(IN)                      :: bb(n,n)
-COMPLEX, INTENT(OUT)                     :: cc(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(IN)                      :: bb(n,n)
+COMPLEX(8), INTENT(OUT)                     :: cc(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -153,8 +155,8 @@ END SUBROUTINE matsub
 SUBROUTINE matcopy(aa,bb,n,ndim)
 !   Copy AA into BB
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
-COMPLEX, INTENT(OUT)                     :: bb(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(OUT)                     :: bb(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -172,9 +174,9 @@ END SUBROUTINE matcopy
 
 SUBROUTINE matconst(aa,bb,x,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
-COMPLEX, INTENT(OUT)                     :: bb(n,n)
-COMPLEX, INTENT(IN)                      :: x
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(OUT)                     :: bb(n,n)
+COMPLEX(8), INTENT(IN)                      :: x
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -192,12 +194,12 @@ END SUBROUTINE matconst
 
 SUBROUTINE mataexpb(aa,bb,n,ndim)
 
-COMPLEX, INTENT(IN OUT)                  :: aa(n,n)
-COMPLEX, INTENT(IN OUT)                  :: bb(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: bb(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN OUT)                  :: ndim
 
-COMPLEX :: cc(n,n),dd(n,n)
+COMPLEX(8) :: cc(n,n),dd(n,n)
 
 
 CALL matexp(bb,cc,n,ndim)
@@ -211,28 +213,28 @@ END SUBROUTINE mataexpb
 
 SUBROUTINE matexp(aa,bb,n,ndim)
 
-COMPLEX, INTENT(IN OUT)                  :: aa(n,n)
-COMPLEX, INTENT(IN OUT)                  :: bb(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: bb(n,n)
 INTEGER, INTENT(IN)                      :: n
 INTEGER, INTENT(IN OUT)                  :: ndim
 
-COMPLEX :: cc(n,n), dd(n,n)
+COMPLEX(8) :: cc(n,n), dd(n,n)
 
 REAL(8) matnorme
 REAL(8) eps, delta,rn
 
-eps=1.e-20
+eps=1D-20
 CALL matunite(bb,n,ndim)
 CALL matunite(cc,n,ndim)
-rn=CMPLX(1.0,0.0)
-delta= 1.0
+rn=CMPLX(1D0,0D0)
+delta= 1D0
 !        call matprint('AAds exp',AA,N,Ndim)
 !        call matprint('BB ds exp',BB,N,Ndim)
 
 DO WHILE (delta > eps)
   CALL matmult(aa,cc,dd,n,ndim)
 !        call matprint('CC ds exp avant const',CC,N,Ndim)
-  CALL matconst(dd,cc, 1.0/rn,n,ndim)
+  CALL matconst(dd,cc, 1D0/rn,n,ndim)
 !        call matprint('CC ds exp',CC,N,Ndim)
   delta= matnorme(cc, n, ndim)
   CALL matadd(bb,cc,bb,n,ndim)
@@ -245,7 +247,7 @@ END SUBROUTINE matexp
 SUBROUTINE matunite(aa,n,ndim)
 !     BB=unite
 
-COMPLEX, INTENT(OUT)                     :: aa(n,n)
+COMPLEX(8), INTENT(OUT)                     :: aa(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -253,9 +255,9 @@ INTEGER, INTENT(IN)                      :: ndim
 
 DO i=1,ndim
   DO j=1,ndim
-    aa(i,j)=CMPLX(0.0,0.0)
+    aa(i,j)=CMPLX(0D0,0D0)
   END DO
-  aa(i,i)=CMPLX(1.0,0.0)
+  aa(i,i)=CMPLX(1D0,0D0)
 END DO
 END SUBROUTINE matunite
 !_________________________________________Mat Norme__________________________________________________
@@ -263,7 +265,7 @@ END SUBROUTINE matunite
 
 REAL(8) FUNCTION matnorme(aa,n,ndim)
 
-COMPLEX, INTENT(IN)                      :: aa(n,n)
+COMPLEX(8), INTENT(IN)                      :: aa(n,n)
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
@@ -296,12 +298,14 @@ INTEGER, INTENT(IN)                      :: ndim
 
 
 
-rmatdorth=0.0
+rmatdorth=0D0
 DO i=1,ndim
   DO j=i,ndim
-    DO k=1, ndim
-      rmatdorth=rmatdorth+aa(i,k)*aa(j,k)
-    END DO
+    IF(i==j) THEN
+      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))-1D0
+    ELSE
+      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))
+    END IF
   END DO
 END DO
 END FUNCTION rmatdorth
@@ -495,15 +499,15 @@ REAL(8) eps, delta,rn
 eps=1.e-20
 CALL rmatunite(bb,n,ndim)
 CALL rmatunite(cc,n,ndim)
-rn=CMPLX(1.0,0.0)
-delta= 1.0
+rn=CMPLX(1D0,0D0)
+delta= 1D0
 !        call rMatprint('AAds exp',AA,N,Ndim)
 !        call rMatprint('BB ds exp',BB,N,Ndim)
 
 DO WHILE (delta > eps)
   CALL rmatmult(aa,cc,dd,n,ndim)
 !        call rMatprint('CC ds exp avant const',CC,N,Ndim)
-  CALL rmatconst(dd,cc, 1.0/rn,n,ndim)
+  CALL rmatconst(dd,cc, 1D0/rn,n,ndim)
 !        call rMatprint('CC ds exp',CC,N,Ndim)
   delta= rmatnorme(cc, n, ndim)
   CALL rmatadd(bb,cc,bb,n,ndim)
@@ -524,9 +528,9 @@ INTEGER, INTENT(IN)                      :: ndim
 
 DO i=1,ndim
   DO j=1,ndim
-    aa(i,j)=0.0
+    aa(i,j)=0D0
   END DO
-  aa(i,i)=1.0
+  aa(i,i)=1D0
 END DO
 END SUBROUTINE rmatunite
 !_________________________________________rMat Norme__________________________________________________

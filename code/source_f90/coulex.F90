@@ -163,7 +163,7 @@ IF(tcoultest) THEN
     IF(i3== nz/2 .AND. i2==ny/2)  WRITE(*,*) (i1-nx/2)*dx,rhotest(ii), &
       ctest(ii) ! *(i1-nx/2)*dx/2D0
   END DO; END DO; END DO
-  STOP
+  STOP "Coulomb test finished"
   DEALLOCATE(rhotest,ctest)  
 END IF
 
@@ -558,7 +558,8 @@ REAL(DP), INTENT(OUT)                        :: pski(kdred)
 !     I/O: pskr   real part of the wave-function
 !          pski   imaginary part of the wave-function
 
-DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+INTEGER,SAVE :: mxini=0,myini=0,mzini=0
+!DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
 
 !----------------------------------------------------------------------
 
@@ -625,9 +626,9 @@ ELSE IF(mzini /= kfftz) THEN
 END IF
 wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
 IF(wisdomtest==0) THEN
-  WRITE(*,*) ' export wisdom_fftw_coul.dat failed'
+  WRITE(*,*) ' FOURF: export wisdom_fftw_coul.dat failed'
 ELSE
-  WRITE(*,*) ' export wisdom_fftw_coul.dat successfull'
+  WRITE(*,*) ' FOURF: export wisdom_fftw_coul.dat successfull'
 END IF
 CALL fftw_forget_wisdom
 #endif

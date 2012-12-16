@@ -71,7 +71,7 @@ SUBROUTINE dcffti (n,wsave)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: wsave(kdim)
+REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
 
 
 IF (n == 1) RETURN
@@ -87,9 +87,9 @@ SUBROUTINE dcfti1 (n,wa,ifac)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wa(kdim)
+REAL(8), INTENT(OUT)                        :: wa(kdim)
 INTEGER, INTENT(OUT)                     :: ifac(kdim)
-REAL :: arg, argh, argld, fi, tpi
+REAL(8) :: arg, argh, argld, fi, tpi
 INTEGER :: ntryh(4)
 DATA ntryh(1), ntryh(2), ntryh(3), ntryh(4) /3, 4, 2, 5/
 DATA tpi   /  6.28318530717958647692528676655900577D0/
@@ -164,8 +164,8 @@ SUBROUTINE dcfftf (n,c,wsave)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: c(kdim)
-REAL, INTENT(IN OUT)                     :: wsave(kdim)
+REAL(8), INTENT(IN OUT)                     :: c(kdim)
+REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
 
 
 IF (n == 1) RETURN
@@ -182,9 +182,9 @@ SUBROUTINE dcftf1 (n,c,ch,wa,ifac)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: c(kdim)
-REAL, INTENT(IN)                         :: ch(kdim)
-REAL, INTENT(IN OUT)                     :: wa(kdim)
+REAL(8), INTENT(OUT)                        :: c(kdim)
+REAL(8), INTENT(IN)                         :: ch(kdim)
+REAL(8), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
 
@@ -261,8 +261,8 @@ SUBROUTINE dcfftb (n,c,wsave)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: c(kdim)
-REAL, INTENT(IN OUT)                     :: wsave(kdim)
+REAL(8), INTENT(IN OUT)                     :: c(kdim)
+REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
 
 
 IF (n == 1) RETURN
@@ -279,9 +279,9 @@ SUBROUTINE dcftb1 (n,c,ch,wa,ifac)
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: c(kdim)
-REAL, INTENT(IN)                         :: ch(kdim)
-REAL, INTENT(IN OUT)                     :: wa(kdim)
+REAL(8), INTENT(OUT)                        :: c(kdim)
+REAL(8), INTENT(IN)                         :: ch(kdim)
+REAL(8), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
 
@@ -362,13 +362,13 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(IN)                         :: cc(ido,ip,l1)
-REAL, INTENT(OUT)                        :: c1(ido,l1,ip)
-REAL, INTENT(OUT)                        :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(kdim)
-REAL :: wai, war
+REAL(8), INTENT(IN)                         :: cc(ido,ip,l1)
+REAL(8), INTENT(OUT)                        :: c1(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(kdim)
+REAL(8) :: wai, war
 
 idot = ido/2
 nt = ip*idl1
@@ -501,10 +501,10 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,2,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,2)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL :: ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,2,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,2)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8) :: ti2, tr2
 
 IF (ido > 2) GO TO 102
 DO  k=1,l1
@@ -535,11 +535,11 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,3,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,3)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,3,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,3)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -592,12 +592,12 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,4,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,4)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
+REAL(8), INTENT(IN)                         :: cc(ido,4,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,4)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
 
 IF (ido /= 2) GO TO 102
 DO  k=1,l1
@@ -656,13 +656,13 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,5,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,5)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL, INTENT(IN)                         :: wa4(kdim)
-REAL :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
+REAL(8), INTENT(IN)                         :: cc(ido,5,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,5)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8), INTENT(IN)                         :: wa4(kdim)
+REAL(8) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
     di2, di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3,  &
     ti4, ti5, tr11, tr12, tr2, tr3, tr4, tr5
 DATA tr11  /  0.30901699437494742410229341718281906D0/
@@ -757,13 +757,13 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(IN)                         :: cc(ido,ip,l1)
-REAL, INTENT(OUT)                        :: c1(ido,l1,ip)
-REAL, INTENT(OUT)                        :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(kdim)
-REAL :: wai, war
+REAL(8), INTENT(IN)                         :: cc(ido,ip,l1)
+REAL(8), INTENT(OUT)                        :: c1(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(kdim)
+REAL(8) :: wai, war
 
 idot = ido/2
 nt = ip*idl1
@@ -896,10 +896,10 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,2,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,2)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL :: ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,2,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,2)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8) :: ti2, tr2
 
 IF (ido > 2) GO TO 102
 DO  k=1,l1
@@ -930,11 +930,11 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,3,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,3)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,3,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,3)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
 DATA taur / -0.5D0 /
 DATA taui  / -0.86602540378443864676372317075293618D0/
 
@@ -985,12 +985,12 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,4,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,4)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
+REAL(8), INTENT(IN)                         :: cc(ido,4,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,4)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
 
 IF (ido /= 2) GO TO 102
 DO  k=1,l1
@@ -1049,13 +1049,13 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,5,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,5)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL, INTENT(IN)                         :: wa4(kdim)
-REAL :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
+REAL(8), INTENT(IN)                         :: cc(ido,5,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,5)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8), INTENT(IN)                         :: wa4(kdim)
+REAL(8) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
     di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3, ti4,  &
     ti5, tr11, tr12, tr2, tr3, tr4, tr5
 DATA tr11  /  0.30901699437494742410229341718281906D0/
@@ -1142,10 +1142,10 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,2,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,2)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL :: ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,2,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,2)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8) :: ti2, tr2
 
 DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
@@ -1185,11 +1185,11 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,3,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,3)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,3,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,3)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -1235,12 +1235,12 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,4,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,4)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL :: ci2, ci3, ci4, cr2, cr3, cr4, sqrt2, ti1, ti2, ti3, ti4,  &
+REAL(8), INTENT(IN)                         :: cc(ido,4,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,4)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8) :: ci2, ci3, ci4, cr2, cr3, cr4, sqrt2, ti1, ti2, ti3, ti4,  &
     tr1, tr2, tr3, tr4
 DATA sqrt2 /  1.41421356237309504880168872420970D0 /
 
@@ -1311,13 +1311,13 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,5,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,5)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL, INTENT(IN)                         :: wa4(kdim)
-REAL :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
+REAL(8), INTENT(IN)                         :: cc(ido,5,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,5)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8), INTENT(IN)                         :: wa4(kdim)
+REAL(8) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
     di2, di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3,  &
     ti4, ti5, tr11, tr12, tr2, tr3, tr4, tr5
 DATA tr11  /  0.30901699437494742410229341718281906D0/
@@ -1394,13 +1394,13 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(IN)                         :: cc(ido,ip,l1)
-REAL, INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL, INTENT(OUT)                        :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(kdim)
-REAL :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
+REAL(8), INTENT(IN)                         :: cc(ido,ip,l1)
+REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(kdim)
+REAL(8) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
 DATA tpi   /  6.28318530717958647692528676655900577D0/
 
 !OLD      ARG = TPI/DFLOAT(IP)
@@ -1580,10 +1580,10 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,2)
-REAL, INTENT(OUT)                        :: ch(ido,2,l1)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL :: ti2, tr2
+REAL(8), INTENT(IN)                         :: cc(ido,l1,2)
+REAL(8), INTENT(OUT)                        :: ch(ido,2,l1)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8) :: ti2, tr2
 
 DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
@@ -1623,11 +1623,11 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,3)
-REAL, INTENT(OUT)                        :: ch(ido,3,l1)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL :: ci2, cr2, di2, di3, dr2, dr3, taui, taur, ti2, ti3, tr2, tr3
+REAL(8), INTENT(IN)                         :: cc(ido,l1,3)
+REAL(8), INTENT(OUT)                        :: ch(ido,3,l1)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8) :: ci2, cr2, di2, di3, dr2, dr3, taui, taur, ti2, ti3, tr2, tr3
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -1671,12 +1671,12 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,4)
-REAL, INTENT(OUT)                        :: ch(ido,4,l1)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL :: ci2, ci3, ci4, cr2, cr3, cr4, hsqt2, ti1, ti2, ti3,  &
+REAL(8), INTENT(IN)                         :: cc(ido,l1,4)
+REAL(8), INTENT(OUT)                        :: ch(ido,4,l1)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8) :: ci2, ci3, ci4, cr2, cr3, cr4, hsqt2, ti1, ti2, ti3,  &
     ti4, tr1, tr2, tr3, tr4
 DATA hsqt2 /   .70710678118654752440084436210485D0 /
 
@@ -1743,13 +1743,13 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,5)
-REAL, INTENT(OUT)                        :: ch(ido,5,l1)
-REAL, INTENT(IN)                         :: wa1(kdim)
-REAL, INTENT(IN)                         :: wa2(kdim)
-REAL, INTENT(IN)                         :: wa3(kdim)
-REAL, INTENT(IN)                         :: wa4(kdim)
-REAL :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
+REAL(8), INTENT(IN)                         :: cc(ido,l1,5)
+REAL(8), INTENT(OUT)                        :: ch(ido,5,l1)
+REAL(8), INTENT(IN)                         :: wa1(kdim)
+REAL(8), INTENT(IN)                         :: wa2(kdim)
+REAL(8), INTENT(IN)                         :: wa3(kdim)
+REAL(8), INTENT(IN)                         :: wa4(kdim)
+REAL(8) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
     di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3, ti4,  &
     ti5, tr11, tr12, tr2, tr3, tr4, tr5
 DATA tr11  /  0.30901699437494742410229341718281906D0/
@@ -1822,13 +1822,13 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(OUT)                        :: cc(ido,ip,l1)
-REAL, INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(OUT)                        :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(kdim)
-REAL :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
+REAL(8), INTENT(OUT)                        :: cc(ido,ip,l1)
+REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(kdim)
+REAL(8) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
 DATA tpi   /  6.28318530717958647692528676655900577D0/
 
 !OLD      ARG = TPI/DFLOAT(IP)

@@ -131,7 +131,7 @@ WRITE(6,'(a,2f17.8)') 'enpol0,enpol',enpol0,enpol
 
 WRITE(6,*) 'Postrun evaluation done.'
 
-STOP
+STOP 'Postrun evaluation done.'
 
 
 !old      if (iflag.eq.1) then

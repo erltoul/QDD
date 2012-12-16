@@ -8,7 +8,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
 
-REAL(DP) :: usicall(kdfull2,kstate)
+REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /sicsav/usicall(kdfull2,kstate)
 
 
@@ -276,16 +276,20 @@ REAL(DP) :: xlambda(kstate,kstate)
 
 !     the matrices  for vector and curvature of stepping
 
-INTEGER, PARAMETER :: ksymcond=kstate*kstate
-REAL(DP) :: symcondvec(ksymcond)
-REAL(DP) :: stepvec(ksymcond)
-REAL(DP) :: symcondmat(ksymcond,ksymcond)
-INTEGER :: iptsymcond(2,ksymcond)
+INTEGER :: ksymcond
+REAL(DP), ALLOCATABLE :: symcondvec(:)
+REAL(DP), ALLOCATABLE :: stepvec(:)
+REAL(DP), ALLOCATABLE :: symcondmat(:,:)
+INTEGER, ALLOCATABLE :: iptsymcond(:,:)
 
 
 LOGICAL, PARAMETER :: ttest=.false.
 
 !*********************************************************
+
+ksymcond=kstate*kstate
+ALLOCATE(symcondvec(ksymcond),stepvec(ksymcond),symcondmat(ksymcond,ksymcond))
+ALLOCATE(iptsymcond(2,ksymcond))
 
 !     the condition vector
 

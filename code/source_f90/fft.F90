@@ -341,6 +341,7 @@ ELSE IF(nzini /= nz2) THEN
 END IF
 #endif
 
+#endif
 DO i1=1,nx2
   modx(i1)=MOD(i1+nx,nx2)+1
 END DO
@@ -352,7 +353,6 @@ END DO
 DO i3=1,nz2
   modz(i3)=MOD(i3+nz,nz2)+1
 END DO
-#endif
 
 WRITE(*,*) ' end: fftay:',fftay
 
@@ -445,8 +445,8 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
-      fftax(modx(i1))=q1(ind) ! copy to workspace
+      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
+!      fftax(modx(i1))=q1(ind) ! copy to workspace
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic fft
@@ -467,8 +467,8 @@ DO i3=1,nz2
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
-      q2(ind)= fftax(modx(i1))*xfnorm
+      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
+!      q2(ind)= fftax(modx(i1))*xfnorm
     END DO
   END DO
 END DO
@@ -480,8 +480,8 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
-      fftay(mody(i2)) = q2(ind)
+      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
+!      fftay(mody(i2)) = q2(ind)
     END DO
 #if(netlib_fft)
     CALL dcftf1 (ny2,ffttay,wrky,wsavey,ifacy)
@@ -502,8 +502,8 @@ DO i3=1,nz2
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
-      q2(ind)= fftay(mody(i2))*yfnorm
+      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
+!      q2(ind)= fftay(mody(i2))*yfnorm
     END DO
   END DO
 END DO
@@ -513,7 +513,8 @@ END DO
 zfnorm = 1D0/nz2
 DO i2=1,ny2
   DO i3=1,nz2
-    i3m = modz(i3)
+!    i3m = modz(i3)
+    i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       ffttb(i3m,i1) = q2(ind)
@@ -537,7 +538,8 @@ DO i2=1,ny2
 #endif
   END DO
   DO i3=1,nz2
-    i3m = modz(i3)
+!    i3m = modz(i3)
+    i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       q1(ind)=ffttb(i3m,i1)*zfnorm
@@ -808,7 +810,8 @@ DO i2=1,ny2
 !                 forward transform along z
     DO i3=1,nz2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      i3m = modz(i3)
+      i3m = MOD(i3+nz,nz2)+1
+!      i3m = modz(i3)
       fftaz(i3m) = fin(ind)
     END DO
 #if(netlib_fft)
@@ -835,7 +838,9 @@ DO i2=1,ny2
 #endif
     DO i3=1,nz2                  ! copy back
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      gradfout(ind)= fftaz(modz(i3))/nz2
+      i3m = MOD(i3+nz,nz2)+1
+      gradfout(ind)= fftaz(i3m)/nz2
+!      gradfout(ind)= fftaz(modz(i3))/nz2
     END DO
 !
   END DO
@@ -962,7 +967,8 @@ END DO
 
 DO i2=1,ny2
   DO i3=1,nz2
-    i3m = modz(i3)
+!    i3m = modz(i3)
+    i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       fftb(i3m,i1) = q2(ind)
@@ -1035,9 +1041,11 @@ DO i2=1,ny2
     CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
   END DO
   DO i3=1,nz2                  ! copy back
+    i3m = MOD(i3+nz,nz2)+1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(modz(i3),i1)
+      q2(ind)= fftb(i3m,i1)
+!      q2(ind)= fftb(modz(i3),i1)
     END DO
   END DO
 END DO
@@ -1303,9 +1311,10 @@ DO i2=1,ny2
     CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
   END DO
   DO i3=1,nz2                  ! copy back
+    i3m = modz(i3)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(modz(i3),i1)
+      q2(ind)= fftb(i3m,i1)
     END DO
   END DO
 END DO
@@ -1339,7 +1348,7 @@ DO i3=1,nz2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
 !      q2(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
-      q3(ind)= REAL(modx(i1),DP)
+      q3(ind)= REAL(fftax(modx(i1)),DP)
     END DO
   END DO
 END DO

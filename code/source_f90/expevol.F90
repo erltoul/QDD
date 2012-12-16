@@ -52,9 +52,11 @@ STOP 'exponential evolution not yet parallelized'
 myn = 0
 #endif
 
-STOP
+!STOP
 
+#if(raregas)
 IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not apppropriate for rare gas'
+#endif
 
 !      write(*,*) 'entering TSTEP_EXP'
 

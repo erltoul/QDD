@@ -344,7 +344,7 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
 
 
 IF(directenergy .AND.  &
-   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
+   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8)  &
     STOP ' directenergy=1 only for Slater and KLI'
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
@@ -1884,12 +1884,12 @@ INTEGER :: is(mpi_status_size)
 
 !INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
-REAL :: efacto                ! factor to get energies from h.o.
-REAL :: efermi                ! estimate for fermi shell
-REAL :: q20fac                ! sqrt(5/16pi)
-REAL :: cosfac,sinfac         ! weightes deduced from 'gamin'
+REAL(DP) :: efacto                ! factor to get energies from h.o.
+REAL(DP) :: efermi                ! estimate for fermi shell
+REAL(DP) :: q20fac                ! sqrt(5/16pi)
+REAL(DP) :: cosfac,sinfac         ! weightes deduced from 'gamin'
 !     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
-REAL :: speact                ! actual s.p. energy in loop
+REAL(DP) :: speact                ! actual s.p. energy in loop
 INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
@@ -2992,8 +2992,7 @@ IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
 #if(symmcond)
-IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible! allow for exact exchange
-!  kli or exchange or fullsic cannot be used simultaneously !! '
+IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible'
 #endif
 IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
 #if(!pw92)
@@ -3416,7 +3415,7 @@ INTEGER, INTENT(OUT)                     :: nrot
 
 INTEGER, PARAMETER :: nmax=500
 INTEGER :: i,ip,iq,j
-REAL :: c,g,h,s,sm,t,tau,theta,tresh,b(nmax),z(nmax)
+REAL(DP) :: c,g,h,s,sm,t,tau,theta,tresh,b(nmax),z(nmax)
 
 DO ip=1,n
   DO iq=1,n

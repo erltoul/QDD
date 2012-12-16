@@ -347,7 +347,7 @@ INTEGER :: is(mpi_status_size)
 #ifdef REALSWITCH
 REAL(DP) :: q0(kdfull2,kstate)
 #else
-COMPLEX :: q0(kdfull2,kstate)
+COMPLEX(DP) :: q0(kdfull2,kstate)
 #endif
 REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
@@ -412,7 +412,7 @@ IF(numspin==2) THEN
   END IF
 
   enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
-  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
+!  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
 
   IF(npartup > 0) THEN
     DO ind=1,nxyz
@@ -710,9 +710,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp,rho1,rho2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
 REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
 ! EQUIVALENCE (rhosp,w1)
-LOGICAL :: testprint
-DATA testprint/.false./
-DATA itmaxkli/200/
+LOGICAL,PARAMETER :: testprint=.false.
+INTEGER :: itmaxkli=200
 
 !--------------------------------------------------------------------
 
@@ -1005,8 +1004,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp
 !     chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
 ! EQUIVALENCE (rhospu,rhosp),(rhospd,usicsp)
 
-LOGICAL :: ttest
-DATA ttest/.false./
+LOGICAL,PARAMETER :: ttest=.false.
 
 IF(numspin.NE.2) STOP ' full SIC requires full spin code'
 
@@ -1113,11 +1111,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 ! EQUIVALENCE (q1(1),w1(1))
 ! EQUIVALENCE (q2(1),w2(1))              ! occupies also w3
 
-LOGICAL :: tocc,tcpu
-DATA tocc,tcpu/.true.,.true./
-LOGICAL :: tdiag,tprojec
-PARAMETER (tdiag=.false.)   ! switch to diagonal subtraction
-PARAMETER (tprojec=.false.) ! switch to full 1ph projection
+LOGICAL :: tocc=.true.,tcpu=.true.
+LOGICAL,PARAMETER :: tdiag=.false.,tprojec=.false.
 
 !------------------------------------------------------------------------
 
@@ -1206,7 +1201,7 @@ DO nbe=1,nstate
   
 END DO
 
-!       compute symmtry condition
+!       compute symmetry condition
 
 symcon = 0D0
 WRITE(6,'(a)') ' hmatrix:'
@@ -1352,7 +1347,7 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-REAL :: partup,partdw
+REAL(DP) :: partup,partdw
 INTEGER :: npartup,npartdw,npartto
 
 
@@ -1394,6 +1389,144 @@ RETURN
 END SUBROUTINE act_part_num
 #endif
 
+
+#ifdef COMPLEXSWITCH
+SUBROUTINE calc_sicspc(rhosp,usicsp,q0state,nb)
+
+!     ******************************
+
+!     computes SIC potential for state 'nb'.
+!     input is
+!       q0state   = wavefunction for s.p. state
+!       nb        = number of state
+!     output is
+!       usicsp   = the s.p. SIC potential
+!     output via common
+!       enrear,enerpw   = rearrangement energies for 'nb'
+!       encoulsp        = Coulomb energy for 'nb'
+
+!#INCLUDE "all.inc"
+USE params
+USE kinetic
+USE coulsolv
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT) :: q0state(kdfull2)
+REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
+
+!     the usage of workspacss is tricky:
+!      'rhosp' from the calling list may be equivalenced with 'w1', but
+!      occupies temporarily two workspaces,. i.e. 'w2=couldif'.
+!      The upper block is obsolete after 'calc_lda' as is the whole
+!      'chpdftsp' after transfer to 'uscisp'. The free slots are then
+!      used for 'rho1' and 'couldif' in the Coulomb solver.
+
+REAL(DP),ALLOCATABLE :: chpdftsp(:)
+REAL(DP),ALLOCATABLE :: couldif(:)
+REAL(DP),ALLOCATABLE :: rho1(:)
+
+LOGICAL,PARAMETER :: testprint=.false.
+
+!--------------------------------------------------------------------
+
+#if(fullspin)
+
+! allocate workspace
+
+ALLOCATE(chpdftsp(2*kdfull2))
+ALLOCATE(couldif(kdfull2))
+ALLOCATE(rho1(kdfull2))
+
+enrearsave=enrear
+enerpwsave=enerpw
+enrear1=0.0
+enrear2=0.0
+enpw1  = 0.0
+enpw2  = 0.0
+encadd = 0.0
+!      write(*,*) ' CALC_SICSPR: nb,occup(nb)',nb,occup(nb)
+
+IF(occup(nb) > small) THEN
+  ishift = (ispin(nrel2abs(nb))-1)*nxyzf ! store spin=2 in upper block
+  
+!         density for s.p. state
+  
+  DO ind=1,nxyzf
+    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
+    rhosp(ind+nxyzf) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
+    rho1(ind)        = rhosp(ind)
+  END DO
+  
+!       DFT for s.p. state
+  
+  CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
+  IF (ispin(nrel2abs(nb)) == 1) THEN
+    DO ind=1,nxyz
+      usicsp(ind) = chpdftsp(ind)
+    END DO
+  ELSE
+    DO ind=1,nxyz
+      idx = ind+nxyzf
+      usicsp(idx) = chpdftsp(idx)
+    END DO
+  END IF
+  
+!         s.p. Coulomb and subtract from LDA
+  
+  DO ind=1,nxyz
+    rho1(ind) = rhosp(ind)
+  END DO
+#if(gridfft)
+  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+#endif
+#if(findiff|numerov)
+CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+#endif
+IF(testprint) THEN
+  WRITE(11,'(a)') '     ','     '
+  WRITE(11,'(a,i3)') '# NB=',nb
+  CALL prifld2(11,rhosp,' density')
+  CALL prifld2(11,couldif,' Coulomb')
+  CALL prifld2(11,chpdftsp,' P&W')
+END IF
+
+encsum = 0.0
+IF (ispin(nrel2abs(nb)) == 1) THEN
+  DO ind=1,nxyz
+    usicsp(ind) = usicsp(ind)+couldif(ind)
+#if(directenergy)
+    encsum=encsum+rhosp(ind)*couldif(ind)
+#endif
+  END DO
+  encoulsp = encsum*dvol
+  IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
+ELSE
+  DO ind=1,nxyz
+    idx = ind+nxyzf
+    usicsp(idx) = usicsp(idx)+couldif(ind)
+#if(directenergy)
+    encsum=encsum+rhosp(ind)*couldif(ind)
+#endif
+  END DO
+  encoulsp = encsum*dvol
+  IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
+END IF
+ELSE
+DO i=1,nxyz
+  usicsp(ind) = 0.0
+END DO
+encoulsp = 0.0
+END IF
+DEALLOCATE(chpdftsp)
+DEALLOCATE(couldif)
+DEALLOCATE(rho1)
+#else
+STOP ' CALC_SICSP requires fullspin code'
+#endif
+
+RETURN
+END SUBROUTINE calc_sicspc
+#endif
 
 
 
@@ -1443,8 +1576,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: chpdftsp,couldif,rho1
 !EQUIVALENCE (chpdftsp,w3)
 !EQUIVALENCE (rho1,w4)
 
-LOGICAL :: testprint
-DATA testprint/.false./
+LOGICAL :: testprint=.false.
 
 !--------------------------------------------------------------------
 

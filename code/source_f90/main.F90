@@ -23,6 +23,7 @@ USE localize_rad
 #endif
 #if(twostsic)
 USE twostr
+USE twost
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -121,8 +122,6 @@ IF (isurf == 1) THEN
 END IF
 #endif
 
-!                                     initialize parameters for FSIC
-IF(ifsicp >= 7) CALL init_fsic()
 
 IF(ihome == 1) CALL init_homfield()  ! optional homogeneous E field
 
@@ -141,10 +140,14 @@ CALL timer(1)
 !
 !       *******************************************
 
+!                                     initialize parameters for FSIC
+IF(nclust > 0 .AND. ifsicp >= 7) THEN
+   CALL init_fsicr()
+END IF
 
 !IF(nclust > 0 .AND. irest == 0 .AND. istat == 0 .AND. ismax > 0)  
 IF(nclust > 0 .AND. irest == 0 .AND. ismax > 0)  THEN
-    CALL statit(psir,rho,aloc)
+  CALL statit(psir,rho,aloc)
 END IF
 
 
@@ -187,6 +190,11 @@ IF (surftemp > 0) CALL init_surftemp()
 #endif
 
 IF(nclust > 0)THEN
+
+  IF(ifsicp >= 7) THEN
+    CALL init_fsic()
+!    CALL end_fsicr()                !??    check and correct
+  END IF
   
   IF(nabsorb > 0) CALL init_absbc(rho)
   IF(jmp > 0) CALL initmeasurepoints

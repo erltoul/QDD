@@ -485,7 +485,7 @@ END SUBROUTINE move
 
 !     *******************
 
-REAL FUNCTION ran0(idum)
+REAL(DP) FUNCTION ran0(idum)
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -497,7 +497,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(OUT)                     :: idum
 
-!REAL :: ran0              !danger, do not declare ran0 as real*8
+!REAL(8):: ran0              !danger, do not declare ran0 as real*8
 INTEGER, PARAMETER :: ia=16807
 INTEGER, PARAMETER :: im=2147483647
 REAL(DP), PARAMETER :: am=1./im

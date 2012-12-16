@@ -96,12 +96,13 @@ IF(myn == 0)THEN
   WRITE(6,*) 'ismax=',ismax
 END IF
 
+#if(twostsic)
 if(ifsicp.eq.8) then
   do is=1,2 !MV initialise ExpDabOld                                        
-    call rMatUnite(rExpDabOld(1,1,is), kstate,ndim(is))  
+    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
   enddo
 endif
-
+#endif
 
 !     the static iteration starts here
 
@@ -340,10 +341,13 @@ IF (isurf /= 0) THEN
 END IF
 #endif
 
+#if(twostsic)
 if(ifsicp.eq.8) then
   write(6,*) 'avant pricm'!MV                                               
   write (6,'(3f12.3)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV             
 endif
+#endif
+
 
 CALL pricm(rho)
 IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &

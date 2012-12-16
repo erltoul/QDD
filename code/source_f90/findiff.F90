@@ -14,8 +14,8 @@ SUBROUTINE rkin3d(psi,dxpsi)
 
 
 
-REAL, INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
 
 
 
@@ -99,17 +99,17 @@ SUBROUTINE rkin1d_3r(psi,deltax,nmax,inc,dxpsi)
 !     inc    = increment which connects neighouring mesh points
 
 
-REAL, INTENT(IN)                         :: psi(*)
-REAL, INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN)                         :: psi(*)
+REAL(DP), INTENT(IN OUT)                     :: deltax
 INTEGER, INTENT(IN)                      :: nmax
 INTEGER, INTENT(IN)                      :: inc
-REAL, INTENT(OUT)                        :: dxpsi(*)
+REAL(DP), INTENT(OUT)                        :: dxpsi(*)
 
 INTEGER :: ninc
 INTEGER :: i
-REAL :: d2i
-REAL :: ! Wellenfunktion psi
-REAL :: ! Ableitung der Wellenfunktion psi
+REAL(DP):: d2i
+REAL(DP):: ! Wellenfunktion psi
+REAL(DP):: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -226,14 +226,14 @@ SUBROUTINE ckin1d_3r(psi,deltax,nmax,inc,dxpsi)
 
 
 COMPLEX(DP), INTENT(IN)                      :: psi(*)
-REAL, INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltax
 INTEGER, INTENT(IN)                      :: nmax
 INTEGER, INTENT(IN)                      :: inc
 COMPLEX(DP), INTENT(OUT)                     :: dxpsi(*)
 
 INTEGER :: ninc
 INTEGER :: i
-REAL :: d2i
+REAL(DP):: d2i
 COMPLEX(DP) :: ! Wellenfunktion psi
 COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
 
@@ -279,7 +279,7 @@ SUBROUTINE d3mixpropag (psi, deltim)
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
-REAL, INTENT(IN OUT)                     :: deltim
+REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
 !      complex neupsi (-MAXX:MAXX, -MAXY:MAXY, -MAXZ:MAXZ)
@@ -330,7 +330,7 @@ SUBROUTINE inv3p_ini(deltim)
 !      include 'pot3D.inc'
 
 
-REAL, INTENT(IN OUT)                     :: deltim
+REAL(DP), INTENT(IN OUT)                     :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 !inverse diagonal elements
 COMPLEX(DP) :: diag
@@ -385,8 +385,8 @@ SUBROUTINE kinprop_1d3 (psi, ndiml, inc, deltax, deltim)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(ndiml)
 INTEGER, INTENT(IN)                      :: ndiml
 INTEGER, INTENT(IN)                      :: inc
-REAL, INTENT(IN OUT)                     :: deltax
-REAL, INTENT(IN OUT)                     :: deltim
+REAL(DP), INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 COMPLEX(DP) :: diag
 COMMON /invnum3c/ invnum,diag
@@ -395,7 +395,7 @@ INTEGER :: ! array size
 COMPLEX(DP) :: ! wave function to be propagated
 COMPLEX(DP) :: solve
 COMPLEX(DP) :: psip,psim,psi0
-REAL :: ! mesh size
+REAL(DP):: ! mesh size
 
 INTEGER ::               ! Work array size
 INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
@@ -561,14 +561,14 @@ SUBROUTINE ckin1d_5r(psi,deltax,nmax,inc,dxpsi)
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(*)
-REAL, INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltax
 INTEGER, INTENT(IN)                      :: nmax
 INTEGER, INTENT(IN)                      :: inc
 COMPLEX(DP), INTENT(OUT)                     :: dxpsi(*)
 
 INTEGER :: ninc,inc2
 INTEGER :: i
-REAL :: d2i
+REAL(DP):: d2i
 COMPLEX(DP) :: ! Wellenfunktion psi
 COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
 
@@ -615,8 +615,8 @@ SUBROUTINE rkin3d(psi,dxpsi)
 
 
 
-REAL, INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
 
 
 
@@ -700,17 +700,17 @@ SUBROUTINE rkin1d_5r(psi,deltax,nmax,inc,dxpsi)
 !     inc    = increment which connects neighouring mesh points
 
 
-REAL, INTENT(IN OUT)                     :: psi(*)
-REAL, INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: psi(*)
+REAL(DP), INTENT(IN OUT)                     :: deltax
 INTEGER, INTENT(IN)                      :: nmax
 INTEGER, INTENT(IN)                      :: inc
-REAL, INTENT(OUT)                        :: dxpsi(*)
+REAL(DP), INTENT(OUT)                        :: dxpsi(*)
 
 INTEGER :: ninc,inc2
 INTEGER :: i
-REAL :: d2i
-REAL :: ! Wellenfunktion psi
-REAL :: ! Ableitung der Wellenfunktion psi
+REAL(DP):: d2i
+REAL(DP):: ! Wellenfunktion psi
+REAL(DP):: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -770,7 +770,7 @@ SUBROUTINE d3mixpropag (psi, neupsi, deltim)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
 COMPLEX(DP), INTENT(IN OUT)                  :: neupsi(-maxx:maxx, -maxy:maxy,
-REAL, INTENT(IN OUT)                     :: deltim
+REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
 
@@ -818,7 +818,7 @@ SUBROUTINE inv5p_ini(deltim)
 !      include 'pot3D.inc'
 
 
-REAL, INTENT(IN)                         :: deltim
+REAL(DP), INTENT(IN)                         :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 !inverse diagonal Elements
 COMPLEX(DP) :: diag,offd
@@ -826,7 +826,7 @@ COMPLEX(DP) :: diag,offd
 COMMON /invnum5c/ invnum,diag,offd
 
 
-REAL :: fac1,fac2   !diagonal elements
+REAL(DP):: fac1,fac2   !diagonal elements
 COMPLEX(DP) :: fac
 INTEGER :: n,dim   !loop
 
@@ -885,8 +885,8 @@ SUBROUTINE kinprop_1d5 (psi, ndiml, inc, deltax, deltim)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(ndiml)
 INTEGER, INTENT(IN)                      :: ndiml
 INTEGER, INTENT(IN)                      :: inc
-REAL, INTENT(IN OUT)                     :: deltax
-REAL, INTENT(IN OUT)                     :: deltim
+REAL(DP), INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 COMPLEX(DP) :: diag,offd
 COMMON /invnum5c/ invnum,diag,offd
@@ -896,7 +896,7 @@ INTEGER :: ! array size
 COMPLEX(DP) :: ! wave function to be propagated
 COMPLEX(DP) :: solve
 COMPLEX(DP) :: psip,psim,psi0
-REAL :: ! mesh size
+REAL(DP):: ! mesh size
 
 INTEGER ::               ! Work array size
 INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
@@ -906,7 +906,7 @@ COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
 !c     $                  offdiag2           ! squared off-diagional el.
 
 INTEGER :: i, n, ninc            ! loop index
-REAL :: fac1,fac2,fac3,fac4
+REAL(DP):: fac1,fac2,fac3,fac4
 
 !----------------------------------------------------------------------------
 

@@ -142,7 +142,7 @@ DO ih=1,nstate-1
               IF((nion_target /= nion).OR.(nspdw_target /= nspdw)) THEN
                 WRITE(6,*)'attachment calculation impossible:'
                 WRITE(6,*)'mismatch betw # of ions or spins'
-                STOP
+                STOP ' ATTACHEMENT: mismatch betw # of ions or spins'
               END IF
               
               DO ipp=1,nstate_target

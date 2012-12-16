@@ -276,6 +276,7 @@ INTEGER :: jekion,iquery4
 #if(fullsic||twostsic)  
 REAL(DP),ALLOCATABLE :: hmatrix(:,:)
 REAL(DP) :: symcon
+INTEGER :: ndims(2)
 #endif
 
 

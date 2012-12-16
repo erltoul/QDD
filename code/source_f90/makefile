@@ -7,17 +7,17 @@
 # Set the date
 DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
-CF90    = IFORT
+CF90    = GFORT
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
-TYPE_FFT = FFTW
+TYPE_FFT = NETLIB
 # debugging option
 DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = YES
+OMP = NO
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -302,9 +302,9 @@ pseudosoft.o: pseudosoft.F90 define.h makefile params.o kinetic.o coulsolv.o
 static.o: pseudosoft.F90 define.h makefile params.o kinetic.o localize_rad.o 2stUT.o
 
 localize_rad.o: localize_rad.F90 define.h makefile params.o kinetic.o 
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH    -o $@ -c $< 
 rho.o: rho.F90 define.h makefile params.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH    -o $@ -c $< 
 rhoc.o: rho.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
@@ -326,16 +326,16 @@ nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
 nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o localize_rad.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
  
-2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o localize_rad.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 attachement.o: attachement.F90 define.h makefile params.o kinetic.o coulsolv.o 
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-Mat.o: Mat.F90 define.h makefile params.o
+Mat.o: Mat.f90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 
