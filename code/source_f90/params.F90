@@ -26,7 +26,7 @@ EXTERNAL :: OMP_SET_NUM_THREADS
 #else
 INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
 #endif
-INTEGER :: nthr=0                ! max number of threads -- 1
+INTEGER :: nthr=numthr-1                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8

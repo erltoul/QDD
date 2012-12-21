@@ -799,11 +799,11 @@ REAL(DP) :: norm,ERR_r
 
 !REAL(DP) :: variance,variance2  ! variance of step  ??
 !REAL(DP) :: radmax              ! max. squared radius
-REAL(DP) :: actstep,stepnew,enold_2st   !,radvary
+REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
 REAL(DP) :: dampopt=0.7D0,steplim=1.2D0    ! optimized stepsize
-LOGICAL,PARAMETER :: topt=.true.       ! switch to optimized step
+LOGICAL,PARAMETER :: topt=.false.       ! switch to optimized step
 
 
 !-------------------------------------------------------
@@ -823,16 +823,25 @@ CALL rmatmult (vecsr(1,1, is),rexpdabold(1,1,is),dabsto,kdim,ni)
 CALL rmatcopy(dabsto,vecsr(1,1,is),kdim,ni)
 
 actstep = step/radmaxsym  ! radmaxsym obsolete, set to 1D0
-
+actprecis = max(precis,1D-1*sumvar2)
+!actprecis = precis
+!WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
   OPEN(353,file='2st-stat-conv.res',POSITION='append')
   WRITE(353,*) '# convergence symmetry condition. is=',is
   WRITE(353,'(a)') '# Ortho , variance, erreur , actstep, Spin'
   WRITE(353,'(a,i4,1pg13.5)') &
-    ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,precis
+    ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
+END IF
+!IF(tconv .AND. ttest) THEN
+IF(tconv) THEN
+  write(353,*) 'entree utgradstepr. Spin=',is  !MV
+  write (353,'(4f12.5)') &
+    ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
+  CALL FLUSH(353)
 END IF
 WRITE(6,'(a,i4,1pg13.5)') &
- ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,precis
+ ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
 
 enold_2st=0D0
 DO iter=1,itmax2
@@ -870,6 +879,7 @@ WRITE(6,*) 'e1der,e1old,e2der,actstep=',e1der,e1old,e2der,actstep
     END IF    
   END IF
   norm=rmatnorme(dab,kdim,ni)
+!  actstep = step/norm
   CALL rmatconst(dab,dab,-actstep, kdim,ni)  !MV mutiply DAB by eta
   CALL rmatexp(dab,expdab,kdim,ni) !MV exp in ExpDab
   CALL rmatabtoa (rexpdabold(1,1,is), expdab,kdim,ni)!MV update exp
@@ -883,14 +893,15 @@ WRITE(6,*) 'e1der,e1old,e2der,actstep=',e1der,e1old,e2der,actstep
          norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
          actstep*norm**2/(ener_2st(is)-enold_2st)
        CALL FLUSH(353)
+  ELSE
+    WRITE(6,'(i4,5(1pg13.5))')   &
+       iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
+       norm, ERR_r,ener_2st(is)-enold_2st,actstep
+    CALL FLUSH(6)
   END IF
-  WRITE(6,'(i4,5(1pg13.5))')   &
-      iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
-     norm, ERR_r,ener_2st(is)-enold_2st,actstep
-  CALL FLUSH(6)
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
-  IF(iter>5 .AND. ABS(norm) < precis) GO TO 99
+  IF(iter>5 .AND. ABS(norm) < actprecis) GO TO 99
   
 END DO
 99   CONTINUE

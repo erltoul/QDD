@@ -568,7 +568,10 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
+  espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
+  espaft = rwfovlp(q0(1,nbe),q1)
+  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
   

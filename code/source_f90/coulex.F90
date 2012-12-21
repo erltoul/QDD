@@ -560,6 +560,7 @@ REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
 INTEGER,SAVE :: mxini=0,myini=0,mzini=0
 !DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+LOGICAL,SAVE :: tinifft=.false.
 
 !----------------------------------------------------------------------
 
@@ -590,47 +591,54 @@ END IF
 #endif
 
 #if(fftw_cpu)
+tinifft=.false.
 #if(parano)
 IF(mxini == 0) THEN
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
   IF (wisdomtest == 0) THEN
-    WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
-    WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
+    WRITE(6,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for x'
+    WRITE(7,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for x'
   END IF
   pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
   pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
   mxini  = kfftx
+  tinifft=.true.
   WRITE(7,'(a)') ' x-fft initialized '
 ELSE IF(mxini /= kfftx) THEN
   STOP ' nx2 in four3d not as initialized!'
 END IF
 IF(myini == 0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for y'
+    WRITE(7,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for y'
+  END IF
   pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
   pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
   myini  = kffty
+  tinifft=.true.
   WRITE(7,'(a)') ' y-fft initialized '
 ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
+  wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+  IF (wisdomtest == 0) THEN
+    WRITE(6,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for z'
+    WRITE(7,*) 'FOURF-COULEX: wisdom_fftw.dat not found, creating it for z'
+  END IF
   pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
   pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
   mzini  = kfftz
+  tinifft=.true.
   IF (wisdomtest == 0) THEN
-    WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(6,*) 'FOURF-COULEX: Error exporting wisdom to file wisdom_fftw.dat'
+    WRITE(7,*) 'FOURF-COULEX: Error exporting wisdom to file wisdom_fftw.dat'
   END IF
   WRITE(7,'(a)') ' z-fft initialized '
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
-wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
-IF(wisdomtest==0) THEN
-  WRITE(*,*) ' FOURF: export wisdom_fftw_coul.dat failed'
-ELSE
-  WRITE(*,*) ' FOURF: export wisdom_fftw_coul.dat successfull'
-END IF
-CALL fftw_forget_wisdom
 #endif
 
 #if(parayes)
@@ -658,6 +666,7 @@ IF(mxini == 0) THEN
     pforwx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_FORWARD,FFTW_planflag)
     pbackx=fftw_plan_dft_1d(kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_planflag)
     mxini  = kfftx
+    tinifft=.true.
   ENDIF
 ELSE IF(mxini /= kfftx) THEN
   STOP ' nx2 in four3d not as initialized!'
@@ -679,6 +688,7 @@ IF(myini == 0) THEN
     pforwy=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_FORWARD,FFTW_planflag)
     pbacky=fftw_plan_dft_1d(kffty,fftay,fftay,FFTW_BACKWARD,FFTW_planflag)
     myini  = kffty
+    tinifft=.true.
   ENDIF
 ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
@@ -688,11 +698,6 @@ IF(mzini == 0) THEN
     pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
     pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
-    wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
-    IF (wisdomtest == 0) THEN
-      WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-      WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'
-    END IF
   ENDIF
   CALL mpi_barrier(mpi_comm_world,mpi_ierror)
   IF(myn /= 0) THEN
@@ -700,11 +705,23 @@ IF(mzini == 0) THEN
     pforwz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_FORWARD,FFTW_planflag)
     pbackz=fftw_plan_dft_1d(kfftz,fftb,fftb,FFTW_BACKWARD,FFTW_planflag)
     mzini  = kfftz
+    tinifft=.true.
   ENDIF
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
 #endif
+
+IF(myn==0 .AND. tinifft) THEN
+  wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw_coul.dat'//C_NULL_CHAR)
+  IF(wisdomtest==0) THEN
+    WRITE(*,*) ' FOURF-COULEX: export wisdom_fftw_coul.dat failed'
+  ELSE
+    WRITE(*,*) ' FOURF-COULEX: export wisdom_fftw_coul.dat successfull'
+  END IF
+  CALL fftw_forget_wisdom
+END IF
+
 #endif
 
 
