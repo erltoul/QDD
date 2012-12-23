@@ -405,6 +405,7 @@ IF (NE > 0) THEN
   CALL calcpseudo()                 ! update pseudo-potentials   ??
 END IF
 #endif
+
 CALL calclocal(rho,aloc)          ! LDA part of the potential
 
 !      call infor(psir,rho,0)
@@ -571,7 +572,7 @@ DO nbe=1,nstate
   espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
   espaft = rwfovlp(q0(1,nbe),q1)
-  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
+!  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
   

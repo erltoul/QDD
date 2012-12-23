@@ -16,6 +16,8 @@ REAL(DP) :: step=0.1D0,precis=1D-6,radmaxsym=1D0
 REAL(DP) :: ener_2st(2)
 INTEGER :: symutbegin=100,itut
 !COMMON /twostut/ step,precis,symutbegin,radmaxsym,itut
+REAL(DP) :: dampopt=0.7D0,steplow=0.01D0,steplim=1.2D0    ! optimized stepsize
+LOGICAL :: toptsicstep=.true.       ! switch to optimized step
 
 INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
@@ -83,7 +85,25 @@ LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
-NAMELIST /fsic/step,precis,symutbegin,radmaxsym   !!! UT parameters
+!
+! Namelist FSIC contains numerical parameters for the solution
+!               of the symmetry condition:
+!  radmaxsym   = presently incactive parameter --> set to 1D0
+!  step        = step size (actually 'step/radmaxysm' is the step size)
+!  precis      = final limit on precision,
+!                early stages use actual variance*1D-4 as limit
+!  symutbegin  = number of iterations in symmetry condition
+!  toptsicstep = switch to dynamical tuning of stepsize 
+!                by quadratic extrapolation of energy to a 
+!                maximum using the last three steps;
+!                the following parameters are relevant only
+!                if this option is set to .true.
+!  dampopt     = damping factor on the optimal step (default 0.7)
+!  steplow     = minimum step size (tentative default 0.01)
+!  steplim     = maximum step size (tentative default 1.2)
+!
+NAMELIST /fsic/step,precis,symutbegin,radmaxsym, &
+               dampopt,steplow,steplim,toptsicstep     !!! UT parameters
 
 !----------------------------------------------------------------
 
@@ -802,8 +822,6 @@ REAL(DP) :: norm,ERR_r
 REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
-REAL(DP) :: dampopt=0.7D0,steplim=1.2D0    ! optimized stepsize
-LOGICAL,PARAMETER :: topt=.false.       ! switch to optimized step
 
 
 !-------------------------------------------------------
@@ -823,7 +841,7 @@ CALL rmatmult (vecsr(1,1, is),rexpdabold(1,1,is),dabsto,kdim,ni)
 CALL rmatcopy(dabsto,vecsr(1,1,is),kdim,ni)
 
 actstep = step/radmaxsym  ! radmaxsym obsolete, set to 1D0
-actprecis = max(precis,1D-1*sumvar2)
+actprecis = max(precis,1D-3*sumvar2)
 !actprecis = precis
 !WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
@@ -833,8 +851,7 @@ IF(tconv) THEN
   WRITE(353,'(a,i4,1pg13.5)') &
     ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
 END IF
-!IF(tconv .AND. ttest) THEN
-IF(tconv) THEN
+IF(tconv .AND. ttest) THEN
   write(353,*) 'entree utgradstepr. Spin=',is  !MV
   write (353,'(4f12.5)') &
     ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
@@ -847,7 +864,7 @@ enold_2st=0D0
 DO iter=1,itmax2
 
   CALL dalphabetar(is, dab, q0) !new DAB
-  IF(topt) THEN
+  IF(toptsicstep) THEN
     IF(iter.LE.3) THEN
       enstore(iter)=ener_2st(is)
       IF(iter==1) THEN
@@ -866,16 +883,19 @@ DO iter=1,itmax2
       e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
-!WRITE(*,*) ' stepnew,actstep=',stepnew,actstep
-      stepnew = stepnew/actstep
-      IF(stepnew > steplim) stepnew=steplim
-      IF(stepnew < 1D0/steplim) stepnew=1D0/steplim
-      actstep = stepnew*actstep
-!WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
-WRITE(*,*) '  enstore=',enstore
-WRITE(*,*) 'stepstore=',stepstore
-WRITE(6,*) 'e1der,e1old,e2der,actstep=',e1der,e1old,e2der,actstep
-!WRITE(*,*) 'actstep=',actstep
+      stepnew=abs(stepnew)
+!      stepnew = stepnew/actstep
+!      actstep = stepnew*actstep
+!      IF(stepnew > steplim) stepnew=steplim
+!      IF(stepnew < steplow) stepnew=steplow
+      actstep = max(steplow,min(stepnew,steplim))
+      IF(ttest) THEN
+        WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
+        WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
+        WRITE(*,'(a,30(1pg15.7))') '  stepstore=',stepstore
+        WRITE(6,'(a,3(1pg15.7))') 'e1d,e1o,e2d=',e1der,e1old,e2der
+        WRITE(6,'(a,2(1pg15.7))') 'act/newstep=',actstep,stepnew
+      END IF
     END IF    
   END IF
   norm=rmatnorme(dab,kdim,ni)
@@ -886,7 +906,7 @@ WRITE(6,*) 'e1der,e1old,e2der,actstep=',e1der,e1old,e2der,actstep
   CALL rmatabtoa (vecsr(1,1,is), expdab,kdim,ni)!MV update Vecs
   CALL rmatcnjg(rexpdabold(1,1,is), dab,kdim,ni)
   CALL rmatmult(rexpdabold(1,1,is), dab,dabsto,kdim,ni)
-  ERR_r=rmatnorme(dabsto,kdim,ni)
+  ERR_r=rmatnorme(dabsto,kdim,ni)**2-ndims(is)
   IF(tconv) THEN
        WRITE(353,'(i4,6(1pg13.5))')   &
          iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
@@ -901,7 +921,7 @@ WRITE(6,*) 'e1der,e1old,e2der,actstep=',e1der,e1old,e2der,actstep
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
-  IF(iter>5 .AND. ABS(norm) < actprecis) GO TO 99
+  IF(iter>2 .AND. ABS(norm) < actprecis) GO TO 99
   
 END DO
 99   CONTINUE
