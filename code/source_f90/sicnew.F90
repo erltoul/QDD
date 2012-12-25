@@ -577,7 +577,7 @@ DATA testprint/.false./
 
 !-------------------------------------------------------------------
 
-IF(numspin.NE.2) STOP ' SIC-Slater requires full spin code'
+IF(numspin.NE.2) STOP ' SIC-Slater requires full spin'
 IF(ifsicp /= 3) STOP ' CALC_SLATER called with wrong option IFSICP'
 
 CALL act_part_num(npartup,npartdw,npartto)
@@ -1429,7 +1429,7 @@ LOGICAL,PARAMETER :: testprint=.false.
 
 !--------------------------------------------------------------------
 
-#if(fullspin)
+IF(numspin<2) STOP ' CALC_SICSP requires fullspin code'
 
 ! allocate workspace
 
@@ -1520,9 +1520,6 @@ END IF
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)
 DEALLOCATE(rho1)
-#else
-STOP ' CALC_SICSP requires fullspin code'
-#endif
 
 RETURN
 END SUBROUTINE calc_sicspc

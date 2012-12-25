@@ -229,8 +229,8 @@ endif
 
 .SUFFIXES: .F90 .o
 
-#EXEC = essai.par
-EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
+EXEC = essai.par
+#EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        generlcgo.o coulsolv.o\
@@ -242,7 +242,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        localize_rad.o symmcond_step.o loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o 2stUTc.o\
        pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o attachement.o Mat.o
+       short.o image.o lattice.o attachement.o
 
 ifeq "$(TYPE_FFT)" "NETLIB"
 OBJS = $(OBJINT) fftpack.o
@@ -333,9 +333,6 @@ nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 attachement.o: attachement.F90 define.h makefile params.o kinetic.o coulsolv.o 
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
-
-Mat.o: Mat.f90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 

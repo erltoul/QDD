@@ -8,7 +8,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
 
-REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /sicsav/usicall(kdfull2,kstate)
 
 

@@ -29,7 +29,7 @@
 ! full SIC and variants (outdated)
 !
 #define fullsic 0
-#define symmcond 1
+#define symmcond 0
 #define twostsic 1
 !
 !  

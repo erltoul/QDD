@@ -8,8 +8,11 @@ USE kinetic
 USE localize_rad
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
+
 REAL(DP),PRIVATE,ALLOCATABLE :: qnewr(:,:)
 REAL(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
+REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
 REAL(DP) :: step=0.1D0,precis=1D-6,radmaxsym=1D0
@@ -41,7 +44,7 @@ REAL(DP),ALLOCATABLE :: vecsr(:,:,:)    ! searched eigenvevtors
 MODULE twost
 USE params
 USE kinetic
-USE twostr, ONLY:step,precis,symutbegin,radmaxsym,itut,vecsr
+USE twostr, ONLY:step,precis,symutbegin,radmaxsym,itut,vecsr,tconv
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP),ALLOCATABLE :: qnewut(:,:)
@@ -81,8 +84,6 @@ USE kinetic
 USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
-
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
 !
@@ -93,9 +94,9 @@ LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 !  precis      = final limit on precision,
 !                early stages use actual variance*1D-4 as limit
 !  symutbegin  = number of iterations in symmetry condition
-!  toptsicstep = switch to dynamical tuning of stepsize 
-!                by quadratic extrapolation of energy to a 
-!                maximum using the last three steps;
+!  toptsicstep = switch to tuning of stepsize by quadratic extrapolation 
+!                of energy to a maximum using the last three steps;
+!                this option is presently only relevant for the static case;
 !                the following parameters are relevant only
 !                if this option is set to .true.
 !  dampopt     = damping factor on the optimal step (default 0.7)
@@ -133,7 +134,9 @@ WRITE(6,'(a,2i5)') ' dimension of sub-matrices:',ndims
 
 
 ! initialize work space
+#if(symmcond)
 ALLOCATE(usicall(kdfull2,kstate))
+#endif
 ALLOCATE(qnewr(kdfull2,kstate))
 ALLOCATE(psirut(kdfull2,kstate))
 
@@ -166,7 +169,7 @@ END DO
 IF(tconv) THEN
 OPEN(353,file='2st-stat-conv.res')
 REWIND(353)
-WRITE(353,'(a)') '# protocol of convergence if symmetry condition'
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition'
 CLOSE(353)
 END IF
 
@@ -234,6 +237,12 @@ ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvevtors
 ALLOCATE(qnewut(kdfull2,kstate))
 ALLOCATE(psiut(kdfull2,kstate))
 
+IF(tconv) THEN
+OPEN(353,file='2st-stat-conv.res')
+REWIND(353)
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition - dynamical'
+CLOSE(353)
+END IF
 
 RETURN
 END SUBROUTINE init_fsic
@@ -743,8 +752,8 @@ COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)           !MV! workspace
 COMPLEX(DP) :: dabsto(kdim,kdim)          !MV! workspace
 COMPLEX(DP) :: vecovlpc   ! function names
 REAL(DP) :: vecnorm   ! function names
-REAL(DP) :: matdorth !MV function
-REAL(DP) :: matnorme !MV function
+!REAL(DP) :: matdorth !MV function
+!REAL(DP) :: matnorme !MV function
 COMPLEX(DP) :: wfovlp
 
 INTEGER :: itmax2,ni
@@ -759,27 +768,50 @@ itmax2=symutbegin ! 50
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-CALL matmult (vecs(1,1, is),expdabold(1,1,is),dabsto,kdim,ni)
-CALL matcopy(dabsto,vecs(1,1,is),kdim,ni)
+!CALL matmult (vecs(1,1, is),expdabold(1,1,is),dabsto,kdim,ni)
+dabsto(1:ni,1:ni) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
+!CALL matcopy(dabsto,vecs(1,1,is),kdim,ni)
+vecs(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 
 actstep = step/radmaxsym     ! radmaxsym obsolete, set to 1D0
 
+IF(tconv) THEN
+  OPEN(353,file='2st-stat-conv.res',POSITION='append')
+  WRITE(353,*) '# convergence symmetry condition. is=',is
+  WRITE(353,'(a)') '# iter Ortho , variance, erreur , actstep'
+ELSE
+  WRITE(6,'(a)')' iter Ortho , variance, erreur, actstep'
+END IF
+
 DO iter=1,itmax2
   CALL dalphabeta(is, dab, q0)     !actual symmetry condition on 'dab'
-  norm=matnorme(dab,kdim,ni)       !norm of symm.cond. = error
-  CALL matconst(dab,dab,CMPLX(-actstep,0),kdim,ni)  !mutiply 'dab' stepsize
+!  norm=matnorme(dab,kdim,ni)       !norm of symm.cond. = error
+  norm = SQRT(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))))
+!  CALL matconst(dab,dab,CMPLX(-actstep,0),kdim,ni)  !mutiply 'dab' stepsize
+  dab(1:ni,1:ni) = CMPLX(-actstep,0D0)*dab(1:ni,1:ni)
   CALL matexp(dab,expdab,kdim,ni)  ! exponentiate 'dab' to 'ExpDab'
-  CALL matabtoa(expdabold(1,1,is),expdab,kdim,ni)   !store 'expdab'
-  CALL matabtoa(vecs(1,1,is), expdab,kdim,ni)       !update 'vecs'
-  CALL matcnjg(expdabold(1,1,is),dab,kdim,ni)       ! conjugate on 'dab'
-  CALL matmult(expdabold(1,1,is), dab,dabsto,kdim,ni)
-  ERR_c=matnorme(dabsto,kdim,ni)
-  WRITE(6,'(a,4f16.13)')' Ortho , variance, erreur, actstep',  &
+!  CALL matabtoa(expdabold(1,1,is),expdab,kdim,ni)   !store 'expdab'
+  expdabold(1:ni,1:ni,is) = MATMUL(expdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
+!  CALL matabtoa(vecs(1,1,is), expdab,kdim,ni)       !update 'vecs'
+  vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdab(1:ni,1:ni))
+!  CALL matcnjg(expdabold(1,1,is),dab,kdim,ni)       ! conjugate on 'dab'
+  dab(1:ni,1:ni) = CONJG(expdabold(1:ni,1:ni,is))
+!  CALL matmult(expdabold(1,1,is), dab,dabsto,kdim,ni)
+  dabsto(1:ni,1:ni) = MATMUL(expdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
+!  ERR_c=SQRT(matnorme(dabsto,kdim,ni)**2-ndims(is))
+  ERR_c = SQRT(SUM(dabsto(1:ni,1:ni)*CONJG(dabsto(1:ni,1:ni))-ndims(is)))
+  IF(tconv) THEN
+    WRITE(353,'(a,i4,4(1pg13.5))') &
+      iter,matdorth(vecs(1,1,is),kdim,ndims(is)),ABS(norm),ABS(ERR_c),actstep
+  ELSE
+    WRITE(6,'(a,4f16.13)')' Ortho , variance, erreur, actstep',  &
       matdorth(vecs(1,1,is), kdim, ndims(is)), ABS(norm), ABS(ERR_c),actstep
+  END IF
   IF(ABS(norm) < precis) GO TO 99
 END DO !iter
 99   CONTINUE
 
+IF(tconv) close(363)
 RETURN
 END SUBROUTINE utgradstepc
 #endif
@@ -813,7 +845,6 @@ REAL(DP) :: rmatnorme   ! function names
 
 INTEGER :: itmax2,ni
 LOGICAL,PARAMETER :: ttest=.false.
-LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
 REAL(DP) :: norm,ERR_r
 
@@ -837,8 +868,10 @@ END IF
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-CALL rmatmult (vecsr(1,1, is),rexpdabold(1,1,is),dabsto,kdim,ni)
-CALL rmatcopy(dabsto,vecsr(1,1,is),kdim,ni)
+!CALL rmatmult (vecsr(1,1, is),rexpdabold(1,1,is),dabsto,kdim,ni)
+dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
+!CALL rmatcopy(dabsto,vecsr(1,1,is),kdim,ni)
+vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 
 actstep = step/radmaxsym  ! radmaxsym obsolete, set to 1D0
 actprecis = max(precis,1D-3*sumvar2)
@@ -898,15 +931,20 @@ DO iter=1,itmax2
       END IF
     END IF    
   END IF
-  norm=rmatnorme(dab,kdim,ni)
+  norm=SQRT(SUM(dab(1:ni,1:ni)**2))   ! rmatnorme(dab,kdim,ni)
 !  actstep = step/norm
-  CALL rmatconst(dab,dab,-actstep, kdim,ni)  !MV mutiply DAB by eta
+!  CALL rmatconst(dab,dab,-actstep, kdim,ni)  !MV mutiply DAB by eta
+  dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
   CALL rmatexp(dab,expdab,kdim,ni) !MV exp in ExpDab
-  CALL rmatabtoa (rexpdabold(1,1,is), expdab,kdim,ni)!MV update exp
-  CALL rmatabtoa (vecsr(1,1,is), expdab,kdim,ni)!MV update Vecs
-  CALL rmatcnjg(rexpdabold(1,1,is), dab,kdim,ni)
-  CALL rmatmult(rexpdabold(1,1,is), dab,dabsto,kdim,ni)
-  ERR_r=rmatnorme(dabsto,kdim,ni)**2-ndims(is)
+!  CALL rmatabtoa (rexpdabold(1,1,is), expdab,kdim,ni)!MV update exp
+  rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
+!  CALL rmatabtoa (vecsr(1,1,is), expdab,kdim,ni)!MV update Vecs
+  vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
+!  CALL rmatcnjg(rexpdabold(1,1,is), dab,kdim,ni)
+  dab(1:ni,1:ni) = rexpdabold(1:ni,1:ni,is)
+!  CALL rmatmult(rexpdabold(1,1,is), dab,dabsto,kdim,ni)
+  dabsto(1:ni,1:ni) = MATMUL(rexpdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
+  ERR_r=SQRT(SUM(dab(1:ni,1:ni)**2)-ndims(is))   ! rmatnorme(dabsto,kdim,ni)**2-ndims(is)
   IF(tconv) THEN
        WRITE(353,'(i4,6(1pg13.5))')   &
          iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
@@ -1652,10 +1690,170 @@ END SUBROUTINE spmomsmatrix
 
 
 #ifdef REALSWITCH
+!_________________________________________rMat Orth__________________________________________________
+ 
+ 
+!                                         sigma(Vi*cjg(Vj))
+
+REAL(8) FUNCTION rmatdorth(aa,n,ndim)
+
+REAL(8), INTENT(IN)                       :: aa(n,n)
+INTEGER, INTENT(IN OUT)                  :: n
+INTEGER, INTENT(IN)                      :: ndim
+
+
+
+rmatdorth=0D0
+DO i=1,ndim
+  DO j=i,ndim
+    IF(i==j) THEN
+      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))-1D0
+    ELSE
+      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))
+    END IF
+  END DO
+END DO
+END FUNCTION rmatdorth
+!_________________________________________rMat Exp__________________________________________________
+!                                         BB=Exp(AA)
+
+SUBROUTINE rmatexp(aa,bb,n,ndim)
+
+REAL(8), INTENT(IN OUT)                   :: aa(n,n)
+REAL(8), INTENT(IN OUT)                   :: bb(n,n)
+INTEGER, INTENT(IN)                      :: n
+INTEGER, INTENT(IN OUT)                  :: ndim
+
+REAL(8) cc(n,n), dd(n,n)
+
+REAL(8) rmatnorme
+REAL(8) eps, delta,rn
+
+eps=1.e-20
+CALL rmatunite(bb,n,ndim)
+CALL rmatunite(cc,n,ndim)
+rn=CMPLX(1D0,0D0)
+delta= 1D0
+!        call rMatprint('AAds exp',AA,N,Ndim)
+!        call rMatprint('BB ds exp',BB,N,Ndim)
+
+DO WHILE (delta > eps)
+!  CALL rmatmult(aa,cc,dd,n,ndim)
+!        call rMatprint('CC ds exp avant const',CC,N,Ndim)
+!  CALL rmatconst(dd,cc, 1D0/rn,n,ndim)
+  dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
+  cc(1:ndim,1:ndim) = dd(1:ndim,1:ndim)/rn
+!        call rMatprint('CC ds exp',CC,N,Ndim)
+!  delta= rmatnorme(cc, n, ndim)
+  delta = SQRT(SUM(cc(1:ndim,1:ndim)**2))
+!  CALL rmatadd(bb,cc,bb,n,ndim)
+bb(1:ndim,1:ndim) = cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim) 
+  rn=rn+1
+END DO
+END SUBROUTINE rmatexp
+!_________________________________________rMat Unite__________________________________________________
+!                                         AA=II
+
+SUBROUTINE rmatunite(aa,n,ndim)
+!     BB=unite
+
+REAL(8), INTENT(OUT)                 :: aa(n,n)
+INTEGER, INTENT(IN)                  :: n
+INTEGER, INTENT(IN)                  :: ndim
+
+
+
+DO i=1,ndim
+  DO j=1,ndim
+    aa(i,j)=0D0
+  END DO
+  aa(i,i)=1D0
+END DO
+END SUBROUTINE rmatunite
+
 END MODULE twostr
 #endif
 
 #ifdef COMPLEXSWITCH
+!_________________________________________Mat Orth__________________________________________________
+ 
+
+REAL(8) FUNCTION matdorth(aa,n,ndim)
+
+COMPLEX(8), INTENT(IN)               :: aa(n,n)
+INTEGER, INTENT(IN)                  :: n
+INTEGER, INTENT(IN)                  :: ndim
+
+
+
+matdorth=0D0
+DO i=1,ndim
+  DO j=i,ndim
+    IF(i==j) THEN
+      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))-1D0
+    ELSE
+      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))
+    END IF
+  END DO
+END DO
+END FUNCTION matdorth
+!_________________________________________Mat Exp__________________________________________________
+!                                         BB=Exp(AA)
+
+SUBROUTINE matexp(aa,bb,n,ndim)
+
+COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
+COMPLEX(8), INTENT(IN OUT)                  :: bb(n,n)
+INTEGER, INTENT(IN)                      :: n
+INTEGER, INTENT(IN OUT)                  :: ndim
+
+COMPLEX(8) :: cc(n,n), dd(n,n)
+
+!REAL(8) matnorme
+REAL(8) eps, delta,rn
+
+eps=1D-20
+CALL matunite(bb,n,ndim)
+CALL matunite(cc,n,ndim)
+rn=CMPLX(1D0,0D0)
+delta= 1D0
+!        call matprint('AAds exp',AA,N,Ndim)
+!        call matprint('BB ds exp',BB,N,Ndim)
+
+DO WHILE (delta > eps)
+!  CALL matmult(aa,cc,dd,n,ndim)
+!        call matprint('CC ds exp avant const',CC,N,Ndim)
+!  CALL matconst(dd,cc, 1D0/rn,n,ndim)
+  dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
+  cc(1:ndim,1:ndim) =  dd(1:ndim,1:ndim)/rn
+!        call matprint('CC ds exp',CC,N,Ndim)
+!  delta= matnorme(cc, n, ndim)
+  delta = SQRT(SUM(cc(1:ndim,1:ndim)*CONJG(cc(1:ndim,1:ndim))))
+!  CALL matadd(bb,cc,bb,n,ndim)
+  bb(1:ndim,1:ndim) =  cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim)
+  rn=rn+1
+END DO
+END SUBROUTINE matexp
+!_________________________________________Mat Unite__________________________________________________
+!                                         AA=II
+
+SUBROUTINE matunite(aa,n,ndim)
+!     BB=unite
+
+COMPLEX(8), INTENT(OUT)              :: aa(n,n)
+INTEGER, INTENT(IN)                  :: n
+INTEGER, INTENT(IN)                  :: ndim
+
+
+
+DO i=1,ndim
+  DO j=1,ndim
+    aa(i,j)=CMPLX(0D0,0D0)
+  END DO
+  aa(i,i)=CMPLX(1D0,0D0)
+END DO
+END SUBROUTINE matunite
+
 END MODULE twost
 #endif
 
