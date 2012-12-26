@@ -26,10 +26,8 @@
 !#define paropenmp 1    set in 'makefile'
 #define dynopenmp 0
 !
-! full SIC and variants (outdated)
+! full SIC and localized SIC
 !
-#define fullsic 0
-#define symmcond 0
 #define twostsic 1
 !
 !  

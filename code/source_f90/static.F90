@@ -11,8 +11,6 @@ USE params
 USE coulsolv, ONLY:falr
 #if(twostsic)
 USE twostr
-#endif
-#if(fullsic)
 USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -31,13 +29,9 @@ LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 
-!MB:
-#if(fullsic)
-REAL(DP) :: qaux(kdfull2,kstate)
-#else
-REAL(DP) :: qaux(1,1)       ! dummy array
-#endif
-!MB/
+REAL(DP),ALLOCATABLE :: qaux(:,:)
+
+IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 
 ! test Coulomb
 CALL calcrhor(rho,psir)
@@ -131,31 +125,12 @@ DO iter1=1,ismax
     END IF
   END IF
   
-  IF(ifsicpsav == 6) THEN
-#if(fullsic)
-    IF(iter1 <= itersicp6 .AND. sumvar > 10D0*epsoro) THEN
-      ifsicp = 3   !   or 0 ?
-    ELSE
-      ifsicp = 6
-!             if(iter1.le.itersicp6+10) then
-      IF(iter1 <= 0) THEN
-        WRITE(*,*) ' before LOCWF'
-        CALL calc_locwf(psir,qaux)
-        CALL calc_fullsicr(psir,qaux)
-        WRITE(*,*) ' after LOCWF'
-      END IF
-    END IF
-#else
-    STOP "IFSICP=6 requires LOCSIC or FULLSIC"
-#endif
-!           write(*,*) ' ITERSICP6,IFSICP=',itersicp6,ifsicp   ! <--  strange line
-  END IF
-  
-  IF(ifsicp /= 6) THEN
-    CALL sstep(psir,aloc,iter1)    ! also for GSlat, DSIC
-#if(fullsic)
+  IF(ifsicp /= 7) THEN
+    CALL sstep(psir,aloc,iter1) 
+#if(twostsic)
   ELSE
-    CALL  sicstep_gen(psir,qaux,aloc,iter1)
+    CALL sstep_lsic(psir,akv,aloc,iter1,qaux)
+!    CALL sicstep_gen(psir,qaux,aloc,iter1)
 #endif
   END IF
   
@@ -216,7 +191,7 @@ END IF
 
 !     diagonalize Lagrange parameters
 
-IF(ifsicp >= 7) THEN
+IF(ifsicp > 7) THEN
   CALL diag_lagr(psir)
 !        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
 END IF
@@ -376,12 +351,10 @@ SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
 !      aloc   = local mean-field potential
 
 USE params
-#if(fullsic)
-USE localize_rad
-#endif
 ! USE kinetic
 #if(twostsic)
 USE twostr
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -412,12 +385,10 @@ CALL calclocal(rho,aloc)          ! LDA part of the potential
 
 IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
-#if(fullsic)
-ELSE IF(ifsicp == 6) THEN
-  CALL calc_fullsicr(psir,psiaux)
-#endif
 #if(twostsic)
-ELSE IF(ifsicp >= 7 .AND. iter1 > 0) THEN
+ELSE IF(ifsicp == 7) THEN
+  CALL calc_locsic(psir,psiaux)
+ELSE IF(ifsicp ==8 .AND. iter1 > 0) THEN
   CALL static_sicfield(rho,aloc,psir,iter1)
 #endif
 END IF
@@ -450,11 +421,9 @@ SUBROUTINE sstep(q0,aloc,iter)
 USE params
 USE kinetic
 !USE localize_rad
-#if(fullsic)
-USE localize_rad
-#endif
 #if(twostsic)
 USE twostr
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -616,6 +585,7 @@ ALLOCATE(psipr(kdfull2))
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
+!    WRITE(*,*) ' nbe,var2=',nbe,evarsp2(nbe)
     DEALLOCATE(w4)
 #endif
     
@@ -807,7 +777,7 @@ SUBROUTINE infor(psi,rho,i)
 !     and prints to standard output.
 
 USE params
-#if(fullsic)
+#if(twostsic)
 USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -859,7 +829,8 @@ DO nb=1,nstate
   sumvar   = sumvar + occup(nb)*evarsp(nb)**2
   sumvar2   = sumvar2 + occup(nb)*evarsp2(nb)**2
   enonlc   = enonlc + enonlo(nb)*occup(nb)
-!        if(nc+nk+ne.gt.0) ecorr=energ_ions()
+!  WRITE(*,*) ' check: nbe,bvar2=',nbe,evarsp2(nb)
+        if(nc+nk+ne.gt.0) ecorr=energ_ions()
 END DO
 
 ecorr=energ_ions()

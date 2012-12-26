@@ -261,10 +261,11 @@ equations\\
                        & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
 {\tt ifsicp           }& selects type of self-interaction correction\\
     &  0 = pure LDA, 1 = SIC-GAM, 2 = ADSIC; 3 = SIC-Slater; \\
-    &  4 = SIC-KLI; 5 = exact exchange; 6 = old SIC (?);\\
-    &  7 = GSlat;  8 = full SIC.\\
-    & for activation see switches 
-     {\tt kli}, {\tt exchange}, {\tt  fullsic}, {\tt twostsic}.\\
+    &  4 = SIC-KLI; 5 = exact exchange; 6 = inactive;\\
+    &  7 = localized SIC;  8 = full SIC (double set).\\
+    & IFSICP=7 or 8 requires switch
+     {\tt twostsic=1} in {\tt define.h}.\\
+    & Option IFSICP=7 needs yet testing.\\
 {\tt icooltyp         }& type of cooling (0=none, 1=pseudo-dynamics,\\
 {\tt                  }& 2=steepest descent, 3=Monte Carlo)\\
 {\tt ifredmas         }& switch to use reduced mass for ions in dynamics\\

@@ -81,7 +81,7 @@ SUBROUTINE init_fsicr()
 
 USE params
 USE kinetic
-USE symcond
+!USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !INCLUDE "twost.inc"
@@ -182,7 +182,7 @@ SUBROUTINE end_fsicr()
 
 USE params
 USE kinetic
-USE symcond
+!USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !   frees workspace for static SIC
@@ -214,7 +214,7 @@ SUBROUTINE init_fsic()
 
 USE params
 USE kinetic
-USE symcond
+!USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !INCLUDE "twost.inc"
@@ -445,9 +445,9 @@ SUBROUTINE infor_sic(psir)
 USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-REAL(DP) :: rho(2*kdfull2)
-REAL(DP) :: aloc(2*kdfull2)
-REAL(DP) :: psir(kdfull2,kstate)
+REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
+!REAL(DP) :: rho(2*kdfull2)
+!REAL(DP) :: aloc(2*kdfull2)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
 
@@ -457,12 +457,10 @@ IF(ifsicp < 7) RETURN
 
 !     TESTS
 
-IF(ifsicp > 6)THEN
-  WRITE(6,*) 'DIAGONAL STATES :'
-  CALL spmomsmatrixr(psir,1)       !!! to print the total variance
-  WRITE(6,*) 'LOCALIZED STATES :'
-  CALL spmomsmatrixr(psirut,1)
-END IF
+WRITE(6,'(a)') 'DIAGONAL STATES :'
+CALL spmomsmatrixr(psir,1)       !!! to print the total variance
+WRITE(6,'(a)') 'LOCALIZED STATES :'
+CALL spmomsmatrixr(psirut,1)
 
 IF(ifsicp == 8) THEN   !!! to calculate the total
   DO is=1,2                       !!! violation of symmetry condition
@@ -799,7 +797,7 @@ DO iter=1,itmax2
 !  CALL matmult(expdabold(1,1,is), dab,dabsto,kdim,ni)
   dabsto(1:ni,1:ni) = MATMUL(expdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
 !  ERR_c=SQRT(matnorme(dabsto,kdim,ni)**2-ndims(is))
-  ERR_c = SQRT(SUM(dabsto(1:ni,1:ni)*CONJG(dabsto(1:ni,1:ni))-ndims(is)))
+  ERR_c = SQRT(ABS(SUM(dabsto(1:ni,1:ni)*CONJG(dabsto(1:ni,1:ni))-ndims(is))))
   IF(tconv) THEN
     WRITE(353,'(a,i4,4(1pg13.5))') &
       iter,matdorth(vecs(1,1,is),kdim,ndims(is)),ABS(norm),ABS(ERR_c),actstep
@@ -1058,7 +1056,10 @@ DO nb=1,nstate
   END IF
 END DO
 
-IF(ttest) call rMatPrint ('DAB', DAB, kstate, ndims(is))
+IF(ttest) THEN
+  WRITE(*,*) 'dab:'
+  WRITE(*,*) dab(1:ndims(is),1:ndims(is))
+END IF
 
 DEALLOCATE(usicsp,rhosp)
 DEALLOCATE(uqsym,symcond)
@@ -1500,8 +1501,8 @@ USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER :: iunit,PRINT    ! print =1 : printing of the total variance
-PARAMETER (iunit=0)    ! set zero to disable testprint
+INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
+INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
 
 REAL(DP) :: var
 LOGICAL :: tfirst
@@ -1509,16 +1510,17 @@ DATA tfirst/.true./
 
 #ifdef REALSWITCH
 !INCLUDE 'radmatrixr.inc'
-REAL(DP) :: wfr(kdfull2,kstate)
+REAL(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
+REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 #else
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
-COMPLEX(DP) :: wfr(kdfull2,kstate)
+COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 #endif
 
 !----------------------------------------------------------------------
 
-OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
+IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
 
 !     check spin of states
 

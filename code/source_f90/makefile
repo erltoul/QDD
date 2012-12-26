@@ -17,7 +17,7 @@ DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = YES
+OMP = NO
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -239,7 +239,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        carlo.o localize.o localizer.o subgrids.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o functions.o\
-       localize_rad.o symmcond_step.o loc_mfield.o givens.o\
+       localize_rad.o loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o 2stUTc.o\
        pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o attachement.o
@@ -314,10 +314,10 @@ localizer.o: localize.F90 define.h makefile params.o
 localize.o: localize.F90 define.h makefile params.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnew.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
 
-sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o
+sicnewc.o: sicnew.F90 define.h makefile params.o kinetic.o coulsolv.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
@@ -326,10 +326,10 @@ nonloc.o: nonloc.F90 define.h makefile params.o kinetic.o
 nonlocc.o: nonloc.F90 define.h makefile params.o kinetic.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
-2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o localize_rad.o
+2stUT.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o localize_rad.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $< 
  
-2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o symmcond_step.o localize_rad.o
+2stUTc.o: 2stUT.F90 define.h makefile params.o kinetic.o coulsolv.o localize_rad.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $< 
 
 attachement.o: attachement.F90 define.h makefile params.o kinetic.o coulsolv.o 

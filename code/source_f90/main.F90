@@ -18,12 +18,10 @@ PROGRAM tdlda_m
 USE params
 USE kinetic
 USE coulsolv
-#if(fullsic)
-USE localize_rad
-#endif
 #if(twostsic)
 USE twostr
 USE twost
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -87,7 +85,7 @@ CALL init_grid()
 
 CALL init_fields()
 
-#if(fullsic)
+#if(twostsic)
 IF(numspin==2) CALL init_radmatrix()
 #endif
 

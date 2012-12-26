@@ -349,15 +349,8 @@ IF(directenergy .AND.  &
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
-#if(fullsic)
-IF(ifsicp==5) STOP ' EXCHANGE doe not run with FULLSIC'
-IF(numspin.NE.2) STOP ' full SIC requires full spin'
-#endif
 
 #if(twostsic)
-#if(fullsic)
-STOP ' TWOSTSIC and FULLSIC cannot run simultaneously'
-#endif
 #if(locsic)
 STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
 #endif
@@ -369,11 +362,6 @@ STOP ' TWOSTSIC cannot yet run in parallel code'
 
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?
-
-#if(fullsic)
-IF(ifsicp == 6 .AND. itmax > 0)  &
-    STOP  ' full SIC not yet adapetd to dynamic case'
-#endif
 
 if(nabsorb == 0 .AND. jesc .NE. 0) &
     STOP ' JESC must be zero for NABSORB=0'
@@ -579,21 +567,18 @@ ELSE IF(ifsicp == 4)  THEN
   WRITE(iu,'(a)') 'sic activated: KLI'
 ELSE IF(ifsicp == 5) THEN
   WRITE(iu,'(a)') 'sic activated: exact exchange'
-#if(fullsic)
-ELSE IF(ifsicp == 6)  THEN
-  WRITE(iu,'(a)') 'sic activated: full SIC'
-#else
-ELSE IF(ifsicp == 6)  THEN
-  STOP ' code not compiled for full SIC'
-#endif
+IF(ifsicp == 6)  STOP ' IFSICP=6 presently not provided'
 #if(twostsic)
 ELSE IF(ifsicp == 7)  THEN
-  WRITE(iu,'(a)') 'sic activated: GSLat'
+  WRITE(iu,'(a)') 'sic activated: localized SIC'
+#if(parayes)
+  STOP " IFSICP=7 not possible in parallel code"
+#endif
 ELSE IF(ifsicp == 8)  THEN
-  WRITE(iu,'(a)') 'sic activated: full SIC'
+  WRITE(iu,'(a)') 'sic activated: double-set SIC'
 #else
 ELSE IF(ifsicp == 7)  THEN
-  STOP ' code not compiled for GSlat'
+  STOP ' code not compiled for localized SIC'
 ELSE IF(ifsicp == 8)  THEN
   STOP ' code not compiled for double-set SIC'
 #endif

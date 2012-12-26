@@ -189,6 +189,9 @@ DO nbe=1,nstate
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
 !          write(6,'(a,i3,2(1pg12.4))')
 !     &       ' nbe,spe,var=',nbe,sume,evarsp(nbe)
+    CALL rfftback(q2,q1)
+    CALL project(q1,q1,ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(rwfovlp(q1,q1))
   ELSE IF(tdiag .AND. fftnorm > 0D0) THEN
     sume = 0D0
     DO i=1,nxyz
@@ -734,7 +737,7 @@ DO iter=1,itmax
     yaver(i) = avermatrix(ymatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
     zaver(i) = avermatrix(zmatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
     raver(i) = avermatrix(rrmatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
-    rvary(i) = raver(i)-xaver(i)**2-yaver(i)**2 -zaver(i)**2
+    rvary(i) = raver(i)**2-xaver(i)**2-yaver(i)**2 -zaver(i)**2
     radvary = radvary + rvary(i)
     radmax = MAX(radmax,raver(i))
   END DO
