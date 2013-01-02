@@ -345,7 +345,7 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
 
 IF(directenergy .AND.  &
    ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8)  &
-    STOP ' directenergy=1 only for Slater and KLI'
+    STOP ' directenergy=1 only for Slater, KLI, or 2st-SIC'
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
@@ -1729,7 +1729,6 @@ END IF
 omeg=0.25*h2m
 !      if(nclust.gt.0)
 !     &    call ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
-CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
 IF(ifhamdiag==1 .AND. nstate>nclust) THEN
   WRITE(6,'(2a,2i5)')  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST', &
@@ -1738,6 +1737,7 @@ IF(ifhamdiag==1 .AND. nstate>nclust) THEN
    ' Presently: nstate,nclust=',nstate,nclust
   STOP  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST'
 END IF
+CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
 
 !     initialize H.O. wavefunctions
@@ -1774,6 +1774,8 @@ ELSE
   
 !       optionally LCGO initialization
   
+!  CALL ininodes()
+  occup=1D0
   CALL genermowf(psir,nmaxst)
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
@@ -1844,13 +1846,13 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
 
 INTEGER, INTENT(IN)                      :: nelect
 REAL(DP), INTENT(IN)                         :: deoccin
 REAL(DP), INTENT(IN)                         :: betain
 REAL(DP), INTENT(IN OUT)                     :: gamin
-INTEGER :: is(mpi_status_size)
-#endif
 
 !     initialization of book-keeping arrays of states nq, ispin.
 
@@ -2101,11 +2103,11 @@ DO i=1,nstate
 END DO
 !      occu(nstate)=0.0
 
+DEALLOCATE(ph)
 
-!-----------------------------------------------------------------------
 
-!  initial parameters:
-
+!
+!  initialize book-keeping fields assoxiating states with nodes
 
 !    parallel version : knode=number of nodes
 !    in the rest we mean absolute = relative to all the wf
@@ -2214,7 +2216,6 @@ WRITE(7,'(a,i3,a,80i1)') 'myn=',myn,': nhome',(nhome(i),i=1,ksttot)
 WRITE(6,'(a,i3,a,80i1)') 'myn=',myn,': nhome',(nhome(i),i=1,ksttot)
 #endif
 
-DEALLOCATE(ph)
 
 RETURN
 END SUBROUTINE ininqb
@@ -2989,6 +2990,12 @@ IF(directenergy .AND. ifsicp==5) &
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"
 #endif
 
+#if(twostsic)
+!IF(ifhamdiag==1 .AND. ifsicp==8) &
+!  STOP "Hamiltonian diagonalization presently not compatible with full SIC"
+IF(ifhamdiag==1 .AND. ifsicp==7) &
+  STOP "Hamiltonian diagonalization presently not compatible with localized SIC"
+#endif
 
 RETURN
 END SUBROUTINE checkoptions

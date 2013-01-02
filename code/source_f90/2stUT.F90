@@ -33,7 +33,7 @@ REAL(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
 REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
-REAL(DP),ALLOCATABLE :: vecsr(:,:,:)    ! searched eigenvevtors
+REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecsr
 !COMMON /radmatrixn/ndims
@@ -63,7 +63,7 @@ COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
-COMPLEX(DP),ALLOCATABLE :: vecs(:,:,:)    ! searched eigenvevtors
+COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvevtors
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecs
 !COMMON /radmatrixn/ndims
@@ -167,9 +167,13 @@ END DO
 
 ! initialize protocolo file
 IF(tconv) THEN
-OPEN(353,file='2st-stat-conv.res')
+OPEN(353,file='2st-stat-conv-1.res')
 REWIND(353)
-WRITE(353,'(a)') '# protocol of convergence of symmetry condition'
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition for ispin=1'
+CLOSE(353)
+OPEN(353,file='2st-stat-conv-2.res')
+REWIND(353)
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition for ispin=2'
 CLOSE(353)
 END IF
 
@@ -781,6 +785,8 @@ ELSE
   WRITE(6,'(a)')' iter Ortho , variance, erreur, actstep'
 END IF
 
+WRITE(*,*) ' before: vecsr=',vecs(1:ni,1:ni,is)
+
 DO iter=1,itmax2
   CALL dalphabeta(is, dab, q0)     !actual symmetry condition on 'dab'
 !  norm=matnorme(dab,kdim,ni)       !norm of symm.cond. = error
@@ -809,6 +815,8 @@ DO iter=1,itmax2
 END DO !iter
 99   CONTINUE
 
+WRITE(*,*) '  after: vecsr=',vecs(1:ni,1:ni,is)
+
 IF(tconv) close(363)
 RETURN
 END SUBROUTINE utgradstepc
@@ -830,21 +838,21 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-!INCLUDE 'twost.inc'
-!INCLUDE 'radmatrixr.inc'   ! defines also 'KDIM'
-!INCLUDE 'vec.inc'!MV
-REAL(DP) :: q0(kdfull2,kstate)
+
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN) :: is,iprint,iter1
+
 REAL(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
 REAL(DP) :: dabsto(kdim,kdim)
 REAL(DP) :: vecovlpr   ! function names
 REAL(DP) :: vecnormr   ! function names
-REAL(DP) :: rmathdorth   ! function names
-REAL(DP) :: rmatnorme   ! function names
+REAL(DP) :: rmathdorth ! function names
+REAL(DP) :: rmatnorme  ! function names
 
 INTEGER :: itmax2,ni
 LOGICAL,PARAMETER :: ttest=.false.
 
-REAL(DP) :: norm,ERR_r
+REAL(DP) :: norm,ERR_r,enorm
 
 !REAL(DP) :: variance,variance2  ! variance of step  ??
 !REAL(DP) :: radmax              ! max. squared radius
@@ -852,6 +860,13 @@ REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
 
+! The optimized step computes a quadratic from for the SIC energy
+! from the previous three iterations and extrapolates this form
+! to the maximum.
+! The step size is limited from above by the parameter 'steplim'
+! and from below by 'steplow'.
+! If a negative step size emerges, the initial step size is used.
+!
 
 !-------------------------------------------------------
 
@@ -866,35 +881,37 @@ END IF
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-!CALL rmatmult (vecsr(1,1, is),rexpdabold(1,1,is),dabsto,kdim,ni)
-dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
-!CALL rmatcopy(dabsto,vecsr(1,1,is),kdim,ni)
-vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
+!dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
+!vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 
-actstep = step/radmaxsym  ! radmaxsym obsolete, set to 1D0
+actstep = step  ! radmaxsym obsolete, set to 1D0
 actprecis = max(precis,1D-3*sumvar2)
 !actprecis = precis
 !WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
-  OPEN(353,file='2st-stat-conv.res',POSITION='append')
-  WRITE(353,*) '# convergence symmetry condition. is=',is
+  IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
+  IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
+  WRITE(353,*) '# convergence symmetry condition. iter1,is=',iter1,is
   WRITE(353,'(a)') '# Ortho , variance, erreur , actstep, Spin'
-  WRITE(353,'(a,i4,1pg13.5)') &
-    ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
-END IF
-IF(tconv .AND. ttest) THEN
-  write(353,*) 'entree utgradstepr. Spin=',is  !MV
-  write (353,'(4f12.5)') &
-    ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
+  IF(ttest) THEN
+    WRITE(353,*) ' before: vecsr='
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') vecsr(1:ni,i,is)
+    END DO
+    WRITE(353,'(a,i4,1pg13.5)') &
+      ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
+  END IF
   CALL FLUSH(353)
 END IF
 WRITE(6,'(a,i4,1pg13.5)') &
  ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
 
+!CALL test_symmcond(is,vecsr(1,1,is),q0)
+
 enold_2st=0D0
 DO iter=1,itmax2
 
-  CALL dalphabetar(is, dab, q0) !new DAB
+  CALL dalphabetar(is, dab,q0) !new DAB
   IF(toptsicstep) THEN
     IF(iter.LE.3) THEN
       enstore(iter)=ener_2st(is)
@@ -914,7 +931,7 @@ DO iter=1,itmax2
       e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
-      stepnew=abs(stepnew)
+      IF(stepnew < 0D0) stepnew=step
 !      stepnew = stepnew/actstep
 !      actstep = stepnew*actstep
 !      IF(stepnew > steplim) stepnew=steplim
@@ -929,20 +946,14 @@ DO iter=1,itmax2
       END IF
     END IF    
   END IF
-  norm=SQRT(SUM(dab(1:ni,1:ni)**2))   ! rmatnorme(dab,kdim,ni)
-!  actstep = step/norm
-!  CALL rmatconst(dab,dab,-actstep, kdim,ni)  !MV mutiply DAB by eta
+  norm=SQRT(SUM(dab(1:ni,1:ni)**2))           ! rmatnorme(dab,kdim,ni)
   dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
-  CALL rmatexp(dab,expdab,kdim,ni) !MV exp in ExpDab
-!  CALL rmatabtoa (rexpdabold(1,1,is), expdab,kdim,ni)!MV update exp
+  CALL rmatexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
   rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
-!  CALL rmatabtoa (vecsr(1,1,is), expdab,kdim,ni)!MV update Vecs
   vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
-!  CALL rmatcnjg(rexpdabold(1,1,is), dab,kdim,ni)
   dab(1:ni,1:ni) = rexpdabold(1:ni,1:ni,is)
-!  CALL rmatmult(rexpdabold(1,1,is), dab,dabsto,kdim,ni)
   dabsto(1:ni,1:ni) = MATMUL(rexpdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
-  ERR_r=SQRT(SUM(dab(1:ni,1:ni)**2)-ndims(is))   ! rmatnorme(dabsto,kdim,ni)**2-ndims(is)
+  ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)**2)-ndims(is))) 
   IF(tconv) THEN
        WRITE(353,'(i4,6(1pg13.5))')   &
          iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
@@ -957,12 +968,20 @@ DO iter=1,itmax2
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
-  IF(iter>2 .AND. ABS(norm) < actprecis) GO TO 99
+  IF(iter>3 .AND. ABS(norm) < actprecis) GO TO 99
   
 END DO
 99   CONTINUE
 
+!CALL test_symmcond(is,vecsr(1,1,is),q0)
+
 IF(tconv) THEN
+  IF(ttest) THEN
+    WRITE(353,*) '  after: vecsr='
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') vecsr(1:ni,i,is)
+    END DO
+  END IF
   WRITE(353,'(1x/1x)') 
   CLOSE(353)
 END IF
@@ -976,6 +995,60 @@ IF(iprint >= 0) THEN
 END IF
 RETURN
 END SUBROUTINE utgradstepr
+
+SUBROUTINE test_symmcond(is,vecact,q0)
+
+!#INCLUDE "all.inc"
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+REAL(DP),INTENT(IN) :: vecact(kdim, kdim)
+INTEGER,INTENT(IN) :: is
+
+LOGICAL,PARAMETER :: ttest=.false.
+
+REAL(DP) :: actstep,enold_2st,norm,enorm
+INTEGER :: ni,i
+
+REAL(DP),PARAMETER :: dactstep=0.1
+INTEGER,PARAMETER :: numteststep=40
+
+REAL(DP),ALLOCATABLE :: vecsav(:,:),dabstep(:,:),dab(:,:),expdab(:,:)
+
+!-------------------------------------------------------
+
+ALLOCATE(vecsav(kdim,kdim),dabstep(kdim,kdim),dab(kdim,kdim),expdab(kdim,kdim))
+
+ni = ndims(is)
+vecsav(1:ni,1:ni) = vecsr(1:ni,1:ni,is)
+CALL dalphabetar(is, dab,q0)
+norm=SQRT(SUM(dab(1:ni,1:ni)**2))
+enold_2st=ener_2st(is)
+
+WRITE(353,'(a,i2)') ' test linearity of unitary transformation for is=',is
+!WRITE(353,'(a,20(1pg13.5))') ' dab:',dab
+WRITE(353,'(a)') ' step-size  energy old-energy  energy-ratio '
+
+
+DO i=0,numteststep
+  actstep = MAX(i*dactstep,2D-3)
+  dabstep(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
+  CALL rmatexp(dabstep,expdab,kdim,ni)
+  vecsr(1:ni,1:ni,is) = MATMUL(vecsav(1:ni,1:ni),expdab(1:ni,1:ni))
+  CALL dalphabetar(is, dabstep, q0)
+  WRITE(353,'(f8.3,6(1pg13.5))')   &
+    actstep,ener_2st(is),ener_2st(is)-enold_2st, &
+    actstep*norm**2/(ener_2st(is)-enold_2st),actstep*norm**2
+END DO
+
+vecsr(1:ni,1:ni,is) = vecsav(1:ni,1:ni)
+
+DEALLOCATE(vecsav,dabstep,dab,expdab)
+
+
+END SUBROUTINE test_symmcond
 #endif
 
 !-----------DAlphaBetar------------------- !MV!!! symmetry condition in antihermitian matrix
@@ -990,6 +1063,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP),INTENT(OUT) :: dab(kdim, kdim)
+INTEGER,INTENT(IN) :: is
 
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -1009,7 +1083,7 @@ ALLOCATE(uqsym(kdfull2,kstate),symcond(kstate,kstate))
 ALLOCATE(utcond(kdim,kdim),qsym(kdfull2,kstate) )
 
 ishift = (is-1)*nxyz
-
+dab=0D0
 ener_2st(is)=0D0
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
@@ -1020,6 +1094,7 @@ DO nb=1,nstate
     save2=enerpw      !!! (else wrong total energy)
     CALL calc_sicspr(rhosp,usicsp,qsym(1,nb),nb)
 !WRITE(*,*) 'is,nb,encoulsp,enerpw=',is,nb,encoulsp,enerpw
+!WRITE(*,*) 'is,nb,norm-wf=',is,nb,rwfnorm(qsym(1,nb))
     ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
     enrear=save1
     enerpw=save2
@@ -1538,7 +1613,7 @@ IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
 
 noff = ndims(1)
 
-!      if(iunit.gt.0) write(iunit,'(a,2i5)') 'NDIMS=',ndims
+write(*,'(a,2i5)') 'NDIMS=',ndims
 
 !     compute matrix elements and store
 
@@ -1630,6 +1705,7 @@ DO na=1,nstate
       ymatr(mb,ma,is) = ymom
       zmatr(mb,ma,is) = zmom
       xxmatr(mb,ma,is) = xxmom
+
       yymatr(mb,ma,is) = yymom
       zzmatr(mb,ma,is) = zzmom
 #else
@@ -1728,30 +1804,21 @@ INTEGER, INTENT(IN OUT)                  :: ndim
 
 REAL(8) cc(n,n), dd(n,n)
 
-REAL(8) rmatnorme
 REAL(8) eps, delta,rn
 
-eps=1.e-20
 CALL rmatunite(bb,n,ndim)
 CALL rmatunite(cc,n,ndim)
-rn=CMPLX(1D0,0D0)
-delta= 1D0
-!        call rMatprint('AAds exp',AA,N,Ndim)
-!        call rMatprint('BB ds exp',BB,N,Ndim)
-
+eps=1D-20
+rn=1D0
+delta=1D0
 DO WHILE (delta > eps)
-!  CALL rmatmult(aa,cc,dd,n,ndim)
-!        call rMatprint('CC ds exp avant const',CC,N,Ndim)
-!  CALL rmatconst(dd,cc, 1D0/rn,n,ndim)
   dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
   cc(1:ndim,1:ndim) = dd(1:ndim,1:ndim)/rn
-!        call rMatprint('CC ds exp',CC,N,Ndim)
-!  delta= rmatnorme(cc, n, ndim)
   delta = SQRT(SUM(cc(1:ndim,1:ndim)**2))
-!  CALL rmatadd(bb,cc,bb,n,ndim)
-bb(1:ndim,1:ndim) = cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim) 
-  rn=rn+1
+  bb(1:ndim,1:ndim) = cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim) 
+  rn=rn+1D0
 END DO
+
 END SUBROUTINE rmatexp
 !_________________________________________rMat Unite__________________________________________________
 !                                         AA=II

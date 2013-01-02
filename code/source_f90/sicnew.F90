@@ -1036,8 +1036,10 @@ IF(occup(nb) > small) THEN
   END DO
   
 !       DFT for s.p. state
-  
+
+ 
   CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
+
   IF (ispin(nrel2abs(nb)) == 1) THEN
     DO ind=1,nxyz
       usicsp(ind) = chpdftsp(ind)
@@ -1068,6 +1070,7 @@ IF(testprint) THEN
   CALL prifld2(11,chpdftsp,' P&W')
 END IF
 
+
 encsum = 0.0
 IF (ispin(nrel2abs(nb)) == 1) THEN
   DO ind=1,nxyz
@@ -1090,11 +1093,10 @@ ELSE
   IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
 END IF
 ELSE
-DO i=1,nxyz
-  usicsp(ind) = 0.0
-END DO
-encoulsp = 0.0
+usicsp=0D0
+encoulsp = 0D0
 END IF
+
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)
 DEALLOCATE(rho1)
@@ -1181,21 +1183,14 @@ IF(occup(nb) > small) THEN
 #else
     rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
 #endif
-!          if(ispin(nrel2abs(nb)).eq.1) then
     rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
-!            rhosp(ind+nxyz) =  1.0
-!          else
-!            rhosp(ind+nxyz) =  -1.0
-!          endif
     rho1(ind)        = rhosp(ind)
   END DO
   
 !       DFT for s.p. state
   
   CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
-!        do ind=1,nxyz+nxyz
-!          usicsp(ind) = chpdftsp(ind)
-!        enddo
+
   IF (ispin(nrel2abs(nb)) == 1) THEN
     DO ind=1,nxyz
       usicsp(ind) = chpdftsp(ind)
@@ -1225,7 +1220,8 @@ IF(occup(nb) > small) THEN
     CALL prifld2(11,couldif,' Coulomb')
     CALL prifld2(11,chpdftsp,' P&W')
   END IF
-  
+
+ 
   encsum = 0D0
   IF (ispin(nrel2abs(nb)) == 1) THEN
     DO ind=1,nxyz
@@ -1234,7 +1230,6 @@ IF(occup(nb) > small) THEN
         encsum=encsum+rhosp(ind)*couldif(ind)
       END IF
     END DO
-    encoulsp = encsum*dvol
     IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
   ELSE
     DO ind=1,nxyz
@@ -1244,13 +1239,11 @@ IF(occup(nb) > small) THEN
         encsum=encsum+rhosp(ind)*couldif(ind)
       END IF
     END DO
-    encoulsp = encsum*dvol
     IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
   END IF
+  encoulsp = encsum*dvol/2D0
 ELSE
-  DO i=1,nxyz
-    usicsp(ind) = 0D0
-  END DO
+  usicsp(1:nxyz) = 0D0
   encoulsp = 0D0
 END IF
 DEALLOCATE(chpdftsp)

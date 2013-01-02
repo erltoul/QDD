@@ -71,6 +71,8 @@ IF (nion2 == 0) CALL solv_fft(rhon,chpcoul,dx,dy,dz)
 !test      call prifld(rhon,'Coulomb dens.')
 !test      call prifld(chpcoul,'Coulomb pot.')
 
+!chpcoul=0D0
+
 !     the lda part
 
 IF(ifsicp /= 5) THEN

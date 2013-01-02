@@ -124,6 +124,14 @@ DO iter1=1,ismax
       ifsicp = ifsicpsav
     END IF
   END IF
+
+  IF(ifsicpsav == 8 .OR. ifsicpsav == 7) THEN      ! switch safe pre-iterations for SIC
+    IF(iter1 <= 2*istinf) THEN
+      ifsicp = 2
+    ELSE
+      ifsicp = ifsicpsav
+    END IF
+  END IF
   
   IF(ifsicp /= 7) THEN
     CALL sstep(psir,aloc,iter1) 
@@ -191,7 +199,7 @@ END IF
 
 !     diagonalize Lagrange parameters
 
-IF(ifsicp > 7) THEN
+IF(ifsicp > 8) THEN
   CALL diag_lagr(psir)
 !        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
 END IF
@@ -697,7 +705,7 @@ IF(ifsicp == 5)  DEALLOCATE(qex)
 
 #if(parano)
 IF(ifhamdiag == 1) THEN
-!     diagonalize mean-field Hamiltonian
+!     diagonalize mean-field Hamiltonianx
 !     and transform occupied states correspondingly
 
 
@@ -714,6 +722,15 @@ IF(ifhamdiag == 1) THEN
     CALL givens(hmatr(1,iactsp),heigen,vect, nstsp(iactsp),nstsp(iactsp),kstate)
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
         (heigen(nbe),nbe=1,nstsp(iactsp))
+#if(twostsic)
+   ni = ndims(iactsp)
+   if(ni .NE. nstsp(iactsp)) THEN
+     WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
+     STOP ' SSTEP: spin sub-matrices do not match'
+   END IF
+   vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
+   WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
+#endif
     DO ii=1,nxyz
       psistate = 0D0
       DO nbes=1,nstsp(iactsp)
