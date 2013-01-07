@@ -470,6 +470,7 @@ DATA tocc,tcpu/.false.,.true./
 #if(parayes)
 DATA tocc,tcpu/.false.,.true./     ! no reoccupation in parallel
 #endif
+LOGICAL,PARAMETER :: tproj=.false.
 !       workspaces
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
@@ -546,9 +547,9 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
-  espbef = rwfovlp(q0(1,nbe),q1)
+!  espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
-  espaft = rwfovlp(q0(1,nbe),q1)
+!  espaft = rwfovlp(q0(1,nbe),q1)
 !  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
@@ -618,6 +619,7 @@ ALLOCATE(psipr(kdfull2))
     evarsp2(nbe) = evarsp(nbe)
 #endif
   END IF
+
   
 #if(parano)
   IF(ifhamdiag == 1) THEN
@@ -635,10 +637,18 @@ ALLOCATE(psipr(kdfull2))
           hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
+#if(twostsic)  
+          hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
+#endif
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
               hmatr(ntridig(iactsp),iactsp)
         END IF
       END DO
+#if(twostsic)  
+      DO nbc=nbe+1,nstate
+        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = rwfovlp(q0(1,nbc),q1)
+      END DO
+#endif
     END IF
 
   END IF
@@ -650,18 +660,24 @@ ALLOCATE(psipr(kdfull2))
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
   
 !  IF(iter > 0) THEN  
+  IF(tproj) THEN
     IF(e0dmp > small) THEN
-!       DO i=1,nxyz
-!         psipr(i)=psipr(i)-q2(i)*epswf / (akv(i) + e0dmp )
-!       END DO
+      q2 = - q2*epswf/(akv+e0dmp)
+    ELSE
+      q2 = - epswf*q2
+    END IF
+    CALL rfftback(q2,q1)
+    CALL project(q1,q1,ispin(nbe),q0)
+    q0(:,nbe) = q0(:,nbe)+q1
+  ELSE
+    IF(e0dmp > small) THEN
       psipr = psipr - q2*epswf/(akv+e0dmp)
     ELSE
       psipr = psipr - epswf*q2
     END IF
-    
     CALL rfftback(psipr,q0(1,nbe))
 !  END IF
-  
+  END IF  
 DEALLOCATE(psipr)
   
 #endif
@@ -705,6 +721,25 @@ IF(ifsicp == 5)  DEALLOCATE(qex)
 
 #if(parano)
 IF(ifhamdiag == 1) THEN
+
+
+!  symmetrize Hamiltonian matrix
+#if(twostsic)  
+  DO iactsp=1,2
+    ntridig(iactsp) = 0
+    DO nbe=1,nstate
+    IF(iactsp == ispin(nbe)) THEN
+      DO nbc=1,nbe
+        IF(iactsp == ispin(nbc)) THEN
+          ntridig(iactsp) = 1+ntridig(iactsp)
+          hmatr(ntridig(iactsp),iactsp) = (hmatrix(nbc,nbe)+hmatrix(nbe,nbc))/2D0
+        END IF
+      END DO
+    END IF
+    END DO
+  END DO
+#endif
+
 !     diagonalize mean-field Hamiltonianx
 !     and transform occupied states correspondingly
 
@@ -723,13 +758,15 @@ IF(ifhamdiag == 1) THEN
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
         (heigen(nbe),nbe=1,nstsp(iactsp))
 #if(twostsic)
-   ni = ndims(iactsp)
-   if(ni .NE. nstsp(iactsp)) THEN
-     WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
-     STOP ' SSTEP: spin sub-matrices do not match'
+   IF(ifsicp==8) THEN
+     ni = ndims(iactsp)
+     if(ni .NE. nstsp(iactsp)) THEN
+       WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
+       STOP ' SSTEP: spin sub-matrices do not match'
+     END IF
+     vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
+     WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
    END IF
-   vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
-   WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
 #endif
     DO ii=1,nxyz
       psistate = 0D0

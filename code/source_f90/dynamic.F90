@@ -574,8 +574,8 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 !JM :  Generalized Slater and FSIC
 #if(twostsic)
 ELSE IF(ifsicp >= 7)THEN
-  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
-  CALL calc_utwfc(psi,psiut,itut)           !MV
+!  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
+  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484)))           !MV
 !ccccccJM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3

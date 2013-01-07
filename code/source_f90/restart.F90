@@ -22,11 +22,11 @@ SUBROUTINE restart2(psi,outna,trealin)
 
 USE params
 USE kinetic
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
 #endif
-#endif
+!#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -295,31 +295,16 @@ END IF
 #endif
 
 
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 !JM
 #if(twostsic)
 IF(ifsicp >= 6) THEN
-  DO i=1,kdim
-    DO j=1,kdim
-      vecsr(i,j,1) = 1D3
-      vecsr(i,j,2) = 2D3
-    END DO
-  END DO
-  ndims(1) = 0
-  ndims(2) = 0
-  DO iss=1,2
-    DO i=1,kdim
-      DO j=1,kdim
-        READ(60) vecsr(i,j,iss)
-      END DO
-    END DO
-  END DO
-  READ(60) ndims(1)
-  READ(60) ndims(2)
+  READ(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
+  WRITE(*,*) ' READ vecsr:',vecsr(1:ndims(1),1:ndims(1),1)
 END IF
 #endif
 !JM
-#endif
+!#endif
 
 IF(trealin) THEN 
   CLOSE(UNIT=60)
@@ -550,16 +535,9 @@ END IF
 !JM
 #if(twostsic)
     IF(ifsicp >= 6) THEN
-      DO iss=1,2
-        DO i=1,kdim
-          DO j=1,kdim
-            WRITE(60) vecsr(i,j,iss)
-          END DO
-        END DO
-      END DO
-      WRITE(60) ndims(1)
-      WRITE(60) ndims(2)
+      WRITE(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
+      WRITE(*,'(20f10.5)') vecsr(1:kstate,1:kstate,1)
     END IF
 #endif
 !JM

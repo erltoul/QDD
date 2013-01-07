@@ -39,9 +39,12 @@ COMPLEX(DP), INTENT(OUT)                     :: qwork(kdfull2,kstate)
 
 COMPLEX(DP) :: q1(kdfull2)
 
-
-
-
+! The parameter 'tnorotate' de-activates the subtraction of the
+! Lagrangian matrix in the SIC step. The version of exponential
+! evolution with subtraction of the Lagrangian matrix is found
+! in 'exp_evolp'. The strategy needs yet testing. It was not
+! really beneficial so far.
+LOGICAL,PARAMETER :: tnorotate=.true.
 
 !----------------------------------------------------------------------
 
@@ -66,12 +69,19 @@ IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not apppropriate for rare gas'
 
 IF(ifsicp==5) psisavex = q0
 
-DO nb=1,nstate
-  DO ind=1,nxyz
-    qwork(ind,nb) = q0(ind,nb)
+IF(tnorotate .OR. ifsicp .NE. 8) THEN
+  DO nb=1,nstate
+    qwork(:,nb) = q0(:,nb)
+    CALL exp_evol(qwork(1,nb),aloc,nb,4,dt1*0.5D0,q1)
   END DO
-  CALL exp_evol(qwork(1,nb),aloc,nb,4,dt1*0.5D0,q1)
-END DO
+ELSE
+#if(twostsic)
+  qwork = q0
+  CALL exp_evolp(qwork,aloc,4,dt1/2D0,q1,q0)
+#else
+  STOP " IFSICP==8 reqires compilation with option twostsic"
+#endif
+END IF
 
 
 !     compute mean field at half time step
@@ -83,9 +93,16 @@ CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0)
 !     use exponential evolution to fourth order
 
 itpri = MOD(it,ipasinf) + 1
-DO nb=1,nstate
-  CALL exp_evol(q0(1,nb),aloc,nb,4,dt1,q1)
-END DO
+IF(tnorotate .OR. ifsicp .NE. 8) THEN
+  DO nb=1,nstate
+    CALL exp_evol(q0(1,nb),aloc,nb,4,dt1,q1)
+  END DO
+ELSE
+#if(twostsic)
+  qwork = q0
+  CALL exp_evolp(q0,aloc,4,dt1,q1,qwork)
+#endif
+END IF
 
 
 
@@ -130,7 +147,6 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 !       nbe      = number of state
 !       norder   = order of epxansion (4 recommended for full step))
 !       dtact    = time step
-!       qwork    = work space for complex wavefunction
 
 !     Note: The propagation uses the action of the Hamiltonian
 !           where the diagonal element (s.p.energy) is subtracted.
@@ -141,14 +157,13 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                  :: qact(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: nbe
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+!REAL(DP), INTENT(IN OUT                 :: akv(kdfull2)
+INTEGER, INTENT(IN)                      :: nbe
 INTEGER, INTENT(IN)                      :: norder
-REAL(DP), INTENT(IN OUT)                     :: dtact
-COMPLEX(DP), INTENT(OUT)                     :: qwork(kdfull2)
-
+REAL(DP), INTENT(IN OUT)                 :: dtact
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
 
 
 COMPLEX(DP) :: dti,cfac
@@ -183,6 +198,119 @@ END DO
 RETURN
 END SUBROUTINE exp_evol
 
+#if(twostsic)
+!-----exp_evolp-------------------------------------------------------------
+
+SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
+
+!     Propagation of a wavefuntion by Taylor expanded exponential
+!     evolution:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       ak       = kinetic energies in momentum space
+!       norder   = order of epxansion (4 recommended for full step))
+!       dtact    = time step
+!       qwork    = work space for complex wavefunction
+!       psi      = set of wavefunctions before the step
+
+!     Note: The propagation uses the action of the Hamiltonian
+!           where the diagonal element (s.p.energy) is subtracted.
+!           That diagonal element is evalutaed in the first order
+!           call 'nterm=1'.
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)                      :: norder
+REAL(DP), INTENT(IN)                     :: dtact
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+
+COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
+
+COMPLEX(DP) :: dti,cfac,cacc(kstate),wfovlp
+INTEGER :: ilocbas
+INTEGER :: nbe
+!test      complex wfovlp,energexp
+
+!----------------------------------------------------------------------
+
+!write(*,*) 'entering EXP_EVOLP'
+
+ALLOCATE(chmatrix(kstate,kstate))
+
+dti = CMPLX(0D0,dtact,DP)
+
+! compute H-matrix, store h*psi wavefunctions
+DO nbe=1,nstate
+  ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
+  CALL hpsi(qact(1,nbe),aloc(ilocbas),nbe,1)
+  DO nc=1,nstate
+    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
+      chmatrix(nc,nbe) = wfovlp(psi(1,nc),qact(1,nbe))
+    ELSE
+      chmatrix(nc,nbe) = CMPLX(0D0,0D0)
+    END IF
+  END DO
+END DO
+! symmetrize H-matrix
+DO nbe=1,nstate; DO nc=1,nbe-1
+  chmatrix(nc,nbe) = (chmatrix(nc,nbe)+CONJG(chmatrix(nbe,nc)))/2D0
+  chmatrix(nbe,nc) = CONJG(chmatrix(nc,nbe))
+END DO; END DO
+
+! now the Taylor expansion (recycle stored h*psi in first step)
+
+!WRITE(*,*) 'CHMATRIX:'
+!DO nbe=1,nstate
+!  WRITE(*,*) chmatrix(:,nbe)
+!END DO
+DO nbe=1,nstate
+  ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
+  cfac = CMPLX(1D0,0D0,DP)
+  DO nterm=1,norder
+    ! H*psi and prepare subtraction factors
+    IF(nterm==1) THEN
+      qwork(:) = qact(:,nbe)
+      qact(:,nbe) = psi(:,nbe)    ! restore original wavefunctions
+      cacc(:) = chmatrix(:,nbe)
+    ELSE
+      DO nc=1,nstate
+        IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
+          cacc(nc) = CMPLX(0D0,0D0)
+          DO na=1,nstate
+            IF(ispin(nrel2abs(na)) == ispin(nrel2abs(nc))) THEN
+              cacc(nc) = cacc(nc) + chmatrix(nc,na)*wfovlp(psi(1,na),qwork)
+!              WRITE(*,*) ' NBE,NC,NA,ovlp:',nbe,nc,na,wfovlp(psi(1,na),qwork)
+            END IF
+          END DO
+        END IF
+      END DO
+      CALL hpsi(qwork,aloc(ilocbas),nbe,2)
+    END IF
+    ! project H-matrix
+!    WRITE(*,*) ' NBE,cacc:',nbe,cacc(1:nstate)
+    DO nc=1,nstate
+      IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
+        qwork(:) = qwork(:) - psi(:,nc)*cacc(nc)
+      END IF
+    END DO
+    ! accumulate to Taylor series
+    cfac = -dti/nterm*cfac
+    qact(:,nbe) = qact(:,nbe) + cfac*qwork(:)
+  END DO
+END DO
+
+DEALLOCATE(chmatrix)
+
+!write(*,*) 'leave EXP_EVOLP'
+
+RETURN
+END SUBROUTINE exp_evolp
+#endif
 
 !-----hpsi  -------------------------------------------------------------
 

@@ -98,8 +98,8 @@ WRITE(*,*) ' FFTA allocated with NACTHR=',nacthr
 !
 !  central setting of FFTW planning expense --> edit here
 !
-!  FFTW_planflag = FFTW_MEASURE  
-  FFTW_planflag = FFTW_EXHAUSTIVE
+  FFTW_planflag = FFTW_MEASURE  
+!  FFTW_planflag = FFTW_EXHAUSTIVE
 #endif
 
 WRITE(7,*) 'h bar squared over two m electron',h2m

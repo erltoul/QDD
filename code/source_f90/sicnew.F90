@@ -1017,21 +1017,21 @@ ALLOCATE(rho1(kdfull2))
 
 enrearsave=enrear
 enerpwsave=enerpw
-enrear1=0.0
-enrear2=0.0
-enpw1  = 0.0
-enpw2  = 0.0
-encadd = 0.0
-!      write(*,*) ' CALC_SICSPR: nb,occup(nb)',nb,occup(nb)
+enrear1=0D0
+enrear2=0D0
+enpw1  = 0D0
+enpw2  = 0D0
+encadd = 0D0
+!      write(*,*) ' CALC_SICSPC: nb,occup(nb)',nb,occup(nb)
 
 IF(occup(nb) > small) THEN
-  ishift = (ispin(nrel2abs(nb))-1)*nxyzf ! store spin=2 in upper block
+  ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
   
 !         density for s.p. state
   
-  DO ind=1,nxyzf
+  DO ind=1,nxyz
     rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
-    rhosp(ind+nxyzf) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
+    rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
     rho1(ind)        = rhosp(ind)
   END DO
   
@@ -1046,7 +1046,7 @@ IF(occup(nb) > small) THEN
     END DO
   ELSE
     DO ind=1,nxyz
-      idx = ind+nxyzf
+      idx = ind+nxyz
       usicsp(idx) = chpdftsp(idx)
     END DO
   END IF
@@ -1071,7 +1071,7 @@ IF(testprint) THEN
 END IF
 
 
-encsum = 0.0
+encsum = 0D0
 IF (ispin(nrel2abs(nb)) == 1) THEN
   DO ind=1,nxyz
     usicsp(ind) = usicsp(ind)+couldif(ind)
@@ -1079,23 +1079,25 @@ IF (ispin(nrel2abs(nb)) == 1) THEN
     encsum=encsum+rhosp(ind)*couldif(ind)
 #endif
   END DO
-  encoulsp = encsum*dvol
+  encoulsp = encsum*dvol/2D0
   IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
 ELSE
   DO ind=1,nxyz
-    idx = ind+nxyzf
+    idx = ind+nxyz
     usicsp(idx) = usicsp(idx)+couldif(ind)
 #if(directenergy)
     encsum=encsum+rhosp(ind)*couldif(ind)
 #endif
   END DO
-  encoulsp = encsum*dvol
+  encoulsp = encsum*dvol/2D0
   IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
 END IF
 ELSE
 usicsp=0D0
 encoulsp = 0D0
 END IF
+
+!WRITE(*,*) ' SICSPC: encoulsp,enerpw=',encsum,enerpw
 
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)

@@ -275,6 +275,7 @@ REAL(DP),ALLOCATABLE :: ekinsp(:),evarsp(:),evarsp2(:),epotsp(:)
 INTEGER :: jekion,iquery4
 #if(twostsic)  
 REAL(DP),ALLOCATABLE :: hmatrix(:,:)
+COMPLEX(DP),ALLOCATABLE :: expmatrix(:,:)
 REAL(DP) :: symcon
 INTEGER :: ndims(2)
 #endif

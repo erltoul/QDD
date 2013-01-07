@@ -15,7 +15,7 @@ REAL(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
 REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
-REAL(DP) :: step=0.1D0,precis=1D-6,radmaxsym=1D0
+REAL(DP) :: step=0.1D0,precis=1D-6,precisfact=1D-3
 REAL(DP) :: ener_2st(2)
 INTEGER :: symutbegin=100,itut
 !COMMON /twostut/ step,precis,symutbegin,radmaxsym,itut
@@ -44,7 +44,7 @@ REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 MODULE twost
 USE params
 USE kinetic
-USE twostr, ONLY:step,precis,symutbegin,radmaxsym,itut,vecsr,tconv
+USE twostr, ONLY:step,precis,symutbegin,precisfact,itut,vecsr,tconv,ener_2st,toptsicstep,steplim,dampopt
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP),ALLOCATABLE :: qnewut(:,:)
@@ -89,7 +89,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !
 ! Namelist FSIC contains numerical parameters for the solution
 !               of the symmetry condition:
-!  radmaxsym   = presently incactive parameter --> set to 1D0
 !  step        = step size (actually 'step/radmaxysm' is the step size)
 !  precis      = final limit on precision,
 !                early stages use actual variance*1D-4 as limit
@@ -99,11 +98,12 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !                this option is presently only relevant for the static case;
 !                the following parameters are relevant only
 !                if this option is set to .true.
+!  precisfact  = factor applied to variance to compute actual precision limit
 !  dampopt     = damping factor on the optimal step (default 0.7)
 !  steplow     = minimum step size (tentative default 0.01)
 !  steplim     = maximum step size (tentative default 1.2)
 !
-NAMELIST /fsic/step,precis,symutbegin,radmaxsym, &
+NAMELIST /fsic/step,precis,symutbegin,precisfact, &
                dampopt,steplow,steplim,toptsicstep     !!! UT parameters
 
 !----------------------------------------------------------------
@@ -115,8 +115,8 @@ IF(ifsicp < 6) RETURN
 OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
 READ(5,fsic)
 WRITE(6,'(a,4(1pg13.5))')  &
-    ' SIC running with step,precis,SymUtBegin,radmaxsym=',  &
-    step,precis,symutbegin,radmaxsym
+    ' SIC running with step,precis,SymUtBegin=',  &
+    step,precis,symutbegin
 CLOSE(5)
 
 !     dimensions of spin sub-spaces
@@ -153,17 +153,19 @@ ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvevtors
 
 !     initialize unitary matrix
 
-DO is=1,2
-  DO i=1,ndims(is)
-    DO j=1,ndims(is)
-      IF(i == j) THEN
-        vecsr(i,j,is) = 1D0
-      ELSE
-        vecsr(i,j,is) = 0D0
-      END IF
+IF(istat==0) THEN
+  DO is=1,2
+    DO i=1,ndims(is)
+      DO j=1,ndims(is)
+        IF(i == j) THEN
+          vecsr(i,j,is) = 1D0
+        ELSE
+          vecsr(i,j,is) = 0D0
+        END IF
+      END DO
     END DO
   END DO
-END DO
+END IF
 
 ! initialize protocolo file
 IF(tconv) THEN
@@ -223,7 +225,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
-NAMELIST /fsic/step,precis,symutbegin,radmaxsym   !!! UT parameters
+NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
 !----------------------------------------------------------------
 
@@ -242,9 +244,13 @@ ALLOCATE(qnewut(kdfull2,kstate))
 ALLOCATE(psiut(kdfull2,kstate))
 
 IF(tconv) THEN
-OPEN(353,file='2st-stat-conv.res')
+OPEN(353,file='2st-stat-conv-1.res')
 REWIND(353)
-WRITE(353,'(a)') '# protocol of convergence of symmetry condition - dynamical'
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition for ispin=1'
+CLOSE(353)
+OPEN(353,file='2st-stat-conv-2.res')
+REWIND(353)
+WRITE(353,'(a)') '# protocol of convergence of symmetry condition for ispin=2'
 CLOSE(353)
 END IF
 
@@ -268,10 +274,6 @@ SUBROUTINE calc_fullsic(q0,qsic)
 
 USE params
 USE kinetic
-#if(symmcond)
-USE symcond
-!COMMON /sicsav/usicall(kdfull2,kstate)
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
@@ -315,16 +317,12 @@ DO nb=1,nstate
 #else
     CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
 #endif
-!#if(twostsic)
-#if(symmcond)
-    DO ind=1,nxyz
-      usicall(ind,nb) = usicsp(ind+ishift)
-    END DO
-#endif
     
     IF (ispin(nrel2abs(nb)) == 1) THEN
       enrear1=enrear1+enrear*occup(nb)
-      enpw1=enpw1+enerpw*occup(nb)
+      IF(directenergy) THEN
+        enpw1=enpw1+enerpw*occup(nb)
+      END IF
     ELSE
       enrear2=enrear2+enrear*occup(nb)
       IF(directenergy) THEN
@@ -347,7 +345,7 @@ DO nb=1,nstate
     END IF
   END IF
 END DO
-encadd=encadd/2.0
+!encadd=encadd/2.0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd
@@ -388,7 +386,7 @@ DO i=1,kstate
   END DO
 END DO
 
-WRITE(6,*) 'vecsr fin initvecs'!MV
+WRITE(6,*) 'vecs fin initvecs'!MV
 WRITE (6,'(6f12.6)') ((vecs(ii,jj,1), ii=1,3),jj=1,3)!MV
 
 RETURN
@@ -759,65 +757,109 @@ REAL(DP) :: vecnorm   ! function names
 COMPLEX(DP) :: wfovlp
 
 INTEGER :: itmax2,ni
+LOGICAL,PARAMETER :: ttest=.false.
 
-REAL(DP) :: norm, ERR_c           ! variance of step, erreur du produit
-!REAL(DP) :: radmax              ! max. squared radius
-REAL(DP) :: actstep,radvary
+REAL(DP) :: norm                         ! variance of step, erreur du produit
+REAL(DP) :: actstep
+REAL(DP) :: enstore(3),stepstore(3)      ! storage for optimized step
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 
+! The switch 'texpo' activates the "extrapolation" of the unitary
+! transformation 'vecs' usign the array 'expdabold'. This array is
+! initialzed as unit matrix and propagated in parallel to 'vecs'.
+! This strategy seems to help. But it is not so obvious why.
+LOGICAL,PARAMETER :: texpo=.true.       ! include extrapolation
+
+
 !-------------------------------------------------------
-itmax2=symutbegin ! 50
+
+itmax2=symutbegin 
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-!CALL matmult (vecs(1,1, is),expdabold(1,1,is),dabsto,kdim,ni)
-dabsto(1:ni,1:ni) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
-!CALL matcopy(dabsto,vecs(1,1,is),kdim,ni)
-vecs(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
+IF(texpo) &
+  vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
 
-actstep = step/radmaxsym     ! radmaxsym obsolete, set to 1D0
+
+actstep = step     ! radmaxsym obsolete, set to 1D0
 
 IF(tconv) THEN
-  OPEN(353,file='2st-stat-conv.res',POSITION='append')
-  WRITE(353,*) '# convergence symmetry condition. is=',is
+  IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
+  IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
+  WRITE(353,*) '# convergence symmetry condition. timestep,is=',iter1,is
   WRITE(353,'(a)') '# iter Ortho , variance, erreur , actstep'
 ELSE
-  WRITE(6,'(a)')' iter Ortho , variance, erreur, actstep'
+  WRITE(6,'(a)')' iter Ortho , variance, non-linearity, actstep'
 END IF
 
-WRITE(*,*) ' before: vecsr=',vecs(1:ni,1:ni,is)
+!WRITE(*,*) ' before: vecs=',vecs(1:ni,1:ni,is)
 
+enold_2st=0D0
 DO iter=1,itmax2
   CALL dalphabeta(is, dab, q0)     !actual symmetry condition on 'dab'
-!  norm=matnorme(dab,kdim,ni)       !norm of symm.cond. = error
+  IF(toptsicstep) THEN
+    IF(iter.LE.3) THEN
+      enstore(iter)=ener_2st(is)
+      IF(iter==1) THEN
+         stepstore(1)=0D0
+      ELSE
+         stepstore(iter) = stepstore(iter-1)+actstep
+      END IF
+    ELSE
+      enstore(1) = enstore(2)
+      enstore(2) = enstore(3)
+      enstore(3) = ener_2st(is)
+      stepstore(1) = stepstore(2)
+      stepstore(2) = stepstore(3)
+      stepstore(3) = stepstore(3)+actstep
+      e1der= (enstore(3)-enstore(2))/(stepstore(3)-stepstore(2))
+      e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
+      e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
+      stepnew = -dampopt*e1der/e2der
+      IF(stepnew < 0D0) stepnew=step
+!      stepnew = stepnew/actstep
+!      actstep = stepnew*actstep
+!      IF(stepnew > steplim) stepnew=steplim
+!      IF(stepnew < steplow) stepnew=steplow
+      actstep = max(steplow,min(stepnew,steplim))
+      IF(ttest) THEN
+        WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
+        WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
+        WRITE(*,'(a,30(1pg15.7))') '  stepstore=',stepstore
+        WRITE(6,'(a,3(1pg15.7))') 'e1d,e1o,e2d=',e1der,e1old,e2der
+        WRITE(6,'(a,2(1pg15.7))') 'act/newstep=',actstep,stepnew
+      END IF
+    END IF    
+  END IF
   norm = SQRT(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))))
-!  CALL matconst(dab,dab,CMPLX(-actstep,0),kdim,ni)  !mutiply 'dab' stepsize
   dab(1:ni,1:ni) = CMPLX(-actstep,0D0)*dab(1:ni,1:ni)
   CALL matexp(dab,expdab,kdim,ni)  ! exponentiate 'dab' to 'ExpDab'
-!  CALL matabtoa(expdabold(1,1,is),expdab,kdim,ni)   !store 'expdab'
-  expdabold(1:ni,1:ni,is) = MATMUL(expdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
-!  CALL matabtoa(vecs(1,1,is), expdab,kdim,ni)       !update 'vecs'
   vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdab(1:ni,1:ni))
-!  CALL matcnjg(expdabold(1,1,is),dab,kdim,ni)       ! conjugate on 'dab'
-  dab(1:ni,1:ni) = CONJG(expdabold(1:ni,1:ni,is))
-!  CALL matmult(expdabold(1,1,is), dab,dabsto,kdim,ni)
-  dabsto(1:ni,1:ni) = MATMUL(expdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
-!  ERR_c=SQRT(matnorme(dabsto,kdim,ni)**2-ndims(is))
-  ERR_c = SQRT(ABS(SUM(dabsto(1:ni,1:ni)*CONJG(dabsto(1:ni,1:ni))-ndims(is))))
+  IF(texpo) THEN
+    expdabold(1:ni,1:ni,is) = MATMUL(expdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
+    dab(1:ni,1:ni) = CONJG(expdabold(1:ni,1:ni,is))
+    dabsto(1:ni,1:ni) = MATMUL(expdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
+    ERR_c = SQRT(ABS(SUM(dabsto(1:ni,1:ni)*CONJG(dabsto(1:ni,1:ni))-ndims(is))))
+  END IF
   IF(tconv) THEN
-    WRITE(353,'(a,i4,4(1pg13.5))') &
-      iter,matdorth(vecs(1,1,is),kdim,ndims(is)),ABS(norm),ABS(ERR_c),actstep
+    WRITE(353,'(i4,6(1pg13.5))') &
+      iter,matdorth(vecs(1,1,is),kdim,ndims(is)),ABS(norm),&
+         actstep*norm**2/(ener_2st(is)-enold_2st),actstep,&
+         ener_2st(is)-enold_2st
+       CALL FLUSH(353)
+
   ELSE
     WRITE(6,'(a,4f16.13)')' Ortho , variance, erreur, actstep',  &
       matdorth(vecs(1,1,is), kdim, ndims(is)), ABS(norm), ABS(ERR_c),actstep
   END IF
+  IF(iter.GE.1) enold_2st=ener_2st(is)
   IF(ABS(norm) < precis) GO TO 99
 END DO !iter
 99   CONTINUE
 
-WRITE(*,*) '  after: vecsr=',vecs(1:ni,1:ni,is)
+!WRITE(*,*) '  after: vecsr=',vecs(1:ni,1:ni,is)
 
-IF(tconv) close(363)
+IF(tconv) close(353)
 RETURN
 END SUBROUTINE utgradstepc
 #endif
@@ -870,7 +912,13 @@ REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
 
 !-------------------------------------------------------
 
-itmax2=symutbegin   ! 500    !Supprimé symutbegin
+! tentative change of step size during iteration
+IF(iter1 < 100000) THEN               
+   itmax2=symutbegin 
+ELSE
+   itmax2=1
+!   step=epswf
+END IF
 
 IF(ttest) THEN
   write(6,*) 'entree utgradstepr'!MV
@@ -885,7 +933,7 @@ ni=ndims(is)
 !vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 
 actstep = step  ! radmaxsym obsolete, set to 1D0
-actprecis = max(precis,1D-3*sumvar2)
+actprecis = max(precis,precisfact*sumvar2)
 !actprecis = precis
 !WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
@@ -968,7 +1016,7 @@ DO iter=1,itmax2
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
-  IF(iter>3 .AND. ABS(norm) < actprecis) GO TO 99
+  IF(iter>0 .AND. ABS(norm) < actprecis) GO TO 99
   
 END DO
 99   CONTINUE
@@ -1179,6 +1227,7 @@ ALLOCATE(uqsym(kdfull2,kstate),symcond(kstate,kstate))
 
 ishift = (is-1)*nxyz
 
+ener_2st(is)=0D0
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
@@ -1186,7 +1235,10 @@ DO nb=1,nstate
     CALL superpose_state(qsym(1,nb),vecs(1,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
-    CALL calc_sicspc(rhosp,usicsp,qsym(1,nb),nb)
+!    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
+    CALL calc_sicsp(rhosp,usicsp,qsym(1,nb),nb)
+!    WRITE(*,*) ' nb,energs=',nb,encoulsp,enerpw,occup(nb)
+    ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
     enrear=save1
     enerpw=save2
     
@@ -1209,6 +1261,7 @@ DO nb=1,nstate
     END DO !na
   END IF
 END DO !nb
+!WRITE(*,*) ' utcond:',utcond(1:nstate,a:nstate)
 !      call MatPrint ('utCond', utcond, kstate, ndims(is))
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
