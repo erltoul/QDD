@@ -52,7 +52,7 @@ dkz=pi/(dz*REAL(nz))
 
 
 !   scaling factor for Thomas-Fermi energy
-tf_fac = 0.6D0*(6.0D0*pi**2)**0.666666666667D0
+tf_fac = 0.6D0*(6.0D0*pi**2)**(2D0/3D0)
 
 !   compute the currents, gradient of density and kinetic density
 
@@ -182,7 +182,7 @@ DO is=2,1,-1
   DO ind=1,kdfull2
 !    rp = max(rho(ind)*(0.5D0+sign*rho(ind+kdfull2)),1D-30)
     rp =MAX(arho(ind),1D-30)
-    tau(ind) = 1D0/(1D0+(tau(ind)/(tf_fac*rp**1.666666666667D0))**2)
+    tau(ind) = 1D0/(1D0+(tau(ind)/(tf_fac*rp**(5D0/3D0)))**2)
     IF(tau(ind).LT.1D-99) tau(ind)=0D0
     average_localization(is) = average_localization(is) + tau(ind)*rp
     sumpart = sumpart + rp

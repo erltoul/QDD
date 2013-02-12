@@ -1233,10 +1233,10 @@ DEALLOCATE(arhop)
 
 excit=0D0
 DO i=1,kdfull2
-   excit=excit+arho(i)**1.666666666667D0
+   excit=excit+arho(i)**(5D0/3D0)
 END DO
 !fact=dvol*0.6D0*(6.0D0*pi**2)**0.666666666667D0
-excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**0.666666666667D0
+excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**(2.D0/3.D0)
 
 IF(extendedTF) THEN
 
