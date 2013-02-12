@@ -1340,7 +1340,7 @@ DO i3=1,nz2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
 !      q2(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
-      q3(ind)= REAL(modx(i1)),DP)
+      q3(ind)= REAL(modx(i1),DP)
     END DO
   END DO
 END DO

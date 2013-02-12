@@ -28,7 +28,7 @@
 
 \title{Handling of the cluster 3D Fortran90-code}
 \author{Instructions and status reprot}
-\date{Started 23 April 2010; status 21. February 2012}
+\date{Started 23 April 2010; status 4. December 2012}
 \maketitle
 
 \tableofcontents
@@ -55,7 +55,7 @@ Before compilation, one should update some settings
 \item
  Finally execute 'make'. The executable will be copied to the working
  directory which is one level below the sub-directory 'source\_f90'.
- Go back to the working directory. The last file called 'essai*' is
+ Go back to the working directory. The last file called 'tdks*' is
  the new executable.
 \end{itemize}
 
@@ -205,7 +205,7 @@ states)\\
 {\tt shiftWFx         }& shift of initial wavefunctions in x direction \\
 {\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to origin\\
 {\tt ispinsep         }& initialize wavefunctiosn with some spin asymmetry\\
-{\tt init\_lcao       }& switches the basis functions to start from\\
+{\tt init\_lcao       }& choice of basis for wavefunction initialization \\
 & =0 $\Longrightarrow$ harmonic oscillator functions (center can be
 moved
   by {\tt shiftWFx})
@@ -459,9 +459,82 @@ localization in statics
 \hline
 \end{tabular}
 
+
+\vspace*{2cm}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Ionic structure and $e^-$-initialization in {\tt for005ion.<name>}} \\
+\hline
+& This initialization does not use {\tt NAMELIST} but reads
+ input in fixed order.\\
+& Each line stands for one ion. Each column has a definite meaning.\\
+Col. 1 &  $x$-coordinate \\
+Col. 2 &  $y$-coordinate \\
+Col. 3 &  $z$-coordinate \\
+Col. 4 & 
+   number of element in periodic system (e.g.: Na$\leftrightarrow$11)\\
+Col. 5 & only {\tt init\_lcao=1}: ordering of nodes in repeated
+    initialization at this ion\\
+Col. 6 & only {\tt init\_lcao=1}: radius of initial Gaussian at 
+    this ion\\
+Col. 7 & only {\tt init\_lcao=1}: starting spin for initalization at
+    this ion\\
+\hline
+\end{tabular}
+\\[8pt]
+The handling of the initialization of electronic wavefunctions is
+rather involved. A more detailed explanation is given in appendix
+\ref{sec:inite}.
+
 \newpage
 
 \appendix
+
+\section{On the initialization of the electronic wavefunctions}
+\label{sec:inite}
+
+The basic switch is {\tt init\_lcao}. \underline{The case
+{\tt init\_lcao=0}} is the simpler option. This initializes harmonic
+oscillator wavefunctions about one common center. This center is
+usually the origin of the coordinte-space grid. It can be moved
+deliberately by {\tt shiftWFx}, {\tt shiftWFy}, and {\tt shiftWFz}.
+The initial oscillator may be deformed. Its deformation is given by
+the dimensionless quadrupole {\tt b2occ} and triaxiality {\tt gamocc}
+(in degree). The oscillator states are filled in order of
+increasing oscillator energies. A spin asymmtry can be enforced
+with {\tt ispinsep=1}. This option is useful when dealing with odd
+electron number. The upper end of initialization is determined by
+{\tt deocc}. A {\tt deocc $\approx$ 0} typically initializes just as many
+states as are occupied. If more is required, enhance {\tt deocc}.
+
+\underline{The case {\tt init\_lcao=1}} initializes wavefunctions
+which are localized at the ions. This option is richer and a bit hard
+to handle. In a first step, the total number of wavefunctions is
+estimated and it is computed how many wavefunctions have to be
+initialized then for each ion. At one given ion, initialization starts
+with the $1s$ oscillator state. The first choice of spin is taken from
+column 7 of {\tt for005ion.<name>} {which initializes the entry of the
+  actual ion in the the {\tt ipol}
+array. The value {\tt ipol=+1} sets a spin up (i.e. {\tt ispin=1} in
+the code) as the first choice, 
+while {\tt ipol=-1} sets a spin down (i.e. {\tt ispin=2}).} If more than one state is to be
+occupied, the next is then the $1s$ state with opposite spin. Next
+comes the $1p_i$ state with first spin where $i$ is the direction
+given as first entry in column 5. For example if column 5 selects
+{\tt 'yzx'}, the $1p_y$ comes here. Occupation continues in order
+given by column 5 and 7 until the wanted number of orbitals at this
+ion site is reached. Column 6 sets the oscillator radius for the
+initialization at this ion (which allows to deal efficiently with
+systems consisting of very different ions). Column 7 becomes important
+for ions associated with an odd number of electrons as, e.g.,
+hydrogen. One ought to distribute an equal collection of 
+%{\tt +1} and {\tt -1} entries
+{spins up and down over the whole system} to avoid unnaturally 
+polarized molecules.
+
+\newpage
+
 \section{Open ends and to-be-dones}
 
 {\Large\bf Status of Fortran90 code development:}
@@ -473,12 +546,15 @@ localization in statics
   \item
     All code is now genuinly double precision and can be
     complied without the {\tt autodouble} option. Only exception
-    if the FFT package {\tt fftpack.F90} which still requires
+    if the FFT package {\tt fftpack.F90} in connection with {\tt
+      NETLIB}
+    which still requires
     the  {\tt autodouble}, as handled explicitely in the
     {\tt Makefile}.
     \\
     Note that the precision is set at the header of {\tt params.F90}
     and used as a {\tt KIND} parameter in typical Fortran90 fashion.
+    The name is set to {\tt DP}.
   \item
     The somewhat dangerous practice of reusing workspace has been
     abandoned. Workspace is now associated dynamically with
@@ -505,8 +581,12 @@ localization in statics
         For example the leap-frog switch does not propagate the
         substrate electrons.
         This case has to be tested.
-  \item Full SIC has not yet been checked.
-  \item The code should be slowly moved to {\tt IMPLICIT NONE}.
+        \\
+        In future, it may be that the whole subtrate part
+        is trated in a separate program connected to the electronic
+        part by a master routine written in {ttt python}.
+  \item Full SIC has yet to be implemented.
+  \item The code should be successively moved to {\tt IMPLICIT NONE}.
 \end{itemize}
 
 \newpage
@@ -532,14 +612,16 @@ localization in statics
         accommodate mesh size in relation for PsP radius.
   \item Although not necessary for performance, one may replace
         DO loops by the Fortran 95 SUM construct. This will make the
-        code more transparent.
+        code more transparent. This also holds for other compact
+        Fortran 95 constructs.
   \item Present parallele version  still needs to specify the number
         of nodes at compile time. This should be 
         changed to allow dynamical adjustment of number of nodes.
   \item Spin-averaged code ({\tt numspin}=1) does not reproduce 
-        the results from full spin calculation in ase of ADSIC.
+        the results from full spin calculation in case of ADSIC.
         Check.
 \end{itemize}
+
 
 
 

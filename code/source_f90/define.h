@@ -39,8 +39,8 @@
 !
 !choose fft solver (only one !)
 !
-#define netlib_fft 1
-#define fftw_cpu 0
+#define netlib_fft 0
+#define fftw_cpu 1
 !#define fftw3d_cpu 0 !Used only to determine wich 1d or 3d FFTS are the fastest
 ! switch to old version of 'kinprop' wiith interlaced 1D FFT
 !#define oldkinprop 0
