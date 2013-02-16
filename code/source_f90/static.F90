@@ -31,6 +31,20 @@ LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 
+CHARACTER (LEN=1) :: inttostring1
+CHARACTER (LEN=2) :: inttostring2
+CHARACTER (LEN=3) :: inttostring3
+
+CHARACTER (LEN=1) :: str1
+CHARACTER (LEN=2) :: str2
+CHARACTER (LEN=3) :: str3
+CHARACTER (LEN=4) :: str4
+CHARACTER (LEN=5) :: str5
+CHARACTER (LEN=6) :: str6
+CHARACTER (LEN=7) :: str7
+CHARACTER (LEN=8) :: str8
+CHARACTER (LEN=9) :: str9
+
 !MB:
 #if(fullsic)
 REAL(DP) :: qaux(kdfull2,kstate)
@@ -237,16 +251,28 @@ IF(tp_prints .AND. (myn == 0 .OR. knode == 1)) THEN
 END IF
 
 IF (iplotorbitals /= 0) THEN
-  OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
-  DO i=1,nstate
-    WRITE(522,'(a,i3)') '# state nr: ',i
-    WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
-    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
-    CALL printfield(522,psir(1,i),'tp.psir')
+  DO nbe=1,nstate
+    nbeabs = nrel2abs(nbe)
+    IF(nbeabs < 10) THEN
+      str1=inttostring1(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str1//'.'//outnam)
+    ELSE IF (nbeabs < 100) THEN
+      str2=inttostring2(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str2//'.'//outnam)
+    ELSE IF(nbeabs < 1000) THEN
+      str3=inttostring3(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str3//'.'//outnam)
+    ELSE
+      STOP 'ERROR: Too many states for iplotorbitals'
+    END IF
+    WRITE(522,'(a,i3)') '# state nr: ',nbeabs
+    WRITE(522,'(a,f12.5)') '# occupation: ',occup(nbe)
+    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(nbe)
+    CALL printfield(522,psir(1,nbe),'tp.psir')
     WRITE(522,*)  ! separate blocks for gnuplot
     WRITE(522,*)  !
+    CLOSE(522)
   END DO
-  CLOSE(522)
 END IF
 
 !       call calcrhor(rhor,psir)
