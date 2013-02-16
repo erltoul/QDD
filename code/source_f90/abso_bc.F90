@@ -50,16 +50,21 @@ IF(nabsorb <= 0) RETURN
 !     optional initialization of mask
 
 IF (firstcall) THEN
-  IF(ispherabso /= 0) THEN
+  IF(ispherabso == 1) THEN
     CALL init_spherabso()
 !    WRITE(*,*) ' ABSBC spherical initialization'
-  ELSE
+  ELSE IF(ispherabso == 0) THEN
     CALL init_abso()
 !    WRITE(*,*) ' ABSBC Cartesian initialization'
+  ELSE IF(ispherabso == 2) THEN
+    CALL init_ellipsabso()
+  ELSE
+    STOP ' this type of absoring boundaries not yet implemented'
   END IF
   firstcall = .false.
 !  WRITE(*,*) ' ABSBC: first call'
 END IF
+
 
 
 
@@ -411,6 +416,92 @@ END DO
 RETURN
 END SUBROUTINE init_abso
 
+
+!------------------------------------------------------------
+
+SUBROUTINE init_ellipsabso
+
+!     Initializes mask function for ellipsoidal boundary conditions
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+!------------------------------------------------------------
+
+WRITE(6,*) 'x,y,zango', xango,yango,zango
+
+bcrad = nabsorb*dx
+dmin2 = 1D10
+
+dmin2x = ABS((maxx-nxsh)*dx-xango)
+dmin2y = ABS((maxy-nysh)*dy-yango)
+dmin2z = ABS((maxz-nzsh)*dz-zango)
+
+dmin2  = MIN(dmin2x,dmin2y,dmin2z)
+
+WRITE(6,*) 'Setting ellipsoidal absorbing mask...'
+WRITE(6,*) 'Minimum distance to edge of box: '  ,dmin2
+
+dmin1x = dmin2x - dmin2x/dmin2*bcrad != dmin2x*(1.0D0-bcrad/dmin2)
+dmin1y = dmin2y - dmin2y/dmin2*bcrad
+dmin1z = dmin2z - dmin2z/dmin2*bcrad
+
+IF (dmin1x < 0D0 .OR. dmin1y < 0.0D0 .OR. dmin1z < 0.0D0) STOP 'Error in abso: dmin1<0'
+
+write(6,*) dmin1x,dmin1y,dmin1z
+write(6,*) dmin2x,dmin2y,dmin2z
+write(6,*) dmin2
+!stop
+
+
+ind = 0
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  rz=z1-zango
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    ry=y1-yango
+    DO ix=minx,maxx
+      x1=(ix-nxsh)*dx
+      rx=x1-xango
+      ellips1 = rx*rx/dmin1x/dmin1x+ry*ry/dmin1y/dmin1y+rz*rz/dmin1z/dmin1z
+      ellips2 = rx*rx/dmin2x/dmin2x+ry*ry/dmin2y/dmin2y+rz*rz/dmin2z/dmin2z
+
+      ind=ind+1
+      IF (ellips1 - 1.0D0 <= 0.0D0) THEN 
+        sphermask(ind)=1.0D0
+        tgridabso(ind)=.false.
+      ELSE IF (ellips2 - 1.0D0 > 0.0D0) THEN
+        sphermask(ind)=0.0D0
+        tgridabso(ind)=.false.
+      ELSE
+        fac = dsqrt(rx*rx/dmin2x/dmin2x+ry*ry/dmin2y/dmin2y+rz*rz/dmin2z/dmin2z)
+        fac = (fac - 1.0D0)/bcrad*dmin2 + 1.0D0
+        cosact = COS(fac*0.5D0*pi)
+        IF(cosact > 0D0) THEN
+          sphermask(ind) = cosact**powabso
+        ELSE
+          sphermask(ind) = 0D0
+        ENDIF
+        tgridabso(ind)=.true.
+      ENDIF
+      spherloss(ind) = 1.0D0 - sphermask(ind)**2
+    END DO
+  END DO
+END DO
+
+OPEN(666,STATUS='unknown',FILE='pabsomask.'//outnam)
+CALL printfield(666,spherloss,'mask')
+CLOSE(666)
+
+DO i=1,nmps
+  WRITE(*,*) ' pt.,mask=',imps(i),sphermask(imps(i)),tgridabso(imps(i))
+END DO
+
+RETURN
+END SUBROUTINE init_ellipsabso
+
+
 !------------------------------------------------------------
 
 SUBROUTINE initmeasurepoints
@@ -465,13 +556,13 @@ END DO
 !CALL prifld(sphermask,' mask ')
 
 DO ik=1,nmps                                    
- impsact = imps(nmps)
+ impsact = imps(ik)
  impsx = mod(impsact-1,nx2)+1
  impsy = mod(impsact/nx2,ny2)+1
  impsz = mod(impsact/(nx2*ny2),nz2)+1
  WRITE(*,*) ' analyzing pts: nmps,imps=',nmps,impsact
  WRITE(*,*) ' nx,ny,nz=',impsx,impsy,impsz
- WRITE(*,*) ' x,y,z=',x,y,z
+ WRITE(*,'(1a,4f)') ' x,y,z,r=',x,y,z,dsqrt(x*x+y*y+z*z)
  WRITE(*,*) ' theta,phi=',t,p
 END DO                                          
 
