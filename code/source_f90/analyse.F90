@@ -426,7 +426,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     evaluates properties at a given iteration, such like
-!     kinetic energy of ions, cores, clouds and kations
+!     kinetic energy of ions, cores, clouds and cations
 !     as well as coupling energies etc.
 
 vsum = 0D0

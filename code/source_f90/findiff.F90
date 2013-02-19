@@ -9,7 +9,7 @@ SUBROUTINE rkin3d(psi,dxpsi)
 !USE params
 !      include 'pot3D.inc'
 
-!     computes kinetic energy (- Lapacian) 3 point finite differences
+!     computes kinetic energy (- Laplacian) 3 point finite differences
 !     and reflecting boundary conditions
 
 
@@ -96,7 +96,7 @@ SUBROUTINE rkin1d_3r(psi,deltax,nmax,inc,dxpsi)
 !     dxpsi  = output containing 2. derivative + input value
 !     deltax = mesh spacing
 !     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighouring mesh points
+!     inc    = increment which connects neighbouring mesh points
 
 
 REAL(DP), INTENT(IN)                         :: psi(*)
@@ -135,7 +135,7 @@ SUBROUTINE ckin3d(psi,dxpsi)
 !USE params
 !      include 'pot3D.inc'
 
-!     computes kinetic energy (- Lapacian) 3 point finite differences
+!     computes kinetic energy (- Laplacian) 3 point finite differences
 !     and reflecting boundary conditions
 
 
@@ -222,7 +222,7 @@ SUBROUTINE ckin1d_3r(psi,deltax,nmax,inc,dxpsi)
 !     dxpsi  = output containing 2. derivative + input value
 !     deltax = mesh spacing
 !     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighouring mesh points
+!     inc    = increment which connects neighbouring mesh points
 
 
 COMPLEX(DP), INTENT(IN)                      :: psi(*)
@@ -275,7 +275,7 @@ SUBROUTINE d3mixpropag (psi, deltim)
 !     and off-diagonals 1.
 
 
-!     list paramaters:
+!     list parameters:
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
@@ -323,7 +323,7 @@ END SUBROUTINE d3mixpropag
 
 SUBROUTINE inv3p_ini(deltim)
 
-!     initialisize Array of fixed values for invers_3r.
+!     initialize Array of fixed values for invers_3r.
 !     Only for same delta in all directions, yet
 
 !USE params
@@ -334,7 +334,7 @@ REAL(DP), INTENT(IN OUT)                     :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 !inverse diagonal elements
 COMPLEX(DP) :: diag
-!diagonalelement of foreward-matrix
+!diagonalelement of forward-matrix
 COMMON /invnum3c/ invnum,diag
 
 
@@ -375,7 +375,7 @@ SUBROUTINE kinprop_1d3 (psi, ndiml, inc, deltax, deltim)
 !             1 + 0.5 * i * deltim * T^
 
 
-!     T^ is kinetic energy operator gives in 3 piont precision
+!     T^ is kinetic energy operator gives in 3 point precision
 !     (finite differenc)
 !     with boundary conditions ZERO at both ends (reflecting)
 
@@ -401,8 +401,8 @@ INTEGER ::               ! Work array size
 INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
 
 COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
-!c     $                  offdiag,           ! constant off-diagional el.
-!c     $                  offdiag2           ! squared off-diagional el.
+!c     $                  offdiag,           ! constant off-diagonal el.
+!c     $                  offdiag2           ! squared off-diagonal el.
 
 INTEGER :: i, n, ninc            ! loop index
 
@@ -429,7 +429,7 @@ psim = psi0
 psi0 = psip
 reff(ndiml) = diag*psi0 -  psim
 
-!     forward loop (eleminate lower off- diagonal elementes)
+!     forward loop (eliminate lower off- diagonal elements)
 
 DO n = 2, ndiml
   reff(n) = reff(n) - reff(n-1)*invnum(n-1)
@@ -470,7 +470,7 @@ SUBROUTINE ckin3d(psi,dxpsi)
 !USE params
 !      include 'pot3D.inc'
 
-!     computes kinetic energy (- Lapacian) 5 point finite differences
+!     computes kinetic energy (- Laplacian) 5 point finite differences
 !     and reflecting boundary conditions
 
 
@@ -557,7 +557,7 @@ SUBROUTINE ckin1d_5r(psi,deltax,nmax,inc,dxpsi)
 !     dxpsi  = output containing 2. derivative + input value
 !     deltax = mesh spacing
 !     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighouring mesh points
+!     inc    = increment which connects neighbouring mesh points
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(*)
@@ -610,7 +610,7 @@ SUBROUTINE rkin3d(psi,dxpsi)
 !USE params
 !      include 'pot3D.inc'
 
-!     computes kinetic energy (- Lapacian) 5 point finite differences
+!     computes kinetic energy (- Laplacian) 5 point finite differences
 !     and reflecting boundary conditions
 
 
@@ -697,7 +697,7 @@ SUBROUTINE rkin1d_5r(psi,deltax,nmax,inc,dxpsi)
 !     dxpsi  = output containing 2. derivative + input value
 !     deltax = mesh spacing
 !     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighouring mesh points
+!     inc    = increment which connects neighbouring mesh points
 
 
 REAL(DP), INTENT(IN OUT)                     :: psi(*)
@@ -757,7 +757,7 @@ SUBROUTINE d3mixpropag (psi, neupsi, deltim)
 !     neupsi = ------------------------  * psi
 !              1 + 0.5 * i * deltim * T^
 
-!     in 3 Dimensions with 5- point precision (Nummerov)
+!     in 3 Dimensions with 5- point precision (Numerov)
 !     with boundary conditions zero at doth ends (reflecting)
 
 !   . The "Laplacian"
@@ -765,7 +765,7 @@ SUBROUTINE d3mixpropag (psi, neupsi, deltim)
 !     and off-diagonals 1.
 
 
-!     list paramaters:
+!     list parameters:
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
@@ -811,7 +811,7 @@ END SUBROUTINE d3mixpropag
 
 SUBROUTINE inv5p_ini(deltim)
 
-!     initialisize Array of fixed values for kinprop__1d5.
+!     initialize Array of fixed values for kinprop__1d5.
 !     Only for same delta in all directions, yet
 
 !USE params
@@ -822,7 +822,7 @@ REAL(DP), INTENT(IN)                         :: deltim
 COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 !inverse diagonal Elements
 COMPLEX(DP) :: diag,offd
-!maxtrix-elements for foreward-matrix
+!matrix-elements for forward-matrix
 COMMON /invnum5c/ invnum,diag,offd
 
 
@@ -874,7 +874,7 @@ SUBROUTINE kinprop_1d5 (psi, ndiml, inc, deltax, deltim)
 !             1 + 0.5 * i * deltim * T^
 
 
-!     T^ is kinetic energy operator gives in 3 piont precision
+!     T^ is kinetic energy operator gives in 3 point precision
 !     (finite differenc)
 !     with boundary conditions ZERO at both ends (reflecting)
 
@@ -902,8 +902,8 @@ INTEGER ::               ! Work array size
 INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
 
 COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
-!c     $                  offdiag,           ! constant off-diagional el.
-!c     $                  offdiag2           ! squared off-diagional el.
+!c     $                  offdiag,           ! constant off-diagonal el.
+!c     $                  offdiag2           ! squared off-diagonal el.
 
 INTEGER :: i, n, ninc            ! loop index
 REAL(DP):: fac1,fac2,fac3,fac4
@@ -934,7 +934,7 @@ psi0 = psip
 reff(ndiml) = diag*psi0 +  offd*psim
 
 
-!     forward loop (eleminate lower off- diagonal elementes)
+!     forward loop (eliminate lower off- diagonal elements)
 
 DO n = 2, ndiml
   reff(n) = reff(n) - reff(n-1)*invnum(n-1)

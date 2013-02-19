@@ -7,6 +7,7 @@ SUBROUTINE init_simann()
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
+INTEGER :: ifall
 
     ionsin    = 3
     iknow     = 0
@@ -28,8 +29,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
     trfac1    = 0.08
     prfac1    = 0.05
     errks0    = 5.0D-3
+
+! Initialize random seed.
+    CALL RANDOM_SEED()
+    CALL RANDOM_SEED(SIZE=isize_seed)
+    ALLOCATE(rand_seed(isize_seed))
+
     IF(myn == 0)THEN
-      
+
       OPEN(UNIT=44,STATUS='old',FORM='formatted', FILE='ionen-in.'//outnam)
       WRITE(6,'(/a)') 'PARAMETERS FOR METROPOLIS:'
       READ(44,*) ionsin,iknow,facann
@@ -40,7 +47,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
       WRITE(6,'(a,4f12.6)') ' cptemp,delpos,err,errks0: ',cptemp  &
           ,delpos,ERR,errks0
       READ(44,*) ifall
-      WRITE(6,'(a,i10)') ' ifall: ',ifall
+      WRITE(6,'(a,i10)') ' ifall (argument no longer used):',ifall
       READ(44,*) trfac2,prfac2,errsim,ncsim
       WRITE(6,'(a,3f8.3,i3)') ' trfac2,prfac2,errsim,ncsim: '  &
           ,trfac2,prfac2,errsim,ncsim
@@ -51,14 +58,18 @@ IMPLICIT REAL(DP) (A-H,O-Z)
       WRITE(6,*) ' '
       WRITE(6,*) ' '
       CLOSE(44)
-      
+
+! Take random seed from first node.
+      CALL RANDOM_SEED(GET=rand_seed)
+
     END IF
-    
     
 #if(parayes)
     CALL comm_simann()
 #endif
 
+! Start all nodes with the same random seed.
+    CALL RANDOM_SEED(PUT=rand_seed)
 
 END SUBROUTINE init_simann
 
@@ -105,7 +116,7 @@ DO jrun = 1, nrun
   
   DO loop1 = 1,nloop1
     
-!     reach convergence in kohn-sham loop
+!     reach convergence in Kohn-Sham loop
     
 !g            call calcpseudo(rho)
     CALL calcpseudo()
@@ -174,7 +185,7 @@ DO jrun = 1, nrun
     END DO
     CALL flush(27)
     
-    WRITE(6,'(A/)') '-->ROLING THE DICE COMPLETED'
+    WRITE(6,'(A/)') '-->ROLLING THE DICE COMPLETED'
   END DO
   
 !     !if you come here, energetic accuracy is finally achieved
@@ -203,6 +214,8 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
 REAL(DP),ALLOCATABLE ::  q1(:)
 REAL(DP),ALLOCATABLE :: rhoion(:)
+
+REAL(DP) :: rand0, rand3(3)
 
 LOGICAL :: ans
 
@@ -267,22 +280,24 @@ DO loop2 = 1,nloop2
   
   ndown  = 0             ! steps downwards
   nbut   = 0             ! steps upwards although energy gets worse
-  nup    = 0             ! steps withou any success
+  nup    = 0             ! steps without any success
   oh     = 0.5D0
   
 !     the inner loop:
   
   DO loop3 = 1,nion
     
-!     role the dice to decide which ion is to be moved:
-    
-    ionvar = INT(nion*ran0(ifall))+1
+!     roll the dice to decide which ion is to be moved:
+
+    CALL RANDOM_NUMBER(rand0)
+    ionvar = INT(nion*rand0)+1
     
 !     vary the coordinates of this ion:
     
-    5          deltax = 2.*delps3*(ran0(ifall)-oh)
-    deltay = 2.*delps3*(ran0(ifall)-oh)
-    deltaz = 2.*delps3*(ran0(ifall)-oh)
+    5          CALL RANDOM_NUMBER(rand3)
+    deltax = 2.*delps3*(rand3(1)-oh)
+    deltay = 2.*delps3*(rand3(2)-oh)
+    deltaz = 2.*delps3*(rand3(3)-oh)
     delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
     IF (delta2 > delps3*delps3) GO TO 5
     
@@ -532,6 +547,7 @@ REAL(DP), INTENT(IN)                         :: diffen
 REAL(DP), INTENT(IN)                         :: t
 INTEGER, INTENT(IN)                      :: iknowi
 LOGICAL, INTENT(OUT)                     :: ans
+REAL(DP) :: rand0
 
 
 IF (t > 0D0) THEN
@@ -546,7 +562,8 @@ ELSE
 END IF
 
 IF(iknowi == 0) THEN
-  ans = (ran0(ifall) < bolfac)
+  CALL RANDOM_NUMBER(rand0)
+  ans = (rand0 < bolfac)
   
 !     proper choice whenever the user has not the
 !     faintest idea about the shape of the cluster!

@@ -658,7 +658,7 @@ tfs = it*dt1*0.0484/(2.0*ame)
 WRITE(*,*) 'enter ITSTEPV: tfs,cpx,cpy,cpz=',tfs,cpx(nion),cpy(nion),cpz(nion)
 
 #if(raregas)
-!                    zero im mobile atoms
+!                    zero in mobile atoms
 IF (isurf /= 0) THEN
   DO i=1,nc
     IF (imobc(i) == 0) THEN
@@ -965,7 +965,7 @@ IF (isurf /= 0) THEN
       DEALLOCATE(xm)
     END IF
   END IF
-!     propagation of kation
+!     propagation of cation
   IF(nk > 0) THEN
      ALLOCATE(xm(1:nk))
      xm = 1D0

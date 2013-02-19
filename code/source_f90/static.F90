@@ -28,6 +28,12 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.true.
+CHARACTER (LEN=1) :: str1
+CHARACTER (LEN=2) :: str2
+CHARACTER (LEN=3) :: str3
+CHARACTER (LEN=1) :: inttostring1
+CHARACTER (LEN=2) :: inttostring2
+CHARACTER (LEN=2) :: inttostring3
 
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 
@@ -226,16 +232,28 @@ IF(tp_prints .AND. (myn == 0 .OR. knode == 1)) THEN
 END IF
 
 IF (iplotorbitals /= 0) THEN
-  OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
-  DO i=1,nstate
-    WRITE(522,'(a,i3)') '# state nr: ',i
-    WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
-    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
-    CALL printfield(522,psir(1,i),'tp.psir')
+  DO nbe=1,nstate
+    nbeabs = nrel2abs(nbe)
+    IF(nbeabs < 10) THEN
+      str1=inttostring1(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str1//'.'//outnam)
+    ELSE IF (nbeabs < 100) THEN
+      str2=inttostring2(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str2//'.'//outnam)
+    ELSE IF(nbeabs < 1000) THEN
+      str3=inttostring3(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str3//'.'//outnam)
+    ELSE
+      STOP 'ERROR: Too many states for iplotorbitals'
+    END IF
+    WRITE(522,'(a,i3)') '# state nr: ',nbeabs
+    WRITE(522,'(a,f12.5)') '# occupation: ',occup(nbe)
+    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(nbe)
+    CALL printfield(522,psir(1,nbe),'tp.psir')
     WRITE(522,*)  ! separate blocks for gnuplot
     WRITE(522,*)  !
+    CLOSE(522)
   END DO
-  CLOSE(522)
 END IF
 
 !       call calcrhor(rhor,psir)
@@ -279,7 +297,7 @@ IF(icooltyp == 1 .AND. itmax > 0) THEN
   CALL rsave(psir,iter1,outnam)
 END IF
 
-!k check 1p-h transition matrix elements to unoccpied state:
+!k check 1p-h transition matrix elements to unoccupied state:
 !k attention: nstate must be bigger than number of electrons
 
 #if(parano)
@@ -422,7 +440,7 @@ SUBROUTINE sstep(q0,aloc,iter)
 !              the local mean field on 'aloc'
 !              the iteration number 'iter' (for switching analysis)
 !                 (only analysis, no stepping for 'iter=0') 
-!     Ouput is new new real wavefunction 'q0'
+!     Output is new new real wavefunction 'q0'
 
 !     This part for the serial version.
 
@@ -603,11 +621,11 @@ ALLOCATE(psipr(kdfull2))
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
+      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
+      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
@@ -655,7 +673,7 @@ ALLOCATE(psipr(kdfull2))
 #endif
   
   
-!     perform the damped gradient step and orthogonalise the new basis
+!     perform the damped gradient step and orthogonalize the new basis
   
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
   
@@ -1183,7 +1201,7 @@ IF(myn == 0) THEN
   WRITE(42,'(a,f7.2)')    'mon.:',qe(1)
   WRITE(42,'(a,3f11.5)')  'dip.in  :',dpolx,dpoly,dpolz
   WRITE(42,'(a,3f11.5)')  'dip.out :',qe(2),qe(3),qe(4)
-  WRITE(42,'(a)')         'quadrupol moments:'
+  WRITE(42,'(a)')         'quadrupole moments:'
   WRITE(42,'(a,3f11.4)')  'xx,yy,zz:',qe(5),qe(6),qe(7)
   WRITE(42,'(a,3f11.4)')  'xy,zx,zy:',qe(8),qe(9),qe(10)
   rms = SQRT(qe(5)+qe(6)+qe(7))

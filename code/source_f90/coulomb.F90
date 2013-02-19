@@ -1,7 +1,7 @@
 #include "define.h"
  
 #if(coudoub)
-!-----main--of--falr coulomb solver-------------------------------------
+!-----main--of--falr Coulomb solver-------------------------------------
 
 !      subroutine pois(rhoc,wcoul)
 
@@ -19,12 +19,12 @@ INTEGER, PARAMETER :: kz2=2*kzbox
 
 COMPLEX, PARAMETER :: czero=(0.0,0.0)
 
-!     solve the poisson equation to obtain the coulomb potential at
+!     solve the Poisson equation to obtain the Coulomb potential at
 !     collocation points.
 !                -d**2*wc=4*pi*e2*rhoc
 
 !         output:
-!                wcoul : coulomb potential at collocation points.
+!                wcoul : Coulomb potential at collocation points.
 
 
 

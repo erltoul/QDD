@@ -23,7 +23,7 @@ REAL(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
 REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
-REAL(DP),PRIVATE,ALLOCATABLE :: vecsr(:,:,:)    ! searched eigenvevtors
+REAL(DP),PRIVATE,ALLOCATABLE :: vecsr(:,:,:)    ! searched eigenvectors
 INTEGER,SAVE,PRIVATE :: ndim(2)
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecsr
@@ -122,7 +122,7 @@ DO nbe=1,nstate
   is = ispin(nbe)
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
-!       action of mean-field hamiltonian on 'hwfr'
+!       action of mean-field Hamiltonian on 'hwfr'
   
   
   IF(ipsptyp == 1) THEN
@@ -173,11 +173,11 @@ DO nbe=1,nstate
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
+      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
+      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
@@ -195,7 +195,7 @@ DO nbe=1,nstate
   ELSE IF(tdiag .AND. fftnorm > 0D0) THEN
     sume = 0D0
     DO i=1,nxyz
-      sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
+      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
     END DO
     sume = sume/fftnorm
     WRITE(6,'(a,i3,2(1pg12.4))') ' nbe,spe,amoy=',nbe,sume,amoy(nbe)
@@ -421,7 +421,7 @@ SUBROUTINE analyze_mom(rhoin,uin,urmoms,tprint)
 !     Analyzes center of gravity for density 'rhoin' times
 !     potential 'uin'. The switch 'tprint' regulates the
 !     level of output.
-!     The cumulated moments are returned on 'urmoms'.
+!     The accumulated moments are returned on 'urmoms'.
 
 !USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -520,7 +520,7 @@ SUBROUTINE spmomsmatrixo(wfr)
 !     Matrix of spatial moments between single-particle states
 !     from real  wf's:
 !      wfr    = set of real single particle wavefunctions
-!     The resuls is stored in common/radmatrixr/ for further
+!     The result is stored in common/radmatrixr/ for further
 !     use in localization transformation.
 
 !USE params
@@ -649,7 +649,7 @@ SUBROUTINE locgradstep(is,iprint)
 
 !      implicit none
 
-!     Nonlinear gradient iteration to optmially localized states:
+!     Nonlinear gradient iteration to optimally localized states:
 !      'vecs'    system of eigen-vectors to be determined
 !      'is'      isospin
 !      'iprint'  print level: <0 --> no print at all

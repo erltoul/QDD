@@ -534,7 +534,7 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
     END IF
   END DO
   
-! lagrange mult matrix diag (necessits vect1,2 in each sp subs, instead bugs)
+! Lagrange mult matrix diag (needs vect1,2 in each sp subs, instead bugs)
   IF(is == 1)THEN
     CALL givens(a,root(1,is),vect1(1,1),ndims(is),ndims(is),ndims(is))
   ELSE IF(is == 2)THEN
@@ -739,7 +739,7 @@ END SUBROUTINE calc_utwf
 #ifdef COMPLEXSWITCH
 SUBROUTINE utgradstepc(is,iprint,q0,iter1)
 
-!c     Nonlinear gradient iteration to optmially localized states:
+!c     Nonlinear gradient iteration to optimally localized states:
 !c      'vecs'    system of eigen-vectors to be determined
 !c      'is'      isospin
 !c      'iprint'  print level: <0 --> no print at all
@@ -1631,7 +1631,7 @@ SUBROUTINE spmomsmatrix(wfr,PRINT)
 !     Matrix of spatial moments between single-particle states
 !     from real  wf's:
 !      wfr    = set of single particle wavefunctions
-!     The resuls is stored in common/radmatrix/ for further
+!     The result is stored in common/radmatrix/ for further
 !     use in localization transformation.
 
 USE params

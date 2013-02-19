@@ -35,6 +35,7 @@ REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 LOGICAL,PARAMETER                       :: trealin=.false.
 #else
 COMPLEX(DP), INTENT(IN OUT)               :: psi(kdfull2,kstate)
+REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 LOGICAL, INTENT(IN)                       :: trealin
 #endif
 
@@ -250,17 +251,28 @@ IF(mynact==0) THEN
         READ(60) rhoabso(1:kdfull2)
       END IF
       IF(jescmaskorb /=0) THEN
+#if(parayes)
+        ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
         IF(trealin) THEN
-           rhoabsoOrb = 0D0
+           rhoabsoorb_all = 0D0
         ELSE
-          DO nbe=1,nstate
-            READ(60) rhoabsoOrb(1:kdfull2,nbe)
+          DO nbe=1,nstate_all
+            READ(60) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
         END IF
+#else
+        IF(trealin) THEN
+           rhoabsoorb = 0D0
+        ELSE
+          DO nbe=1,nstate
+            READ(60) rhoabsoorb(1:kdfull2,nbe)
+          ENDDO
+        ENDIF
+#endif
       END IF
       IF(ttest) WRITE(*,*) ' abso read in'
     END IF
-!   reading cumulators for laser field
+!   reading accumulators for laser field
     IF(.NOT.trealin) THEN
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
 !      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
@@ -279,11 +291,6 @@ IF(knode > 1) THEN
   IF (nabsorb > 0) &
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
                    mpi_double_precision,0,mpi_comm_world,ic)
-#if COMPLEXSWITCH
-  IF (nabsorb > 0 .AND. jescmaskorb /= 0) &
-    CALL mpi_bcast(rhoabsoorb(1:kdfull2,1:nstate),kdfull2*nstate, &
-                   mpi_double_precision,0,mpi_comm_world,ic)
-#endif
     CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,ic)
@@ -292,6 +299,17 @@ IF(knode > 1) THEN
     CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,ic)
 END IF
+
+#ifdef COMPLEXSWITCH
+IF (nabsorb > 0 .AND. jescmaskorb /= 0) THEN
+  DO nb=1,nstate_all
+    nod = nhome(nb)
+    nba = nabs2rel(nb)
+    CALL send_and_receive(rhoabsoorb_all(1:kdfull2,nb),rhoabsoorb(1:kdfull2,nba),kdfull2,0,nod)
+  END DO
+IF(myn == 0) DEALLOCATE(rhoabsoorb_all)
+END IF
+#endif
 #endif
 
 
@@ -358,6 +376,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 #endif
 
 INTEGER, INTENT(IN OUT)                     :: isa
@@ -484,6 +503,19 @@ IF(nclust > 0)THEN
 
 END IF
 #endif
+
+#if(parayes)
+#ifdef COMPLEXSWITCH
+IF(nabsorb > 0 .AND. jescmaskorb /= 0) THEN
+   IF(myn == 0) ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
+   DO nb=1,nstate_all
+     nod = nhome(nb)
+     nba = nabs2rel(nb)
+     CALL send_and_receive(rhoabsoorb(1:kdfull2,nba),rhoabsoorb_all(1:kdfull2,nb),kdfull2,nod,0)
+   END DO
+END IF
+#endif
+#endif
     
 IF(mynact==0) THEN
 !  DO i=1,ksttot
@@ -511,7 +543,7 @@ IF(mynact==0) THEN
   END IF
 #endif    
     
-!  write dipol moment etc:
+!  write dipole moment etc:
     IF(nclust > 0) THEN 
       WRITE(60) qe(1:kmom),se(1:3)
     
@@ -519,13 +551,20 @@ IF(mynact==0) THEN
       IF (nabsorb > 0) THEN
         WRITE(60) rhoabso(1:kdfull2)
         IF(jescmaskorb /=0) THEN
-          DO nbe=1,nstate
-            WRITE(60) rhoabsoOrb(1:kdfull2,nbe)
+#if(parayes)
+          DO nbe=1,nstate_all
+            WRITE(60) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
+#else
+          DO nbe=1,nstate
+            WRITE(60) rhoabsoorb(1:kdfull2,nbe)
+          ENDDO
+#endif
         END IF
       END IF
 !     writing cumulators for laser field
-      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
+      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
+                fpulseinteg1,fpulseinteg2,elaser
       WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
 #endif
     END IF
@@ -718,9 +757,9 @@ END SUBROUTINE addcluster
 #ifdef REALSWITCH
 SUBROUTINE send_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
-!     Both strings are double precsion and have length 'length'
+!     Both strings are double precision and have length 'length'
 
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -758,7 +797,7 @@ END SUBROUTINE send_and_receive
 
 SUBROUTINE csend_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
 !     Both strings are double complex and have length 'length'
 

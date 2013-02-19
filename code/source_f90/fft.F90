@@ -7,9 +7,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
 !     arrays for kinetic energy and electronic propagation
-!       kinetic energy coefficients in strange ordered fourier space
-!     akv  = fouier-field for 0.5*k^2
-!     ak   = fourier-field for exp(i*dt*(h^2/2m)*k^2)
+!       kinetic energy coefficients in strange ordered Fourier space
+!     akv  = Fourier-field for 0.5*k^2
+!     ak   = Fourier-field for exp(i*dt*(h^2/2m)*k^2)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
 REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
@@ -50,13 +50,14 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 
 #if(fftw_cpu)
 USE FFTW
+#endif
 #if(parayes)
 USE params, only : myn,numthr,nthr
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
+#if(fftw_cpu)
 INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
-
 #endif
 
 REAL(DP) :: dt1,h2m
@@ -362,6 +363,7 @@ ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
 #endif
+!#endif
 
 #endif
 DO i1=1,nx2

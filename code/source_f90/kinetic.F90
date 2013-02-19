@@ -1,7 +1,7 @@
-#include "define.h"
+#include 'define.h'
 
 #if(gridfft)
-#include "fft.F90"
+#include 'fft.F90'
 #endif 
 
 #if(findiff|numerov)

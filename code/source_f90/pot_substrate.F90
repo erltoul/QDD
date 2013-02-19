@@ -540,7 +540,7 @@ END SUBROUTINE addgsmpot
 
 SUBROUTINE addgsmdensity(field,xx,yy,zz,sigm,ccharge,iparit)
 !************************************************************
-!     adds (iparit=even) or subtracts (iparit=odd) gaussian
+!     adds (iparit=even) or subtracts (iparit=odd) Gaussian
 !     density to field on subgrid centered at xx,yy,zz
 
 USE params
@@ -720,7 +720,7 @@ SUBROUTINE calc_frho(rho)
 
 !     ****************************
 
-! frho(i,is) is the composant i of the integral of (grad.Vsoft)/r over rho for
+! frho(i,is) is the component i of the integral of (grad.Vsoft)/r over rho for
 ! the raregas atom is
 ! for computation of Van der Waals potential and forces
 

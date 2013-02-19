@@ -240,7 +240,7 @@ SUBROUTINE init_scattel(psi)
 
 !     Adds one electron in scattering state as Gaussian wavepacket
 !     with a certain velocity.
-!     The bookkeeping fiedls are extended accoprdingly.
+!     The bookkeeping fields are extended accordingly.
 
 
 USE params
@@ -317,7 +317,7 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 !     For pure electronic propagation one has the option to
 !     reduce the number of local unitary steps. The last half-step
-!     is omitted (exept in case of the last call 'itsub=ipasinf')
+!     is omitted (except in case of the last call 'itsub=ipasinf')
 !     and the first local step is doubled instead (except for the
 !     first call 'itsub=1'). This option is switched on by the
 !     run time switch 'iffastpropag'.
@@ -924,7 +924,7 @@ ecorr = energ_ions()
 ekion=0D0        ! kinetic energy of Na cores
 ekinion=0D0      ! kinetic energy of GSM cores
 ekinel=0D0       ! kinetic energy of GSM shells
-ekinkat=0D0      ! kinetic energy of kations
+ekinkat=0D0      ! kinetic energy of cations
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
@@ -1004,7 +1004,7 @@ IF(myn == 0) THEN
   WRITE(6,*) 'e_coul:ion-ion   = ',ecorr
   WRITE(6,*) 'e_coul:el-ion    = ',2.*ecback
   WRITE(6,*) 'extern. energy   = ',2.*ecback+ecorr
-  WRITE(6,*) 'hartree energy   = ',ecrho-ecback-ecrhoimage
+  WRITE(6,*) 'Hartree energy   = ',ecrho-ecback-ecrhoimage
   WRITE(6,*) 'nonlocal energy  = ',enonlc
   WRITE(6,*) 'sim.ann.energy   = ',2.*ecback+ecorr+enonlc
   WRITE(6,*) 'laser energy     = ',elaser
@@ -1072,7 +1072,7 @@ CALL fftf(psin,psi2)
 sum0 = 0D0
 sumk = 0D0
 DO ii=1,kdfull2
-  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +imag(psi2(ii))*imag(psi2(ii))
+  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
@@ -1088,9 +1088,9 @@ CALL ckin3d(psi(1,nb),psi2)
 sum0 = 0D0
 acc = 0D0
 DO i=1,nxyz
-  acc = REAL(psi(i,nb))*REAL(psi2(i)) + imag(psi(i,nb))*imag(psi2(i))  &
+  acc = REAL(psi(i,nb))*REAL(psi2(i)) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
       + acc
-  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + imag(psi(i,nb))*imag(psi(i,nb))  &
+  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
       + sum0
 END DO
 ekinout = REAL(wfovlp(psi(1,nb),psi2))
@@ -1351,7 +1351,7 @@ SUBROUTINE mrote
 !        irotat=3 -> rotate around z-axis
 !        irotat=4 -> rotate around diagonal axis
 !      The angle 'phirot' is to be given in degree.
-!      Conifguration and parameters are communciated via 'common'
+!      Configuration and parameters are communicated via 'common'
 
 USE params
 !USE kinetic
@@ -1414,7 +1414,7 @@ REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
 !  !        irotat=2 -> rotate around y-axis
 !  !        irotat=3 -> rotate around z-axis
 !  !        irotat=4 -> rotate around diagonal axis
-!  !      conifguration and parameters are communciated via 'common'
+!  !      configuration and parameters are communicated via 'common'
 !  
 !  USE params
 !  USE kinetic
@@ -1548,7 +1548,7 @@ ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
-!      eye=cmplx(0.0,1.0)
+!      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
@@ -1680,7 +1680,7 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 !     qact     = array for actual wavefunction to be propagated
 !     q1,q2    = auxiliary wavefunction  arrays
 !     ri       = size of time step
-!     tenerg   = (logical) switch to cumulate non-local energy
+!     tenerg   = (logical) switch to accumulate non-local energy
 !     nb       = number of state which is propagated
 !     norder   = order of step (up to 6, 4 or 6 recommended)
 !
@@ -1711,7 +1711,7 @@ CALL nonlocalc(qact,q1,0)
 IF(tenerg) THEN !  add nonloc.pot energy
   sumadd = 0D0
   DO  i=1,nxyz
-    sumadd  = REAL(qact(i))*REAL(q1(i)) +imag(qact(i))*imag(q1(i))  + sumadd
+    sumadd  = REAL(qact(i))*REAL(q1(i)) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
   END DO
   enonlo(nb) = sumadd*dvol
   epotsp(nb) = sumadd*dvol + epotsp(nb)
@@ -1913,11 +1913,11 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 1: time (fs), col 2:  total sp en.'
     WRITE(163,*) 'col 3: rearr. en, col 4:  kin. en. Na ions'
     WRITE(163,*) 'col 5: kin. cores,col 6:  kin. en. shells'
-    WRITE(163,*) 'col 7: kin. kations,col 8:  pot. energy of ions'
+    WRITE(163,*) 'col 7: kin. cations,col 8:  pot. energy of ions'
     WRITE(163,*) 'col 9: ion-ion pot., col 10: ion-surf pot'
     WRITE(163,*) 'col 11: intra-surf. pot'
     WRITE(163,*) 'col 12: el-ion energy,col 13:  external en.'
-    WRITE(163,*) 'col 14: hartree en.,col 15:  nonloc. en'
+    WRITE(163,*) 'col 14: Hartree en.,col 15:  nonloc. en'
     WRITE(163,*) 'col 16: sim.ann. en.,col 17:  binding en.'
     WRITE(163,*) 'col 18: total en. [Ry]'
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
@@ -2001,7 +2001,7 @@ IF(irest <= 0) THEN                    !  write file headers
           CLOSE(621)
         END IF
         
-! Positions of GSM cores, clouds and kations
+! Positions of GSM cores, clouds and cations
         IF(isurf /= 0) THEN
           OPEN(24,STATUS='unknown',FORM='formatted', FILE='pposcore.'//outnam)
           WRITE(24,'(a)') ' & '
@@ -2975,7 +2975,7 @@ END IF
 IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 !  DO i=1,nstate
 !    cscal=orbitaloverlap(psi(1,i),psi(1,i))
-!    rtmp(i,1)=REAL(cscal)**2+imag(cscal)**2
+!    rtmp(i,1)=REAL(cscal)**2+AIMAG(cscal)**2
 !    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
 !  END DO
 !call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'

@@ -9,7 +9,7 @@ SUBROUTINE coul_mfield(rho)
 !     Input:
 !      rho    = electron density
 !     Output:
-!      Couolomb field via 'chpcoul' in common
+!      Coulomb field via 'chpcoul' in common
 
 USE params
 !USE kinetic
@@ -59,7 +59,7 @@ CALL solv_fft(rho,chpcoul,dx,dy,dz)
 !  END DO
 !END DO
 
-! computation of the coulomb potential from the electronic density
+! computation of the Coulomb potential from the electronic density
 ! before adjustdip or vstep for pseudodensity description
 
 !     restore electron density, save Coulomb fields,

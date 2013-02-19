@@ -28,7 +28,7 @@
 !
 ! full SIC and localized SIC
 !
-#define twostsic 0
+#define twostsic 1
 !
 !  
 ! switch to extended model with polarizable raregas
@@ -38,10 +38,11 @@
 !choose fft solver (only one !)
 !
 #define netlib_fft 0
-#define fftw_cpu 1
+!#define fftw_cpu 1
 !#define fftw3d_cpu 0 !Used only to determine wich 1d or 3d FFTS are the fastest
 ! switch to old version of 'kinprop' wiith interlaced 1D FFT
 !#define oldkinprop 0
 
 ! to be activated if FFTW is used in connection with MKL
 #define fftwnomkl 1
+

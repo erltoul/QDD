@@ -6,7 +6,7 @@ SUBROUTINE calclocal(rho,aloc)
 
 !       ******************************
 
-!       computes local part of hamiltonian
+!       computes local part of Hamiltonian
 !       'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -56,7 +56,7 @@ IF(idielec /= 0) THEN
 END IF
 #endif
 
-!     the coulombic part
+!     the Coulombic part
 !     warning : counet inserts the esquar factor
 
 
@@ -169,7 +169,7 @@ SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
 
 !    computes the lsda potential and the rear.energ.
-!    with the gunnarsson & lundqvist functional 1976
+!    with the Gunnarsson & Lundqvist functional 1976
 
 
 USE params
@@ -185,7 +185,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
 
-!     the gunnarson lundqvist parameters
+!     the Gunnarsson Lundqvist parameters
 
 !      data small/1.0e-20/
 !#if(exonly)
@@ -330,9 +330,9 @@ SUBROUTINE calc_lda_pw92(rho,chpdft)
 
 
 !    computes the lsda potential and the rear.energ.
-!    with the perdew-wang functional
+!    with the Perdew-Wang functional
 !    attention: the rearrangement energy for e-tot has to be computed
-!               the same way as for gunnarsson & lundqvist
+!               the same way as for Gunnarsson & Lundqvist
 !               the mean-field part is o.k.!!!!!
 
 USE params
@@ -344,7 +344,7 @@ REAL,SAVE                                    :: et
 
 !        parameter (pi=3.141592654)
 
-! pade approximant to perdew-wang 92 density functional
+! Pade' approximant to Perdew-Wang 92 density functional
 
 
 !!!!!      icount = 0

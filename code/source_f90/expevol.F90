@@ -16,7 +16,7 @@ SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork)
 
 !     For pure electronic propagation one has the option to
 !     reduce the number of local unitary steps. The last half-step
-!     is omitted (exept in case of the last call 'itsub=ipasinf')
+!     is omitted (except in case of the last call 'itsub=ipasinf')
 !     and the first local step is doubled instead (except for the
 !     first call 'itsub=1'). This option is switched on by the
 !     compile time switch 'fastpropag'.
@@ -148,7 +148,7 @@ END SUBROUTINE tstep_exp
 
 SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 
-!     Propagation of a wavefuntion by Taylor expanded exponential
+!     Propagation of a wavefunction by Taylor expanded exponential
 !     evolution:
 !       qact     = wavefunction on which H acts and resulting w.f.
 !       aloc     = local potential for the actual spin component
@@ -159,7 +159,7 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 
 !     Note: The propagation uses the action of the Hamiltonian
 !           where the diagonal element (s.p.energy) is subtracted.
-!           That diagonal element is evalutaed in the first order
+!           That diagonal element is evaluated in the first order
 !           call 'nterm=1'.
 
 USE params
