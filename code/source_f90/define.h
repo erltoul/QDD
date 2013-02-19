@@ -24,11 +24,11 @@
 #define parano 1
 #define simpara 0
 !#define paropenmp 1    set in 'makefile'
-#define dynopenmp 0
+#define dynopenmp 1
 !
 ! full SIC and localized SIC
 !
-#define twostsic 1
+#define twostsic 0
 !
 !  
 ! switch to extended model with polarizable raregas
@@ -43,3 +43,5 @@
 ! switch to old version of 'kinprop' wiith interlaced 1D FFT
 !#define oldkinprop 0
 
+! to be activated if FFTW is used in connection with MKL
+#define fftwnomkl 1

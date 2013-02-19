@@ -27,7 +27,7 @@ SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork)
 !g     the number of iteration in which the number of local unitary steps is reduced
 
 USE params
-!USE kinetic
+USE twost, ONLY:tnearest
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q0(kdfull2,kstate)
@@ -46,6 +46,7 @@ COMPLEX(DP) :: q1(kdfull2)
 ! really beneficial so far.
 LOGICAL,PARAMETER :: tnorotate=.true.
 
+
 !----------------------------------------------------------------------
 
 
@@ -58,7 +59,7 @@ myn = 0
 !STOP
 
 #if(raregas)
-IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not apppropriate for rare gas'
+IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 #endif
 
 !      write(*,*) 'entering TSTEP_EXP'
@@ -83,6 +84,10 @@ ELSE
 #endif
 END IF
 
+#if(twostsic)
+IF(tnearest) CALL eval_unitrot(qwork,q0)
+#endif
+
 
 !     compute mean field at half time step
 
@@ -103,6 +108,10 @@ ELSE
   CALL exp_evolp(q0,aloc,4,dt1,q1,qwork)
 #endif
 END IF
+
+#if(twostsic)
+IF(tnearest) CALL eval_unitrot(q0,qwork)
+#endif
 
 
 
@@ -310,6 +319,62 @@ DEALLOCATE(chmatrix)
 
 RETURN
 END SUBROUTINE exp_evolp
+!-----eval_unitrot-------------------------------------------------------------
+
+SUBROUTINE eval_unitrot(qact,qold)
+
+! Computes the piece of rotation amongst occupied states contained
+! in the tansformation from 'qold' to 'qact'. The resulting unitary
+! transformation is transferred via 'wfrotate'.
+
+USE params
+USE twost
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)              :: qold(kdfull2,kstate)
+
+COMPLEX(DP) :: wfovlp,ovl
+REAL(DP) :: rmo
+INTEGER :: is,ni,na,nb,naeff,nbeff
+
+!----------------------------------------------------------------------
+
+DO is=1,2
+  ni = ndims(is)
+
+! evaluate matrix from overlaps
+  DO na=1,nstate
+    naeff = na - (is-1)*ndims(1)
+    DO nb=1,nstate
+      IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
+        nbeff = nb - (is-1)*ndims(1)
+        wfrotate(naeff,nbeff,is) = wfovlp(qold(1,na),qact(1,nb))
+      END IF
+    END DO
+  END DO
+
+! ortho-normalize
+  DO nb=1,ni
+    DO na=1,nb-1
+      ovl=SUM(CONJG(wfrotate(1:ni,na,is))*wfrotate(1:ni,nb,is))
+      wfrotate(:,nb,is) = wfrotate(:,nb,is)-wfrotate(:,na,is)*ovl
+    END DO
+    ovl=SUM(CONJG(wfrotate(1:ni,nb,is))*wfrotate(1:ni,nb,is))
+    wfrotate(1:ni,nb,is) = wfrotate(1:ni,nb,is)*CMPLX(1D0/SQRT(REAL(ovl,DP)),0D0)
+  END DO
+
+! transpose for further use
+  wfrotate(1:ni,1:ni,is) = CONJG(TRANSPOSE(wfrotate(1:ni,1:ni,is)))
+
+  rmo = matdorth(wfrotate(1,1,is),kstate,ni)
+  WRITE(*,*) 'is,unitarity wfrotate:',is,rmo
+  IF(ABS(rmo)>1D-10) WRITE(*,*) ' WFROTATE:',wfrotate(1:ni,1:ni,is)
+
+END DO
+
+END SUBROUTINE eval_unitrot
+
 #endif
 
 !-----hpsi  -------------------------------------------------------------

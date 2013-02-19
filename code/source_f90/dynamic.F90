@@ -22,6 +22,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #if(twostsic)
   do is=1,2         !MV initialise ExpDabOld                                  
      call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
+     call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
   enddo
 #endif
 
@@ -323,6 +324,9 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 USE params
 USE kinetic
+#if(twostsic)
+USE twost, ONLY:tnearest
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
@@ -330,7 +334,7 @@ REAL(DP), INTENT(IN)                         :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2,qwork
 COMPLEX(DP) :: rii,cfac
 !INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
 
@@ -392,15 +396,19 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
-#if(dynopenmp)
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
-#endif
+#if(paropenmp && dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg) SCHEDULE(STATIC)
+  DO nb=1,nstate
+    ithr = OMP_GET_THREAD_NUM()
+    tenerg = itsub == ipasinf
+    CALL nonlocstep(q0(1,nb),q1(1,ithr),q2(1,ithr),dt,tenerg,nb,6)   ! 4
+  END DO
+!$OMP END PARALLEL DO 
+#else
   DO nb=1,nstate
     tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
-#if(dynopenmp)
-!$OMP END PARALLEL DO 
 #endif
 END IF
 
@@ -414,7 +422,7 @@ ithr=0
 DO nb=1,nstate
 #if(paropenmp && dynopenmp)
   ithr = OMP_GET_THREAD_NUM()
-  WRITE(*,*) ' actual thread:',ithr
+!  WRITE(*,*) ' actual thread:',ithr
 !  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
 #endif 
 #if(gridfft)
@@ -451,15 +459,19 @@ CALL flush(7)
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
-#if(dynopenmp)
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg,q1,q2) SCHEDULE(STATIC)
-#endif
-  DO nb = 1,nstate
-    tenerg = .false. !   itsub.eq.ipasinf
+#if(paropenmp && dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg) SCHEDULE(STATIC)
+  DO nb=1,nstate
+    ithr = OMP_GET_THREAD_NUM()
+    tenerg = itsub == ipasinf
+    CALL nonlocstep(q0(1,nb),q1(1,ithr),q2(1,ithr),dt,tenerg,nb,6)   ! 4
+  END DO
+!$OMP END PARALLEL DO 
+#else
+  DO nb=1,nstate
+    tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
-#if(dynopenmp)
-!$OMP END PARALLEL DO 
 #endif
 END IF
 
@@ -468,6 +480,14 @@ END IF
 DEALLOCATE(q1)
 DEALLOCATE(q2)
 
+#if(twostsic)
+IF(tnearest .AND. ifsicp==8) THEN
+  ALLOCATE(qwork(kdfull2,kstate))
+  qwork=q0
+  CALL eval_unitrot(q0,qwork)
+  DEALLOCATE(qwork)
+END IF
+#endif
 
 
 !     new density and local potential

@@ -55,7 +55,7 @@ INTEGER,PRIVATE :: kdim
 
 !     matrices of radial moments
 
-COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:)!MV added
+COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
@@ -64,9 +64,17 @@ COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvevtors
-!COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
-!    vecs
-!COMMON /radmatrixn/ndims
+
+! This parameter 'tnearest' activates the computation of the
+! rotation amongst occupuied states. The result ist stored on
+! 'wfrotate' and so transferred to the SIC routines.
+LOGICAL,PARAMETER :: tnearest=.true.
+
+! The switch 'texpo' activates the "extrapolation" of the unitary
+! transformation 'vecs' usign the array 'expdabold'. This array is
+! initialzed as unit matrix and propagated in parallel to 'vecs'.
+! This strategy seems to help. But it is not so obvious why.
+LOGICAL,PARAMETER :: texpo=.true.       
 
 #endif
 
@@ -230,7 +238,7 @@ NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 !----------------------------------------------------------------
 
 kdim=kstate
-ALLOCATE(ExpDABold(kstate, kstate, 2))!MV added
+ALLOCATE(ExpDABold(kstate,kstate,2),wfrotate(kstate,kstate,2))
 ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
 ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
 ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
@@ -764,12 +772,6 @@ REAL(DP) :: actstep
 REAL(DP) :: enstore(3),stepstore(3)      ! storage for optimized step
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 
-! The switch 'texpo' activates the "extrapolation" of the unitary
-! transformation 'vecs' usign the array 'expdabold'. This array is
-! initialzed as unit matrix and propagated in parallel to 'vecs'.
-! This strategy seems to help. But it is not so obvious why.
-LOGICAL,PARAMETER :: texpo=.true.       ! include extrapolation
-
 
 !-------------------------------------------------------
 
@@ -777,9 +779,17 @@ itmax2=symutbegin
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-IF(texpo) &
-  vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
+!IF(is==1) WRITE(*,*) ' vecs before:',vecs(1:ni,1:ni,is)
+!IF(is==1) WRITE(*,*) ' wfrotate:',wfrotate(1:ni,1:ni,is)
 
+IF(tnearest)  vecs(1:ni,1:ni,is) = MATMUL(wfrotate(1:ni,1:ni,is),vecs(1:ni,1:ni,is))
+
+!IF(is==1) WRITE(*,*) ' vecs after:',vecs(1:ni,1:ni,is)
+
+IF(texpo) THEN
+  vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
+!  call MatUnite(ExpDabOld(1,1,is),kstate,ndims(is))
+END IF
 
 actstep = step     ! radmaxsym obsolete, set to 1D0
 
@@ -1620,7 +1630,7 @@ SUBROUTINE spmomsmatrix(wfr,PRINT)
 
 !     Matrix of spatial moments between single-particle states
 !     from real  wf's:
-!      wfr    = set of real single particle wavefunctions
+!      wfr    = set of single particle wavefunctions
 !     The resuls is stored in common/radmatrix/ for further
 !     use in localization transformation.
 

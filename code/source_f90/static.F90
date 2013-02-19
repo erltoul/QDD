@@ -27,7 +27,7 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !REAL(DP) ::  rhotmp(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
-LOGICAL,PARAMETER :: tp_prints=.false.
+LOGICAL,PARAMETER :: tp_prints=.true.
 
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 

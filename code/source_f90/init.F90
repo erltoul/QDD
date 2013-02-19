@@ -586,8 +586,8 @@ ELSE
   WRITE(iu,'(a)') 'this version of SIC not available'
 END IF
 
-IF(.NOT.(ifexpevol==1) .AND. itmax > 0 .AND. ifsicp >= 6) STOP  &
-    ' full TDSIC requires exponential evolution'
+!IF(.NOT.(ifexpevol==1) .AND. itmax > 0 .AND. ifsicp >= 6) STOP  &
+!    ' full TDSIC requires exponential evolution'
 
 
 !     dynamical options
@@ -1032,6 +1032,19 @@ ELSE IF(ipsptyp == 1) THEN
   radiong(8)=1.5D0
   h0_11g(8)=18.19996387   ! 18.266917D0
   h1_11g(8)=0D0
+  
+!       fluor   (row 2)
+  
+  amu(9)  = 18D0
+  ch(9)   = 7.0D0
+ cc1(9)   =-21.307361
+ cc2(9)   = 3.072869
+ crloc(9) = 0.218525
+ r0g(9)=0.195567
+ r1g(9)=0.2
+ radiong(9)=1.3
+ h0_11g(9)=23.58494 
+ h1_11g(9) =0D0
   
 !       neon   (row 2)
   
