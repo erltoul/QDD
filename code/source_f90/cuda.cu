@@ -12,16 +12,13 @@
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 #include <thrust/device_free.h>
-#if(parayes)
-#include "mpif.h"
-#endif
 
 using namespace std;
 
 #include "params_gpu.h"
 #include "gpu_compute.cu"
 #include "coulex.cu"
-#include "static_gpu.cu"
+
 #define BATCH 1 //The number of batched ffts 
 
 #if(lda_gpu)
@@ -58,23 +55,14 @@ __device__ __constant__ double cr4 = 1.5874010519681993613971827;
 __device__ __constant__ double t17 = 1.923661051;
 
 double *d_chpdft;
-/*thrust::device_vector<double> d_ec(1);
-#if(directenergy)
-thrust::device_vector<double> d_enerpw(1);
-#endif*/
 #endif
 
 extern "C" void cuda_gpu_init_() //initialize some variables usefull for GPU computing
 {
 #if(lda_gpu)
-//Work in progress for lda_gpu
 	int size_lda = 2*params_mp_nxyz_*sizeof(double);
         error=cudaMalloc((void**)&d_chpdft,size_lda);
 	Check_CUDA_Error(error);
-	/*d_ec.resize(nxyz);
-#if(directenergy)
-	d_enerpw.resize(nxyz);
-#endif*/
 #endif
 	cudaStreamCreate(&stream1);
 	cudaStreamCreate(&stream2);
@@ -215,7 +203,7 @@ extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	error=cudaMemcpyAsync(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice,stream1);
+	error=cudaMemcpy(d_ffta_int,d_ffta,size_cp,cudaMemcpyDeviceToDevice);
 	Check_CUDA_Error(error);
 }
 
@@ -329,7 +317,6 @@ extern "C" void run_fft_back3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,in
 }
 
 #if(lda_gpu)
-//Work in progress
 __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int nxyz)
 {
 

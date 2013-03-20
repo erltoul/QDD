@@ -3,11 +3,11 @@ REAL(DP),PARAMETER :: varelcorelimit=1E-8  ! limiting value for V_elArcore [Ry]
 
 !INTEGER,PARAMETER :: kfermi=kxbox*17330  ! length of interpolation table
 INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
-                                      ! uises here fixed length -- check!
+                                      ! uses here fixed length -- check!
 
 
 !  surface part:
-INTEGER,PARAMETER :: ngpar = 400
+INTEGER,PARAMETER :: ngpar = 3000
 INTEGER :: maxpar 
 INTEGER,PARAMETER :: maxnlayers=3
 INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
@@ -101,7 +101,7 @@ REAL(DP) :: cspr=6.7585128              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
 REAL(DP) :: xdielec=0D0
-INTEGER :: NE,nc=0,nk=0
+INTEGER :: NE=0,nc=0,nk=0
 INTEGER :: nlayers,nside,iararlj, ipog
 INTEGER :: iforcecl2co=0
 

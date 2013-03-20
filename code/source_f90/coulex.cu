@@ -250,7 +250,7 @@ Check_CUDA_Error(error);
 
 if(cufftExecD2Z(pfftforw,gpu_rfftac,gpu_fftac) != CUFFT_SUCCESS)
 {
-  cout<<"CUFFT error : Exec Z2Z forward failed in coulex"<<endl;
+  cout<<"CUFFT error : Exec D2Z forward failed in coulex"<<endl;
   exit(-1);
 }
 
@@ -264,7 +264,7 @@ tnorm=fnorm/(8.0*grnorm)*pow(pi,1.5);
 
 if(cufftExecZ2D(pfftback,gpu_fftac,gpu_rfftac) != CUFFT_SUCCESS)
 {
-	  cout<<"CUFFT error : Exec Z2Z backward failed in coulex"<<endl;
+	  cout<<"CUFFT error : Exec Z2D backward failed in coulex"<<endl;
 	  exit(-1);
 }
 

@@ -1,7 +1,6 @@
 #include "define.h"
  
 !-----statit---------------------------------------------------------
-#if(netlib_fft|fftw_cpu)
 SUBROUTINE statit(psir,rho,aloc)
 
 !     master routine for static iteration
@@ -352,15 +351,9 @@ IF(itmax <= 0) STOP ' terminate with static iteration '
 
 RETURN
 END SUBROUTINE statit
-#endif
 !-----static_mfield------------------------------------------------
 
-#if(netlib_fft|fftw_cpu)
 SUBROUTINE static_mfield(rho,aloc,psir,psiaux,int_pass)
-#endif
-#if(fftw_gpu)
-SUBROUTINE static_mfield(rho,aloc,psir,psiaux)
-#endif
 
 !     The Coulomb part of the mean field.
 
@@ -384,9 +377,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
-#if(netlib_fft|fftw_cpu)
 INTEGER , INTENT(IN OUT)                      :: int_pass
-#endif
 
 
 
@@ -423,12 +414,7 @@ END SUBROUTINE static_mfield
 
 !#if(parano)
 !-----sstep----------------------------------------------------------
-#if(netlib_fft|fftw_cpu)
 SUBROUTINE sstep(q0,aloc,int_pass)
-#endif
-#if(fftw_gpu)
-SUBROUTINE sstep(q0,aloc)
-#endif
 !     Performs one static step for all wavefunctions and for given
 !     mean fields.
 !     The step involves: action of H->psi, some analysis, and damping.
@@ -459,9 +445,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-#if(netlib_fft|fftw_cpu)
 INTEGER, INTENT(IN)                      :: int_pass
-#endif
 
 REAL(DP) :: occold(kstate),ocwork(kstate)
 #if(parayes)
@@ -969,12 +953,7 @@ END SUBROUTINE sstep
 !#endif
 
 !-----infor--------------------------------------------------------
-#if(netlib_fft|fftw_cpu)
 SUBROUTINE infor(psi,rho,int_pass)
-#endif
-#if(fftw_gpu)
-SUBROUTINE infor(psi,rho)
-#endif
 
 !     Computes observables (energies, radii, ...)
 !     and prints to standard output.
@@ -987,9 +966,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-#if(netlib_fft|fftw_cpu)
 INTEGER, INTENT(IN)                      :: int_pass
-#endif
 REAL(DP), PARAMETER :: alpha_ar=10.6
 REAL(DP),SAVE :: energyold=0D0
 
@@ -1222,12 +1199,8 @@ RETURN
 END SUBROUTINE infor
 
 !-----pri_pstat----------------------------------------------------
-#if(netlib_fft|fftw_cpu)
 SUBROUTINE pri_pstat(psi,int_pass,rho)
-#endif
-#if(fftw_gpu)
-SUBROUTINE pri_pstat(psi,rho)
-#endif
+
 !     print short protocol on file 'pstat.*'
 
 
@@ -1239,9 +1212,7 @@ USE coulsolv
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-#if(netlib_fft|fftw_cpu)
 INTEGER, INTENT(IN OUT)              :: int_pass
-#endif
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr

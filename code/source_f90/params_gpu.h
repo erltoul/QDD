@@ -322,8 +322,6 @@ extern double params_mp_projinix_,params_mp_projiniy_,params_mp_projiniz_;   // 
 extern double params_mp_rvectmp2_[3],params_mp_rvectmp_[3];
 extern int params_mp_iindtmp_[3];
 
-extern int params_mp_int_pass_;
-
 cudaError_t error;
 cudaStream_t stream1,stream2,stream3;
 

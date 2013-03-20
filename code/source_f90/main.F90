@@ -479,11 +479,6 @@ CLOSE(806)
 
 DEALLOCATE(psi)
 
-#if(fftw_cpu|fftw_gpu)
-CALL fft_end()
-CALL coulsolv_end()
-#endif
-
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
@@ -495,6 +490,11 @@ WRITE(7,*) ' before final barrier. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
+#endif
+
+#if(fftw_cpu|fftw_gpu)
+CALL fft_end()
+CALL coulsolv_end()
 #endif
 
 #if(fftw_gpu)

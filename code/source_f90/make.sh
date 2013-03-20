@@ -37,7 +37,7 @@ if [ $nb_procs = 1 ] ; then
     sed -i -e 's/hamdiag.*/hamdiag 1/' define.h
     sed -i -e 's/mdshort.*/mdshort 1/' define.h
     sed -i -e 's/madelungonly.*/madelungonly 1/' define.h
-#    sed -i -e 's/knode=.*/knode=1/' params.F90
+    sed -i -e 's/knode=.*/knode=1/' params.F90
     sed -i -e 's/EXEC = essai\..*/EXEC = essai\.seq/' makefile
     sed -i -e 's/CF90    = .*/CF90    = IFORT/' makefile
     sed -i -e 's/USE_MPI = .*/USE_MPI = NO/' makefile
@@ -78,7 +78,7 @@ else
     sed -i -e 's/madelungonly.*/madelungonly 0/' define.h
     sed -i -e 's/knode=.*/knode='$nb_procs'/' params.F90
     sed -i -e 's/EXEC = essai\..*/EXEC = essai\.par/' makefile
-    sed -i -e 's/CF90    = .*/CF90    = IFORT/' makefile
+    sed -i -e 's/CF90    = .*/CF90    = MPIF90/' makefile
     sed -i -e 's/USE_MPI = .*/USE_MPI = YES/' makefile
     if [ $type_check = netlib ] ; then
         sed -i -e 's/netlib_fft.*/netlib_fft 1/' define.h
@@ -97,6 +97,8 @@ else
         sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
     fi
     if [ $type_check = gpu ] ; then
+        sed -i -e 's/fftw_gpu.*/fftw_gpu 1/' define.h
+        sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = cuFFT/' makefile
         cp define.h define_cuda.h
         sed -i -e 's/!/\/\//g' define_cuda.h #define_cuda.h is just define.h turned into C++
     fi
