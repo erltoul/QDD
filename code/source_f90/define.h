@@ -46,3 +46,5 @@
 ! switch to old version of 'kinprop' wiith interlaced 1D FFT
 !#define oldkinprop 0
 
+! to be activated if FFTW is used in connection with MKL
+#define fftwnomkl 1
