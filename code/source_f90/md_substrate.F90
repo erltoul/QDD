@@ -52,6 +52,7 @@ IF(myn == 0)THEN
   READ(120,*)            ! comment line
   
   
+ ! iusecell=1
   
   IF (iusecell == 0) THEN
     
@@ -101,7 +102,7 @@ IF(myn == 0)THEN
             rvectmp(2) = xatom(i,2)+rlattvec(2)*jy+shifty
             rvectmp(3) = xatom(i,3)-rlattvec(3)*(jz-1)+shiftz
             
-!            write(6,*) rVecTmp(1), rVecTmp(2), rVecTmp(3)
+            write(6,*) rVecTmp(1), rVecTmp(2), rVecTmp(3)
             
             
             IF (ipsort(i) == 1) THEN

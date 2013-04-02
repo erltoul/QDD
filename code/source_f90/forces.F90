@@ -39,7 +39,7 @@ INTEGER, INTENT(IN)                      :: iflag
 
 INTEGER :: itime
 
-!test      write(6,*) 'Entering getforces: ipsptyp=',ipsptyp
+     write(6,*) 'Entering getforces: ipsptyp=',ipsptyp
 
 
 !     In case of Goedecker PsP, switch to the corresponding routine
@@ -128,14 +128,20 @@ IF (isurf /= 0) THEN
   
 END IF
 #endif
-
-!         do i=1,nc
-!            write(6,'(a,6e17.7)') 'cv: ',fxc(i),fyc(i),fzc(i),
-!     &            fxe(i),fye(i),fze(i)
-!         enddo
-!         do i=1,nk
-!            write(6,'(a,3e17.7)') 'k: ',fxk(i),fyk(i),fzk(i)
-!         enddo
+         OPEN(772,FILE='forces.'//outnam)
+         do i=1,nion
+         write(772,*) fx(i)
+         write(772,*) fy(i)
+         write(772,*) fz(i)
+         enddo
+         do i=1,nk
+!           write(*,*) 'k: ',fxk(i),fyk(i),fzk(i)
+!        write(772,'(a),(6e17.7)') 'cv: ',fxk(i),fyk(i),fzk(i)
+!        write(6,*) 'cv: ',fxk(i),fyk(i),fzk(i)
+!        write(7,*) 'cv: ',fxk(i),fyk(i),fzk(i)
+         enddo
+         CALL flush(772)
+         CLOSE(772)
 
 
 

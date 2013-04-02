@@ -167,8 +167,12 @@ IF(ipseudo == 1)THEN
             
             ind = conv3to1(ix,iy,iz)
             
+            if(ind>1) then
+            if(ind<nxyz) then
             pseudorho(ind) = pseudorho(ind)  &
                 + cfac1*EXP(-rr*exfac1) + cfac2*EXP(-rr*exfac2)
+             endif
+             endif
             
           END DO
         END DO

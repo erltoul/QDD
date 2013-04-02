@@ -185,7 +185,6 @@ CALL flush(6)
 END DO                                      ! end iteration loop
 99   CONTINUE
 
-
 IF(myn == 0)THEN
   WRITE(7,*) ' static iteration terminated with ', iter1,' iterations'
   
@@ -613,7 +612,16 @@ ALLOCATE(psipr(kdfull2))
   IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
-    
+   ALLOCATE(w4(kdfull2))
+
+    CALL rfftback(psipr,w4)
+    CALL rfftback(q2,w4)
+
+    CALL project(w4,w4,ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
+    DEALLOCATE(w4)
+#endif
+
     sum0 = 0D0
     sumk = 0D0
     sume = 0D0
@@ -631,16 +639,6 @@ ALLOCATE(psipr(kdfull2))
 !          write(6,*) ' norm,spe=',sum0,sume
 !          amoy(nbe)   = sume
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
-
-    ALLOCATE(w4(kdfull2))
-
-    CALL rfftback(psipr,w4)
-    CALL rfftback(q2,w4)
-
-    CALL project(w4,w4,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
-    DEALLOCATE(w4)
-#endif
 
 #if(parayes)
     evarsp2(nbe) = evarsp(nbe)
@@ -757,6 +755,21 @@ ENDDO !END LOOP OVER STATES
   IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
+    ALLOCATE(w4(kdfull2,kstate))
+    CALL gpu_to_gpu(gpu_fftaglob,gpu_ffta_int,size_data) !save gpu_ffta for later
+    CALL rfftback2(w4,fftaglob,gpu_ffta_int)
+
+    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
+    CALL rfftback2(w4,ffta2,gpu_ffta_int)
+
+
+DO nbe=1,nstate    
+    CALL project(w4(1,nbe),w4(1,nbe),ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(rwfovlp(w4(1,nbe),w4(1,nbe)))
+ENDDO
+    DEALLOCATE(w4)
+#endif
+
 DO nbe=1,nstate
     sum0 = 0D0
     sumk = 0D0
@@ -772,27 +785,11 @@ DO nbe=1,nstate
 
 ENDDO !END LOOP OVER STATES
 
-    ALLOCATE(w4(kdfull2,kstate))
-    CALL gpu_to_gpu(gpu_fftaglob,gpu_ffta_int,size_data) !save gpu_ffta for later
-    CALL rfftback2(w4,fftaglob,gpu_ffta_int)
-
-    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
-    CALL rfftback2(w4,ffta2,gpu_ffta_int)
-
-
-DO nbe=1,nstate    
-    CALL project(w4(1,nbe),w4(1,nbe),ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4(1,nbe),w4(1,nbe)))
-ENDDO
-#endif
-
 #if(parayes)
 DO nbe=1,nstate    
     evarsp2(nbe) = evarsp(nbe)
 ENDDO
 #endif
-
-    DEALLOCATE(w4)
   END IF
   
 #if(parano)

@@ -677,6 +677,8 @@ LOGICAL,PARAMETER :: ttest=.FALSE.
 !END DO
 
 
+OPEN(2743,FILE='energies.'//outnam)
+
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 #else
@@ -947,6 +949,7 @@ IF(myn == 0) THEN
   IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
   IF(ivdw == 1) WRITE(6,*) 'vdw energy       = ',evdw
   WRITE(6,*) 'binding energy   = ',energy
+  WRITE(2743,*) 'binding energy   = ',energy
   WRITE(6,*) 'total energy     = ',etot
   IF (isurf /= 0) THEN
     WRITE(6,*) 'adsorb.energy = ',etot-enerinfty
@@ -974,6 +977,8 @@ END IF
 
 tstinf = .false.
 
+call flush(2743)
+close(2743)
 RETURN
 END SUBROUTINE info
 
