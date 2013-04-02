@@ -7,7 +7,7 @@ INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
 
 
 !  surface part:
-INTEGER,PARAMETER :: ngpar = 400
+INTEGER,PARAMETER :: ngpar = 3000
 INTEGER :: maxpar 
 INTEGER,PARAMETER :: maxnlayers=3
 INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)

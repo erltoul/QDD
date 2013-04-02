@@ -28,12 +28,12 @@
 !
 ! full SIC and localized SIC
 !
-#define twostsic 1
+#define twostsic 0
 !
 !  
 ! switch to extended model with polarizable raregas
 !
-#define raregas 0
+#define raregas 1
 !
 !choose fft solver (only one !)
 !

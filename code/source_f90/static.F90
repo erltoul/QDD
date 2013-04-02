@@ -608,7 +608,7 @@ ALLOCATE(psipr(kdfull2))
     
 #if(parano)
     ALLOCATE(w4(kdfull2))
-    CALL rfftback(psipr,w4)
+    CALL rfftback(psipr,w4)     !  ???
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
