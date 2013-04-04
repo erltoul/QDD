@@ -22,6 +22,7 @@ MKL = YES
 MKL_PARALLEL = YES
 # Path to MKL libraries
 MKLPATH =/divers/intel/Compiler/12.1/mkl/lib/intel64
+MKLPATH =
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -232,7 +233,7 @@ ifeq ($(MKL), YES)
 
 	MKLFLAGS =
 
-  ifeq ($(TYPE_FFT), FFTW)
+  ifeq ($(TYPE_FFT), FFTW) # MKL FFTW wrappers
     ifneq "$(MKL_WRAPPERS)" ""
 	MKLFLAGS += -L$(MKL_WRAPPERS)
     endif
@@ -246,36 +247,22 @@ ifeq ($(MKL), YES)
 	MKLFLAGS += -I$(MKLINCLUDE)
   endif
 
-  ifeq ($(LINK_STATIC), YES) # Static MKL
-
-	MKLFLAGS += -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a
-#	MKLFLAGS += -lmkl_intel_lp64
-
-    ifeq ($(MKL_PARALLEL), YES)
-	MKLFLAGS += $(MKLPATH)/libmkl_intel_thread.a
-#	MKLFLAGS += -lmkl_intel_thread
-    else
-	MKLFLAGS += $(MKLPATH)/libmkl_sequential.a
-#	MKLFLAGS += -lmkl_sequential
-    endif
-
-	MKLFLAGS += $(MKLPATH)/libmkl_core.a -Wl,--end-group
-#	MKLFLAGS += -lmkl_core
-
-
-
-  else # Dynamic MKL
+  ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
+	MKLFLAGS += -Wl,--start-group
+  endif
 
 	MKLFLAGS += -lmkl_intel_lp64
 
-    ifeq ($(MKL_PARALLEL), YES)
+  ifeq ($(MKL_PARALLEL), YES)
 	MKLFLAGS += -lmkl_intel_thread
-    else
+  else
 	MKLFLAGS += -lmkl_sequential
-    endif
+  endif
 
 	MKLFLAGS += -lmkl_core
 
+  ifeq ($(LINK_STATIC), YES) # Static MKL
+	MKLFLAGS += -Wl,--end-group
   endif
 
   ifeq ($(MKL_PARALLEL), YES)
