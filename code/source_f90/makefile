@@ -210,15 +210,22 @@ endif
 # Switches used to preprocess files.
 ifeq ($(calls_FFTW), YES)
 	FFTWADD = -Dfftw_cpu
+	fftw_cpu_value := 1
+  ifeq ($(TYPE_FFT), FFTW)
+	FFTWADD += -Dfftwnomkl
+	fftwnomkl_value := 1
+  endif
 else
   ifeq ($(TYPE_FFT), NETLIB)
 	FFTWADD = -Dnetlib_fft
+	netlib_fft_value := 1
   endif
 endif
 
 OMPADD =
 ifeq ($(OMP), YES)
 	OMPADD += -Dparopenmp
+	paropenmp_value := 1
 endif
 
 # Compiler flags
@@ -361,14 +368,13 @@ fullsic_value  :=$(shell echo -e "\\n\#if(fullsic)  \\nfullsic  \\n\#else\\n0\\n
 symmcon_value  :=$(shell echo -e "\\n\#if(symmcon)  \\nsymmcon  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-fftwnomkl_value:=$(shell echo -e "\\n\#if(fftwnomkl)\\nfftwnomkl\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
 initial_checks: makefile define.h
 	@echo "#######################################################"
 	@echo  Lists of known compilation parameters.
 	@echo "#######################################################"
 	@echo  Parameters defined in define.h:
-	@echo "-------------------------------------"
+	@echo "----------------------------------------"
 	@echo "gridfft       $(gridfft_value)"
 	@echo "findiff       $(findiff_value)"
 	@echo "numerov       $(numerov_value)"
@@ -383,10 +389,9 @@ initial_checks: makefile define.h
 	@echo "symmcond      $(symmcon_value)"
 	@echo "twostsic      $(twostsic_value)"
 	@echo "raregas       $(raregas_value)"
-	@echo "fftwnomkl     $(fftwnomkl_value)"
 	@echo "#######################################################"
 	@echo  Parameters defined in makefile:
-	@echo "-------------------------------------"
+	@echo "----------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "USE_MPI       $(USE_MPI)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
@@ -397,6 +402,13 @@ initial_checks: makefile define.h
 	@echo "MKL_WRAPPERS  $(MKL_WRAPPERS)"
 	@echo "MKLPATH       $(MKLPATH)"
 	@echo "MKLINCLUDE    $(MKLINCLUDE)"
+	@echo "#######################################################"
+	@echo "-D flags enabled (1) by makefile rules:"
+	@echo "----------------------------------------"
+	@echo "netlib_fft    $(netlib_fft_value)"
+	@echo "fftw_cpu      $(fftw_cpu_value)"
+	@echo "fftwnomkl     $(fftwnomkl_value)"
+	@echo "paropenmp     $(paropenmp_value)"
 	@echo "#######################################################"
 
 # Check that the fortran compiler is defined.
@@ -516,19 +528,6 @@ endif
 ifneq ($(dynopenmp_value), 0)
   ifneq ($(OMP), YES)
 	$(error ERROR: You are trying to compile the code with dynopenmp enabled in define.h, but OMP is disabled in the makefile)
-  endif
-endif
-
-# Checks connecting FFTW, MKL, and fftwnomkl:
-ifeq ($(calls_FFTW), YES)
-  ifeq ($(TYPE_FFT), MKL)
-    ifneq ($(fftwnomkl_value), 0)
-	$(error ERROR: If you use the MKL wrappers for FFTW, you must disable fftwnomkl in define.h)
-    endif
-  else
-    ifeq ($(fftwnomkl_value), 0)
-	$(error ERROR: If you compile with true FFTW, without MKL, you must enable fftwnomkl in define.h)
-    endif
   endif
 endif
 

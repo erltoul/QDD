@@ -47,4 +47,5 @@
 !#define oldkinprop 0
 
 ! to be deactivated if FFTW is used in connection with MKL
-#define fftwnomkl 1
+! (deprecated, set in makefile)
+! #define fftwnomkl 1
