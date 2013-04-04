@@ -15,9 +15,13 @@ DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = YES
+OMP = NO
 # Use MKL libraries
-MKL = NO
+MKL = YES
+# MKL Threading
+MKL_PARALLEL = YES
+# Path to MKL libraries
+MKLPATH =/divers/intel/Compiler/12.1/mkl/lib/intel64
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -29,9 +33,13 @@ MKL = NO
 # ifeq "$(CF90)" "OWN"
 # 	COMPILER  = ...
 # 	LDLIBS    =
+#   ifeq "$(OMP)" "YES"
+# 	OMPADDL = ...
+#   endif
 # endif
 
 
+OMPADDL =
 ifeq "$(CF90)" "MPIF90"
 	COMPILER  = /opt/mpich2-intel/bin/mpif90
 	LDLIBS    =
@@ -41,41 +49,52 @@ endif
 ifeq "$(CF90)" "GFORT"
 	COMPILER  = gfortran
 	LDLIBS    =
+  ifeq "$(OMP)" "YES"
+	OMPADDL = -fopenmp
+  endif
 endif
 
 
 ifeq "$(CF90)" "GFORT1"
 	COMPILER  = gfortran
 	LDLIBS    =
+  ifeq "$(OMP)" "YES"
+	OMPADDL = -fopenmp
+  endif
 endif
 
 
 ifeq "$(CF90)" "IFORT"
 	COMPILER  = ifort
 	LDLIBS    =
-ifeq "$(USE_MPI)" "YES"
+  ifeq "$(USE_MPI)" "YES"
 	LDLIBS    = -lmpi
-endif
+  endif
+  ifeq "$(OMP)" "YES"
+	OMPADDL =  -openmp
+  endif
 endif
 
 
 ifeq "$(CF90)" "IFORT1"
 	COMPILER  = ifort
 	LDLIBS    =
-ifeq "$(USE_MPI)" "YES"
+  ifeq "$(USE_MPI)" "YES"
 	LDLIBS    = -lmpi
-endif
+  endif
+  ifeq "$(OMP)" "YES"
+	OMPADDL =  -openmp
+  endif
 endif
 
 
 ifeq "$(CF90)" "XLF_R"
 	COMPILER  = xlf90_r
 	LDLIBS    =
-ifeq "$(USE_MPI)" "YES"
+  ifeq "$(USE_MPI)" "YES"
 	COMPILER  = mpxlf90_r
 	LDLIBS    = -lpesslsmp -lesslsmp
-
-endif
+  endif
 endif
 
 
@@ -99,8 +118,6 @@ endif
 # endif
 # endif
 
-OMPADDL =
-
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
@@ -108,14 +125,11 @@ ifeq "$(CF90)" "GFORT"
 #	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse
 #	OPT2  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse -fdefault-real-8
 #	OPT3  = -cpp -w -g
-ifeq "$(DEBUG)" "YES"
+  ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT2  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-endif
-ifeq "$(OMP)" "YES"
-	OMPADDL = -fopenmp
-endif
+  endif
 endif
 
 
@@ -123,32 +137,27 @@ ifeq "$(CF90)" "GFORT1"
 	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
-ifeq "$(DEBUG)" "YES"
+  ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -pg -cpp -w -g
-endif
-ifeq "$(OMP)" "YES"
-	OMPADDL = -fopenmp
-endif
+  endif
 endif
 
 
 ifeq "$(CF90)" "IFORT"
+	STATIC = -static
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
 	OPT1  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  =  -fpp -w       -g                 -align all -autodouble
-ifeq "$(DEBUG)" "YES"
+  ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 	OPT3  =  -pg -fpp -w -g                -align all -autodouble
-endif
-ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
-endif
+  endif
 endif
 
 
@@ -157,14 +166,11 @@ ifeq "$(CF90)" "IFORT1"
 	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  = -fpp -w        -g                            -align all -autodouble
-ifeq "$(DEBUG)" "YES"
+  ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
 	OPT2  =   $(OPT1)
 	OPT3  =  -fpp -w -g -align all -autodouble
-endif
-ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
-endif
+  endif
 endif
 
 
@@ -173,11 +179,11 @@ ifeq "$(CF90)" "MPIF90"
         OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble
         OPT2  =  $(OPT1)
         OPT3  =  -fpp -w -g               -align all -autodouble
-ifeq "$(DEBUG)" "YES"
+  ifeq "$(DEBUG)" "YES"
         OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
         OPT2  =  $(OPT1) -autodouble
         OPT3  =  -pg -fpp -w -g                -align all -autodouble
-endif
+  endif
 endif
 
 
@@ -221,24 +227,77 @@ endif
 
 LINKER = $(COMPILER)
 
-LINKERFLAGS = $(LDLIBS) $(OPT1) $(OMPADDL)
+# Flags for linking using the MKL libraries.
+ifeq ($(MKL), YES)
 
-ifeq "$(LINK_STATIC)" "YES"
-	LINKERFLAGS += $(STATIC)
-endif
+	MKLFLAGS =
 
-ifeq "$(MKL)" "YES"
-ifeq "$(TYPE_FFT)" "FFTW"
-	LINKERFLAGS += -lfftw3xf_intel
-endif
-	LINKERFLAGS += -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-endif
+  ifeq ($(TYPE_FFT), FFTW)
+    ifneq "$(MKL_WRAPPERS)" ""
+	MKLFLAGS += -L$(MKL_WRAPPERS)
+    endif
+	MKLFLAGS += -lfftw3xf_intel
+  endif
 
-ifeq "$(TYPE_FFT)" "FFTW"
-ifeq "$(OMP)" "YES"
+  ifneq "$(MKLPATH)" ""
+	MKLFLAGS += -L$(MKLPATH)
+  endif
+  ifneq "$(MKLINCLUDE)" ""
+	MKLFLAGS += -I$(MKLINCLUDE)
+  endif
+
+  ifeq ($(LINK_STATIC), YES) # Static MKL
+
+	MKLFLAGS += -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a
+#	MKLFLAGS += -lmkl_intel_lp64
+
+    ifeq ($(MKL_PARALLEL), YES)
+	MKLFLAGS += $(MKLPATH)/libmkl_intel_thread.a
+#	MKLFLAGS += -lmkl_intel_thread
+    else
+	MKLFLAGS += $(MKLPATH)/libmkl_sequential.a
+#	MKLFLAGS += -lmkl_sequential
+    endif
+
+	MKLFLAGS += $(MKLPATH)/libmkl_core.a -Wl,--end-group
+#	MKLFLAGS += -lmkl_core
+
+
+
+  else # Dynamic MKL
+
+	MKLFLAGS += -lmkl_intel_lp64
+
+    ifeq ($(MKL_PARALLEL), YES)
+	MKLFLAGS += -lmkl_intel_thread
+    else
+	MKLFLAGS += -lmkl_sequential
+    endif
+
+	MKLFLAGS += -lmkl_core
+
+  endif
+
+  ifeq ($(MKL_PARALLEL), YES)
+	MKLFLAGS += -liomp5
+  endif
+
+	MKLFLAGS += -lpthread
+
+# Flags for directly linking the original FFTW libraries.
+else
+  ifeq ($(TYPE_FFT), FFTW)
+    ifeq ($(OMP), YES)
 	LINKERFLAGS += -lfftw3_omp
-endif
+    endif
 	LINKERFLAGS += -lfftw3 -lm
+  endif
+endif
+
+LINKERFLAGS = $(LDLIBS) $(MKLFLAGS) $(OPT1) $(OMPADDL)
+
+ifeq ($(LINK_STATIC), YES)
+	LINKERFLAGS += $(STATIC)
 endif
 
 
@@ -250,15 +309,14 @@ endif
 DATE =$(shell date +%d.%m.%y)
 
 # Set type of parallelization.
-ifeq "$(USE_MPI)" "NO"
-ifeq "$(OMP)" "YES"
-	MPI_NAME = OMP
-else
-	MPI_NAME = Mono
-endif
-endif
 ifeq "$(USE_MPI)" "YES"
 	MPI_NAME = Mpi
+else
+  ifeq "$(OMP)" "YES"
+	MPI_NAME = OMP
+  else
+	MPI_NAME = Mono
+  endif
 endif
 
 EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
@@ -296,6 +354,7 @@ findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n
 numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 parayes_value  :=$(shell echo -e "\\n\#if(parayes)  \\nparayes  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 parano_value   :=$(shell echo -e "\\n\#if(parano)   \\nparano   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 simpara_value  :=$(shell echo -e "\\n\#if(simpara)  \\nsimpara  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
@@ -305,6 +364,7 @@ fullsic_value  :=$(shell echo -e "\\n\#if(fullsic)  \\nfullsic  \\n\#else\\n0\\n
 symmcon_value  :=$(shell echo -e "\\n\#if(symmcon)  \\nsymmcon  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+fftwnomkl_value:=$(shell echo -e "\\n\#if(fftwnomkl)\\nfftwnomkl\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
 initial_checks: makefile define.h
 	@echo "#######################################################"
@@ -317,6 +377,7 @@ initial_checks: makefile define.h
 	@echo "numerov       $(numerov_value)"
 	@echo "coufou        $(coufou_value)"
 	@echo "coudoub       $(coudoub_value)"
+	@echo "coudoub3D     $(coudoub3D_value)"
 	@echo "parayes       $(parayes_value)"
 	@echo "parano        $(parano_value)"
 	@echo "simpara       $(simpara_value)"
@@ -325,6 +386,7 @@ initial_checks: makefile define.h
 	@echo "symmcond      $(symmcon_value)"
 	@echo "twostsic      $(twostsic_value)"
 	@echo "raregas       $(raregas_value)"
+	@echo "fftwnomkl     $(fftwnomkl_value)"
 	@echo "#######################################################"
 	@echo  Parameters defined in makefile:
 	@echo "-------------------------------------"
@@ -364,61 +426,112 @@ ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 	$(error ERROR: Unknown $(strip MKL         value) in makefile ($(MKL)))
 endif
 
+# gridfft, findiff, numerov: only one can be enabled.
+ifneq ($(gridfft_value), 0)
+  ifneq ($(findiff_value), 0)
+	$(error ERROR: gridfft and findiff cannot be enabled simultaneously in define.h)
+  endif
+  ifneq ($(numerov_value), 0)
+	$(error ERROR: gridfft and numerov cannot be enabled simultaneously in define.h)
+  endif
+else
+	$(warning WARNING: gridfft disabled, so TYPE_FFT=$(TYPE_FFT) will be disregarded)
+  ifeq ($(findiff_value), 0)
+    ifeq ($(numerov_value), 0)
+	$(error ERROR: gridfft, findiff and numerov cannot be simultaneously disabled in define.h)
+    endif
+  endif
+#  ifneq ($(findiff_value), 0)
+#    ifneq ($(numerov_value), 0)
+#	$(error ERROR: findiff and numerov cannot be enabled simultaneously in define.h)
+#    endif
+#  endif
+endif
+
+# coufou, coudoub: only one can be enabled.
+ifneq ($(coufou_value), 0)
+  ifneq ($(coudoub_value), 0)
+	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
+  endif
+endif
+
+# coudoub3D is only enabled when using FFTW.
+ifneq ($(coudoub3D_value), 0)
+  ifneq ($(TYPE_FFT), FFTW)
+	$(error ERROR: coudoub3D requires the use of FFTW)
+  endif
+endif
+
 # If parayes is enabled in define.h,
 ifneq ($(parayes_value), 0)
 # parano must be disabled,
-ifneq ($(parano_value), 0)
+  ifneq ($(parano_value), 0)
 	$(error ERROR: parayes and parano cannot be enabled simultaneously in define.h)
-endif
+  endif
 # simpara must be disabled,
-ifneq ($(simpara_value), 0)
+  ifneq ($(simpara_value), 0)
 	$(error ERROR: parayes and simpara cannot be enabled simultaneously in define.h)
-endif
+  endif
 # and MPI compilation must be enabled;
-ifneq ($(USE_MPI), YES)
+  ifneq ($(USE_MPI), YES)
 	$(error ERROR: parayes requires USE_MPI=YES in makefile)
-endif
+  endif
 # if parayes is disabled,
 else
 # then parano must be enabled.
-ifeq ($(parano_value), 0)
+  ifeq ($(parano_value), 0)
 	$(error ERROR: either parayes or parano should be enabled in define.h)
-endif
+  endif
 endif
 
 # If simpara is enabled in define.h,
 ifneq ($(simpara_value), 0)
 # parano must also be enabled
-ifeq ($(parano_value), 0)
+  ifeq ($(parano_value), 0)
 	$(error ERROR: in order to enable simpara, you also need to enable parano in define.h)
-endif
+  endif
 # and MPI compilation must be enabled.
-ifneq ($(USE_MPI), YES)
+  ifneq ($(USE_MPI), YES)
 	$(error ERROR: simpara requires USE_MPI=YES in makefile)
-endif
+  endif
 endif
 
 # If parano is enabled in define.h, and simpara is disabled, don't use MPI:
 ifneq ($(parano_value), 0)
-ifeq ($(simpara_value), 0)
-ifneq ($(USE_MPI), NO)
+  ifeq ($(simpara_value), 0)
+    ifneq ($(USE_MPI), NO)
 	$(error ERROR: if parano is enabled and simpara is disabled, USE_MPI should be NO in the makefile)
-endif
-endif
+    endif
+  endif
 endif
 
 # Check collision of MPI and OpenMP:
 ifeq ($(USE_MPI), YES)
-ifeq ($(OMP), YES)
+  ifeq ($(OMP), YES)
 	$(error ERROR: code not ready for simultaneous MPI and OpenMP parallelizations)
-endif
+  endif
 endif
 
+# dynopenmp requires OpenMP:
 ifneq ($(dynopenmp_value), 0)
-ifneq ($(OMP), YES)
+  ifneq ($(OMP), YES)
 	$(error ERROR: You are trying to compile the code with dynopenmp enabled in define.h, but OMP is disabled in the makefile)
+  endif
 endif
+
+# Checks connecting FFTW, MKL, and fftwnomkl:
+ifeq ($(FFT_TYPE), FFTW)
+  ifeq ($(MKL), YES)
+    ifneq ($(fftwnomkl_value), 0)
+	$(error ERROR: If you compile with FFTW and MKL, you must disable fftwnomkl in define.h)
+    endif
+  else
+    ifeq ($(fftwnomkl_value), 0)
+	$(error ERROR: If you compile with FFTW and MKL, you must enable fftwnomkl in define.h)
+    endif
+  endif
 endif
+
 
 	@echo "Done with the initial checks, starting compilation..."
 	@echo "#######################################################"
