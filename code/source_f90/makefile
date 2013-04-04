@@ -16,10 +16,8 @@ DEBUG   = NO
 LINK_STATIC = YES
 # invoke openmp
 OMP = NO
-# Use MKL libraries
-MKL = YES
 # MKL Threading
-MKL_PARALLEL = YES
+MKL_THREADS = YES
 # Path to MKL libraries
 MKLPATH =/divers/intel/Compiler/12.1/mkl/lib/intel64
 MKLPATH =
@@ -39,8 +37,8 @@ MKLPATH =
 #   endif
 # endif
 
-
 OMPADDL =
+
 ifeq "$(CF90)" "MPIF90"
 	COMPILER  = /opt/mpich2-intel/bin/mpif90
 	LDLIBS    =
@@ -198,17 +196,29 @@ endif
 #                        Compilation rules                          #
 #####################################################################
 
-# Switches used to preprocess files.
-ifeq "$(TYPE_FFT)" "FFTW"
-	FFTWADD = -Dfftw_cpu
+# MKL only used to provide FFTW support through wrappers.
+ifeq ($(TYPE_FFT), FFTW)
+	calls_FFTW = YES
+else
+  ifeq ($(TYPE_FFT), MKL)
+	calls_FFTW = YES
+  else
+	calls_FFTW = NO
+  endif
 endif
-ifeq "$(TYPE_FFT)" "NETLIB"
+
+# Switches used to preprocess files.
+ifeq ($(calls_FFTW), YES)
+	FFTWADD = -Dfftw_cpu
+else
+  ifeq ($(TYPE_FFT), NETLIB)
 	FFTWADD = -Dnetlib_fft
+  endif
 endif
 
 OMPADD =
-ifeq "$(OMP)" "YES"
-	OMPADD = $(OMPADDL) -Dparopenmp
+ifeq ($(OMP), YES)
+	OMPADD += -Dparopenmp
 endif
 
 # Compiler flags
@@ -229,16 +239,15 @@ endif
 LINKER = $(COMPILER)
 
 # Flags for linking using the MKL libraries.
-ifeq ($(MKL), YES)
+ifeq ($(TYPE_FFT), MKL)
 
 	MKLFLAGS =
+	FFTWFLAGS =
 
-  ifeq ($(TYPE_FFT), FFTW) # MKL FFTW wrappers
-    ifneq "$(MKL_WRAPPERS)" ""
+  ifneq "$(MKL_WRAPPERS)" ""
 	MKLFLAGS += -L$(MKL_WRAPPERS)
-    endif
-	MKLFLAGS += -lfftw3xf_intel
   endif
+	MKLFLAGS += -lfftw3xf_intel
 
   ifneq "$(MKLPATH)" ""
 	MKLFLAGS += -L$(MKLPATH)
@@ -253,7 +262,7 @@ ifeq ($(MKL), YES)
 
 	MKLFLAGS += -lmkl_intel_lp64
 
-  ifeq ($(MKL_PARALLEL), YES)
+  ifeq ($(MKL_THREADS), YES)
 	MKLFLAGS += -lmkl_intel_thread
   else
 	MKLFLAGS += -lmkl_sequential
@@ -265,23 +274,24 @@ ifeq ($(MKL), YES)
 	MKLFLAGS += -Wl,--end-group
   endif
 
-  ifeq ($(MKL_PARALLEL), YES)
+  ifeq ($(MKL_THREADS), YES)
 	MKLFLAGS += -liomp5
   endif
 
 	MKLFLAGS += -lpthread
+	FFTWFLAGS = $(MKLFLAGS)
 
 # Flags for directly linking the original FFTW libraries.
 else
   ifeq ($(TYPE_FFT), FFTW)
     ifeq ($(OMP), YES)
-	LINKERFLAGS += -lfftw3_omp
+	FFTWFLAGS += -lfftw3_omp
     endif
-	LINKERFLAGS += -lfftw3 -lm
+	FFTWFLAGS += -lfftw3 -lm
   endif
 endif
 
-LINKERFLAGS = $(LDLIBS) $(MKLFLAGS) $(OPT1) $(OMPADDL)
+LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL)
 
 ifeq ($(LINK_STATIC), YES)
 	LINKERFLAGS += $(STATIC)
@@ -334,7 +344,7 @@ define.h: ;
 valid_CF90 := GFORT GFORT1 IFORT IFORT1 MPIF90 XLF_R
 
 # List of valid TYPE_FFT values.
-valid_FFT := FFTW NETLIB
+valid_FFT := FFTW NETLIB MKL
 
 gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
@@ -383,7 +393,10 @@ initial_checks: makefile define.h
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
 	@echo "OMP           $(OMP)"
-	@echo "MKL           $(MKL)"
+	@echo "MKL_THREADS   $(MKL_THREADS)"
+	@echo "MKL_WRAPPERS  $(MKL_WRAPPERS)"
+	@echo "MKLPATH       $(MKLPATH)"
+	@echo "MKLINCLUDE    $(MKLINCLUDE)"
 	@echo "#######################################################"
 
 # Check that the fortran compiler is defined.
@@ -442,9 +455,9 @@ ifneq ($(coufou_value), 0)
   endif
 endif
 
-# coudoub3D is only enabled when using FFTW.
+# coudoub3D is only enabled when using FFTW calls.
 ifneq ($(coudoub3D_value), 0)
-  ifneq ($(TYPE_FFT), FFTW)
+  ifneq ($(calls_FFTW), YES)
 	$(error ERROR: coudoub3D requires the use of FFTW)
   endif
 endif
@@ -507,18 +520,17 @@ ifneq ($(dynopenmp_value), 0)
 endif
 
 # Checks connecting FFTW, MKL, and fftwnomkl:
-ifeq ($(FFT_TYPE), FFTW)
-  ifeq ($(MKL), YES)
+ifeq ($(calls_FFTW), YES)
+  ifeq ($(TYPE_FFT), MKL)
     ifneq ($(fftwnomkl_value), 0)
-	$(error ERROR: If you compile with FFTW and MKL, you must disable fftwnomkl in define.h)
+	$(error ERROR: If you use the MKL wrappers for FFTW, you must disable fftwnomkl in define.h)
     endif
   else
     ifeq ($(fftwnomkl_value), 0)
-	$(error ERROR: If you compile with FFTW and MKL, you must enable fftwnomkl in define.h)
+	$(error ERROR: If you compile with true FFTW, without MKL, you must enable fftwnomkl in define.h)
     endif
   endif
 endif
-
 
 	@echo "Done with the initial checks, starting compilation..."
 	@echo "#######################################################"
@@ -543,7 +555,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
 ifeq "$(TYPE_FFT)" "NETLIB"
 FFT_OBJ = fftpack.o
 endif
-ifeq "$(TYPE_FFT)" "FFTW"
+ifeq ($(calls_FFTW), YES)
 FFT_OBJ = fftw.o
 endif
 

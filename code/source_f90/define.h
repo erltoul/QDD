@@ -24,7 +24,7 @@
 #define parano 1
 #define simpara 0
 !#define paropenmp 1    set in 'makefile'
-#define dynopenmp 1
+#define dynopenmp 0
 !
 ! full SIC and variants (outdated)
 !
@@ -46,5 +46,5 @@
 ! switch to old version of 'kinprop' wiith interlaced 1D FFT
 !#define oldkinprop 0
 
-! to be activated if FFTW is used in connection with MKL
+! to be deactivated if FFTW is used in connection with MKL
 #define fftwnomkl 1
