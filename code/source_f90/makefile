@@ -1,28 +1,80 @@
-# Makefile v2.4 (2010.05.05)
-# CF90  = GFORT (serial version only)
-#         IFORT (serial & parallel & debug version)
-#         XLF_R (serial & parallel version)
-#         MPIF90 (parallel version only)
+# Makefile
 
-# the compiler is set here
-CF90    = IFORT
-# the option for parallel processing (only for some compilers)
+#####################################################################
+#                             Defaults                              #
+#####################################################################
+# PLEASE, DO NOT MODIFY THESE PARAMETERS HERE, EDIT THE INCLUDE'D   #
+# FILE (define.mk) IF YOU NEED TO CHANGE ANY OF THEM                #
+#####################################################################
+
+# CF90: Fortran compiler
+# Available options:
+#   * GFORT (serial version only)
+#   * IFORT (serial & parallel & debug version)
+#   * XLF_R (serial & parallel version)
+#   * MPIF90 (parallel version only)
+CF90 = IFORT
+
+# USE_MPI: Variable for parallel processing (only for some compilers)
+# Available options:
+#   * YES
+#   * NO
 USE_MPI = NO
-# Which FFT solver
+
+# TYPE_FFT: FFT solver
+# Available options:
+#   * NETLIB
+#   * FFTW
+#   * MKL
 TYPE_FFT = FFTW
-# debugging option
-DEBUG   = NO
-# Link static or not.
+
+# DEBUG: enable debugging
+# Available options:
+#   * YES
+#   * NO
+DEBUG  = NO
+
+# LINK_STATIC: select static linkage of the binary
+# Available options:
+#   * YES
+#   * NO
 LINK_STATIC = YES
-# invoke openmp
+
+# OMP: Invoke OpenMP
+# Available options:
+#   * YES
+#   * NO
 OMP = NO
-# MKL Threading
+
+# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = MKL)
+# Available options:
+#   * YES
+#   * NO
 MKL_THREADS = YES
-# Path to MKL libraries
-MKLPATH =/divers/intel/Compiler/12.1/mkl/lib/intel64
+
+# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT = MKL)
+# Default value:
+MKL_WRAPPERS =
+
+# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT = MKL)
+# Default value:
 MKLPATH =
+# Path for hyperion:
+# MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
+
+# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT = MKL)
+# Default value:
+MKLINCLUDE =
+
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
+
+#####################################################################
+#                 Include customized makefile                       #
+#####################################################################
+
+# Include file with customized compilation parameters
+include define.mk
 
 #####################################################################
 #                             Compiler                              #
@@ -340,6 +392,7 @@ clean:
 
 # Prevent make from trying to update the source files:
 makefile: ;
+define.mk: ;
 define.h: ;
 *.F90: ;
 
@@ -362,19 +415,18 @@ coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n
 parayes_value  :=$(shell echo -e "\\n\#if(parayes)  \\nparayes  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 parano_value   :=$(shell echo -e "\\n\#if(parano)   \\nparano   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 simpara_value  :=$(shell echo -e "\\n\#if(simpara)  \\nsimpara  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#	dyn1:=`grep -i '^[[:space:]]*\#[[:space:]]*define[[:space:]]\+dynopenmp[[:space:]]\+[[:digit:]]' define.h | tail -n1 | grep -ic '^[[:space:]]*\#[[:space:]]*define[[:space:]]\+dynopenmp[[:space:]]\+1'`
 dynopenmp_value:=$(shell echo -e "\\n\#if(dynopenmp)\\ndynopenmp\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 fullsic_value  :=$(shell echo -e "\\n\#if(fullsic)  \\nfullsic  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 symmcon_value  :=$(shell echo -e "\\n\#if(symmcon)  \\nsymmcon  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
-initial_checks: makefile define.h
+initial_checks: makefile define.mk define.h
 	@echo "#######################################################"
 	@echo  Lists of known compilation parameters.
 	@echo "#######################################################"
 	@echo  Parameters defined in define.h:
-	@echo "----------------------------------------"
+	@echo "--------------------------------------------"
 	@echo "gridfft       $(gridfft_value)"
 	@echo "findiff       $(findiff_value)"
 	@echo "numerov       $(numerov_value)"
@@ -390,8 +442,8 @@ initial_checks: makefile define.h
 	@echo "twostsic      $(twostsic_value)"
 	@echo "raregas       $(raregas_value)"
 	@echo "#######################################################"
-	@echo  Parameters defined in makefile:
-	@echo "----------------------------------------"
+	@echo  Parameters defined in makefile / define.mk:
+	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "USE_MPI       $(USE_MPI)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
@@ -404,7 +456,7 @@ initial_checks: makefile define.h
 	@echo "MKLINCLUDE    $(MKLINCLUDE)"
 	@echo "#######################################################"
 	@echo "-D flags enabled (1) by makefile rules:"
-	@echo "----------------------------------------"
+	@echo "--------------------------------------------"
 	@echo "netlib_fft    $(netlib_fft_value)"
 	@echo "fftw_cpu      $(fftw_cpu_value)"
 	@echo "fftwnomkl     $(fftwnomkl_value)"
@@ -413,29 +465,29 @@ initial_checks: makefile define.h
 
 # Check that the fortran compiler is defined.
 ifneq ($(CF90), $(filter $(CF90), $(valid_CF90)))
-	$(error ERROR: Unknown fortran compiler in makefile (CF90=$(CF90)))
+	$(error ERROR: Unknown fortran compiler in makefile / define.mk (CF90=$(CF90)))
 endif
 
 # Check that the TYPE_FFT is valid:
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
-	$(error ERROR: Unknown TYPE_FFT in makefile ($(TYPE_FFT)))
+	$(error ERROR: Unknown TYPE_FFT in makefile / define.mk ($(TYPE_FFT)))
 endif
 
 # Check that variables which should be either YES or NO have proper values:
 ifneq ($(USE_MPI),     $(filter $(USE_MPI),     YES NO))
-	$(error ERROR: Unknown $(strip USE_MPI     value) in makefile ($(USE_MPI)))
+	$(error ERROR: Unknown $(strip USE_MPI     value) in makefile / define.mk ($(USE_MPI)))
 endif
 ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
-	$(error ERROR: Unknown $(strip DEBUG       value) in makefile ($(DEBUG)))
+	$(error ERROR: Unknown $(strip DEBUG       value) in makefile / define.mk ($(DEBUG)))
 endif
 ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
-	$(error ERROR: Unknown $(strip LINK_STATIC value) in makefile ($(LINK_STATIC)))
+	$(error ERROR: Unknown $(strip LINK_STATIC value) in makefile / define.mk ($(LINK_STATIC)))
 endif
 ifneq ($(OMP),         $(filter $(OMP),         YES NO))
-	$(error ERROR: Unknown $(strip OMP         value) in makefile ($(OMP)))
+	$(error ERROR: Unknown $(strip OMP         value) in makefile / define.mk ($(OMP)))
 endif
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
-	$(error ERROR: Unknown $(strip MKL         value) in makefile ($(MKL)))
+	$(error ERROR: Unknown $(strip MKL         value) in makefile / define.mk ($(MKL)))
 endif
 
 # gridfft, findiff, numerov: only one can be enabled.
@@ -486,7 +538,7 @@ ifneq ($(parayes_value), 0)
   endif
 # and MPI compilation must be enabled;
   ifneq ($(USE_MPI), YES)
-	$(error ERROR: parayes requires USE_MPI=YES in makefile)
+	$(error ERROR: parayes requires USE_MPI=YES in makefile / define.mk)
   endif
 # if parayes is disabled,
 else
@@ -504,7 +556,7 @@ ifneq ($(simpara_value), 0)
   endif
 # and MPI compilation must be enabled.
   ifneq ($(USE_MPI), YES)
-	$(error ERROR: simpara requires USE_MPI=YES in makefile)
+	$(error ERROR: simpara requires USE_MPI=YES in makefile / define.mk)
   endif
 endif
 
@@ -512,7 +564,7 @@ endif
 ifneq ($(parano_value), 0)
   ifeq ($(simpara_value), 0)
     ifneq ($(USE_MPI), NO)
-	$(error ERROR: if parano is enabled and simpara is disabled, USE_MPI should be NO in the makefile)
+	$(error ERROR: if parano is enabled and simpara is disabled, USE_MPI should be NO in the makefile / define.mk)
     endif
   endif
 endif
@@ -527,7 +579,7 @@ endif
 # dynopenmp requires OpenMP:
 ifneq ($(dynopenmp_value), 0)
   ifneq ($(OMP), YES)
-	$(error ERROR: You are trying to compile the code with dynopenmp enabled in define.h, but OMP is disabled in the makefile)
+	$(error ERROR: You are trying to compile the code with dynopenmp enabled in define.h, but OMP is disabled in the makefile / define.mk)
   endif
 endif
 
@@ -568,7 +620,7 @@ OBJS_COUL = loc_mfield.o pseudosoft.o init.o
 
 DEPS_COUL = kinetic.o coulsolv.o
 
-OBJH = makefile define.h params.F90 kinetic.F90 coulsolv.F90
+OBJH = makefile define.mk define.h params.F90 kinetic.F90 coulsolv.F90
 
 #####################################################################
 #                   Compilation and linkage rules                   #
@@ -583,12 +635,12 @@ $(EXEC): initial_checks $(OBJS)
 	mv -fv $(EXEC) ../
 
 
-# Dependencies on makefile, define.h and params.o
+# Dependencies on makefile, define.mk, define.h and params.o
 # Dependencies are inherited, so there's no need to repeat them
 # in the targets below.
-params.o: makefile define.h
+params.o: makefile define.mk define.h
 
-$(OBJS_NPAR): makefile define.h params.o
+$(OBJS_NPAR): makefile define.mk define.h params.o
 
 # Rule for objects that depend on kinetic.o and coulsolv.o, with no other special requirements:
 $(OBJS_COUL): $(DEPS_COUL)
