@@ -20,9 +20,9 @@
 !   paropenmp    activates openMP parallelity, requires parano=1
 !   dynopenmp    uses parallele comp. of wfs., only for paropenmp=1
 !
-#define parayes 0
-#define parano 1
-#define simpara 0
+!#define parayes 0
+!#define parano 1
+!#define simpara 0
 !#define paropenmp 1    set in 'makefile'
 #define dynopenmp 0
 !

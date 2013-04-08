@@ -8,11 +8,12 @@
 #   * MPIF90 (parallel version only)
 CF90 = IFORT
 
-# USE_MPI: Variable for parallel processing (only for some compilers)
+# MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
+#   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
-USE_MPI = NO
+MPI_PARALLEL = NO
 
 # TYPE_FFT: FFT solver
 # Available options:

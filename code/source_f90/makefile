@@ -15,11 +15,12 @@
 #   * MPIF90 (parallel version only)
 CF90 = IFORT
 
-# USE_MPI: Variable for parallel processing (only for some compilers)
+# MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
+#   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
-USE_MPI = NO
+MPI_PARALLEL = NO
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -75,6 +76,17 @@ MKLINCLUDE =
 
 # Include file with customized compilation parameters
 include define.mk
+
+#####################################################################
+#                Process parallelization options                    #
+#####################################################################
+
+# MPI
+ifeq ($(MPI_PARALLEL), NO)
+	USE_MPI = NO
+else
+	USE_MPI = YES
+endif
 
 #####################################################################
 #                             Compiler                              #
@@ -274,16 +286,29 @@ else
   endif
 endif
 
-OMPADD =
+ifeq ($(MPI_PARALLEL), YES)
+	MPIADD := -Dparayes
+	parayes_value := 1
+else
+	MPIADD = -Dparano
+	parano_value := 1
+  ifeq ($(MPI_PARALLEL), SIM)
+	MPIADD += -Dsimpara
+	simpara_value := 1
+  endif
+endif
+
 ifeq ($(OMP), YES)
-	OMPADD += -Dparopenmp
+	OMPADD := -Dparopenmp
 	paropenmp_value := 1
+else
+	OMPADD :=
 endif
 
 # Compiler flags
-COMPILERFLAGS1 =  $(LDLIBS) $(OPT1) $(OMPADD) $(FFTWADD)
-COMPILERFLAGS2 =  $(LDLIBS) $(OPT2) $(OMPADD) $(FFTWADD)
-COMPILERFLAGS3 =  $(LDLIBS) $(OPT3) $(OMPADD) $(FFTWADD)
+COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
+COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
+COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
 IDRIS =
@@ -365,13 +390,17 @@ endif
 DATE =$(shell date +%d.%m.%y)
 
 # Set type of parallelization.
-ifeq "$(USE_MPI)" "YES"
-	MPI_NAME = Mpi
+ifeq ($(MPI_PARALLEL), YES)
+	MPI_NAME = MPI
 else
-  ifeq "$(OMP)" "YES"
-	MPI_NAME = OMP
+  ifeq ($(MPI_PARALLEL), SIM)
+	MPI_NAME = SIM
   else
+    ifeq ($(OMP), YES)
+	MPI_NAME = OMP
+    else
 	MPI_NAME = Mono
+    endif
   endif
 endif
 
@@ -403,6 +432,9 @@ define.h: ;
 # List of valid compilers.
 valid_CF90 := GFORT GFORT1 IFORT IFORT1 MPIF90 XLF_R
 
+# List of valid MPI_PARALLEL:
+valid_MPI_PARALLEL := YES SIM NO
+
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
@@ -412,9 +444,6 @@ numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n
 coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-parayes_value  :=$(shell echo -e "\\n\#if(parayes)  \\nparayes  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-parano_value   :=$(shell echo -e "\\n\#if(parano)   \\nparano   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-simpara_value  :=$(shell echo -e "\\n\#if(simpara)  \\nsimpara  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 dynopenmp_value:=$(shell echo -e "\\n\#if(dynopenmp)\\ndynopenmp\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 fullsic_value  :=$(shell echo -e "\\n\#if(fullsic)  \\nfullsic  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 symmcon_value  :=$(shell echo -e "\\n\#if(symmcon)  \\nsymmcon  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
@@ -433,9 +462,6 @@ initial_checks: makefile define.mk define.h
 	@echo "coufou        $(coufou_value)"
 	@echo "coudoub       $(coudoub_value)"
 	@echo "coudoub3D     $(coudoub3D_value)"
-	@echo "parayes       $(parayes_value)"
-	@echo "parano        $(parano_value)"
-	@echo "simpara       $(simpara_value)"
 	@echo "dynopenmp     $(dynopenmp_value)"
 	@echo "fullsic       $(fullsic_value)"
 	@echo "symmcond      $(symmcon_value)"
@@ -445,7 +471,7 @@ initial_checks: makefile define.mk define.h
 	@echo  Parameters defined in makefile / define.mk:
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
-	@echo "USE_MPI       $(USE_MPI)"
+	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
@@ -457,6 +483,9 @@ initial_checks: makefile define.mk define.h
 	@echo "#######################################################"
 	@echo "-D flags enabled (1) by makefile rules:"
 	@echo "--------------------------------------------"
+	@echo "parayes       $(parayes_value)"
+	@echo "parano        $(parano_value)"
+	@echo "simpara       $(simpara_value)"
 	@echo "netlib_fft    $(netlib_fft_value)"
 	@echo "fftw_cpu      $(fftw_cpu_value)"
 	@echo "fftwnomkl     $(fftwnomkl_value)"
@@ -472,11 +501,11 @@ endif
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
 	$(error ERROR: Unknown TYPE_FFT in makefile / define.mk ($(TYPE_FFT)))
 endif
+ifneq ($(MPI_PARALLEL), $(filter $(MPI_PARALLEL), $(valid_MPI_PARALLEL)))
+	$(error ERROR: Unknown MPI_PARALLEL value in makefile / define.mk ($(MPI_PARALLEL)))
+endif
 
 # Check that variables which should be either YES or NO have proper values:
-ifneq ($(USE_MPI),     $(filter $(USE_MPI),     YES NO))
-	$(error ERROR: Unknown $(strip USE_MPI     value) in makefile / define.mk ($(USE_MPI)))
-endif
 ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
 	$(error ERROR: Unknown $(strip DEBUG       value) in makefile / define.mk ($(DEBUG)))
 endif
@@ -523,49 +552,6 @@ endif
 ifneq ($(coudoub3D_value), 0)
   ifneq ($(calls_FFTW), YES)
 	$(error ERROR: coudoub3D requires the use of FFTW)
-  endif
-endif
-
-# If parayes is enabled in define.h,
-ifneq ($(parayes_value), 0)
-# parano must be disabled,
-  ifneq ($(parano_value), 0)
-	$(error ERROR: parayes and parano cannot be enabled simultaneously in define.h)
-  endif
-# simpara must be disabled,
-  ifneq ($(simpara_value), 0)
-	$(error ERROR: parayes and simpara cannot be enabled simultaneously in define.h)
-  endif
-# and MPI compilation must be enabled;
-  ifneq ($(USE_MPI), YES)
-	$(error ERROR: parayes requires USE_MPI=YES in makefile / define.mk)
-  endif
-# if parayes is disabled,
-else
-# then parano must be enabled.
-  ifeq ($(parano_value), 0)
-	$(error ERROR: either parayes or parano should be enabled in define.h)
-  endif
-endif
-
-# If simpara is enabled in define.h,
-ifneq ($(simpara_value), 0)
-# parano must also be enabled
-  ifeq ($(parano_value), 0)
-	$(error ERROR: in order to enable simpara, you also need to enable parano in define.h)
-  endif
-# and MPI compilation must be enabled.
-  ifneq ($(USE_MPI), YES)
-	$(error ERROR: simpara requires USE_MPI=YES in makefile / define.mk)
-  endif
-endif
-
-# If parano is enabled in define.h, and simpara is disabled, don't use MPI:
-ifneq ($(parano_value), 0)
-  ifeq ($(simpara_value), 0)
-    ifneq ($(USE_MPI), NO)
-	$(error ERROR: if parano is enabled and simpara is disabled, USE_MPI should be NO in the makefile / define.mk)
-    endif
   endif
 endif
 
