@@ -15,6 +15,13 @@ CF90 = IFORT
 #   * NO
 MPI_PARALLEL = NO
 
+# OMP_THREADS: Invoke OpenMP
+# Available options:
+#   * DYN: wave function parallelization (threads)
+#   * YES: use threads for FFT
+#   * NO
+OMP_THREADS = NO
+
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
@@ -33,12 +40,6 @@ DEBUG  = NO
 #   * YES
 #   * NO
 LINK_STATIC = YES
-
-# OMP: Invoke OpenMP
-# Available options:
-#   * YES
-#   * NO
-OMP = NO
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = MKL)
 # Available options:

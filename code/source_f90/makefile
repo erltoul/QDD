@@ -22,6 +22,13 @@ CF90 = IFORT
 #   * NO
 MPI_PARALLEL = NO
 
+# OMP_THREADS: Invoke OpenMP
+# Available options:
+#   * DYN: wave function parallelization (threads)
+#   * YES: use threads for FFT
+#   * NO
+OMP_THREADS = NO
+
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
@@ -40,12 +47,6 @@ DEBUG  = NO
 #   * YES
 #   * NO
 LINK_STATIC = YES
-
-# OMP: Invoke OpenMP
-# Available options:
-#   * YES
-#   * NO
-OMP = NO
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = MKL)
 # Available options:
@@ -86,6 +87,13 @@ ifeq ($(MPI_PARALLEL), NO)
 	USE_MPI = NO
 else
 	USE_MPI = YES
+endif
+
+# OpenMP
+ifeq ($(OMP_THREADS), NO)
+	OMP = NO
+else
+	OMP = YES
 endif
 
 #####################################################################
@@ -299,8 +307,12 @@ else
 endif
 
 ifeq ($(OMP), YES)
-	OMPADD := -Dparopenmp
+	OMPADD = -Dparopenmp
 	paropenmp_value := 1
+  ifeq ($(OMP_THREADS), DYN)
+	OMPADD += -Ddynopenmp
+	dynopenmp_value :=1
+  endif
 else
 	OMPADD :=
 endif
@@ -435,6 +447,9 @@ valid_CF90 := GFORT GFORT1 IFORT IFORT1 MPIF90 XLF_R
 # List of valid MPI_PARALLEL:
 valid_MPI_PARALLEL := YES SIM NO
 
+# List of valid OMP_THREADS:
+valid_OMP_THREADS := DYN YES NO
+
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
@@ -444,7 +459,6 @@ numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n
 coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-dynopenmp_value:=$(shell echo -e "\\n\#if(dynopenmp)\\ndynopenmp\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 fullsic_value  :=$(shell echo -e "\\n\#if(fullsic)  \\nfullsic  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 symmcon_value  :=$(shell echo -e "\\n\#if(symmcon)  \\nsymmcon  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
@@ -462,7 +476,6 @@ initial_checks: makefile define.mk define.h
 	@echo "coufou        $(coufou_value)"
 	@echo "coudoub       $(coudoub_value)"
 	@echo "coudoub3D     $(coudoub3D_value)"
-	@echo "dynopenmp     $(dynopenmp_value)"
 	@echo "fullsic       $(fullsic_value)"
 	@echo "symmcond      $(symmcon_value)"
 	@echo "twostsic      $(twostsic_value)"
@@ -472,10 +485,10 @@ initial_checks: makefile define.mk define.h
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
+	@echo "OMP_THREADS   $(OMP_THREADS)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
-	@echo "OMP           $(OMP)"
 	@echo "MKL_THREADS   $(MKL_THREADS)"
 	@echo "MKL_WRAPPERS  $(MKL_WRAPPERS)"
 	@echo "MKLPATH       $(MKLPATH)"
@@ -490,6 +503,7 @@ initial_checks: makefile define.mk define.h
 	@echo "fftw_cpu      $(fftw_cpu_value)"
 	@echo "fftwnomkl     $(fftwnomkl_value)"
 	@echo "paropenmp     $(paropenmp_value)"
+	@echo "dynopenmp     $(dynopenmp_value)"
 	@echo "#######################################################"
 
 # Check that the fortran compiler is defined.
@@ -501,8 +515,13 @@ endif
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
 	$(error ERROR: Unknown TYPE_FFT in makefile / define.mk ($(TYPE_FFT)))
 endif
+
+# Check that the parallelization and threading options are valid:
 ifneq ($(MPI_PARALLEL), $(filter $(MPI_PARALLEL), $(valid_MPI_PARALLEL)))
 	$(error ERROR: Unknown MPI_PARALLEL value in makefile / define.mk ($(MPI_PARALLEL)))
+endif
+ifneq ($(OMP_THREADS), $(filter $(OMP_THREADS), $(valid_OMP_THREADS)))
+	$(error ERROR: Unknown OMP_THREADS value in makefile / define.mk ($(OMP_THREADS)))
 endif
 
 # Check that variables which should be either YES or NO have proper values:
@@ -511,9 +530,6 @@ ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
 endif
 ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
 	$(error ERROR: Unknown $(strip LINK_STATIC value) in makefile / define.mk ($(LINK_STATIC)))
-endif
-ifneq ($(OMP),         $(filter $(OMP),         YES NO))
-	$(error ERROR: Unknown $(strip OMP         value) in makefile / define.mk ($(OMP)))
 endif
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 	$(error ERROR: Unknown $(strip MKL         value) in makefile / define.mk ($(MKL)))
@@ -559,13 +575,6 @@ endif
 ifeq ($(USE_MPI), YES)
   ifeq ($(OMP), YES)
 	$(error ERROR: code not ready for simultaneous MPI and OpenMP parallelizations)
-  endif
-endif
-
-# dynopenmp requires OpenMP:
-ifneq ($(dynopenmp_value), 0)
-  ifneq ($(OMP), YES)
-	$(error ERROR: You are trying to compile the code with dynopenmp enabled in define.h, but OMP is disabled in the makefile / define.mk)
   endif
 endif
 
