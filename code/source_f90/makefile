@@ -592,105 +592,166 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        carlo.o localize.o localizer.o subgrids.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o functions.o\
-       localize_rad.o symmcond_step.o loc_mfield.o givens.o\
-       parallele.o expevol.o 2stUT.o 2stUTc.o\
+       loc_mfield.o givens.o\
+       parallele.o expevol.o 2stUT.o \
        pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o
 
+# List of modules:
+MODLIST = params.mod kinetic.mod coulsolv.mod
+
+# Objects that depend on kinetic.mod and/or coulsolv.mod,
+# with no other special requirements:
+OBJS_KIN  = dynamic.o expevol.o ionmd.o util.o zeroforce.o
+OBJS_COUL = image.o lda.o loc_mfield.o
+OBJS_KINCOUL = init.o main.o pseudosoft.o
+
+DEPS_KINCOUL = kinetic.mod coulsolv.mod
+
 # Object file for FFT:
-ifeq "$(TYPE_FFT)" "NETLIB"
-FFT_OBJ = fftpack.o
+ifeq ($(TYPE_FFT), NETLIB)
+  FFT_OBJ = fftpack.o
 endif
 ifeq ($(calls_FFTW), YES)
-FFT_OBJ = fftw.o
+  FFT_OBJ = fftw.o
+  MODLIST += fftw.mod
 endif
 
-OBJS      = $(OBJINT) $(FFT_OBJ)
+# Sic-conditional objects:
+ifneq ($(fullsic_value), 0)
+  OBJINT  += localize_rad.o
+  MODLIST += localize_rad.mod
+endif
+ifneq ($(symmcond_value), 0)
+  OBJINT  += symmcond_step.o
+  MODLIST += symmcond_step.mod
+endif
+ifneq ($(twostsic_value), 0)
+  OBJINT  += 2stUTc.o
+  MODLIST += twostr.mod twost.mod
+endif
+
+OBJS = $(OBJINT) $(FFT_OBJ)
 
 # List of objects excluding params.o:
 OBJS_NPAR = $(filter-out params.o, $(OBJS))
-
-# Objects that depend on kinetic.o and coulsolv.o, with no other special requirements:
-OBJS_COUL = loc_mfield.o pseudosoft.o init.o
-
-DEPS_COUL = kinetic.o coulsolv.o
-
-OBJH = makefile define.mk define.h params.F90 kinetic.F90 coulsolv.F90
 
 #####################################################################
 #                   Compilation and linkage rules                   #
 #####################################################################
 
 .SUFFIXES:
-.SUFFIXES: .F90 .o
+.SUFFIXES: .F90 .o .mod
 
 $(EXEC): initial_checks $(OBJS)
 	@echo Linking executable $@
 	$(LINKER) -o $@ $(strip $(OBJS) $(LINKERFLAGS))
 	mv -fv $(EXEC) ../
 
-
-# Dependencies on makefile, define.mk, define.h and params.o
+# Dependencies on makefile, define.mk, define.h and params.mod
 # Dependencies are inherited, so there's no need to repeat them
 # in the targets below.
-params.o: makefile define.mk define.h
+$(MODLIST):   makefile define.mk define.h
+params.o:     makefile define.mk define.h
+$(OBJS_NPAR): makefile define.mk define.h params.mod
 
-$(OBJS_NPAR): makefile define.mk define.h params.o
-
-# Rule for objects that depend on kinetic.o and coulsolv.o, with no other special requirements:
-$(OBJS_COUL): $(DEPS_COUL)
+# Rule for objects that depend on kinetic.o and/or coulsolv.o,
+# with no other special requirements:
+$(OBJS_KIN):     kinetic.mod
+$(OBJS_COUL):    coulsolv.mod
+$(OBJS_KINCOUL): $(DEPS_KINCOUL)
 
 %.o: %.mod
 
-# Implicit rule
-.F90.o:
+# Implicit rule for objects:
+%.o: %.F90
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+# Implicit rule for modules:
+%.o %.mod: %.F90
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+# Set FFTW-dependent modules:
+ifeq ($(calls_FFTW), YES)
+coulsolv.mod: fftw.mod
+kinetic.mod: fftw.mod
+endif
+
+# Additions for fullsic:
+ifneq ($(fullsic_value), 0)
+OBJS_LOCALIZE_RAD = main.o static.o 2stUT.o
+
+$(OBJS_LOCALIZE_RAD): localize_rad.mod
+
+localize_rad.o localize_rad.mod: localize_rad.F90 kinetic.mod
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+endif
+
+# Additions for symmcond:
+ifneq ($(symmcond_value), 0)
+OBJS_SYMCOND = sicnew.o sicnewc.o
+
+$(OBJS_SYMCOND): symmcond_step.mod
+endif
+
+# Additions for twostsic:
+ifneq ($(twostsic_value), 0)
+
+ifneq ($(symmcond_value), 0)
+2stUT.o: symmcond_step.o
+2stUTc.o: symmcond_step.o
+endif
+
+OBJS_TWOSTSIC   = dynamic.F90 expevol.F90
+OBJS_TWOSTSIC_R = 2stUTc.o dynamic.o main.o restart.o static.o
+
+$(OBJS_TWOSTSIC):   twost.mod
+$(OBJS_TWOSTSIC_R): twostr.mod
+
+2stUTc.o twost.mod: 2stUT.F90 kinetic.mod
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+
+2stUT.o twostr.mod: 2stUT.F90 kinetic.mod
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+else
+2stUT.o: 2stUT.F90 kinetic.mod
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+endif
 
 # Particular rules
 # (complex dependencies, REAL/COMPLEX switch, non-default COMPILERFLAGS).
 
-main.o: main.F90 $(DEPS_COUL) 2stUT.o 2stUTc.o localize_rad.o
-
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.o $(FFT_OBJ)
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.mod $(FFT_OBJ)
 
-static.o: pseudosoft.F90 kinetic.o localize_rad.o 2stUT.o
-
-localize_rad.o: localize_rad.F90 kinetic.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 
 rho.o: rho.F90
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-rhoc.o: rho.F90
+rhoc.o: rho.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-localizer.o: localize.F90
+localizer.o: localize.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-localize.o: localize.F90
+localize.o: localize.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-sicnew.o: sicnew.F90 $(DEPS_COUL) symmcond_step.o
+sicnew.o: sicnew.F90 $(DEPS_KINCOUL)
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-sicnewc.o: sicnew.F90 $(DEPS_COUL) symmcond_step.o
+sicnewc.o: sicnew.F90 $(DEPS_KINCOUL)
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-nonloc.o: nonloc.F90 kinetic.o
+nonloc.o: nonloc.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-nonlocc.o: nonloc.F90 kinetic.o
+nonlocc.o: nonloc.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-2stUT.o: 2stUT.F90 $(DEPS_COUL) symmcond_step.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
-
-2stUTc.o: 2stUT.F90 $(DEPS_COUL) symmcond_step.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
-
-ifeq "$(TYPE_FFT)" "NETLIB"
+ifeq ($(TYPE_FFT), NETLIB)
 fftpack.o: fftpack.F90 fftpack2.F90
 	$(COMPILER) $(COMPILERFLAGS2) -c $<
 endif
@@ -698,12 +759,12 @@ endif
 givens.o: givens.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-restart.o: restart.F90 kinetic.o
+restart.o: restart.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 
-restartc.o: restart.F90 kinetic.o
+restartc.o: restart.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
-parallele.o: parallele.F90 kinetic.o
+parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
