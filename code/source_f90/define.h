@@ -28,7 +28,8 @@
 !
 ! full SIC and localized SIC
 !
-#define twostsic 0
+#define twostsic 1
+#define cmplxsic 0
 !
 !  
 ! switch to extended model with polarizable raregas

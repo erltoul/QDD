@@ -92,7 +92,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iscatterelectron,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
-    scatterelectrony,scatterelectronz,scatterelectronw, &
+    scatterelectrony,scatterelectronz,scatterelectronw,jattach, &
     phangle,phphase,nhstate,npstate, &
     jstateoverlap
 

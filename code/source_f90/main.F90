@@ -413,6 +413,20 @@ DO it=irest,itmax   ! time-loop
     END IF
     IF(nclust > 0) CALL savings(psi,tarray,it)
   END IF
+
+
+  IF(it==irest) then
+    totintegprob=0D0
+    reference_energy=etot
+  ELSE IF(it>irest .AND. (jattach>0 .AND. MOD(it,jattach)==0)) then
+    call attach_prob(nmatchenergy,totalprob,psi)
+    totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+    write(6,'(e12.5,1x,i4,3(1x,e14.5))') &                
+      tfs,nmatchenergy,totalprob,totintegprob
+    write(809,'(e12.5,1x,i4,3(1x,e14.5))') & 
+       tfs,nmatchenergy,totalprob,totintegprob
+  END IF
+
   
   
 #if(simpara)
@@ -420,7 +434,8 @@ DO it=irest,itmax   ! time-loop
   WRITE(7,*) ' After barrier. myn,it=',myn,it
 #endif
   
-  
+
+ 
 END DO
 
 !  ********************  end of dynamic loop ****************************

@@ -10,8 +10,13 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
+#if(cmplxsic)
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: qnewr(:,:)
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
+#else
 REAL(DP),PRIVATE,ALLOCATABLE :: qnewr(:,:)
 REAL(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
+#endif
 REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
@@ -25,6 +30,17 @@ LOGICAL :: toptsicstep=.true.       ! switch to optimized step
 INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
+#if(cmplxsic)
+COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
+COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
+#else
 REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
 REAL(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
 REAL(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
@@ -34,6 +50,7 @@ REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
+#endif
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
 !    vecsr
 !COMMON /radmatrixn/ndims
@@ -175,7 +192,7 @@ IF(istat==0) THEN
   END DO
 END IF
 
-! initialize protocolo file
+! initialize protocol file
 IF(tconv) THEN
 OPEN(353,file='2st-stat-conv-1.res')
 REWIND(353)
@@ -190,8 +207,8 @@ END IF
 
 RETURN
 END SUBROUTINE init_fsicr
-!-----end_fsicr------------------------------------------------
 
+!-----end_fsicr------------------------------------------------
 SUBROUTINE end_fsicr()
 
 USE params
@@ -285,8 +302,13 @@ USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
+#if(cmplxsic)
+COMPLEX(DP) :: q0(kdfull2,kstate)
+COMPLEX(DP) :: qsic(kdfull2,kstate)
+#else
 REAL(DP) :: q0(kdfull2,kstate)
 REAL(DP) :: qsic(kdfull2,kstate)
+#endif
 #else
 COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: qsic(kdfull2,kstate)
@@ -389,8 +411,13 @@ WRITE (6,'(3f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV
 
 DO i=1,kstate
   DO j=1,kstate
+#if(cmplxsic)
+    vecs(i,j,1) = vecsr(i,j,1)
+    vecs(i,j,2) = vecsr(i,j,2)
+#else
     vecs(i,j,1) = CMPLX(vecsr(i,j,1),0D0,DP)
     vecs(i,j,2) = CMPLX(vecsr(i,j,2),0D0,DP)
+#endif
   END DO
 END DO
 
@@ -438,7 +465,11 @@ IF(ifsicp == 7) THEN       ! Generalized Slater pot
   ifsicp=7
 !          write(*,*) ' CALC_SICR over'
 ELSE IF(ifsicp == 8) THEN   !    DSIC
+#if(cmplxsic)
+  CALL calc_fullsic(psirut,qnewr)
+#else
   CALL calc_fullsicr(psirut,qnewr)
+#endif
 END IF
 
 RETURN
@@ -460,6 +491,9 @@ REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !REAL(DP) :: aloc(2*kdfull2)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
+#if(cmplxsic)
+COMPLEX(DP) :: wfovlp
+#endif
 
 !----------------------------------------------------------------
 
@@ -470,7 +504,11 @@ IF(ifsicp < 7) RETURN
 WRITE(6,'(a)') 'DIAGONAL STATES :'
 CALL spmomsmatrixr(psir,1)       !!! to print the total variance
 WRITE(6,'(a)') 'LOCALIZED STATES :'
+#if(cmplxsic)
+CALL spmomsmatrix(psirut,1)
+#else
 CALL spmomsmatrixr(psirut,1)
+#endif
 
 IF(ifsicp == 8) THEN   !!! to calculate the total
   DO is=1,2                       !!! violation of symmetry condition
@@ -479,8 +517,13 @@ IF(ifsicp == 8) THEN   !!! to calculate the total
       IF(ispin(na) == is)THEN
         DO nb=1,nstate
           IF(ispin(nb) == is)THEN
+#if(cmplxsic)
             acc = ( rwfovlp(psirut(1,na),qnewr(1,nb)) -  &
                 rwfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
+#else
+            acc = ABS( wfovlp(psirut(1,na),qnewr(1,nb)) -  &
+                wfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
+#endif
           END IF
         END DO
       END IF
@@ -584,30 +627,24 @@ END SUBROUTINE diag_lagr
 
 SUBROUTINE subtr_sicpot(q1,nbe)
 
-!     Diagonalize the matrix of Lagrange parameters and print
-!     information from that step.
+! subtract the SIC potential acting on the acual 'q1'
 
 USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
-REAL(DP) :: q1(kdfull2)
+REAL(DP), INTENT(IN OUT) :: q1(kdfull2)
 
 !----------------------------------------------------------------
 
 IF(ifsicp /= 8) RETURN
 
-!JM : subtract SIC potential for state NBE
-
 is=ispin(nbe)
+nb = nbe - (is-1)*ndims(1)
 DO na=1,ndims(is)
-  nb = nbe - (is-1)*ndims(1)
   nae = na + (is-1)*ndims(1)
-  cf = vecsr(nb,na,is)
-  DO i=1,nxyz
-    q1(i)=q1(i)-qnewr(i,nae)*cf
-  END DO
+  q1(:) =q1(:)-qnewr(:,nae)*vecsr(nb,na,is)
 END DO
 
 RETURN
@@ -688,7 +725,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #ifdef REALSWITCH
 !INCLUDE 'radmatrixr.inc'
 REAL(DP) :: q0(kdfull2,kstate)
+#if(cmplxsic)
+COMPLEX(DP) :: q0ut(kdfull2,kstate)
+#else
 REAL(DP) :: q0ut(kdfull2,kstate)
+#endif
 #else
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP) :: q0(kdfull2,kstate)
@@ -708,10 +749,6 @@ DO is=1,2
 #ifdef REALSWITCH
     CALL utgradstepr(is,0,q0,iter1)   !!!!! new vecs (gradient method)
 #else
-!      do nb=1,nstate
-!        write(*,*) ' CALC_UTWF: nb,Q0 norm:',
-!     &       nb,wfovlp(q0(1,nb),q0(1,nb))
-!      enddo
     CALL utgradstepc(is,0,q0,iter1)   !!!!! new vecs (gradient method)
 #endif
   END IF
@@ -1109,9 +1146,99 @@ DEALLOCATE(vecsav,dabstep,dab,expdab)
 END SUBROUTINE test_symmcond
 #endif
 
+#ifdef REALSWITCH
+#if(cmplxsic)
+SUBROUTINE dalphabetarc(is,dab,q0)
+
+!#INCLUDE "all.inc"
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+COMPLEX(DP),INTENT(IN OUT) :: dab(kdim, kdim) !  DAB
+
+LOGICAL,PARAMETER :: ttest=.false.
+
+
+REAL(DP) :: save1,save2,acc2
+COMPLEX(DP) :: wfovlp ! function declaration 
+
+!INCLUDE 'radmatrix.inc'   ! defines also 'KDIM'
+!INCLUDE 'vec.inc'!MV
+REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
+COMPLEX(DP),ALLOCATABLE :: qsym(:,:),utcond(:,:)
+COMPLEX(DP),ALLOCATABLE :: uqsym(:,:),symcond(:,:)
+
+!-------------------------------------------------------
+
+ALLOCATE(usicsp(2*kdfull2),rhosp(2*kdfull2))
+ALLOCATE(qsym(kdfull2,kstate),utcond(kdim,kdim))
+ALLOCATE(uqsym(kdfull2,kstate),symcond(kstate,kstate))
+
+ishift = (is-1)*nxyz
+
+ener_2st(is)=0D0
+DO nb=1,nstate
+  IF(ispin(nrel2abs(nb)) == is)THEN
+    nbeff = nb - (is-1)*ndims(1)
+    
+    CALL superpose_staterc(qsym(1,nb),vecs(1,nbeff,is),q0,is)
+    save1=enrear      !!! to deactivate cumulation of enrear, enerpw
+    save2=enerpw      !!! (else wrong total energy)
+!    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
+    CALL calc_sicsp(rhosp,usicsp,qsym(1,nb),nb)
+!    WRITE(*,*) ' nb,energs=',nb,encoulsp,enerpw,occup(nb)
+    ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
+    enrear=save1
+    enerpw=save2
+    
+    DO ind=1,nxyz
+      uqsym(ind,nb) = usicsp(ind+ishift)*qsym(ind,nb)
+    END DO! nxyz
+  END IF
+END DO !nb
+
+! variational result of the UT constraint
+
+DO nb=1,nstate
+  IF(ispin(nrel2abs(nb)) == is)THEN
+    nbeff = nb - (is-1)*ndims(1)
+    DO na=1,nstate
+      IF(ispin(nrel2abs(na)) == is)THEN
+        naa = na - (is-1)*ndims(1)
+        utcond(naa,nbeff) = -wfovlp(qsym(1,na),uqsym(1,nb))
+      END IF !ispin
+    END DO !na
+  END IF
+END DO !nb
+!WRITE(*,*) ' utcond:',utcond(1:nstate,a:nstate)
+!      call MatPrint ('utCond', utcond, kstate, ndims(is))
+DO nb=1,nstate
+  IF(ispin(nrel2abs(nb)) == is)THEN
+    nbeff = nb - (is-1)*ndims(1)
+    DO na=1,nstate
+      IF(ispin(nrel2abs(na)) == is)THEN
+        naa = na - (is-1)*ndims(1)
+        dab(naa,nbeff)=utcond(naa,nbeff)-CONJG (utcond(nbeff,naa))
+      END IF
+    END DO
+  END IF
+END DO
+!      call MatPrint ('DAB', DAB, kstate, ndims(is))
+
+DEALLOCATE(usicsp,rhosp)
+DEALLOCATE(qsym,utcond)
+DEALLOCATE(uqsym,symcond)
+
+
+RETURN
+END SUBROUTINE dalphabetarc
+
+#else  
+
 !-----------DAlphaBetar------------------- !MV!!! symmetry condition in antihermitian matrix
 
-#ifdef REALSWITCH
 SUBROUTINE dalphabetar(is,dab,q0)
 
 !#INCLUDE "all.inc"
@@ -1201,6 +1328,8 @@ DEALLOCATE(utcond,qsym)
 
 RETURN
 END SUBROUTINE dalphabetar
+#endif
+
 #endif
 
 
@@ -1563,7 +1692,11 @@ END FUNCTION vecovlp
 !-----superpose_state--------------------------------------------------
 
 #ifdef REALSWITCH
+#if(cmplxsic)
+SUBROUTINE superpose_staterc(wfsup,coeff,q0,is)
+#else
 SUBROUTINE superpose_stater(wfsup,coeff,q0,is)
+#endif
 #else
 SUBROUTINE superpose_state(wfsup,coeff,q0,is)
 #endif
@@ -1582,8 +1715,13 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #ifdef REALSWITCH
 !INCLUDE 'radmatrixr.inc'
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+#if(cmplxsic)
+COMPLEX(DP),INTENT(IN OUT) :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(IN) :: coeff(kstate)
+#else
 REAL(DP),INTENT(IN OUT) :: wfsup(kdfull2)
 REAL(DP),INTENT(IN) :: coeff(kstate)
+#endif
 #else
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)

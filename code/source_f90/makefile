@@ -13,7 +13,7 @@ USE_MPI = NO
 # Which FFT solver
 TYPE_FFT = FFTW
 # debugging option
-DEBUG   = NO
+DEBUG   = YES
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
