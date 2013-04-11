@@ -578,7 +578,7 @@ endif
 	@echo "#######################################################"
 
 #####################################################################
-#                       Targets and dependencies                    #
+#                  Targets and common dependencies                  #
 #####################################################################
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
@@ -595,14 +595,6 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
 
 # List of modules:
 MODLIST = params.mod kinetic.mod coulsolv.mod
-
-# Objects that depend on kinetic.mod and/or coulsolv.mod,
-# with no other special requirements:
-OBJS_KIN  = dynamic.o expevol.o ionmd.o util.o zeroforce.o
-OBJS_COUL = image.o lda.o loc_mfield.o
-OBJS_KINCOUL = init.o main.o pseudosoft.o
-
-DEPS_KINCOUL = kinetic.mod coulsolv.mod
 
 # Object file for FFT:
 ifeq ($(TYPE_FFT), NETLIB)
@@ -624,6 +616,33 @@ OBJS = $(OBJINT) $(FFT_OBJ)
 # List of objects excluding params.o:
 OBJS_NPAR = $(filter-out params.o, $(OBJS))
 
+# Objects that depend on kinetic.mod and/or coulsolv.mod,
+# with no other special requirements:
+OBJS_KIN  = dynamic.o expevol.o ionmd.o util.o zeroforce.o
+OBJS_COUL = image.o lda.o loc_mfield.o
+OBJS_KINCOUL = init.o main.o pseudosoft.o
+
+DEPS_KINCOUL = kinetic.mod coulsolv.mod
+
+# Dependencies on makefile, define.mk, define.h and params.mod
+# Dependencies are inherited, so there's no need to repeat them
+# in the targets below.
+$(MODLIST):   makefile define.mk define.h
+params.o:     makefile define.mk define.h
+$(OBJS_NPAR): makefile define.mk define.h params.mod
+
+# Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
+# with no other special requirements:
+$(OBJS_KIN):     kinetic.mod
+$(OBJS_COUL):    coulsolv.mod
+$(OBJS_KINCOUL): $(DEPS_KINCOUL)
+
+# Set FFTW-dependent modules:
+ifeq ($(calls_FFTW), YES)
+coulsolv.mod: fftw.mod
+kinetic.mod: fftw.mod
+endif
+
 #####################################################################
 #                   Compilation and linkage rules                   #
 #####################################################################
@@ -636,19 +655,6 @@ $(EXEC): initial_checks $(OBJS)
 	$(LINKER) -o $@ $(strip $(OBJS) $(LINKERFLAGS))
 	mv -fv $(EXEC) ../
 
-# Dependencies on makefile, define.mk, define.h and params.mod
-# Dependencies are inherited, so there's no need to repeat them
-# in the targets below.
-$(MODLIST):   makefile define.mk define.h
-params.o:     makefile define.mk define.h
-$(OBJS_NPAR): makefile define.mk define.h params.mod
-
-# Rule for objects that depend on kinetic.o and/or coulsolv.o,
-# with no other special requirements:
-$(OBJS_KIN):     kinetic.mod
-$(OBJS_COUL):    coulsolv.mod
-$(OBJS_KINCOUL): $(DEPS_KINCOUL)
-
 %.o: %.mod
 
 # Implicit rule for objects:
@@ -658,12 +664,6 @@ $(OBJS_KINCOUL): $(DEPS_KINCOUL)
 # Implicit rule for modules:
 %.o %.mod: %.F90
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
-
-# Set FFTW-dependent modules:
-ifeq ($(calls_FFTW), YES)
-coulsolv.mod: fftw.mod
-kinetic.mod: fftw.mod
-endif
 
 # Additions for twostsic:
 ifneq ($(twostsic_value), 0)
