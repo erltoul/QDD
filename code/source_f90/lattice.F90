@@ -4,8 +4,8 @@
 
 SUBROUTINE createouterpot
 !------------------------------------------------------------
-!USE params
-USE kinetic
+USE params
+!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
