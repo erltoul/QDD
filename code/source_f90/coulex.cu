@@ -48,7 +48,7 @@ Check_CUDA_Error(error);
 
 if(cufftExecD2Z(pfftforw,gpu_akvr,gpu_akvc) != CUFFT_SUCCESS)
 {
-  cout<<"CUFFT error : Exec Z2Z forward failed in coulex (akv)"<<endl;
+  cout<<"CUFFT error : Exec D2Z forward failed in coulex (akv)"<<endl;
   exit(-1);
 }
 

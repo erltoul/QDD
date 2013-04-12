@@ -489,7 +489,7 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
 #endif
 #if(fftw_gpu)
-REAL(DP),ALLOCATABLE :: q1(:,:),rsp(:),w4(:,:)
+REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
 REAL(DP) :: sum0,sumk,sume,sum2
 #endif
 #else
@@ -524,7 +524,6 @@ ALLOCATE(q2(kdfull2))
 #if(fftw_gpu)
 #if(gridfft)
 ALLOCATE(q1(kdfull2,kstate))
-ALLOCATE(rsp(kstate))
 #else
 ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
@@ -781,7 +780,7 @@ DO nbe=1,nstate
     sum2 = sum2/sum0
 !          write(6,*) ' norm,spe=',sum0,sume
 !          amoy(nbe)   = sume
-    rsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+    evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
 
 ENDDO !END LOOP OVER STATES
 
