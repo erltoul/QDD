@@ -99,7 +99,9 @@ END IF
 #if(twostsic)
 if(ifsicp.eq.8) then
   do is=1,2 !MV initialise ExpDabOld                                        
-    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
+!    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
+    rExpDabOld(1:ndims(is),1:ndims(is),is)=0D0
+    do i=1,ndims(is);rExpDabOld(i,i,is)=1D0;enddo
   enddo
 endif
 #endif
@@ -205,10 +207,12 @@ END IF
 
 !     diagonalize Lagrange parameters
 
+#if(!cmplxsic)
 IF(ifsicp > 8) THEN
   CALL diag_lagr(psir)
 !        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
 END IF
+#endif
 #endif
 
 

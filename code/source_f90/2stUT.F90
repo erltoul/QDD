@@ -31,24 +31,24 @@ INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
 #if(cmplxsic)
-COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
+COMPLEX(DP),ALLOCATABLE :: rExpDABold(:,:,:)
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 #else
 REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
-REAL(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-REAL(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-REAL(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-REAL(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
+!REAL(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+!REAL(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+!REAL(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+!REAL(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+!REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+!REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+!REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 #endif
 !COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
@@ -73,13 +73,13 @@ INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
 COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvevtors
 
 ! This parameter 'tnearest' activates the computation of the
@@ -167,13 +167,13 @@ ALLOCATE(psirut(kdfull2,kstate))
 
 kdim=kstate
 ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
-ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
-ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
-ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
-ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
-ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
-ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
-ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
+!ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
+!ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
+!ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
+!ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
+!ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
+!ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
+!ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvevtors
 
 !     initialize unitary matrix
@@ -219,13 +219,13 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !   frees workspace for static SIC
 
 DEALLOCATE(rExpDABold)!MV added
-DEALLOCATE(rrmatr)  ! matrix of r**2
-DEALLOCATE(xxmatr)  ! matrix of x**2
-DEALLOCATE(yymatr)  ! matrix of y**2
-DEALLOCATE(zzmatr)  ! matrix of z**2
-DEALLOCATE(xmatr)   ! matrix of x
-DEALLOCATE(ymatr)   ! matrix of y
-DEALLOCATE(zmatr)   ! matrix of z
+!DEALLOCATE(rrmatr)  ! matrix of r**2
+!DEALLOCATE(xxmatr)  ! matrix of x**2
+!DEALLOCATE(yymatr)  ! matrix of y**2
+!DEALLOCATE(zzmatr)  ! matrix of z**2
+!DEALLOCATE(xmatr)   ! matrix of x
+!DEALLOCATE(ymatr)   ! matrix of y
+!DEALLOCATE(zmatr)   ! matrix of z
 DEALLOCATE(vecsr)   ! searched eigenvevtors
 
 
@@ -256,13 +256,13 @@ NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
 kdim=kstate
 ALLOCATE(ExpDABold(kstate,kstate,2),wfrotate(kstate,kstate,2))
-ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
-ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
-ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
-ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
-ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
-ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
-ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
+!ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
+!ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
+!ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
+!ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
+!ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
+!ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
+!ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvevtors
 
 ALLOCATE(qnewut(kdfull2,kstate))
@@ -466,7 +466,7 @@ IF(ifsicp == 7) THEN       ! Generalized Slater pot
 !          write(*,*) ' CALC_SICR over'
 ELSE IF(ifsicp == 8) THEN   !    DSIC
 #if(cmplxsic)
-  CALL calc_fullsic(psirut,qnewr)
+  CALL calc_fullsicr(psirut,qnewr)
 #else
   CALL calc_fullsicr(psirut,qnewr)
 #endif
@@ -485,6 +485,9 @@ SUBROUTINE infor_sic(psir)
 
 USE params
 USE kinetic
+#if(cmplxsic)
+USE twost, ONLY: spmomsmatrix
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !REAL(DP) :: rho(2*kdfull2)
@@ -492,7 +495,7 @@ REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
 #if(cmplxsic)
-COMPLEX(DP) :: wfovlp
+COMPLEX(DP) :: wfovlp,acc
 #endif
 
 !----------------------------------------------------------------
@@ -518,17 +521,17 @@ IF(ifsicp == 8) THEN   !!! to calculate the total
         DO nb=1,nstate
           IF(ispin(nb) == is)THEN
 #if(cmplxsic)
-            acc = ( rwfovlp(psirut(1,na),qnewr(1,nb)) -  &
-                rwfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
-#else
-            acc = ABS( wfovlp(psirut(1,na),qnewr(1,nb)) -  &
+            acc = ( wfovlp(psirut(1,na),qnewr(1,nb)) -  &
                 wfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
+#else
+            acc = ABS( rwfovlp(psirut(1,na),qnewr(1,nb)) -  &
+                rwfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
 #endif
           END IF
         END DO
       END IF
     END DO
-    WRITE(6,'(a,i3,a,(1pg12.4))')  &
+    WRITE(6,'(a,i3,a,2(1pg12.4))')  &
         'For spin',is,'  Total violation of SymCond',SQRT(acc)
   END DO
 END IF
@@ -538,6 +541,7 @@ END SUBROUTINE infor_sic
 
 
 #if(twostsic)
+#if(!cmplxsic)
 !-----diag_lagr------------------------------------------------
 
 SUBROUTINE diag_lagr(psir)
@@ -617,10 +621,15 @@ ifsicp=8
 WRITE(6,*) 'DIAGONAL STATES :'
 CALL spmomsmatrixr(psir,1)  !!! to print the total variance
 WRITE(6,*) 'LOCALIZED STATES :'
+#if(cmplxsic)
+CALL spmomsmatrix(psirut,1)
+#else
 CALL spmomsmatrixr(psirut,1)
+#endif
 
 RETURN
 END SUBROUTINE diag_lagr
+#endif
 #endif
 
 !-----subtr_sicpot------------------------------------------------
@@ -758,7 +767,11 @@ DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   nbeff = nb - (is-1)*ndims(1)
 #ifdef REALSWITCH
+#if(cmplxsic)
+  CALL superpose_staterc(q0ut(1,nb),vecsr(1,nbeff,is),q0,is)
+#else
   CALL superpose_stater(q0ut(1,nb),vecsr(1,nbeff,is),q0,is)
+#endif
 #else
   CALL superpose_state(q0ut(1,nb),vecs(1,nbeff,is),q0,is)
 #endif
@@ -926,17 +939,23 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
+USE twost, ONLY: matexp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
-INTEGER,INTENT(IN) :: is,iprint,iter1
-
+#if(cmplxsic)
+COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
+COMPLEX(DP) :: dabsto(kdim,kdim)
+#else
 REAL(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
 REAL(DP) :: dabsto(kdim,kdim)
-REAL(DP) :: vecovlpr   ! function names
-REAL(DP) :: vecnormr   ! function names
-REAL(DP) :: rmathdorth ! function names
-REAL(DP) :: rmatnorme  ! function names
+#endif
+INTEGER,INTENT(IN) :: is,iprint,iter1
+
+!REAL(DP) :: vecovlpr   ! function names
+!REAL(DP) :: vecnormr   ! function names
+!REAL(DP) :: rmathdorth ! function names
+!REAL(DP) :: rmatnorme  ! function names
 
 INTEGER :: itmax2,ni
 LOGICAL,PARAMETER :: ttest=.false.
@@ -1006,7 +1025,11 @@ WRITE(6,'(a,i4,1pg13.5)') &
 enold_2st=0D0
 DO iter=1,itmax2
 
+#if(cmplxsic)
+  CALL dalphabetarc(is, dab,q0) !new DAB
+#else
   CALL dalphabetar(is, dab,q0) !new DAB
+#endif
   IF(toptsicstep) THEN
     IF(iter.LE.3) THEN
       enstore(iter)=ener_2st(is)
@@ -1043,7 +1066,11 @@ DO iter=1,itmax2
   END IF
   norm=SQRT(SUM(dab(1:ni,1:ni)**2))           ! rmatnorme(dab,kdim,ni)
   dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
+#if(cmplxsic)
+  CALL matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
+#else
   CALL rmatexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
+#endif
   rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
   vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
   dab(1:ni,1:ni) = rexpdabold(1:ni,1:ni,is)
@@ -1091,6 +1118,7 @@ END IF
 RETURN
 END SUBROUTINE utgradstepr
 
+#if(!cmplxsic)
 SUBROUTINE test_symmcond(is,vecact,q0)
 
 !#INCLUDE "all.inc"
@@ -1145,6 +1173,7 @@ DEALLOCATE(vecsav,dabstep,dab,expdab)
 
 END SUBROUTINE test_symmcond
 #endif
+#endif
 
 #ifdef REALSWITCH
 #if(cmplxsic)
@@ -1182,8 +1211,7 @@ ener_2st(is)=0D0
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
-    
-    CALL superpose_staterc(qsym(1,nb),vecs(1,nbeff,is),q0,is)
+    CALL superpose_staterc(qsym(1,nb),vecsr(1,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
 !    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
@@ -1753,7 +1781,11 @@ END DO
 
 RETURN
 #ifdef REALSWITCH
+#if(cmplxsic)
+END SUBROUTINE superpose_staterc
+#else
 END SUBROUTINE superpose_stater
+#endif
 #else
 END SUBROUTINE superpose_state
 #endif
@@ -1785,17 +1817,39 @@ LOGICAL :: tfirst
 DATA tfirst/.true./
 
 #ifdef REALSWITCH
-!INCLUDE 'radmatrixr.inc'
 REAL(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
+REAL(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+REAL(DP),ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+REAL(DP),ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+REAL(DP),ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+REAL(DP),ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+REAL(DP),ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+REAL(DP),ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 #else
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
+COMPLEX(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
+COMPLEX(DP),ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
+COMPLEX(DP),ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
+COMPLEX(DP),ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
+COMPLEX(DP),ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
+COMPLEX(DP),ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
+COMPLEX(DP),ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 #endif
 
 !----------------------------------------------------------------------
 
+kdim=kstate
+ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
+ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
+ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
+ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
+ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
+ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
+ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
+!
 IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
 
 !     check spin of states
@@ -1955,6 +2009,13 @@ IF(PRINT == 1)THEN
 END IF
 
 IF(iunit > 0) CLOSE(iunit)
+DEALLOCATE(rrmatr)  ! matrix of r**2
+DEALLOCATE(xxmatr)  ! matrix of x**2
+DEALLOCATE(yymatr)  ! matrix of y**2
+DEALLOCATE(zzmatr)  ! matrix of z**2
+DEALLOCATE(xmatr)   ! matrix of x
+DEALLOCATE(ymatr)   ! matrix of y
+DEALLOCATE(zmatr)   ! matrix of z
 
 RETURN
 #ifdef REALSWITCH
@@ -1976,7 +2037,11 @@ END SUBROUTINE spmomsmatrix
 
 REAL(8) FUNCTION rmatdorth(aa,n,ndim)
 
+#if(cmplxsic)
+COMPLEX(8), INTENT(IN)                       :: aa(n,n)
+#else
 REAL(8), INTENT(IN)                       :: aa(n,n)
+#endif
 INTEGER, INTENT(IN OUT)                  :: n
 INTEGER, INTENT(IN)                      :: ndim
 
