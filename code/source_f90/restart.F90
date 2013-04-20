@@ -562,7 +562,7 @@ IF(mynact==0) THEN
 #endif
         END IF
       END IF
-!     writing cumulators for laser field
+!     writing accumulators for laser field
       WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
                 fpulseinteg1,fpulseinteg2,elaser
       WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold

@@ -27,7 +27,9 @@ SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork)
 !g     the number of iteration in which the number of local unitary steps is reduced
 
 USE params
+#if(twostsic)
 USE twost, ONLY:tnearest
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: q0(kdfull2,kstate)

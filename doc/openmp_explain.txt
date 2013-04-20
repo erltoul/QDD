@@ -4,7 +4,7 @@ Brief instructions for the OpenMP version of the 3D code
 There are new compile-time parameters in 'define.h':
 
 coudoub3D   activates the 3D FFTW in the exact Coulomb solver.
-dynopenmp   activates waefunction parallelization with OpenMP,
+dynopenmp   activates wavefunction parallelization with OpenMP,
             requires 'paropenmp' to be set.
 oldkinprop  switches back to old style 'kinprop' using interlaced
             1D FFT's.
@@ -15,7 +15,7 @@ Other new compile-time parameters are set in 'makefile':
 
 paropenmp   activates OpenMP parallelization, requires 'parano=1;
             it is set in 'makefile' by a 'YES' in the 'OMP' option.
-fftwcpu     activates FFTW3 routines for FFT; it is set in 'makefile' 
+fftw_cpu    activates FFTW3 routines for FFT; it is set in 'makefile'
             by a 'FFTW' in the option 'TYPE_FFT'.
 netlib_fft  activates NETLIB routines for FFT; it is set in 'makefile' 
             by a 'NETLIB' in the option 'TYPE_FFT'.
