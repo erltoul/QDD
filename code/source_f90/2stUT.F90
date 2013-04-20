@@ -20,11 +20,11 @@ REAL(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
 REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
-REAL(DP) :: step=0.1D0,precis=1D-6,precisfact=1D-3
+REAL(DP) :: step=0.1D0,precis=1D-6,precisfact=1D-3,phiini=0D0
 REAL(DP) :: ener_2st(2)
 INTEGER :: symutbegin=100,itut
 !COMMON /twostut/ step,precis,symutbegin,radmaxsym,itut
-REAL(DP) :: dampopt=0.7D0,steplow=0.01D0,steplim=1.2D0    ! optimized stepsize
+REAL(DP) :: dampopt=0.5D0,steplow=0.01D0,steplim=1.2D0    ! optimized stepsize
 LOGICAL :: toptsicstep=.true.       ! switch to optimized step
 
 INTEGER,PRIVATE :: kdim
@@ -32,28 +32,11 @@ INTEGER,PRIVATE :: kdim
 
 #if(cmplxsic)
 COMPLEX(DP),ALLOCATABLE :: rExpDABold(:,:,:)
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 #else
 REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
-!REAL(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-!REAL(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-!REAL(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-!REAL(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-!REAL(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-!REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-!REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
 #endif
-!COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
-!    vecsr
-!COMMON /radmatrixn/ndims
 
 #endif
 
@@ -73,13 +56,6 @@ INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
 COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
-!COMPLEX(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvevtors
 
 ! This parameter 'tnearest' activates the computation of the
@@ -129,7 +105,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !  steplim     = maximum step size (tentative default 1.2)
 !
 NAMELIST /fsic/step,precis,symutbegin,precisfact, &
-               dampopt,steplow,steplim,toptsicstep     !!! UT parameters
+               dampopt,steplow,steplim,toptsicstep,phiini     !!! UT parameters
 
 !----------------------------------------------------------------
 
@@ -167,13 +143,6 @@ ALLOCATE(psirut(kdfull2,kstate))
 
 kdim=kstate
 ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
-!ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
-!ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
-!ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
-!ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
-!ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
-!ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
-!ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvevtors
 
 !     initialize unitary matrix
@@ -183,12 +152,32 @@ IF(istat==0) THEN
     DO i=1,ndims(is)
       DO j=1,ndims(is)
         IF(i == j) THEN
+#if(cmplxsic)
+!          vecsr(i,j,is) = CMPLX(0D0,1D0)
           vecsr(i,j,is) = 1D0
+#else
+          vecsr(i,j,is) = 1D0
+#endif
         ELSE
           vecsr(i,j,is) = 0D0
         END IF
       END DO
     END DO
+#if(cmplxsic)
+    ifcmplxin=1
+    ni=ndims(is)
+    nim=ni-1      
+    IF(ifcmplxin==1) THEN
+!      phiini=PI*1D-3
+      vecsr(ni,ni,is)=CMPLX(COS(phiini),0D0,DP)
+      vecsr(nim,nim,is)=vecsr(ni,ni,is)
+      vecsr(ni,nim,is)=CMPLX(0D0,SIN(phiini),DP)
+      vecsr(nim,ni,is)=CMPLX(0D0,-SIN(phiini),DP)
+    ELSE
+      vecsr(ni,ni,is)=CMPLX(0D0,1D0,DP)
+      vecsr(nim,nim,is)=CMPLX(0D0,-1D0,DP)
+    END IF
+#endif    
   END DO
 END IF
 
@@ -219,13 +208,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !   frees workspace for static SIC
 
 DEALLOCATE(rExpDABold)!MV added
-!DEALLOCATE(rrmatr)  ! matrix of r**2
-!DEALLOCATE(xxmatr)  ! matrix of x**2
-!DEALLOCATE(yymatr)  ! matrix of y**2
-!DEALLOCATE(zzmatr)  ! matrix of z**2
-!DEALLOCATE(xmatr)   ! matrix of x
-!DEALLOCATE(ymatr)   ! matrix of y
-!DEALLOCATE(zmatr)   ! matrix of z
 DEALLOCATE(vecsr)   ! searched eigenvevtors
 
 
@@ -256,13 +238,6 @@ NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
 kdim=kstate
 ALLOCATE(ExpDABold(kstate,kstate,2),wfrotate(kstate,kstate,2))
-!ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
-!ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
-!ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
-!ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
-!ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
-!ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
-!ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvevtors
 
 ALLOCATE(qnewut(kdfull2,kstate))
@@ -343,7 +318,11 @@ DO nb=1,nstate
   IF(occup(nb) > small) THEN
     ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
 #ifdef REALSWITCH
+#if(cmplxsic)
+    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
+#else
     CALL calc_sicspr(rhosp,usicsp,q0(1,nb),nb)
+#endif
 #else
     CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
 #endif
@@ -653,7 +632,11 @@ is=ispin(nbe)
 nb = nbe - (is-1)*ndims(1)
 DO na=1,ndims(is)
   nae = na + (is-1)*ndims(1)
+#if(cmplxsic)
+  q1(:) =q1(:)-qnewr(:,nae)*CONJG(vecsr(nb,na,is))
+#else
   q1(:) =q1(:)-qnewr(:,nae)*vecsr(nb,na,is)
+#endif
 END DO
 
 RETURN
@@ -876,7 +859,7 @@ DO iter=1,itmax2
       e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
-      IF(stepnew < 0D0) stepnew=step
+!      IF(stepnew < 0D0) stepnew=step
 !      stepnew = stepnew/actstep
 !      actstep = stepnew*actstep
 !      IF(stepnew > steplim) stepnew=steplim
@@ -939,7 +922,9 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
-USE twost, ONLY: matexp
+#if(cmplxsic)
+USE twost, ONLY: matexp,matdorth
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -986,18 +971,19 @@ ELSE
 !   step=epswf
 END IF
 
+ni=ndims(is)
+
 IF(ttest) THEN
-  write(6,*) 'entree utgradstepr'!MV
-  write (6,'(4f12.5)') &
-    ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
+  write(6,*) 'entree utgradstepr: is=',is
+  DO jj=1,ni  
+    write (6,'(6(1pg13.5))') vecsr(:,jj,is)
+  END DO
 END IF
 
-ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
 !dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
 !vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
-
 actstep = step  ! radmaxsym obsolete, set to 1D0
 actprecis = max(precis,precisfact*sumvar2)
 !actprecis = precis
@@ -1008,9 +994,13 @@ IF(tconv) THEN
   WRITE(353,*) '# convergence symmetry condition. iter1,is=',iter1,is
   WRITE(353,'(a)') '# Ortho , variance, erreur , actstep, Spin'
   IF(ttest) THEN
-    WRITE(353,*) ' before: vecsr='
+    WRITE(353,*) ' vecsr before: is=',is
     DO i=1,ni
       WRITE(353,'(20(1pg13.5))') vecsr(1:ni,i,is)
+    END DO
+    WRITE(353,*) ' rexpdabold before: is=',is
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') rexpdabold(1:ni,i,is)
     END DO
     WRITE(353,'(a,i4,1pg13.5)') &
       ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
@@ -1030,6 +1020,12 @@ DO iter=1,itmax2
 #else
   CALL dalphabetar(is, dab,q0) !new DAB
 #endif
+  IF(iter==1) THEN
+    WRITE(353,*) ' dab before: is=',is
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') dab(1:ni,i)
+    END DO
+  END IF
   IF(toptsicstep) THEN
     IF(iter.LE.3) THEN
       enstore(iter)=ener_2st(is)
@@ -1049,12 +1045,13 @@ DO iter=1,itmax2
       e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
-      IF(stepnew < 0D0) stepnew=step
+!      IF(stepnew < 0D0) stepnew=step
 !      stepnew = stepnew/actstep
 !      actstep = stepnew*actstep
 !      IF(stepnew > steplim) stepnew=steplim
 !      IF(stepnew < steplow) stepnew=steplow
       actstep = max(steplow,min(stepnew,steplim))
+!      WRITE(*,'(i52(1pg13.5))') ' is,stepnew,actstep=',is,stepnew,actstep
       IF(ttest) THEN
         WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
         WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
@@ -1064,7 +1061,11 @@ DO iter=1,itmax2
       END IF
     END IF    
   END IF
-  norm=SQRT(SUM(dab(1:ni,1:ni)**2))           ! rmatnorme(dab,kdim,ni)
+#if(cmplxsic)
+  norm=SQRT(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))))  ! rmatnorme(dab,kdim,ni)
+#else
+  norm=SQRT(SUM(dab(1:ni,1:ni)**2))  ! rmatnorme(dab,kdim,ni)
+#endif
   dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
 #if(cmplxsic)
   CALL matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
@@ -1073,14 +1074,29 @@ DO iter=1,itmax2
 #endif
   rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
   vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
+#if(cmplxsic)
+  dab(1:ni,1:ni) = CONJG(rexpdabold(1:ni,1:ni,is))
+#else
   dab(1:ni,1:ni) = rexpdabold(1:ni,1:ni,is)
+#endif
   dabsto(1:ni,1:ni) = MATMUL(rexpdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
+#if(cmplxsic)
+  ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))-ndims(is))))
+#else
   ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)**2)-ndims(is))) 
+#endif
   IF(tconv) THEN
-       WRITE(353,'(i4,6(1pg13.5))')   &
+#if(cmplxsic)
+       WRITE(353,'(i4,8(1pg13.5))')   &
+         iter,matdorth(vecsr(1,1,is),kdim,ndims(is)),&
+         norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
+         actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
+#else
+       WRITE(353,'(i4,8(1pg13.5))')   &
          iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
          norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
-         actstep*norm**2/(ener_2st(is)-enold_2st)
+         actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
+#endif
        CALL FLUSH(353)
   ELSE
     WRITE(6,'(i4,5(1pg13.5))')   &
@@ -1102,6 +1118,10 @@ IF(tconv) THEN
     WRITE(353,*) '  after: vecsr='
     DO i=1,ni
       WRITE(353,'(20(1pg13.5))') vecsr(1:ni,i,is)
+    END DO
+    WRITE(353,*) '  after: rexpdabold='
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') rexpdabold(1:ni,i,is)
     END DO
   END IF
   WRITE(353,'(1x/1x)') 
@@ -1306,8 +1326,12 @@ DO nb=1,nstate
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
     CALL calc_sicspr(rhosp,usicsp,qsym(1,nb),nb)
+!    CALL printfield(6,rhosp,'rhosp')
+!    CALL printfield(6,usicsp,'usicsp')
 !WRITE(*,*) 'is,nb,encoulsp,enerpw=',is,nb,encoulsp,enerpw
-!WRITE(*,*) 'is,nb,norm-wf=',is,nb,rwfnorm(qsym(1,nb))
+!WRITE(*,*) 'is,nb,norm-wf=',is,nb,rwfnorm(qsym(1,nb)),&
+! SUM(rhosp),SUM(usicsp)
+
     ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
     enrear=save1
     enerpw=save2
@@ -1331,6 +1355,10 @@ DO nb=1,nstate
     END DO !na
   END IF
 END DO !nb
+!    WRITE(6,*) ' utcond: is=',is
+!    DO i=1,ndims(is)
+!      WRITE(6,'(20(1pg13.5))') utcond(1:ndims(is),i)
+!    END DO
 !      call rMatPrint ('utCond', utcond, kstate, ndims(is))
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
@@ -1744,16 +1772,16 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'radmatrixr.inc'
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 #if(cmplxsic)
-COMPLEX(DP),INTENT(IN OUT) :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(OUT) :: wfsup(kdfull2)
 COMPLEX(DP),INTENT(IN) :: coeff(kstate)
 #else
-REAL(DP),INTENT(IN OUT) :: wfsup(kdfull2)
+REAL(DP),INTENT(OUT) :: wfsup(kdfull2)
 REAL(DP),INTENT(IN) :: coeff(kstate)
 #endif
 #else
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
-COMPLEX(DP),INTENT(IN OUT) :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(OUT) :: wfsup(kdfull2)
 COMPLEX(DP),INTENT(IN) :: coeff(kstate)
 COMPLEX(DP) :: wfovlp,orbitaloverlap
 #endif

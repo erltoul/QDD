@@ -1075,9 +1075,9 @@ encsum = 0D0
 IF (ispin(nrel2abs(nb)) == 1) THEN
   DO ind=1,nxyz
     usicsp(ind) = usicsp(ind)+couldif(ind)
-#if(directenergy)
-    encsum=encsum+rhosp(ind)*couldif(ind)
-#endif
+    IF(directenergy) THEN
+      encsum=encsum+rhosp(ind)*couldif(ind)
+    END IF
   END DO
   encoulsp = encsum*dvol/2D0
   IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
@@ -1085,9 +1085,9 @@ ELSE
   DO ind=1,nxyz
     idx = ind+nxyz
     usicsp(idx) = usicsp(idx)+couldif(ind)
-#if(directenergy)
-    encsum=encsum+rhosp(ind)*couldif(ind)
-#endif
+    IF(directenergy) THEN
+      encsum=encsum+rhosp(ind)*couldif(ind)
+    END IF
   END DO
   encoulsp = encsum*dvol/2D0
   IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')

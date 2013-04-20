@@ -569,10 +569,10 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
-!  espbef = rwfovlp(q0(1,nbe),q1)
+  espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
-!  espaft = rwfovlp(q0(1,nbe),q1)
-!  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
+  espaft = rwfovlp(q0(1,nbe),q1)
+  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
   
@@ -1144,6 +1144,17 @@ IF(myn == 0) THEN
   IF(ifsicp == 6) THEN
     WRITE(42,'(a,i3,a,i5)') 'final protocol of static for IFSICP=',ifsicp,  &
         ', pre-iterations with Slater=',itersicp6
+  ELSE IF(ifsicp == 8) THEN
+    WRITE(42,'(a,i3,a,i5)') 'final protocol of static for IFSICP=',ifsicp
+#if(cmplxsic)
+    WRITE(42,'(a)') ' complex SIC'
+#else
+    WRITE(42,'(a)') ' real SIC'
+#endif
+    WRITE(42,'(a)') &
+      'symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep'
+    WRITE(42,'(i4,7(1pg12.4),l7)') symutbegin,step,precis,precisfact, &
+               dampopt,steplow,steplim,phiini,toptsicstep
   ELSE
     WRITE(42,'(a,i3)') 'final protocol of static for IFSICP=',ifsicp
   END IF
