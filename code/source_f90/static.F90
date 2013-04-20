@@ -1103,6 +1103,7 @@ SUBROUTINE pri_pstat(psi,i,rho)
 USE params
 ! USE kinetic
 USE coulsolv
+USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
