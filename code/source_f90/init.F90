@@ -89,7 +89,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     nmptheta,nmpphi,jmp,jovlp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
-    iscatterelectron,scatterelectronenergy,  &
+    iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw, &

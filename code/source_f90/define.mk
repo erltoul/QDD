@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT
+CF90 = GFORT1
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -33,7 +33,7 @@ TYPE_FFT = FFTW
 # Available options:
 #   * YES
 #   * NO
-DEBUG  = NO
+DEBUG  = YES
 
 # LINK_STATIC: select static linkage of the binary
 # Available options:

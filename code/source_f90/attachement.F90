@@ -52,14 +52,16 @@ COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
 COMPLEX(DP) :: psidum(kdfull2)
 
-EXTERNAL wfovlp
+!EXTERNAL wfovlp
 COMPLEX(DP) :: wfovlp
 INTEGER :: indx(nstate)             ! index field for LU decomp.
 COMPLEX(DP) :: cdum
+REAL(DP) :: xxdum
+INTEGER :: iidum
 
 !--------------------------------------------------------------
 
-WRITE(6,*) 'Entering attach_prob'
+WRITE(6,*) 'Enter attach_prob'
 
 vcoll=1D0      ! strength of collisional pot.
 
@@ -69,9 +71,16 @@ vcoll=1D0      ! strength of collisional pot.
 
 WRITE(6,*) 'opening unit 91'
 OPEN(UNIT=91,STATUS='unknown',FORM='formatted', FILE='occ_eps_target')
-IF(istat == 0.AND.irest == 0) READ(91,*) xdum,xdum
-IF(istat == 1.AND.irest == 0) READ(91,*) binerg,xdum
-IF(istat == 0.AND.irest > 0) READ(91,*) binerg,reference_energy
+IF(istat == 0.AND.irest == 0) THEN
+   READ(91,*) xxdum,xxdum
+ELSE IF(istat == 1.AND.irest == 0) THEN
+   READ(91,*) binerg,xxdum
+ELSE IF(istat == 0.AND.irest > 0) THEN
+   READ(91,*) binerg,reference_energy
+ELSE
+   STOP ' invalid option in ATTACH_PROB'
+END IF
+WRITE(*,*) ' binerg=',binerg
 
 !      aver_estar  = etot - binerg
 aver_estar  = reference_energy - binerg
@@ -87,11 +96,11 @@ WRITE(6,*)'aver_estar,delta_etrgt,emin_target,emax_target',  &
 
 nstate_target=0
 DO i=1,10000
+  WRITE(*,*) ' before 91. i=',i
   READ(91,*,END=899)xxdum,iidum,ispin_target(i), occ_target(i),eps_target(i)
-!            write(6,'(a,2(1x,i2),2(1x,e12.5) )')
-!     &      'target state #, spin, occup,energy',
-!     &      i,ispin_target(i),occ_target(i),eps_target(i)
-  nstate_target=nstate_target+1
+  write(6,'(a,2(1x,i2),2(1x,e12.5) )') 'target state nr., spin, occup,energy', &
+     i,ispin_target(i),occ_target(i),eps_target(i)
+  nstate_target=nstate_target+1    !?
 END DO
 899     CONTINUE
 CLOSE(91)
@@ -137,8 +146,8 @@ DO ih=1,nstate-1
 !         write(6,*) 'target: nstate_t,nclust_t,nion_t,nspdw_t'
 !         write(6,*) nstate_target,nclust_target,
 !     &              nion_target,nspdw_target
-!         write(6,*) 'actual: nstate,nclust,nion,nspdw,kstate'
-!         write(6,*) nstate,nclust,nion,nspdw,kstate
+         write(6,*) 'actual: nstate,nclust,nion,nspdw,kstate'
+         write(6,*) nstate,nclust,nion,nspdw,kstate
               IF((nion_target /= nion).OR.(nspdw_target /= nspdw)) THEN
                 WRITE(6,*)'attachment calculation impossible:'
                 WRITE(6,*)'mismatch betw # of ions or spins'
@@ -198,7 +207,7 @@ DO ih=1,nstate-1
               
               678  CONTINUE
               CLOSE(90)
-!      write(6,*)'target wfs and occ/energ read'
+      write(6,*)'target wfs and occ/energ read'
               
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     build matrix overlaps of s.p. states

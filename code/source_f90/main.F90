@@ -414,7 +414,23 @@ DO it=irest,itmax   ! time-loop
     IF(nclust > 0) CALL savings(psi,tarray,it)
   END IF
   
-  
+!  computing electron attachement
+  IF(jattach>0) THEN
+    IF(it.eq.irest) THEN
+       totintegprob=0.d0
+       reference_energy=etot
+    ELSE IF(it.gt.irest.and.mod(it,jattach).eq.0) THEN
+       call attach_prob(nmatchenergy,totalprob,psi)
+!          call testoto(psi)                                                    
+       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+       write(6,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+       write(809,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+    END IF
+  END IF  
+! end electron attachement
+
 #if(simpara)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   WRITE(7,*) ' After barrier. myn,it=',myn,it
