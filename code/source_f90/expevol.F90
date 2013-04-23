@@ -340,18 +340,21 @@ INTEGER :: is,ni,na,nb,naeff,nbeff
 
 !----------------------------------------------------------------------
 
+wfrotate = 0D0
 DO is=1,2
   ni = ndims(is)
 
 ! evaluate matrix from overlaps
   DO na=1,nstate
-    naeff = na - (is-1)*ndims(1)
-    DO nb=1,nstate
-      IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
-        nbeff = nb - (is-1)*ndims(1)
-        wfrotate(naeff,nbeff,is) = wfovlp(qold(1,na),qact(1,nb))
-      END IF
-    END DO
+    IF(ispin(nrel2abs(na))==is) THEN
+      naeff = na - (is-1)*ndims(1)
+      DO nb=1,nstate
+        IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
+          nbeff = nb - (is-1)*ndims(1)
+          wfrotate(naeff,nbeff,is) = wfovlp(qold(1,na),qact(1,nb))
+        END IF
+      END DO
+    END IF
   END DO
 
 ! ortho-normalize

@@ -82,8 +82,11 @@ SUBROUTINE init_fsicr()
 
 USE params
 USE kinetic
+USE twost, ONLY: orthnorm
 !USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(8) :: ccr,csi
 
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
@@ -164,18 +167,27 @@ IF(istat==0) THEN
       END DO
     END DO
 #if(cmplxsic)
-    ifcmplxin=1
-    ni=ndims(is)
-    nim=ni-1      
+    ifcmplxin=2
     IF(ifcmplxin==1) THEN
 !      phiini=PI*1D-3
+      ni=ndims(is)
+      nim=ni-1      
       vecsr(ni,ni,is)=CMPLX(COS(phiini),0D0,DP)
       vecsr(nim,nim,is)=vecsr(ni,ni,is)
       vecsr(ni,nim,is)=CMPLX(0D0,SIN(phiini),DP)
       vecsr(nim,ni,is)=CMPLX(0D0,-SIN(phiini),DP)
-    ELSE
-      vecsr(ni,ni,is)=CMPLX(0D0,1D0,DP)
-      vecsr(nim,nim,is)=CMPLX(0D0,-1D0,DP)
+    ELSE IF(ifcmplxin==2) THEN
+      csi = CMPLX(0D0,SIN(phiini)/SQRT(2D0),DP)
+      ccr = CMPLX(SQRT(1D0-2D0*ABS(csi)**2),0D0,DP)
+      DO ni=1,ndims(is)
+        vecsr(ni,ni,is) = ccr
+        nip=MOD(ni,ndims(is))+1
+        vecsr(ni,nip,is) = csi
+        nim=ni-1
+        if(nim==0) nim=ndims(is)
+        vecsr(ni,nim,is) = -csi
+      END DO
+      CALL orthnorm(vecsr(1,1,is),ndims(is),kdim)
     END IF
 #endif    
   END DO
@@ -830,6 +842,10 @@ IF(tconv) THEN
   IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
   IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
   WRITE(353,*) '# convergence symmetry condition. timestep,is=',iter1,is
+!  WRITE(353,*) 'vecs before:'
+!  DO na=1,ni
+!    WRITE(353,'(3(2(1pg13.5),2x))') vecs(1:ni,na,is)
+!  END DO
   WRITE(353,'(a)') '# iter Ortho , variance, erreur , actstep'
 ELSE
   WRITE(6,'(a)')' iter Ortho , variance, non-linearity, actstep'
@@ -859,7 +875,7 @@ DO iter=1,itmax2
       e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
-!      IF(stepnew < 0D0) stepnew=step
+      IF(stepnew < 0D0) stepnew=step
 !      stepnew = stepnew/actstep
 !      actstep = stepnew*actstep
 !      IF(stepnew > steplim) stepnew=steplim
@@ -2028,9 +2044,15 @@ IF(PRINT == 1)THEN
 #else
     var=CMPLX(0D0,0D0,DP)
 #endif
+    WRITE(6,'(a)') ' na  x   y   z     xx    yy     zz'
     DO na=1,ndims(is)
       var = var + rrmatr(na,na,is) - xmatr(na,na,is)**2 -  &
           ymatr(na,na,is)**2 - zmatr(na,na,is)**2
+      nac = na+(is-1)*noff
+      WRITE(6,'(i5,6(1pg13.5))')  &
+       na,REAL(xmatr(na,na,is),DP),REAL(ymatr(na,na,is),DP), &
+       REAL(zmatr(na,na,is),DP),REAL(xxmatr(na,na,is),DP), &
+       REAL(yymatr(na,na,is),DP),REAL(zzmatr(na,na,is),DP)
     END DO
     WRITE(6,*)'For spin =',is,' Total spacial variance ',var
   END DO
