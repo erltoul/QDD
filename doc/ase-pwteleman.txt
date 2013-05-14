@@ -1,0 +1,13 @@
+The coupling of the PWTELEMAN code with ASE ( https://wiki.fysik.dtu.dk/ase ) is still in progress.
+An example using Na is included in "code/Python_ASE/Na/".
+The directory contains 3 files : "na.py", "pwtelemanscript.py" and "pwtelemandynr.py".
+To use them, follow the steps below :
+
+	1- Install ASE : https://wiki.fysik.dtu.dk/ase/download.html
+	2- Move pwtelemandynr.py in [your_ase_installation_path]/ase/calculators/
+	3- Place na.py in your working directory
+	4- Set pwteleman_SCRIPT environment variable as follow : export pwteleman_SCRIPT=[path_to_pwtelemanscript.py]/pwtelemanscript.py
+	5- In the file "pwtelemanscript.py", replace the location of PWTELEMAN program by your actual path (line 3)
+	6- Run the python script with the following command : python na.py
+
+ASE will automatically generate the input files for the PWTELEMAN code (the for005* files) and then run the code itself
