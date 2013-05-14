@@ -322,8 +322,11 @@ extern double params_mp_projinix_,params_mp_projiniy_,params_mp_projiniz_;   // 
 extern double params_mp_rvectmp2_[3],params_mp_rvectmp_[3];
 extern int params_mp_iindtmp_[3];
 
+extern int params_mp_num_gpus_;  //total number of gpus on the node
+extern int params_mp_mygpu_; //number of the actual gpu used by the node
+
 cudaError_t error;
-cudaStream_t stream1,stream2,stream3;
+cudaStream_t *stream1,*stream2,*stream3;
 
 void Check_CUDA_Error(cudaError_t error)
 {

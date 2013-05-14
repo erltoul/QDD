@@ -70,6 +70,10 @@ CALL cpu_time(time_absinit)
 
 CALL init_parallele()
 
+#if(fftw_gpu)
+CALL cuda_gpu_init()
+#endif
+
 CALL checkoptions()
 
 CALL initnamelists          ! read all input parameters
@@ -88,8 +92,8 @@ CALL init_grid()
 
 CALL init_fields()
 
-#if(fftw_gpu)
-CALL cuda_gpu_init()
+#if(lda_gpu&&fftw_gpu)
+CALL cuda_lda_init()
 #endif
 
 #if(fullsic)

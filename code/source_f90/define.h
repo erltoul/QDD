@@ -42,3 +42,6 @@
 
 !For the moment compute lda on GPU seems to be unstable and can freeze the computer
 #define lda_gpu 1
+
+!Asynchronous GPU kernel, set it to 0 for the moment
+#define asynclaunch 0

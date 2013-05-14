@@ -318,6 +318,11 @@ REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile positi
 REAL(DP) :: rvectmp2(3),rvectmp(3)
 INTEGER :: iindtmp(3)
 
+#if(fftw_gpu)
+INTEGER :: num_gpus !total number of gpus on the node
+INTEGER :: mygpu !number of the actual gpu used by the node
+#endif
+
 ! pointer for energy-density functional
 PROCEDURE(),POINTER :: calc_lda
 

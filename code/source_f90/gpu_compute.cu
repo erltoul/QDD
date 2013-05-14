@@ -23,6 +23,9 @@ __global__ void multiply_device_real(cufftDoubleReal *d_ffta,int nxyz,double nor
 
 extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	double norm = *tnorm;
 	int blocksize=192;
@@ -31,7 +34,11 @@ extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*norm on the GPU
-        multiply_device<<<dimgrid,dimblock,0,stream2>>>(d_ffta,nxyz,norm);
+#if(asynclaunch)
+        multiply_device<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,nxyz,norm);
+#else
+        multiply_device<<<dimgrid,dimblock>>>(d_ffta,nxyz,norm);
+#endif
 }
 
 __global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz, double tnorm)
@@ -49,6 +56,9 @@ __global__ void multiply_ak_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
 
 extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -56,7 +66,11 @@ extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*d_ak on the GPU
-        multiply_ak_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz,1.0);
+#if(asynclaunch)
+        multiply_ak_gpu<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_ak,nxyz,1.0);
+#else
+        multiply_ak_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz,1.0);
+#endif
 }
 
 __global__ void multiply_ak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
@@ -74,6 +88,9 @@ __global__ void multiply_ak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *
 
 extern "C" void multiply_ak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -81,7 +98,11 @@ extern "C" void multiply_ak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_a
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*d_ak on the GPU
-        multiply_ak_gpu2<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz);
+#if(asynclaunch)
+        multiply_ak_gpu2<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_ak,nxyz);
+#else
+        multiply_ak_gpu2<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+#endif
 }
 
 __global__ void multiply_rak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int nxyz)
@@ -99,6 +120,9 @@ __global__ void multiply_rak_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex 
 
 extern "C" void multiply_rak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -106,7 +130,11 @@ extern "C" void multiply_rak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*d_ak on the GPU
-        multiply_rak_gpu2<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz);
+#if(asynclaunch)
+        multiply_rak_gpu2<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_ak,nxyz);
+#else
+        multiply_rak_gpu2<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+#endif
 }
 
 __global__ void multiply_ak_real_gpu(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int nxyz)
@@ -122,6 +150,9 @@ __global__ void multiply_ak_real_gpu(cufftDoubleComplex *d_ffta,cufftDoubleReal 
 
 extern "C" void multiply_ak_real_(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_ak,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -129,7 +160,11 @@ extern "C" void multiply_ak_real_(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_
 	dim3 dimblock(blocksize,1,1);
 
 	//Multiplication d_ffta*d_ak on the GPU
-        multiply_ak_real_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ak,nxyz);
+#if(asynclaunch)
+        multiply_ak_real_gpu<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_ak,nxyz);
+#else
+        multiply_ak_real_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ak,nxyz);
+#endif
 }
 
 __global__ void multiply_shift_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,cufftDoubleComplex shix,cufftDoubleComplex shiy,cufftDoubleComplex shiz,int nxyz)
@@ -163,6 +198,9 @@ __global__ void multiply_shift_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex
 
 extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz,double *sx,double *sy,double *sz,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	cufftDoubleComplex shix,shiy,shiz;
 	int blocksize=192;
@@ -178,7 +216,11 @@ extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
 	shiz.y = *sz;
 
 	//Multiplication on the GPU
-        multiply_shift_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
+#if(asynclaunch)
+        multiply_shift_gpu<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
+#else
+        multiply_shift_gpu<<<dimgrid,dimblock>>>(d_ffta,d_akx,d_aky,d_akz,shix,shiy,shiz,nxyz);
+#endif
 }
 
 __global__ void hpsi_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int nxyz, int kdfull2)
@@ -195,6 +237,9 @@ __global__ void hpsi_gpu(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,
 
 extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,int *N,int *kd)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int kdfull2=*kd;
 	int blocksize=192;
@@ -203,7 +248,11 @@ extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta
 	dim3 dimblock(blocksize,1,1);
 
 	//d_ffta*d_ak+d_ffta2 on the GPU
-        hpsi_gpu<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_ffta2,d_akv,nxyz,kdfull2);
+#if(asynclaunch)
+        hpsi_gpu<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_ffta2,d_akv,nxyz,kdfull2);
+#else
+        hpsi_gpu<<<dimgrid,dimblock>>>(d_ffta,d_ffta2,d_akv,nxyz,kdfull2);
+#endif
 	Check_CUDA_Error(error);
 }
 
@@ -220,6 +269,9 @@ __global__ void d_grad_gpu1(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 
 extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,cufftDoubleReal *d_akv,double *ep,double *e0,int *N,int *nbe)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	double epswf = *ep, e0dmp = *e0;
 	int kstate=*nbe-1;
@@ -229,7 +281,11 @@ extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,
 	dim3 dimblock(blocksize,1,1);
 
 	//grad on the GPU
-        d_grad_gpu1<<<dimgrid,dimblock,0,stream2>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,d_akv,epswf,e0dmp,nxyz);
+#if(asynclaunch)
+        d_grad_gpu1<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,d_akv,epswf,e0dmp,nxyz);
+#else
+        d_grad_gpu1<<<dimgrid,dimblock>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,d_akv,epswf,e0dmp,nxyz);
+#endif
 	Check_CUDA_Error(error);
 }
 
@@ -246,6 +302,9 @@ __global__ void d_grad_gpu2(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 
 extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,double *ep,int *N,int *nbe)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	double epswf = *ep;
 	int kstate=*nbe-1;
@@ -255,7 +314,11 @@ extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,
 	dim3 dimblock(blocksize,1,1);
 
 	//grad on the GPU
-        d_grad_gpu2<<<dimgrid,dimblock,0,stream2>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,epswf,nxyz);
+#if(asynclaunch)
+        d_grad_gpu2<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,epswf,nxyz);
+#else
+        d_grad_gpu2<<<dimgrid,dimblock>>>(d_ffta+kstate*nxyz,d_ffta2+kstate*nxyz,epswf,nxyz);
+#endif
 	Check_CUDA_Error(error);
 }
 
@@ -274,6 +337,9 @@ __global__ void d_sum_calc(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta
 
 extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2, cufftDoubleReal *d_akv,int *N,int *nb)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int nbe  = *nb-1;
 	int blocksize=192;
@@ -287,7 +353,11 @@ extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubl
 	thrust::device_vector<double> d_sum2(nxyz);
 
 	//Computation of the d_sum vectors on the GPU
-        d_sum_calc<<<dimgrid,dimblock,0,stream2>>>(d_ffta+nbe*nxyz,d_ffta2+nbe*nxyz,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
+#if(asynclaunch)
+        d_sum_calc<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta+nbe*nxyz,d_ffta2+nbe*nxyz,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
+#else
+        d_sum_calc<<<dimgrid,dimblock>>>(d_ffta+nbe*nxyz,d_ffta2+nbe*nxyz,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),raw_pointer_cast(&d_sume[0]),raw_pointer_cast(&d_sum2[0]),nxyz);
+#endif
 
 	//Reduction of the vectors
 	*s0=thrust::reduce(d_sum0.begin(),d_sum0.end(),(double)0.0);
@@ -310,6 +380,9 @@ __global__ void d_sum_calc2(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_akv,do
 
 extern "C" void sum_calc2_(double *s0,double *sk,cufftDoubleComplex *d_ffta,cufftDoubleReal *d_akv,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int blocksize=192;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
@@ -318,8 +391,11 @@ extern "C" void sum_calc2_(double *s0,double *sk,cufftDoubleComplex *d_ffta,cuff
 	//Declaration of the vectors on the GPU
 	thrust::device_vector<double> d_sum0(nxyz);
 	thrust::device_vector<double> d_sumk(nxyz);
-
-        d_sum_calc2<<<dimgrid,dimblock,0,stream2>>>(d_ffta,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),nxyz);
+#if(asynclaunch)
+        d_sum_calc2<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_ffta,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),nxyz);
+#else
+        d_sum_calc2<<<dimgrid,dimblock>>>(d_ffta,d_akv,raw_pointer_cast(&d_sum0[0]),raw_pointer_cast(&d_sumk[0]),nxyz);
+#endif
 
 	*s0=thrust::reduce(d_sum0.begin(),d_sum0.end(),(double)0.0);
 	*sk=thrust::reduce(d_sumk.begin(),d_sumk.end(),(double)0.0);
@@ -358,12 +434,18 @@ __global__ void d_build_k(int nx,int ny,int nz,double h2m,double dt1,double dkx,
 
 extern "C" void build_kgpu_(int *NX,int *NY,int *NZ,double *hm,double *dt,double *dx,double *dy,double *dz,cufftDoubleComplex *d_ak,cufftDoubleReal *d_akv,cufftDoubleComplex *d_akx,cufftDoubleComplex *d_aky,cufftDoubleComplex *d_akz)
 {
-
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nx=*NX,ny=*NY,nz=*NZ;
 	double h2m=*hm,dt1=*dt,dkx=*dx,dky=*dy,dkz=*dz;
 	int blocksize=8;
 	int gridx=(int)ceil(nx/(float)blocksize),gridy=(int)ceil(ny/(float)blocksize),gridz=(int)ceil(nz/(float)blocksize);
 	dim3 dimgrid(gridx,gridy,gridz);
 	dim3 dimblock(blocksize,blocksize,blocksize);
-	d_build_k<<<dimgrid,dimblock,0,stream2>>>(nx,ny,nz,h2m,dt1,dkx,dky,dkz,d_ak,d_akv,d_akx,d_aky,d_akz);
+#if(asynclaunch)
+	d_build_k<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(nx,ny,nz,h2m,dt1,dkx,dky,dkz,d_ak,d_akv,d_akx,d_aky,d_akz);
+#else
+	d_build_k<<<dimgrid,dimblock>>>(nx,ny,nz,h2m,dt1,dkx,dky,dkz,d_ak,d_akv,d_akx,d_aky,d_akz);
+#endif
 }

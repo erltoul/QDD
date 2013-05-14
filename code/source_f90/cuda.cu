@@ -54,93 +54,145 @@ __device__ __constant__ double cr3 = 1.4422495703074083017725115;
 __device__ __constant__ double cr4 = 1.5874010519681993613971827;
 __device__ __constant__ double t17 = 1.923661051;
 
-double *d_chpdft;
+double **d_chpdft;
 #endif
 
 extern "C" void cuda_gpu_init_() //initialize some variables usefull for GPU computing
 {
-#if(lda_gpu)
-	int size_lda = 2*params_mp_nxyz_*sizeof(double);
-        error=cudaMalloc((void**)&d_chpdft,size_lda);
-	Check_CUDA_Error(error);
+#if(parayes)
+cudaGetDeviceCount(&params_mp_num_gpus_);
+if(params_mp_num_gpus_ == 1) params_mp_mygpu_ = 0;
+else if(params_mp_num_gpus_ == params_mp_knode_) params_mp_mygpu_=params_mp_myn_;
+else if(params_mp_knode_ % params_mp_num_gpus_ == 0) params_mp_mygpu_=params_mp_myn_%params_mp_num_gpus_;
+else {
+	cout<<"For the moment, number of gpus must be equal to the number of MPI process"<<endl;
+	exit(-1);
+     }
+cudaSetDevice(params_mp_mygpu_);
+#else
+params_mp_num_gpus_=1;
+params_mp_mygpu_=0;
 #endif
-	cudaStreamCreate(&stream1);
-	cudaStreamCreate(&stream2);
-	cudaStreamCreate(&stream3);
+
+	stream1 = new cudaStream_t[params_mp_num_gpus_];
+	stream2 = new cudaStream_t[params_mp_num_gpus_];
+	stream3 = new cudaStream_t[params_mp_num_gpus_];
+	cudaStreamCreate(&stream1[params_mp_mygpu_]);
+	cudaStreamCreate(&stream2[params_mp_mygpu_]);
+	cudaStreamCreate(&stream3[params_mp_mygpu_]);
 }
+
+#if(lda_gpu)
+extern "C" void cuda_lda_init_()
+{
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
+	int size_lda = 2*params_mp_nxyz_*sizeof(double);
+	d_chpdft  = (double**)malloc(params_mp_num_gpus_*sizeof(double*));
+        error=cudaMalloc((void**)&d_chpdft[params_mp_mygpu_],size_lda);
+	Check_CUDA_Error(error);
+}
+#endif
 
 extern "C" void cuda_end_() //Destroy variables set above
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 #if(lda_gpu)
 	cudaFree(d_chpdft);
 #endif
-	cudaStreamDestroy(stream1);
-	cudaStreamDestroy(stream2);
-	cudaStreamDestroy(stream3);
+	cudaStreamDestroy(stream1[params_mp_mygpu_]);
+	cudaStreamDestroy(stream2[params_mp_mygpu_]);
+	cudaStreamDestroy(stream3[params_mp_mygpu_]);
+	delete(stream1);
+	delete(stream2);
+	delete(stream3);
 }
 
 extern "C" void cuda_plan_1d_(cufftHandle *plan, int *dim, int *batch)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	//Creation of a 1D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan1d(plan,*dim,CUFFT_Z2Z,*batch) != CUFFT_SUCCESS)
 	{
-	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  cout<<"CUFFT error : Plan Creation failed 1D_Z2Z"<<endl;
 	  exit(-1);
 	}
+#if(asynclaunch)
 	//Associate the plan to a stream
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2[params_mp_mygpu_]) != CUFFT_SUCCESS)
 	{
 	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
+#endif
 }
 
 extern "C" void cuda_plan_3d_(cufftHandle *plan, int *n1, int *n2, int *n3)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_Z2Z) != CUFFT_SUCCESS)
 	{
-	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  cout<<"CUFFT error : Plan Creation failed 3D_Z2Z"<<endl;
 	  exit(-1);
 	}
+#if(asynclaunch)
 	//Associate the plan to a stream
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2[params_mp_mygpu_]) != CUFFT_SUCCESS)
 	{
 	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
+#endif
 }
 
 extern "C" void cuda_plan_3d_r2c_(cufftHandle *plan, int *n1, int *n2, int *n3)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_D2Z) != CUFFT_SUCCESS)
 	{
-	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  cout<<"CUFFT error : Plan Creation failed 3d_D2Z"<<endl;
 	  exit(-1);
 	}
+#if(asynclaunch)
 	//Associate the plan to a stream
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2[params_mp_mygpu_]) != CUFFT_SUCCESS)
 	{
 	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
+#endif
 }
 
 extern "C" void cuda_plan_3d_c2r_(cufftHandle *plan, int *n1, int *n2, int *n3)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	//Creation of a 3D FFT plan for GPU (the plan is the same for FORWARD and BACKWARD FFT)
         if(cufftPlan3d(plan,*n3,*n2,*n1,CUFFT_Z2D) != CUFFT_SUCCESS)
 	{
-	  cout<<"CUFFT error : Plan Creation failed"<<endl;
+	  cout<<"CUFFT error : Plan Creation failed 3D_Z2D"<<endl;
 	  exit(-1);
 	}
+#if(asynclaunch)
 	//Associate the plan to a stream
-        if(cufftSetStream(*plan,stream2) != CUFFT_SUCCESS)
+        if(cufftSetStream(*plan,stream2[params_mp_mygpu_]) != CUFFT_SUCCESS)
 	{
 	  cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
 	  exit(-1);
 	}
+#endif
 }
 
 extern "C" void kill_plan_(cufftHandle *plan)
@@ -151,14 +203,21 @@ extern "C" void kill_plan_(cufftHandle *plan)
 
 extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out, int *Np) //1D FFT FORWARD
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
         int N = *Np;
         cufftDoubleComplex *d_ffta_kin;
 
 	//Allocate device memory
         error=cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
+#if(asynclaunch)
 	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
-        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
+        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+        error=cudaMemcpy(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice);
+#endif
 	Check_CUDA_Error(error);
 	//Perform 1D FFT FORWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_FORWARD) != CUFFT_SUCCESS)
@@ -175,14 +234,21 @@ extern "C" void run_fft_for_(cufftHandle *plan, cufftDoubleComplex *in, cufftDou
 
 extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDoubleComplex *out,int *Np)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
         int N = *Np;
         cufftDoubleComplex *d_ffta_kin;
 
         //Allocate device memory
         error=cudaMalloc((void**)&d_ffta_kin,sizeof(cufftDoubleComplex)*N*BATCH);
 	Check_CUDA_Error(error);
+#if(asynclaunch)
 	//Copy data from CPU to GPU asynchonously, so we can perform copy and FFT at the same time
-        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1);
+        error=cudaMemcpyAsync(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+        error=cudaMemcpy(d_ffta_kin,in,sizeof(cufftDoubleComplex)*N*BATCH,cudaMemcpyHostToDevice);
+#endif
 	Check_CUDA_Error(error);
 	//Perform 1D FFT BACKWARD
         if(cufftExecZ2Z(*plan,d_ffta_kin,d_ffta_kin, CUFFT_INVERSE) != CUFFT_SUCCESS)
@@ -200,6 +266,9 @@ extern "C" void run_fft_back_(cufftHandle *plan, cufftDoubleComplex *in, cufftDo
 extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta_int,int *N)
 //Copy a complex array from GPU to another array on GPU
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
@@ -210,26 +279,42 @@ extern "C" void gpu_to_gpu_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_fft
 extern "C" void copy_on_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
 //Copy a complex array from CPU to GPU
 {
-
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
 
-	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+	error=cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+#endif
 	Check_CUDA_Error(error);
 }
 
 extern "C" void copy_real_on_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
 //Copy a real array from CPU to GPU
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
-	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+	error=cudaMemcpyAsync(d_mat,mat,size_cp,cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+	error=cudaMemcpy(d_mat,mat,size_cp,cudaMemcpyHostToDevice);
+#endif
 	Check_CUDA_Error(error);
 }
 
 extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 //Copy a complex array from GPU to CPU
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleComplex);
@@ -241,6 +326,9 @@ extern "C" void copy_from_gpu_(cufftDoubleComplex *mat,cufftDoubleComplex *d_mat
 extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,int *N)
 //Copy a real array from CPU to GPU
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int nxyz = *N;
 	int size_cp = nxyz*sizeof(cufftDoubleReal);
 
@@ -250,6 +338,9 @@ extern "C" void copy_real_from_gpu_(cufftDoubleReal *mat,cufftDoubleReal *d_mat,
 
 extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int type = *ty;
 	//Perform 3D FTT FORWARD on the GPU, with different error messages to localize easily a problem
         if(cufftExecZ2Z(*plan,d_ffta,d_ffta, CUFFT_FORWARD) != CUFFT_SUCCESS)
@@ -269,6 +360,9 @@ extern "C" void run_fft_for3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int 
 
 extern "C" void run_fft_for3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ks,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int kstate=*ks;
 	int nxyz=*N;
 	//Perform 3D FTT FORWARD on the GPU
@@ -284,6 +378,9 @@ extern "C" void run_fft_for3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 
 extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ty)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int type = *ty;
 
 	//Perform 3D FTT BACKWARD on the GPU, with different error messages to localize easily a problem
@@ -304,6 +401,9 @@ extern "C" void run_fft_back3d_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int
 
 extern "C" void run_fft_back3d2_(cufftHandle *plan,cufftDoubleComplex *d_ffta,int *ks,int *N)
 {
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
 	int kstate=*ks;
 	int nxyz=*N;
 	//Perform 3D FTT BACKWARD on the GPU
@@ -390,6 +490,7 @@ __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int n
 
 extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,double *ec,double *enerpw)
 {
+	cudaSetDevice(params_mp_mygpu_);
         int blocksize=192;
 	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
@@ -397,14 +498,18 @@ extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,double *ec,doubl
 	thrust::device_vector<double> d_ec(params_mp_nxyz_);
 	thrust::device_vector<double> d_enerpw(params_mp_nxyz_);
 
-        error=cudaMemcpyAsync(d_chpdft,rho,sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+        error=cudaMemcpyAsync(d_chpdft[params_mp_mygpu_],rho,sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
 	Check_CUDA_Error(error);
-
-        lda_enerpw<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),raw_pointer_cast(&d_enerpw[0]),params_mp_nxyz_);
-
+        lda_enerpw<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_chpdft[params_mp_mygpu_],raw_pointer_cast(&d_ec[0]),raw_pointer_cast(&d_enerpw[0]),params_mp_nxyz_);
+#else
+        error=cudaMemcpy(d_chpdft[params_mp_mygpu_],rho,sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyHostToDevice);
+	Check_CUDA_Error(error);
+        lda_enerpw<<<dimgrid,dimblock>>>(d_chpdft[params_mp_mygpu_],raw_pointer_cast(&d_ec[0]),raw_pointer_cast(&d_enerpw[0]),params_mp_nxyz_);
+#endif
 	*ec=thrust::reduce(d_ec.begin(),d_ec.end(),(double)0.0);
 	*enerpw=thrust::reduce(d_enerpw.begin(),d_enerpw.end(),(double)0.0);
-        error=cudaMemcpy(chpdft,d_chpdft, sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyDeviceToHost);
+        error=cudaMemcpy(chpdft,d_chpdft[params_mp_mygpu_], sizeof(double)*(params_mp_nxyz_*2),cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 }
 
@@ -480,20 +585,26 @@ __global__ void lda(double *d_chpdft,double *d_ec,int nxyz)
 
 extern "C" void calc_lda_gpu_(double *rho,double *chpdft,double *ec)
 {
-
+#if(parayes)
+	cudaSetDevice(params_mp_mygpu_);
+#endif
         int blocksize=192;
 	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
         dim3 dimgrid(gridx,1,1);
         dim3 dimblock(blocksize,1,1);
 	thrust::device_vector<double> d_ec(params_mp_nxyz_);
-
-        error=cudaMemcpyAsync(d_chpdft,rho,2*params_mp_nxyz_*sizeof(double),cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+        error=cudaMemcpyAsync(d_chpdft[params_mp_mygpu_],rho,2*params_mp_nxyz_*sizeof(double),cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
 	Check_CUDA_Error(error);
-
-        lda<<<dimgrid,dimblock,0,stream2>>>(d_chpdft,raw_pointer_cast(&d_ec[0]),params_mp_nxyz_);
+        lda<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(d_chpdft[params_mp_mygpu_],raw_pointer_cast(&d_ec[0]),params_mp_nxyz_);
+#else
+	error=cudaMemcpy(d_chpdft[params_mp_mygpu_],rho,2*params_mp_nxyz_*sizeof(double),cudaMemcpyHostToDevice);
+	Check_CUDA_Error(error);
+        lda<<<dimgrid,dimblock>>>(d_chpdft[params_mp_mygpu_],raw_pointer_cast(&d_ec[0]),params_mp_nxyz_);
+#endif
 
 	*ec=thrust::reduce(d_ec.begin(),d_ec.end(),(double)0.0);
-        error=cudaMemcpy(chpdft,d_chpdft,2*params_mp_nxyz_*sizeof(double),cudaMemcpyDeviceToHost);
+        error=cudaMemcpy(chpdft,d_chpdft[params_mp_mygpu_],2*params_mp_nxyz_*sizeof(double),cudaMemcpyDeviceToHost);
 	Check_CUDA_Error(error);
 }
 #endif

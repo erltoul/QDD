@@ -18,8 +18,8 @@ double pi=3.141592653589793;
 cufftHandle pfftforw,pfftback;
 int batch=1;
 cufftDoubleReal *rfftac,*akvr,*prfftac,*pakvr;
-cufftDoubleComplex *gpu_fftac,*gpu_akvc;
-cufftDoubleReal *gpu_rfftac,*gpu_akvr;
+cufftDoubleComplex **gpu_fftac,**gpu_akvc;
+cufftDoubleReal **gpu_rfftac,**gpu_akvr;
 
 int res;
 
@@ -31,9 +31,10 @@ void fourfakv(){
 //     I/O: pskr   real part of the wave-function
 //          pski   imaginary part of the wave-function
 
-//DATA  mini/0/              // flag for initialization
 //----------------------------------------------------------------------
-
+#if(parayes)
+cudaSetDevice(params_mp_mygpu_);
+#endif
 int blocksize=192;
 int gridx=(int)ceil(kdred/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
@@ -43,17 +44,23 @@ dim3 dimblock(blocksize,1,1);
 
 tnorm=grnorm*fnorm;
 
-error=cudaMemcpyAsync(gpu_akvr,pakvr,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+error=cudaMemcpyAsync(gpu_akvr[params_mp_mygpu_],pakvr,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+error=cudaMemcpy(gpu_akvr[params_mp_mygpu_],pakvr,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice);
+#endif
 Check_CUDA_Error(error);
 
-if(cufftExecD2Z(pfftforw,gpu_akvr,gpu_akvc) != CUFFT_SUCCESS)
+if(cufftExecD2Z(pfftforw,gpu_akvr[params_mp_mygpu_],gpu_akvc[params_mp_mygpu_]) != CUFFT_SUCCESS)
 {
   cout<<"CUFFT error : Exec D2Z forward failed in coulex (akv)"<<endl;
   exit(-1);
 }
-
-multiply_device<<<dimgrid,dimblock,0,stream3>>>(gpu_akvc,kdred,tnorm);
-
+#if(asynclaunch)
+multiply_device<<<dimgrid,dimblock,0,stream3[params_mp_mygpu_]>>>(gpu_akvc[params_mp_mygpu_],kdred,tnorm);
+#else
+multiply_device<<<dimgrid,dimblock>>>(gpu_akvc[params_mp_mygpu_],kdred,tnorm);
+#endif
 }
 
 //-----fftinp------------------------------------------------------------
@@ -66,7 +73,9 @@ void fftinp() {
 //     initialized before !
 
 //-----------------------------------------------------------------------
-
+#if(parayes)
+cudaSetDevice(params_mp_mygpu_);
+#endif
 int ikzero,ii;
 double xz1,xz2,xy1,xy2,xx1,xx2,ak2;
 int nxyfn,ind;
@@ -159,7 +168,7 @@ for (int i3=1;i3<=nzc;i3++){
 fourfakv();
 
 cudaFreeHost(pakvr);
-cudaFree(gpu_akvr);
+cudaFree(gpu_akvr[params_mp_mygpu_]);
 
 }
 
@@ -168,7 +177,9 @@ cudaFree(gpu_akvr);
 extern "C" void init_coul_(double *dx0,double *dy0,double *dz0,unsigned int *nx0,unsigned int *ny0,unsigned int *nz0) {
 
 //-----------------------------------------------------------------------
-
+#if(parayes)
+cudaSetDevice(params_mp_mygpu_);
+#endif
 //     read grid parameters from file or simply initialize them
 //     note that the Coulomb solver doubles the grid internally
 nxc=*nx0;  ///2;
@@ -189,21 +200,25 @@ if(cufftPlan3d(&pfftforw,kxmax,kymax,kzmax,CUFFT_D2Z) != CUFFT_SUCCESS)
   cout<<"CUFFT error : Plan Creation failed"<<endl;
   exit(-1);
 }
-if(cufftSetStream(pfftforw,stream2) != CUFFT_SUCCESS)
+#if(asynclaunch)
+if(cufftSetStream(pfftforw,stream2[params_mp_mygpu_]) != CUFFT_SUCCESS)
 {
   cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
   exit(-1);
 }
+#endif
 if(cufftPlan3d(&pfftback,kxmax,kymax,kzmax,CUFFT_Z2D) != CUFFT_SUCCESS)
 {
   cout<<"CUFFT error : Plan Creation failed"<<endl;
   exit(-1);
 }
-if(cufftSetStream(pfftback,stream1) != CUFFT_SUCCESS)
+#if(asynclaunch)
+if(cufftSetStream(pfftback,stream1[params_mp_mygpu_]) != CUFFT_SUCCESS)
 {
   cout<<"CUFFT error : Streamed FFT Creation failed"<<endl;
   exit(-1);
 }
+#endif
 // Pinned memory allocation on the CPU to make CPU>GPU and GPU>CPU transfers faster
 
 cudaMallocHost (&prfftac,kdred*sizeof(cufftDoubleReal));
@@ -213,13 +228,18 @@ rfftac=prfftac-1; //rfftac points one location before prfftac, so rfftac[1]...rf
 akvr=pakvr-1;   //same trick as above
 
 // Memory allocation on the GPU
-error=cudaMalloc((void**)&gpu_fftac,kdred*sizeof(cufftDoubleComplex));
+gpu_fftac  = (cufftDoubleComplex**)malloc(params_mp_num_gpus_*sizeof(cufftDoubleComplex*));
+gpu_akvc   = (cufftDoubleComplex**)malloc(params_mp_num_gpus_*sizeof(cufftDoubleComplex*));
+gpu_rfftac = (cufftDoubleReal**)malloc(params_mp_num_gpus_*sizeof(cufftDoubleReal*));
+gpu_akvr   = (cufftDoubleReal**)malloc(params_mp_num_gpus_*sizeof(cufftDoubleReal*));
+
+error=cudaMalloc((void**)&gpu_fftac[params_mp_mygpu_],kdred*sizeof(cufftDoubleComplex));
 Check_CUDA_Error(error);
-error=cudaMalloc((void**)&gpu_akvc,kdred*sizeof(cufftDoubleComplex));
+error=cudaMalloc((void**)&gpu_akvc[params_mp_mygpu_],kdred*sizeof(cufftDoubleComplex));
 Check_CUDA_Error(error);
-error=cudaMalloc((void**)&gpu_rfftac,kdred*sizeof(cufftDoubleReal));
+error=cudaMalloc((void**)&gpu_rfftac[params_mp_mygpu_],kdred*sizeof(cufftDoubleReal));
 Check_CUDA_Error(error);
-error=cudaMalloc((void**)&gpu_akvr,kdred*sizeof(cufftDoubleReal));
+error=cudaMalloc((void**)&gpu_akvr[params_mp_mygpu_],kdred*sizeof(cufftDoubleReal));
 Check_CUDA_Error(error);
 
 pindex = (int*)malloc(kdfull*sizeof(int));
@@ -233,7 +253,9 @@ fftinp();
 //-----cofows------------------------------------------------------------
 
 void coufou2(){
-
+#if(parayes)
+cudaSetDevice(params_mp_mygpu_);
+#endif
 int blocksize=192;
 int gridx=(int)ceil(kdred/(float)blocksize);
 dim3 dimgrid(gridx,1,1);
@@ -244,33 +266,46 @@ dim3 dimblock(blocksize,1,1);
 //     fourier transformation of the density
 
 tnorm=grnorm*fnorm;
-
-error=cudaMemcpyAsync(gpu_rfftac,prfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1);
+#if(asynclaunch)
+error=cudaMemcpyAsync(gpu_rfftac[params_mp_mygpu_],prfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);
+#else
+error=cudaMemcpy(gpu_rfftac[params_mp_mygpu_],prfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyHostToDevice);
+#endif
 Check_CUDA_Error(error);
 
-if(cufftExecD2Z(pfftforw,gpu_rfftac,gpu_fftac) != CUFFT_SUCCESS)
+if(cufftExecD2Z(pfftforw,gpu_rfftac[params_mp_mygpu_],gpu_fftac[params_mp_mygpu_]) != CUFFT_SUCCESS)
 {
+#if(parayes)
+  cout<<"CUFFT error : Exec D2Z forward failed in coulex from "<<params_mp_myn_<<" "<<params_mp_mygpu_<<endl;
+#else
   cout<<"CUFFT error : Exec D2Z forward failed in coulex"<<endl;
+#endif
   exit(-1);
 }
 
 //     calculation of the coulomb field (writing on the density field)
-
-multiply_ak_gpu<<<dimgrid,dimblock,0,stream3>>>(gpu_fftac,gpu_akvc,kdred,tnorm);
+#if(asynclaunch)
+multiply_ak_gpu<<<dimgrid,dimblock,0,stream3[params_mp_mygpu_]>>>(gpu_fftac[params_mp_mygpu_],gpu_akvc[params_mp_mygpu_],kdred,tnorm);
+#else
+multiply_ak_gpu<<<dimgrid,dimblock>>>(gpu_fftac[params_mp_mygpu_],gpu_akvc[params_mp_mygpu_],kdred,tnorm);
+#endif
 
 //     fourier back transformation
 
 tnorm=fnorm/(8.0*grnorm)*pow(pi,1.5);
 
-if(cufftExecZ2D(pfftback,gpu_fftac,gpu_rfftac) != CUFFT_SUCCESS)
+if(cufftExecZ2D(pfftback,gpu_fftac[params_mp_mygpu_],gpu_rfftac[params_mp_mygpu_]) != CUFFT_SUCCESS)
 {
 	  cout<<"CUFFT error : Exec Z2D backward failed in coulex"<<endl;
 	  exit(-1);
 }
+#if(asynclaunch)
+multiply_device_real<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(gpu_rfftac[params_mp_mygpu_],kdred,tnorm);
+#else
+multiply_device_real<<<dimgrid,dimblock>>>(gpu_rfftac[params_mp_mygpu_],kdred,tnorm);
+#endif
 
-multiply_device_real<<<dimgrid,dimblock,0,stream2>>>(gpu_rfftac,kdred,tnorm);
-
-error=cudaMemcpy(prfftac,gpu_rfftac,kdred*sizeof(cufftDoubleReal),cudaMemcpyDeviceToHost);
+error=cudaMemcpy(prfftac,gpu_rfftac[params_mp_mygpu_],kdred*sizeof(cufftDoubleReal),cudaMemcpyDeviceToHost);
 Check_CUDA_Error(error);
 
 }
@@ -299,11 +334,13 @@ for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[inde[i0]];
 }
 
 extern "C" void coulsolv_end_() {
-
+#if(parayes)
+cudaSetDevice(params_mp_mygpu_);
+#endif
 cudaFreeHost(prfftac);
-cudaFree(gpu_fftac);
-cudaFree(gpu_rfftac);
-cudaFree(gpu_akvc);
+cudaFree(gpu_fftac[params_mp_mygpu_]);
+cudaFree(gpu_rfftac[params_mp_mygpu_]);
+cudaFree(gpu_akvc[params_mp_mygpu_]);
 cufftDestroy(pfftforw);
 cufftDestroy(pfftback);
 free(pindex);
