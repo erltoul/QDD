@@ -125,9 +125,9 @@ IF (nini==0) THEN
 !  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
 !  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
 !  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_planflag)
-  pforw=fftw_plan_dft_r2c_3d(kxmax,kymax,kzmax,rffta,ffta,FFTW_planflag)
-  pback=fftw_plan_dft_c2r_3d(kxmax,kymax,kzmax,ffta,rffta,FFTW_planflag)
-  pforwc=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
+  pforw=fftw_plan_dft_r2c_3d(kzmax,kymax,kxmax,rffta,ffta,FFTW_planflag)
+  pback=fftw_plan_dft_c2r_3d(kzmax,kymax,kxmax,ffta,rffta,FFTW_planflag)
+  pforwc=fftw_plan_dft_3d(kzmax,kymax,kxmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
   nini  = kxmax*kymax*kzmax
   WRITE(*,*) ' Coul-Solv initialized nini=',nini,kxmax,kymax,kzmax
 ELSE IF(nini /= kxmax*kymax*kzmax) THEN

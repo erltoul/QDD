@@ -20,10 +20,12 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
   itgradstep=0      !MV to have a number of iterarions in utgradstepc             
 #if(twostsic)
-  do is=1,2         !MV initialise ExpDabOld                                  
-     call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
-     call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
-  enddo
+  IF(ifsicp==8) THEN
+    do is=1,2         !MV initialise ExpDabOld                                  
+       call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
+       call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
+    enddo
+  END IF
 #endif
 
 

@@ -572,7 +572,7 @@ DO nbe=1,nstate
   espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
   espaft = rwfovlp(q0(1,nbe),q1)
-  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
+!  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
   

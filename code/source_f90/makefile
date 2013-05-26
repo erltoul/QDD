@@ -101,8 +101,8 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -msse4.2 -axAVX -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -msse4.2 -axAVX -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -msse4.2 -axAVX -axSSE4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -w -msse4.2 -axAVX -axSSE4.2 -O3 -ip -no-prec-div -align all -autodouble -static
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble

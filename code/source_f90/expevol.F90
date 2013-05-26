@@ -85,7 +85,7 @@ ELSE
 END IF
 
 #if(twostsic)
-IF(tnearest) CALL eval_unitrot(qwork,q0)
+IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(qwork,q0)
 #endif
 
 
@@ -110,7 +110,7 @@ ELSE
 END IF
 
 #if(twostsic)
-IF(tnearest) CALL eval_unitrot(q0,qwork)
+IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(q0,qwork)
 #endif
 
 
