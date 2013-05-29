@@ -7,7 +7,7 @@
 # Set the date
 DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
-CF90    = IFORT1
+CF90    = GFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
@@ -17,7 +17,7 @@ DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = YES
+OMP = NO
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -101,8 +101,8 @@ endif
 
 
 ifeq "$(CF90)" "IFORT1"
-	OPT1  = -fpp -w -msse4.2 -axAVX -axSSE4.2 -O3 -ip -no-prec-div -align all -autodouble -static
-	OPT2  = -fpp -w -msse4.2 -axAVX -axSSE4.2 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT1  = -fpp -w -msse4.2 -axSSE4.1 -O3 -ip -no-prec-div -align all -autodouble -static
+	OPT2  = -fpp -w -msse4.2 -axSSE4.1 -O3 -ip -no-prec-div -align all -autodouble -static
 	OPT3  = -fpp -w        -g               -align all -autodouble -static
 ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
@@ -229,7 +229,8 @@ endif
 
 .SUFFIXES: .F90 .o
 
-EXEC = essai.par
+#EXEC = essai.par
+EXEC = essai.gnu
 #EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\

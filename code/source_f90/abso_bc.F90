@@ -562,7 +562,7 @@ DO ik=1,nmps
  impsz = mod(impsact/(nx2*ny2),nz2)+1
  WRITE(*,*) ' analyzing pts: nmps,imps=',nmps,impsact
  WRITE(*,*) ' nx,ny,nz=',impsx,impsy,impsz
- WRITE(*,'(1a,4f)') ' x,y,z,r=',x,y,z,dsqrt(x*x+y*y+z*z)
+ WRITE(*,'(1a,4f12.5)') ' x,y,z,r=',x,y,z,dsqrt(x*x+y*y+z*z)
  WRITE(*,*) ' theta,phi=',t,p
 END DO                                          
 
