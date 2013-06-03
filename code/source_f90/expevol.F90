@@ -40,6 +40,7 @@ INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(OUT)                     :: qwork(kdfull2,kstate)
 
 COMPLEX(DP) :: q1(kdfull2)
+COMPLEX(DP) :: cdtact
 
 ! The parameter 'tnorotate' de-activates the subtraction of the
 ! Lagrangian matrix in the SIC step. The version of exponential
@@ -53,7 +54,7 @@ LOGICAL,PARAMETER :: tnorotate=.true.
 
 
 #if(parayes)
-STOP 'exponential evolution not yet parallelized'
+STOP 'exponential evolution not yet MPI parallelized'
 #else
 myn = 0
 #endif
@@ -72,15 +73,16 @@ IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 
 IF(ifsicp==5) psisavex = q0
 
+cdtact = CMPLX(dt1/2D0,0D0)
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
     qwork(:,nb) = q0(:,nb)
-    CALL exp_evol(qwork(1,nb),aloc,nb,4,dt1*0.5D0,q1)
+    CALL exp_evol(qwork(1,nb),aloc,nb,4,cdtact,q1)
   END DO
 ELSE
 #if(twostsic)
   qwork = q0
-  CALL exp_evolp(qwork,aloc,4,dt1/2D0,q1,q0)
+  CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
 #else
   STOP " IFSICP==8 reqires compilation with option twostsic"
 #endif
@@ -99,15 +101,16 @@ CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0)
 !     full time step to next wavefunctions
 !     use exponential evolution to fourth order
 
+cdtact = dt1
 itpri = MOD(it,ipasinf) + 1
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
-    CALL exp_evol(q0(1,nb),aloc,nb,4,dt1,q1)
+    CALL exp_evol(q0(1,nb),aloc,nb,4,cdtact,q1)
   END DO
 ELSE
 #if(twostsic)
   qwork = q0
-  CALL exp_evolp(q0,aloc,4,dt1,q1,qwork)
+  CALL exp_evolp(q0,aloc,4,cdtact,q1,qwork)
 #endif
 END IF
 
@@ -173,7 +176,7 @@ REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: nbe
 INTEGER, INTENT(IN)                      :: norder
-REAL(DP), INTENT(IN OUT)                 :: dtact
+COMPLEX(DP), INTENT(IN)                  :: dtact
 COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
 
 
@@ -192,7 +195,7 @@ ELSE IF (ispin(nrel2abs(nbe)) == 2) THEN
 ELSE
   STOP " EXPEVOL: spin index must be 1 or 2"
 END IF
-dti = CMPLX(0D0,dtact,DP)
+dti = dtact*CMPLX(0D0,1D0,DP)
 cfac = CMPLX(1D0,0D0,DP)
 DO  i=1,nxyz
   qwork(i) = qact(i)
@@ -236,7 +239,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: norder
-REAL(DP), INTENT(IN)                     :: dtact
+COMPLEX(DP), INTENT(IN)                  :: dtact
 COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
@@ -253,7 +256,7 @@ INTEGER :: nbe
 
 ALLOCATE(chmatrix(kstate,kstate))
 
-dti = CMPLX(0D0,dtact,DP)
+dti = dtact*CMPLX(0D0,1D0,DP)
 
 ! compute H-matrix, store h*psi wavefunctions
 DO nbe=1,nstate
