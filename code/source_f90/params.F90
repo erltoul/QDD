@@ -193,6 +193,7 @@ CHARACTER (LEN=13) :: outnam
 INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
+INTEGER :: isitmax=0         ! number of imaginary-time steps (afterburn)
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
 INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0

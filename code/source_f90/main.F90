@@ -159,10 +159,58 @@ END IF
 DEALLOCATE(psir)
 
 
+!       ****************************************************
+!          imaginary-time iteration (top improve statics)
+!       ****************************************************
+
+WRITE(*,*) ' before afterburn. isitmax=',isitmax
+IF(isitmax>0) THEN
+   WRITE(*,*) ' start afterburn. isitmax=',isitmax
+   ALLOCATE(psi(kdfull2,kstate))
+   CALL restart2(psi,outnam,.true.)     ! read static wf's
+   CALL calcpseudo()
+   CALL calclocal(rho,aloc)                          !  ??
+   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
+   IF(ipsptyp == 1) THEN
+     DO ion=1,nion
+       CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+     END DO
+   END IF
+   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
+#if(twostsic)
+   IF(nclust > 0 .AND. ifsicp >= 7) THEN
+      CALL init_fsic()
+   END IF
+   IF(ifsicp==8) THEN
+     do is=1,2         !MV initialise ExpDabOld                              
+       call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
+       call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
+     enddo
+   END IF
+   IF(ifsicp>=7) CALL init_vecs()
+#endif
+   DO it=1,isitmax
+     WRITE(*,*) ' afterburn. iteration=',it
+     IF(ifexpevol == 1) THEN
+       CALL tstep_exp(psi,aloc,rho,it,psiw,.true.)
+     ELSE
+       STOP 'imaginary-time step requires exponential evolution'
+!       CALL tstep(psi,aloc,rho,it)
+     END IF
+     CALL cschmidt(psi)
+     IF(MOD(it,istinf)==0)   CALL info(psi,rho,aloc,it)
+   END DO
+   DEALLOCATE(psiw)
+   CALL info(psi,rho,aloc,-1)
+   CALL SAVE(psi,-1,outnam)
+   DEALLOCATE(psi)
+   IF(nclust>0 .AND. ifsicp>=7) CALL end_fsic()
+   IF(itmax <= 0) STOP ' terminate with afterburn '
+END IF
+
+
 !       *******************************************
-
-!       dynamic
-
+!                     dynamic
 !       *******************************************
 
 ALLOCATE(psi(kdfull2,kstate))
@@ -351,7 +399,7 @@ DO it=irest,itmax   ! time-loop
 !     propagation of the wfs
       
       IF(ifexpevol == 1) THEN
-        CALL tstep_exp(psi,aloc,rho,it,psiw)
+        CALL tstep_exp(psi,aloc,rho,it,psiw,.false.)
       ELSE
         CALL tstep(psi,aloc,rho,it)
       END IF

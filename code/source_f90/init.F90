@@ -65,7 +65,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
-    ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
+    ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iforce,iexcit,iangmo,  &
     irotat,phirot,i3dz,i3dx,i3dstate,istream,iflocaliz,  &
@@ -357,8 +357,12 @@ STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
 #if(parayes)
 STOP ' TWOSTSIC cannot yet run in parallel code'
 #endif
+IF(ifsicp==8 .AND. .NOT.directenergy) &
+   STOP 'full SIC (IFSICP=8) requires DIRECTENERGY=.TRUE.'
 #endif
 
+IF(isitmax>0 .AND. ifexpevol== 0) &
+    STOP ' imaginary-time step only for exponential evolution'
 
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?

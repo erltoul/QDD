@@ -438,8 +438,13 @@ END IF
 
 #else
 
-IF(mynact==0) &
-  OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
+IF(mynact==0) THEN
+  IF(isa<0) THEN
+    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna)   
+  ELSE
+    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
+  END IF
+END IF
 
 #endif
   

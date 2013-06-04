@@ -317,3 +317,84 @@ END DO
 RETURN
 
 END SUBROUTINE orthogonalize
+
+
+!     ******************************
+
+SUBROUTINE cschmidt(q0)
+
+!     ******************************
+
+
+!     serial version of Schmidt orthogonalization for complex wf's
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
+
+REAL(DP) :: eord(kstate)
+INTEGER :: isort(kstate)
+COMPLEX(DP) :: cs
+
+LOGICAL, PARAMETER :: tord=.false.
+
+!*********************************************************
+
+!     sort the s.p. energies
+
+DO n=1,nstate
+  eord(n)   = amoy(n)
+  isort(n) = n
+END DO
+!      write(6,'(a,10(/5g12.4))')
+!     &  ' spe before:',(eord(n),n=1,nstate)
+IF(tord) THEN
+  DO n=1,nstate
+    emin   = 1D32
+    imin   = n
+    DO i=n,nstate
+      IF(eord(i) < emin) THEN
+        emin   = eord(i)
+        imin   = i
+      END IF
+    END DO
+    isav         = isort(imin)
+    eord(imin)   = eord(n)
+    isort(imin)  = isort(n)
+    eord(n)      = emin
+    isort(n)     = isav
+  END DO
+!        write(6,'(a,10(/5g12.4))')
+!     &    ' spe after:',(eord(n),n=1,nstate)
+END IF
+
+!     Schmidt ortho-normalisation
+
+DO nbes=1,nstate
+  nbe = isort(nbes)
+  
+  DO ncs=1,nstate
+    ncc = isort(ncs)
+    IF((ispin(nbe) == ispin(ncc)) .AND. ncc <= nbe) THEN
+      cs=CMPLX(0D0,0D0,DP)
+      DO i=1,nxyz
+        cs=cs+CONJG(q0(i,ncc))*q0(i,nbe)
+      END DO
+      cs=cs*dvol
+      IF(ncc == nbe) THEN
+        DO i=1,nxyz
+          q0(i,nbe)=q0(i,nbe)/SQRT(REAL(cs))
+        END DO
+      ELSE
+        DO  i=1,nxyz
+          q0(i,nbe)=q0(i,nbe)-cs*q0(i,ncc)
+        END DO
+      END IF
+    END IF
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE cschmidt

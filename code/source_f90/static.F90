@@ -27,7 +27,7 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !REAL(DP) ::  rhotmp(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
-LOGICAL,PARAMETER :: tp_prints=.true.
+LOGICAL,PARAMETER :: tp_prints=.false.
 CHARACTER (LEN=1) :: str1
 CHARACTER (LEN=2) :: str2
 CHARACTER (LEN=3) :: str3
@@ -276,7 +276,7 @@ END IF
 
 CALL rsave(psir,iter1,outnam)
 istat=1                        ! prepare for reading in time step
-IF(itmax == 0 .AND. isave > 0) THEN
+IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
          write(*,*) ' CALL RSAVE  1. case'
   CALL infor(psir,rho,-1)
   
@@ -364,7 +364,7 @@ zcm=rvectmp(3)
 
 IF(idenspl /= 0) CALL mtv_fld(rho,1)
 
-IF(itmax <= 0) STOP ' terminate with static iteration '
+IF(itmax <= 0 .AND. isitmax <= 0) STOP ' terminate with static iteration '
 
 RETURN
 END SUBROUTINE statit

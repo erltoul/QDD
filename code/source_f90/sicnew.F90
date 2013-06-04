@@ -1188,7 +1188,7 @@ IF(occup(nb) > small) THEN
     rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
     rho1(ind)        = rhosp(ind)
   END DO
-  
+!  WRITE(*,*) 'SICSP: nb,norm-dens=',nb,dvol*SUM(rhosp(1:nxyz))
 !       DFT for s.p. state
   
   CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
@@ -1251,6 +1251,8 @@ END IF
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)
 DEALLOCATE(rho1)
+! WRITE(*,*) 'SICSP: encoulsp,enerpw=',encoulsp,enerpw
+
 
 RETURN
 #ifdef REALSWITCH

@@ -3,28 +3,19 @@
 
 !-----tstep_exp-------------------------------------------------------------
 
-SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork)
+SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork,timagtime)
 
-!     one electronic time step by TV splitting method.
+!     One electronic time step by exponential evolution, consisting
+!     of a half step to produce an intermediate mean field followed
+!     by a full with using this mean field.
+!
+!      q0          = s.p. wavefunctions to be propagated
+!      aloc        = array for local mean field
+!      rho         = array for local density
+!      it          = nr. of time step
+!      qwork       = work space for s.p. wavefunctions
+!      timagtime   = logical variable, switch to imaginary time step
 
-!     'itsub' indicates the number of subiteration before
-!     next analyzing step (routine 'info').
-!     'itsub=1' is the first call in a series and
-!     'itsub=ipasinf' is the last call.
-!g     Now, 'ipasinf' gives the step of computation of the electronic force
-!g     on the cluster ion. Here it is only important with option 'iffastpropag'.
-
-!     For pure electronic propagation one has the option to
-!     reduce the number of local unitary steps. The last half-step
-!     is omitted (except in case of the last call 'itsub=ipasinf')
-!     and the first local step is doubled instead (except for the
-!     first call 'itsub=1'). This option is switched on by the
-!     compile time switch 'fastpropag'.
-!g     Option 'iffastpropag' must be reserved for pure electronic dynamics,
-!g     it is not adapted to the new electronic/ionic dynamics.
-
-!g     For pure electronic propagation with 'iffastpropag', 'ipasinf' is then
-!g     the number of iteration in which the number of local unitary steps is reduced
 
 USE params
 #if(twostsic)
@@ -32,12 +23,13 @@ USE twost, ONLY:tnearest
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN)                      :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+!REAL(DP), INTENT(IN OUT)                :: akv(kdfull2)
+REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP), INTENT(OUT)                     :: qwork(kdfull2,kstate)
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2,kstate)
+LOGICAL, INTENT(IN)                      :: timagtime
 
 COMPLEX(DP) :: q1(kdfull2)
 COMPLEX(DP) :: cdtact
@@ -73,35 +65,40 @@ IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 
 IF(ifsicp==5) psisavex = q0
 
-cdtact = CMPLX(dt1/2D0,0D0)
-IF(tnorotate .OR. ifsicp .NE. 8) THEN
-  DO nb=1,nstate
-    qwork(:,nb) = q0(:,nb)
-    CALL exp_evol(qwork(1,nb),aloc,nb,4,cdtact,q1)
-  END DO
-ELSE
+IF(.NOT.timagtime) THEN
+  cdtact = CMPLX(dt1/2D0,0D0)
+  IF(tnorotate .OR. ifsicp .NE. 8) THEN
+    DO nb=1,nstate
+      qwork(:,nb) = q0(:,nb)
+      CALL exp_evol(qwork(1,nb),aloc,nb,4,cdtact,q1)
+    END DO
+  ELSE
 #if(twostsic)
-  qwork = q0
-  CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
+    qwork = q0
+    CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
 #else
-  STOP " IFSICP==8 reqires compilation with option twostsic"
+    STOP " IFSICP==8 reqires compilation with option twostsic"
 #endif
-END IF
+  END IF
 
 #if(twostsic)
-IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(qwork,q0)
+  IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(qwork,q0)
 #endif
-
 
 !     compute mean field at half time step
+  CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0)
 
-CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0)
-
+END IF
 
 !     full time step to next wavefunctions
 !     use exponential evolution to fourth order
 
-cdtact = dt1
+IF(timagtime) THEN
+  cdtact = CMPLX(0D0,-dt1)
+ELSE
+  cdtact = CMPLX(dt1,0D0)
+END IF
+
 itpri = MOD(it,ipasinf) + 1
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
@@ -115,7 +112,7 @@ ELSE
 END IF
 
 #if(twostsic)
-IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(q0,qwork)
+IF(tnearest .AND. ifsicp==8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
 #endif
 
 
@@ -502,7 +499,11 @@ IF(tpri) THEN
   epotsp(nbe) = wfovlp(qact,q1)
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
   q2 = q1+q2
-  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-amoy(nbe)**2)
+!  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-amoy(nbe)**2)
+  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-ABS(wfovlp(qact,q2))**2)
+  WRITE(*,'(a,i4,5(1pg13.5))') &
+   ' HPSI: nbe,esp,var=',nbe,amoy(nbe),spvariance(nbe), &
+      SQRT(REAL(wfovlp(q2,q2))),ABS(wfovlp(qact,q2))
   qact = q2
 ELSE
   qact = q1+q2

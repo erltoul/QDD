@@ -35,7 +35,11 @@ IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) ALLOCATE(psisavex(kdfull2,kstate))
 
 !     use of saved real wavefunctions, read and copy to complex
 
-CALL restart2(psi,outnam,.true.)
+IF(isitmax==0) THEN
+  CALL restart2(psi,outnam,.true.)
+ELSE
+  CALL restart2(psi,outnam,.false.)
+END IF
 IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) psisavex = psi
 
 !     optionally rotate a 1ph state
@@ -1035,8 +1039,8 @@ END IF
 IF(myn==0) THEN
   WRITE(6,'(a,f8.4,a,f7.2,a,3f10.5)')  &
     'In info: t=',tfs,' moments: monop.=',qe(1), ' dip.: ',qe(2),qe(3),qe(4)
-  WRITE(6,'(a,f8.4,a,f7.2,a,3f10.5)')  &
-    'In info: t=',tfs,' moments: quad et al=',qe(5), ' dip.: ',qe(6),qe(7),qe(8)
+  WRITE(6,'(a,f8.4,a,3f10.5)')  &
+    'In info: t=',tfs,' moments: quads=',qe(5),qe(6),qe(7)
 END IF
 
 tstinf = .false.

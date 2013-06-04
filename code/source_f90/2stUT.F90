@@ -82,7 +82,9 @@ SUBROUTINE init_fsicr()
 
 USE params
 USE kinetic
+#if(cmplxsic)
 USE twost, ONLY: orthnorm
+#endif
 !USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -268,6 +270,29 @@ END IF
 
 RETURN
 END SUBROUTINE init_fsic
+!-----end_fsic------------------------------------------------
+
+SUBROUTINE end_fsic()
+
+!     terminates fields for FSIC etc
+
+USE params
+USE kinetic
+!USE symcond
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
+
+!----------------------------------------------------------------
+
+kdim=kstate
+DEALLOCATE(ExpDABold,wfrotate,vecs)
+DEALLOCATE(qnewut,psiut)
+
+IF(tconv) CLOSE(353)
+
+RETURN
+END SUBROUTINE end_fsic
 #endif
 
 !     ******************************
@@ -1446,7 +1471,7 @@ DO nb=1,nstate
     CALL superpose_state(qsym(1,nb),vecs(1,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
-!    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
+!    WRITE(*,*) 'DALPHAETA: nb,wfnorm=',nb,wfnorm(qsym(1,nb))
     CALL calc_sicsp(rhosp,usicsp,qsym(1,nb),nb)
 !    WRITE(*,*) ' nb,energs=',nb,encoulsp,enerpw,occup(nb)
     ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
