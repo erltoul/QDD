@@ -160,23 +160,13 @@ DEALLOCATE(psir)
 
 
 !       ****************************************************
-!          imaginary-time iteration (top improve statics)
+!          imaginary-time iteration (to improve statics)
 !       ****************************************************
 
-WRITE(*,*) ' before afterburn. isitmax=',isitmax
-IF(isitmax>0) THEN
+IF(isitmax>0 .AND. ismax>0) THEN
    WRITE(*,*) ' start afterburn. isitmax=',isitmax
+   CALL flush(6)
    ALLOCATE(psi(kdfull2,kstate))
-   CALL restart2(psi,outnam,.true.)     ! read static wf's
-   CALL calcpseudo()
-   CALL calclocal(rho,aloc)                          !  ??
-   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
-   IF(ipsptyp == 1) THEN
-     DO ion=1,nion
-       CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-     END DO
-   END IF
-   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 #if(twostsic)
    IF(nclust > 0 .AND. ifsicp >= 7) THEN
       CALL init_fsic()
@@ -187,8 +177,21 @@ IF(isitmax>0) THEN
        call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
      enddo
    END IF
+#endif
+   CALL restart2(psi,outnam,.true.)     ! read static wf's
+#if(twostsic)
    IF(ifsicp>=7) CALL init_vecs()
 #endif
+   CALL calcpseudo()
+   CALL calclocal(rho,aloc)                          !  ??
+   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
+   IF(ipsptyp == 1) THEN
+     DO ion=1,nion
+       CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+     END DO
+   END IF
+   CALL info(psi,rho,aloc,-1)
+   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
    DO it=1,isitmax
      WRITE(*,*) ' afterburn. iteration=',it
      IF(ifexpevol == 1) THEN

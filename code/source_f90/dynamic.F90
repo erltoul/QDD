@@ -83,7 +83,7 @@ rvectmp(1)=1D0             ! ??? what for ?
 
 !JM
 #if(twostsic)
-IF(ifsicp>=7) CALL init_vecs()
+IF(ifsicp>=7 .AND. isitmax==0) CALL init_vecs()
 #endif
 !JM
 
@@ -727,10 +727,11 @@ COMPLEX(DP),ALLOCATABLE :: qtmp(:)
 REAL(DP),ALLOCATABLE :: current(:,:)
 REAL(DP) ::  estar(2),estarETF(2)
 COMPLEX(DP) :: wfovlp
-
+COMPLEX(DP), ALLOCATABLE :: psiaux(:)
 
 LOGICAL :: topenf
 LOGICAL,PARAMETER :: ttest=.FALSE.
+LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 
 !------------------------------------------------------------------
 
@@ -768,6 +769,7 @@ DO nb=1,nstate
   spnorm(nb) = wfovlp(psi(1,nb),psi(1,nb))
   CALL  calc_ekin(psi(1,nb),ekin)
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
+  !WRITE(*,*) ' before CALC_EPOT',nb,it,ishift
   CALL calc_epot(psi(1,nb),aloc(ishift+1), epot,enonlo(nb),nb,it)
   ekinsp(nb) = ekin
   ehilf= epot
@@ -785,6 +787,12 @@ DO nb=1,nstate
        '  ispin=',ispin(nrel2abs(nb)),' occup=',occup(nb), &
        '  ekin='  &
       ,ekin,'  epot=',ehilf,'  esp=',amoy(nb) ,'  enonlo=', enonlo(nb)
+  IF(ttesthpsi) THEN
+    ALLOCATE(psiaux(kdfull2))
+    psiaux = psi(1:nxyz,nb)
+    CALL hpsi(psiaux,aloc(ishift+1),nb,1)
+    DEALLOCATE(psiaux)
+  END IF
 #endif
 END DO
 
@@ -801,7 +809,8 @@ IF(tstinf) then
   ALLOCATE(qtmp(kdfull2))
   DO nb=1,nstate
     qtmp = psi(:,nb)
-    CALL hpsi(qtmp,aloc,nb,1)  
+    ishift = (ispin(nrel2abs(nb))-1)*nxyz
+    CALL hpsi(qtmp,aloc(ishift+1),nb,1)  
     CALL cproject(qtmp,qtmp,ispin(nb),psi)
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp)))
   END DO
@@ -831,7 +840,8 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
   END DO
   DO nb=1,nstate
     qtmp = psi(:,nb)
-    CALL hpsi_boostinv(qtmp,aloc,current,rho,nbe)
+    ishift = (ispin(nrel2abs(nb))-1)*nxyz
+    CALL hpsi_boostinv(qtmp,aloc(ishift+1),current,rho,nbe)
     spenergybi(nb) = REAL(wfovlp(psi(1,nb),qtmp))
     spvariancebi(nb) = SQRT(REAL(wfovlp(qtmp,qtmp))-spenergybi(nb)**2)
   END DO
@@ -1143,7 +1153,7 @@ ALLOCATE(psi2(kdfull2))
 
 epot=0D0
 
-
+WRITE(*,*) ' in CALC_EPOT 1'
 !     non local part of ps
 
 IF(ipsptyp == 1) THEN
@@ -1163,6 +1173,7 @@ ELSE
   END DO
 END IF
 
+WRITE(*,*) ' in CALC_EPOT 2'
 !JM : subtract SIC potential for state NB
 #if(twostsic)
 IF(ifsicp == 8) THEN
@@ -1170,8 +1181,9 @@ IF(ifsicp == 8) THEN
   DO na=1,ndims(is)
     nbe = nb - (is-1)*ndims(1)
     nae = na + (is-1)*ndims(1)
+            write(*,*)   ' nb,is,na,nbe,vecs=',nb,is,na,nbe,vecs(nbe,na,is)
     cf = CONJG(vecs(nbe,na,is))
-!            write(*,*)   ' nb,is,na,nbe,cf=',nb,is,na,nbe,cf
+            write(*,*)   ' nb,is,na,nbe,cf=',nb,is,na,nbe,cf
     DO i=1,nxyz
       psi2(i)=psi2(i)-qnewut(i,nae)*cf
     END DO
@@ -1187,9 +1199,10 @@ IF(ifsicp==5) THEN
   DEALLOCATE(qex)
 END IF
 
+WRITE(*,*) ' in CALC_EPOT 3'
 epot = REAL(wfovlp(psin,psi2))   ! develop real overlap
 
-!      write(*,*) ' EPOT: nb,epot=',nb,epot
+      write(*,*) ' EPOT: nb,epot=',nb,epot
 
 DEALLOCATE(psi2)
 

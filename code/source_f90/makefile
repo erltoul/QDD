@@ -7,7 +7,7 @@
 # Set the date
 DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
-CF90    = IFORT1
+CF90    = GFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
@@ -17,7 +17,7 @@ DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = YES
+OMP = NO
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
@@ -62,13 +62,13 @@ ifeq "$(DEBUG)" "YES"
 	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 endif
 ifeq "$(OMP)" "YES"
-	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads
+	OMPADD = -fopenmp -Dparopenmp -lfftw3_threads -lfftw3_omp
 endif        
 endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
+	OPT1  =  -w -O3 -msse2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 ifeq "$(DEBUG)" "YES"
@@ -260,7 +260,7 @@ $(EXEC): $(OBJS)
 	@echo Linking executable $@
 
 ifeq "$(TYPE_FFT)" "FFTW"
-	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3_omp -lfftw3 -lm
+	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS) -lfftw3_threads -lfftw3 $(OMPADD) -lm
 endif
 ifeq "$(TYPE_FFT)" "NETLIB"
 	$(LINKER) $(LINKERFLAGS) -o $@ $(OBJS)

@@ -99,15 +99,16 @@ ELSE
   cdtact = CMPLX(dt1,0D0)
 END IF
 
+nterms = 4
 itpri = MOD(it,ipasinf) + 1
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
-    CALL exp_evol(q0(1,nb),aloc,nb,4,cdtact,q1)
+    CALL exp_evol(q0(1,nb),aloc,nb,nterms,cdtact,q1)
   END DO
 ELSE
 #if(twostsic)
   qwork = q0
-  CALL exp_evolp(q0,aloc,4,cdtact,q1,qwork)
+  CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
 #endif
 END IF
 
@@ -192,13 +193,18 @@ ELSE IF (ispin(nrel2abs(nbe)) == 2) THEN
 ELSE
   STOP " EXPEVOL: spin index must be 1 or 2"
 END IF
+IF(ABS(IMAG(dtact))>1D-10) THEN
+  isig = -1
+ELSE
+  isig = 1
+END IF
 dti = dtact*CMPLX(0D0,1D0,DP)
 cfac = CMPLX(1D0,0D0,DP)
 DO  i=1,nxyz
   qwork(i) = qact(i)
 END DO
 DO nterm=1,norder
-  CALL hpsi(qwork,aloc(ilocbas),nbe,nterm)
+  CALL hpsi(qwork,aloc(ilocbas),nbe,isig*nterm)
   cfac = -dti/nterm*cfac
   DO  i=1,nxyz
     qact(i) = qact(i) + cfac*qwork(i)
@@ -254,6 +260,11 @@ INTEGER :: nbe
 ALLOCATE(chmatrix(kstate,kstate))
 
 dti = dtact*CMPLX(0D0,1D0,DP)
+IF(ABS(IMAG(dtact))>1D-10) THEN
+  isig = -1
+ELSE
+  isig = 1
+END IF
 
 ! compute H-matrix, store h*psi wavefunctions
 DO nbe=1,nstate
@@ -393,7 +404,8 @@ SUBROUTINE hpsi(qact,aloc,nbe,itpri)
 !       aloc     = local potential for the actual spin component
 !       ak       = kinetic energies in momentum space
 !       nbe      = number of state
-!       itpri    = switch for computing s.p. energies
+!       itpri    = switch for computing s.p. energies (for ABVS(itpri)=1)
+!                  <0 switches to subtract mean-value of s.p. energy
 
 
 USE params
@@ -417,6 +429,7 @@ COMPLEX(DP) :: wfovlp
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
 LOGICAL :: tpri
+LOGICAL,PARAMETER :: tsubmean=.TRUE.
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -426,7 +439,7 @@ COMPLEX(DP) :: cf
 
 
 !      write(*,*) 'entering HPSI'
-tpri = itpri == 1
+tpri = ABS(itpri)==1
 
 
 ALLOCATE(q1(kdfull2),q2(kdfull2))
@@ -501,14 +514,21 @@ IF(tpri) THEN
   q2 = q1+q2
 !  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-amoy(nbe)**2)
   spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-ABS(wfovlp(qact,q2))**2)
-  WRITE(*,'(a,i4,5(1pg13.5))') &
-   ' HPSI: nbe,esp,var=',nbe,amoy(nbe),spvariance(nbe), &
-      SQRT(REAL(wfovlp(q2,q2))),ABS(wfovlp(qact,q2))
-  qact = q2
+  is=ispin(nrel2abs(nbe))
+  WRITE(*,'(a,2i4,5(1pg13.5))') &
+   ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
+      ekinsp(nbe),epotsp(nbe),amoy(nbe)
+  CALL flush(6)
+!      SQRT(REAL(wfovlp(q2,q2))),ABS(wfovlp(qact,q2))
 ELSE
-  qact = q1+q2
+  q2 = q1+q2
 END IF
 
+IF(itpri<0) THEN
+  qact = q2-amoy(nbe)*qact
+ELSE
+  qact = q2
+END IF
 
 !espact =  amoy(nbe)
 

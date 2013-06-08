@@ -25,6 +25,7 @@ USE kinetic
 !#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
+USE twost, ONLY: vecs
 #endif
 !#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -42,8 +43,8 @@ LOGICAL, INTENT(IN)                       :: trealin
 CHARACTER (LEN=13), INTENT(IN)            :: outna
 
 REAL(DP), ALLOCATABLE                     :: psiauxr(:)
-LOGICAL :: topenf
-LOGICAL,PARAMETER :: ttest = .FALSE.
+LOGICAL :: topenf,tstatin
+LOGICAL,PARAMETER :: ttest = .TRUE.
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -82,7 +83,7 @@ mynact = myn
 
 
 
-
+tstatin = trealin .OR. isitmax>0
 
 #ifdef REALSWITCH
 
@@ -92,7 +93,7 @@ mynact = myn
 #else
 
   IF(mynact==0) THEN
-    IF(trealin) THEN
+    IF(tstatin) THEN
       INQUIRE(60,OPENED=topenf)
       IF(.NOT.topenf) THEN
         OPEN(UNIT=60,STATUS='old',FORM='unformatted',FILE='rsave.'//outna) 
@@ -129,7 +130,7 @@ END IF
 
 
 #ifdef COMPLEXSWITCH
-IF(trealin) THEN
+IF(tstatin) THEN
   irest=0
 ELSE
   irest=iact
@@ -151,6 +152,12 @@ IF(nclust > 0)THEN
     END IF
   END DO
   READ(60) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
+  IF(ttest) THEN
+    WRITE(*,*) ' READ occup:',occup(1:nstate)
+    WRITE(*,*) ' READ amoy:',amoy(1:nstate)
+    WRITE(*,*) ' READ epotsp:',epotsp(1:nstate)
+    WRITE(*,*) ' READ ekinsp:',ekinsp(1:nstate)
+  END IF
 END IF
 #endif
 #if(parayes)
@@ -216,15 +223,20 @@ IF(mynact==0) THEN
 
 !  read protonic coordinates and momenta
   IF(nion > 0) THEN
-    IF(trealin) THEN
+    IF(tstatin) THEN
       READ(60) dummy
     ELSE
       READ(60) cx(1:nion),cy(1:nion),cz(1:nion), &
                cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
     END IF
+    IF(ttest) THEN
+      WRITE(*,*) '  ionix positions/velocities:'
+      DO n=1,nion
+        WRITE(*,*) cx(n),cy(n),cz(n),cpx(n),cpy(n),cpz(n)
+      END DO
+    END IF
   END IF
 
-  IF(ttest) WRITE(*,*) ' ions read in. nion=',nion
 !  read substrate coordinates and momenta
 #if(raregas)
   IF (isurf /= 0) THEN
@@ -242,10 +254,10 @@ IF(mynact==0) THEN
 
   IF(nclust > 0) THEN
     READ(60) qe(1:kmom),se(1:3)
-    IF(ttest) WRITE(*,*) ' moments read in'
+    IF(ttest) WRITE(*,*) ' moments read in:',qe(1:4)
 #ifdef COMPLEXSWITCH                                          !new
     IF (nabsorb > 0) THEN
-      IF(trealin) THEN
+      IF(tstatin) THEN
         rhoabso = 0D0
       ELSE
         READ(60) rhoabso(1:kdfull2)
@@ -253,7 +265,7 @@ IF(mynact==0) THEN
       IF(jescmaskorb /=0) THEN
 #if(parayes)
         ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
-        IF(trealin) THEN
+        IF(tstatin) THEN
            rhoabsoorb_all = 0D0
         ELSE
           DO nbe=1,nstate_all
@@ -261,7 +273,7 @@ IF(mynact==0) THEN
           END DO
         END IF
 #else
-        IF(trealin) THEN
+        IF(tstatin) THEN
            rhoabsoorb = 0D0
         ELSE
           DO nbe=1,nstate
@@ -274,8 +286,9 @@ IF(mynact==0) THEN
     END IF
 !   reading accumulators for laser field
     IF(.NOT.trealin) THEN
+      IF(ttest) WRITE(*,*) ' before reading laser'
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
-!      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
+      IF(ttest) WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
     END IF
 #endif                                                        !new
   END IF
@@ -313,18 +326,27 @@ END IF
 #endif
 
 
-!#ifdef REALSWITCH
-!JM
 #if(twostsic)
 IF(ifsicp >= 6) THEN
+#ifdef REALSWITCH
   READ(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
-  WRITE(*,*) ' READ vecsr:',vecsr(1:ndims(1),1:ndims(1),1)
+  WRITE(*,*) ' READ vecsr:'
+  DO n=1,ndims(1)
+    WRITE(*,'(8f10.6)') vecsr(1:ndims(1),n,1)
+  END DO
+#endif
+#ifdef COMPLEXSWITCH
+  WRITE(*,*) ' before reading VECS'
+  READ(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  WRITE(*,*) ' READ vecs:'
+  DO n=1,ndims(1)
+    WRITE(*,'(8f10.6)') vecs(1:ndims(1),n,1)
+  END DO
+#endif
 END IF
 #endif
-!JM
-!#endif
 
-IF(trealin) THEN 
+IF(tstatin) THEN 
   CLOSE(UNIT=60)
 ELSE
   CLOSE(UNIT=60,STATUS='keep')
@@ -365,11 +387,12 @@ SUBROUTINE SAVE(psi,isa,outna)
 
 USE params
 USE kinetic
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
+USE twost, ONLY: vecs
 #endif
-#endif
+!#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
@@ -441,6 +464,8 @@ END IF
 IF(mynact==0) THEN
   IF(isa<0) THEN
     OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna)   
+    WRITE(*,*) ' RSAVE opened for complex output'
+    REWIND(60)
   ELSE
     OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
   END IF
@@ -575,16 +600,31 @@ IF(mynact==0) THEN
     END IF
 END IF    
     
-#ifdef REALSWITCH
-!JM
 #if(twostsic)
+#ifdef REALSWITCH
     IF(ifsicp >= 6) THEN
       WRITE(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
-      WRITE(*,'(20f10.5)') vecsr(1:kstate,1:kstate,1)
+      DO n=1,ndims(1)
+        WRITE(*,'(10f10.5)') vecsr(1:ndims(1),n,1)
+      END DO
+      DO n=1,ndims(2)
+        WRITE(*,'(10f10.5)') vecsr(1:ndims(2),n,2)
+      END DO
     END IF
 #endif
-!JM
+#ifdef COMPLEXSWITCH
+    IF(ifsicp >= 6) THEN
+      WRITE(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+      WRITE(*,*) 'vecs written'
+      DO n=1,ndims(1)
+        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
+      END DO
+      DO n=1,ndims(2)
+        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
+      END DO
+    END IF
+#endif
 #endif
 
 IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
@@ -597,9 +637,11 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
 #endif
   
   
-  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
+!  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
     WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
-  END IF
+!  END IF
+
+  CLOSE(60)
   
   RETURN
 #ifdef REALSWITCH
