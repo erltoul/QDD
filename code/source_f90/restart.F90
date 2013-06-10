@@ -257,15 +257,16 @@ IF(mynact==0) THEN
     IF(ttest) WRITE(*,*) ' moments read in:',qe(1:4)
 #ifdef COMPLEXSWITCH                                          !new
     IF (nabsorb > 0) THEN
-      IF(tstatin) THEN
+      IF(trealin) THEN
         rhoabso = 0D0
       ELSE
         READ(60) rhoabso(1:kdfull2)
+        IF(ttest) WRITE(*,*) ' rhoabso read in'
       END IF
       IF(jescmaskorb /=0) THEN
 #if(parayes)
         ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
-        IF(tstatin) THEN
+        IF(trealin) THEN
            rhoabsoorb_all = 0D0
         ELSE
           DO nbe=1,nstate_all
@@ -273,16 +274,16 @@ IF(mynact==0) THEN
           END DO
         END IF
 #else
-        IF(tstatin) THEN
+        IF(trealin) THEN
            rhoabsoorb = 0D0
         ELSE
           DO nbe=1,nstate
             READ(60) rhoabsoorb(1:kdfull2,nbe)
+            IF(ttest) WRITE(*,*) ' rhoabsoorb read in'
           ENDDO
         ENDIF
 #endif
       END IF
-      IF(ttest) WRITE(*,*) ' abso read in'
     END IF
 !   reading accumulators for laser field
     IF(.NOT.trealin) THEN

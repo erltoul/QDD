@@ -7,7 +7,7 @@
 # Set the date
 DATE    =$(shell date +%d.%m.%y)
 # the compiler is set here 
-CF90    = GFORT1
+CF90    = IFORT1
 # the option for parallel processing (only for some compilers)
 USE_MPI = NO
 # Which FFT solver
@@ -17,7 +17,7 @@ DEBUG   = NO
 # Link static or not.
 LINK_STATIC = YES
 # invoke openmp
-OMP = NO
+OMP = YES
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
