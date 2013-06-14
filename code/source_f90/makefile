@@ -274,7 +274,7 @@ $(OBJS):  define.h makefile params.F90
 
 .F90.o:
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
-main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o 2stUT.o 2stUTc.o localize_rad.o
+main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o localize_rad.o 2stUT.o 2stUTc.o
 
 ifeq "$(TYPE_FFT)" "NETLIB"
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftpack.o

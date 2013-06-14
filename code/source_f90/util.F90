@@ -1636,11 +1636,26 @@ SUBROUTINE laserp(vlaser,rho)
 !          tvend  < t < ...      f(t) = 0.
 
 !      itft = 2 --> Gaussian laser pulse
-
 !          tmax = tnode + tpeak
-
 !          0.     < t < tnode    f(t) = 0.
 !          tnode  < t < ...      f(t) = exp(-((t-tmax)/deltat)**2)
+
+!      itft = 3 --> cos**2 envelope
+!          tnode   = start of pulse
+!          tmax    = tnode + 2*tpeak    = end of pulse
+!          2*tpeak = peak length
+!          deltat  = obsolete, must be set to zero
+!
+!      this pulse allows a second cos**2 pulse (probe) switched by
+!      start time tstart2 and length 2*tpeak2.
+
+
+!      itft = 4 --> cos**4 envelope
+!          tnode   = start of pulse
+!          tmax    = tnode + 2*tpeak    = end of pulse
+!          2*tpeak = peak length
+!          deltat  = obsolete, must be set to zero
+
 
 ! The routine accumulates the integrated pulse profile in 'fpulseinteg1/2'.
 ! Trapezoidal integration is used and the last pulse value is
@@ -1700,6 +1715,8 @@ END IF
 
 !     prepare time profile
 
+foft2 = 0D0                ! standard case is: no second pulse
+
 IF(itft == 1) THEN
   tstart = tnode  + tpeak
   tend   = tstart + deltat
@@ -1717,20 +1734,25 @@ END IF
 IF(itft == 2) THEN
   tmax = tnode + tpeak
   
-  IF(tfs <= tnode) foft = 0.
+  IF(tfs <= tnode) foft = 0D0
   IF(tfs > tnode) foft = EXP (- ((tfs - tmax) / deltat)**2)
 END IF
 
 IF(itft == 3) THEN
-  tvend = tnode + 2*tpeak + deltat
+  tvend = tnode + 2D0*tpeak + deltat
   IF(tfs <= tnode.OR.tfs >= tvend) THEN
-!         if(time.le.tnode.or.time.ge.tvend) then
-    foft = 0.
+    foft = 0D0
   ELSE
-!            foft = cos((tfs-0.5*tvend)*pi/tvend)**2
-!mb            foft = cos((time-0.5*tvend)*pi/tvend)**2
-    foft = COS((-0.5+(tfs-tnode)/(2*tpeak+deltat))*pi)**2
+    foft = COS((-0.5D0+(tfs-tnode)/(2D0*tpeak+deltat))*pi)**2
   END IF
+
+  IF(ABS(e0_2) > small) THEN
+    tpulse2 = tpeak2+tpeak2
+    IF(tfs >= tstart2 .AND. tfs <= tstart2+tpulse2) THEN
+      foft2 = COS((-0.5+(tfs-tstart2)/tpulse2)*pi)**2
+    END IF
+  END IF
+
 END IF
 
 IF(itft == 4) THEN
@@ -1738,7 +1760,6 @@ IF(itft == 4) THEN
   IF(tfs <= tnode.OR.tfs >= tvend) THEN
     foft = 0.
   ELSE
-!mb            foft = cos((tfs-0.5*tvend)*pi/tvend)**4
     foft = COS((-0.5+(tfs-tnode)/(2*tpeak+deltat))*pi)**4
   END IF
 END IF
@@ -1752,7 +1773,7 @@ power=e0*e0*foft*foft
 
 
 foft1 = COS(omega*tfs/0.0484)*foft
-foft2 = COS(omega*tfs/0.0484+phi)*foft
+foft2 = COS(omega2*tfs/0.0484+phase2)*foft2
 fpulseinteg1 = fpulseinteg1 + (foft1+foft1old)*0.5D0*(tfs/0.0484-timeold)
 fpulseinteg2 = fpulseinteg2 + (foft2+foft2old)*0.5D0*(tfs/0.0484-timeold)
 
@@ -1770,8 +1791,6 @@ DO  iz=minz,maxz
       ind  = ind + 1
       scal1 = x1 * e1x + y1 * e1y + z1 * e1z
       scal2 = x1 * e2x + y1 * e2y + z1 * e2z
-!            scal=scal1*cos(omega*time)+scal2*cos(omega*time+phi)
-!            vlaser(ind) = - e0 * (scal * foft
       vlaser(ind) = - e0 * (scal1*foft1+scal2*foft2)
       acc1 = acc1 + e0*scal1*rho(ind)
       acc2 = acc2 + e0*scal2*rho(ind)

@@ -317,7 +317,9 @@ INTEGER,ALLOCATABLE :: rand_seed(:)
 !     parameters for external excitations by laser or projectile
 INTEGER :: itft=3
 REAL(DP) :: tnode=0D0,deltat=0D0,tpeak=0D0,omega=0D0,e0=0D0,time,tfs=0D0  
-REAL(DP) :: e1x=1D0,e1y=0D0,e1z=0D0,e2x=0D0,e2y=0D0,e2z=0D0,phi=0D0
+REAL(DP) :: e1x=1D0,e1y=0D0,e1z=0D0,phi=0D0
+REAL(DP) :: e2x=0D0,e2y=0D0,e2z=0D0,phase2=0D0,omega2=0D0,e0_2=0D0
+REAL(DP) :: tstart2=0D0,tpeak2
 REAL(DP) :: fl(6),power
 REAL(DP) :: elaser
 INTEGER :: ijel

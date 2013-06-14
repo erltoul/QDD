@@ -79,6 +79,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     projcharge,projvelx,projvely,projvelz, &
     projinix,projiniy,projiniz, &
     e1x,e1y,e1z,e2x,e2y,e2z,phi,  &
+    phase2,omega2,e0_2,tstart2,tpeak2, &
     izforcecorr, iclassicmd, dinmargin,  &
     ntref,iangabso,ipes,nangtheta,nangphi,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
@@ -349,6 +350,11 @@ IF(directenergy .AND.  &
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
+#if(cmplxsic)
+#if(!twostsic) 
+  STOP 'CMPLXSIC requires TWOSTSIC=1'
+#endif
+#endif
 
 #if(twostsic)
 #if(locsic)
