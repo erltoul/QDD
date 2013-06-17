@@ -377,6 +377,7 @@ ELSE
 
   DO ind=1,nxyz
     rhosp(ind)=rho(ind)*factotal
+    rhosp(ind+nxyz)=1.0
   END DO
 
 !     DFT for averaged s.p. state

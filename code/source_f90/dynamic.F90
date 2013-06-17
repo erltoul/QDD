@@ -1153,7 +1153,8 @@ ALLOCATE(psi2(kdfull2))
 
 epot=0D0
 
-WRITE(*,*) ' in CALC_EPOT 1'
+WRITE(*,*) ' in CALC_EPOT 1. average field=',SUM(alocact(1:nxyz))
+!call prifld(alocact,'ALOC in Epot')
 !     non local part of ps
 
 IF(ipsptyp == 1) THEN

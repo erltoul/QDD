@@ -642,7 +642,7 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
     WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
 !  END IF
 
-  CLOSE(60)
+!  CLOSE(60)
   
   RETURN
 #ifdef REALSWITCH
