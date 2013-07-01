@@ -83,7 +83,7 @@ mynact = myn
 
 
 
-tstatin = trealin .OR. isitmax>0
+tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
 
 #ifdef REALSWITCH
 
@@ -286,7 +286,8 @@ IF(mynact==0) THEN
       END IF
     END IF
 !   reading accumulators for laser field
-    IF(.NOT.trealin) THEN
+    IF(ttest) WRITE(*,*) ' before laser switch:',trealin
+    IF(.NOT.tstatin) THEN
       IF(ttest) WRITE(*,*) ' before reading laser'
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
       IF(ttest) WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
@@ -342,6 +343,9 @@ IF(ifsicp >= 6) THEN
   WRITE(*,*) ' READ vecs:'
   DO n=1,ndims(1)
     WRITE(*,'(8f10.6)') vecs(1:ndims(1),n,1)
+  END DO
+  DO n=1,ndims(2)
+    WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
   END DO
 #endif
 END IF
@@ -405,7 +409,7 @@ REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 
 INTEGER, INTENT(IN OUT)                     :: isa
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
-LOGICAL,PARAMETER :: ttest = .FALSE.
+LOGICAL,PARAMETER :: ttest = .TRUE.
 
 
 #if(parayes)
@@ -594,9 +598,11 @@ IF(mynact==0) THEN
         END IF
       END IF
 !     writing cumulators for laser field
-      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
-                fpulseinteg1,fpulseinteg2,elaser
-      WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
+      IF(isa.GE.0) THEN
+        WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
+                  fpulseinteg1,fpulseinteg2,elaser
+        WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
+      END IF
 #endif
     END IF
 END IF    
@@ -618,6 +624,7 @@ END IF
     IF(ifsicp >= 6) THEN
       WRITE(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecs written'
+      WRITE(*,*) ndims
       DO n=1,ndims(1)
         WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
       END DO

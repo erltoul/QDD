@@ -83,7 +83,7 @@ rvectmp(1)=1D0             ! ??? what for ?
 
 !JM
 #if(twostsic)
-IF(ifsicp>=7 .AND. isitmax==0) CALL init_vecs()
+!IF(ifsicp>=7 .AND. isitmax==0) CALL init_vecs()
 #endif
 !JM
 
@@ -437,7 +437,7 @@ DO nb=1,nstate
   ELSE
     CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
-!    WRITE(*,*) ak(1),q1(1,ithr)
+    WRITE(*,*) ak(1),q1(1,ithr)
     q1(:,ithr) = ak*q1(:,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
   END IF
