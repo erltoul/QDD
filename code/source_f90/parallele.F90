@@ -193,6 +193,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(ipsptyp,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(ipseudo,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(imob,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(numspin,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(ismax,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(itmax,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -361,6 +362,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(ipsptyp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(ipseudo,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(imob,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(numspin,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(ismax,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(itmax,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
