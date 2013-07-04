@@ -466,16 +466,40 @@ DO it=irest,itmax   ! time-loop
   END IF
 
 
-  IF(it==irest) then
-    totintegprob=0D0
-    reference_energy=etot
-  ELSE IF(it>irest .AND. (jattach>0 .AND. MOD(it,jattach)==0)) then
-    call attach_prob(nmatchenergy,totalprob,psi)
-    totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
-    write(6,'(e12.5,1x,i4,3(1x,e14.5))') &                
-      tfs,nmatchenergy,totalprob,totintegprob
-    write(809,'(e12.5,1x,i4,3(1x,e14.5))') & 
-       tfs,nmatchenergy,totalprob,totintegprob
+  IF (jattach>0) THEN
+    ! The calculation of an electron attachment on a water molecule should 
+    ! proceed as follows:
+    ! 1) Perform a static calculation for a water molecule alone, with a 
+    !    'deocc' high enough, so that all bound states, occupied and empty, 
+    !    are calculated.
+    ! 2) Create the file 'occ_spe_target' containing the binding energy and 
+    !    the total energy as a first line, and then the ispin, occupation 
+    !    number and s.p. energie of each state.
+    ! 3) Perform a dynamical calculation with itmax=1 to generate a save file 
+    !    which should be moved to the parent directory and renamed 'wfs_target'.
+    ! 4) Perform a static and dynamical calculation with 'iscatterelectron=1' 
+    !    and a small deocc (e.g., 'deocc=0.1'), so that only occupied states 
+    !    of the water molecule are considered. The incoming electron is added 
+    !    just before the dynamics as the last (occupied) state, and thus 
+    !    labeled by nstate.
+    IF(it == irest) then
+      totintegprob=0.D0
+      reference_energy=etot
+
+      CALL init_occ_target()
+      WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
+      ALLOCATE(psitemp(kdfull2,nstate_target))
+      CALL init_psitarget()
+
+    ELSE IF(it>irest .AND. MOD(it,jattach) == 0) then
+      call attach_prob(totalprob,psi)
+      totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+      write(6,'(e12.5,1x,i8,3(1x,e14.5))') &                
+           tfs,nmatchenergy,totalprob,totintegprob
+      CALL safeopen(809,it,jattach,'pattach')
+      write(809,'(e12.5,1x,i8,3(1x,e14.5))') & 
+           tfs,nmatchenergy,totalprob,totintegprob
+    END IF
   END IF
 
   
