@@ -1,6 +1,7 @@
 #include "define.h"
  
 !-----statit---------------------------------------------------------
+
 SUBROUTINE statit(psir,rho,aloc)
 
 !     master routine for static iteration
@@ -12,8 +13,6 @@ USE coulsolv, ONLY:falr
 #endif
 #if(twostsic)
 USE twostr
-#endif
-#if(fullsic)
 USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -30,15 +29,17 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !REAL(DP) ::  rhotmp(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
-LOGICAL,PARAMETER :: tp_prints=.false.
+LOGICAL,PARAMETER :: tp_prints=.true.
+CHARACTER (LEN=1) :: str1
+CHARACTER (LEN=2) :: str2
+CHARACTER (LEN=3) :: str3
+CHARACTER (LEN=1) :: inttostring1
+CHARACTER (LEN=2) :: inttostring2
+CHARACTER (LEN=2) :: inttostring3
 
-!MB:
-#if(fullsic)
-REAL(DP) :: qaux(kdfull2,kstate)
-#else
-REAL(DP) :: qaux(1,1)       ! dummy array
-#endif
-!MB/
+REAL(DP),ALLOCATABLE :: qaux(:,:)
+
+IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 
 ! test Coulomb
 CALL calcrhor(rho,psir)
@@ -97,7 +98,13 @@ IF(myn == 0)THEN
   WRITE(6,*) 'ismax=',ismax
 END IF
 
-
+#if(twostsic)
+if(ifsicp.eq.8) then
+  do is=1,2 !MV initialise ExpDabOld                                        
+    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
+  enddo
+endif
+#endif
 
 !     the static iteration starts here
 
@@ -125,32 +132,21 @@ DO iter1=1,ismax
       ifsicp = ifsicpsav
     END IF
   END IF
-  
-  IF(ifsicpsav == 6) THEN
-#if(fullsic)
-    IF(iter1 <= itersicp6 .AND. sumvar > 10D0*epsoro) THEN
-      ifsicp = 3   !   or 0 ?
+
+  IF(ifsicpsav == 8 .OR. ifsicpsav == 7) THEN      ! switch safe pre-iterations for SIC
+    IF(iter1 <= 2*istinf) THEN
+      ifsicp = 2
     ELSE
-      ifsicp = 6
-!             if(iter1.le.itersicp6+10) then
-      IF(iter1 <= 0) THEN
-        WRITE(*,*) ' before LOCWF'
-        CALL calc_locwf(psir,qaux)
-        CALL calc_fullsicr(psir,qaux)
-        WRITE(*,*) ' after LOCWF'
-      END IF
+      ifsicp = ifsicpsav
     END IF
-#else
-    STOP "IFSICP=6 requires LOCSIC or FULLSIC"
-#endif
-!           write(*,*) ' ITERSICP6,IFSICP=',itersicp6,ifsicp   ! <--  strange line
   END IF
   
-  IF(ifsicp /= 6) THEN
-    CALL sstep(psir,aloc,iter1)    ! also for GSlat, DSIC
-#if(fullsic)
+  IF(ifsicp /= 7) THEN
+    CALL sstep(psir,aloc,iter1) 
+#if(twostsic)
   ELSE
-    CALL  sicstep_gen(psir,qaux,aloc,iter1)
+    CALL sstep_lsic(psir,akv,aloc,iter1,qaux)
+!    CALL sicstep_gen(psir,qaux,aloc,iter1)
 #endif
   END IF
   
@@ -185,6 +181,7 @@ CALL flush(6)
 END DO                                      ! end iteration loop
 99   CONTINUE
 
+
 IF(myn == 0)THEN
   WRITE(7,*) ' static iteration terminated with ', iter1,' iterations'
   
@@ -210,7 +207,7 @@ END IF
 
 !     diagonalize Lagrange parameters
 
-IF(ifsicp >= 7) THEN
+IF(ifsicp > 8) THEN
   CALL diag_lagr(psir)
 !        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
 END IF
@@ -237,16 +234,28 @@ IF(tp_prints .AND. (myn == 0 .OR. knode == 1)) THEN
 END IF
 
 IF (iplotorbitals /= 0) THEN
-  OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
-  DO i=1,nstate
-    WRITE(522,'(a,i3)') '# state nr: ',i
-    WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
-    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
-    CALL printfield(522,psir(1,i),'tp.psir')
+  DO nbe=1,nstate
+    nbeabs = nrel2abs(nbe)
+    IF(nbeabs < 10) THEN
+      str1=inttostring1(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str1//'.'//outnam)
+    ELSE IF (nbeabs < 100) THEN
+      str2=inttostring2(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str2//'.'//outnam)
+    ELSE IF(nbeabs < 1000) THEN
+      str3=inttostring3(nbeabs)
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str3//'.'//outnam)
+    ELSE
+      STOP 'ERROR: Too many states for iplotorbitals'
+    END IF
+    WRITE(522,'(a,i3)') '# state nr: ',nbeabs
+    WRITE(522,'(a,f12.5)') '# occupation: ',occup(nbe)
+    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(nbe)
+    CALL printfield(522,psir(1,nbe),'tp.psir')
     WRITE(522,*)  ! separate blocks for gnuplot
     WRITE(522,*)  !
+    CLOSE(522)
   END DO
-  CLOSE(522)
 END IF
 
 !       call calcrhor(rhor,psir)
@@ -290,7 +299,7 @@ IF(icooltyp == 1 .AND. itmax > 0) THEN
   CALL rsave(psir,iter1,outnam)
 END IF
 
-!k check 1p-h transition matrix elements to unoccpied state:
+!k check 1p-h transition matrix elements to unoccupied state:
 !k attention: nstate must be bigger than number of electrons
 
 #if(parano)
@@ -335,6 +344,13 @@ IF (isurf /= 0) THEN
 END IF
 #endif
 
+#if(twostsic)
+if(ifsicp.eq.8) then
+  write(6,*) 'avant pricm'!MV                                               
+  write (6,'(3f12.3)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV             
+endif
+#endif
+
 
 CALL pricm(rho)
 IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
@@ -352,7 +368,7 @@ RETURN
 END SUBROUTINE statit
 !-----static_mfield------------------------------------------------
 
-SUBROUTINE static_mfield(rho,aloc,psir,psiaux,int_pass)
+SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
 
 !     The Coulomb part of the mean field.
 
@@ -363,12 +379,10 @@ SUBROUTINE static_mfield(rho,aloc,psir,psiaux,int_pass)
 !      aloc   = local mean-field potential
 
 USE params
-#if(fullsic)
-USE localize_rad
-#endif
 ! USE kinetic
 #if(twostsic)
 USE twostr
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -376,7 +390,8 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
-INTEGER , INTENT(IN OUT)                      :: int_pass
+INTEGER, INTENT(IN OUT)                  :: iter1
+
 
 
 
@@ -391,19 +406,18 @@ IF (NE > 0) THEN
   CALL calcpseudo()                 ! update pseudo-potentials   ??
 END IF
 #endif
+
 CALL calclocal(rho,aloc)          ! LDA part of the potential
 
 !      call infor(psir,rho,0)
 
 IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
-#if(fullsic)
-ELSE IF(ifsicp == 6) THEN
-  CALL calc_fullsicr(psir,psiaux)
-#endif
 #if(twostsic)
-ELSE IF(ifsicp >= 7 .AND. int_pass > 0) THEN
-  CALL static_sicfield(rho,aloc,psir,int_pass)
+ELSE IF(ifsicp == 7) THEN
+  CALL calc_locsic(psir,psiaux)
+ELSE IF(ifsicp ==8 .AND. iter1 > 0) THEN
+  CALL static_sicfield(rho,aloc,psir,iter1)
 #endif
 END IF
 
@@ -413,7 +427,9 @@ END SUBROUTINE static_mfield
 
 !#if(parano)
 !-----sstep----------------------------------------------------------
-SUBROUTINE sstep(q0,aloc,int_pass)
+
+SUBROUTINE sstep(q0,aloc,iter)
+
 !     Performs one static step for all wavefunctions and for given
 !     mean fields.
 !     The step involves: action of H->psi, some analysis, and damping.
@@ -426,25 +442,24 @@ SUBROUTINE sstep(q0,aloc,int_pass)
 !              the local mean field on 'aloc'
 !              the iteration number 'iter' (for switching analysis)
 !                 (only analysis, no stepping for 'iter=0') 
-!     Ouput is new new real wavefunction 'q0'
+!     Output is new new real wavefunction 'q0'
 
 !     This part for the serial version.
 
 USE params
 USE kinetic
 !USE localize_rad
-#if(fullsic)
-USE localize_rad
-#endif
 #if(twostsic)
 USE twostr
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                      :: int_pass
+INTEGER, INTENT(IN)                      :: iter
+
 
 REAL(DP) :: occold(kstate),ocwork(kstate)
 #if(parayes)
@@ -477,6 +492,7 @@ DATA tocc,tcpu/.false.,.true./
 #if(parayes)
 DATA tocc,tcpu/.false.,.true./     ! no reoccupation in parallel
 #endif
+LOGICAL,PARAMETER :: tproj=.false.
 !       workspaces
 
 #if(netlib_fft|fftw_cpu)
@@ -503,6 +519,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 #if(fftw_gpu)
 size_data=nstate*kdfull2
 #endif
+
 nph=3-numspin
 
 !     set timer
@@ -517,10 +534,12 @@ IF(ifsicp == 5) THEN
   CALL exchgr(q0,qex)
 END IF
 
+
 #if(netlib_fft|fftw_cpu)
 ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
 #endif
+
 #if(fftw_gpu)
 #if(gridfft)
 ALLOCATE(q1(kdfull2,kstate))
@@ -574,14 +593,17 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
+!  espbef = rwfovlp(q0(1,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
+!  espaft = rwfovlp(q0(1,nbe),q1)
+!  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
   
   
 !       optionally compute expectation value of potential energy
   
-  IF(MOD(int_pass,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -599,8 +621,10 @@ ALLOCATE(psipr(kdfull2))
 !        FFT of V*psi
   CALL rftf(q1,q2)
   
+  
 !       compose to h|psi>
   q2 = psipr*akv+q2
+  
   
 !       Optionally compute expectation value of kinetic energy
 !       and variance of mean field Hamiltonian.
@@ -608,29 +632,28 @@ ALLOCATE(psipr(kdfull2))
 !       Variance 'evarsp2' excludes non-diagonal elements within
 !       occupied space.
   
-  IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
+  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
-   ALLOCATE(w4(kdfull2))
-
-    CALL rfftback(psipr,w4)
+    ALLOCATE(w4(kdfull2))
+    CALL rfftback(psipr,w4)     !  ???
     CALL rfftback(q2,w4)
-
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
+!    WRITE(*,*) ' nbe,var2=',nbe,evarsp2(nbe)
     DEALLOCATE(w4)
 #endif
-
+    
     sum0 = 0D0
     sumk = 0D0
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
+      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +imag(q2(i))*imag(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +imag(q2(i))*imag(q2(i))  + sum2
+      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
@@ -638,18 +661,18 @@ ALLOCATE(psipr(kdfull2))
 !          write(6,*) ' norm,spe=',sum0,sume
 !          amoy(nbe)   = sume
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
-
 #if(parayes)
     evarsp2(nbe) = evarsp(nbe)
 #endif
   END IF
+
   
 #if(parano)
   IF(ifhamdiag == 1) THEN
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
-    IF(int_pass > 0) THEN  
+    IF(iter > 0) THEN  
       CALL rfftback(q2,q1)
       iactsp = ispin(nbe)
       nstsp(iactsp) = 1+nstsp(iactsp)
@@ -660,39 +683,54 @@ ALLOCATE(psipr(kdfull2))
           hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
+#if(twostsic)  
+          hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
+#endif
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
               hmatr(ntridig(iactsp),iactsp)
         END IF
       END DO
+#if(twostsic)  
+      DO nbc=nbe+1,nstate
+        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = rwfovlp(q0(1,nbc),q1)
+      END DO
+#endif
     END IF
 
   END IF
 #endif
   
-!     perform the damped gradient step and orthogonalise the new basis
   
-  IF(idyniter /= 0 .AND. int_pass > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-
-!  IF(int_pass > 0) THEN  
+!     perform the damped gradient step and orthogonalize the new basis
+  
+  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
+  
+!  IF(iter > 0) THEN  
+  IF(tproj) THEN
     IF(e0dmp > small) THEN
-!       DO i=1,nxyz
-!         psipr(i)=psipr(i)-q2(i)*epswf / (akv(i) + e0dmp )
-!       END DO
+      q2 = - q2*epswf/(akv+e0dmp)
+    ELSE
+      q2 = - epswf*q2
+    END IF
+    CALL rfftback(q2,q1)
+    CALL project(q1,q1,ispin(nbe),q0)
+    q0(:,nbe) = q0(:,nbe)+q1
+  ELSE
+    IF(e0dmp > small) THEN
       psipr = psipr - q2*epswf/(akv+e0dmp)
     ELSE
       psipr = psipr - epswf*q2
     END IF
     CALL rfftback(psipr,q0(1,nbe))
-
 !  END IF
-  
+  END IF  
 DEALLOCATE(psipr)
 END DO                                            ! end loop over states
 #endif
 ! end of FFT switch
 #endif
 !end of netlib/fftw switch
-
+  
 #if(fftw_gpu)
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
@@ -728,7 +766,7 @@ DO nbe=1,nstate
   
 !       optionally compute Cexpectation value of potential energy
   
-  IF(MOD(int_pass,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1(1,nbe)) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1(1,nbe)) + amoy(nbe)
   
   
 #if(gridfft)
@@ -751,7 +789,7 @@ ENDDO !END LOOP OVER STATES
 !       Variance 'evarsp2' excludes non-diagonal elements within
 !       occupied space.
   
-  IF(MOD(int_pass,istinf) == 0 .AND. ifsicp /= 6) THEN
+  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
     ALLOCATE(w4(kdfull2,kstate))
@@ -796,7 +834,7 @@ ENDDO
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
-    IF(int_pass > 0) THEN  
+    IF(iter > 0) THEN  
 
       CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
 
@@ -822,7 +860,7 @@ ENDDO
 #endif
 !     perform the damped gradient step and orthogonalise the new basis
 DO nbe=1,nstate    
-  IF(idyniter /= 0 .AND. int_pass > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
+  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
     IF(e0dmp > small) THEN
 !      psipr = psipr - q2*epswf/(akv+e0dmp)
       CALL d_grad1(gpu_fftaglob,gpu_ffta2,gpu_akvfft,epswf,e0dmp,kdfull2,nbe)
@@ -837,7 +875,7 @@ ENDDO
 ! end of FFT switch
 #endif
 ! end of fftw_gpu switch
-  
+
 #if(findiff|numerov)
   
 !      action of kinetic energy, exp.values, and gradient step
@@ -863,6 +901,7 @@ ENDDO
   evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
 END DO                                            ! end loop over states
+
 #if(fftw_gpu)
 DEALLOCATE(q2)
 #endif
@@ -878,7 +917,26 @@ IF(ifsicp == 5)  DEALLOCATE(qex)
 
 #if(parano)
 IF(ifhamdiag == 1) THEN
-!     diagonalize mean-field Hamiltonian
+
+
+!  symmetrize Hamiltonian matrix
+#if(twostsic)  
+  DO iactsp=1,2
+    ntridig(iactsp) = 0
+    DO nbe=1,nstate
+    IF(iactsp == ispin(nbe)) THEN
+      DO nbc=1,nbe
+        IF(iactsp == ispin(nbc)) THEN
+          ntridig(iactsp) = 1+ntridig(iactsp)
+          hmatr(ntridig(iactsp),iactsp) = (hmatrix(nbc,nbe)+hmatrix(nbe,nbc))/2D0
+        END IF
+      END DO
+    END IF
+    END DO
+  END DO
+#endif
+
+!     diagonalize mean-field Hamiltonianx
 !     and transform occupied states correspondingly
 
 
@@ -895,6 +953,17 @@ IF(ifhamdiag == 1) THEN
     CALL givens(hmatr(1,iactsp),heigen,vect, nstsp(iactsp),nstsp(iactsp),kstate)
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
         (heigen(nbe),nbe=1,nstsp(iactsp))
+#if(twostsic)
+   IF(ifsicp==8) THEN
+     ni = ndims(iactsp)
+     if(ni .NE. nstsp(iactsp)) THEN
+       WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
+       STOP ' SSTEP: spin sub-matrices do not match'
+     END IF
+     vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
+     WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
+   END IF
+#endif
     DO ii=1,nxyz
       psistate = 0D0
       DO nbes=1,nstsp(iactsp)
@@ -941,28 +1010,31 @@ IF(tcpu) THEN
 !        write(6,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 !        write(7,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 END IF
-WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
-WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',int_pass,se(4),se(5),time_cpu
+WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
+WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
+
+
 
 RETURN
 END SUBROUTINE sstep
 !#endif
 
 !-----infor--------------------------------------------------------
-SUBROUTINE infor(psi,rho,int_pass)
+
+SUBROUTINE infor(psi,rho,i)
 
 !     Computes observables (energies, radii, ...)
 !     and prints to standard output.
 
 USE params
-#if(fullsic)
+#if(twostsic)
 USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: int_pass
+INTEGER, INTENT(IN)                      :: i
 REAL(DP), PARAMETER :: alpha_ar=10.6
 REAL(DP),SAVE :: energyold=0D0
 
@@ -982,6 +1054,7 @@ REAL(DP) :: en(kstate)
 ALLOCATE(psipr(kdfull2))
 ALLOCATE(psi2(kdfull2))
 
+
 !   compute h*psi
 
 eshell=0D0
@@ -991,7 +1064,6 @@ sumvar = 0D0
 sumvar2 = 0D0
 espnb  = 0D0
 enonlc = 0D0
-
 DO nb=1,nstate
   
   ekin     = ekinsp(nb)
@@ -1007,7 +1079,8 @@ DO nb=1,nstate
   sumvar   = sumvar + occup(nb)*evarsp(nb)**2
   sumvar2   = sumvar2 + occup(nb)*evarsp2(nb)**2
   enonlc   = enonlc + enonlo(nb)*occup(nb)
-!        if(nc+nk+ne.gt.0) ecorr=energ_ions()
+!  WRITE(*,*) ' check: nbe,bvar2=',nbe,evarsp2(nb)
+        if(nc+nk+ne.gt.0) ecorr=energ_ions()
 END DO
 
 ecorr=energ_ions()
@@ -1125,14 +1198,14 @@ IF(myn == 0) THEN
     energ2 = energy
     energy = ensav
   END IF
-  WRITE(6,'(a,i5,a,f12.6)') 'iter= ',int_pass,'  binding energy',binerg
+  WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
   WRITE(6,'(a)') ' '
   
-  IF(jinfo > 0 .AND. MOD(int_pass,jinfo) == 0) THEN
+  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
     CALL cleanfile(17)
     OPEN(17,POSITION='append',FILE='infosp.'//outnam)
     WRITE(17,'(a,i5,4(1pg13.5))') 'iteration,energy,variances=',  &
-        int_pass,energy,(energy-energyold)/jinfo,sumvar,sumvar2
+        i,energy,(energy-energyold)/jinfo,sumvar,sumvar2
     CALL flush(17)
     energyold = energy
   END IF
@@ -1180,7 +1253,7 @@ END IF
 
 !mb for creating the potential energy curve of Na on MgO
 #if(raregas)
-IF (int_pass == -1 .AND. myn == 0) THEN ! static iteration ended, print out binding energies
+IF (i == -1 .AND. myn == 0) THEN ! static iteration ended, print out binding energies
   OPEN(221,POSITION='append',FILE='penerstat')
   WRITE(221,'(1f15.5,8e20.10)') zc(1),energy,ecorr,2*ecback, ecrho-ecback,  &
       amoy(1)
@@ -1195,7 +1268,8 @@ RETURN
 END SUBROUTINE infor
 
 !-----pri_pstat----------------------------------------------------
-SUBROUTINE pri_pstat(psi,int_pass,rho)
+
+SUBROUTINE pri_pstat(psi,i,rho)
 
 !     print short protocol on file 'pstat.*'
 
@@ -1208,7 +1282,7 @@ USE coulsolv
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)              :: int_pass
+INTEGER, INTENT(IN OUT)              :: i
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
@@ -1265,11 +1339,11 @@ CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
 #if(parano)
 DO nb=1,nstate
   IF(numspin==2) THEN
-    WRITE(42,'(a,i2,a,i3,3f9.5,1pg12.4)')  &
+    WRITE(42,'(a,i3,a,i3,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,variance =',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekinsp(nb), amoy(nb),evarsp(nb)
   ELSE
-    WRITE(42,'(a,i2,a,3f9.5,1pg12.4)')  &
+    WRITE(42,'(a,i3,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,variance=',  &
       occup(nb),ekinsp(nb),amoy(nb),evarsp(nb)
   END IF
@@ -1307,7 +1381,7 @@ IF(myn == 0) THEN
   WRITE(42,'(a,f7.2)')    'mon.:',qe(1)
   WRITE(42,'(a,3f11.5)')  'dip.in  :',dpolx,dpoly,dpolz
   WRITE(42,'(a,3f11.5)')  'dip.out :',qe(2),qe(3),qe(4)
-  WRITE(42,'(a)')         'quadrupol moments:'
+  WRITE(42,'(a)')         'quadrupole moments:'
   WRITE(42,'(a,3f11.4)')  'xx,yy,zz:',qe(5),qe(6),qe(7)
   WRITE(42,'(a,3f11.4)')  'xy,zx,zy:',qe(8),qe(9),qe(10)
   rms = SQRT(qe(5)+qe(6)+qe(7))
@@ -1533,6 +1607,7 @@ USE params
 
 END SUBROUTINE print_orb
 
+#if(raregas)
 SUBROUTINE print_surf(rho)
 USE params
 
@@ -1571,4 +1646,5 @@ USE params
   END IF
 
 END SUBROUTINE print_surf
+#endif
 #endif

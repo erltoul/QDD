@@ -20,11 +20,10 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-#if(fullsic)
-USE localize_rad
-#endif
 #if(twostsic)
 USE twostr
+USE twost
+USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -34,7 +33,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     psi  = complex wavefunctions in coord space (for dynamics)
 !     rho  = electronic density in coord space
 !     aloc = mean-field-potential (to be initialized before dynamics)
-!     chpcoul = coulomb-potential of electrons
+!     chpcoul = Coulomb-potential of electrons
 !     c$s/cp$s = auxiliary field to store coords and momenta in between
 !              the trial protonic propagation
 !     rhojel = jel.density
@@ -92,11 +91,11 @@ CALL init_grid()
 
 CALL init_fields()
 
-#if(lda_gpu&&fftw_gpu)
+#if(lda_gpu)
 CALL cuda_lda_init()
 #endif
 
-#if(fullsic)
+#if(twostsic)
 IF(numspin==2) CALL init_radmatrix()
 #endif
 
@@ -131,8 +130,6 @@ IF (isurf == 1) THEN
 END IF
 #endif
 
-!                                     initialize parameters for FSIC
-IF(ifsicp >= 7) CALL init_fsic()
 
 IF(ihome == 1) CALL init_homfield()  ! optional homogeneous E field
 
@@ -151,14 +148,18 @@ CALL timer(1)
 !
 !       *******************************************
 
+!                                     initialize parameters for FSIC
+IF(nclust > 0 .AND. ifsicp >= 7) THEN
+   CALL init_fsicr()
+END IF
 
 !IF(nclust > 0 .AND. irest == 0 .AND. istat == 0 .AND. ismax > 0)  
 IF(nclust > 0 .AND. irest == 0 .AND. ismax > 0)  THEN
-    CALL statit(psir,rho,aloc)
+  CALL statit(psir,rho,aloc)
 END IF
 
 
-!     using monte-carlo
+!     using Monte-Carlo
 
 IF(icooltyp == 3) THEN
   CALL simann(psir,rho,aloc)
@@ -175,14 +176,14 @@ DEALLOCATE(psir)
 !       *******************************************
 
 ALLOCATE(psi(kdfull2,kstate))
-psi=CMPLX(0D0,0D0)
+psi=CMPLX(0D0,0D0,DP)
 
 !     optionally initialize work arrays
-IF(jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
+IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
 IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 
 
-!     initialise protocol files
+!     initialize protocol files
 
 IF(nclust > 0 .AND. nabsorb > 0) CALL init_absbc(rho)
 IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
@@ -197,6 +198,11 @@ IF (surftemp > 0) CALL init_surftemp()
 #endif
 
 IF(nclust > 0)THEN
+
+  IF(ifsicp >= 7) THEN
+    CALL init_fsic()
+!    CALL end_fsicr()                !??    check and correct
+  END IF
   
   IF(nabsorb > 0) CALL init_absbc(rho)
   IF(jmp > 0) CALL initmeasurepoints
@@ -320,8 +326,11 @@ ekionold=0D0
 
 !---           here starts true propagation  --------------
 
+CALL flush(7)
+CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
+CALL stimer(1)
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step
@@ -398,6 +407,7 @@ DO it=irest,itmax   ! time-loop
 !     ******** compute and write observables: ********
   
   CALL timer(2)
+  CALL stimer(2)
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
@@ -414,7 +424,23 @@ DO it=irest,itmax   ! time-loop
     IF(nclust > 0) CALL savings(psi,tarray,it)
   END IF
   
-  
+!  computing electron attachement
+  IF(jattach>0) THEN
+    IF(it.eq.irest) THEN
+       totintegprob=0.d0
+       reference_energy=etot
+    ELSE IF(it.gt.irest.and.mod(it,jattach).eq.0) THEN
+       call attach_prob(nmatchenergy,totalprob,psi)
+!          call testoto(psi)                                                    
+       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+       write(6,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+       write(809,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+    END IF
+  END IF  
+! end electron attachement
+
 #if(simpara)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   WRITE(7,*) ' After barrier. myn,it=',myn,it
@@ -483,6 +509,16 @@ CLOSE(806)
 
 DEALLOCATE(psi)
 
+#if(fftw_cpu|fftw_gpu)
+IF (myn == 0) THEN
+CALL fft_end()
+CALL coulsolv_end()
+ENDIF
+#endif
+
+#if(fftw_gpu)
+CALL cuda_end()
+#endif
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
@@ -494,15 +530,6 @@ WRITE(7,*) ' before final barrier. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
-#endif
-
-#if(fftw_cpu|fftw_gpu)
-CALL fft_end()
-CALL coulsolv_end()
-#endif
-
-#if(fftw_gpu)
-CALL cuda_end()
 #endif
 
 CALL cpu_time(time_absfin)

@@ -358,8 +358,8 @@ sumr=0.
 sumi=0.
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + imag(q1(ind))*imag(q2(ind))
-  sumi=sumi+REAL(q1(ind))*imag(q2(ind))- REAL(q2(ind))*imag(q1(ind))
+  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
+  sumi=sumi+REAL(q1(ind))*AIMAG(q2(ind))- REAL(q2(ind))*AIMAG(q1(ind))
 END DO
 
 
@@ -390,7 +390,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 sumr=0.
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + imag(q1(ind))*imag(q2(ind))
+  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
 END DO
 
 realoverlap=sumr*dvol
@@ -423,7 +423,7 @@ INTEGER, INTENT(IN OUT)                  :: ion
 sumr=0.
 DO i=1,ifin(ion)
   ii = icount(i,ion)
-  sumr = REAL(q2(ii))*REAL(q1(ii)) +imag(q2(ii))*imag(q1(ii)) + sumr
+  sumr = REAL(q2(ii))*REAL(q1(ii)) +AIMAG(q2(ii))*AIMAG(q1(ii)) + sumr
 END DO
 
 realovsubgrid=sumr*dvol
@@ -462,9 +462,9 @@ IF (iflag == 4) THEN
     ek = ek + (cpx(i)**2+cpy(i)**2+cpz(i)**2)/2./rm
   END DO
   
-  rkt = 2./(3.*nion-3.)*(ek - ekcm) ! thermische Energie kT in Ry
+  rkt = 2./(3.*nion-3.)*(ek - ekcm) ! thermal energy kT in Ry
   
-! Temperatur in Kelvin
+! Temperature in Kelvin
   
   tt = rkt/(6.507E-6)
   
@@ -505,9 +505,9 @@ ELSE IF (iflag <= 3) THEN
     ek = ek + (pxk(i)**2+pyk(i)**2+pzk(i)**2)/2./rmk
   END DO
   
-  rkt = 2./(3.*(nc+nk)-3.)*(ek - ekcm) ! thermische Energie kT in Ry
+  rkt = 2./(3.*(nc+nk)-3.)*(ek - ekcm) ! thermal energy kT in Ry
   
-! Temperatur in Kelvin
+! Temperature in Kelvin
   
   tt = rkt/(6.507E-6)
   
@@ -1587,173 +1587,6 @@ END DO
 RETURN
 END SUBROUTINE emoms
 
-!#if(ifspemoms)
-!-----spmomsr---------------------------------------------------spmoms
-
-SUBROUTINE spmomsr(wfr,iunit)
-
-!     spatial moments of single-particle densities from real  wf's:
-!     input is
-!      wfr    = set of real single particle wavefunctions
-!      iunit  = unit number for output
-
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-REAL(DP), INTENT(IN)                     :: wfr(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)                  :: iunit
-
-LOGICAL, PARAMETER :: ttest=.false.
-REAL(DP) :: prisav(kstate,11)  ! printing communication
-INTEGER :: iprisav(kstate)     ! printing communication
-
-!      logical tfirst
-!      data tfirst/.true./
-
-!----------------------------------------------------------------------
-
-
-#if(parayes)
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
-IF(myn == 0) THEN
-#endif
-  WRITE(iunit,'(a)') 'protocol of s.p. moments:',  &
-      '  state energy   x   y   z   variance  xx  yy  zz xy xz yz'
-#if(parayes)
-END IF
-#endif
-
-
-xcmel = 0D0
-ycmel = 0D0
-zcmel = 0D0
-r2el = 0D0
-DO nbe=1,nstate
-  wfmom = 0D0
-  xmom = 0D0
-  ymom = 0D0
-  zmom = 0D0
-  xxmom = 0D0
-  xymom = 0D0
-  xzmom = 0D0
-  yymom = 0D0
-  yzmom = 0D0
-  zzmom = 0D0
-  
-  
-  ind=0
-  DO iz=minz,maxz
-    z1=(iz-nzsh)*dz
-    z2=z1*z1
-    DO iy=miny,maxy
-      y1=(iy-nysh)*dy
-      y2=y1*y1
-      DO ix=minx,maxx
-        ind=ind+1
-        IF((ix /= nx2).AND.(iy /= ny2).AND.(iz /= nz2)) THEN
-          x1=(ix-nxsh)*dx
-          x2=x1*x1
-          s=wfr(ind,nbe)*wfr(ind,nbe)
-!                                                       monopole
-          wfmom=wfmom+s
-!                                                       dipole
-          xmom=xmom+s*x1
-          ymom=ymom+s*y1
-          zmom=zmom+s*z1
-!                                                       quadrupole
-          xxmom=xxmom+s*x2
-          yymom=yymom+s*y2
-          zzmom=zzmom+s*z2
-          xymom=xymom+s*x1*y1
-          xzmom=xzmom+s*z1*x1
-          yzmom=yzmom+s*z1*y1
-        END IF
-      END DO
-    END DO
-  END DO
-  
-  wfmom = dvol*wfmom
-  xmom = dvol*xmom
-  ymom = dvol*ymom
-  zmom = dvol*zmom
-  xxmom = dvol*xxmom-xmom*xmom
-  xymom = dvol*xymom-xmom*ymom
-  xzmom = dvol*xzmom-xmom*zmom
-  yymom = dvol*yymom-ymom*ymom
-  yzmom = dvol*yzmom-ymom*zmom
-  zzmom = dvol*zzmom-zmom*zmom
-  
-#if(parayes)
-  IF(myn == 0) THEN
-#endif
-#if(parano)
-  xcmel = xcmel + xmom
-  ycmel = ycmel + ymom
-  zcmel = zcmel + zmom
-  r2el = r2el + xxmom+yymom+zzmom
-#endif
-    WRITE(iunit,'(i4,f7.3,4f6.2,2x,6f7.1)') nbe,amoy(nbe),xmom,ymom,zmom,  &
-        SQRT(xxmom+yymom+zzmom), xxmom,yymom,zzmom,xymom,xzmom,yzmom
-#if(parayes)
-  ELSE
-    iprisav(nbe) = nrel2abs(nbe)
-    prisav(nbe,1) = amoy(nbe)
-    prisav(nbe,2) = xmom
-    prisav(nbe,3) = ymom
-    prisav(nbe,4) = zmom
-    prisav(nbe,5) = SQRT(xxmom+yymom+zzmom)
-    prisav(nbe,6) = xxmom
-    prisav(nbe,7) = yymom
-    prisav(nbe,8) = zzmom
-    prisav(nbe,9) = xymom
-    prisav(nbe,10) = xzmom
-    prisav(nbe,11) = yzmom
-  END IF
-#endif
-END DO
-
-#if(parano)
-  xcmel = xcmel/nstate
-  ycmel = ycmel/nstate
-  zcmel = zcmel/nstate
-  r2el = SQRT(r2el/nstate)
-    WRITE(iunit,'(a11,4f6.2)') &
-       'average:   ',xcmel,ycmel,zcmel,r2el
-#endif
-
-#if(parayes)
-IF(myn /= 0) THEN
-  nod = myn
-  CALL mpi_send(prisav,11*kstate,mpi_double_precision,  &
-      0,nod,mpi_comm_world,ic)
-  CALL mpi_send(iprisav,kstate,mpi_integer, 0,nod,mpi_comm_world,ic)
-  IF(ttest) WRITE(*,*) ' SPMOMS: sent at node:',myn
-ELSE
-  DO nod2=1,knode-1
-    IF(nod2 > 0) THEN
-      CALL mpi_recv(prisav,11*kstate,mpi_double_precision,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,ic)
-      CALL mpi_recv(iprisav,kstate,mpi_integer,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,ic)
-      IF(ttest) WRITE(*,*)' SPMOMS: recv from  node=',nod2
-    END IF
-    DO nbe=1,nstate_node(nod2)
-      WRITE(iunit,'(i4,f7.3,4f6.2,2x,6f7.1)')  &
-          iprisav(nbe),(prisav(nbe,j),j=1,11)
-    END DO
-  END DO
-END IF
-#endif
-
-RETURN
-END SUBROUTINE spmomsr
-!#endif
 
 
 
@@ -1802,7 +1635,7 @@ SUBROUTINE laserp(vlaser,rho)
 !          tend   < t < tvend    f(t) = sin(.5 *PI* (t - tend) / tpeak)
 !          tvend  < t < ...      f(t) = 0.
 
-!      itft = 2 --> gaussian laser pulse
+!      itft = 2 --> Gaussian laser pulse
 
 !          tmax = tnode + tpeak
 
@@ -2038,7 +1871,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc   = REAL(psi(ii))*REAL(psi(ii)) +imag(psi(ii))*imag(psi(ii)) + acc
+  acc   = REAL(psi(ii))*REAL(psi(ii)) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
 END DO
 wfnorm = acc*dvol
 
@@ -2061,7 +1894,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = REAL(psi1(ii))*REAL(psi2(ii)) + imag(psi1(ii))*imag(psi2(ii)) + acc
+  acc = REAL(psi1(ii))*REAL(psi2(ii)) + AIMAG(psi1(ii))*AIMAG(psi2(ii)) + acc
 END DO
 wfnorm_r = acc*dvol
 
@@ -2084,7 +1917,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = -REAL(psi1(ii))*imag(psi2(ii)) +imag(psi1(ii))*REAL(psi2(ii)) + acc
+  acc = -REAL(psi1(ii))*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii)) + acc
 END DO
 wfnorm_i = acc*dvol
 
@@ -2740,7 +2573,7 @@ INTEGER, INTENT(IN)          :: isp
 
 !*********************************************************
 
-!     orthogonalisation
+!     orthogonalization
 
 IF(temp /= 0D0) STOP ' ORTHOGWFR requires temperature 0'
 DO nbe=1,nstate
@@ -3147,11 +2980,12 @@ END SUBROUTINE cproject
 
 
 
-!-----pair  ------------ part of the hartree-fock package --------------
+!-----pair  ------------ part of the Hartree-Fock package --------------
 
 SUBROUTINE pair(e,gw,ph,nz,nmax,gp,eferm,delta,partnm,  &
     iter,ipair,eps,iab,kstate)
 USE params, ONLY: DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     the include file 'params.inc' communicates the dimensioning of
 !     the fields 'e' and 'gw' with the parameter 'ksl2'. it allows
@@ -3163,9 +2997,9 @@ USE params, ONLY: DP
 
 !     * * * * * * * * * *     pairing iteration      * * * * * * * * * *
 
-!     determines the fermi-energy 'eferm' and the gap 'delta'
+!     determines the Fermi-energy 'eferm' and the gap 'delta'
 !     such that the "gap-equation" and the "particle number condition"
-!     are fulfilled simultanously. this is achieved by iteration
+!     are fulfilled simultaneously. this is achieved by iteration
 !     with a gradient scheme (newton's tangential formula)
 !     where the gradient is evaluated by finite differences.
 
@@ -3181,7 +3015,7 @@ USE params, ONLY: DP
 !     input via list:
 !      e       = array(1..nmax) of single particle energies.
 !      gw      = array(1..nmax) of occupation probabilities,
-!                input is used as initila guess for the iteration.
+!                input is used as initial guess for the iteration.
 !      ph      = array(1..nmax) of the multiplicities of the single
 !                particle levels.
 !      nz      = desired particle number
@@ -3190,10 +3024,10 @@ USE params, ONLY: DP
 !                 and smaller than 46, for dimensioning reasons).
 !      gp      = size of pairing-force, is input in case of
 !                "constant force" approach.
-!      eferm   = fermi-energy, input is used as initial guess;
+!      eferm   = Fermi-energy, input is used as initial guess;
 !                if eferm=0.0 is input then a suitable initial guess
 !                is computed from input 'gw'.
-!      delta   = pairing gap, is input in case of "constant gap" approac
+!      delta   = pairing gap, is input in case of "constant gap" approach
 !      iter    = number of pairing iterations,
 !                abs(iter) is the number of iterations
 !      ipair   = switch for pairing type
@@ -3217,7 +3051,7 @@ USE params, ONLY: DP
 !                "constant gap" approach.
 !      delta   = pairing gap, is output in case of
 !                "constant force" approach.
-!      eferm   = fermi-energy.
+!      eferm   = Fermi-energy.
 !      sum     = particle number, from adding 'gw' with degeneracy 'ph'.
 
 !     some auxiliary fields are:
@@ -3230,7 +3064,7 @@ USE params, ONLY: DP
 !      dgap    = array(1..3) of variation in the gap equation as
 !                consequence of 'deferm' and 'ddelta'.
 !      gr      = double array of variation of particle number and of
-!                gap equation, used for construction of the tangantial
+!                gap equation, used for construction of the tangential
 !                step
 
 REAL(DP) :: e(kstate),gw(kstate),ph(kstate)
@@ -3240,7 +3074,7 @@ REAL(DP) :: emax,emin
 DATA gr,dparn,dgap/10*0D0/
 
 !     further numerical variables are:
-!      deferm  = step in the fermi-energy, to evaluate
+!      deferm  = step in the Fermi-energy, to evaluate
 !                numerically the derivatives.
 !      ddelta  = step in the gap, to evaluate numerically the
 !                derivatives; used only in the "constant force" approach
@@ -3289,7 +3123,7 @@ IF(iab > 1) THEN
   WRITE(7,*) partnm,ipair,eps,iab
 END IF
 
-!      prepare fermi-energy 'eferm', if not yet initialised.
+!      prepare Fermi-energy 'eferm', if not yet initialised.
 
 IF(eferm == zero) THEN
   isum   = 0
@@ -3311,7 +3145,7 @@ IF(ipair == 1) THEN
 !-----------------------------------------------------------------------
   
 !     case of constant pairing-force, given by 'gp'.
-!      gap 'delta', fermi-energy 'eferm', and occupations 'gw'
+!      gap 'delta', Fermi-energy 'eferm', and occupations 'gw'
 !      are computed.
   
 !-----------------------------------------------------------------------
@@ -3324,7 +3158,7 @@ IF(ipair == 1) THEN
 !       and at 'eferm' varied (k=2) and at 'delta' varied (k=3).
     
     DO ka=1,3
-!                                          actual fermi-energy and gap
+!                                          actual Fermi-energy and gap
       k      = 4-ka
       IF(k == 1) THEN
         elam   = eferm
@@ -3558,7 +3392,7 @@ END IF
 
 RETURN
 END SUBROUTINE pair
-!-----parnm------------ part of the hartree-fock package ---------------
+!-----parnm------------ part of the Hartree-Fock package ---------------
 
 FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 
@@ -3575,7 +3409,7 @@ FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 !       ph     = array of degeneracy factors
 !       nmax   = number of states in the above three arrays
 !       delta  = pairing gap or temperature
-!       elam   = fermi energy
+!       elam   = Fermi energy
 !       ipair  = switch to pairing (0) or temperature (4).
 
 USE params
@@ -3801,6 +3635,40 @@ RETURN
 END SUBROUTINE timer
 
 
+!-----stimer------------------------------------------------------
+
+SUBROUTINE stimer(iaction)
+
+!     Initializes timer and retrieves CPU times
+!       iaction  = 1  for initial call
+!                  2  for subsequent call
+!     The relative time is taken between step 2 and 1.
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+INTEGER, INTENT(IN) :: iaction
+
+INTEGER, SAVE :: itimeold=0,itimenew=0
+
+!-----------------------------------------------------------------
+
+
+IF(iaction == 1) THEN
+  CALL system_clock(itimeold)
+ELSE IF(iaction == 2) THEN
+  CALL system_clock(itimenew)
+  IF(myn == 0) WRITE(6,'(a,1pg13.5)') 'sys.time for step in node 0=',  &
+      (itimenew-itimeold)*1D-4
+  itimeold = itimenew
+ELSE
+  STOP 'SYS.TIMER: this IACTION is not valid'
+END IF
+
+RETURN
+END SUBROUTINE stimer
+
 
 
 !---probab----------------------------------------------------------
@@ -3822,7 +3690,7 @@ COMPLEX(DP)                            :: orbitaloverlap
 
 DO i=1,nstate
    cscal=orbitaloverlap(psitmp(1,i),psitmp(1,i))
-   rtmpuse(i)=SQRT(REAL(cscal)**2 + IMAG(cscal)**2)
+   rtmpuse(i)=SQRT(REAL(cscal)**2 + AIMAG(cscal)**2)
    prob(i)=0D0
 ENDDO
 
@@ -3890,10 +3758,10 @@ INTEGER :: i
   cb = cos(phphase/180D0*PI)
   sb = sin(phphase/180D0*PI)
   
-  psi(:,nhstate) = (ca*cb+CMPLX(0D0,sa*sb))*psi(:,nhstate) &
-                  +(sa*cb-CMPLX(0D0,ca*sb))*psi(:,npstate)
-  psi(:,npstate) = -(sa*cb+CMPLX(0D0,ca*sb))*oldhole &
-                   +(ca*cb-CMPLX(0D0,sa*sb))*psi(:,npstate)
+  psi(:,nhstate) = (ca*cb+CMPLX(0D0,sa*sb,DP))*psi(:,nhstate) &
+                  +(sa*cb-CMPLX(0D0,ca*sb,DP))*psi(:,npstate)
+  psi(:,npstate) = -(sa*cb+CMPLX(0D0,ca*sb,DP))*oldhole &
+                   +(ca*cb-CMPLX(0D0,sa*sb,DP))*psi(:,npstate)
 
   newhole = psi(:,nhstate)
 
@@ -3946,7 +3814,7 @@ END SUBROUTINE phoverl
 
 SUBROUTINE stateoverl(psi1,psi2)
 
-!  Computes overlap of two Slaters states with possibly
+!  Computes overlap of two Slater states with possibly
 !  different sets of s.p. states.
 !  Both states must have the same sequence of occupation numbers.
 !  The set of s.p. states is given by 'psi1' and 'psi2'.
@@ -4043,7 +3911,7 @@ CALL fftf(q0,q1,ffta,gpu_ffta)
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
-!      eye=cmplx(0.0,1.0)
+!      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
@@ -4086,10 +3954,6 @@ ENDDO
 CALL fftback(q1,q0)
 #endif
 #if(fftw_gpu)
-!DO ind=1,kdfull2
-!  q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
-!ENDDO
-
 CALL multiply_shift(gpu_ffta,gpu_akxfft,gpu_akyfft,gpu_akzfft,shix,shiy,shiz)
 
 CALL fftback(q1,q0,ffta,gpu_ffta)
@@ -4209,16 +4073,12 @@ ekintestz = dvol*SUM(wfin*wftest)
 
 #if(netlib_fft|fftw_cpu)
 CALL fftf(wfin,wftest)
-
 wftest = akv*wftest
-
 CALL fftback(wftest,wftest)
 #endif
 #if(fftw_gpu)
 CALL fftf(wfin,wftest,ffta,gpu_ffta)
-
 CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
-
 CALL fftback(wftest,wftest,ffta,gpu_ffta)
 #endif
 ekintot = dvol*SUM(wfin*wftest)

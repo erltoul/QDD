@@ -4,8 +4,8 @@ SUBROUTINE cosqb (n,x,wsave)
 ! Date: 2010-04-16  Time: 12:36:26
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: x(10)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(OUT)                        :: x(10)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 DATA tsqrt2 /2.82842712474619/
 
@@ -30,9 +30,9 @@ SUBROUTINE cosqb1 (n,x,w,xh)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(1)
-REAL, INTENT(IN)                         :: w(1)
-REAL, INTENT(OUT)                        :: xh(1)
+REAL(8), INTENT(IN OUT)                     :: x(1)
+REAL(8), INTENT(IN)                         :: w(1)
+REAL(8), INTENT(OUT)                        :: xh(1)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -65,9 +65,9 @@ SUBROUTINE radb2 (ido,l1,cc,ch,wa1)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,2,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,2)
-REAL, INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: cc(ido,2,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,2)
+REAL(8), INTENT(IN)                         :: wa1(1)
 
 DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
@@ -102,10 +102,10 @@ SUBROUTINE radb3 (ido,l1,cc,ch,wa1,wa2)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,3,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,3)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: cc(ido,3,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,3)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
 
 DATA taur,taui /-.5,.866025403784439/
 
@@ -147,11 +147,11 @@ SUBROUTINE radb4 (ido,l1,cc,ch,wa1,wa2,wa3)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,4,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,4)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
+REAL(8), INTENT(IN)                         :: cc(ido,4,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,4)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: wa3(1)
 
 DATA sqrt2 /1.414213562373095/
 
@@ -217,12 +217,12 @@ SUBROUTINE radb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,5,l1)
-REAL, INTENT(OUT)                        :: ch(ido,l1,5)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
-REAL, INTENT(IN)                         :: wa4(1)
+REAL(8), INTENT(IN)                         :: cc(ido,5,l1)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,5)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: wa3(1)
+REAL(8), INTENT(IN)                         :: wa4(1)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
     -.809016994374947,.587785252292473/
@@ -292,12 +292,12 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(IN)                         :: cc(ido,ip,l1)
-REAL, INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL, INTENT(OUT)                        :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(1)
+REAL(8), INTENT(IN)                         :: cc(ido,ip,l1)
+REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(1)
 
 DATA tpi/6.28318530717959/
 
@@ -461,8 +461,8 @@ SUBROUTINE rfftb (n,r,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: r(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: r(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 CALL rfftb1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
@@ -473,9 +473,9 @@ SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: c(1)
-REAL, INTENT(IN)                         :: ch(1)
-REAL, INTENT(IN OUT)                     :: wa(1)
+REAL(8), INTENT(OUT)                        :: c(1)
+REAL(8), INTENT(IN)                         :: ch(1)
+REAL(8), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 nf = ifac(2)
@@ -548,8 +548,8 @@ END SUBROUTINE rfftb1
 SUBROUTINE cosqf (n,x,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(10)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: x(10)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 DATA sqrt2 /1.4142135623731/
 
@@ -572,9 +572,9 @@ SUBROUTINE cosqf1 (n,x,w,xh)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(1)
-REAL, INTENT(IN)                         :: w(1)
-REAL, INTENT(OUT)                        :: xh(1)
+REAL(8), INTENT(IN OUT)                     :: x(1)
+REAL(8), INTENT(IN)                         :: w(1)
+REAL(8), INTENT(OUT)                        :: xh(1)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -605,9 +605,9 @@ SUBROUTINE radf2 (ido,l1,cc,ch,wa1)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,2)
-REAL, INTENT(OUT)                        :: ch(ido,2,l1)
-REAL, INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: cc(ido,l1,2)
+REAL(8), INTENT(OUT)                        :: ch(ido,2,l1)
+REAL(8), INTENT(IN)                         :: wa1(1)
 
 DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
@@ -642,10 +642,10 @@ SUBROUTINE radf3 (ido,l1,cc,ch,wa1,wa2)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,3)
-REAL, INTENT(OUT)                        :: ch(ido,3,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: cc(ido,l1,3)
+REAL(8), INTENT(OUT)                        :: ch(ido,3,l1)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
 
 DATA taur,taui /-.5,.866025403784439/
 
@@ -685,11 +685,11 @@ SUBROUTINE radf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,4)
-REAL, INTENT(OUT)                        :: ch(ido,4,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
+REAL(8), INTENT(IN)                         :: cc(ido,l1,4)
+REAL(8), INTENT(OUT)                        :: ch(ido,4,l1)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: wa3(1)
 
 DATA hsqt2 /.7071067811865475/
 
@@ -751,12 +751,12 @@ SUBROUTINE radf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,5)
-REAL, INTENT(OUT)                        :: ch(ido,5,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
-REAL, INTENT(IN)                         :: wa4(1)
+REAL(8), INTENT(IN)                         :: cc(ido,l1,5)
+REAL(8), INTENT(OUT)                        :: ch(ido,5,l1)
+REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(8), INTENT(IN)                         :: wa3(1)
+REAL(8), INTENT(IN)                         :: wa4(1)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
     -.809016994374947,.587785252292473/
@@ -822,12 +822,12 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(OUT)                        :: cc(ido,ip,l1)
-REAL, INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(OUT)                        :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(1)
+REAL(8), INTENT(OUT)                        :: cc(ido,ip,l1)
+REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(8), INTENT(IN OUT)                     :: c2(idl1,ip)
+REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(8), INTENT(OUT)                        :: ch2(idl1,ip)
+REAL(8), INTENT(IN)                         :: wa(1)
 
 DATA tpi/6.28318530717959/
 
@@ -997,8 +997,8 @@ SUBROUTINE rfftf (n,r,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: r(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: r(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 CALL rfftf1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
@@ -1009,9 +1009,9 @@ SUBROUTINE rfftf1 (n,c,ch,wa,ifac)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: c(1)
-REAL, INTENT(IN)                         :: ch(1)
-REAL, INTENT(IN OUT)                     :: wa(1)
+REAL(8), INTENT(OUT)                        :: c(1)
+REAL(8), INTENT(IN)                         :: ch(1)
+REAL(8), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 nf = ifac(2)
@@ -1075,7 +1075,7 @@ END SUBROUTINE rfftf1
 SUBROUTINE cosqi (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wsave(1)
+REAL(8), INTENT(OUT)                        :: wsave(1)
 
 DATA pih /1.57079632679491/
 
@@ -1093,8 +1093,8 @@ SUBROUTINE cost (n,x,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(10)
-REAL, INTENT(IN)                         :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: x(10)
+REAL(8), INTENT(IN)                         :: wsave(1)
 
 nm1 = n-1
 np1 = n+1
@@ -1151,7 +1151,7 @@ END SUBROUTINE cost
 SUBROUTINE costi (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wsave(1)
+REAL(8), INTENT(OUT)                        :: wsave(1)
 
 DATA pi /3.14159265358979/
 
@@ -1175,7 +1175,7 @@ SUBROUTINE rffti (n,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 CALL rffti1 (n,wsave(n+1),wsave(2*n+1))
@@ -1186,8 +1186,8 @@ SUBROUTINE sinqb (n,x,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: x(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(OUT)                        :: x(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n > 1) GO TO 101
 x(1) = 4.*x(1)
@@ -1210,8 +1210,8 @@ SUBROUTINE sinqf (n,x,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: x(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 ns2 = n/2
@@ -1232,7 +1232,7 @@ SUBROUTINE sinqi (n,wsave)
 
 
 INTEGER, INTENT(IN OUT)                  :: n
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 CALL cosqi (n,wsave)
 RETURN
@@ -1242,8 +1242,8 @@ SUBROUTINE sint (n,x,wsave)
 
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
+REAL(8), INTENT(IN OUT)                     :: x(1)
+REAL(8), INTENT(IN OUT)                     :: wsave(1)
 
 np1 = n+1
 iw1 = n/2+1
@@ -1256,10 +1256,10 @@ END SUBROUTINE sint
 SUBROUTINE sint1(n,war,was,xh,x,ifac)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: war(1)
-REAL, INTENT(IN)                         :: was(1)
-REAL, INTENT(OUT)                        :: xh(10)
-REAL, INTENT(IN OUT)                     :: x(1)
+REAL(8), INTENT(IN OUT)                     :: war(1)
+REAL(8), INTENT(IN)                         :: was(1)
+REAL(8), INTENT(OUT)                        :: xh(10)
+REAL(8), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
 
 DATA sqrt3 /1.73205080756888/
@@ -1311,7 +1311,7 @@ END SUBROUTINE sint1
 SUBROUTINE sinti (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wsave(1)
+REAL(8), INTENT(OUT)                        :: wsave(1)
 
 DATA pi /3.14159265358979/
 
@@ -1329,9 +1329,9 @@ END SUBROUTINE sinti
 SUBROUTINE rffti1 (n,wa,ifac)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wa(1)
+REAL(8), INTENT(OUT)                        :: wa(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
-DIMENSION  ntryh(4)
+INTEGER :: ntryh(4)
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/
 
 nl = n

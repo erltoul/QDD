@@ -328,7 +328,6 @@ for (int ii=1;ii<=kdfull;ii++) rfftac[inde[ii]]=rhoinp[ii];
 coufou2();
 
 //     Write the result of the fcs on the array chpfalr
-
 for (int i0=1;i0<=kdfull;i0++) chpfalr[i0] = 2.0*rfftac[inde[i0]];
 
 }

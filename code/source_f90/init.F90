@@ -45,15 +45,15 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
 !k use of parameters for dynamics:
 
 !  use of discrete ions via pseudopotentials:      nion2 not=0
-!  use of homogenous background via jellium:       nion2=0
+!  use of homogeneous background via jellium:       nion2=0
 
 !  iforce=0
 !  polarized clusters (e.g. polar. isomer of na_12)   iforce=1
 
 !  dipoleboost or spindipoleboost      iexcit=0:
 !    boost of electronic density by centfx/y/z       ispidi=0
-!    boost of spinup densitiy by +0.5*centfx/y/z     ispidi=1
-!             spindown densitiy by -0.5*centfx/y/z   ispidi=1
+!    boost of spinup density by +0.5*centfx/y/z     ispidi=1
+!             spindown density by -0.5*centfx/y/z   ispidi=1
 !  dipoleshift (iexcit=0) by shiftinix/y/z
 
 
@@ -71,7 +71,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     irotat,phirot,i3dz,i3dx,i3dstate,istream,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
-    jdip,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
+    jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
     tempion,idenspl,ekmat,nfix,  &
@@ -89,7 +89,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     nmptheta,nmpphi,jmp,jovlp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
-    iscatterelectron,scatterelectronenergy,  &
+    iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw, &
@@ -250,7 +250,7 @@ END SUBROUTINE changeperio
 
 SUBROUTINE iparams()
 
-!     check consistency of input paramaters, do some initializations
+!     check consistency of input parameters, do some initializations
 
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -299,7 +299,7 @@ iquery4=0
 WRITE(6,*) 'jekion=',jekion
 
 
-!     ceck consistency of input options
+!     check consistency of input options
 
 IF(numspin.NE.2 .AND. iftransme ==1) STOP ' IFTRANSME needs full spin'
 
@@ -344,20 +344,13 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
 
 
 IF(directenergy .AND.  &
-   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 6)  &
-    STOP ' directenergy=1 only for Slater and KLI'
+   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8)  &
+    STOP ' directenergy=1 only for Slater, KLI, or 2st-SIC'
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
-#if(fullsic)
-IF(ifsicp==5) STOP ' EXCHANGE doe not run with FULLSIC'
-IF(numspin.NE.2) STOP ' full SIC requires full spin'
-#endif
 
 #if(twostsic)
-#if(fullsic)
-STOP ' TWOSTSIC and FULLSIC cannot run simultaneously'
-#endif
 #if(locsic)
 STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
 #endif
@@ -369,11 +362,6 @@ STOP ' TWOSTSIC cannot yet run in parallel code'
 
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?
-
-#if(fullsic)
-IF(ifsicp == 6 .AND. itmax > 0)  &
-    STOP  ' full SIC not yet adapetd to dynamic case'
-#endif
 
 if(nabsorb == 0 .AND. jesc .NE. 0) &
     STOP ' JESC must be zero for NABSORB=0'
@@ -432,7 +420,7 @@ IF(iu == 8) OPEN(8,STATUS='unknown',FORM='formatted',  &
 WRITE(iu,'(a)') 'the following options are used:'
 WRITE(iu,*)
 IF(idenfunc==1) THEN
-  WRITE(iu,'(a)') 'perdew-wang 92 exchange-correlation functional'
+  WRITE(iu,'(a)') 'Perdew-Wang 92 exchange-correlation functional'
 ELSE IF(idenfunc==2) THEN
   WRITE(iu,'(a)') 'gl 76 exchange-correlation functional'
 ELSE IF(idenfunc==3) THEN
@@ -463,7 +451,7 @@ ELSE
 END IF
 ! fft:
 #if(gridfft)
-WRITE(iu,'(a)') 'fourier propagation'
+WRITE(iu,'(a)') 'Fourier propagation'
 #if(netlib_fft)
 WRITE(iu,'(a)') 'using netlib ffts'
 #endif
@@ -518,9 +506,9 @@ WRITE(iu,*)
 IF(ipsptyp == 0) THEN
   WRITE(iu,'(a)') 'soft local pseudopotentials (errf)'
 ELSE IF(ipsptyp == 1) THEN
-  WRITE(iu,'(a)') 'full goedecker pseudopotentials'
+  WRITE(iu,'(a)') 'full Goedecker pseudopotentials'
 ELSE IF(ipsptyp == 2) THEN
-  WRITE(iu,'(a)') 'local goedecker pseudopotentials'
+  WRITE(iu,'(a)') 'local Goedecker pseudopotentials'
 ELSE
   STOP ' this type IPSPTYP not yet implemented'
 END IF
@@ -579,21 +567,18 @@ ELSE IF(ifsicp == 4)  THEN
   WRITE(iu,'(a)') 'sic activated: KLI'
 ELSE IF(ifsicp == 5) THEN
   WRITE(iu,'(a)') 'sic activated: exact exchange'
-#if(fullsic)
-ELSE IF(ifsicp == 6)  THEN
-  WRITE(iu,'(a)') 'sic activated: full SIC'
-#else
-ELSE IF(ifsicp == 6)  THEN
-  STOP ' code not compiled for full SIC'
-#endif
+IF(ifsicp == 6)  STOP ' IFSICP=6 presently not provided'
 #if(twostsic)
 ELSE IF(ifsicp == 7)  THEN
-  WRITE(iu,'(a)') 'sic activated: GSLat'
+  WRITE(iu,'(a)') 'sic activated: localized SIC'
+#if(parayes)
+  STOP " IFSICP=7 not possible in parallel code"
+#endif
 ELSE IF(ifsicp == 8)  THEN
-  WRITE(iu,'(a)') 'sic activated: full SIC'
+  WRITE(iu,'(a)') 'sic activated: double-set SIC'
 #else
 ELSE IF(ifsicp == 7)  THEN
-  STOP ' code not compiled for GSlat'
+  STOP ' code not compiled for localized SIC'
 ELSE IF(ifsicp == 8)  THEN
   STOP ' code not compiled for double-set SIC'
 #endif
@@ -601,8 +586,8 @@ ELSE
   WRITE(iu,'(a)') 'this version of SIC not available'
 END IF
 
-IF(.NOT.(ifexpevol==1) .AND. itmax > 0 .AND. ifsicp >= 6) STOP  &
-    ' full TDSIC requires exponential evolution'
+!IF(.NOT.(ifexpevol==1) .AND. itmax > 0 .AND. ifsicp >= 6) STOP  &
+!    ' full TDSIC requires exponential evolution'
 
 
 !     dynamical options
@@ -625,12 +610,12 @@ WRITE(iu,'(a/a,i3,5f8.3/a,7f8.3)') ' laser:',  &
 IF (isurf /= 0) THEN
   WRITE(iu,*) '*************************************************'
   WRITE(iu,*) 'SURFACE/MATRIX PRESENT:'
-  WRITE(iu,'(a,i4,a,i4)') 'GSM particles: ',nc,'  kations: ',nk
+  WRITE(iu,'(a,i4,a,i4)') 'GSM particles: ',nc,'  cations: ',nk
   WRITE(iu,*) '*************************************************'
 END IF
 
 
-WRITE(iu,*) 'CODE VERSION: ',iversion
+WRITE(iu,*) 'CODE VERSION: ', IVERSION
 
 IF(iu == 8) CLOSE(8)
 
@@ -646,16 +631,19 @@ SUBROUTINE init_output()
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-CHARACTER (LEN=2) :: num
+CHARACTER (LEN=3) :: num
 
 !------------------------------------------------------------------
 
-IF(myn < 9) THEN
+IF(myn < 10) THEN
   WRITE(num,'(i1)') myn
   maxnum = 1
-ELSE
+ELSE IF(myn < 100 .AND. myn > 9) THEN
   WRITE(num,'(i2)') myn
   maxnum=2
+ELSE
+  WRITE(num,'(i3)') myn
+  maxnum=3
 END IF
 OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
 
@@ -806,7 +794,7 @@ IF(e0 /= 0D0) THEN
     WRITE(7,*) ' on/off up to/from f(t) = 1'
   END IF
   IF(itft == 2) THEN
-    WRITE(7,*) 'gaussian laser pulse'
+    WRITE(7,*) 'Gaussian laser pulse'
   END IF
   WRITE(7,*) 'length of the pulse',deltat
   WRITE(7,*) 'peak time',tpeak
@@ -1045,6 +1033,19 @@ ELSE IF(ipsptyp == 1) THEN
   h0_11g(8)=18.19996387   ! 18.266917D0
   h1_11g(8)=0D0
   
+!       fluor   (row 2)
+  
+  amu(9)  = 18D0
+  ch(9)   = 7.0D0
+ cc1(9)   =-21.307361
+ cc2(9)   = 3.072869
+ crloc(9) = 0.218525
+ r0g(9)=0.195567
+ r1g(9)=0.2
+ radiong(9)=1.3
+ h0_11g(9)=23.58494 
+ h1_11g(9) =0D0
+  
 !       neon   (row 2)
   
   amu(10)  = 20.2D0
@@ -1101,7 +1102,7 @@ ELSE IF(ipsptyp == 1) THEN
   h0_22g(13)=2.679700D0
   h1_11g(13)=2.193438D0
   
-!       silicium
+!       silicon
   
   amu(14)  = 28.09D0
   ch(14)   = 4.0D0
@@ -1197,13 +1198,13 @@ ELSE IF(ipsptyp == 1) THEN
   
 ELSE IF(ipsptyp == 2) THEN
   
-!       hydrogen Gianocci PsP (approx. local goedecker)
+!       hydrogen Gianocci PsP (approx. local Goedecker)
   
   amu(1)   = 1D0
   ch(1)    = 1D0
 !  nrow(1)  = 1
   
-!       Na (approximate local pseudo built on Geodecker local part)
+!       Na (approximate local pseudo built on Goedecker local part)
   
   amu(11)  = 23.0
   ch(11)   = 1D0
@@ -1213,7 +1214,7 @@ ELSE IF(ipsptyp == 2) THEN
 !  nrow(11) = 3
 !        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
   
-!       Ar (approximate local pseudo built on Geodecker local part)
+!       Ar (approximate local pseudo built on Goedecker local part)
   
   amu(18)  = 39.95
   ch(18)   = 8.0
@@ -1569,7 +1570,7 @@ CALL comm_ionconfig()
 
 
 
-!       np(0) for use in monte-carlo
+!       np(0) for use in Monte-Carlo
 
 
 IF(icooltyp == 3)  CALL cenmass()
@@ -1579,7 +1580,7 @@ dt12=dt1
 
 
 
-!       initialize peudopotential background
+!       initialize pseudopotential background
 
 !g         call calcpseudo(rho)
 
@@ -1741,7 +1742,6 @@ END IF
 omeg=0.25*h2m
 !      if(nclust.gt.0)
 !     &    call ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
-CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
 IF(ifhamdiag==1 .AND. nstate>nclust) THEN
   WRITE(6,'(2a,2i5)')  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST', &
@@ -1750,6 +1750,7 @@ IF(ifhamdiag==1 .AND. nstate>nclust) THEN
    ' Presently: nstate,nclust=',nstate,nclust
   STOP  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST'
 END IF
+CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
 
 !     initialize H.O. wavefunctions
@@ -1786,6 +1787,8 @@ ELSE
   
 !       optionally LCGO initialization
   
+!  CALL ininodes()
+  occup=1D0
   CALL genermowf(psir,nmaxst)
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
@@ -1856,37 +1859,37 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
 
 INTEGER, INTENT(IN)                      :: nelect
 REAL(DP), INTENT(IN)                         :: deoccin
 REAL(DP), INTENT(IN)                         :: betain
 REAL(DP), INTENT(IN OUT)                     :: gamin
-INTEGER :: is(mpi_status_size)
-#endif
 
 !     initialization of book-keeping arrays of states nq, ispin.
 
-!     estimates fermi energy from particle number and considers
-!     all states up "fermi-energy plus deoccin" in the ordering
+!     estimates Fermi energy from particle number and considers
+!     all states up "Fermi-energy plus deoccin" in the ordering
 !     of a deformed harmonic oscillator for given deformation.
 !     the input parameters are:
 !       nelect  = number of electrons
-!       deoccin   = number of osc. shells above fermi shell
+!       deoccin   = number of osc. shells above Fermi shell
 !       betain  = quadrupole deformation of jellium background
 !       gamin   = triaxiality angle of jellium background
 !       temp    = (via common) temperature, temp=0 cuts to occupied only
 
-!     the output goes on the occuoation fields nq and ispin on
+!     the output goes on the occupation fields nq and ispin on
 !     common /option/ .
 
 !INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
-REAL :: efacto                ! factor to get energies from h.o.
-REAL :: efermi                ! estimate for fermi shell
-REAL :: q20fac                ! sqrt(5/16pi)
-REAL :: cosfac,sinfac         ! weightes deduced from 'gamin'
+REAL(DP) :: efacto                ! factor to get energies from h.o.
+REAL(DP) :: efermi                ! estimate for fermi shell
+REAL(DP) :: q20fac                ! sqrt(5/16pi)
+REAL(DP) :: cosfac,sinfac         ! weightes deduced from 'gamin'
 !     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
-REAL :: speact                ! actual s.p. energy in loop
+REAL(DP) :: speact                ! actual s.p. energy in loop
 INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
@@ -1895,6 +1898,7 @@ REAL(DP),ALLOCATABLE :: ph(:)             ! degeneracy of wavefunction, for
 REAL(DP) :: occu(ksttot)
 LOGICAL :: tocc
 DATA tocc/.false./
+REAL(DP),PARAMETER :: third=1D0/3D0
 
 !-----------------------------------------------------------------------
 
@@ -1918,7 +1922,7 @@ END IF
 !     where 'nelect,spin' is the nr. of electrons for given spin.
 !     this relation is resolved approximately for N.
 
-q20fac = SQRT(5.0/(16.0*pi))
+q20fac = SQRT(5.D0/(16.D0*pi))
 IF(numspin==2) THEN
   nelup  = nelect-nspdw
   neldw  = nspdw
@@ -1931,28 +1935,28 @@ ELSE
     STOP ' nr. of electrons must be even for spin degeneracy'
   nelup  = nclust/2
 END IF
-efacto = 0.25/(1D0*nelect)**0.3333333
-efrmup = (6.0*nelup)**0.3333333
-efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**0.3333333-1.5
+efacto = 0.25D0/(1D0*nelect)**third
+efrmup = (6.D0*nelup)**third
+efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**third-1.5D0
 ecutup = efrmup+deoccin
-nomxup = ecutup*(1D0+2.0*q20fac*betain)+0.5
+nomxup = ecutup*(1D0+2.D0*q20fac*betain)+0.5D0
 ecutup = efacto*ecutup
 IF(numspin==2) THEN
   IF(neldw > 0) THEN
-    efrmdw = (6.0*neldw)**0.3333333
-    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
+    efrmdw = (6.0D0*neldw)**third
+    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**third-1.5D0
   ELSE
-    efrmdw = -0.00001
+    efrmdw = -0.00001D0
   END IF
   ecutdw = efrmdw+deoccin
-  nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
+  nomxdw = ecutdw*(1D0+2.0D0*q20fac*betain)+0.5D0
   ecutdw = efacto*ecutdw
 END IF
 cosfac = q20fac*COS(gamin)
-sinfac = q20fac*SQRT(2.0)*SIN(gamin)
+sinfac = q20fac*SQRT(2.D0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
 yfac   = efacto/(1D0-betain*(cosfac+sinfac))
-zfac   = efacto/(1D0+2.0*betain*cosfac)
+zfac   = efacto/(1D0+2.0D0*betain*cosfac)
 !      write(*,*) ' efacto,efrmup,ecutup,deoccin=',
 !     &   efacto,efrmup,ecutup,deoccin
 
@@ -2113,11 +2117,11 @@ DO i=1,nstate
 END DO
 !      occu(nstate)=0.0
 
+DEALLOCATE(ph)
 
-!-----------------------------------------------------------------------
 
-!  initial parameters:
-
+!
+!  initialize book-keeping fields assoxiating states with nodes
 
 !    parallel version : knode=number of nodes
 !    in the rest we mean absolute = relative to all the wf
@@ -2226,7 +2230,6 @@ WRITE(7,'(a,i3,a,80i1)') 'myn=',myn,': nhome',(nhome(i),i=1,ksttot)
 WRITE(6,'(a,i3,a,80i1)') 'myn=',myn,': nhome',(nhome(i),i=1,ksttot)
 #endif
 
-DEALLOCATE(ph)
 
 RETURN
 END SUBROUTINE ininqb
@@ -2245,7 +2248,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     'surjel', and the deformation is adjusted to the
 !     electron deformation given on 'alphel' and 'betael'
 
-!     y40 is expressed in terms of y20_effective to turn it automaticall
+!     y40 is expressed in terms of y20_effective to turn it automatically
 !     into the principal axes.
 
 !     this version allows three-dimensional rotation of the
@@ -2518,16 +2521,24 @@ END SUBROUTINE jelbak
 
 SUBROUTINE initho(psir)
 
-!     initailizes harmonic oscillator wavefunctions
+!     initializes harmonic oscillator wavefunctions
 
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
+
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
 REAL(DP), ALLOCATABLE :: phix(:)
+
+REAL(DP),PARAMETER :: third=1D0/3D0
+REAL(DP),PARAMETER :: sixth=1D0/6D0
 
 !EQUIVALENCE (phix(1),w1(1))
 
@@ -2538,19 +2549,19 @@ REAL(DP), ALLOCATABLE :: phix(:)
 
 an  = REAL(2*nclust)
 IF(temp > 0D0) THEN
-  homx = omeg*an**(-0.33333333)*xfac
-  homy = omeg*an**(-0.33333333)*yfac
-  homz = omeg*an**(-0.33333333)*zfac
+  homx = omeg*an**(-third)*xfac
+  homy = omeg*an**(-third)*yfac
+  homz = omeg*an**(-third)*zfac
   bxx  = (2.0*h2m/homx)**3
   bxy  = (2.0*h2m/homy)**3
   bxz  = (2.0*h2m/homz)**3
-  bxx  = osfac*(bxx**0.16666666)
-  bxy  = osfac*(bxy**0.16666666)
-  bxz  = osfac*(bxz**0.16666666)
+  bxx  = osfac*(bxx**sixth)
+  bxy  = osfac*(bxy**sixth)
+  bxz  = osfac*(bxz**sixth)
 ELSE
-  hom  = omeg*an**(-0.33333333)
+  hom  = omeg*an**(-third)
   bk1  = (2.0*h2m/hom)**3
-  bk1   = osfac*(bk1**0.166666666)
+  bk1   = osfac*(bk1**sixth)
 END IF
 
 
@@ -2561,7 +2572,7 @@ DO nb=1,nstate
   
 !       nq is  relative to the proc
   
-!       this way we implicitely parallelize the computation of phix
+!       this way we implicitly parallelize the computation of phix
   
   inx=nq(1,nrel2abs(nb))
   iny=nq(2,nrel2abs(nb))
@@ -2600,7 +2611,17 @@ DO nb=1,nstate
   
 END DO
 
+#if(parayes)
+CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+WRITE(*,*) ' wfs initialized: myn=',myn
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+WRITE(6,*) 'myn=',myn,' before SCHMID'
+#endif
 CALL schmidt(psir)
+#if(parayes)
+WRITE(6,*) 'myn=',myn,' after SCHMID'
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+#endif
 
 
 RETURN
@@ -2623,7 +2644,7 @@ SUBROUTINE clust(in,b,z,x,val,n1)
 
 !     the function is
 !                sqrt(2)^n*h(sqrt(2)*x)
-!     where h(x) is the hermite polynomial as explained in rottmann, p.1
+!     where h(x) is the Hermite polynomial as explained in Rottmann, p.1
 
 USE params
 !USE kinetic
@@ -2974,8 +2995,7 @@ IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
 #if(symmcond)
-IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible! allow for exact exchange
-!  kli or exchange or fullsic cannot be used simultaneously !! '
+IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible'
 #endif
 IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
 #if(!pw92)
@@ -2987,6 +3007,12 @@ IF(directenergy .AND. ifsicp==5) &
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"
 #endif
 
+#if(twostsic)
+!IF(ifhamdiag==1 .AND. ifsicp==8) &
+!  STOP "Hamiltonian diagonalization presently not compatible with full SIC"
+IF(ifhamdiag==1 .AND. ifsicp==7) &
+  STOP "Hamiltonian diagonalization presently not compatible with localized SIC"
+#endif
 
 RETURN
 END SUBROUTINE checkoptions
@@ -3089,17 +3115,6 @@ DO iz=1,nz2
   zt2(iz)=z1*z1
 END DO
 
-
-!     init coulomb solver
-
-#if(findiff|numerov)
-CALL d3sinfinit (dx,dy,dz)
-#else
-#if(coufou || coudoub)
-CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
-#endif
-#endif
-
 !     init kinetic energy array
 
 #if(findiff)
@@ -3111,6 +3126,17 @@ CALL inv5p_ini(dt1)
 #if(gridfft)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #endif
+
+!     init Coulomb solver
+
+#if(findiff|numerov)
+CALL d3sinfinit (dx,dy,dz)
+#else
+#if(coufou || coudoub)
+CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
+#endif
+#endif
+
 
 RETURN
 END SUBROUTINE init_grid
@@ -3311,7 +3337,7 @@ IF(iswap == 1) THEN
   aviner = 1./3. * (dminer(1) + dminer(2) + dminer(3))
   delmx  = dminer(3) - aviner
   iax    = 3
-!   check wether x or y are outstanding
+!   check whether x or y are outstanding
   delx   = dminer(1) - aviner
   IF (ABS(delx) > ABS(delmx)) THEN
     iax    = 1
@@ -3400,7 +3426,7 @@ INTEGER, INTENT(OUT)                     :: nrot
 
 INTEGER, PARAMETER :: nmax=500
 INTEGER :: i,ip,iq,j
-REAL :: c,g,h,s,sm,t,tau,theta,tresh,b(nmax),z(nmax)
+REAL(DP) :: c,g,h,s,sm,t,tau,theta,tresh,b(nmax),z(nmax)
 
 DO ip=1,n
   DO iq=1,n

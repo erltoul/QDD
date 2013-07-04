@@ -156,7 +156,7 @@ ALLOCATE(dq0(kdfull2))
 ! reset 
 current=0D0
 
-! cumulate
+! accumulate
 DO nb=1,nstate
   CALL xgradient_rspace(q0(1,nb),dq0)
   current(:,1) = current(:,1) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))
@@ -172,4 +172,187 @@ RETURN
 
 END SUBROUTINE calc_current
 #endif
+!-----spmoms------------------------------------------------------------
+
+#ifdef REALSWITCH
+SUBROUTINE spmomsr(wfr,iunit)
+#else
+SUBROUTINE spmoms(wf,iunit)
+#endif
+
+!     spatial moments of single-particle densities from real  wf's:
+!     input is
+!      wfr    = set of real single particle wavefunctions
+!      wf     = set of complex s.p. wavefunctions
+!      iunit  = unit number for output
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
+
+#ifdef REALSWITCH
+REAL(DP), INTENT(IN)                     :: wfr(kdfull2,kstate)
+#else
+COMPLEX(DP), INTENT(IN)                  :: wf(kdfull2,kstate)
+#endif
+
+LOGICAL, PARAMETER :: ttest=.false.
+REAL(DP), ALLOCATABLE :: qeorb(:,:)
+INTEGER, INTENT(IN OUT)                  :: iunit
+#if(parayes)
+INTEGER  :: iprisav(kstate,2)     ! printing communication
+#endif
+
+!      logical tfirst
+!      data tfirst/.true./
+
+!----------------------------------------------------------------------
+
+ALLOCATE(qeorb(kstate,11))
+
+#if(parayes)
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+IF(myn == 0) THEN
+#endif
+  WRITE(iunit,'(a)') 'protocol of s.p. moments:',  &
+      '  state energy   x   y   z   variance  xx  yy  zz xy xz yz'
+#if(parayes)
+END IF
+#endif
+
+xcmel = 0D0
+ycmel = 0D0
+zcmel = 0D0
+r2el = 0D0
+
+DO nbe=1,nstate
+  DO k=1,11
+    qeorb(nbe,k)=0D0
+  END DO
+  
+  ind=0
+  DO iz=minz,maxz
+    z1=(iz-nzsh)*dz
+    z2=z1*z1
+    DO iy=miny,maxy
+      y1=(iy-nysh)*dy
+      y2=y1*y1
+      DO ix=minx,maxx
+        ind=ind+1
+        IF((ix /= nx2).AND.(iy /= ny2).AND.(iz /= nz2)) THEN
+          x1=(ix-nxsh)*dx
+          x2=x1*x1
+#ifdef REALSWITCH
+          s=wfr(ind,nbe)*wfr(ind,nbe)
+#else
+          s=wf(ind,nbe)*CONJG(wf(ind,nbe))
+#endif
+          qeorb(nbe,1)=amoy(nbe)
+!                                                       monopole
+          qeorb(nbe,2)=qeorb(nbe,2)+s
+!                                                       dipole
+          qeorb(nbe,3)=qeorb(nbe,3)+s*x1
+          qeorb(nbe,4)=qeorb(nbe,4)+s*y1
+          qeorb(nbe,5)=qeorb(nbe,5)+s*z1
+!                                                       quadrupole
+          qeorb(nbe,6)=qeorb(nbe,6)+s*x2
+          qeorb(nbe,7)=qeorb(nbe,7)+s*y2
+          qeorb(nbe,8)=qeorb(nbe,8)+s*z2
+
+          qeorb(nbe,9)=qeorb(nbe,9)+s*x1*y1
+          qeorb(nbe,10)=qeorb(nbe,10)+s*z1*x1
+          qeorb(nbe,11)=qeorb(nbe,11)+s*z1*y1
+        END IF
+      END DO
+    END DO
+  END DO
+ 
+  DO k=2,11
+    qeorb(nbe,k)=qeorb(nbe,k)*dvol
+  END DO
+!    qeorb(nbe,6)=qeorb(nbe,6)-qeorb(nbe,3)*qeorb(nbe,3)    ?
+!    qeorb(nbe,7)=qeorb(nbe,7)-qeorb(nbe,4)*qeorb(nbe,4)    ?
+!    qeorb(nbe,8)=qeorb(nbe,8)-qeorb(nbe,5)*qeorb(nbe,5)    ?
+!    qeorb(nbe,9)=qeorb(nbe,9)-qeorb(nbe,3)*qeorb(nbe,4)    ?
+!    qeorb(nbe,10)=qeorb(nbe,10)-qeorb(nbe,3)*qeorb(nbe,5)  ?
+!    qeorb(nbe,11)=qeorb(nbe,11)-qeorb(nbe,4)*qeorb(nbe,5)  ?
+
+#if(parano)
+  WRITE(iunit,'(i4,f7.3,4f6.2,2x,6f7.1)')  nbe,qeorb(nbe,1), &
+   (qeorb(nbe,j),j=3,5), &
+   SQRT(qeorb(nbe,6)+qeorb(nbe,7)+qeorb(nbe,8)),(qeorb(nbe,j),j=9,11)
+
+  qeorb_all(nbe,:)=qeorb(nbe,:)
+#endif
+END DO
+
+#if(parayes)
+DO nbe=1,nstate
+  iprisav(nbe,1) = nrel2abs(nbe)
+  iprisav(nbe,2) = 3-2*ispin(nrel2abs(nbe))
+END DO
+
+
+IF(myn /= 0) THEN
+  nod = myn
+  CALL mpi_send(qeorb,11*kstate,mpi_double_precision,  &
+      0,nod,mpi_comm_world,ic)
+  CALL mpi_send(iprisav,2*kstate,mpi_integer, 0,nod,mpi_comm_world,ic)
+  IF(ttest) WRITE(*,*) ' SPMOMS: sent at node:',myn
+ELSE
+  DO nod2=0,knode-1
+    IF(nod2 > 0) THEN
+      CALL mpi_recv(qeorb,11*kstate,mpi_double_precision,  &
+          nod2,mpi_any_tag,mpi_comm_world,is,ic)
+      CALL mpi_recv(iprisav,2*kstate,mpi_integer,  &
+          nod2,mpi_any_tag,mpi_comm_world,is,ic)
+      IF(ttest) WRITE(*,*)' SPMOMS: recv from  node=',nod2
+    END IF
+    DO nbe=1,nstate_node(nod2)
+      nact = nrel2abs_other(nbe,nod2)
+      qeorb_all(nact,:) = qeorb(nbe,:)
+      WRITE(iunit,'(i4,f7.3,4f6.2,2x,6f7.1)')  iprisav(nbe,1),qeorb(nbe,1), &
+       (qeorb(nbe,j),j=3,5), &
+       SQRT(qeorb(nbe,6)+qeorb(nbe,7)+qeorb(nbe,8)),(qeorb(nbe,j),j=9,11)
+    END DO
+  END DO
+END IF
+#endif
+
+DEALLOCATE(qeorb)
+
+#if(parayes)
+IF(myn == 0) THEN
+#endif
+  DO nbe=1,nstate_all
+    xcmel = xcmel + qeorb_all(nbe,3)
+    ycmel = ycmel + qeorb_all(nbe,4)
+    zcmel = zcmel + qeorb_all(nbe,5)
+    r2el  = r2el + qeorb_all(nbe,6)+qeorb_all(nbe,7)+qeorb_all(nbe,8)
+  END DO
+
+  xcmel = xcmel/nstate_all
+  ycmel = ycmel/nstate_all
+  zcmel = zcmel/nstate_all
+  r2el  = SQRT(r2el/nstate_all)
+
+  WRITE(iunit,'(a11,4f6.2)') 'average:   ',xcmel,ycmel,zcmel,r2el
+#if(parayes)
+END IF
+#endif
+
+
+RETURN
+#ifdef REALSWITCH
+END SUBROUTINE spmomsr
+#else
+END SUBROUTINE spmoms
+#endif
+
+!-----------------------------------------------------------------
 

@@ -22,7 +22,6 @@ using namespace std;
 #define BATCH 1 //The number of batched ffts 
 
 #if(lda_gpu)
-//Work in progress for lda_gpu
 __device__ __constant__ double e2  = 2.0;
 
 __device__ __constant__ double a0  = 0.458165293;

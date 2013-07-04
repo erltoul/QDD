@@ -47,7 +47,7 @@ DO is=1,numspin
 !       Fourier transformation
 #if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
-
+    
 !       Laplacian and integral
     
     DO  i=1,nxyz
@@ -59,14 +59,10 @@ DO is=1,numspin
     CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
 
 !       Laplacian and integral
-    
-!    DO  i=1,nxyz
-!      dervk(i) = potk(i)*akv(i)
-!    END DO
+
     CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-
     denominator = rwfovlp(rho(1+ishift),potwork)
     
 !       x-derivative
@@ -88,7 +84,6 @@ DO is=1,numspin
 !          END IF
 !!MB/
 !          ind=ind+1
-!          dervk(ind) = eye*zkx*potk(ind)
           dervk = -akx*potk
 !        END DO
 !      END DO
@@ -96,7 +91,6 @@ DO is=1,numspin
     CALL rfftback(dervk,potwork)
 #endif
 #if(fftw_gpu)
-!    dervk = -akx*potk
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
@@ -125,7 +119,6 @@ DO is=1,numspin
 !          END IF
 !!MB/
 !          ind=ind+1
-!          dervk(ind) = eye*zky*potk(ind)
           dervk = -aky*potk
 !        END DO
 !      END DO
@@ -133,7 +126,6 @@ DO is=1,numspin
     CALL rfftback(dervk,potwork)
 #endif
 #if(fftw_gpu)
-!    dervk = -aky*potk
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
@@ -218,6 +210,7 @@ DO is=1,numspin
     ishift = (is-1)*nxyz
     
 !       Fourier transformation
+    
 #if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
 #endif

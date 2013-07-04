@@ -6,7 +6,7 @@ SUBROUTINE calclocal(rho,aloc)
 
 !       ******************************
 
-!       computes local part of hamiltonian
+!       computes local part of Hamiltonian
 !       'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -58,7 +58,7 @@ IF(idielec /= 0) THEN
 END IF
 #endif
 
-!     the coulombic part
+!     the Coulombic part
 !     warning : counet inserts the esquar factor
 
 
@@ -72,6 +72,8 @@ IF (nion2 == 0) CALL solv_fft(rhon,chpcoul,dx,dy,dz)
 !usew1 = .false.
 !test      call prifld(rhon,'Coulomb dens.')
 !test      call prifld(chpcoul,'Coulomb pot.')
+
+!chpcoul=0D0
 
 !     the lda part
 
@@ -169,7 +171,7 @@ SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
 
 !    computes the lsda potential and the rear.energ.
-!    with the gunnarsson & lundqvist functional 1976
+!    with the Gunnarsson & Lundqvist functional 1976
 
 
 USE params
@@ -185,7 +187,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
 
-!     the gunnarson lundqvist parameters
+!     the Gunnarsson Lundqvist parameters
 
 !      data small/1.0e-20/
 !#if(exonly)
@@ -330,9 +332,9 @@ SUBROUTINE calc_lda_pw92(rho,chpdft)
 
 
 !    computes the lsda potential and the rear.energ.
-!    with the perdew-wang functional
+!    with the Perdew-Wang functional
 !    attention: the rearrangement energy for e-tot has to be computed
-!               the same way as for gunnarsson & lundqvist
+!               the same way as for Gunnarsson & Lundqvist
 !               the mean-field part is o.k.!!!!!
 
 USE params
@@ -344,12 +346,12 @@ REAL,SAVE                                    :: et
 
 !        parameter (pi=3.141592654)
 
-! pade approximant to perdew-wang 92 density functional
+! Pade' approximant to Perdew-Wang 92 density functional
 
 
 !!!!!      icount = 0
 
-#if(netlib_fft|fftw_cpu|(fftw_gpu && lda_gpu==0))
+#if(!lda_gpu)
 DATA a0  /0.458165293D0 /
 DATA da0 /0.119086804D0 /
 
@@ -385,6 +387,7 @@ ec=0D0
 
 !CALL cpu_time(time_start)
 
+!!!$OMP PARALLEL DO DEFAULT(PRIVATE) SHARED(nxyz,rho,chpdft) SCHEDULE(STATIC) REDUCTION(+: ec,enerpw)
 DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
   xi     = rho(ii+nxyz)
@@ -414,30 +417,30 @@ DO ii=1,nxyz
   t36 = t28**2
   t37 = t24*t36
   t42 = (a3+da3*t13*t17)*t26
-  t44 = a0+da0*t13*t17+t23*t29/4.0+t35*t37/4+3D0/4D0*t42*t3
+  t44 = a0+da0*t13*t17+t23*t29/4.0D0+t35*t37/4D0+3D0/4D0*t42*t3
   t48 = (b1+db1*t13*t17)*t22
   t53 = (b2+db2*t13*t17)*t34
   t58 = (b3+db3*t13*t17)*t26
   t63 = (b4+db4*t13*t17)*t22
   t64 = t36**2
-  t = t48*t29/4+t53*t37/4+3D0/4D0*t58*t3+3D0/16D0*t63*t25*t64
-  t68 = 1/t
+  t = t48*t29/4D0+t53*t37/4D0+3D0/4D0*t58*t3+3D0/16D0*t63*t25*t64
+  t68 = 1D0/t
   t70 = t2**2
-  t71 = 1/t70
+  t71 = 1D0/t70
   t72 = t1*t71
   t77 = 4D0/3D0*t6*(t3-t72)+4D0/3D0*t10*(-t3+t72)
   t82 = t22*t25
   t83 = t82*t28
-  t88 = 1/t36*t26*t71
+  t88 = 1D0/t36*t26*t71
   t93 = t34*t24*t36
-  t98 = 1/t28*t26*t71
+  t98 = 1D0/t28*t26*t71
   t102 = t17*t26*t3
   t109 = t**2
-  t135 = t44*t68+t2*(da0*t77*t17+da1*t77*t17*t83/4-t23*t25*t88/12+da2  &
-      *t77*t17*t93/4-t35*t24*t98/6+3D0/4D0*da3*t77*t102-3D0/4D0*t42  &
+  t135 = t44*t68+t2*(da0*t77*t17+da1*t77*t17*t83/4D0-t23*t25*t88/12D0+da2  &
+      *t77*t17*t93/4D0-t35*t24*t98/6D0+3D0/4D0*da3*t77*t102-3D0/4D0*t42  &
       *t71)*t68-t2*t44/t109*(db1*t77*t17*t83/4-t48*t25*t88/12+db2*t77*t17  &
-      *t93/4-t53*t24*t98/6+3D0/4D0*db3*t77*t102-3D0/4D0*t58*t71+3D0  &
-      /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4)
+      *t93/4D0-t53*t24*t98/6D0+3D0/4D0*db3*t77*t102-3D0/4D0*t58*t71+3D0  &
+      /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4D0)
   
   
   
@@ -455,16 +458,16 @@ DO ii=1,nxyz
   t77 = 4D0/3D0*t6*(-t3-t72)+4D0/3D0*t10*(t3+t72)
   t82 = t22*t25
   t83 = t82*t28
-  t88 = 1/t36*t26*t71
+  t88 = 1D0/t36*t26*t71
   t93 = t34*t24*t36
-  t98 = 1/t28*t26*t71
+  t98 = 1D0/t28*t26*t71
   t102 = t17*t26*t3
   t109 = t**2
-  t135 = t44*t68+t2*(da0*t77*t17+da1*t77*t17*t83/4-t23*t25*t88/12+da2  &
-      *t77*t17*t93/4-t35*t24*t98/6+3D0/4D0*da3*t77*t102-3D0/4D0*t42  &
-      *t71)*t68-t2*t44/t109*(db1*t77*t17*t83/4-t48*t25*t88/12+db2*t77*t17 &
-      *t93/4-t53*t24*t98/6+3D0/4D0*db3*t77*t102-3D0/4D0*t58*t71+3D0  &
-      /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4)
+  t135 = t44*t68+t2*(da0*t77*t17+da1*t77*t17*t83/4D0-t23*t25*t88/12+da2  &
+      *t77*t17*t93/4D0-t35*t24*t98/6D0+3D0/4D0*da3*t77*t102-3D0/4D0*t42  &
+      *t71)*t68-t2*t44/t109*(db1*t77*t17*t83/4D0-t48*t25*t88/12D0+db2*t77*t17 &
+      *t93/4D0-t53*t24*t98/6D0+3D0/4D0*db3*t77*t102-3D0/4D0*t58*t71+3D0  &
+      /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4D0)
   
   
   
@@ -481,28 +484,28 @@ DO ii=1,nxyz
   
   t1=rp
   t4 = xi
-  t6 = (1+t4)**(1D0/3D0)
+  t6 = (1D0+t4)**(1D0/3D0)
   t7 = t6**2
   t8 = t7**2
-  t10 = (1-t4)**(1D0/3D0)
+  t10 = (1D0-t4)**(1D0/3D0)
   t11 = t10**2
   t12 = t11**2
-  t13 = t8+t12-2
-  t15 = 2**(1D0/3D0)
-  t17 = 1/(2*t15-2)
-  t22 = 3**(1D0/3D0)
-  t24 = 4**(1D0/3D0)
+  t13 = t8+t12-2D0
+  t15 = 2D0**(1D0/3D0)
+  t17 = 1D0/(2D0*t15-2D0)
+  t22 = 3D0**(1D0/3D0)
+  t24 = 4D0**(1D0/3D0)
   t25 = t24**2
-  t26 = 1/pi
+  t26 = 1D0/pi
   t28 = (t26*t3)**(1D0/3D0)
   t29 = t25*t28
   t34 = t22**2
   t36 = t28**2
   t37 = t24*t36
   t65 = t36**2
-  t70 = t1*(a0+da0*t13*t17+(a1+da1*t13*t17)*t22*t29/4+(a2+da2*t13*t17  &
-      )*t34*t37/4+3D0/4D0*(a3+da3*t13*t17)*t26*t3)/((b1+db1*t13*t17)*  &
-      t22*t29/4+(b2+db2*t13*t17)*t34*t37/4+3D0/4D0*(b3+db3*t13*t17)*t26 &
+  t70 = t1*(a0+da0*t13*t17+(a1+da1*t13*t17)*t22*t29/4D0+(a2+da2*t13*t17  &
+      )*t34*t37/4D0+3D0/4D0*(a3+da3*t13*t17)*t26*t3)/((b1+db1*t13*t17)*  &
+      t22*t29/4D0+(b2+db2*t13*t17)*t34*t37/4D0+3D0/4D0*(b3+db3*t13*t17)*t26 &
       *t3+3D0/16D0*(b4+db4*t13*t17)*t22*t25*t65)
   
 !    xc energy-density is now:   -e2*t70/rp
@@ -524,9 +527,8 @@ DO ii=1,nxyz
 !old        ec=-t70/2.0*e2+ec
 
 END DO
-#endif
-
-#if(fftw_gpu && lda_gpu )
+!!!!$OMP END PARALLEL DO
+#else(lda_gpu)
 enrear = 0D0
 ec=0D0
 
@@ -539,6 +541,12 @@ END IF
 #endif
 
 enrear=ec*dvol
+!  CALL cpu_time(time_end)
+!  write (6,*)ec
+!  et=et+time_end-time_start
+!  write(6,*)"Time lda:",et
+!  STOP
+
 
 IF(directenergy) THEN
   enerpw = enerpw*dvol

@@ -4,8 +4,8 @@
 
 SUBROUTINE createouterpot
 !------------------------------------------------------------
-!USE params
-USE kinetic
+USE params
+!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -704,7 +704,7 @@ DO k=1,ilayers
         chge(icntc) = chgval
         
         
-      ELSE ! kation
+      ELSE ! cation
         
         icntk = icntk + 1
         

@@ -52,7 +52,7 @@ IF(ndiff > 0) THEN
 ELSE
   nadd = -1
 END IF
-!? nadd=0
+nadd=0     !  ?? check the initialization
 IF(ndiff /= 0) THEN
   nadded = 0
   DO ncy=1,ncycle
@@ -66,7 +66,8 @@ IF(ndiff /= 0) THEN
 END IF
 WRITE(6,'(a,5i5)')  &
     ' ndiff,nmaxval,nstate,ncycle,nadd=',ndiff,nmaxval,nstate, ncycle,nadd
-WRITE(6,'(a,10i5)') ' nmxst:',(nmxst(ion),ion=1,nion)
+WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
+WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
 
 !     loop through ions and fill electron states successively
 
@@ -74,12 +75,16 @@ nmaxact = nstate/nion+1                ! max. states per atom
 numstate = 0
 DO ion=1,nion
   DO natlevel=1,nmxst(ion)
+    IF(numstate == ksttot) GO TO 99
     numstate = 1 + numstate
     IF(numspin==2) THEN
       nactst(ion) = nactst(ion)+MOD(natlevel,2)
       ispin(numstate) = 2-MOD(natlevel,2)
       if (ipol(ion).eq.-1) then
-        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
+!        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
+        ispin(numstate) = 2
+      else
+        ispin(numstate) = 1
       endif
       write(6,*) 'ion,natlev,numst,ispin', &
                   ion,natlevel,numstate,ispin(numstate)

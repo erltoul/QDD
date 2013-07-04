@@ -22,11 +22,11 @@ SUBROUTINE restart2(psi,outna,trealin)
 
 USE params
 USE kinetic
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
 #endif
-#endif
+!#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -35,6 +35,7 @@ REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 LOGICAL,PARAMETER                       :: trealin=.false.
 #else
 COMPLEX(DP), INTENT(IN OUT)               :: psi(kdfull2,kstate)
+REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 LOGICAL, INTENT(IN)                       :: trealin
 #endif
 
@@ -250,19 +251,30 @@ IF(mynact==0) THEN
         READ(60) rhoabso(1:kdfull2)
       END IF
       IF(jescmaskorb /=0) THEN
+#if(parayes)
+        ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
         IF(trealin) THEN
-           rhoabsoOrb = 0D0
+           rhoabsoorb_all = 0D0
         ELSE
-          DO nbe=1,nstate
-            READ(60) rhoabsoOrb(1:kdfull2,nbe)
+          DO nbe=1,nstate_all
+            READ(60) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
         END IF
+#else
+        IF(trealin) THEN
+           rhoabsoorb = 0D0
+        ELSE
+          DO nbe=1,nstate
+            READ(60) rhoabsoorb(1:kdfull2,nbe)
+          ENDDO
+        ENDIF
+#endif
       END IF
       IF(ttest) WRITE(*,*) ' abso read in'
     END IF
-!   reading cumulators for laser field
+!   reading accumulators for laser field
     IF(.NOT.trealin) THEN
-      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
 !      WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
     END IF
 #endif                                                        !new
@@ -287,34 +299,30 @@ IF(knode > 1) THEN
     CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,ic)
     CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,ic)
 END IF
+
+#ifdef COMPLEXSWITCH
+IF (nabsorb > 0 .AND. jescmaskorb /= 0) THEN
+  DO nb=1,nstate_all
+    nod = nhome(nb)
+    nba = nabs2rel(nb)
+    CALL send_and_receive(rhoabsoorb_all(1:kdfull2,nb),rhoabsoorb(1:kdfull2,nba),kdfull2,0,nod)
+  END DO
+IF(myn == 0) DEALLOCATE(rhoabsoorb_all)
+END IF
+#endif
 #endif
 
 
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 !JM
 #if(twostsic)
 IF(ifsicp >= 6) THEN
-  DO i=1,kdim
-    DO j=1,kdim
-      vecsr(i,j,1) = 1D3
-      vecsr(i,j,2) = 2D3
-    END DO
-  END DO
-  ndims(1) = 0
-  ndims(2) = 0
-  DO iss=1,2
-    DO i=1,kdim
-      DO j=1,kdim
-        READ(60) vecsr(i,j,iss)
-      END DO
-    END DO
-  END DO
-  READ(60) ndims(1)
-  READ(60) ndims(2)
+  READ(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
+  WRITE(*,*) ' READ vecsr:',vecsr(1:ndims(1),1:ndims(1),1)
 END IF
 #endif
 !JM
-#endif
+!#endif
 
 IF(trealin) THEN 
   CLOSE(UNIT=60)
@@ -343,11 +351,12 @@ END SUBROUTINE restart2
 
 
 !     **************************
+
 #if(netlib_fft|fftw_cpu)
 #ifdef REALSWITCH
-SUBROUTINE RSAVE(psi,int_pass)
+SUBROUTINE RSAVE(psi,isa)
 #else
-SUBROUTINE SAVE(psi,int_pass)
+SUBROUTINE SAVE(psi,isa)
 #endif
 #endif
 #if(fftw_gpu)
@@ -357,6 +366,7 @@ SUBROUTINE RSAVE(psi)
 SUBROUTINE SAVE(psi)
 #endif
 #endif
+
 !     **************************
 
 !  writes out the data if mod(iter,isave)=0
@@ -375,10 +385,12 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 #endif
 #if(netlib_fft|fftw_cpu)
-INTEGER, INTENT(IN OUT)                     :: int_pass
+INTEGER, INTENT(IN OUT)                     :: isa
 #endif
+!CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 LOGICAL,PARAMETER :: ttest = .FALSE.
 
 
@@ -444,11 +456,11 @@ IF(mynact==0) &
   
 !  write iteration at which the data is saved
 IF(mynact==0) THEN
-  WRITE(60) int_pass,nstate_all,nclust,nion,nspdw
+  WRITE(60) isa,nstate_all,nclust,nion,nspdw
   IF(TTEST) WRITE(6,*)' SAVE: isa written at myn=',myn
 END IF
   
-  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',int_pass,myn
+  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',isa,myn
   
 !  write wavefunctions:
 #if(parano)
@@ -501,6 +513,19 @@ IF(nclust > 0)THEN
 
 END IF
 #endif
+
+#if(parayes)
+#ifdef COMPLEXSWITCH
+IF(nabsorb > 0 .AND. jescmaskorb /= 0) THEN
+   IF(myn == 0) ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
+   DO nb=1,nstate_all
+     nod = nhome(nb)
+     nba = nabs2rel(nb)
+     CALL send_and_receive(rhoabsoorb(1:kdfull2,nba),rhoabsoorb_all(1:kdfull2,nb),kdfull2,nod,0)
+   END DO
+END IF
+#endif
+#endif
     
 IF(mynact==0) THEN
 !  DO i=1,ksttot
@@ -528,7 +553,7 @@ IF(mynact==0) THEN
   END IF
 #endif    
     
-!  write dipol moment etc:
+!  write dipole moment etc:
     IF(nclust > 0) THEN 
       WRITE(60) qe(1:kmom),se(1:3)
     
@@ -536,13 +561,20 @@ IF(mynact==0) THEN
       IF (nabsorb > 0) THEN
         WRITE(60) rhoabso(1:kdfull2)
         IF(jescmaskorb /=0) THEN
-          DO nbe=1,nstate
-            WRITE(60) rhoabsoOrb(1:kdfull2,nbe)
+#if(parayes)
+          DO nbe=1,nstate_all
+            WRITE(60) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
+#else
+          DO nbe=1,nstate
+            WRITE(60) rhoabsoorb(1:kdfull2,nbe)
+          ENDDO
+#endif
         END IF
       END IF
-!     writing cumulators for laser field
-      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2
+!     writing accumulators for laser field
+      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
+                fpulseinteg1,fpulseinteg2,elaser
       WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
 #endif
     END IF
@@ -552,16 +584,9 @@ END IF
 !JM
 #if(twostsic)
     IF(ifsicp >= 6) THEN
-      DO iss=1,2
-        DO i=1,kdim
-          DO j=1,kdim
-            WRITE(60) vecsr(i,j,iss)
-          END DO
-        END DO
-      END DO
-      WRITE(60) ndims(1)
-      WRITE(60) ndims(2)
+      WRITE(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
+      WRITE(*,'(20f10.5)') vecsr(1:kstate,1:kstate,1)
     END IF
 #endif
 !JM
@@ -578,7 +603,7 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
   
   
   IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
-    WRITE(17,'(a,i6,a)') '** data saved at ',int_pass,' iterations**'
+    WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
   END IF
   
   RETURN
@@ -742,9 +767,9 @@ END SUBROUTINE addcluster
 #ifdef REALSWITCH
 SUBROUTINE send_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
-!     Both strings are double precsion and have length 'length'
+!     Both strings are double precision and have length 'length'
 
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -782,7 +807,7 @@ END SUBROUTINE send_and_receive
 
 SUBROUTINE csend_and_receive(instring,outstring,length,in_node,dest_node)
 
-!     Sends 'instring' from odde 'in_node' to
+!     Sends 'instring' from node 'in_node' to
 !     'outstring' on node 'out_node'.
 !     Both strings are double complex and have length 'length'
 

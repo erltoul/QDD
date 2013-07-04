@@ -1,0 +1,60 @@
+Brief instructions for the OpenMP version of the 3D code
+========================================================
+
+There are new compile-time parameters in 'define.h':
+
+coudoub3D   activates the 3D FFTW in the exact Coulomb solver.
+dynopenmp   activates wavefunction parallelization with OpenMP,
+            requires 'paropenmp' to be set.
+oldkinprop  switches back to old style 'kinprop' using interlaced
+            1D FFT's.
+
+
+
+Other new compile-time parameters are set in 'makefile':
+
+paropenmp   activates OpenMP parallelization, requires 'parano=1;
+            it is set in 'makefile' by a 'YES' in the 'OMP' option.
+fftw_cpu    activates FFTW3 routines for FFT; it is set in 'makefile'
+            by a 'FFTW' in the option 'TYPE_FFT'.
+netlib_fft  activates NETLIB routines for FFT; it is set in 'makefile' 
+            by a 'NETLIB' in the option 'TYPE_FFT'.
+
+
+
+There is a central setting for the preparation of FFTW3 routines:
+
+In 'fft.F90' you find a place where 'FFTW_planflag' is set.
+You choose here 'FFTW_MEASURE' for a good optimization of the FFT's,
+'FFTW_EXHAUSTIVE' for a very good one, and 'FFTW_ESTIMATE' for a
+quick set up.
+
+
+
+There is a central setting for the maximum number of nodes used:
+
+In 'params.F90' you find a place where 'numthr' is set. You insert in
+the branch 'paropenmp=1' the intended number which, of course, should
+not be larger than the number of nodes on your machine. Do not touch
+the 'numthr=1' in the branch 'paropenmp=0'.
+
+
+
+Examples:
+
+To compile the standard code (FFTW3, 3D FFT in Coulomb and 'kinprop'):
+Put 'coudob3D 1', 'oldkinprop 0' in 'define.h',
+invoke 'TYPE_FFT = FFTW' and 'OMP = NO' in 'makefile.
+(And, of course, 'iffastpropag=1' in the dynamic switches.)
+
+
+To compile a fast code with OpenMP using 2 nodes:
+Set 'numthr=2' in 'params.F90' (the branch 'paropenmp=1'),
+leave 'coudob3D 1', 'oldkinprop 0' in 'define.h',
+invoke 'TYPE_FFT = FFTW' and 'OMP = YES' in 'makefile.
+(And, of course, 'iffastpropag=1' in the dynamic switches.)
+
+
+After all be careful that the 'makefile' changes names of the
+executable depending on the options.
+

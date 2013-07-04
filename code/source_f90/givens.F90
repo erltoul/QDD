@@ -3,13 +3,13 @@
 SUBROUTINE givens(a,root,vect,nx,nrootx,njx)
 
 ! 62.3  givens  -eigenvalues and eigenvectors by the givens method.
-!      by franklin prosser, indiana university.
-!      september, 1967
+!      by Franklin Prosser, Indiana University.
+!      September, 1967
 !      calculates eigenvalues and eigenvectors of real symmetric matrix
 !      stored in packed upper triangular form.
 
-!      thanks are due to f. e. harris (stanford university) and h. h.
-!      michels (united aircraft research laboratories) for excellent
+!      thanks are due to F. E. Harris (Stanford University) and H. H.
+!      Michels (United Aircraft Research Laboratories) for excellent
 !      work on numerical difficulties with earlier versions of this
 !      program.
 
@@ -51,20 +51,20 @@ SUBROUTINE givens(a,root,vect,nx,nrootx,njx)
 !      the method as presented in this program consists of four steps,
 !      all modifications of the original method...
 !      first, the input matrix is reduced to tridiagonal form by the
-!      householder technique (j. h. wilkinson, comp. j. 3, 23 (1960)).
-!      the roots are then located by the sturm sequence method (j. m.
-!      ortega (see reference below).  the vectors of the tridiagonal
-!      form are then evaluated (j. h. wilkinson, comp. j. 1, 90 (1958)),
+!      householder technique (J. H. Wilkinson, Comp. J. 3, 23 (1960)).
+!      the roots are then located by the Sturm sequence method (j. m.
+!      Ortega (see reference below).  the vectors of the tridiagonal
+!      form are then evaluated (J. H. Wilkinson, Comp. J. 1, 90 (1958)),
 !      and last the tridiagonal vectors are rotated to vectors of the
 !      original array (first reference).
 !      vectors for degenerate (or near-degenerate) roots are forced
-!      to be orthogonal, using a method suggested by b. garbow, argonne
-!      national ldabs (private communication, 1964).  the gram-schmidt
+!      to be orthogonal, using a method suggested by B. Garbow, Argonne
+!      National Labs (private communication, 1964).  the Gram-Schmidt
 !      process is used for the orthogonalization.
 
 !      an excellent presentation of the givens technique is found in
-!      j. m. ortega's article in 'mathematics for digital computers,'
-!      volume 2, ed. by ralston and wilf, wiley (1967), page 94.
+!      J. M. Ortega's article in 'mathematics for digital computers,'
+!      volume 2, ed. by Ralston and Wilf, Wiley (1967), page 94.
 
 
 ! ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -274,8 +274,8 @@ b(nm1,1) = a(nsize-1)
 a(nsize-1) = 0D0
 b(n,1)=0D0
 
-!     sturm section.
-!     sturm sequence iteration to obtain roots of tridiagonal form.
+!     Sturm section.
+!     Sturm sequence iteration to obtain roots of tridiagonal form.
 !     move diagonal elements into second n elements of b-vector.
 !     this is a more convenient indexing position.
 !     also, put square of codiagonal elements in third n elements.
@@ -301,7 +301,7 @@ DO  i=1,nroot
   500   trial = (rootl + root(i))*0.5D0
 !     if (trial.eq.rootl.or.trial.eq.root(i)) go to 330
   IF(.NOT.ABS(trial-rootl) > 0D0 .OR. .NOT.ABS(trial-root(i)) > 0D0) CYCLE
-!     form sturm sequence ratios, using ortega's algorithm (modified).
+!     form Sturm sequence ratios, using Ortega's algorithm (modified).
 !     nomtch is the number of roots less than the trial value.
   350   CONTINUE
   nomtch = n

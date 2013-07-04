@@ -14,7 +14,7 @@ USE FFTW
 type(C_PTR) :: wisdom_plan1df,wisdom_plan3df,wisdom_plan1db,wisdom_plan3db
 INTEGER(C_INT) :: wisdomtest
 COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: mat1d(:),mat3d(:,:,:) ! 2d is not used in the tddft code
-INTEGER :: grid_size1d(8)=(/12,24,48,64,96,128,192,256/),grid_size3d(6)=(/12,24,48,64,96,128/)
+INTEGER :: grid_size1d(7)=(/24,48,64,96,128,192,256/),grid_size3d(5)=(/24,48,64,96,128/)
 NAMELIST /gridsize/ nxspec,nyspec,nzspec
 
 wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)

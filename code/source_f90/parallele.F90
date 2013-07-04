@@ -4,7 +4,7 @@
 
 SUBROUTINE init_parallele()
 
-!     Initializes parellele computing determines actual 'myn'.
+!     Initializes parallele computing determines actual 'myn'.
 !     The actual node 'myn' is communicated via common.
 
 USE params
@@ -27,6 +27,7 @@ WRITE(*,*) nprocs,knode
 #if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
+!IF(knode /= kstate) STOP "knode must be equal to kstate !"
 #else
 knode = 1
 nprocs= 1
@@ -40,6 +41,16 @@ myn=n
 knode = 1         
 nprocs= 1         
 #endif
+
+#if(paropenmp)
+CALL OMP_SET_NUM_THREADS(numthr)
+WRITE(*,*) ' init. OMP:  Nr. threads=',numthr,OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
+nthr = OMP_GET_MAX_THREADS()-1
+#else
+nthr = 0
+#endif
+WRITE(*,*) ' INIT_PARALLELE: nthr=',nthr
+
 
 
 RETURN
@@ -217,6 +228,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(istat,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(jdip,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(jdiporb,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jquad,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jang,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jspdp,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -390,6 +402,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(istat,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(jdip,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(jdiporb,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jquad,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jang,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jspdp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
@@ -742,7 +755,6 @@ IF(n == 0 .AND. knode /= 1)THEN
     CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(ifall,1,mpi_integer,nod,1, mpi_comm_world,ic)
     CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -752,6 +764,7 @@ IF(n == 0 .AND. knode /= 1)THEN
     CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,ic)
   END DO
   
 ELSE IF(n /= 0 .AND. knode /= 1)THEN
@@ -771,7 +784,6 @@ ELSE IF(n /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(errks0,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
-  CALL mpi_recv(ifall,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(trfac2,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(prfac2,1,mpi_double_precision,0,mpi_any_tag,  &
@@ -788,6 +800,7 @@ ELSE IF(n /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(prfac1,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
+  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
 END IF
 
 RETURN

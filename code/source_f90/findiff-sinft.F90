@@ -43,30 +43,30 @@ SUBROUTINE solv_fft(rhoin,pot,deltax,deltay,deltaz)
 !INCLUDE 'work3D.inc'
 
 
-REAL, INTENT(IN OUT)                     :: rhoin(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(IN OUT)                     :: deltax
-REAL, INTENT(IN OUT)                     :: deltay
-REAL, INTENT(IN OUT)                     :: deltaz
+REAL(DP), INTENT(IN OUT)                     :: rhoin(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltay
+REAL(DP), INTENT(IN OUT)                     :: deltaz
 
 
 
 
-REAL :: potbcxl(-maxy:maxy,-maxz:maxz)
-REAL :: potbcxu(-maxy:maxy,-maxz:maxz)
-REAL :: potbcyl(-maxx:maxx,-maxz:maxz)
-REAL :: potbcyu(-maxx:maxx,-maxz:maxz)
-REAL :: potbczl(-maxx:maxx,-maxy:maxy)
-REAL :: potbczu(-maxx:maxx,-maxy:maxy)
+REAL(DP):: potbcxl(-maxy:maxy,-maxz:maxz)
+REAL(DP):: potbcxu(-maxy:maxy,-maxz:maxz)
+REAL(DP):: potbcyl(-maxx:maxx,-maxz:maxz)
+REAL(DP):: potbcyu(-maxx:maxx,-maxz:maxz)
+REAL(DP):: potbczl(-maxx:maxx,-maxy:maxy)
+REAL(DP):: potbczu(-maxx:maxx,-maxy:maxy)
 
-REAL :: fac
+REAL(DP):: fac
 INTEGER :: ix,iy,iz
 
 
 !-----------------------------------------------------------------------
 
 
-!     inhomogenous equation with b.c. zero
+!     inhomogeneous equation with b.c. zero
 
 
 CALL  d3sinfinverse(rhoin, pot, zero)
@@ -90,7 +90,7 @@ CALL boundc(rhoin,deltax,deltay,deltaz,  &
 
 
 
-!     add homogenous solution from all six boundaries of te cube
+!     add homogeneous solution from all six boundaries of the cube
 
 
 CALL homog_sol(pot,deltax,deltay,deltaz,  &
@@ -119,29 +119,29 @@ SUBROUTINE homog_sol(pot,deltax,deltay,deltaz,  &
 
 !USE params
 
-!     Compute homogneous solution for given potentials
+!     Compute homogeneous solution for given potentials
 !     'potbcxl',...,'potbczu' at the six boundary planes of the cube.
-!     Inhomogenous solution is entered on 'pot',
-!     homogenous solution is added, and result is returned on 'pot'.
+!     Inhomogeneous solution is entered on 'pot',
+!     homogeneous solution is added, and result is returned on 'pot'.
 !     The mesh spacing is entered through 'deltax,deltay,deltaz'
 !     and the mesh size is prescribed in 'all.inc'.
 
-!     Note: This code is optimized for readibility not yet for speed.
+!     Note: This code is optimized for readability not yet for speed.
 
 
 !INCLUDE 'work3D.inc'
 
 
-REAL, INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(IN)                         :: deltax
-REAL, INTENT(IN)                         :: deltay
-REAL, INTENT(IN)                         :: deltaz
-REAL, INTENT(IN OUT)                     :: potbcxl(-maxy:maxy,-maxz:maxz)
-REAL, INTENT(IN OUT)                     :: potbcxu(-maxy:maxy,-maxz:maxz)
-REAL, INTENT(IN OUT)                     :: potbcyl(-maxx:maxx,-maxz:maxz)
-REAL, INTENT(IN OUT)                     :: potbcyu(-maxx:maxx,-maxz:maxz)
-REAL, INTENT(IN OUT)                     :: potbczl(-maxx:maxx,-maxy:maxy)
-REAL, INTENT(IN OUT)                     :: potbczu(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: deltax
+REAL(DP), INTENT(IN)                         :: deltay
+REAL(DP), INTENT(IN)                         :: deltaz
+REAL(DP), INTENT(IN OUT)                     :: potbcxl(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: potbcxu(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: potbcyl(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: potbcyu(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: potbczl(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(IN OUT)                     :: potbczu(-maxx:maxx,-maxy:maxy)
 
 
 
@@ -158,17 +158,17 @@ REAL, INTENT(IN OUT)                     :: potbczu(-maxx:maxx,-maxy:maxy)
 
 LOGICAL :: testpr
 INTEGER :: ix,iy,iz
-REAL :: fac,xl,xu,yl,yu,zl,zu
+REAL(DP):: fac,xl,xu,yl,yu,zl,zu
 
-REAL :: gammax(-maxy:maxy,-maxz:maxz)
-REAL :: sinhlx(-maxy:maxy,-maxz:maxz)
-REAL :: gammay(-maxx:maxx,-maxz:maxz)
-REAL :: sinhly(-maxx:maxx,-maxz:maxz)
-REAL :: gammaz(-maxx:maxx,-maxy:maxy)
-REAL :: sinhlz(-maxx:maxx,-maxy:maxy)
-REAL :: potbcx(-maxy:maxy,-maxz:maxz)
-REAL :: potbcy(-maxx:maxx,-maxz:maxz)
-REAL :: potbcz(-maxx:maxx,-maxy:maxy)
+REAL(DP):: gammax(-maxy:maxy,-maxz:maxz)
+REAL(DP):: sinhlx(-maxy:maxy,-maxz:maxz)
+REAL(DP):: gammay(-maxx:maxx,-maxz:maxz)
+REAL(DP):: sinhly(-maxx:maxx,-maxz:maxz)
+REAL(DP):: gammaz(-maxx:maxx,-maxy:maxy)
+REAL(DP):: sinhlz(-maxx:maxx,-maxy:maxy)
+REAL(DP):: potbcx(-maxy:maxy,-maxz:maxz)
+REAL(DP):: potbcy(-maxx:maxx,-maxz:maxz)
+REAL(DP):: potbcz(-maxx:maxx,-maxy:maxy)
 
 DATA testpr/.false./
 
@@ -341,24 +341,24 @@ SUBROUTINE boundc(rhoin,deltax,deltay,deltaz,  &
 !     Additionally, an initial guess for the potential is
 !     computed and returned on 'potini'.
 
-!     Note: This code is optimized for readibility not yet for speed.
+!     Note: This code is optimized for readability not yet for speed.
 
 
 !INCLUDE 'work3D.inc'
 
 
 
-REAL, INTENT(IN)                         :: rhoin(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(IN)                         :: deltax
-REAL, INTENT(IN)                         :: deltay
-REAL, INTENT(IN)                         :: deltaz
-REAL, INTENT(OUT)                        :: potbcxl(-maxy:maxy,-maxz:maxz)
-REAL, INTENT(OUT)                        :: potbcxu(-maxy:maxy,-maxz:maxz)
-REAL, INTENT(OUT)                        :: potbcyl(-maxx:maxx,-maxz:maxz)
-REAL, INTENT(OUT)                        :: potbcyu(-maxx:maxx,-maxz:maxz)
-REAL, INTENT(OUT)                        :: potbczl(-maxx:maxx,-maxy:maxy)
-REAL, INTENT(OUT)                        :: potbczu(-maxx:maxx,-maxy:maxy)
-REAL, INTENT(OUT)                        :: potini(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: rhoin(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: deltax
+REAL(DP), INTENT(IN)                         :: deltay
+REAL(DP), INTENT(IN)                         :: deltaz
+REAL(DP), INTENT(OUT)                        :: potbcxl(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(OUT)                        :: potbcxu(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(OUT)                        :: potbcyl(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(OUT)                        :: potbcyu(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(OUT)                        :: potbczl(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(OUT)                        :: potbczu(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(OUT)                        :: potini(-maxx:maxx,-maxy:maxy,-
 INTEGER, INTENT(IN)                      :: ifinit
 
 
@@ -377,29 +377,29 @@ INTEGER, INTENT(IN)                      :: ifinit
 
 
 LOGICAL :: testpr
-REAL :: mulm00,mulm10,mulm11r,mulm11i, mulm20,mulm21r,mulm21i,mulm22r,mulm22i
+REAL(DP):: mulm00,mulm10,mulm11r,mulm11i, mulm20,mulm21r,mulm21i,mulm22r,mulm22i
 
 INTEGER :: ix,iy,iz
-REAL :: fac,x,y,z,x2,y2,z2,dr2,r,r2
-REAL :: y00,y10,y11r,y11i,y20,y21r,y21i,y22r,y22i
+REAL(DP):: fac,x,y,z,x2,y2,z2,dr2,r,r2
+REAL(DP):: y00,y10,y11r,y11i,y20,y21r,y21i,y22r,y22i
 
 
 !     damping radius for initialization
 
 
-REAL, PARAMETER :: rms2ini=2.0D0
+REAL(DP), PARAMETER :: rms2ini=2.0D0
 
 
 
 !     forefactors of the spherical harmonics
 
 
-REAL, PARAMETER :: pfy00 = 0.282094791
-REAL, PARAMETER :: pfy10 = 0.488602511
-REAL, PARAMETER :: pfy11 = 0.488602511
-REAL, PARAMETER :: pfy20 = 0.315391565
-REAL, PARAMETER :: pfy21 = 1.092548431
-REAL, PARAMETER :: pfy22 = 0.546274215
+REAL(DP), PARAMETER :: pfy00 = 0.282094791
+REAL(DP), PARAMETER :: pfy10 = 0.488602511
+REAL(DP), PARAMETER :: pfy11 = 0.488602511
+REAL(DP), PARAMETER :: pfy20 = 0.315391565
+REAL(DP), PARAMETER :: pfy21 = 1.092548431
+REAL(DP), PARAMETER :: pfy22 = 0.546274215
 
 
 DATA testpr/.false./
@@ -592,12 +592,12 @@ SUBROUTINE d3sinfinit (deltax,deltay,deltaz)
 
 !     Initialization of Sine FFT in 3D.
 !     'deltax', 'deltay', and 'deltaz' are spatial mesh sizes.
-!     Actual grid sizes are givn in 'param3D.inc'.
+!     Actual grid sizes are given in 'param3D.inc'.
 !     Resulting work spaces and deduced parameters are returned
 !     via 'work3D.inc'.
 
 !     the storage of the kinetic energy in x-, y-, and z
-!     is shifted to a negative left bound. This is to accomodate
+!     is shifted to a negative left bound. This is to accommodate
 !     to loop parameters in an actual all.
 !     Note that p-space counts from 1,...,ndimx
 !     while x-space was from -maxmx,...,+maxmx
@@ -605,9 +605,9 @@ SUBROUTINE d3sinfinit (deltax,deltay,deltaz)
 
 
 
-REAL, INTENT(IN OUT)                     :: deltax
-REAL, INTENT(IN OUT)                     :: deltay
-REAL, INTENT(IN OUT)                     :: deltaz
+REAL(DP), INTENT(IN OUT)                     :: deltax
+REAL(DP), INTENT(IN OUT)                     :: deltay
+REAL(DP), INTENT(IN OUT)                     :: deltaz
 
 
 !INCLUDE 'work3D.inc'
@@ -699,7 +699,7 @@ DO iz=-maxmz,maxmz
     DO ix=-maxmx,maxmx
       n = 1 + n
       workx (n)  = REAL(fieldin(ix,iy,iz))
-      workxi (n) = imag(fieldin(ix,iy,iz))
+      workxi (n) = AIMAG(fieldin(ix,iy,iz))
     END DO
     
 !       do klt=1,ndimx
@@ -728,7 +728,7 @@ DO iz=-maxmz,maxmz
     DO iy=-maxmy,maxmy
       n = 1 + n
       worky (n)  = REAL(fieldout(ix,iy,iz))
-      workyi (n) = imag(fieldout(ix,iy,iz))
+      workyi (n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '2 ON'
     
@@ -758,7 +758,7 @@ DO iy=-maxmy,maxmy
     DO iz=-maxmz,maxmz
       n = 1 + n
       workz (n) = REAL(fieldout(ix,iy,iz))
-      workzi(n) = imag(fieldout(ix,iy,iz))
+      workzi(n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '3 ON'
     CALL sint(ndimz,workz(1),wsavez)
@@ -806,8 +806,8 @@ COMPLEX(DP), INTENT(OUT)                     :: kin_field(-maxx:maxx,-maxy:maxy,
 !INCLUDE 'work3D.inc'
 
 INTEGER :: ix,iy,iz
-REAL :: laplz,laplzy
-REAL :: totalnorm
+REAL(DP):: laplz,laplzy
+REAL(DP):: totalnorm
 
 !-----------------------------------------------------------------------
 
@@ -867,7 +867,7 @@ SUBROUTINE d3sinfpropag(field, prop_field, del_time)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: field(-maxx:maxx,-maxy:maxy,-
 COMPLEX(DP), INTENT(OUT)                     :: prop_field(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(IN OUT)                     :: del_time
+REAL(DP), INTENT(IN OUT)                     :: del_time
 
 
 
@@ -875,8 +875,8 @@ REAL, INTENT(IN OUT)                     :: del_time
 !INCLUDE 'work3D.inc'
 
 INTEGER :: ix,iy,iz
-REAL :: kinactz,kinactzy
-REAL :: totalnorm
+REAL(DP):: kinactz,kinactzy
+REAL(DP):: totalnorm
 
 !-----------------------------------------------------------------------
 
@@ -936,8 +936,8 @@ SUBROUTINE d3sinftreal (fieldin, fieldout)
 
 
 
-REAL, INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy,-
 
 
 
@@ -1037,16 +1037,16 @@ SUBROUTINE d3sinflaplace(field, lapl_field)
 
 
 
-REAL, INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: lapl_field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: lapl_field(-maxx:maxx,-maxy:maxy,-
 
 
 
 !INCLUDE 'work3D.inc'
 
 INTEGER :: ix,iy,iz
-REAL :: laplz,laplzy
-REAL :: totalnorm
+REAL(DP):: laplz,laplzy
+REAL(DP):: totalnorm
 
 !-----------------------------------------------------------------------
 
@@ -1092,7 +1092,7 @@ SUBROUTINE d3sinfinverse(field, inv_field, e0inv)
 !USE params
 !      include 'param3D.inc'
 
-!     Action of inverse Lapace operator by sine FFT:
+!     Action of inverse Laplace operator by sine FFT:
 
 !      inv_field  =  ( -Laplace + e0inv ) * field
 
@@ -1109,9 +1109,9 @@ SUBROUTINE d3sinfinverse(field, inv_field, e0inv)
 
 
 
-REAL, INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(OUT)                        :: inv_field(-maxx:maxx,-maxy:maxy,-
-REAL, INTENT(IN)                         :: e0inv
+REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: inv_field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: e0inv
 
 
 
@@ -1119,8 +1119,8 @@ REAL, INTENT(IN)                         :: e0inv
 !INCLUDE 'work3D.inc'
 
 INTEGER :: ix,iy,iz
-REAL :: kinactz,kinactzy
-REAL :: totalnorm
+REAL(DP):: kinactz,kinactzy
+REAL(DP):: totalnorm
 
 !-----------------------------------------------------------------------
 
@@ -1177,8 +1177,8 @@ SUBROUTINE d2xysinft (fieldin, fieldout)
 
 
 
-REAL, INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy)
-REAL, INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy)
+REAL(DP), INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy)
 
 
 
@@ -1253,8 +1253,8 @@ SUBROUTINE d2xzsinft (fieldin, fieldout)
 
 
 
-REAL, INTENT(IN)                         :: fieldin(-maxx:maxx,-maxz:maxz)
-REAL, INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(IN)                         :: fieldin(-maxx:maxx,-maxz:maxz)
+REAL(DP), INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxz:maxz)
 
 
 
@@ -1329,8 +1329,8 @@ SUBROUTINE d2yzsinft (fieldin, fieldout)
 
 
 
-REAL, INTENT(IN OUT)                     :: fieldin(-maxy:maxy,-maxz:maxz)
-REAL, INTENT(IN OUT)                     :: fieldout(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: fieldin(-maxy:maxy,-maxz:maxz)
+REAL(DP), INTENT(IN OUT)                     :: fieldout(-maxy:maxy,-maxz:maxz)
 
 
 
@@ -1391,8 +1391,8 @@ END SUBROUTINE d2yzsinft
 SUBROUTINE sinti (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wsave(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(OUT)                        :: wsave(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA pi /3.14159265358979E0/
 
@@ -1410,8 +1410,8 @@ END SUBROUTINE sinti
 SUBROUTINE rffti (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: wsave(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 
 IF (n == 1) RETURN
@@ -1422,9 +1422,9 @@ END SUBROUTINE rffti
 SUBROUTINE rffti1 (n,wa,ifac)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: wa(*)
+REAL(DP), INTENT(OUT)                        :: wa(*)
 INTEGER, INTENT(OUT)                     :: ifac(3)
-IMPLICIT REAL (a-h,o-z)
+IMPLICIT REAL(DP)(a-h,o-z)
 INTEGER :: ntryh(4)
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/
 
@@ -1492,9 +1492,9 @@ END SUBROUTINE rffti1
 SUBROUTINE sint (n,x,wsave)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: x(1)
-REAL, INTENT(IN OUT)                     :: wsave(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 
 np1 = n+1
@@ -1509,10 +1509,10 @@ SUBROUTINE radf2 (ido,l1,cc,ch,wa1)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,2)
-REAL, INTENT(OUT)                        :: ch(ido,2,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
+REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 
 DO  k=1,l1
@@ -1548,11 +1548,11 @@ SUBROUTINE radf3 (ido,l1,cc,ch,wa1,wa2)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,3)
-REAL, INTENT(OUT)                        :: ch(ido,3,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,3)
+REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA taur,taui /-.5E0,.866025403784439E0/
 
@@ -1592,12 +1592,12 @@ SUBROUTINE radf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,4)
-REAL, INTENT(OUT)                        :: ch(ido,4,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,4)
+REAL(DP), INTENT(OUT)                        :: ch(ido,4,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA hsqt2 /.7071067811865475E0/
 
@@ -1659,13 +1659,13 @@ SUBROUTINE radf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL, INTENT(IN)                         :: cc(ido,l1,5)
-REAL, INTENT(OUT)                        :: ch(ido,5,l1)
-REAL, INTENT(IN)                         :: wa1(1)
-REAL, INTENT(IN)                         :: wa2(1)
-REAL, INTENT(IN)                         :: wa3(1)
-REAL, INTENT(IN)                         :: wa4(1)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,5)
+REAL(DP), INTENT(OUT)                        :: ch(ido,5,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: wa4(1)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947E0,.951056516295154E0,  &
     -.809016994374947E0,.587785252292473E0/
@@ -1731,13 +1731,13 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL, INTENT(OUT)                        :: cc(ido,ip,l1)
-REAL, INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL, INTENT(IN OUT)                     :: c2(idl1,ip)
-REAL, INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL, INTENT(OUT)                        :: ch2(idl1,ip)
-REAL, INTENT(IN)                         :: wa(*)
-IMPLICIT REAL (a-h,o-z)
+REAL(DP), INTENT(OUT)                        :: cc(ido,ip,l1)
+REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(DP), INTENT(IN OUT)                     :: c2(idl1,ip)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
+REAL(DP), INTENT(IN)                         :: wa(*)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA tpi/6.28318530717959E0/
 
@@ -1906,11 +1906,11 @@ END SUBROUTINE radfg
 SUBROUTINE rfftf1 (n,c,ch,wa,ifac)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(OUT)                        :: c(1)
-REAL, INTENT(IN)                         :: ch(1)
-REAL, INTENT(IN OUT)                     :: wa(*)
+REAL(DP), INTENT(OUT)                        :: c(1)
+REAL(DP), INTENT(IN)                         :: ch(1)
+REAL(DP), INTENT(IN OUT)                     :: wa(*)
 INTEGER, INTENT(IN)                      :: ifac(2)
-IMPLICIT REAL (a-h,o-z)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 
 nf = ifac(2)
@@ -1974,12 +1974,12 @@ END SUBROUTINE rfftf1
 SUBROUTINE sint1(n,war,was,xh,x,ifac)
 
 INTEGER, INTENT(IN)                      :: n
-REAL, INTENT(IN OUT)                     :: war(1)
-REAL, INTENT(IN)                         :: was(1)
-REAL, INTENT(OUT)                        :: xh(2)
-REAL, INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: war(1)
+REAL(DP), INTENT(IN)                         :: was(1)
+REAL(DP), INTENT(OUT)                        :: xh(2)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
-IMPLICIT REAL (a-h,o-z)
+IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA sqrt3 /1.73205080756888E0/
 

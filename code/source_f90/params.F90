@@ -9,7 +9,7 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 !
 
 ! number of nodes (=1 for serial version)
-INTEGER :: knode=1
+INTEGER :: knode=10
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
 INTEGER :: kstate=0
@@ -17,6 +17,16 @@ INTEGER :: kstate=0
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
 
+!  settings ad definitions for openmp parallel computing
+#if(paropenmp)
+INTEGER,PARAMETER :: numthr = 4  ! actual number of threads in openmp
+INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
+INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+EXTERNAL :: OMP_SET_NUM_THREADS
+#else
+INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
+#endif
+INTEGER :: nthr=numthr-1                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8
@@ -24,7 +34,7 @@ INTEGER :: ng
 
 
 INTEGER,PARAMETER :: maxnang=100    ! max. angular bins for PAD
-INTEGER,PARAMETER :: maxmps=100    ! max. nr. analyzing points fpr PES
+INTEGER,PARAMETER :: maxmps=100    ! max. nr. analyzing points for PES
 ! parameter(drtab=1e-4)
 
 
@@ -41,14 +51,14 @@ REAL(DP),PARAMETER :: one=1.0D0
 REAL(DP),PARAMETER :: PI=3.141592653589793D0
 REAL(DP),PARAMETER :: fourpi=4.0D0*PI
 REAL(DP),PARAMETER :: small=1.0D-20
-REAL(DP),PARAMETER :: sq2=1.414213562D0
+REAL(DP),PARAMETER :: sq2=1.4142135623730950D0
 REAL(DP),PARAMETER :: sqrtpi=1.772453850905516D0
 COMPLEX(DP),PARAMETER :: eye=(0D0,1D0)
 
 
 !     maximum sizes of the box in x,y, and z
 INTEGER :: kxbox=0,kybox=0,kzbox=0
-! deduced grid paramaters
+! deduced grid parameters
 INTEGER :: kxmax,kymax,kzmax
 INTEGER :: nx2,ny2,nz2
 !INTEGER,PARAMETER :: nxyzf=nx2*ny2*nz2                 !?
@@ -123,7 +133,7 @@ INTEGER :: numspin=2                       ! number of spin components
 REAL(DP) :: omeg,eferm                     !  initial Gaussians
 REAL(DP) :: dInMargin=6D0
 INTEGER :: iforce=0
-INTEGER :: ipseudo=1          ! swich on/off subgrids and pseudo-densities
+INTEGER :: ipseudo=1          ! switch on/off subgrids and pseudo-densities
 REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
 REAL(DP) :: b2occ=0.4,gamocc=10.0,deocc=0D0,osfac=1D0 !  h.o.initalization
@@ -134,7 +144,7 @@ INTEGER :: itback=200                            !  jellium params
 REAL(DP) :: betatj,gammtj,bet4tj                 !      "      "
 REAL(DP) :: bbeta=0D0,gamma=0D0,beta4=0D0        !      "      "
 REAL(DP) :: falph,fbeta,fhexe                    !  jellium auxiliary
-REAL(DP) :: dpolx=0D0,dpoly=0D0,dpolz=0D0       !  static dipol potential
+REAL(DP) :: dpolx=0D0,dpoly=0D0,dpolz=0D0       !  static dipole potential
 LOGICAL :: tdipolxyz                     ! switch to dipole fields
 INTEGER :: iexcit=0,irotat=0,ispidi=0          !  dynam. initialisation
 REAL(DP) :: phirot=0D0
@@ -163,7 +173,7 @@ INTEGER :: ishutdown=0
 INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
 INTEGER :: jovlp=100000000,jnorms=0
-INTEGER :: iscatterelectron=0,jcharges=0
+INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
@@ -175,7 +185,8 @@ REAL(DP) :: ehom0=0D0,ehomx=0D0,ehomy=0D0,ehomz=1D0
 INTEGER :: ihome=0
 REAL(DP) :: scatterelectronenergy=0D0,scatterelectronw=1D0
 REAL(DP) :: scatterelectronvxn=0D0,scatterelectronvyn=0D0,scatterelectronvzn=1D0
-REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz
+REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz=0D0
+REAL(DP) :: reference_energy=0D0
 REAL(DP) :: drcharges=5D0
 
 
@@ -184,11 +195,11 @@ INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=0,ifexpevol=0
+INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
-INTEGER :: jinfo=10,jdip=10,jquad=0,jang=0,jspdp=0,jenergy=10
+INTEGER :: jinfo=10,jdip=10,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
@@ -228,7 +239,7 @@ REAL(DP),ALLOCATABLE :: rhoabso(:)           !  storage for absorbed density
 REAL(DP),ALLOCATABLE :: spherMask(:)         !  mask for spherical absorbing bounds
 REAL(DP),ALLOCATABLE :: spherloss(:)         !  loss factor for spher. abs. bounds
 REAL(DP) :: bcrad,powabso=0.125D0           ! width & power of abs. bounds
-INTEGER :: ispherAbso=1               !  swicth to spherical abs. bounds
+INTEGER :: ispherAbso=1               !  switch to spherical abs. bounds
 INTEGER :: iangabso=0,nangtheta=1,nangphi=1
 INTEGER :: ipes=0, indicesmp(maxnang*maxnang)
 REAL(DP) :: angthetah=PI,angthetal=0D0
@@ -245,6 +256,7 @@ REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 INTEGER,PARAMETER :: kmom=35
 INTEGER :: nrmom
 REAL(DP) :: qe(kmom),se(5),ajx,ajy,ajz
+REAL(DP),ALLOCATABLE :: qeorb_all(:,:)
 !COMMON /moment/ qe,se,ajx,ajy,ajz,nrmom
 
 ! storage for the case of 1ph rotation (see 'phangle')
@@ -262,9 +274,11 @@ REAL(DP) :: etot,ekionold,qold2,qold3,qold4
 REAL(DP) :: ekmat=0D0,engg,enii,enig,ecrhoimage
 REAL(DP),ALLOCATABLE :: ekinsp(:),evarsp(:),evarsp2(:),epotsp(:)
 INTEGER :: jekion,iquery4
-#if(fullsic||twostsic)  
+#if(twostsic)  
 REAL(DP),ALLOCATABLE :: hmatrix(:,:)
+COMPLEX(DP),ALLOCATABLE :: expmatrix(:,:)
 REAL(DP) :: symcon
+INTEGER :: ndims(2)
 #endif
 
 
@@ -289,12 +303,14 @@ INTEGER,ALLOCATABLE :: nmaxst(:)
 
 
 
-!     parameters for simulated annealinig
+!     parameters for simulated annealing
 REAL(DP),ALLOCATABLE :: eloc(:),enoloc(:),eion(:,:),eiinew(:)
 REAL(DP) :: cptemp,delpos,ERR,binerg, errtot,erfac1,trfac1,prfac1
 REAL(DP) :: trfac2,prfac2,errsim,eiontot,enoloctot,facann
 REAL(DP) :: eloctot,errks0,errks,sumvar,sumvar2
-INTEGER :: ionsin,nrun,nloop1,nloop2,loop1,ifall,nyes,ncon, ncsim,iknow
+INTEGER :: ionsin,nrun,nloop1,nloop2,loop1,nyes,ncon, ncsim,iknow
+INTEGER :: isize_seed
+INTEGER,ALLOCATABLE :: rand_seed(:)
 
 
 
@@ -314,19 +330,19 @@ REAL(DP) :: projvelx=0D0,projvely=0D0,projvelz=0D0   ! projectile velocity
 REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile position
                    ! impact parameter = min(projinix,projiniy,projiniz)
 
+
+
 ! workspace for communication
 REAL(DP) :: rvectmp2(3),rvectmp(3)
 INTEGER :: iindtmp(3)
+
+! pointer for energy-density functional
+PROCEDURE(),POINTER :: calc_lda
 
 #if(fftw_gpu)
 INTEGER :: num_gpus !total number of gpus on the node
 INTEGER :: mygpu !number of the actual gpu used by the node
 #endif
-
-! pointer for energy-density functional
-PROCEDURE(),POINTER :: calc_lda
-
-
 
 !                          these includes should be shifted to own modules
 #if(raregas)
@@ -340,7 +356,7 @@ CONTAINS
 SUBROUTINE init_baseparams()
 
 
-! deduced grid paramaters
+! deduced grid parameters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
  nx2=kxbox;ny2=kybox;nz2=kzbox
  nxyz=nx2*ny2*nz2;nyf=nx2;nxyf=nx2*ny2
@@ -410,6 +426,7 @@ enonlo=0D0
 ALLOCATE(spvariance(kstate))                  !  s.p. energy variances
 ALLOCATE(spvariancep(kstate))                 !  s.p. energy variances
 ALLOCATE(spvariancebi(kstate))                !  s.p. energy variances
+ALLOCATE(qeorb_all(ksttot,11))                !  s.p. dipole moments
 ALLOCATE(spenergybi(kstate))
 ALLOCATE(spnorm(kstate))                      !  norm of s.p. wf
 ALLOCATE(occup(kstate))                       !  occupation weight
@@ -432,7 +449,7 @@ evarsp=0D0
 evarsp2=0D0
 epotsp=0D0
 
-#if(fullsic||twostsic)  
+#if(twostsic)  
 ALLOCATE(hmatrix(kstate,kstate))
 #endif
 
@@ -498,7 +515,7 @@ nunflayk=20
 runfrowc=20D0
 runfrowe=20D0
 runfrowk=20D0
-fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitely
+fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitly
 fermib=1D0
 fermic=1D0
 fermiac=0D0

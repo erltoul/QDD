@@ -52,7 +52,6 @@ IF(myn == 0)THEN
   READ(120,*)            ! comment line
   
   
- ! iusecell=1
   
   IF (iusecell == 0) THEN
     
@@ -102,7 +101,7 @@ IF(myn == 0)THEN
             rvectmp(2) = xatom(i,2)+rlattvec(2)*jy+shifty
             rvectmp(3) = xatom(i,3)-rlattvec(3)*(jz-1)+shiftz
             
-            write(6,*) rVecTmp(1), rVecTmp(2), rVecTmp(3)
+!            write(6,*) rVecTmp(1), rVecTmp(2), rVecTmp(3)
             
             
             IF (ipsort(i) == 1) THEN
@@ -157,7 +156,7 @@ IF(myn == 0)THEN
     END DO
     
 !$$$         do ilm=-2,2
-!$$$            cellMult(2,ilm) = cmplx(0D0,0D0)
+!$$$            cellMult(2,ilm) = CMPLX(0D0,0D0,DP)
 !$$$         enddo
     
     DO i=1,natoms
@@ -460,7 +459,7 @@ END IF
 
 
 
-!     set mixed gaussian widths:
+!     set mixed Gaussian widths:
 sigmacc = sigsig(sigmac,sigmac)
 sigmacv = sigsig(sigmac,sigmav)
 sigmack = sigsig(sigmac,sigmak)
@@ -743,7 +742,7 @@ END DO
 
 WRITE(6,'(i6,a,i6,a)') icfixed, ' of ' , nc , ' cores fixed.'
 WRITE(6,'(i6,a,i6,a)') iefixed, ' of ' , NE , ' shells fixed.'
-WRITE(6,'(i6,a,i6,a)') ikfixed, ' of ' , nk , ' kations fixed.'
+WRITE(6,'(i6,a,i6,a)') ikfixed, ' of ' , nk , ' cations fixed.'
 
 IF (ishiftcmtoorigin == 1) THEN
   
@@ -955,7 +954,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     the electrostatic properties for the GSM particles
-!     allow for different types of anions (and kations) at the same
+!     allow for different types of anions (and cations) at the same
 !     time, but so far it makes no sense, because in that case
 !     we would need more parameters for the short range interaction
 
@@ -992,7 +991,7 @@ DO ii=1,nk
     
     
   ELSE
-    STOP 'This kind of GSM kations is not yet implemented'
+    STOP 'This kind of GSM cations is not yet implemented'
   END IF
 END DO
 
@@ -1033,7 +1032,7 @@ IF (ii <= nc) THEN ! ii is core
   ELSE IF (jj <= nc+NE) THEN ! jj is v-cloud
     dis2 = (xc(ii)-xe(jj-nc))**2+ (yc(ii)-ye(jj-nc))**2  &
         +(zc(ii)-ze(jj-nc))**2
-  ELSE ! jj is kation
+  ELSE ! jj is cation
     dis2 = (xc(ii)-xk(jj-nc-NE))**2+ (yc(ii)-yk(jj-nc-NE))**2  &
         +(zc(ii)-zk(jj-nc-NE))**2
   END IF
@@ -1041,11 +1040,11 @@ ELSE IF (ii <= nc+NE) THEN ! ii is valence cloud
   IF (jj <= nc+NE) THEN ! jj is v-cloud
     dis2 = (xe(ii-nc)-xe(jj-nc))**2+ (ye(ii-nc)-ye(jj-nc))**2  &
         +(ze(ii-nc)-ze(jj-nc))**2
-  ELSE          ! jj is kation
+  ELSE          ! jj is cation
     dis2 = (xe(ii-nc)-xk(jj-nc-NE))**2 +(ye(ii-nc)-yk(jj-nc-NE))**2  &
         +(ze(ii-nc)-zk(jj-nc-NE))**2
   END IF
-ELSE ! ii and jj are kations
+ELSE ! ii and jj are cations
   dis2 = (xk(ii-nc-NE)-xk(jj-nc-NE))**2 +(yk(ii-nc-NE)-yk(jj-nc-NE))**2  &
       +(zk(ii-nc-NE)-zk(jj-nc-NE))**2
 END IF
@@ -1065,7 +1064,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     returns mixed gaussian widths between particles with indices ii and jj
+!     returns mixed Gaussian widths between particles with indices ii and jj
 !     where ii,jj are "long" indices from 1 to nc+ne+nk
 !          some of the sigsig functions can be replaced by simple
 !          multiplication with SQ2 !!!
@@ -1081,7 +1080,7 @@ IF (ii <= nc) THEN ! ii is core
     
     sss = sigsig(sigmac,sigmav)
     
-  ELSE ! jj is kation
+  ELSE ! jj is cation
     
     sss = sigsig(sigmac,sigmak)
     
@@ -1091,12 +1090,12 @@ ELSE IF (ii <= nc+NE) THEN ! ii is valence cloud
     
     sss = sigsig(sigmav,sigmav)
     
-  ELSE          ! jj is kation
+  ELSE          ! jj is cation
     
     sss = sigsig(sigmav,sigmak)
     
   END IF
-ELSE ! ii and jj are kations
+ELSE ! ii and jj are cations
   
   sss = sigsig(sigmak,sigmak)
   
@@ -1248,7 +1247,7 @@ END FUNCTION iconvshorttolong
 
 SUBROUTINE propagate(rho)
 ! ------------------------------------------------------------
-!  propagation using velocity verlet step
+!  propagation using velocity Verlet step
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -1641,7 +1640,7 @@ DO i=1,nc
   END DO
 END DO
 
-!     ion-kation
+!     ion-cation
 !   something's wrong here
 DO i=1,nc
   
@@ -1702,7 +1701,7 @@ DO i=1,NE
 !     e-e done
 END DO
 
-!     electron-kation
+!     electron-cation
 DO i=1,NE
   DO j=1,nk
     r = SQRT((xe(i)-xk(j))**2+(ye(i)-yk(j))**2+ (ze(i)-zk(j))**2)
@@ -1718,7 +1717,7 @@ DO i=1,NE
 !     e-k done
 END DO
 
-!     kation-kation
+!     cation-cation
 DO i=1,nk
   DO j=1,nk
     IF (i /= j) THEN
@@ -1985,7 +1984,7 @@ WRITE(6,*) '*************************************************'
 WRITE(6,*) '*'
 WRITE(6,*) '*'
 
-WRITE(6,*) 'Position of kations: '
+WRITE(6,*) 'Position of cations: '
 
 DO i=1,nk
   WRITE(6,'(1i6,3f15.4)') i,xk(i),yk(i),zk(i)
@@ -2386,7 +2385,7 @@ WRITE(iunit+5,'(a,e15.5,a,3f10.2)')  &
     getyval(indmin),getzval(indmin)
 
 
-WRITE(iunit+5,*) '# Histogramm: '
+WRITE(iunit+5,*) '# Histogram: '
 
 ! make histogram
 

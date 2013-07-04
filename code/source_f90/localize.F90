@@ -25,7 +25,9 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP) :: p(kdfull2)
 #endif
 COMPLEX(DP) :: q2(kdfull2)
-!REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
+#if(netlib_fft|fftw_cpu)
+REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
+#endif
 COMPLEX(DP) :: test
 REAL(DP) :: average_localization(2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajt
@@ -36,8 +38,9 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: tau
 LOGICAL,PARAMETER :: tupdate=.true.
 
 IF(.NOT.tupdate) STOP ' LOCALIZE not up to date '
-
-!ALLOCATE(akk(kdfull2))
+#if(netlib_fft|fftw_cpu)
+ALLOCATE(akk(kdfull2))
+#endif
 ALLOCATE(ajt(kdfull2))
 ALLOCATE(drho(kdfull2))
 ALLOCATE(arho(kdfull2))
@@ -52,7 +55,7 @@ dkz=pi/(dz*REAL(nz))
 
 
 !   scaling factor for Thomas-Fermi energy
-tf_fac = 0.6D0*(6.0D0*pi**2)**0.666666666667D0
+tf_fac = 0.6D0*(6.0D0*pi**2)**(2D0/3D0)
 
 !   compute the currents, gradient of density and kinetic density
 
@@ -67,53 +70,54 @@ DO is=2,1,-1
   DO idirection=1,3
 
 !         prepare momentum-space factor for actual direction
-!    IF(idirection.EQ.1) THEN
-!      ind=0
-!      DO i3=1,nz2
-!        DO i2=1,ny2
-!          DO i1=1,nx2
-!            IF(i1 >= (nx+1)) THEN
-!              zkx=(i1-nx2-1)*dkx
-!            ELSE
-!              zkx=(i1-1)*dkx
-!            END IF
-!            ind=ind+1
-!            akk(ind)=-zkx
-!          END DO
-!        END DO
-!      END DO
-!    ELSEIF(idirection.EQ.2) THEN
-!      ind=0
-!      DO i3=1,nz2
-!        DO i2=1,ny2
-!          IF(i2 >= (ny+1)) THEN
-!            zky=(i2-ny2-1)*dky
-!          ELSE
-!            zky=(i2-1)*dky
-!          END IF
-!          DO i1=1,nx2
-!            ind=ind+1
-!            akk(ind)=-zky
-!          END DO
-!        END DO
-!      END DO
-!    ELSEIF(idirection.EQ.3) THEN
-!      ind=0
-!      DO i3=1,nz2
-!        IF(i3 >= (nz+1)) THEN
-!          zkz=(i3-nz2-1)*dkz
-!        ELSE
-!          zkz=(i3-1)*dkz
-!        END IF
-!        DO i2=1,ny2
-!          DO i1=1,nx2
-!            ind=ind+1
-!            akk(ind)=-zkz
-!          END DO
-!        END DO
-!      END DO
-!    END IF
-  
+#if(netlib_fft|fftw_cpu)
+    IF(idirection.EQ.1) THEN
+      ind=0
+      DO i3=1,nz2
+        DO i2=1,ny2
+          DO i1=1,nx2
+            IF(i1 >= (nx+1)) THEN
+              zkx=(i1-nx2-1)*dkx
+            ELSE
+              zkx=(i1-1)*dkx
+            END IF
+            ind=ind+1
+            akk(ind)=-zkx
+          END DO
+        END DO
+      END DO
+    ELSEIF(idirection.EQ.2) THEN
+      ind=0
+      DO i3=1,nz2
+        DO i2=1,ny2
+          IF(i2 >= (ny+1)) THEN
+            zky=(i2-ny2-1)*dky
+          ELSE
+            zky=(i2-1)*dky
+          END IF
+          DO i1=1,nx2
+            ind=ind+1
+            akk(ind)=-zky
+          END DO
+        END DO
+      END DO
+    ELSEIF(idirection.EQ.3) THEN
+      ind=0
+      DO i3=1,nz2
+        IF(i3 >= (nz+1)) THEN
+          zkz=(i3-nz2-1)*dkz
+        ELSE
+          zkz=(i3-1)*dkz
+        END IF
+        DO i2=1,ny2
+          DO i1=1,nx2
+            ind=ind+1
+            akk(ind)=-zkz
+          END DO
+        END DO
+      END DO
+    END IF
+#endif
     DO i=1,kdfull2
       ajt(i)=0D0
       drho(i)=0D0
@@ -137,38 +141,22 @@ DO is=2,1,-1
 #if(netlib_fft|fftw_cpu)
       CALL fftf(psi(1,nb),q2)
 #endif
+#endif
+
+#if(netlib_fft|fftw_cpu)
+      DO ind=1,kdfull2
+        q2(ind)=q2(ind)*akk(ind)*eye
+      END DO
+#endif
 #if(fftw_gpu)
-      CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-#endif
-#endif
       IF(idirection.EQ.1) THEN
-        DO ind=1,kdfull2
-#if(netlib_fft|fftw_cpu)
-          q2(ind)=q2(ind)*akx(ind)
-#endif
-#if(fftw_gpu)
           CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-#endif
-        END DO
       ELSEIF(idirection.EQ.2) THEN
-        DO ind=1,kdfull2
-#if(netlib_fft|fftw_cpu)
-          q2(ind)=q2(ind)*aky(ind)
-#endif
-#if(fftw_gpu)
           CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-#endif
-        END DO
       ELSEIF(idirection.EQ.3) THEN
-        DO ind=1,kdfull2
-#if(netlib_fft|fftw_cpu)
-          q2(ind)=q2(ind)*akz(ind)
-#endif
-#if(fftw_gpu)
           CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-#endif
-        END DO
       ENDIF
+#endif
 #ifdef REALSWITCH
 #if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,p)
@@ -184,7 +172,6 @@ DO is=2,1,-1
 #if(fftw_gpu)
       CALL fftback(q2,p,ffta,gpu_ffta)
 #endif
-
 #endif
       DO ind=1,kdfull2
 #ifdef REALSWITCH
@@ -229,7 +216,7 @@ DO is=2,1,-1
   DO ind=1,kdfull2
 !    rp = max(rho(ind)*(0.5D0+sign*rho(ind+kdfull2)),1D-30)
     rp =MAX(arho(ind),1D-30)
-    tau(ind) = 1D0/(1D0+(tau(ind)/(tf_fac*rp**1.666666666667D0))**2)
+    tau(ind) = 1D0/(1D0+(tau(ind)/(tf_fac*rp**(5D0/3D0)))**2)
     IF(tau(ind).LT.1D-99) tau(ind)=0D0
     average_localization(is) = average_localization(is) + tau(ind)*rp
     sumpart = sumpart + rp
@@ -245,7 +232,9 @@ DO is=2,1,-1
 
 END DO  ! loop over spins
 
-!DEALLOCATE(akk)
+#if(netlib_fft|fftw_cpu)
+DEALLOCATE(akk)
+#endif
 DEALLOCATE(ajt)
 DEALLOCATE(drho)
 DEALLOCATE(arho)
@@ -393,10 +382,10 @@ WRITE(33,'(/a)')  '# localization after static iteration'
 !#else
 !WRITE(33,'(/a,1f13.5)')  '# localization at time=',tfs
 #endif
-DO ix=minx,maxx
+DO iz=minz,maxz
   DO iy=minz,maxz
-    DO iz=minz,maxz
-      indadd  = (iy-1)*nyf+ix+(iz-1)*nxyf
+    DO ix=minx,maxx
+     indadd  = (iy-1)*nyf+ix+(iz-1)*nxyf
       WRITE(33,'(1x,3f10.2,3g13.5)')  &
           (ix-nxsh)*dx,(iy-nysh)*dy,(iz-nzsh)*dz, &
           tau(indadd), tau(indadd+kdfull2), rho(indadd)

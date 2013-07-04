@@ -7,12 +7,17 @@ Compile with netlib fftpack, sequential. The executable is called tdks_v000000_M
 Compile with netlib fftpack, parallel with np proc 
 
 ./make.sh 1 fftw
-Compile with FFTW functions (need FFTW 3.3.2), sequential (parallel has not been test) The executable is called tdks_v000000_Mono_FFTW.bin
+Compile with FFTW functions (need FFTW 3.3.2), sequential. The executable is called tdks_v000000_Mono_FFTW.bin
+
+./make.sh np fftw
+Compile with FFTW functions (need FFTW 3.3.2), parallel with np proc. The executable is called tdks_v000000_Mpi_FFTW.bin
 
 ./make.sh 1 gpu
-Compile with cuFFT function (FFT on GPU) and calc_ldu function ported on GPU, single processor (use parallel version at your own risks...)
-The executable is called tdks_v000000_Mono_cuFFT.bin
-nvcc compiler is required as wall as a 1.3 compute capability GPU (A small program to obtain info from your GPU is include in get_GPU_info)
+Compile with cuda functions, sequential. The executable is called tdks_v000000_Mono_FFTW.bin
+
+./make.sh np gpu
+Compile with cuda functions, parallel with np proc. The number of GPUs is dependant on the number of GPUs in the computation node. 
+The best configuration is one MPI process for 1 GPU. The executable is called tdks_v000000_Mpi_cuFFT.bin
 
 Some word on wisdom (from the FFTW manual):
 
@@ -34,7 +39,7 @@ sufficient to reconstruct the plan. After planning, you can save this informatio
 The next time you run the program, you can restore the wisdom and then recreate the plan using
 the same flags as before.
 Wisdom is automatically used for any size to which it is applicable, as long as the planner
-flags are not more “patient” than those with which the wisdom was created. For example,
+flags are not more "patient" than those with which the wisdom was created. For example,
 wisdom created with FFTW_MEASURE can be used if you later plan with FFTW_ESTIMATE or
 FFTW_MEASURE, but not with FFTW_PATIENT."
 

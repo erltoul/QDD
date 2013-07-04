@@ -5,15 +5,26 @@
 SUBROUTINE init_dynwf(psi)
 !------------------------------------------------------------
 USE params
+#if(twostsic)
+USE twost
+#endif
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     initializes dynamical wavefunctions from static solution
 
-
-
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+
+!----------------------------------------------------
+
+  itgradstep=0      !MV to have a number of iterarions in utgradstepc             
+#if(twostsic)
+  do is=1,2         !MV initialise ExpDabOld                                  
+     call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
+     call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
+  enddo
+#endif
 
 
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
@@ -66,7 +77,7 @@ rvectmp(1)=1D0             ! ??? what for ?
 
 !JM
 #if(twostsic)
-CALL init_vecs(vecs)
+IF(ifsicp>=7) CALL init_vecs()
 #endif
 !JM
 
@@ -229,7 +240,7 @@ SUBROUTINE init_scattel(psi)
 
 !     Adds one electron in scattering state as Gaussian wavepacket
 !     with a certain velocity.
-!     The bookkeeping fiedls are extended accoprdingly.
+!     The bookkeeping fields are extended accordingly.
 
 
 USE params
@@ -306,13 +317,16 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 !     For pure electronic propagation one has the option to
 !     reduce the number of local unitary steps. The last half-step
-!     is omitted (exept in case of the last call 'itsub=ipasinf')
+!     is omitted (except in case of the last call 'itsub=ipasinf')
 !     and the first local step is doubled instead (except for the
 !     first call 'itsub=1'). This option is switched on by the
 !     run time switch 'iffastpropag'.
 
 USE params
 USE kinetic
+#if(twostsic)
+USE twost, ONLY:tnearest
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
@@ -320,8 +334,11 @@ REAL(DP), INTENT(IN)                         :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2,qwork
 COMPLEX(DP) :: rii,cfac
+!INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
+
+
 ! CHARACTER (LEN=1) :: inttostring1
 ! CHARACTER (LEN=2) :: inttostring2
 ! 
@@ -346,9 +363,9 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 myn = 0
 #endif
 
-
-ALLOCATE(q1(2*kdfull2))
-ALLOCATE(q2(kdfull2))
+!WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
+ALLOCATE(q1(2*kdfull2,0:nthr))
+ALLOCATE(q2(kdfull2,0:nthr))
 
 CALL cpu_time(time_init)
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
@@ -358,23 +375,20 @@ itsub = MOD(it,ipasinf) + 1
 
 ri = -dt1*0.5D0
 dt = dt1*0.5D0
-
-
-
+nlocact = numspin*nxyz
 
 
 !     half time step in coordinate space
 !     local phase field on workspace 'q1'
 
-nlocact = numspin*nxyz
 DO ind=1,nlocact
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
 !  CALL cmult3d(q0(1,nb),q1(1+ishift))
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 
@@ -382,50 +396,91 @@ END DO
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
+#if(paropenmp && dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg) SCHEDULE(STATIC)
+  DO nb=1,nstate
+    ithr = OMP_GET_THREAD_NUM()
+    tenerg = itsub == ipasinf
+    CALL nonlocstep(q0(1,nb),q1(1,ithr),q2(1,ithr),dt,tenerg,nb,6)   ! 4
+  END DO
+!$OMP END PARALLEL DO 
+#else
   DO nb=1,nstate
     tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#endif
 END IF
 
 
 !       one full time step for the kinetic energy
 
+ithr=0
+#if(dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,ishift,ithr) SCHEDULE(STATIC)
+#endif
 DO nb=1,nstate
+#if(paropenmp && dynopenmp)
+  ithr = OMP_GET_THREAD_NUM()
+!  WRITE(*,*) ' actual thread:',ithr
+!  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+#endif 
 #if(gridfft)
   IF(iffastpropag == 1) THEN
-    CALL kinprop(q0(1,nb),q1)
+    CALL kinprop(q0(1,nb),q1(1,ithr))
   ELSE
 #if(netlib_fft|fftw_cpu)
-    CALL fftf(q0(1,nb),q1)
+    CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
-    q1 = ak*q1
-    CALL fftback(q1,q0(1,nb))
+!    WRITE(*,*) ak(1),q1(1,ithr)
+    q1(:,ithr) = ak*q1(:,ithr)
+    CALL fftback(q1(1,ithr),q0(1,nb))
 #endif
 #if(fftw_gpu)
-    CALL fftf(q0(1,nb),q1,ffta,gpu_ffta)
+    CALL fftf(q0(1,nb),q1(1,ithr),ffta,gpu_ffta)
 !    CALL cmult3d(q1,ak)
     CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
-    CALL fftback(q1,q0(1,nb),ffta,gpu_ffta)
+    CALL fftback(q1(1,ithr),q0(1,nb),ffta,gpu_ffta)
 #endif
   END IF
 #endif
 #if(findiff|numerov)
   CALL d3mixpropag (q0(1,nb),dt1)
 #endif
+!#if(paropenmp)
+!WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
+!WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
+!#endif 
   
 END DO
-
+#if(dynopenmp)
+!$OMP END PARALLEL DO
+#endif
 
 !old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
+
+
+CALL flush(7)
+
+
 
 !     half non-local step
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
-  DO nb = 1,nstate
-    tenerg = .false. !   itsub.eq.ipasinf
+#if(paropenmp && dynopenmp)
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(nb,tenerg) SCHEDULE(STATIC)
+  DO nb=1,nstate
+    ithr = OMP_GET_THREAD_NUM()
+    tenerg = itsub == ipasinf
+    CALL nonlocstep(q0(1,nb),q1(1,ithr),q2(1,ithr),dt,tenerg,nb,6)   ! 4
+  END DO
+!$OMP END PARALLEL DO 
+#else
+  DO nb=1,nstate
+    tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
+#endif
 END IF
 
 
@@ -433,6 +488,14 @@ END IF
 DEALLOCATE(q1)
 DEALLOCATE(q2)
 
+#if(twostsic)
+IF(tnearest .AND. ifsicp==8) THEN
+  ALLOCATE(qwork(kdfull2,kstate))
+  qwork=q0
+  CALL eval_unitrot(q0,qwork)
+  DEALLOCATE(qwork)
+END IF
+#endif
 
 
 !     new density and local potential
@@ -447,18 +510,18 @@ CALL dyn_mfield(rho,aloc,q0,dt)
 
 !     re-open workspace
 
-ALLOCATE(q1(2*kdfull2))
+ALLOCATE(q1(2*kdfull2,0:0))
 
 !     half time step in coordinate space:
 
 nup = numspin*nxyz
 DO ind=1,nup
   pr=-dt*aloc(ind)
-  q1(ind)=CMPLX(COS(pr),SIN(pr),DP)
+  q1(ind,0)=CMPLX(COS(pr),SIN(pr),DP)
 END DO
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
-  q0(:,nb) = q1(ishift+1:ishift+kdfull2)*q0(:,nb)
+  q0(:,nb) = q1(ishift+1:ishift+kdfull2,0)*q0(:,nb)
 END DO
 
 !     finally release workspace
@@ -476,6 +539,7 @@ IF(myn == 0)THEN
   WRITE(6,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
   WRITE(7,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
   CALL FLUSH(6)
+  CALL FLUSH(7)
 END IF
 
 IF (izforcecorr /= -1) THEN
@@ -485,6 +549,9 @@ END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
+
+CALL flush(6)
+CALL flush(7)
 
 RETURN
 END SUBROUTINE tstep
@@ -515,8 +582,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: dt
 
-
-
 COMPLEX(DP) :: wfovlp
 
 !----------------------------------------------------------------
@@ -537,14 +602,14 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 !JM :  Generalized Slater and FSIC
 #if(twostsic)
 ELSE IF(ifsicp >= 7)THEN
-  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
-  CALL calc_utwf(psi,psiut,itut)
+!  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
+  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484)))           !MV
 !ccccccJM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
-!ccccccJM     DSIC
+!ccccccJM     2 state SIC
   ELSE IF(ifsicp == 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
@@ -676,7 +741,6 @@ LOGICAL,PARAMETER :: ttest=.FALSE.
 !  CALL testgradient(psi(1,nb))
 !END DO
 
-
 OPEN(2743,FILE='energies.'//outnam)
 
 #if(parayes)
@@ -726,6 +790,8 @@ DO nb=1,nstate
       ,ekin,'  epot=',ehilf,'  esp=',amoy(nb) ,'  enonlo=', enonlo(nb)
 #endif
 END DO
+
+CALL spmoms(psi,6)
 
 WRITE(441,'(f10.3,10(1pg13.5))') tfs,enonlo(1:nstate)
 CALL FLUSH(441)
@@ -867,7 +933,7 @@ ecorr = energ_ions()
 ekion=0D0        ! kinetic energy of Na cores
 ekinion=0D0      ! kinetic energy of GSM cores
 ekinel=0D0       ! kinetic energy of GSM shells
-ekinkat=0D0      ! kinetic energy of kations
+ekinkat=0D0      ! kinetic energy of cations
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
@@ -878,19 +944,19 @@ IF(ionmdtyp > 0) THEN
 #if(raregas)
   DO ion=1,nc
     ek=pxc(ion)*pxc(ion)+pyc(ion)*pyc(ion)+pzc(ion)*pzc(ion)
-    xm=1836.0*mion*ame
+    xm=1836.0D0*mion*ame
     ek=ek/2.0/xm
     ekinion=ekinion+ek
   END DO
   DO ion=1,NE
     ek=pxe(ion)*pxe(ion)+pye(ion)*pye(ion)+pze(ion)*pze(ion)
-    xm=1836.0*me*ame
+    xm=1836.0D0*me*ame
     ek=ek/2.0/xm
     ekinel=ekinel+ek
   END DO
   DO ion=1,nk
     ek=pxk(ion)*pxk(ion)+pyk(ion)*pyk(ion)+pzk(ion)*pzk(ion)
-    xm=1836.0*mkat*ame
+    xm=1836.0D0*mkat*ame
     ek=ek/2.0/xm
     ekinkat=ekinkat+ek
   END DO
@@ -904,10 +970,13 @@ energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
 etot = energy + ekion + ekinion + ekinel + ekinkat
+energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
+WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, &
+  eshell+enrear+ecback+ecorr,ecback+ecorr
 
 IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
   CALL safeopen(163,it,jenergy,'penergies')
-  WRITE(163,'(1f14.6,22e24.15)') tfs, &
+  WRITE(163,'(1f14.6,25e24.15)') tfs, &
      &                eshell*2.-esh1,     &
      &                enrear,             &
      &                ekion,              &
@@ -926,7 +995,10 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &                energy,            &
      &                etot, &
      &                elaser, &
-     &                estar,estarETF
+     &                estar,&
+     &                estarETF,&
+     &                energ2,&
+     &                esh1
   CALL flush(163)
   CLOSE(163)
 END IF
@@ -941,7 +1013,7 @@ IF(myn == 0) THEN
   WRITE(6,*) 'e_coul:ion-ion   = ',ecorr
   WRITE(6,*) 'e_coul:el-ion    = ',2.*ecback
   WRITE(6,*) 'extern. energy   = ',2.*ecback+ecorr
-  WRITE(6,*) 'hartree energy   = ',ecrho-ecback-ecrhoimage
+  WRITE(6,*) 'Hartree energy   = ',ecrho-ecback-ecrhoimage
   WRITE(6,*) 'nonlocal energy  = ',enonlc
   WRITE(6,*) 'sim.ann.energy   = ',2.*ecback+ecorr+enonlc
   WRITE(6,*) 'laser energy     = ',elaser
@@ -977,8 +1049,8 @@ END IF
 
 tstinf = .false.
 
-call flush(2743)
-close(2743)
+CALL flush(2743)
+CLOSE(2743)
 RETURN
 END SUBROUTINE info
 
@@ -1014,13 +1086,11 @@ CALL fftf(psin,psi2)
 #if(fftw_gpu)
 CALL fftf(psin,psi2,ffta,gpu_ffta)
 #endif
-
-
 sum0 = 0D0
 sumk = 0D0
 #if(netlib_fft|fftw_cpu)
 DO ii=1,kdfull2
-  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +imag(psi2(ii))*imag(psi2(ii))
+  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
@@ -1030,7 +1100,9 @@ CALL sum_calc2(sum0,sumk,gpu_ffta,gpu_akvfft,kdfull2)
 CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
 CALL copy3dto1d(ffta,psi2,nx2,ny2,nz2)
 #endif
-ekinout = sumk/sum0
+sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
+ekinout = sumk/sum0ex
+!WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
 #endif
 #if(findiff|numerov)
 
@@ -1040,9 +1112,9 @@ CALL ckin3d(psi(1,nb),psi2)
 sum0 = 0D0
 acc = 0D0
 DO i=1,nxyz
-  acc = REAL(psi(i,nb))*REAL(psi2(i)) + imag(psi(i,nb))*imag(psi2(i))  &
+  acc = REAL(psi(i,nb))*REAL(psi2(i)) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
       + acc
-  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + imag(psi(i,nb))*imag(psi(i,nb))  &
+  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
       + sum0
 END DO
 ekinout = REAL(wfovlp(psi(1,nb),psi2))
@@ -1215,10 +1287,10 @@ DEALLOCATE(arhop)
 
 excit=0D0
 DO i=1,kdfull2
-   excit=excit+arho(i)**1.666666666667D0
+   excit=excit+arho(i)**(5D0/3D0)
 END DO
 !fact=dvol*0.6D0*(6.0D0*pi**2)**0.666666666667D0
-excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**0.666666666667D0
+excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**(2.D0/3.D0)
 
 IF(extendedTF) THEN
 
@@ -1324,7 +1396,7 @@ SUBROUTINE mrote
 !        irotat=3 -> rotate around z-axis
 !        irotat=4 -> rotate around diagonal axis
 !      The angle 'phirot' is to be given in degree.
-!      Conifguration and parameters are communciated via 'common'
+!      Configuration and parameters are communicated via 'common'
 
 USE params
 !USE kinetic
@@ -1387,7 +1459,7 @@ REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
 !  !        irotat=2 -> rotate around y-axis
 !  !        irotat=3 -> rotate around z-axis
 !  !        irotat=4 -> rotate around diagonal axis
-!  !      conifguration and parameters are communciated via 'common'
+!  !      configuration and parameters are communicated via 'common'
 !  
 !  USE params
 !  USE kinetic
@@ -1513,7 +1585,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP), ALLOCATABLE :: q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
-LOGICAL,PARAMETER :: recopy=.false.
+
 !------------------------------------------------------------------
 
 !ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
@@ -1523,7 +1595,7 @@ ALLOCATE(q2(kdfull2),jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
-!      eye=cmplx(0.0,1.0)
+!      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
@@ -1534,7 +1606,7 @@ dkz=pi/(dz*REAL(nz))
 !  ELSE
 !    zkz=(i3-1)*dkz
 !  END IF
-!  
+  
 !  DO i2=1,ny2
 !    IF(i2 >= (ny+1)) THEN
 !      zky=(i2-ny2-1)*dky
@@ -1594,7 +1666,7 @@ DO nb=1,nstate
     jalpha=test
     jtx(ind)=jtx(ind)-o*jalpha
   END DO
-  
+
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
 
@@ -1611,13 +1683,11 @@ DO nb=1,nstate
 
   CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
-
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
     jty(ind)=jty(ind)-o*jalpha
   END DO
-  
   
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
@@ -1674,7 +1744,9 @@ ajz=ajz*dvol
 WRITE(6,'(a,3f12.4)') 'moments',ajx,ajy,ajz
 WRITE(6,*)
 
+!DEALLOCATE(akx,q2,aky,akz,jtx,jty,jtz)
 DEALLOCATE(q2,jtx,jty,jtz)
+
 
 RETURN
 END SUBROUTINE instit
@@ -1690,7 +1762,7 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 !     qact     = array for actual wavefunction to be propagated
 !     q1,q2    = auxiliary wavefunction  arrays
 !     ri       = size of time step
-!     tenerg   = (logical) switch to cumulate non-local energy
+!     tenerg   = (logical) switch to accumulate non-local energy
 !     nb       = number of state which is propagated
 !     norder   = order of step (up to 6, 4 or 6 recommended)
 !
@@ -1721,7 +1793,7 @@ CALL nonlocalc(qact,q1,0)
 IF(tenerg) THEN !  add nonloc.pot energy
   sumadd = 0D0
   DO  i=1,nxyz
-    sumadd  = REAL(qact(i))*REAL(q1(i)) +imag(qact(i))*imag(q1(i))  + sumadd
+    sumadd  = REAL(qact(i))*REAL(q1(i)) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
   END DO
   enonlo(nb) = sumadd*dvol
   epotsp(nb) = sumadd*dvol + epotsp(nb)
@@ -1816,6 +1888,22 @@ IF(irest <= 0) THEN                    !  write file headers
   END IF
   
 #if(simpara)
+  IF(jdiporb /= 0) THEN
+#else
+  IF(myn == 0 .AND. jdiporb /= 0) THEN
+#endif
+    OPEN(810,STATUS='unknown',FORM='formatted',FILE='pdiporb.x.'//outnam)
+    WRITE(810,'(a)') 'protocol of s.p. moments: time,x-dipole of orbitals'
+    CLOSE(810)
+    OPEN(811,STATUS='unknown',FORM='formatted',FILE='pdiporb.y.'//outnam)
+    WRITE(811,'(a)') 'protocol of s.p. moments: time,y-dipole of orbitals'
+    CLOSE(811)
+    OPEN(812,STATUS='unknown',FORM='formatted',FILE='pdiporb.z.'//outnam)
+    WRITE(812,'(a)') 'protocol of s.p. moments: time,z-dipole of orbitals'
+    CLOSE(812)
+  END IF
+
+#if(simpara)
   IF(jmp /= 0) THEN
 #else
   IF(jmp /= 0 .AND. myn == 0) THEN
@@ -1907,15 +1995,16 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 1: time (fs), col 2:  total sp en.'
     WRITE(163,*) 'col 3: rearr. en, col 4:  kin. en. Na ions'
     WRITE(163,*) 'col 5: kin. cores,col 6:  kin. en. shells'
-    WRITE(163,*) 'col 7: kin. kations,col 8:  pot. energy of ions'
+    WRITE(163,*) 'col 7: kin. cations,col 8:  pot. energy of ions'
     WRITE(163,*) 'col 9: ion-ion pot., col 10: ion-surf pot'
     WRITE(163,*) 'col 11: intra-surf. pot'
     WRITE(163,*) 'col 12: el-ion energy,col 13:  external en.'
-    WRITE(163,*) 'col 14: hartree en.,col 15:  nonloc. en'
+    WRITE(163,*) 'col 14: Hartree en.,col 15:  nonloc. en'
     WRITE(163,*) 'col 16: sim.ann. en.,col 17:  binding en.'
     WRITE(163,*) 'col 18: total en. [Ry]'
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
     WRITE(163,*) 'col 20/21: internal exc. energy (spin up/down)'
+    WRITE(163,*) 'col 24/25: direct energy, kinetic energy'
     CLOSE(163)
   END IF
   
@@ -1994,7 +2083,7 @@ IF(irest <= 0) THEN                    !  write file headers
           CLOSE(621)
         END IF
         
-! Positions of GSM cores, clouds and kations
+! Positions of GSM cores, clouds and cations
         IF(isurf /= 0) THEN
           OPEN(24,STATUS='unknown',FORM='formatted', FILE='pposcore.'//outnam)
           WRITE(24,'(a)') ' & '
@@ -2585,6 +2674,9 @@ IF(nclust > 0 .AND. myn == 0)THEN
 #endif
   
   CALL safeopen(8,it,jdip,'pdip')
+  CALL safeopen(810,it,jdiporb,'pdiporb.x')
+  CALL safeopen(811,it,jdiporb,'pdiporb.y')
+  CALL safeopen(812,it,jdiporb,'pdiporb.z')
   CALL safeopen(9,it,jquad,'pquad')
   CALL safeopen(17,it,jinfo,'infosp')
   CALL safeopen(47,0,jangabso,'pangabso')
@@ -2644,8 +2736,9 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
   sumy=0D0
   sumz=0D0
   DO ion=1,nion
+    r2iona = SQRT(cx(ion)**2+cy(ion)**2+cz(ion)**2)
     IF(MOD(it,jpos) == 0) WRITE(21,'(1f13.5,3e17.8,1pg13.5)')  &
-        tfs,cx(ion),cy(ion),cz(ion),r2ion   !  ecorr
+        tfs,cx(ion),cy(ion),cz(ion),r2iona   !  ecorr
     IF(MOD(it,jvel) == 0) WRITE(22,'(1f13.5,3e17.8,1pg13.5)')  &
         tfs,cpx(ion),cpy(ion),cpz(ion),ekion
     sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836.
@@ -2943,7 +3036,8 @@ END IF
 IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
    .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
    .OR. (jenergy > 0 .AND. MOD(it,jenergy)==0) & 
-   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0)) THEN
+   .OR. (jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) &
+   .OR. (jdiporb > 0 .AND. MOD(it,jdiporb)==0)) THEN
 #if(parayes) 
   IF(ttest) WRITE(*,*) ' ANALYZE before INFO: myn=',myn
 #endif
@@ -2963,7 +3057,7 @@ END IF
 IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 !  DO i=1,nstate
 !    cscal=orbitaloverlap(psi(1,i),psi(1,i))
-!    rtmp(i,1)=REAL(cscal)**2+imag(cscal)**2
+!    rtmp(i,1)=REAL(cscal)**2+AIMAG(cscal)**2
 !    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
 !  END DO
 !call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'
@@ -2990,6 +3084,15 @@ IF(myn==0) THEN
   IF(jdip > 0 .AND. MOD(it,jdip) == 0) THEN
     WRITE(8,'(f10.5,3e17.8)') tfs,qe(2),qe(3),qe(4)
     CALL flush(8)
+  END IF
+
+  IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN
+    WRITE(810,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
+    WRITE(811,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,4),nbe=1,nstate_all)
+    WRITE(812,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,5),nbe=1,nstate_all)
+    CALL flush(810)
+    CALL flush(811)
+    CALL flush(812)
   END IF
   
   IF(jquad > 0 .AND. MOD(it,jquad) == 0) THEN
@@ -3060,12 +3163,14 @@ REAL(DP) :: trun
 
 
 
-IF(isave > 0 .AND. it /= 0 .AND. MOD(it,isave) == 0) THEN
+IF(isave > 0 .AND. it /= 0) THEN
+ IF(MOD(it,isave) == 0 .OR. it == itmax) THEN
   IF (irest /= 0 .AND. ABS(it-irest) <= 2) THEN
 ! do nothing, change later if needed
   ELSE
     CALL SAVE(psi,it,outnam)
   END IF
+ END IF
 END IF
 
 !     if walltime has almost expired, save all relevant data to
@@ -3126,8 +3231,7 @@ REAL(DP), INTENT(IN OUT)         :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3146,14 +3250,12 @@ END DO
 !     propagation of positions first
 
 !      xm=amu(np(nrare+1))*1836.0*ame
-
-xm=amu(-18)*1836.0*ame
-
 !      call leapfr(cx(nrare+1),cy(nrare+1),cz(nrare+1),
 !     &     cpx(nrare+1),cpy(nrare+1),cpz(nrare+1),dt,xm,nrare)
 
-CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,NE,2)
-
+ALLOCATE(xm(1:ne))
+xm=amu(-18)*1836.0D0*ame
+CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,ne,2)
 
 !     update subgrids in case of pseudo-densities
 
@@ -3166,8 +3268,9 @@ END IF
 
 CALL getforces(rho,psi,0) ! forces on valences with new positions
 
-
-CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,1D0,NE,2)
+xm = 1D0
+CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 RETURN
 END SUBROUTINE vstep
@@ -3185,8 +3288,7 @@ REAL(DP), INTENT(IN)             :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN OUT)          :: it
 REAL(DP), INTENT(IN OUT)         :: dt
 
-
-
+REAL(DP),ALLOCATABLE :: xm(:)
 
 
 !------------------------------------------------------------------
@@ -3206,9 +3308,11 @@ END DO
 
 !      xm=amu(np(nrare+1))*1836.0*ame
 
+ALLOCATE(xm(1:ne))
 xm=amu(-18)*1836.0*ame
 CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
                 fxe(1),fye(1),fze(1),dt,xm,ne,2)
+DEALLOCATE(xm)
 
 !     update subgrids in case of pseudo-densities
 

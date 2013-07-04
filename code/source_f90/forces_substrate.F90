@@ -1091,7 +1091,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      GSM means
 !     a particle described by the Gaussian Shell Model, i.e.
-!     cores, valence shells and kations.
+!     cores, valence shells and cations.
 
 !     - calculation of the forces between GSM particles and
 !       cluster cores, labelled Na
@@ -1163,7 +1163,7 @@ ipseudo=ipseudosave
 !     van der Waals part
 IF (ivdw == 1) THEN
   CALL getvdwforce(rho)
-END IF  ! if ivdw.eq.2 vdw is done implicitely by vArElCore
+END IF  ! if ivdw.eq.2 vdw is done implicitly by vArElCore
 
 
 
@@ -1353,7 +1353,7 @@ END SUBROUTINE madelung
 !--------------------------------------------------------------------------
 
 SUBROUTINE adjustdip(rho)
-!     computes the force on the GSM-dipoles and adjustes their dipolmoments
+!     computes the force on the GSM-dipoles and adjusts their dipole moments
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
 USE params
@@ -1577,7 +1577,7 @@ END SUBROUTINE adjustdip
 !--------------------------------------------------------------------------
 
 SUBROUTINE adjustdipz(rho)
-!     computes the force on the GSM-dipoles and adjustes their dipolmoments
+!     computes the force on the GSM-dipoles and adjusts their dipole moments
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
 USE params

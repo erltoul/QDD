@@ -13,17 +13,11 @@
 !
 #define coufou 0
 #define coudoub 1
+!   switch to 3D FFTW in Coulomb solver (preliminary option)
+#define coudoub3D 0
 !
-! parallel or serial:
+! full SIC and localized SIC
 !
-#define parayes 0
-#define parano 1
-#define simpara 0
-!
-! full SIC and variants (outdated)
-!
-#define fullsic 0
-#define symmcond 0
 #define twostsic 0
 !
 !  
@@ -31,17 +25,11 @@
 !
 #define raregas 0
 !
-!choose fft solver (choose only one)
-!For the moment, don't use iffastpropag with GPU
-!
-#define netlib_fft 0
-#define fftw_cpu 0
-!#define fftw3d_cpu 0
-#define fftw_gpu 1
-!#define fftw3d_gpu 0
+! switch to old version of 'kinprop' with interlaced 1D FFT
+!#define oldkinprop 0
 
-!For the moment compute lda on GPU seems to be unstable and can freeze the computer
-#define lda_gpu 1
+!lda computed on GPU (1) or on CPU (0)
+#define lda_gpu 0
 
 !Asynchronous GPU kernel, set it to 0 for the moment
 #define asynclaunch 0

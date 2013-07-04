@@ -1,68 +1,5 @@
 #include "define.h"
 
-#if(fullsic)
-#ifdef REALSWITCH
-!-----sicstep_gen------------------------------------------
-
-SUBROUTINE sicstep_gen(psir,qnew,aloc,iter1)
-
-!     Switchboard for symmetry condition in static full SIC.
-!     (? yet to be tested and developed ?)
-
-USE params
-USE kinetic
-#if(symmcond)
-USE symcond
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: qnew(kdfull2,kstate)
-!REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                      :: iter1
-
-
-!REAL(DP) ::  rho(2*kdfull2)
-
-!------------------------------------------------------------
-
-
-#if(symmcond)
-
-!     tentative propagation of symmetry condition
-!     the stepping parameters are set here at compile time.
-
-itbegin = itersicp6+10000
-itmodul = 100
-symmstep = 3.0 ! 0.8
-
-IF(iter1 > itbegin .AND. MOD(iter1/itmodul,2) == 0) THEN
-!        call symmcond_step(psir,qnew,symmstep,symcond_add)
-!        call symmcond_direct(psir,qnew,symmstep,symcond_add)
-  CALL symmcond_emin(psir,qnew,symmstep,symcond_add)
-  WRITE(7,'(a,i5,1pg13.5)') ' iter,symm.cond.=',iter1,SQRT(symcond_add/nstate)
-  WRITE(11,'(a,i5,1pg13.5)')  &
-      ' iter,symm.cond.=',iter1,SQRT(symcond_add/nstate)
-  IF(MOD(iter1,itmodul) == 1) WRITE(11,'(5x)')
-  symcon = SQRT(symcond_add/nstate)
-ELSE
-  CALL sstep_sic(psir,aloc,iter1,qnew)
-END IF
-#else
-
-CALL sstep_sic(psir,aloc,iter1,qnew)
-
-#endif
-
-RETURN
-END SUBROUTINE sicstep_gen
-
-#endif
-#endif
-
-
-
 
 
 !     ******************************
@@ -146,7 +83,7 @@ SUBROUTINE calc_sicgam(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of SIC-GAM hamiltonian
+!     computes local part of SIC-GAM Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -293,7 +230,7 @@ IF(numspin==2) THEN
 
 ELSE
 
-!     recalculate coulomb part for jellium
+!     recalculate Coulomb part for jellium
 
 #if(gridfft)
   IF(nion2 == 0) CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
@@ -330,7 +267,7 @@ SUBROUTINE calc_adsic(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -351,7 +288,7 @@ INTEGER :: is(mpi_status_size)
 #ifdef REALSWITCH
 REAL(DP) :: q0(kdfull2,kstate)
 #else
-COMPLEX :: q0(kdfull2,kstate)
+COMPLEX(DP) :: q0(kdfull2,kstate)
 #endif
 REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
@@ -416,6 +353,7 @@ IF(numspin==2) THEN
   END IF
 
   enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
+!  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
 
   IF(npartup > 0) THEN
     DO ind=1,nxyz
@@ -513,7 +451,7 @@ IF(numspin==2) THEN
 
 ELSE
 
-!     recalculate coulomb part for jellium
+!     recalculate Coulomb part for jellium
 
 #if(gridfft)
   IF(nion2 == 0) THEN
@@ -553,7 +491,7 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -580,7 +518,7 @@ DATA testprint/.false./
 
 !-------------------------------------------------------------------
 
-IF(numspin.NE.2) STOP ' SIC-Slater requires full spin code'
+IF(numspin.NE.2) STOP ' SIC-Slater requires full spin'
 IF(ifsicp /= 3) STOP ' CALC_SLATER called with wrong option IFSICP'
 
 CALL act_part_num(npartup,npartdw,npartto)
@@ -689,7 +627,7 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of hamiltonian
+!     computes local part of Hamiltonian
 !     'time' <= 0  signal static iteration i.e. without laser field
 
 
@@ -713,9 +651,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp,rho1,rho2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
 REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
 ! EQUIVALENCE (rhosp,w1)
-LOGICAL :: testprint
-DATA testprint/.false./
-DATA itmaxkli/200/
+LOGICAL,PARAMETER :: testprint=.false.
+INTEGER :: itmaxkli=200
 
 !--------------------------------------------------------------------
 
@@ -787,7 +724,7 @@ END DO
 sumslup = 0D0
 sumsldw = 0D0
 
-!     loop oover s.p. states
+!     loop over s.p. states
 ALLOCATE(rhosp(2*kdfull2))
 ALLOCATE(usicsp(2*kdfull2))
 
@@ -974,369 +911,6 @@ END SUBROUTINE calc_sickli
 #endif
 
 
-!  presently only static version of 'calc_fullsicr'
-#ifdef REALSWITCH
-#if(fullsic)
-
-!     ******************************
-
-SUBROUTINE calc_fullsicr(q0,qsic)
-
-!     ******************************
-
-!     full SIC:
-!       input is set of wavefunctions on 'q0'
-!       output are SIC s.p. wavefunctions on 'qsic'
-
-USE params
-USE kinetic
-#if(symmcond)
-USE symcond
-!COMMON /sicsav/usicall(kdfull2,kstate)
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT) :: qsic(kdfull2,kstate)
-
-
-!       workspaces
-
-REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp
-! DIMENSION usicsp(2*kdfull2),rhosp(2*kdfull2)
-! COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-!     chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-! EQUIVALENCE (rhospu,rhosp),(rhospd,usicsp)
-
-LOGICAL :: ttest
-DATA ttest/.false./
-
-IF(numspin.NE.2) STOP ' full SIC requires full spin code'
-
-!mb
-enrearsave=enrear
-enerpwsave=enerpw
-enrear1=0D0
-enrear2=0D0
-enpw1  = 0D0
-enpw2  = 0D0
-encadd = 0D0
-!mb/
-
-ALLOCATE(rhosp(2*kdfull2))
-ALLOCATE(usicsp(2*kdfull2))
-
-
-!------------------------------------------------------------------
-
-!     compute action of SIC potential
-
-DO nb=1,nstate
-  IF(occup(nb) > small) THEN
-    ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-#ifdef REALSWITCH
-    CALL calc_sicspr(rhosp,usicsp,q0(1,nb),nb)
-#else
-    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
-#endif
-#if(symmcond)
-    DO ind=1,nxyz
-      usicall(ind,nb) = usicsp(ind+ishift)
-    END DO
-#endif
-    
-    IF (ispin(nrel2abs(nb)) == 1) THEN
-      enrear1=enrear1+enrear*occup(nb)
-      enpw1=enpw1+enerpw*occup(nb)
-    ELSE
-      enrear2=enrear2+enrear*occup(nb)
-      IF(directenergy) THEN
-        enpw2=enpw2+enerpw*occup(nb)
-      END IF
-    END IF
-    IF(directenergy) THEN
-      encadd=encadd+encoulsp*occup(nb)
-    END IF
-    
-    IF (ispin(nrel2abs(nb)) == 1) THEN
-      DO ind=1,nxyz
-        qsic(ind,nb) = usicsp(ind)*q0(ind,nb)
-      END DO
-    ELSE
-      DO ind=1,nxyz
-        idx = ind+nxyz
-        qsic(ind,nb) = usicsp(idx)*q0(ind,nb)
-      END DO
-    END IF
-  END IF
-END DO
-encadd=encadd/2.0
-enrear   = enrearsave-enrear1-enrear2
-IF(directenergy) THEN
-  enerpw   = enerpwsave-enpw1-enpw2-encadd
-END IF
-
-
-DEALLOCATE(rhosp)
-DEALLOCATE(usicsp)
-
-RETURN
-END SUBROUTINE calc_fullsicr
-
-
-
-!     ******************************
-
-SUBROUTINE sstep_sic(q0,aloc,iter,qnew)
-
-!     ******************************
-
-
-!     one static step with full SIC - only serial version
-
-USE params
-USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-REAL(DP), INTENT(IN OUT)   :: q0(kdfull2,kstate)
-!REAL(DP), INTENT(IN)      :: akv(kdfull2)
-REAL(DP), INTENT(IN OUT)   :: qnew(kdfull2,kstate)
-REAL(DP), INTENT(IN)       :: aloc(2*kdfull2)
-
-!       workspaces
-
-REAL(DP),DIMENSION(:),ALLOCATABLE :: q1
-!,q1(kdfull2)
-#if(gridfft)
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2,psipr
-! COMPLEX :: q2(kdfull2),psipr(kdfull2)
-#else
-REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
-! REAL :: q2(kdfull2)
-#endif
-! EQUIVALENCE (q1(1),w1(1))
-! EQUIVALENCE (q2(1),w2(1))              ! occupies also w3
-
-LOGICAL :: tocc,tcpu
-DATA tocc,tcpu/.true.,.true./
-LOGICAL :: tdiag,tprojec
-PARAMETER (tdiag=.false.)   ! switch to diagonal subtraction
-PARAMETER (tprojec=.false.) ! switch to full 1ph projection
-
-!------------------------------------------------------------------------
-
-
-!      write(*,*) ' SSTEP with IFSICP=',ifsicp
-IF(tcpu) CALL cpu_time(time_init)
-IF(ifsicp /= 6) STOP ' SSTEP_SIC only for full SIC'
-!                       action of SIC potentials returned on 'qnew'
-
-!MB:      call calc_fullsic(q0,qnew)
-
-
-ALLOCATE(q1(kdfull2))
-ALLOCATE(q2(kdfull2))
-#if(gridfft)
-ALLOCATE(psipr(kdfull2))
-#endif
-
-dvol=dx*dy*dz
-DO nbe=1,nstate
-  ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
-  
-!       action of mean-field hamiltonian on 'hwfr'
-  
-  
-  IF(ipsptyp == 1) THEN
-    CALL nonlocalr(q0(1,nbe),q1)
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1)
-    DO  i=1,nxyz
-      q1(i)=q1(i)+q0(i,nbe)*aloc(i+ishift)
-    END DO
-  ELSE
-    DO  i=1,nxyz
-      q1(i)=q0(i,nbe)*aloc(i+ishift)
-    END DO
-  END IF
-!                             subtract SIC potential for state NBE
-  DO i=1,nxyz
-    q1(i)=q1(i)-qnew(i,nbe)
-  END DO
-  
-!      optionally compute expectation value of potential energy
-  
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1)
-  
-  
-#if(gridfft)
-  
-!      action of the kinetic energy in momentum space
-  
-  CALL rftf(q0(1,nbe),psipr)
-  CALL rftf(q1,q2)
-  DO  i=1,nxyz
-    q2(i) = psipr(i)*akv(i) ! Why is q2 overwritten in that way ?
-  END DO
-  IF(MOD(iter,istinf) == 0) THEN
-    sum0 = 0D0
-    sumk = 0D0
-    DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +imag(psipr(i))*imag(psipr(i))
-      sum0  = vol + sum0
-      sumk  = vol*akv(i) + sumk
-    END DO
-    ekinsp(nbe) = sumk/sum0
-  END IF
-  CALL rfftback(q2,qnew(1,nbe))
-  DO i=1,nxyz
-    qnew(i,nbe)=q1(i)+qnew(i,nbe)
-  END DO
-#endif
-#if(findiff|numerov)
-  STOP ' full SIC not yet working for finite diifferences'
-#endif
-  
-!       compute 'hmatrix' for next step
-  
-  DO nbc=1,nstate
-    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nbc))) THEN
-      hmatrix(nbc,nbe) = rwfovlp(q0(1,nbc),qnew(1,nbe))
-    ELSE
-      hmatrix(nbc,nbe) = 0D0
-    END IF
-  END DO
-  
-!     first round loop completed
-  
-END DO
-
-!       compute symmtry condition
-
-symcon = 0D0
-WRITE(6,'(a)') ' hmatrix:'
-DO na=1,nstate
-  DO nb=1,nstate
-    symcon = (hmatrix(na,nb)-hmatrix(nb,na))**2 + symcon
-  END DO
-  WRITE(6,'(20(1pg13.5))') (hmatrix(nb,na),nb=1,nstate)
-END DO
-symcon = SQRT(symcon/nstate)
-
-!       symmetrize Hamiltonian matrix
-
-DO na=1,nstate
-  DO nb=1,na-1
-    hmatrix(na,nb) = 0.5*(hmatrix(na,nb)+hmatrix(nb,na))
-    hmatrix(nb,na) = hmatrix(na,nb)
-  END DO
-END DO
-
-!     second round loop
-
-DO nbe=1,nstate
-  DO ind=1,nxyz
-    q1(ind) = qnew(ind,nbe)       ! copy to workspace
-  END DO
-  
-!       augment with non-diagonal constraint correction
-  
-  IF(tprojec) THEN
-    CALL orthogwfr(q1,ispin(nbe),q0)
-  ELSE
-    IF(tdiag) THEN
-      DO ind=1,nxyz
-        q1(ind) = q1(ind)-hmatrix(nbe,nbe)*q0(ind,nbe)
-      END DO
-    ELSE
-      DO nbc=1,nstate
-        IF(ispin(nrel2abs(nbc)) == ispin(nrel2abs(nbe))) THEN
-          DO ind=1,nxyz
-            q1(ind) = q1(ind)-hmatrix(nbe,nbc)*q0(ind,nbc)
-          END DO
-        END IF
-      END DO
-    END IF
-  END IF
-  
-!       the action of the SIC Hamiltonian is completed
-!       thus compute average and variance
-  
-  IF(MOD(iter,istinf) == 0) THEN
-    evarsp(nbe) = SQRT(MAX(rwfnorm(q1),small))
-    epotsp(nbe) = hmatrix(nbe,nbe)-ekinsp(nbe)
-  END IF
-  
-  
-  
-!     perform the damped gradient step
-  
-  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-
-#if(gridfft)
-  IF(e0dmp > small) THEN
-    CALL rftf(q1,q2)
-    DO i=1,nxyz
-      q2(i)=epswf / (akv(i) + e0dmp )*q2(i)
-    END DO
-    CALL rfftback(q2,q1)
-    DO i=1,nxyz
-      qnew(i,nbe)=q0(i,nbe)-q1(i)
-    END DO
-  ELSE
-    DO i=1,nxyz
-      qnew(i,nbe)=q0(i,nbe)-epswf*q1(i)
-    END DO
-  END IF
-  
-  
-#else
-  STOP ' full SIC requires fast Fourier code '
-#endif
-  
-END DO
-
-! usew1 = .false.
-! usew2 = .false.
-! usew3 = .false.
-DEALLOCATE(q1)
-DEALLOCATE(q2)
-#if(gridfft)
-DEALLOCATE(psipr)
-#endif
-
-!     copy to 'q0'
-
-DO nbe=1,nstate
-  DO i=1,nxyz
-    q0(i,nbe) = qnew(i,nbe)
-  END DO
-END DO
-
-
-!     Schmidt ortho-normalisation
-
-CALL schmidt(q0)
-
-!     readjust occupations numbers to actual s.p. energies
-
-IF(tocc .AND. nclust < nstate*nph) CALL reocc()
-
-IF(tcpu) THEN
-  CALL cpu_time(time_fin)
-  time_cpu = time_fin-time_init
-!        write(6,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
-!        write(7,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
-END IF
-WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
-WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
-
-
-RETURN
-END SUBROUTINE sstep_sic
-
-
-#endif
-#endif
-
 #ifdef REALSWITCH
 
 !     ******************************
@@ -1355,7 +929,7 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-REAL :: partup,partdw
+REAL(DP) :: partup,partdw
 INTEGER :: npartup,npartdw,npartto
 
 
@@ -1397,6 +971,147 @@ RETURN
 END SUBROUTINE act_part_num
 #endif
 
+
+#ifdef COMPLEXSWITCH
+SUBROUTINE calc_sicspc(rhosp,usicsp,q0state,nb)
+
+!     ******************************
+
+!     computes SIC potential for state 'nb'.
+!     input is
+!       q0state   = wavefunction for s.p. state
+!       nb        = number of state
+!     output is
+!       usicsp   = the s.p. SIC potential
+!     output via common
+!       enrear,enerpw   = rearrangement energies for 'nb'
+!       encoulsp        = Coulomb energy for 'nb'
+
+!#INCLUDE "all.inc"
+USE params
+USE kinetic
+#if(netlib_fft|fftw_cpu)
+USE coulsolv
+#endif
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP), INTENT(IN OUT) :: q0state(kdfull2)
+REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
+
+!     the usage of workspacss is tricky:
+!      'rhosp' from the calling list may be equivalenced with 'w1', but
+!      occupies temporarily two workspaces,. i.e. 'w2=couldif'.
+!      The upper block is obsolete after 'calc_lda' as is the whole
+!      'chpdftsp' after transfer to 'uscisp'. The free slots are then
+!      used for 'rho1' and 'couldif' in the Coulomb solver.
+
+REAL(DP),ALLOCATABLE :: chpdftsp(:)
+REAL(DP),ALLOCATABLE :: couldif(:)
+REAL(DP),ALLOCATABLE :: rho1(:)
+
+LOGICAL,PARAMETER :: testprint=.false.
+
+!--------------------------------------------------------------------
+
+IF(numspin<2) STOP ' CALC_SICSP requires fullspin code'
+
+! allocate workspace
+
+ALLOCATE(chpdftsp(2*kdfull2))
+ALLOCATE(couldif(kdfull2))
+ALLOCATE(rho1(kdfull2))
+
+enrearsave=enrear
+enerpwsave=enerpw
+enrear1=0D0
+enrear2=0D0
+enpw1  = 0D0
+enpw2  = 0D0
+encadd = 0D0
+!      write(*,*) ' CALC_SICSPC: nb,occup(nb)',nb,occup(nb)
+
+IF(occup(nb) > small) THEN
+  ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
+  
+!         density for s.p. state
+  
+  DO ind=1,nxyz
+    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
+    rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
+    rho1(ind)        = rhosp(ind)
+  END DO
+  
+!       DFT for s.p. state
+
+ 
+  CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
+
+  IF (ispin(nrel2abs(nb)) == 1) THEN
+    DO ind=1,nxyz
+      usicsp(ind) = chpdftsp(ind)
+    END DO
+  ELSE
+    DO ind=1,nxyz
+      idx = ind+nxyz
+      usicsp(idx) = chpdftsp(idx)
+    END DO
+  END IF
+  
+!         s.p. Coulomb and subtract from LDA
+  
+  DO ind=1,nxyz
+    rho1(ind) = rhosp(ind)
+  END DO
+#if(gridfft)
+  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+#endif
+#if(findiff|numerov)
+CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+#endif
+IF(testprint) THEN
+  WRITE(11,'(a)') '     ','     '
+  WRITE(11,'(a,i3)') '# NB=',nb
+  CALL prifld2(11,rhosp,' density')
+  CALL prifld2(11,couldif,' Coulomb')
+  CALL prifld2(11,chpdftsp,' P&W')
+END IF
+
+
+encsum = 0D0
+IF (ispin(nrel2abs(nb)) == 1) THEN
+  DO ind=1,nxyz
+    usicsp(ind) = usicsp(ind)+couldif(ind)
+#if(directenergy)
+    encsum=encsum+rhosp(ind)*couldif(ind)
+#endif
+  END DO
+  encoulsp = encsum*dvol/2D0
+  IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
+ELSE
+  DO ind=1,nxyz
+    idx = ind+nxyz
+    usicsp(idx) = usicsp(idx)+couldif(ind)
+#if(directenergy)
+    encsum=encsum+rhosp(ind)*couldif(ind)
+#endif
+  END DO
+  encoulsp = encsum*dvol/2D0
+  IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
+END IF
+ELSE
+usicsp=0D0
+encoulsp = 0D0
+END IF
+
+!WRITE(*,*) ' SICSPC: encoulsp,enerpw=',encsum,enerpw
+
+DEALLOCATE(chpdftsp)
+DEALLOCATE(couldif)
+DEALLOCATE(rho1)
+
+RETURN
+END SUBROUTINE calc_sicspc
+#endif
 
 
 
@@ -1448,8 +1163,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: chpdftsp,couldif,rho1
 !EQUIVALENCE (chpdftsp,w3)
 !EQUIVALENCE (rho1,w4)
 
-LOGICAL :: testprint
-DATA testprint/.false./
+LOGICAL :: testprint=.false.
 
 !--------------------------------------------------------------------
 
@@ -1479,21 +1193,14 @@ IF(occup(nb) > small) THEN
 #else
     rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
 #endif
-!          if(ispin(nrel2abs(nb)).eq.1) then
     rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
-!            rhosp(ind+nxyz) =  1.0
-!          else
-!            rhosp(ind+nxyz) =  -1.0
-!          endif
     rho1(ind)        = rhosp(ind)
   END DO
   
 !       DFT for s.p. state
   
   CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
-!        do ind=1,nxyz+nxyz
-!          usicsp(ind) = chpdftsp(ind)
-!        enddo
+
   IF (ispin(nrel2abs(nb)) == 1) THEN
     DO ind=1,nxyz
       usicsp(ind) = chpdftsp(ind)
@@ -1523,7 +1230,8 @@ IF(occup(nb) > small) THEN
     CALL prifld2(11,couldif,' Coulomb')
     CALL prifld2(11,chpdftsp,' P&W')
   END IF
-  
+
+ 
   encsum = 0D0
   IF (ispin(nrel2abs(nb)) == 1) THEN
     DO ind=1,nxyz
@@ -1532,7 +1240,6 @@ IF(occup(nb) > small) THEN
         encsum=encsum+rhosp(ind)*couldif(ind)
       END IF
     END DO
-    encoulsp = encsum*dvol
     IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
   ELSE
     DO ind=1,nxyz
@@ -1542,13 +1249,11 @@ IF(occup(nb) > small) THEN
         encsum=encsum+rhosp(ind)*couldif(ind)
       END IF
     END DO
-    encoulsp = encsum*dvol
     IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
   END IF
+  encoulsp = encsum*dvol/2D0
 ELSE
-  DO i=1,nxyz
-    usicsp(ind) = 0D0
-  END DO
+  usicsp(1:nxyz) = 0D0
   encoulsp = 0D0
 END IF
 DEALLOCATE(chpdftsp)
@@ -1652,7 +1357,7 @@ DO nbe=1,nstate
 #endif
       END DO
       
-!       the coulomb potential for the transition density
+!       the Coulomb potential for the transition density
 !         (warning : counet inserts the esquar factor)
       
 #if(gridfft)
@@ -1684,7 +1389,7 @@ DO nbe=1,nstate
 #ifdef REALSWITCH
       qex(:,nbe)=  qex(:,nbe) - q0(:,nb2)*acl(:)
 #else
-      qex(:)=  qex(:) - psisavex(:,nb2)*CMPLX(acl(:),acli(:))
+      qex(:)=  qex(:) - psisavex(:,nb2)*CMPLX(acl(:),acli(:),DP)
 #endif
 
 #ifdef REALSWITCH

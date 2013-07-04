@@ -74,9 +74,9 @@ REAL(DP) :: timeinp(0:ktimes)
   DO iomega=1,komega
     omega = iomega*delomega
 
-    accum = cmplx(0D0,0D0)
+    accum = CMPLX(0D0,0D0,DP)
     DO itimes=0,ntimes
-      cfac   = cexp(cmplx(0D0,omega*itimes*deltim))
+      cfac   = EXP(CMPLX(0D0,omega*itimes*deltim,DP))
       accum = accum + cfac*q0(itimes,:,:)
     END DO
 
