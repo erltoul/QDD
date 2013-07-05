@@ -207,7 +207,9 @@ IF(isitmax>0 .AND. ismax>0) THEN
    CALL info(psi,rho,aloc,-1)
    CALL SAVE(psi,-1,outnam)
    DEALLOCATE(psi)
+#if(twostsic)
    IF(nclust>0 .AND. ifsicp>=7) CALL end_fsic()
+#endif
    IF(itmax <= 0) STOP ' terminate with afterburn '
 END IF
 
@@ -561,6 +563,14 @@ IF (isurf == 1) THEN
   CLOSE(157)
   
 END IF
+
+if (jattach>0) THEN
+  DEALLOCATE(psitemp)
+  DEALLOCATE(ispin_temp)
+  DEALLOCATE(occ_target)
+  DEALLOCATE(spe_target)
+END IF
+
 
 CLOSE(163)
 CLOSE(68)

@@ -174,6 +174,13 @@ INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
 INTEGER :: jovlp=100000000,jnorms=0
 INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
+INTEGER,ALLOCATABLE :: ispin_target(:),ispin_temp(:)
+REAL(DP),ALLOCATABLE :: occ_target(:)
+REAL(DP),ALLOCATABLE :: spe_target(:)
+COMPLEX(DP),ALLOCATABLE :: psitemp(:,:)
+REAL(DP) :: totintegprob
+REAL(DP) :: aver_estar,emin_target,emax_target
+INTEGER  :: nstate_target,nmatchenergy
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
@@ -185,7 +192,8 @@ REAL(DP) :: ehom0=0D0,ehomx=0D0,ehomy=0D0,ehomz=1D0
 INTEGER :: ihome=0
 REAL(DP) :: scatterelectronenergy=0D0,scatterelectronw=1D0
 REAL(DP) :: scatterelectronvxn=0D0,scatterelectronvyn=0D0,scatterelectronvzn=1D0
-REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz
+REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz=0D0
+REAL(DP) :: reference_energy=0D0
 REAL(DP) :: drcharges=5D0
 
 

@@ -11,10 +11,10 @@
 !
 ! coulomb solver  (set all to 0 for 'findiff' or 'numerov')
 !
-#define coufou 0
-#define coudoub 1
+#define coufou 1
+#define coudoub 0
 !   switch to 3D FFTW in Coulomb solver (preliminary option)
-#define coudoub3D 1
+#define coudoub3D 0
 !
 ! parallel or serial:
 !   paropenmp    activates openMP parallelity, requires parano=1
@@ -28,13 +28,13 @@
 !
 ! full SIC and localized SIC
 !
-#define twostsic 1
-#define cmplxsic 1
+#define twostsic 0
+#define cmplxsic 0
 !
 !  
 ! switch to extended model with polarizable raregas
 !
-#define raregas 0
+#define raregas 1
 !
 !choose fft solver (only one !)
 !

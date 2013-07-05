@@ -3,7 +3,7 @@
 #if(gridfft)
 #if(coufou)
 
-#include 'falr.F90'
+#include "falr.F90"
 
 #endif !coufou
 
@@ -15,6 +15,6 @@
 #endif !gridfft
 
 #if(findiff|numerov)
-!INCLUDE 'gridcoul.F90'
+!INCLUDE "gridcoul.F90"
 INCLUDE "findiff-sinft.F90"
 #endif

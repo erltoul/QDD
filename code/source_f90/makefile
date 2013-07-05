@@ -229,8 +229,8 @@ endif
 
 .SUFFIXES: .F90 .o
 
-#EXEC = essai.par
-EXEC = essai.gnu
+EXEC = essai.par
+#EXEC = essai.gnu
 #EXEC = tdks_v$(DATE)_$(MPI_NAME)_$(TYPE_FFT).bin
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
