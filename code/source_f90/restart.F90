@@ -25,7 +25,7 @@ USE kinetic
 !#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
-USE twost, ONLY: vecs
+USE twost, ONLY: vecs,expdabold,wfrotate
 #endif
 !#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -340,6 +340,10 @@ IF(ifsicp >= 6) THEN
 #ifdef COMPLEXSWITCH
   WRITE(*,*) ' before reading VECS'
   READ(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  IF(.NOT.tstatin) THEN
+    READ(60) ExpDABold(1:kstate,1:kstate,1:2)
+    READ(60) wfrotate(1:kstate,1:kstate,1:2)
+  END IF
   WRITE(*,*) ' READ vecs:'
   DO n=1,ndims(1)
     WRITE(*,'(8f10.6)') vecs(1:ndims(1),n,1)
@@ -395,7 +399,7 @@ USE kinetic
 !#ifdef REALSWITCH
 #if(twostsic)
 USE twostr, ONLY: vecsr,ndims
-USE twost, ONLY: vecs
+USE twost, ONLY: vecs,expdabold,wfrotate
 #endif
 !#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -473,6 +477,8 @@ IF(mynact==0) THEN
     REWIND(60)
   ELSE
     OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
+    WRITE(*,*) ' SAVE opened for complex output'
+    REWIND(60)
   END IF
 END IF
 
@@ -485,7 +491,7 @@ IF(mynact==0) THEN
   IF(TTEST) WRITE(6,*)' SAVE: isa written at myn=',myn
 END IF
   
-  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',isa,myn
+!  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',isa,myn
   
 !  write wavefunctions:
 #if(parano)
@@ -494,6 +500,7 @@ IF(nclust > 0)THEN
     WRITE(60) occup(nb),psi(1:nxyz,nb)
   END DO
   WRITE(60) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
+  IF(TTEST) WRITE(6,*)' SAVE: wavefunctions written'
 END IF
 #endif
 #if(parayes)
@@ -564,7 +571,7 @@ IF(mynact==0) THEN
   IF(nion > 0) &
     WRITE(60) cx(1:nion),cy(1:nion),cz(1:nion), &
              cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
-
+    IF(TTEST) WRITE(*,*) 'ionic coordinates written'
 !  write substrate coordinates and momenta
 #if(raregas)
   IF (isurf /= 0) THEN
@@ -581,6 +588,7 @@ IF(mynact==0) THEN
 !  write dipole moment etc:
     IF(nclust > 0) THEN 
       WRITE(60) qe(1:kmom),se(1:3)
+      IF(TTEST) WRITE(*,*) 'electronic moments written'
     
 #ifdef COMPLEXSWITCH
       IF (nabsorb > 0) THEN
@@ -623,7 +631,9 @@ END IF
 #ifdef COMPLEXSWITCH
     IF(ifsicp >= 6) THEN
       WRITE(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
-      WRITE(*,*) 'vecs written'
+      WRITE(60) expdabold(1:kstate,1:kstate,1:2)
+      WRITE(60) wfrotate(1:kstate,1:kstate,1:2)
+      WRITE(*,*) 'vecs and expdabold written'
       WRITE(*,*) ndims
       DO n=1,ndims(1)
         WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)

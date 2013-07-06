@@ -272,6 +272,13 @@ IF(nclust > 0)THEN
     IF (iaddcluster /= 0) CALL addcluster(psi,outnam)
     WRITE(7,'(a,i3)') 'restart irest=',irest
 !          if (irest.gt.1) irest=irest-1
+!      WRITE(*,*) 'ndims=',ndims,' , vecs after restart:'
+!      DO n=1,ndims(1)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
+!      END DO
+!      DO n=1,ndims(2)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
+!      END DO
   END IF
 !                                           refresh potentials
   IF(irest > 0 .OR. istat > 0) THEN
@@ -283,6 +290,13 @@ IF(nclust > 0)THEN
         CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
       END DO
     END IF
+!      WRITE(*,*) 'ndims=',ndims,' , vecs after mean field 1:'
+!      DO n=1,ndims(1)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
+!      END DO
+!      DO n=1,ndims(2)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
+!      END DO
   END IF
   
 #if(simpara)
@@ -294,6 +308,14 @@ IF(nclust > 0)THEN
   
   CALL dyn_mfield(rho,aloc,psi,0D0)
   
+!      WRITE(*,*) 'ndims=',ndims,' , vecs after mean field 1:'
+!      DO n=1,ndims(1)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
+!      END DO
+!      DO n=1,ndims(2)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
+!      END DO
+
   IF(irest == 0) CALL info(psi,rho,aloc,0)
   IF(iangmo == 1 .AND. iexcit == 1)  CALL instit(psi)    !notes
   IF(ifrhoint_time == 1) THEN
@@ -374,6 +396,13 @@ CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 !cpx=0D0;cpy=0D0;cpz=0D0
 CALL stimer(1)
+!      WRITE(*,*) 'ndims=',ndims,' , vecs before dynamics:'
+!      DO n=1,ndims(1)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
+!      END DO
+!      DO n=1,ndims(2)
+!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
+!      END DO
 DO it=irest,itmax   ! time-loop
   
   iterat = it      ! to communicate time step
