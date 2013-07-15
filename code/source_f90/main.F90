@@ -510,14 +510,12 @@ CLOSE(806)
 DEALLOCATE(psi)
 
 #if(fftw_cpu|fftw_gpu)
-IF (myn == 0) THEN
-CALL fft_end()
-CALL coulsolv_end()
-ENDIF
+!CALL fft_end()
+!CALL coulsolv_end()
 #endif
 
 #if(fftw_gpu)
-CALL cuda_end()
+!CALL cuda_end()
 #endif
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
@@ -532,6 +530,7 @@ WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
 #endif
 
+IF(myn==0) THEN
 CALL cpu_time(time_absfin)
 OPEN(123,ACCESS='append',STATUS='unknown',FILE='Time')
 #if(netlib_fft)
@@ -546,6 +545,7 @@ WRITE(123,*)'cuFFT'
 WRITE(123,*)'Box :',nx2,ny2,nz2
 WRITE(123,*)'Walltime =',time_absfin-time_absinit
 CLOSE(123)
+ENDIF
 
 END PROGRAM tdlda_m
 

@@ -655,14 +655,16 @@ DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
 
 #if(fftw_gpu)
 facnr = 1D0/(nx2*ny2*nz2)
-ffta=reshape(q1,(/nx2,ny2,nz2/))
+!ffta=reshape(q1,(/nx2,ny2,nz2/))
+CALL copy1dto3d(q1,ffta,nx2,ny2,nz2)
 CALL copy_on_gpu(ffta,gpu_ffta,kdfull2)
 CALL run_fft_for3d(plan_3d,gpu_ffta,typefft)
 CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
 CALL run_fft_back3d(plan_3d,gpu_ffta,typefft)
 CALL multiply_gpu(gpu_ffta,kdfull2,facnr)
 CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
-q1=reshape(ffta,(/kdfull2/))
+!q1=reshape(ffta,(/kdfull2/))
+CALL secopy3dto1d(ffta,q1,nx2,ny2,nz2)
 #endif
 
 #endif

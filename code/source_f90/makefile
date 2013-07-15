@@ -49,23 +49,23 @@ DEBUG  = NO
 #   * NO
 LINK_STATIC = YES
 
-# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = cuFFT
+# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = FFTW)
 # Available options:
 #   * YES
 #   * NO
 MKL_THREADS = YES
 
-# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT = cuFFT
+# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT = FFTW)
 # Default value:
 MKL_WRAPPERS =
 
-# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT = cuFFT
+# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT = FFTW)
 # Default value:
 MKLPATH =
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
-# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT = cuFFT
+# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT = FFTW )
 # Default value:
 MKLINCLUDE =
 
@@ -115,7 +115,7 @@ OMPADDL =
 ifeq "$(CF90)" "MPIF90"
 #	COMPILER  = /opt/mpich2-intel/bin/mpif90
 #	LDLIBS    =
-	COMPILER  = /opt/openmpi/1.6.4-intel/bin/mpif90
+	COMPILER  = mpif90
 	LDLIBS    =
 endif
 
@@ -271,14 +271,15 @@ ifeq "$(CF90)" "XLF_R"
 endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-	GPUCOMPILER = nvcc
-	#GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_13 -I/opt/cuda/4.2/include
-	GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_20 -I/opt/cuda/4.2/include
-	#GPUCOMPILERFLAGS =  -O3 --gpu-architecture sm_30 -I/opt/cuda/include
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_13 
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_20 
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_30 
+	OPTGPU = -O3 --gpu-architecture sm_35 
   ifeq "$(DEBUG)" "YES"
-       	#GPUCOMPILERFLAGS =  -g -G --gpu-architecture sm_13 -I/opt/cuda/include
-	GPUCOMPILERFLAGS =  -g -G --gpu-architecture sm_20 -I/opt/cuda/4.2/include
-	#GPUCOMPILERFLAGS =  -g -G --gpu-architecture sm_30 -I/opt/cuda/include
+       	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_13 
+	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_20 
+	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_30 
+	OPTGPU = -g -G --gpu-architecture sm_35 
   endif
 endif
 
@@ -343,7 +344,7 @@ endif
 COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-
+GPUCOMPILERFLAGS = $(OPTGPU) $(MPIADD) $(OMPADD)
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
 IDRIS =
 ifeq "$(CF90)" "XLF_R"
@@ -411,7 +412,7 @@ endif
 
 #Flags for directly linking the cuda libraries
 ifeq ($(TYPE_FFT), cuFFT)
-        CUDAFLAGS += -L/opt/cuda/4.2/lib64/ -lcufft -lcudart
+        CUDAFLAGS += -lcufft -lcudart
 endif
 
 LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL) $(CUDAFLAGS)

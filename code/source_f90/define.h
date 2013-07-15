@@ -29,7 +29,7 @@
 !#define oldkinprop 0
 
 !lda computed on GPU (1) or on CPU (0)
-#define lda_gpu 0
+#define lda_gpu 1
 
 !Asynchronous GPU kernel, set it to 0 for the moment
 #define asynclaunch 0
