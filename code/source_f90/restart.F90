@@ -5,7 +5,7 @@
 #ifdef REALSWITCH
 SUBROUTINE resume(psi,outna)
 #else
-SUBROUTINE restart2(psi,outna,trealin)
+SUBROUTINE restart2(psi,outna,tstatin)
 #endif
 
 !     **************************
@@ -15,8 +15,11 @@ SUBROUTINE restart2(psi,outna,trealin)
 !     The variant 'restart2' produces complex wavefunctions,
 !     for 'trealin=.false.' from saved complex wavefunctions and
 !     for 'trealin=.true.' from real wavefunctions converting them
-!     to complex  after reading.
-!     All the data are saved in one file called '(r)save' even in the 
+!     to complex  after reading. The parameter 'trealin' is read from
+!     the file 'rsave.*'.
+!     The list parameter 'tstatin' regulates reading of static or
+!     dynamic input.
+!     All the data are saved in one file called '(r)save', also in the 
 !     parallel case.
 
 
@@ -33,17 +36,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-LOGICAL,PARAMETER                       :: trealin=.false.
+LOGICAL,PARAMETER                       :: tstatin=.false.
 #else
 COMPLEX(DP), INTENT(IN OUT)               :: psi(kdfull2,kstate)
 REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
-LOGICAL, INTENT(IN)                       :: trealin
+LOGICAL, INTENT(IN)                       :: tstatin
 #endif
 
 CHARACTER (LEN=13), INTENT(IN)            :: outna
 
 REAL(DP), ALLOCATABLE                     :: psiauxr(:)
-LOGICAL :: topenf,tstatin
+LOGICAL :: topenf,trealin
 LOGICAL,PARAMETER :: ttest = .TRUE.
 
 #if(parayes)
@@ -83,7 +86,7 @@ mynact = myn
 
 
 
-tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
+!tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
 
 #ifdef REALSWITCH
 
@@ -112,10 +115,10 @@ tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
 
 IF(mynact==0) THEN
   !  read the iteration where the data has been saved last:
-  READ(60) iact,nstate_test,nclust,nion,nspdw
+  READ(60) iact,nstate_test,nclust,nion,nspdw,trealin
   IF(nstate_test /= nstate_all) &
    STOP ' RESTART: inconsistent nr. of states'
-  IF(ttest) WRITE(*,*) ' READ: iact etc at myn=',myn
+  IF(ttest) WRITE(*,*) 'READ iact etc:',iact,nstate_test,nclust,nion,nspdw,trealin
 END IF
 #if(parayes)
 IF(knode>1) THEN
@@ -151,9 +154,9 @@ IF(nclust > 0)THEN
       READ(60) occup(nb),psi(1:nxyz,nb)
     END IF
   END DO
+  IF(ttest) WRITE(*,*) ' READ occup:',occup(1:nstate)
   READ(60) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
   IF(ttest) THEN
-    WRITE(*,*) ' READ occup:',occup(1:nstate)
     WRITE(*,*) ' READ amoy:',amoy(1:nstate)
     WRITE(*,*) ' READ epotsp:',epotsp(1:nstate)
     WRITE(*,*) ' READ ekinsp:',ekinsp(1:nstate)
@@ -257,7 +260,7 @@ IF(mynact==0) THEN
     IF(ttest) WRITE(*,*) ' moments read in:',qe(1:4)
 #ifdef COMPLEXSWITCH                                          !new
     IF (nabsorb > 0) THEN
-      IF(trealin) THEN
+      IF(tstatin) THEN
         rhoabso = 0D0
       ELSE
         READ(60) rhoabso(1:kdfull2)
@@ -266,7 +269,7 @@ IF(mynact==0) THEN
       IF(jescmaskorb /=0) THEN
 #if(parayes)
         ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
-        IF(trealin) THEN
+        IF(tstatin) THEN
            rhoabsoorb_all = 0D0
         ELSE
           DO nbe=1,nstate_all
@@ -274,7 +277,7 @@ IF(mynact==0) THEN
           END DO
         END IF
 #else
-        IF(trealin) THEN
+        IF(tstatin) THEN
            rhoabsoorb = 0D0
         ELSE
           DO nbe=1,nstate
@@ -286,7 +289,7 @@ IF(mynact==0) THEN
       END IF
     END IF
 !   reading accumulators for laser field
-    IF(ttest) WRITE(*,*) ' before laser switch:',trealin
+    IF(ttest) WRITE(*,*) ' before laser switch:',tstatin
     IF(.NOT.tstatin) THEN
       IF(ttest) WRITE(*,*) ' before reading laser'
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
@@ -414,6 +417,7 @@ REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 INTEGER, INTENT(IN OUT)                     :: isa
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 LOGICAL,PARAMETER :: ttest = .TRUE.
+LOGICAL :: trealin
 
 
 #if(parayes)
@@ -466,6 +470,7 @@ IF(mynact==0) THEN
     OPEN(UNIT=60,STATUS='scratch',FORM='unformatted') 
     WRITE(*,*) ' scratch opened'
   END IF
+  trealin=.true.
 END IF
 
 #else
@@ -480,6 +485,7 @@ IF(mynact==0) THEN
     WRITE(*,*) ' SAVE opened for complex output'
     REWIND(60)
   END IF
+  trealin=.false.
 END IF
 
 #endif
@@ -487,8 +493,8 @@ END IF
   
 !  write iteration at which the data is saved
 IF(mynact==0) THEN
-  WRITE(60) isa,nstate_all,nclust,nion,nspdw
-  IF(TTEST) WRITE(6,*)' SAVE: isa written at myn=',myn
+  WRITE(60) isa,nstate_all,nclust,nion,nspdw,trealin
+  IF(ttest) WRITE(*,*) 'WROTE iact etc:',iact,nstate_test,nclust,nion,nspdw,trealin
 END IF
   
 !  IF(TTEST) WRITE(6,*)' SAVE: isa,myn=',isa,myn

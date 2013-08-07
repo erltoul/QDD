@@ -361,11 +361,13 @@ IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
 #endif
 #if(parayes)
-STOP ' TWOSTSIC cannot yet run in parallel code'
+STOP ' TWOSTSIC cannot yet run in MPI parallel code'
 #endif
 IF(ifsicp==8 .AND. .NOT.directenergy) &
    STOP 'full SIC (IFSICP=8) requires DIRECTENERGY=.TRUE.'
 #endif
+
+IF(ifsicp.NE.8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for SIC'
 
 IF(isitmax>0 .AND. ifexpevol== 0) &
     STOP ' imaginary-time step only for exponential evolution'

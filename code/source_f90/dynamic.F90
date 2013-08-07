@@ -35,11 +35,8 @@ IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) ALLOCATE(psisavex(kdfull2,kstate))
 
 !     use of saved real wavefunctions, read and copy to complex
 
-IF(isitmax==0) THEN
-  CALL restart2(psi,outnam,.true.)
-ELSE
-  CALL restart2(psi,outnam,.false.)
-END IF
+CALL restart2(psi,outnam,.true.)
+
 IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) psisavex = psi
 
 !     optionally rotate a 1ph state
