@@ -352,7 +352,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 
 COMPLEX(DP) :: csum
-WRITE(6,*) 'Entering orbitalOverlap'
+!WRITE(6,*) 'Entering orbitalOverlap'
 
 sumr=0.
 sumi=0.
@@ -366,7 +366,7 @@ END DO
 csum=CMPLX(sumr*dx*dy*dz,sumi*dx*dy*dz,DP)
 
 orbitaloverlap=csum
-WRITE(6,*) 'result = ',csum
+!WRITE(6,*) 'result = ',csum
 
 RETURN
 END FUNCTION orbitaloverlap

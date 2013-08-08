@@ -1143,6 +1143,7 @@ INTEGER, INTENT(IN OUT)                  :: it
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
 COMPLEX(DP) :: wfovlp
 COMPLEX(DP) :: cf
+LOGICAL,PARAMETER :: ttest=.false.
 
 !------------------------------------------------------------------
 
@@ -1150,7 +1151,7 @@ ALLOCATE(psi2(kdfull2))
 
 epot=0D0
 
-WRITE(*,*) ' in CALC_EPOT 1. average field=',SUM(alocact(1:nxyz))
+IF(ttest) WRITE(*,*) ' in CALC_EPOT 1. average field=',SUM(alocact(1:nxyz))
 !call prifld(alocact,'ALOC in Epot')
 !     non local part of ps
 
@@ -1171,7 +1172,7 @@ ELSE
   END DO
 END IF
 
-WRITE(*,*) ' in CALC_EPOT 2'
+IF(ttest) WRITE(*,*) ' in CALC_EPOT 2'
 !JM : subtract SIC potential for state NB
 #if(twostsic)
 IF(ifsicp == 8) THEN
@@ -1197,10 +1198,10 @@ IF(ifsicp==5) THEN
   DEALLOCATE(qex)
 END IF
 
-WRITE(*,*) ' in CALC_EPOT 3'
+IF(ttest) WRITE(*,*) ' in CALC_EPOT 3'
 epot = REAL(wfovlp(psin,psi2))   ! develop real overlap
 
-      write(*,*) ' EPOT: nb,epot=',nb,epot
+IF(ttest)   write(*,*) ' EPOT: nb,epot=',nb,epot
 
 DEALLOCATE(psi2)
 

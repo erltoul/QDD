@@ -72,8 +72,8 @@ ifeq "$(CF90)" "GFORT1"
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
+	OPT1  =  -pg -cpp -w -g -fbounds-check -fbacktrace -fdefault-real-8 -fdefault-double-8
+	OPT2  =  $(OPT1)
 	OPT3  =  -pg -cpp -w -g                             
 endif
 ifeq "$(OMP)" "YES"
@@ -274,7 +274,7 @@ $(OBJS):  define.h makefile params.F90
 
 .F90.o:
 	$(COMPILER) $(COMPILERFLAGS1) -c $< 
-main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o localize_rad.o 2stUT.o 2stUTc.o
+main.o: main.F90 define.h makefile params.o kinetic.o coulsolv.o localize_rad.o 2stUT.o 2stUTc.o attachement.o
 
 ifeq "$(TYPE_FFT)" "NETLIB"
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 define.h makefile params.o fftpack.o

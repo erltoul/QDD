@@ -430,6 +430,7 @@ COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
+LOGICAL,PARAMETER :: ttest=.false.
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -515,7 +516,7 @@ IF(tpri) THEN
 !  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-amoy(nbe)**2)
   spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-ABS(wfovlp(qact,q2))**2)
   is=ispin(nrel2abs(nbe))
-  WRITE(*,'(a,2i4,5(1pg13.5))') &
+  IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
    ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
       ekinsp(nbe),epotsp(nbe),amoy(nbe)
   CALL flush(6)

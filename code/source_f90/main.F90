@@ -48,6 +48,7 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
+REAL(DP) :: totalprob
 
 LOGICAL :: tmf
 
@@ -525,11 +526,13 @@ DO it=irest,itmax   ! time-loop
     ELSE IF(it>irest .AND. MOD(it,jattach) == 0) then
       call attach_prob(totalprob,psi)
       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
-      write(6,'(e12.5,1x,i8,3(1x,e14.5))') &                
+      write(6,'(a,e12.5,1x,i8,3(1x,e14.5))') &
+           'after ATTACHEMENT:',&
            tfs,nmatchenergy,totalprob,totintegprob
       CALL safeopen(809,it,jattach,'pattach')
       write(809,'(e12.5,1x,i8,3(1x,e14.5))') & 
            tfs,nmatchenergy,totalprob,totintegprob
+      CALL FLUSH(809)
     END IF
   END IF
 
