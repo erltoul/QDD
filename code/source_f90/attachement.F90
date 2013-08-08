@@ -12,17 +12,18 @@ INTEGER  :: iidum
 
 WRITE(6,*) 'opening occ_eps_target file'
 OPEN(UNIT=91,STATUS='unknown',FORM='formatted', FILE='occ_spe_target')
-IF(istat == 0.AND.irest == 0) THEN
-   READ(91,*) xxdum,xxdum
-ELSE IF(istat == 1.AND.irest == 0) THEN
-   READ(91,*) binerg,xxdum
+!IF(istat == 0.AND.irest == 0) THEN
+!   READ(91,*) xxdum,xxdum
+!ELSE IF(istat == 1.AND.irest == 0) THEN
+!IF(istat == 1.AND.irest == 0) THEN
+!   READ(91,*) binerg,xxdum
 !ELSE IF(istat == 0.AND.irest > 0) THEN
-ELSE IF(istat == 1.AND.irest > 0) THEN
+!ELSE IF(istat == 1.AND.irest > 0) THEN
    READ(91,*) binerg,reference_energy
-ELSE
-   STOP ' invalid option in ATTACH_PROB'
-END IF
-WRITE(*,*) ' binerg,reference_energy:',binerg,reference_energy
+!ELSE
+!   STOP ' invalid option in ATTACH_PROB'
+!END IF
+WRITE(*,*) ' istat,irest,binerg,reference_energy:',istat,irest,binerg,reference_energy
 
 !      aver_estar  = etot - binerg                                                            
 aver_estar  = reference_energy - binerg
@@ -68,7 +69,7 @@ REAL(DP)   :: xxdum
 ! reading of w.f. from wfs_target
 !-------------------------------------------------------------------
 WRITE(*,*) 'enter init_psitarget'
-OPEN(UNIT=90,STATUS='unknown',FORM='unformatted',FILE='wfs_target')
+OPEN(UNIT=90,STATUS='unknown',FORM='unformatted',FILE='../wfs_target')
 
 READ(90) idum,nstatedum,nclust_target,nion_target,nspdw_target
 write(6,*) 'target: nstate_t,nclust_t,nion_t,nspdw_t'                 
@@ -115,9 +116,10 @@ COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 COMPLEX(DP) :: wfovlp
 INTEGER :: indx(nstate)             ! index field for LU decomp.                          
 INTEGER :: index(nstate-2)          ! index field for LU decomp.                          
-COMPLEX(DP) :: cdum,temp1,temp2
+COMPLEX(DP) :: temp1,temp2
 REAL(DP) :: xxdum,d
 INTEGER :: iidum,nexpand,ierror
+LOGICAL,PARAMETER :: ttest=.true.
 
 !--------------------------------------------------------------                           
 
@@ -132,19 +134,26 @@ nmatchenergy=0
 ALLOCATE(ispin_target(nstate_target))
 ispin_target(1:nstate_target)=ispin_temp(1:nstate_target)
 
+!WRITE(*,'(200i3)') ispin_target(1:nstate_target)
+!WRITE(*,'(200i3)') ispin(1:nstate)
+
 ALLOCATE(psitarget(kdfull2,nstate))
 DO ih=1,nstate-1
    IF(ispin_target(ih) == ispin(nstate)) THEN
-      DO ip1=nstate,nstate_target-1
+!      DO ip1=nstate,nstate_target-1
+      DO ip1=1,nstate_target-1
          DO ip2=ip1+1,nstate_target
+!            WRITE(*,'(3i5,3(1pg13.5))') ih,ip1,ip2, &
+!                  occ_target(ih),occ_target(ip1),occ_target(ip1)
             IF(ispin_target(ip1) == ispin(nstate).AND.ispin_target(ip2) == ispin(nstate)) THEN
                IF((occ_target(ih) > 0.5).AND.(occ_target(ip1) < 0.5).AND.(occ_target(ip2) < 0.5)) THEN
                   delta_e = spe_target(ip2)+spe_target(ip1)-spe_target(ih)
+                  IF(ttest) WRITE(*,'(a,3i5,4(1pg13.5))') 'ih etc:',ih,ip1,ip2,&
+                    spe_target(ih),spe_target(ip1),spe_target(ip2),delta_e
                   IF(delta_e > emin_target.AND.delta_e < emax_target) THEN
-
-                     write(6,*)'ih,ip1,ip2,delta_e',ih,ip1,ip2,delta_e
+!                     write(6,*)'ih,ip1,ip2,delta_e',ih,ip1,ip2,delta_e
                      nmatchenergy=nmatchenergy+1
-                     WRITE(*,*) 'nmatch:',nmatchenergy
+                     IF(ttest) WRITE(*,*) 'nmatch:',nmatchenergy
 
                      DO nb=1,nstate-1
                         psitarget(1:nxyz,nb)=psitemp(1:nxyz,nb)
@@ -167,7 +176,8 @@ DO ih=1,nstate-1
                      
                      nexpand = nstate
 
-!                     write(6,*)'entering overlap comp. loop with nexpand=', nexpand
+                     IF(ttest) write(6,*) &
+                        'entering overlap comp. loop with nexpand=', nexpand
                      DO i=1,nexpand
                         DO j=1,nexpand
                            IF(ispin_target(i) == ispin(j)) THEN
@@ -178,7 +188,7 @@ DO ih=1,nstate-1
                         END DO
                      END DO
 
-!                     WRITE(*,*) 'overlap(5,:):',overlaps(5,:)
+                     IF(ttest) WRITE(*,*) 'overlap(5,:):',overlaps(5,:)
 
 !                     WRITE(*,*) 'LU decomposition of overlaps matrix'
 !                     CALL cludcmp_d(overlaps,nexpand,kstate,indx,d,det,ierror)
@@ -188,14 +198,16 @@ DO ih=1,nstate-1
                      IF(ierror == 99) det = CMPLX(0D0,0D0)
 !                     WRITE(6,'(f12.5,4i5,3(1pg13.5))') tfs,nmatchenergy,ih,ip1,ip2,&
 !                          delta_e,REAL(det),imag(det)
-                     WRITE(811,'(f12.5,4i8,3(1pg13.5))') tfs,nmatchenergy,ih,ip1,ip2,&
-                          delta_e,REAL(det),imag(det)
+!                     WRITE(811,'(f12.5,4i8,3(1pg13.5))') tfs,nmatchenergy,ih,ip1,ip2,&
+!                          delta_e,REAL(det),imag(det)
 
 !     accumulate total transition matrix element                                     
 
                      tbelement = CMPLX(0D0,0D0)
                      DO i1=1,nexpand
                         DO i2=i1+1,nexpand
+                           IF(ttest) WRITE(*,'(a,4i3)') &
+                              ' submatrix outer loops: i1,i2=',i1,i2
                            DO j1=1,nexpand
                               DO j2=j1+1,nexpand
                                  i1nn = i1
@@ -205,6 +217,7 @@ DO ih=1,nstate-1
                                  IF((ispin_target(i1)+ispin_target(i2))  &
                                       == ispin(j1)+ispin(j2)) THEN
 !                                     extract submatrix                                  
+                        
                                     ishift = 0
                                     DO i=1,nexpand
                                        IF(i == i1) ishift = 1+ishift
@@ -223,13 +236,12 @@ DO ih=1,nstate-1
                                     IF(ierror == 99) det = CMPLX(0D0,0D0)
                                     IF(ierror == 0) THEN
                                        DO ind=1,kdfull2
-                                          psip(ind)=psitarget(ind,i1nn)*psitarget(ind,i2nn)
-                                          psipp(ind) = psi(ind,j1nn)*psi(ind,j2nn)
-                                          tbelement = CONJG(psip(ind))*psipp(ind)  + tbelement
+                                          temp1=psitarget(ind,i1nn)*psitarget(ind,i2nn)
+                                          temp2=psi(ind,j1nn)*psi(ind,j2nn)
+                                          tbelement = CONJG(temp1)*temp2  + tbelement
                                        END DO
                                        tbelement=tbelement*det
 !                                       tbelement = tbelement + wfovlp(psip,psipp)*det
-
                                     END IF
                                  END IF
                               END DO
@@ -237,7 +249,7 @@ DO ih=1,nstate-1
                         END DO
                      END DO
 !     final composition                                                                   
-                    tbelement=tbelememt*dvol
+                    tbelement=tbelement*dvol
                     totalprob = totalprob + ABS(tbelement*vcoll)**2
 
                   END IF    ! test on 2p1h energies                                       
@@ -248,7 +260,7 @@ DO ih=1,nstate-1
    END IF        ! test on ih spin                                                        
 END DO! loop on ih   
                                                                
-WRITE(*,*) 'ispin_target:',ispin_target(1:nstate_target)
+WRITE(*,'(a,200i3)') 'ispin_target:',ispin_target(1:nstate_target)
 
 DEALLOCATE(psitarget)
 DEALLOCATE(ispin_target)
