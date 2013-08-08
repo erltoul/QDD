@@ -358,6 +358,16 @@ IF(ifsicp >= 6) THEN
 END IF
 #endif
 
+#ifdef COMPLEXSWITCH
+  IF(mynact==0) THEN
+     IF(.NOT.tstatin .AND. jattach /=0) THEN
+        WRITE(*,*) 'read totintegprob: istat,irest=',istat,irest 
+        READ(60) totintegprob
+        WRITE(*,*) totintegprob
+     END IF
+  END IF
+#endif
+
 IF(tstatin) THEN 
   CLOSE(UNIT=60)
 ELSE
@@ -649,6 +659,10 @@ END IF
       END DO
     END IF
 #endif
+#endif
+
+#ifdef COMPLEXSWITCH
+IF (jattach /=0) WRITE(60) totintegprob
 #endif
 
 IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
