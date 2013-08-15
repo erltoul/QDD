@@ -174,10 +174,10 @@ INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
 INTEGER :: jovlp=100000000,jnorms=0
 INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
-INTEGER,ALLOCATABLE :: ispin_target(:),ispin_temp(:)
+INTEGER,ALLOCATABLE :: ispin_target(:)
 REAL(DP),ALLOCATABLE :: occ_target(:)
 REAL(DP),ALLOCATABLE :: spe_target(:)
-COMPLEX(DP),ALLOCATABLE :: psitemp(:,:)
+COMPLEX(DP),ALLOCATABLE :: psi_target(:,:)
 REAL(DP) :: totintegprob
 REAL(DP) :: aver_estar,emin_target,emax_target
 INTEGER  :: nstate_target,nmatchenergy

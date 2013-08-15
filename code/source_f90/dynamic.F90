@@ -278,6 +278,10 @@ nrel2abs(nstate)=nstate
 nabs2rel(nstate)=nstate
 ispin(nstate)=1
 
+! test actual number of active states, only occcupied states allowed
+DO i=1,nstate
+  IF(occup(i)<0.5D0) STOP "only occupied states allowed in case of attachement"
+END DO
 
 fac = 1D0/SQRT(pi**1.5*scatterelectronw**3)
 

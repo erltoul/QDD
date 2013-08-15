@@ -520,7 +520,7 @@ DO it=irest,itmax   ! time-loop
 
       CALL init_occ_target()
       WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
-      ALLOCATE(psitemp(kdfull2,nstate_target))
+      ALLOCATE(psi_target(kdfull2,nstate_target))
       CALL init_psitarget()
 
     ELSE IF(it>irest .AND. MOD(it,jattach) == 0) then
@@ -597,8 +597,8 @@ IF (isurf == 1) THEN
 END IF
 
 if (jattach>0) THEN
-  DEALLOCATE(psitemp)
-  DEALLOCATE(ispin_temp)
+  DEALLOCATE(psi_target)
+  DEALLOCATE(ispin_target)
   DEALLOCATE(occ_target)
   DEALLOCATE(spe_target)
 END IF
