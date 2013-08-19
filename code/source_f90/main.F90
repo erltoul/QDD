@@ -528,10 +528,10 @@ DO it=irest,itmax   ! time-loop
       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
       write(6,'(a,e12.5,1x,i8,3(1x,e14.5))') &
            'after ATTACHEMENT:',&
-           tfs,nmatchenergy,totalprob,totintegprob
+           tfs,nmatch,totalprob,totintegprob
       CALL safeopen(809,it,jattach,'pattach')
       write(809,'(e12.5,1x,i8,3(1x,e14.5))') & 
-           tfs,nmatchenergy,totalprob,totintegprob
+           tfs,nmatch,totalprob,totintegprob
       CALL FLUSH(809)
     END IF
   END IF
@@ -601,6 +601,7 @@ if (jattach>0) THEN
   DEALLOCATE(ispin_target)
   DEALLOCATE(occ_target)
   DEALLOCATE(spe_target)
+  DEALLOCATE(match)
 END IF
 
 

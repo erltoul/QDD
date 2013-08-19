@@ -178,9 +178,10 @@ INTEGER,ALLOCATABLE :: ispin_target(:)
 REAL(DP),ALLOCATABLE :: occ_target(:)
 REAL(DP),ALLOCATABLE :: spe_target(:)
 COMPLEX(DP),ALLOCATABLE :: psi_target(:,:)
+INTEGER,ALLOCATABLE :: match(:,:)
 REAL(DP) :: totintegprob
 REAL(DP) :: aver_estar,emin_target,emax_target
-INTEGER  :: nstate_target,nmatchenergy
+INTEGER  :: nstate_target,nmatch
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
