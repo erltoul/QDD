@@ -151,10 +151,10 @@ END SUBROUTINE init_psitarget
 
 !-----attach_prob------------------------------------------------                        
 
-SUBROUTINE attach_prob(totalprob,psi)
+SUBROUTINE attach_prob(totalprob,totalovlp,psi)
 USE params
 
-REAL(DP), INTENT(OUT)           :: totalprob
+REAL(DP), INTENT(OUT)           :: totalprob,totalovlp
 COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 
 !COMPLEX(DP),ALLOCATABLE :: psitarget(:,:)
@@ -250,9 +250,13 @@ DO iener=1,nmatch
       CALL FLUSH(6)
    END IF
 
-   ! CALL cludcmp_d(overlaps,nstate,indx,d,det,ierror)
-   
-   ! IF(ierror == 99) det = CMPLX(0D0,0D0)
+!
+!  as a test, compute determinant of full overlap
+!
+   submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
+   CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
+   IF(ierror == 99) det = CMPLX(0D0,0D0)
+   totalovlp=det
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'
