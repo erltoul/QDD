@@ -160,7 +160,7 @@ COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 !COMPLEX(DP),ALLOCATABLE :: psitarget(:,:)
 
 COMPLEX(DP) :: overlaps(kstate,kstate),submatr(kstate,kstate)
-COMPLEX(DP) :: determinant,tbelement,det,tbacc
+COMPLEX(DP) :: determinant,tbelement,det,tbacc,testovlp
 
 COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
@@ -256,11 +256,12 @@ DO iener=1,nmatch
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
    CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
    IF(ierror == 99) det = CMPLX(0D0,0D0)
-   totalovlp=det
+   totalovlp=ABS(det)
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'
    tbelement = CMPLX(0D0,0D0)
+   testovlp =  CMPLX(0D0,0D0)
    DO i1=1,nstate
       i1nn = ipoi_act(i1)
       DO i2=i1+1,nstate
@@ -270,7 +271,7 @@ DO iener=1,nmatch
          DO j1=1,nstate
             DO j2=j1+1,nstate
                IF((ispin_target(i1nn)+ispin_target(i2nn))  &
-                    == ispin(j1)+ispin(j2)) THEN
+                    == ispin(j1)+ispin(j2) ) THEN
                   !      extract submatrix                     
                   ishift = 0
                   DO i=1,nstate
@@ -286,9 +287,18 @@ DO iener=1,nmatch
                      END DO
                   END DO
                   CALL cludcmp_d(submatr,nstate-2,index,d,det,ierror)
-                  
                   IF(ierror == 99) det = CMPLX(0D0,0D0)
-                  IF(ierror == 0) THEN
+                  
+                  testovlp = det*(2*MOD(i1,2)-1)*(2*MOD(i2,2)-1) &
+                                *(2*MOD(j1,2)-1)*(2*MOD(j2,2)-1) &
+                             *(overlaps(i1,j1)*overlaps(i2,j2) &
+                               -overlaps(i1,j2)*overlaps(i2,j1)) &
+                            + testovlp
+                  IF(ispin_target(i1nn).NE.ispin_target(i2nn) ) THEN
+!                       IF(mod(j1-j2,2)==0) det = -det
+                     det = det*(2*MOD(i1,2)-1)*(2*MOD(i2,2)-1) &
+                              *(2*MOD(j1,2)-1)*(2*MOD(j2,2)-1)
+                     IF(ispin_target(i1nn).NE.ispin(j1)) det = -det
                      tbacc = CMPLX(0D0,0D0)
                      DO ind=1,kdfull2
                         temp1=psi_target(ind,i1nn)*psi_target(ind,i2nn)
@@ -313,8 +323,10 @@ DO iener=1,nmatch
 END DO! loop on 2p1h transitions
 
 IF(ttest) THEN
-  WRITE(*,'(a,i4,2(1pg13.5))') &
+  WRITE(*,'(a,i4,4(1pg13.5))') &
     'nmatch,totalprob=',nmatch,totalprob
+  WRITE(*,'(a,4(1pg13.5))') &
+    'test determinants=',totalovlp,ABS(testovlp),ABS(testovlp)/totalovlp
   CALL FLUSH(6)
 END IF
 
