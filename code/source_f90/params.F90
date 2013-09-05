@@ -19,14 +19,14 @@ INTEGER,PRIVATE :: ksttot2
 
 !  settings ad definitions for openmp parallel computing
 #if(paropenmp)
-INTEGER,PARAMETER :: numthr = 8  ! actual number of threads in openmp
+INTEGER :: numthr = 1  ! actual number of threads in openmp
 INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
 INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
 EXTERNAL :: OMP_SET_NUM_THREADS
 #else
 INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
 #endif
-INTEGER :: nthr=numthr-1                ! max number of threads -- 1
+INTEGER :: nthr                ! max number of threads -- 1
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8
@@ -363,7 +363,7 @@ CONTAINS
 
 SUBROUTINE init_baseparams()
 
-
+nthr=numthr-1  
 ! deduced grid parameters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
  nx2=kxbox;ny2=kybox;nz2=kzbox

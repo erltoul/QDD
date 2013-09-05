@@ -182,6 +182,8 @@ LOGICAL,PARAMETER :: ttest=.true.   ! compact test output
 IF(ttest) WRITE(*,'(a)') 'enter attach_prob'
 
 vcoll=1D0      ! strength of collisional pot.                                   totalprob=0D0
+totalovlp=0D0
+totaltestovlp=0D0
 
 IF(ttestb) THEN
   WRITE(*,'(a,200f8.4)') 'OCCUP:',occup(1:nstate)
@@ -256,7 +258,7 @@ DO iener=1,nmatch
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
    CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
    IF(ierror == 99) det = CMPLX(0D0,0D0)
-   totalovlp=ABS(det)
+   totalovlp=ABS(det)+totalovlp
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'
@@ -319,6 +321,7 @@ DO iener=1,nmatch
       CALL FLUSH(6)
    END IF
    totalprob = totalprob + ABS(tbelement*vcoll)**2
+   totaltestovlp=ABS(testovlp)+totaltestovlp
    
 END DO! loop on 2p1h transitions
 
@@ -326,7 +329,7 @@ IF(ttest) THEN
   WRITE(*,'(a,i4,4(1pg13.5))') &
     'nmatch,totalprob=',nmatch,totalprob
   WRITE(*,'(a,4(1pg13.5))') &
-    'test determinants=',totalovlp,ABS(testovlp),ABS(testovlp)/totalovlp
+    'test determinants=',totalovlp,totaltestovlp,totaltestovlp/totalovlp
   CALL FLUSH(6)
 END IF
 
