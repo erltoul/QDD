@@ -278,7 +278,7 @@ COMPLEX(DP),ALLOCATABLE :: psisavex(:,:)
 !     the energy transmitted from calc-lda to info etc
 
 REAL(DP) :: enrear,ecback,ecrho,ecorr,dt12,sgaus,ekion,energy
-REAL(DP) :: energ2,enerpw,encoulsp,entrop,epot,espnb,esh1
+REAL(DP) :: energ2,enerpw,encoulsp,entrop,epot,espnb,esh1,energit1
 REAL(DP) :: etot,ekionold,qold2,qold3,qold4
 REAL(DP) :: ekmat=0D0,engg,enii,enig,ecrhoimage
 REAL(DP),ALLOCATABLE :: ekinsp(:),evarsp(:),evarsp2(:),epotsp(:)

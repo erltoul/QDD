@@ -26,10 +26,13 @@ OPEN(UNIT=91,STATUS='unknown',FORM='formatted', FILE='occ_spe_target')
 !ELSE
 !   STOP ' invalid option in ATTACH_PROB'
 !END IF
-WRITE(*,*) ' istat,irest,binerg,reference_energy:',istat,irest,binerg,reference_energy
+WRITE(*,'(a,2i5,2(1pg15.7))')  &
+  ' istat,irest,binerg,reference_energy:',istat,irest,binerg,reference_energy
 
 !      aver_estar  = etot - binerg                                                            
-aver_estar  = reference_energy - binerg
+!aver_estar  = reference_energy - binerg
+aver_estar  = energit1-binerg
+WRITE(*,*) ' energit1,binerg=',energit1,binerg
 delta_etrgt = 3.d0*h2m/4.d0/scatterelectronw**2
 emin_target = aver_estar - delta_etrgt
 emax_target = aver_estar + delta_etrgt
@@ -162,7 +165,7 @@ COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 COMPLEX(DP) :: overlaps(kstate,kstate),submatr(kstate,kstate)
 COMPLEX(DP) :: determinant,tbelement,det,tbacc,testovlp
 
-COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
+!COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
 COMPLEX(DP) :: wfovlp
 REAL(DP),ALLOCATABLE :: occ_act(:)
@@ -258,12 +261,14 @@ DO iener=1,nmatch
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
    CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
    IF(ierror == 99) det = CMPLX(0D0,0D0)
-   totalovlp=ABS(det)+totalovlp
+   totalovlp=ABS(det)**2+totalovlp
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'
    tbelement = CMPLX(0D0,0D0)
    testovlp =  CMPLX(0D0,0D0)
+!   WRITE(*,'(a,i5)') ' for iener=',iener
+!   WRITE(*,'(a)') ' i1,i2,j1,j2,tbacc,det,tbacc*dvol*det:'
    DO i1=1,nstate
       i1nn = ipoi_act(i1)
       DO i2=i1+1,nstate
@@ -308,6 +313,8 @@ DO iener=1,nmatch
                         tbacc = CONJG(temp1)*temp2  + tbacc
                      END DO
                      tbelement=tbacc*dvol*det+tbelement
+!                     add = REAL(ABS(tbacc*dvol*det))
+!IF(add>1D-5) WRITE(*,'(4i5,6(1pg13.5))') i1,i2,j1,j2,REAL(ABS(tbacc)),REAL(ABS(det)),add
                   END IF
                END IF
             END DO
@@ -321,9 +328,12 @@ DO iener=1,nmatch
       CALL FLUSH(6)
    END IF
    totalprob = totalprob + ABS(tbelement*vcoll)**2
-   totaltestovlp=ABS(testovlp)+totaltestovlp
+   totaltestovlp=ABS(testovlp)**2+totaltestovlp
    
 END DO! loop on 2p1h transitions
+
+totaltestovlp=SQRT(totaltestovlp)
+totalovlp=SQRT(totalovlp)
 
 IF(ttest) THEN
   WRITE(*,'(a,i4,4(1pg13.5))') &
