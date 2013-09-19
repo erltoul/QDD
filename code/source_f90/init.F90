@@ -90,7 +90,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     nmptheta,nmpphi,jmp,jovlp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
-    iscatterelectron,scatterelectronenergy,  &
+    iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw,jattach, &
@@ -1910,6 +1910,7 @@ REAL(DP),ALLOCATABLE :: ph(:)             ! degeneracy of wavefunction, for
 REAL(DP) :: occu(ksttot)
 LOGICAL :: tocc
 DATA tocc/.false./
+REAL(DP),PARAMETER :: third=1D0/3D0
 
 !-----------------------------------------------------------------------
 
@@ -1933,7 +1934,7 @@ END IF
 !     where 'nelect,spin' is the nr. of electrons for given spin.
 !     this relation is resolved approximately for N.
 
-q20fac = SQRT(5.0/(16.0*pi))
+q20fac = SQRT(5.D0/(16.D0*pi))
 IF(numspin==2) THEN
   nelup  = nelect-nspdw
   neldw  = nspdw
@@ -1946,28 +1947,28 @@ ELSE
     STOP ' nr. of electrons must be even for spin degeneracy'
   nelup  = nclust/2
 END IF
-efacto = 0.25/(1D0*nelect)**0.3333333
-efrmup = (6.0*nelup)**0.3333333
-efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**0.3333333-1.5
+efacto = 0.25D0/(1D0*nelect)**third
+efrmup = (6.D0*nelup)**third
+efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**third-1.5D0
 ecutup = efrmup+deoccin
-nomxup = ecutup*(1D0+2.0*q20fac*betain)+0.5
+nomxup = ecutup*(1D0+2.D0*q20fac*betain)+0.5D0
 ecutup = efacto*ecutup
 IF(numspin==2) THEN
   IF(neldw > 0) THEN
-    efrmdw = (6.0*neldw)**0.3333333
-    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**0.3333333-1.5
+    efrmdw = (6.0D0*neldw)**third
+    efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**third-1.5D0
   ELSE
-    efrmdw = -0.00001
+    efrmdw = -0.00001D0
   END IF
   ecutdw = efrmdw+deoccin
-  nomxdw = ecutdw*(1D0+2.0*q20fac*betain)+0.5
+  nomxdw = ecutdw*(1D0+2.0D0*q20fac*betain)+0.5D0
   ecutdw = efacto*ecutdw
 END IF
 cosfac = q20fac*COS(gamin)
-sinfac = q20fac*SQRT(2.0)*SIN(gamin)
+sinfac = q20fac*SQRT(2.D0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
 yfac   = efacto/(1D0-betain*(cosfac+sinfac))
-zfac   = efacto/(1D0+2.0*betain*cosfac)
+zfac   = efacto/(1D0+2.0D0*betain*cosfac)
 !      write(*,*) ' efacto,efrmup,ecutup,deoccin=',
 !     &   efacto,efrmup,ecutup,deoccin
 
@@ -2548,6 +2549,9 @@ REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
 REAL(DP), ALLOCATABLE :: phix(:)
 
+REAL(DP),PARAMETER :: third=1D0/3D0
+REAL(DP),PARAMETER :: sixth=1D0/6D0
+
 !EQUIVALENCE (phix(1),w1(1))
 
 !----------------------------------------------------------------------
@@ -2557,19 +2561,19 @@ REAL(DP), ALLOCATABLE :: phix(:)
 
 an  = REAL(2*nclust)
 IF(temp > 0D0) THEN
-  homx = omeg*an**(-0.33333333)*xfac
-  homy = omeg*an**(-0.33333333)*yfac
-  homz = omeg*an**(-0.33333333)*zfac
+  homx = omeg*an**(-third)*xfac
+  homy = omeg*an**(-third)*yfac
+  homz = omeg*an**(-third)*zfac
   bxx  = (2.0*h2m/homx)**3
   bxy  = (2.0*h2m/homy)**3
   bxz  = (2.0*h2m/homz)**3
-  bxx  = osfac*(bxx**0.16666666)
-  bxy  = osfac*(bxy**0.16666666)
-  bxz  = osfac*(bxz**0.16666666)
+  bxx  = osfac*(bxx**sixth)
+  bxy  = osfac*(bxy**sixth)
+  bxz  = osfac*(bxz**sixth)
 ELSE
-  hom  = omeg*an**(-0.33333333)
+  hom  = omeg*an**(-third)
   bk1  = (2.0*h2m/hom)**3
-  bk1   = osfac*(bk1**0.166666666)
+  bk1   = osfac*(bk1**sixth)
 END IF
 
 
@@ -3071,7 +3075,9 @@ SUBROUTINE init_grid()
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

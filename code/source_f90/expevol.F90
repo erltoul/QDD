@@ -448,11 +448,20 @@ ALLOCATE(q1(kdfull2),q2(kdfull2))
 !     action of kinetic energy
 
 #if(gridfft)
+#if(netlib_fft|fftw_cpu)
 CALL fftf(qact,q1)
 DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO
 CALL fftback(q1,q2)
+#endif
+#if(fftw_gpu)
+CALL fftf(qact,q1,ffta,gpu_ffta)
+
+CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
+
+CALL fftback(q1,q2,ffta,gpu_ffta)
+#endif
 IF(tpri) ekinsp(nbe) = wfovlp(qact,q2)
 #else
 STOP ' HPSI not yet appropriate for finite differences'

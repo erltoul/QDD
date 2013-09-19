@@ -17,7 +17,9 @@ PROGRAM tdlda_m
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 #if(twostsic)
 USE twostr
 USE twost
@@ -68,6 +70,10 @@ CALL cpu_time(time_absinit)
 
 CALL init_parallele()
 
+#if(fftw_gpu)
+CALL cuda_gpu_init()
+#endif
+
 CALL checkoptions()
 
 CALL initnamelists          ! read all input parameters
@@ -85,6 +91,10 @@ CALL iparams()               ! check dynamic  parameters
 CALL init_grid()
 
 CALL init_fields()
+
+#if(lda_gpu)
+CALL cuda_lda_init()
+#endif
 
 #if(twostsic)
 IF(numspin==2) CALL init_radmatrix()
@@ -538,7 +548,23 @@ DO it=irest,itmax   ! time-loop
   END IF
 
   
-  
+!  computing electron attachement
+  IF(jattach>0) THEN
+    IF(it.eq.irest) THEN
+       totintegprob=0.d0
+       reference_energy=etot
+    ELSE IF(it.gt.irest.and.mod(it,jattach).eq.0) THEN
+       call attach_prob(nmatchenergy,totalprob,psi)
+!          call testoto(psi)                                                    
+       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+       write(6,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+       write(809,'(e12.5,1x,i4,3(1x,e14.5))') &
+         tfs,nmatchenergy,totalprob,totintegprob
+    END IF
+  END IF  
+! end electron attachement
+
 #if(simpara)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   WRITE(7,*) ' After barrier. myn,it=',myn,it
@@ -617,13 +643,14 @@ CLOSE(806)
 
 DEALLOCATE(psi)
 
-#if(fftw_cpu)
-IF (myn == 0) THEN
-CALL fft_end()
-CALL coulsolv_end()
-ENDIF
+#if(fftw_cpu|fftw_gpu)
+!CALL fft_end()
+!CALL coulsolv_end()
 #endif
 
+#if(fftw_gpu)
+!CALL cuda_end()
+#endif
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
@@ -637,6 +664,7 @@ WRITE(7,*) ' after final barrier. myn=',myn
 CALL mpi_finalize(icode)
 #endif
 
+IF(myn==0) THEN
 CALL cpu_time(time_absfin)
 OPEN(123,ACCESS='append',STATUS='unknown',FILE='Time')
 #if(netlib_fft)
@@ -645,9 +673,13 @@ WRITE(123,*)'NETLIB'
 #if(fftw_cpu)
 WRITE(123,*)'FFTW'
 #endif
+#if(fftw_gpu)
+WRITE(123,*)'cuFFT'
+#endif
 WRITE(123,*)'Box :',nx2,ny2,nz2
 WRITE(123,*)'Walltime =',time_absfin-time_absinit
 CLOSE(123)
+ENDIF
 
 END PROGRAM tdlda_m
 
@@ -676,7 +708,9 @@ SUBROUTINE loc_mfield_dummy(rho,aloc)
 
 USE params
 !USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

@@ -436,11 +436,19 @@ DO nb=1,nstate
   IF(iffastpropag == 1) THEN
     CALL kinprop(q0(1,nb),q1(1,ithr))
   ELSE
+#if(netlib_fft|fftw_cpu)
     CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
     WRITE(*,*) ak(1),q1(1,ithr)
     q1(:,ithr) = ak*q1(:,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
+#endif
+#if(fftw_gpu)
+    CALL fftf(q0(1,nb),q1(1,ithr),ffta,gpu_ffta)
+!    CALL cmult3d(q1,ak)
+    CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
+    CALL fftback(q1(1,ithr),q0(1,nb),ffta,gpu_ffta)
+#endif
   END IF
 #endif
 #if(findiff|numerov)
@@ -741,6 +749,7 @@ LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 !  CALL testgradient(psi(1,nb))
 !END DO
 
+OPEN(2743,FILE='energies.'//outnam)
 
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
@@ -1029,6 +1038,7 @@ IF(myn == 0) THEN
   IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
   IF(ivdw == 1) WRITE(6,*) 'vdw energy       = ',evdw
   WRITE(6,*) 'binding energy   = ',energy
+  WRITE(2743,*) 'binding energy   = ',energy
   WRITE(6,*) 'total energy     = ',etot
   IF (isurf /= 0) THEN
     WRITE(6,*) 'adsorb.energy = ',etot-enerinfty
@@ -1056,6 +1066,8 @@ END IF
 
 tstinf = .false.
 
+CALL flush(2743)
+CLOSE(2743)
 RETURN
 END SUBROUTINE info
 
@@ -1085,14 +1097,26 @@ COMPLEX(DP) :: wfovlp
 ALLOCATE(psi2(kdfull2))
 
 #if(gridfft)
+#if(netlib_fft|fftw_cpu)
 CALL fftf(psin,psi2)
+#endif
+#if(fftw_gpu)
+CALL fftf(psin,psi2,ffta,gpu_ffta)
+#endif
 sum0 = 0D0
 sumk = 0D0
+#if(netlib_fft|fftw_cpu)
 DO ii=1,kdfull2
   vol   = REAL(psi2(ii))*REAL(psi2(ii)) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
+#endif
+#if(fftw_gpu)
+CALL sum_calc2(sum0,sumk,gpu_ffta,gpu_akvfft,kdfull2)
+CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
+CALL copy3dto1d(ffta,psi2,nx2,ny2,nz2)
+#endif
 sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
 ekinout = sumk/sum0ex
 !WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
@@ -1285,10 +1309,10 @@ DEALLOCATE(arhop)
 
 excit=0D0
 DO i=1,kdfull2
-   excit=excit+arho(i)**1.666666666667D0
+   excit=excit+arho(i)**(5D0/3D0)
 END DO
 !fact=dvol*0.6D0*(6.0D0*pi**2)**0.666666666667D0
-excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**0.666666666667D0
+excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**(2.D0/3.D0)
 
 IF(extendedTF) THEN
 
@@ -1300,9 +1324,16 @@ IF(extendedTF) THEN
 ! x derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,1)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
+  CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1313,9 +1344,16 @@ IF(extendedTF) THEN
 ! y derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,2)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
+  CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1326,9 +1364,16 @@ IF(extendedTF) THEN
 ! z derivative
   gradrho = log(arho)
 !  CALL rftf(arho,gradrhok)
+#if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,3)
   CALL rfftback(gradrhok,gradrho)
+#endif
+#if(fftw_gpu)
+  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
+  CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
+  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
+#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1558,14 +1603,16 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
-COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:),q2(:)
+!COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
+COMPLEX(DP), ALLOCATABLE :: q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
 
 !------------------------------------------------------------------
 
-ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
-         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
+!ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
+!         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
+ALLOCATE(q2(kdfull2),jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 
 dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
@@ -1574,35 +1621,35 @@ dkz=pi/(dz*REAL(nz))
 !      nxyf=nx2*ny2
 !      nyf=nx2
 
-ind=0
-DO i3=1,nz2
-  IF(i3 >= (nz+1)) THEN
-    zkz=(i3-nz2-1)*dkz
-  ELSE
-    zkz=(i3-1)*dkz
-  END IF
+!ind=0
+!DO i3=1,nz2
+!  IF(i3 >= (nz+1)) THEN
+!    zkz=(i3-nz2-1)*dkz
+!  ELSE
+!    zkz=(i3-1)*dkz
+!  END IF
   
-  DO i2=1,ny2
-    IF(i2 >= (ny+1)) THEN
-      zky=(i2-ny2-1)*dky
-    ELSE
-      zky=(i2-1)*dky
-    END IF
-    
-    DO i1=1,nx2
-      IF(i1 >= (nx+1)) THEN
-        zkx=(i1-nx2-1)*dkx
-      ELSE
-        zkx=(i1-1)*dkx
-      END IF
-      
-      ind=ind+1
-      akx(ind)=-zkx*eye
-      aky(ind)=-zky*eye
-      akz(ind)=-zkz*eye
-    END DO
-  END DO
-END DO
+!  DO i2=1,ny2
+!    IF(i2 >= (ny+1)) THEN
+!      zky=(i2-ny2-1)*dky
+!    ELSE
+!      zky=(i2-1)*dky
+!    END IF
+!    
+!    DO i1=1,nx2
+!      IF(i1 >= (nx+1)) THEN
+!        zkx=(i1-nx2-1)*dkx
+!      ELSE
+!        zkx=(i1-1)*dkx
+!      END IF
+!      
+!      ind=ind+1
+!      akx(ind)=-zkx*eye
+!      aky(ind)=-zky*eye
+!      akz(ind)=-zkz*eye
+!    END DO
+!  END DO
+!END DO
 
 !  we going to calc. jx,jy,jz
 
@@ -1617,36 +1664,70 @@ END DO
 DO nb=1,nstate
   o=occup(nb)
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akx(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
+
+  CALL fftback(q2,q2,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     
     jalpha=test
     jtx(ind)=jtx(ind)-o*jalpha
   END DO
-  
-  
+
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*aky(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
+
+  CALL fftback(q2,q2,ffta,gpu_ffta)
+#endif
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
     jty(ind)=jty(ind)-o*jalpha
   END DO
   
-  
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
     q2(ind)=q2(ind)*akz(ind)
   END DO
+
   CALL fftback(q2,q2)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
+
+  CALL fftback(q2,q2,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
@@ -1685,7 +1766,8 @@ ajz=ajz*dvol
 WRITE(6,'(a,3f12.4)') 'moments',ajx,ajy,ajz
 WRITE(6,*)
 
-DEALLOCATE(akx,q2,aky,akz,jtx,jty,jtz)
+!DEALLOCATE(akx,q2,aky,akz,jtx,jty,jtz)
+DEALLOCATE(q2,jtx,jty,jtz)
 
 
 RETURN

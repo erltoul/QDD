@@ -396,10 +396,19 @@ END SUBROUTINE restart2
 
 !     **************************
 
+#if(netlib_fft|fftw_cpu)
 #ifdef REALSWITCH
-SUBROUTINE RSAVE(psi,isa,outna)
+SUBROUTINE RSAVE(psi,isa)
 #else
-SUBROUTINE SAVE(psi,isa,outna)
+SUBROUTINE SAVE(psi,isa)
+#endif
+#endif
+#if(fftw_gpu)
+#ifdef REALSWITCH
+SUBROUTINE RSAVE(psi)
+#else
+SUBROUTINE SAVE(psi)
+#endif
 #endif
 
 !     **************************
@@ -423,8 +432,9 @@ REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 #endif
-
+#if(netlib_fft|fftw_cpu)
 INTEGER, INTENT(IN OUT)                     :: isa
+#endif
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 LOGICAL,PARAMETER :: ttest = .TRUE.
 LOGICAL :: trealin
@@ -474,7 +484,7 @@ IF(ttest) WRITE(*,*) ' SAVE-BEFORE: myn=',myn
 
 IF(mynact==0) THEN
   IF(isave > 0) THEN
-    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna) 
+    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outnam) 
     WRITE(*,*) ' RSAVE opened'
   ELSE
     OPEN(UNIT=60,STATUS='scratch',FORM='unformatted') 
@@ -485,6 +495,10 @@ END IF
 
 #else
 
+#if(fftw_gpu)
+IF(mynact==0) &
+  OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outnam)   
+#else
 IF(mynact==0) THEN
   IF(isa<0) THEN
     OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna)   
@@ -497,6 +511,7 @@ IF(mynact==0) THEN
   END IF
   trealin=.false.
 END IF
+#endif
 
 #endif
   
@@ -621,12 +636,21 @@ IF(mynact==0) THEN
 #endif
         END IF
       END IF
+
+#if(fftw_gpu)
+!     writing accumulators for laser field
+      WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
+                fpulseinteg1,fpulseinteg2,elaser
+      WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
+#endif
 !     writing cumulators for laser field
       IF(isa.GE.0) THEN
         WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
                   fpulseinteg1,fpulseinteg2,elaser
         WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
       END IF
+#endif
+
 #endif
     END IF
 END IF    

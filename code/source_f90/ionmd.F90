@@ -1324,7 +1324,7 @@ INTEGER, INTENT(IN OUT)                  :: iask
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
-REAL(DP),DIMENSION(:),ALLOCATABLE :: akkx,akky,akkz
+!REAL(DP),DIMENSION(:),ALLOCATABLE :: akkx,akky,akkz
 !DIMENSION akkx(kdfull2),akky(kdfull2),akkz(kdfull2)
 !EQUIVALENCE (akkx(1),w1(1))
 !EQUIVALENCE (akky(1),w2(1))
@@ -1342,9 +1342,9 @@ ALLOCATE(aj(kdfull2))
 !EQUIVALENCE (aj(1),q2(1))
 #endif
 
-ALLOCATE(akkx(kdfull2))
-ALLOCATE(akky(kdfull2))
-ALLOCATE(akkz(kdfull2))
+!ALLOCATE(akkx(kdfull2))
+!ALLOCATE(akky(kdfull2))
+!ALLOCATE(akkz(kdfull2))
 ALLOCATE(p(kdfull2),q2(kdfull2))
 ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
 
@@ -1354,32 +1354,32 @@ dkx=pi/(dx*REAL(nx))
 dky=pi/(dy*REAL(ny))
 dkz=pi/(dz*REAL(nz))
 
-ind=0
-DO i3=1,nz2
-  IF(i3 >= (nz+1)) THEN
-    zkz=(i3-nz2-1)*dkz
-  ELSE
-    zkz=(i3-1)*dkz
-  END IF
-  DO i2=1,ny2
-    IF(i2 >= (ny+1)) THEN
-      zky=(i2-ny2-1)*dky
-    ELSE
-      zky=(i2-1)*dky
-    END IF
-    DO i1=1,nx2
-      IF(i1 >= (nx+1)) THEN
-        zkx=(i1-nx2-1)*dkx
-      ELSE
-        zkx=(i1-1)*dkx
-      END IF
-      ind=ind+1
-      akkx(ind)=-zkx
-      akky(ind)=-zky
-      akkz(ind)=-zkz
-    END DO
-  END DO
-END DO
+!ind=0
+!DO i3=1,nz2
+!  IF(i3 >= (nz+1)) THEN
+!    zkz=(i3-nz2-1)*dkz
+!  ELSE
+!    zkz=(i3-1)*dkz
+!  END IF
+!  DO i2=1,ny2
+!    IF(i2 >= (ny+1)) THEN
+!      zky=(i2-ny2-1)*dky
+!    ELSE
+!      zky=(i2-1)*dky
+!    END IF
+!    DO i1=1,nx2
+!      IF(i1 >= (nx+1)) THEN
+!        zkx=(i1-nx2-1)*dkx
+!      ELSE
+!        zkx=(i1-1)*dkx
+!      END IF
+!      ind=ind+1
+!      akkx(ind)=-zkx
+!      akky(ind)=-zky
+!      akkz(ind)=-zkz
+!    END DO
+!  END DO
+!END DO
 
 !   compute the currents for each direction: ajtx/y/z
 !   and their expectation values: exjx/y/z
@@ -1398,11 +1398,23 @@ DO nb=1,nstate
   exjy(nb)=0D0
   exjz(nb)=0D0
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akkx(ind)*eye
+    q2(ind)=q2(ind)*akx(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1410,11 +1422,24 @@ DO nb=1,nstate
     ajtx(ind)=ajtx(ind)+ajalpha
   END DO
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akky(ind)*eye
+    q2(ind)=q2(ind)*aky(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1422,11 +1447,24 @@ DO nb=1,nstate
     ajty(ind)=ajty(ind)+ajalpha
   END DO
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akkz(ind)*eye
+    q2(ind)=q2(ind)*akz(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1489,11 +1527,24 @@ END DO
 tel=0D0
 DO nb=1,nstate
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akkx(ind)*eye
+    q2(ind)=q2(ind)*akx(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1502,11 +1553,24 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajtx(ind))**2
   END DO
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akky(ind)*eye
+    q2(ind)=q2(ind)*aky(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1515,11 +1579,24 @@ DO nb=1,nstate
     tel=tel+0.5D0*rhoalpha*(ajalpha-ajty(ind))**2
   END DO
   
+#if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
+
   DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akkz(ind)*eye
+    q2(ind)=q2(ind)*akz(ind)
   END DO
+
   CALL fftback(q2,p)
+#endif
+
+#if(fftw_gpu)
+  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
+
+  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
+
+  CALL fftback(q2,p,ffta,gpu_ffta)
+#endif
+
   DO ind=1,kdfull2
     test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
@@ -1539,9 +1616,9 @@ CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,ic)
 WRITE(6,'(a,f12.5)') ' electronic thermal energy: ',eeth
 !      write(17,'(a,f12.5)') 'electronic thermal energy: ',eeth
 
-DEALLOCATE(akkx)
-DEALLOCATE(akky)
-DEALLOCATE(akkz)
+!DEALLOCATE(akkx)
+!DEALLOCATE(akky)
+!DEALLOCATE(akkz)
 DEALLOCATE(p,q2)
 DEALLOCATE(ajtx,ajty,ajtz)
 #if(parayes)

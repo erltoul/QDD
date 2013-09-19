@@ -51,7 +51,7 @@ REAL(DP),PARAMETER :: one=1.0D0
 REAL(DP),PARAMETER :: PI=3.141592653589793D0
 REAL(DP),PARAMETER :: fourpi=4.0D0*PI
 REAL(DP),PARAMETER :: small=1.0D-20
-REAL(DP),PARAMETER :: sq2=1.414213562D0
+REAL(DP),PARAMETER :: sq2=1.4142135623730950D0
 REAL(DP),PARAMETER :: sqrtpi=1.772453850905516D0
 COMPLEX(DP),PARAMETER :: eye=(0D0,1D0)
 
@@ -174,6 +174,7 @@ INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
 INTEGER :: jovlp=100000000,jnorms=0
 INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
+
 INTEGER,ALLOCATABLE :: ispin_target(:)
 REAL(DP),ALLOCATABLE :: occ_target(:)
 REAL(DP),ALLOCATABLE :: spe_target(:)
@@ -182,6 +183,7 @@ INTEGER,ALLOCATABLE :: match(:,:)
 REAL(DP) :: totintegprob
 REAL(DP) :: aver_estar,emin_target,emax_target
 INTEGER  :: nstate_target,nmatch
+
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
@@ -350,7 +352,10 @@ INTEGER :: iindtmp(3)
 ! pointer for energy-density functional
 PROCEDURE(),POINTER :: calc_lda
 
-
+#if(fftw_gpu)
+INTEGER :: num_gpus !total number of gpus on the node
+INTEGER :: mygpu !number of the actual gpu used by the node
+#endif
 
 !                          these includes should be shifted to own modules
 #if(raregas)

@@ -45,7 +45,7 @@ DO is=1,numspin
     ishift = (is-1)*nxyz
     
 !       Fourier transformation
-    
+#if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
     
 !       Laplacian and integral
@@ -54,32 +54,46 @@ DO is=1,numspin
       dervk(i) = potk(i)*akv(i)
     END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
+
+!       Laplacian and integral
+
+    CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     denominator = rwfovlp(rho(1+ishift),potwork)
     
 !       x-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      DO i2=1,ny2
-        DO i1=1,nx2
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zkx*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+          dervk = -akx*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     counter = rwfovlp(rho(1+ishift),potwork)
     xlambda = counter/denominator
     DO i=1,nxyz
@@ -87,29 +101,34 @@ DO is=1,numspin
     END DO
     
 !       y-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      DO i2=1,ny2
-        IF(i2 >= (ny+1)) THEN
-          zky=(i2-ny2-1)*dky
-        ELSE
-          zky=(i2-1)*dky
-        END IF
-        DO i1=1,nx2
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zky*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        IF(i2 >= (ny+1)) THEN
+!          zky=(i2-ny2-1)*dky
+!        ELSE
+!          zky=(i2-1)*dky
+!        END IF
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+          dervk = -aky*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     counter = rwfovlp(rho(1+ishift),potwork)
     ylambda = counter/denominator
     DO i=1,nxyz
@@ -117,29 +136,36 @@ DO is=1,numspin
     END DO
     
 !       z-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      IF(i3 >= (nz+1)) THEN
-        zkz=(i3-nz2-1)*dkz
-      ELSE
-        zkz=(i3-1)*dkz
-      END IF
-      DO i2=1,ny2
-        DO i1=1,nx2
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zkz*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      IF(i3 >= (nz+1)) THEN
+!        zkz=(i3-nz2-1)*dkz
+!      ELSE
+!        zkz=(i3-1)*dkz
+!      END IF
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zkz*potk(ind)
+          dervk = -akz*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -akz*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     counter = rwfovlp(rho(1+ishift),potwork)
     zlambda = counter/denominator
     DO i=1,nxyz
@@ -185,88 +211,113 @@ DO is=1,numspin
     
 !       Fourier transformation
     
+#if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
-    
+#endif
+#if(fftw_gpu)
+    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
+#endif
     
     
 !       x-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      DO i2=1,ny2
-        DO i1=1,nx2
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zkx*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zkx*potk(ind)
+          dervk = -akx*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -akx*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     zforcex = rwfovlp(rho(1+ishift),potwork)
     
     
 !       y-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      DO i2=1,ny2
-        IF(i2 >= (ny+1)) THEN
-          zky=(i2-ny2-1)*dky
-        ELSE
-          zky=(i2-1)*dky
-        END IF
-        DO i1=1,nx2
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zky*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        IF(i2 >= (ny+1)) THEN
+!          zky=(i2-ny2-1)*dky
+!        ELSE
+!          zky=(i2-1)*dky
+!        END IF
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zky*potk(ind)
+          dervk = -aky*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -aky*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     zforcey = rwfovlp(rho(1+ishift),potwork)
     
     
 !       z-derivative
-    
-    ind=0
-    DO i3=1,nz2
-      IF(i3 >= (nz+1)) THEN
-        zkz=(i3-nz2-1)*dkz
-      ELSE
-        zkz=(i3-1)*dkz
-      END IF
-      DO i2=1,ny2
-        DO i1=1,nx2
-!MB:
-          IF(i1 >= (nx+1)) THEN
-            zkx=(i1-nx2-1)*dkx
-          ELSE
-            zkx=(i1-1)*dkx
-          END IF
-!MB/
-          ind=ind+1
-          dervk(ind) = eye*zkz*potk(ind)
-        END DO
-      END DO
-    END DO
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      IF(i3 >= (nz+1)) THEN
+!        zkz=(i3-nz2-1)*dkz
+!      ELSE
+!        zkz=(i3-1)*dkz
+!      END IF
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zkz*potk(ind)
+          dervk = -akz*potk
+!        END DO
+!      END DO
+!    END DO
     CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -akz*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
     zforcez = rwfovlp(rho(1+ishift),potwork)
     
     
@@ -314,92 +365,119 @@ ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
 
 !       Fourier transformation
-
+#if(netlib_fft|fftw_cpu)
 CALL rftf(fieldfrom(1+ishift*kdfull2),potk)
-
+#endif
+#if(fftw_gpu)
+CALL rftf(fieldfrom(1+ishift*kdfull2),potk,ffta,gpu_ffta)
+#endif
 
 IF (icoor == 1) THEN
   
 !       x-derivative
   
-  ind=0
-  DO i3=1,nz2
-    DO i2=1,ny2
-      DO i1=1,nx2
-        IF(i1 >= (nx+1)) THEN
-          zkx=(i1-nx2-1)*dkx
-        ELSE
-          zkx=(i1-1)*dkx
-        END IF
-!MB:
-        IF(i1 >= (nx+1)) THEN
-          zkx=(i1-nx2-1)*dkx
-        ELSE
-          zkx=(i1-1)*dkx
-        END IF
-!MB/
-        ind=ind+1
-        dervk(ind) = eye*zkx*potk(ind)
-      END DO
-    END DO
-  END DO
-  CALL rfftback(dervk,potwork)
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zkx*potk(ind)
+          dervk = -akx*potk
+!        END DO
+!      END DO
+!    END DO
+    CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -akx*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
   
 ELSE IF (icoor == 2) THEN
   
   
 !       y-derivative
   
-  ind=0
-  DO i3=1,nz2
-    DO i2=1,ny2
-      IF(i2 >= (ny+1)) THEN
-        zky=(i2-ny2-1)*dky
-      ELSE
-        zky=(i2-1)*dky
-      END IF
-      DO i1=1,nx2
-!MB:
-        IF(i1 >= (nx+1)) THEN
-          zkx=(i1-nx2-1)*dkx
-        ELSE
-          zkx=(i1-1)*dkx
-        END IF
-!MB/
-        ind=ind+1
-        dervk(ind) = eye*zky*potk(ind)
-      END DO
-    END DO
-  END DO
-  CALL rfftback(dervk,potwork)
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      DO i2=1,ny2
+!        IF(i2 >= (ny+1)) THEN
+!          zky=(i2-ny2-1)*dky
+!        ELSE
+!          zky=(i2-1)*dky
+!        END IF
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zky*potk(ind)
+          dervk = -aky*potk
+!        END DO
+!      END DO
+!    END DO
+    CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -aky*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
   
 ELSE IF (icoor == 3) THEN
   
   
 !       z-derivative
   
-  ind=0
-  DO i3=1,nz2
-    IF(i3 >= (nz+1)) THEN
-      zkz=(i3-nz2-1)*dkz
-    ELSE
-      zkz=(i3-1)*dkz
-    END IF
-    DO i2=1,ny2
-      DO i1=1,nx2
-!MB:
-        IF(i1 >= (nx+1)) THEN
-          zkx=(i1-nx2-1)*dkx
-        ELSE
-          zkx=(i1-1)*dkx
-        END IF
-!MB/
-        ind=ind+1
-        dervk(ind) = eye*zkz*potk(ind)
-      END DO
-    END DO
-  END DO
-  CALL rfftback(dervk,potwork)
+#if(netlib_fft|fftw_cpu)
+!    ind=0
+!    DO i3=1,nz2
+!      IF(i3 >= (nz+1)) THEN
+!        zkz=(i3-nz2-1)*dkz
+!      ELSE
+!        zkz=(i3-1)*dkz
+!      END IF
+!      DO i2=1,ny2
+!        DO i1=1,nx2
+!!MB:
+!          IF(i1 >= (nx+1)) THEN
+!            zkx=(i1-nx2-1)*dkx
+!          ELSE
+!            zkx=(i1-1)*dkx
+!          END IF
+!!MB/
+!          ind=ind+1
+!          dervk(ind) = eye*zkz*potk(ind)
+          dervk = -akz*potk
+!        END DO
+!      END DO
+!    END DO
+    CALL rfftback(dervk,potwork)
+#endif
+#if(fftw_gpu)
+!    dervk = -akz*potk
+    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
+    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
+#endif
   
 ELSE
   STOP 'Error in getGradField'

@@ -94,7 +94,9 @@ SUBROUTINE pseudosoft()
 
 USE params
 USE kinetic
+#if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY: falr
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !    size of subgrid in units of mesh size
