@@ -392,6 +392,7 @@ ekionold=0D0
 
 !---           here starts true propagation  --------------
 
+energit1=etot
 CALL flush(7)
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
@@ -505,7 +506,7 @@ DO it=irest,itmax   ! time-loop
     !    'deocc' high enough, so that all bound states, occupied and empty, 
     !    are calculated.
     ! 2) Create the file 'occ_spe_target' containing the binding energy and 
-    !    the total energy as a first line, and then the ispin, occupation 
+    !    the total energy as a first line, and then the isopin, occupation 
     !    number and s.p. energie of each state.
     ! 3) Perform a dynamical calculation with itmax=1 to generate a save file 
     !    which should be moved to the parent directory and renamed 'wfs_target'.
