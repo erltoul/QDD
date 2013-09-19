@@ -271,15 +271,15 @@ ifeq "$(CF90)" "XLF_R"
 endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-	#OPTGPU = -O3 --gpu-architecture sm_13 
-	OPTGPU = -O3 --gpu-architecture sm_20 
-	#OPTGPU = -O3 --gpu-architecture sm_30 
-	#OPTGPU = -O3 --gpu-architecture sm_35 
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_13 
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_20 
+	#GPUCOMPILERFLAGS = -O3 --gpu-architecture sm_30 
+	OPTGPU = -O3 --gpu-architecture sm_35 
   ifeq "$(DEBUG)" "YES"
-	#OPTGPU = -g -G --gpu-architecture sm_13 
-	OPTGPU = -g -G --gpu-architecture sm_20 
-	#OPTGPU = -g -G --gpu-architecture sm_30 
-	#OPTGPU = -g -G --gpu-architecture sm_35 
+       	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_13 
+	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_20 
+	#GPUCOMPILERFLAGS = -g -G --gpu-architecture sm_30 
+	OPTGPU = -g -G --gpu-architecture sm_35 
   endif
 endif
 
