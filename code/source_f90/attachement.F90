@@ -256,7 +256,7 @@ DO iener=1,nmatch
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
    CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
    IF(ierror == 99) det = CMPLX(0D0,0D0)
-   totalovlp=det
+   totalovlp=ABS(det)
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'

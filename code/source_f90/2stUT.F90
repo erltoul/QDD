@@ -1148,6 +1148,7 @@ DO iter=1,itmax2
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
   IF(iter>0 .AND. ABS(norm) < actprecis) GO TO 99
+!  IF(iter>2 .AND. ABS(norm) < actprecis) GO TO 99
   
 END DO
 99   CONTINUE
