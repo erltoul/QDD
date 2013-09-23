@@ -13,7 +13,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT
+CF90 = IFORT1
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -35,13 +35,13 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = cuFFT
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
 #   * YES
 #   * NO
-DEBUG  = NO
+DEBUG  = YES
 
 # LINK_STATIC: select static linkage of the binary
 # Available options:
@@ -53,7 +53,7 @@ LINK_STATIC = YES
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = YES
+MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT = FFTW)
 # Default value:

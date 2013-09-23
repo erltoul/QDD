@@ -177,7 +177,7 @@ IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
     IF(sumvar2 < epsoro) GO TO 99
   END IF
   
-  IF(MOD(iter1,isave) == 0) CALL rsave(psir,iter1,outnam)
+  IF(isave>0 .AND. MOD(iter1,isave) == 0) CALL rsave(psir,iter1,outnam)
 
 CALL flush(6)
 

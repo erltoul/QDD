@@ -18,8 +18,8 @@
 !
 ! full SIC and localized SIC
 !
-#define twostsic 0
-#define cmplxsic 0
+#define twostsic 1
+#define cmplxsic 1
 !
 !  
 ! switch to extended model with polarizable raregas
@@ -30,7 +30,7 @@
 !#define oldkinprop 0
 
 !lda computed on GPU (1) or on CPU (0)
-#define lda_gpu 1
+#define lda_gpu 0
 
 !Asynchronous GPU kernel, set it to 0 for the moment
 #define asynclaunch 0
