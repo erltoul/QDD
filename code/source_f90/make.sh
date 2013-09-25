@@ -40,15 +40,15 @@ case "$LD_LIBRARY_PATH" in
     *sgi?mpt*)
         if [ $para = 1 ] || [ $para = 2 ] ; then
             echo '*** SGI cluster detected, LINK_STATIC set to NO ***'
-            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' define.mk
+            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' makefile
         elif [ $para = 0 ] ; then
-            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = YES/' define.mk
+            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = YES/' makefile
         fi
         ;;
     *)
-#        sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = YES/' define.mk
+#        sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = YES/' makefile
         if [ $type_check = gpu ] ; then
-            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' define.mk
+            sed -i -e 's/LINK_STATIC = .*/LINK_STATIC = NO/' makefile
         fi
         ;;
 esac
@@ -59,27 +59,27 @@ if [ $para = 0 ] ; then
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
 #    sed -i -e 's/parayes.*/parayes 0/' define.h
 #    sed -i -e 's/simpara.*/simpara 0/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" define.mk
-    sed -i -e 's/CF90 = .*/CF90 = IFORT/' define.mk
-    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = NO/' define.mk
+#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" makefile
+    sed -i -e 's/CF90 = .*/CF90 = IFORT/' makefile
+    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = NO/' makefile
 elif [ $para = 1 ] ; then
     echo '*** parallel compilation, simpara = no ***'
     echo "*** the executable for parallel code is name '$NAME.par' ***"
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 0/' define.h
 #    sed -i -e 's/parayes.*/parayes 1/' define.h
 #    sed -i -e 's/simpara.*/simpara 0/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.par/g" define.mk
-    sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' define.mk
-    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = YES/' define.mk
+#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.par/g" makefile
+    sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
+    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = YES/' makefile
 elif [ $para = 2 ] ; then
     echo '*** parallel compilation, simpara = yes ***'
     echo "*** the executable for sim. parallel code is named '$NAME.sim' ***"
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
 #    sed -i -e 's/parayes.*/parayes 0/' define.h
 #    sed -i -e 's/simpara.*/simpara 1/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.sim/g" define.mk
-    sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' define.mk
-    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = SIM/' define.mk
+#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.sim/g" makefile
+    sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
+    sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = SIM/' makefile
 else
     echo "(0) serial; (1) parallel; (2) simpara"
     exit 0 
@@ -87,21 +87,21 @@ fi
 
 if [ $type_check = netlib ] ; then
     sed -i -e 's/netlib_fft.*/netlib_fft 1/' define.h
-    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = NETLIB/' define.mk
-#        sed -i -e 's/DIM = .*/DIM = 1d/' define.mk
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = NETLIB/' makefile
+#        sed -i -e 's/DIM = .*/DIM = 1d/' makefile
 elif [ $type_check = fftw ] ; then
 #    	if [ $dim_check = 1d ] ; then
-#        	sed -i -e 's/DIM = .*/DIM = 1d/' define.mk
+#        	sed -i -e 's/DIM = .*/DIM = 1d/' makefile
     sed -i -e 's/fftw_cpu.*/fftw_cpu 1/' define.h
 #    	fi
 #    	if [ $dim_check = 3d ] ; then
-#        	sed -i -e 's/DIM = .*/DIM = 3d/' define.mk
+#        	sed -i -e 's/DIM = .*/DIM = 3d/' makefile
 #        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
 #    	fi
-    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' define.mk
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
 elif [ $type_check = gpu ] ; then
     sed -i -e 's/fftw_cpu.*/fftw_gpu 1/' define.h
-    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = cuFFT/' define.mk
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = cuFFT/' makefile
     cp define.h define_cuda.h
     sed -i -e 's/!/\/\//g' define_cuda.h #define_cuda.h is just define.h turned into C++
 else

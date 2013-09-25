@@ -42,23 +42,23 @@ DEBUG  = NO
 #   * NO
 LINK_STATIC = YES
 
-# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT = FFTW)
+# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
 #   * YES
 #   * NO
 MKL_THREADS = NO
 
-# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT = FFTW)
+# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
 MKL_WRAPPERS =
 
-# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT = FFTW)
+# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
 MKLPATH =
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
-# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT = FFTW )
+# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
 MKLINCLUDE =
 
