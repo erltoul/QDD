@@ -1,12 +1,5 @@
 # Makefile
 
-#####################################################################
-#                             Defaults                              #
-#####################################################################
-# PLEASE, DO NOT MODIFY THESE PARAMETERS HERE, EDIT THE INCLUDE'D   #
-# FILE (define.mk) IF YOU NEED TO CHANGE ANY OF THEM                #
-#####################################################################
-
 # CF90: Fortran compiler
 # Available options:
 #   * GFORT (serial version only)
@@ -41,7 +34,7 @@ TYPE_FFT = FFTW
 # Available options:
 #   * YES
 #   * NO
-DEBUG  = YES
+DEBUG  = NO
 
 # LINK_STATIC: select static linkage of the binary
 # Available options:
@@ -72,12 +65,6 @@ MKLINCLUDE =
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
-#####################################################################
-#                 Include customized makefile                       #
-#####################################################################
-
-# Include file with customized compilation parameters
-include define.mk
 
 #####################################################################
 #                Process parallelization options                    #
