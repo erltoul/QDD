@@ -6,14 +6,14 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT1
+CF90 = MPIF90
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
 #   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
-MPI_PARALLEL = NO
+MPI_PARALLEL = YES
 
 # OMP_THREADS: Invoke OpenMP
 # Available options:
@@ -28,7 +28,7 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = FFTW
+TYPE_FFT = MKL
 
 # DEBUG: enable debugging
 # Available options:
@@ -40,7 +40,7 @@ DEBUG  = NO
 # Available options:
 #   * YES
 #   * NO
-LINK_STATIC = YES
+LINK_STATIC = NO
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
@@ -50,17 +50,17 @@ MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
-MKL_WRAPPERS =
+MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
-MKLPATH =
+MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
-MKLINCLUDE =
+MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
@@ -393,7 +393,7 @@ else
     ifeq ($(OMP), YES)
 	FFTWFLAGS += -lfftw3_omp
     endif
-	FFTWFLAGS += -lfftw3 -lm
+	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib
   endif
 endif
 
@@ -402,7 +402,7 @@ ifeq ($(TYPE_FFT), cuFFT)
         CUDAFLAGS += -L/opt/cuda/5.0/lib64/ -lcufft -lcudart
 endif
 
-LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL) $(CUDAFLAGS)
+LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL) $(CUDAFLAGS) 
 
 ifeq ($(LINK_STATIC), YES)
 	LINKERFLAGS += $(STATIC)

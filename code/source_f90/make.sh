@@ -1,9 +1,17 @@
 #!/bin/bash
 NAME=essai
 
+module unload default-intel-cc
+module unload default-intel-fc
+module unload default-intel-mkl
+module load intel-mkl/12.1
+module load intel-fc-12/12.1
+module load intel-cc-12/12.1
+
 para=0
 if [ $1 ] ; then
  para=$1
+ module load sgi-mpt/2.0.4
 fi
 
 if [ -z $2 ] ; then
@@ -99,6 +107,9 @@ elif [ $type_check = fftw ] ; then
 #        	sed -i -e 's/fftw3d_cpu.*/fftw3d_cpu 1/' define.h
 #    	fi
     sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = FFTW/' makefile
+elif [ $type_check = mkl ] ; then
+    sed -i -e 's/fftw_cpu.*/fftw_cpu 1/' define.h
+    sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = MKL/' makefile
 elif [ $type_check = gpu ] ; then
     sed -i -e 's/fftw_cpu.*/fftw_gpu 1/' define.h
     sed -i -e 's/TYPE_FFT = .*/TYPE_FFT = cuFFT/' makefile
