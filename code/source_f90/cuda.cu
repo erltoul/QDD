@@ -61,10 +61,10 @@ extern "C" void cuda_gpu_init_() //initialize some variables usefull for GPU com
 #if(parayes)
 cudaGetDeviceCount(&params_mp_num_gpus_);
 if(params_mp_num_gpus_ == 1) params_mp_mygpu_ = 0;
-else if(params_mp_num_gpus_ == params_mp_knode_) params_mp_mygpu_=params_mp_myn_;
+else if(params_mp_num_gpus_ >= params_mp_knode_) params_mp_mygpu_=params_mp_myn_;
 else if(params_mp_knode_ % params_mp_num_gpus_ == 0) params_mp_mygpu_=params_mp_myn_%params_mp_num_gpus_;
 else {
-	cout<<"For the moment, number of gpus must be equal to the number of MPI process"<<endl;
+	cout<<"Incompatible CPU/GPU numbe"<<endl;
 	exit(-1);
      }
 cudaSetDevice(params_mp_mygpu_);
