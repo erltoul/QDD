@@ -184,7 +184,8 @@ LOGICAL,PARAMETER :: ttest=.true.   ! compact test output
 !WRITE(*,*) 'ispin(nstate)',ispin(nstate)
 IF(ttest) WRITE(*,'(a)') 'enter attach_prob'
 
-vcoll=1D0      ! strength of collisional pot.                                   totalprob=0D0
+vcoll=1D0      ! strength of collisional pot.                                   
+totalprob=0D0
 totalovlp=0D0
 totaltestovlp=0D0
 

@@ -52,12 +52,12 @@ IF(ndiff > 0) THEN
 ELSE
   nadd = -1
 END IF
-nadd=0     !  ?? check the initialization
+!nadd=0     !  ?? check the initialization
 IF(ndiff /= 0) THEN
   nadded = 0
   DO ncy=1,ncycle
-    DO ion=1,nion
-      nmxst(ion) = nmxst(ion)+nadd
+    DO ion=nion,1,-1
+      nmxst(ion) = nmxst(ion)-nadd
       nadded = nadded + nadd
       IF(nadded == ndiff) GO TO 19
     END DO
@@ -80,11 +80,11 @@ DO ion=1,nion
     IF(numspin==2) THEN
       nactst(ion) = nactst(ion)+MOD(natlevel,2)
       ispin(numstate) = 2-MOD(natlevel,2)
-      if (ipol(ion).eq.-1) then
-!        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
-        ispin(numstate) = 2
-      else
-        ispin(numstate) = 1
+      if (ipol(ion).eq.-1) then ! ipol=-1 serves to force spin down on some hydrogen atoms
+        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
+!       ispin(numstate) = 2
+!      else
+!        ispin(numstate) = 1
       endif
       write(6,*) 'ion,natlev,numst,ispin', &
                   ion,natlevel,numstate,ispin(numstate)

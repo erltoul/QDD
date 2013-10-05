@@ -1801,6 +1801,8 @@ ELSE
   
 !  CALL ininodes()
   occup=1D0
+! new MD
+  nstate=nclust
   CALL genermowf(psir,nmaxst)
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
@@ -1913,6 +1915,7 @@ DATA tocc/.false./
 REAL(DP),PARAMETER :: third=1D0/3D0
 
 !-----------------------------------------------------------------------
+write(6,*)'lionel',ksttot
 
 ALLOCATE(ph(2*ksttot))
 IF(numspin==2) THEN

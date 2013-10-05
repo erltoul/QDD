@@ -1,6 +1,8 @@
 #!/bin/bash
 NAME=essai
 
+. /usr/share/modules/init/bash
+
 module unload default-intel-cc
 module unload default-intel-fc
 module unload default-intel-mkl
