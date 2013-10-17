@@ -11,8 +11,6 @@ END SUBROUINTE dummypack
 
 !-----COMPLEX FFT PACKAGE FROM NETLIB -----------------------------------------
  
-! Code converted using TO_F90 by Alan Miller
-! Date: 2010-04-16  Time: 12:36:26
  
 !     VERSION FOR SINGLE PRECISION
 
@@ -66,22 +64,6 @@ END SUBROUINTE dummypack
 !------------------------------------------------------------------------------
 
 
-SUBROUTINE dcffti (n,wsave)
-
-INTEGER, PARAMETER :: kdim=512
-
-INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
-
-
-IF (n == 1) RETURN
-
-iw1 = n+n+1
-iw2 = iw1+n+n
-CALL dcfti1 (n,wsave(iw1),wsave(iw2))
-
-RETURN
-END SUBROUTINE dcffti
 SUBROUTINE dcfti1 (n,wa,ifac)
 
 INTEGER, PARAMETER :: kdim=512
@@ -159,23 +141,6 @@ END DO
 RETURN
 END SUBROUTINE dcfti1
 
-SUBROUTINE dcfftf (n,c,wsave)
-
-INTEGER, PARAMETER :: kdim=512
-
-INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: c(kdim)
-REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
-
-
-IF (n == 1) RETURN
-
-iw1 = n+n+1
-iw2 = iw1+n+n
-CALL dcftf1 (n,c,wsave,wsave(iw1),wsave(iw2))
-
-RETURN
-END SUBROUTINE dcfftf
 
 SUBROUTINE dcftf1 (n,c,ch,wa,ifac)
 
@@ -256,23 +221,6 @@ END DO
 RETURN
 END SUBROUTINE dcftf1
 
-SUBROUTINE dcfftb (n,c,wsave)
-
-INTEGER, PARAMETER :: kdim=512
-
-INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: c(kdim)
-REAL(8), INTENT(IN OUT)                     :: wsave(kdim)
-
-
-IF (n == 1) RETURN
-
-iw1 = n+n+1
-iw2 = iw1+n+n
-CALL dcftb1 (n,c,wsave,wsave(iw1),wsave(iw2))
-
-RETURN
-END SUBROUTINE dcfftb
 
 SUBROUTINE dcftb1 (n,c,ch,wa,ifac)
 
