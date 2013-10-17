@@ -440,7 +440,7 @@ DO nb=1,nstate
     CALL fftf(q0(1,nb),q1(1,ithr))
 !    CALL cmult3d(q1,ak)
     WRITE(*,*) ak(1),q1(1,ithr)
-    q1(:,ithr) = ak*q1(:,ithr)
+    q1(1:kdfull2,ithr) = ak*q1(1:kdfull2,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
 #endif
 #if(fftw_gpu)

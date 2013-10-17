@@ -122,13 +122,18 @@ ELSE
 END IF
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
-
+WRITE(7,*) 'after initwf'
 !                                     initialize surface
 #if(raregas)
 IF (isurf == 1) THEN
   CALL initfunctions
   CALL initsurface
 END IF
+#endif
+
+#if(parayes)
+CALL init_boxpara()
+WRITE(*,*) 'lengnod:',lengnod
 #endif
 
 
@@ -279,6 +284,7 @@ IF(nclust > 0)THEN
   ELSE
     IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi,iflag)
 !                   ??: 'evaluate' should come after 'restart2' ??
+    IF (iscatterelectron /=0) CALL init_scattel(psi)
     CALL restart2(psi,outnam,.false.)
     IF (iaddcluster /= 0) CALL addcluster(psi,outnam)
     WRITE(7,'(a,i3)') 'restart irest=',irest
@@ -398,11 +404,14 @@ END IF
 
 ekionold=0D0
 
+ IF(irest == 0) THEN
+      totintegprob=0.D0
+      reference_energy=etot
+ END IF
 
 
 !---           here starts true propagation  --------------
 
-energit1=etot
 CALL flush(7)
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
@@ -427,7 +436,12 @@ DO it=irest,itmax   ! time-loop
   
 !test           call calcrho(rho,psi)      !  ??????????
   
-  
+  IF(jattach/=0 .AND. it==irest) THEN
+     CALL init_occ_target()
+     WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
+     ALLOCATE(psi_target(kdfull2,nstate_target))
+     CALL init_psitarget()
+  END IF
   
   IF(it > irest)THEN
     
@@ -443,7 +457,7 @@ DO it=irest,itmax   ! time-loop
       
       
 !     propagation of the wfs
-      
+      WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw,.false.)
       ELSE
@@ -505,11 +519,6 @@ DO it=irest,itmax   ! time-loop
       ecorr = energ_ions()
       etot = ecorr + ekion
     END IF
-    IF(nclust > 0) CALL savings(psi,tarray,it)
-  END IF
-
-
-  IF (jattach>0) THEN
     ! The calculation of an electron attachment on a water molecule should 
     ! proceed as follows:
     ! 1) Perform a static calculation for a water molecule alone, with a 
@@ -525,45 +534,21 @@ DO it=irest,itmax   ! time-loop
     !    of the water molecule are considered. The incoming electron is added 
     !    just before the dynamics as the last (occupied) state, and thus 
     !    labeled by nstate.
-    IF(it == irest) then
-      totintegprob=0.D0
-      reference_energy=etot
 
-      CALL init_occ_target()
-      WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
-      ALLOCATE(psi_target(kdfull2,nstate_target))
-      CALL init_psitarget()
-
-    ELSE IF(it>irest .AND. MOD(it,jattach) == 0) then
-      call attach_prob(totalprob,totalovlp,psi)
-      totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
-      write(6,'(a,e12.5,1x,i8,3(1x,1pg13.5))') &
-           'after ATTACHEMENT:',&
-           tfs,nmatch,totalprob,totintegprob,totalovlp
-      CALL safeopen(809,it,jattach,'pattach')
-      write(809,'(e12.5,1x,i8,3(1x,1pg13.5))') & 
-           tfs,nmatch,totalprob,totintegprob,totalovlp
-      CALL FLUSH(809)
-    END IF
-  END IF
-
-  
-!  computing electron attachement
-  IF(jattach>0) THEN
-    IF(it.eq.irest) THEN
-       totintegprob=0.d0
-       reference_energy=etot
-    ELSE IF(it.gt.irest.and.mod(it,jattach).eq.0) THEN
-       call attach_prob(nmatchenergy,totalprob,psi)
-!          call testoto(psi)                                                    
+    IF(jattach>0 .AND. it>irest .AND. MOD(it,jattach) == 0) then
+       call attach_prob(totalprob,totalovlp,psi)
        totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
-       write(6,'(e12.5,1x,i4,3(1x,e14.5))') &
-         tfs,nmatchenergy,totalprob,totintegprob
-       write(809,'(e12.5,1x,i4,3(1x,e14.5))') &
-         tfs,nmatchenergy,totalprob,totintegprob
+       write(6,'(a,e12.5,1x,i8,3(1x,1pg13.5))') &
+            'after ATTACHEMENT:',&
+            tfs,nmatch,totalprob,totintegprob,totalovlp
+       CALL safeopen(809,it,jattach,'pattach')
+       write(809,'(e12.5,1x,i8,3(1x,1pg13.5))') & 
+            tfs,nmatch,totalprob,totintegprob,totalovlp
+       CALL FLUSH(809)
     END IF
-  END IF  
-! end electron attachement
+    IF(nclust > 0) CALL savings(psi,tarray,it)
+  END IF
+  
 
 #if(simpara)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
