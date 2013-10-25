@@ -6,14 +6,14 @@ USE params
 
 REAL(DP) :: xxdum,delta_etrgt
 INTEGER  :: iidum
-LOGICAL,PARAMETER :: ttest=.true.
+LOGICAL,PARAMETER :: ttest=.false.
 INTEGER,PARAMETER :: Nmatchmax=500
 
 !------------------------------------------------------------------------
 ! Reads the file 'occ_eps_target' that should be in the working directory.
 !------------------------------------------------------------------------
 
-WRITE(6,*) 'opening occ_spe_target file'
+WRITE(6,*) 'opening occ_eps_target file'
 OPEN(UNIT=91,STATUS='unknown',FORM='formatted', FILE='occ_spe_target')
 !IF(istat == 0.AND.irest == 0) THEN
 !   READ(91,*) xxdum,xxdum
@@ -31,8 +31,6 @@ WRITE(*,'(a,2i5,2(1pg15.7))')  &
 
 !      aver_estar  = etot - binerg                                                            
 aver_estar  = reference_energy - binerg
-!aver_estar  = energit1-binerg
-WRITE(*,*) 'reference_energy,binerg=',reference_energy,binerg
 delta_etrgt = 3.d0*h2m/4.d0/scatterelectronw**2
 emin_target = aver_estar - delta_etrgt
 emax_target = aver_estar + delta_etrgt
@@ -59,7 +57,7 @@ CLOSE(91)
 WRITE(*,*) 'ispin_target:',ispin_target(1:nstate_target)
 WRITE(*,*) 'occ_target:',occ_target(1:nstate_target)
 WRITE(*,*) 'nclust,nstate,nstate_target:',nclust,nstate,nstate_target
-
+WRITE(*,*) 'ispin:',ispin(1:nstate)
 !commPG
 !
 ! The following loops make sense only if the target states are sorted
@@ -107,7 +105,7 @@ IF (ttest) THEN
       write(*,*) 'iener,match: ',iener,match(iener,:)
    END DO
 END IF
-
+WRITE(*,*) 'nmatch:',nmatch
 RETURN
 END SUBROUTINE init_occ_target
 
@@ -184,7 +182,7 @@ LOGICAL,PARAMETER :: ttest=.true.   ! compact test output
 !WRITE(*,*) 'ispin(nstate)',ispin(nstate)
 IF(ttest) WRITE(*,'(a)') 'enter attach_prob'
 
-vcoll=1D0      ! strength of collisional pot.
+vcoll=1D0      ! strength of collisional pot.                                   
 totalprob=0D0
 totalovlp=0D0
 totaltestovlp=0D0

@@ -122,7 +122,7 @@ ELSE
 END IF
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
-WRITE(7,*) 'after initwf'
+
 !                                     initialize surface
 #if(raregas)
 IF (isurf == 1) THEN
@@ -404,13 +404,14 @@ END IF
 
 ekionold=0D0
 
+
+
+!---           here starts true propagation  --------------
+
  IF(irest == 0) THEN
       totintegprob=0.D0
       reference_energy=etot
  END IF
-
-
-!---           here starts true propagation  --------------
 
 CALL flush(7)
 CALL stimer(1)
@@ -425,7 +426,7 @@ CALL stimer(1)
 !        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
 !      END DO
 DO it=irest,itmax   ! time-loop
-  
+
   iterat = it      ! to communicate time step
   ijel=it
   tfs=it*dt1*0.0484  !/(2.0*ame)
@@ -436,13 +437,15 @@ DO it=irest,itmax   ! time-loop
   
 !test           call calcrho(rho,psi)      !  ??????????
   
-  IF(jattach/=0 .AND. it==irest) THEN
+  
+  IF(jattach /=0 .and. it == irest) then
      CALL init_occ_target()
      WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
      ALLOCATE(psi_target(kdfull2,nstate_target))
      CALL init_psitarget()
+     WRITE(*,*) 'after init_psitarget'
   END IF
-  
+
   IF(it > irest)THEN
     
     
@@ -514,7 +517,7 @@ DO it=irest,itmax   ! time-loop
       IF(isurf > 0) CALL analyze_surf(it)
     END IF
     IF(nclust > 0) THEN
-      CALL analyze_elect(psi,rho,aloc,it)
+        CALL analyze_elect(psi,rho,aloc,it)
     ELSE IF(MOD(it,100) == 0)THEN
       ecorr = energ_ions()
       etot = ecorr + ekion
@@ -534,8 +537,7 @@ DO it=irest,itmax   ! time-loop
     !    of the water molecule are considered. The incoming electron is added 
     !    just before the dynamics as the last (occupied) state, and thus 
     !    labeled by nstate.
-
-    IF(jattach>0 .AND. it>irest .AND. MOD(it,jattach) == 0) then
+    IF(jattach /= 0 .AND. it>irest .AND. MOD(it,jattach) == 0) then
        call attach_prob(totalprob,totalovlp,psi)
        totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
        write(6,'(a,e12.5,1x,i8,3(1x,1pg13.5))') &
@@ -546,9 +548,10 @@ DO it=irest,itmax   ! time-loop
             tfs,nmatch,totalprob,totintegprob,totalovlp
        CALL FLUSH(809)
     END IF
-    IF(nclust > 0) CALL savings(psi,tarray,it)
-  END IF
   
+    IF(nclust > 0) CALL savings(psi,tarray,it)
+ END IF
+
 
 #if(simpara)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)

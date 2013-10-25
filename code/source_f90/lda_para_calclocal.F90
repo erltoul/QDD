@@ -21,6 +21,16 @@ REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,homoe,Vproj
+INTEGER :: mysize
+
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+REAL(DP),DIMENSION(:),ALLOCATABLE :: tp1,tp2,tp3,tp4,tp5,tp6
+REAL(DP),DIMENSION(:),ALLOCATABLE :: aloc1,aloc2
+REAL(DP),DIMENSION(:),ALLOCATABLE :: potvdwnod
+INTEGER  :: nod
+#endif
 
 IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
 
@@ -34,6 +44,20 @@ ALLOCATE(rhon(kdfull2))
 ALLOCATE(chpdft(2*kdfull2))
 !ALLOCATE(vlaser(kdfull2))
 
+#if(parayes)
+CALL mpi_comm_rank(mpi_comm_world,nod,icode)
+
+mysize=lengnod(nod+1)
+ALLOCATE(tp1(mysize))
+ALLOCATE(tp2(mysize))
+CALL pi_scatterv(rho,nxyz,tp1,mysize,icode)
+CALL pi_scatterv(rhojel,nxyz,tp2,mysize,icode)
+ALLOCATE(tp3(mysize))
+#else
+nod=0
+mysize=nxyz
+#endif
+
 
 !       first, the netto charge density
 
@@ -42,13 +66,21 @@ ALLOCATE(chpdft(2*kdfull2))
 
 !test      write(6,'(a)') 'CALCLOCAL:'
 
-DO ind=1,nxyz
+!DO ind=1,nxyz
+DO ind=1,mysize
   IF(nion2 == 0) THEN
+#if(parayes)
+    tp3(ind)=tp1(ind)-tp2(ind)                 !jellium
+#else
     rhon(ind)=rho(ind)-rhojel(ind)                 !jellium
+#endif
   ELSE IF(nion2 /= 0) THEN
     rhon(ind)=rho(ind)                             !pseudo
   END IF
 END DO
+#if(parayes)
+CALL pi_allgatherv(tp3,mysize,rhon,nxyz,icode)
+#endif
 
 #if(raregas)
 IF(idielec /= 0) THEN
@@ -98,29 +130,87 @@ END IF
 
 !       the sum
 
-DO ind=1,nxyz
+#if(parayes)
+ALLOCATE(tp4(mysize))
+ALLOCATE(tp5(mysize))
+ALLOCATE(tp6(mysize))
+CALL pi_scatterv(chpcoul,nxyz,tp1,mysize,icode)
+CALL pi_scatterv(potion,nxyz,tp2,mysize,icode)
+if (tfs > 0D0) THEN
+   CALL pi_scatterv(vlaser,nxyz,tp3,mysize,icode)
+   CALL pi_scatterv(Vproj,nxyz,tp4,mysize,icode)
+END IF
+CALL pi_scatterv(chpdft,nxyz,tp5,mysize,icode)
+CALL pi_scatterv(chpdft(nxyz+1),nxyz,tp6,mysize,icode)
+
+ALLOCATE(aloc1(mysize))
+ALLOCATE(aloc2(mysize))
+
+#if(raregas)  
+ALLOCATE(potvdwnod)
+CALL pi_scatterv(potvdw,nxyz,potvdwnod,mysize,icode)
+#endif
+
+#endif
+
+
+!DO ind=1,nxyz
+DO ind=1,mysize
   IF(nion2 /= 0) THEN
+#if(parayes)
+    AINT=tp1(ind)-tp2(ind)
+#else
     AINT=chpcoul(ind)-potion(ind)
+#endif
 !            aint=-potion(ind)
   ELSE IF(nion2 == 0) THEN
+#if(parayes)
+    AINT=tp1(ind)
+#else
     AINT=chpcoul(ind)
+#endif
   END IF
   IF(tfs > 0D0) THEN
+#if(parayes)
+     AINT = AINT + tp3(ind) + tp4(ind)
+#else
      AINT = AINT + vlaser(ind) + Vproj(ind)
+#endif
   END IF
 
+#if(parayes)
+  aloc1(ind)=tp5(ind)+AINT
+  aloc2(ind)=tp6(ind)+AINT
+#else
   aloc(ind)=chpdft(ind)+AINT
   aloc(ind+nxyz)=chpdft(ind+nxyz)+AINT
+#endif
 
 #if(raregas)  
   IF (nc > 0 .AND. ivdw == 1) THEN
+#if(parayes)
+    aloc1(ind) = aloc1(ind) + potvdwnod(ind)
+    aloc2(ind) = aloc2(ind) + potvdwnod(ind)
+#else
     aloc(ind) = aloc(ind) + potvdw(ind)
     aloc(ind+nxyz) = aloc(ind+nxyz) + potvdw(ind)
+#endif
   END IF
 #endif
 
 END DO
 
+
+#if(parayes)
+CALL pi_allgatherv(aloc1,mysize,aloc,nxyz,icode)
+CALL pi_allgatherv(aloc2,mysize,aloc(nxyz+1),nxyz,icode)
+DEALLOCATE(aloc1,aloc2)
+DEALLOCATE(tp1,tp2,tp5,tp6)
+IF (tfs > 0D0) DEALLOCATE(tp3,tp4)
+#if(raregas)
+DEALLOCATE(potvdwnod)
+#endif
+#endif
 
 
 IF(tfs > 0D0)  THEN
@@ -343,14 +433,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
 REAL,SAVE                                    :: et
-INTEGER :: mysize
-
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,chpdftnod1,rhonod2,chpdftnod2
-INTEGER :: nod
-#endif
 
 !        parameter (pi=3.141592654)
 
@@ -395,31 +477,11 @@ ec=0D0
 
 !CALL cpu_time(time_start)
 
-#if(parayes)
-CALL mpi_comm_rank(mpi_comm_world,nod,icode)
-mysize=lengnod(nod+1)
-
-ALLOCATE(rhonod1(mysize))
-ALLOCATE(rhonod2(mysize))
-CALL pi_scatterv(rho,nxyz,rhonod1,mysize,icode)
-CALL pi_scatterv(rho(nxyz+1),nxyz,rhonod2,mysize,icode)
-
-ALLOCATE(chpdftnod1(mysize))
-ALLOCATE(chpdftnod2(mysize))
-#else
-mysize=nxyz
-#endif
 
 !!!$OMP PARALLEL DO DEFAULT(PRIVATE) SHARED(nxyz,rho,chpdft) SCHEDULE(STATIC) REDUCTION(+: ec,enerpw)
-!DO ii=1,nxyz
-DO ii=1,mysize
-#if(parayes)
-  rp     = MAX(rhonod1(ii),1D-16)
-  xi     = rhonod2(ii)
-#else
+DO ii=1,nxyz
   rp     = MAX(rho(ii),1D-16)
   xi     = rho(ii+nxyz)
-#endif
   
   t1 = xi*rp
   t2 = rp
@@ -475,11 +537,7 @@ DO ii=1,mysize
   
   
   
-#if(parayes)  
-  chpdftnod1(ii)      = -t135  * e2
-#else
   chpdft(ii)      = -t135  * e2
-#endif
   
   
 !      if (neldw.gt.0) then
@@ -506,11 +564,7 @@ DO ii=1,mysize
   
   
   
-#if(parayes)  
-  chpdftnod2(ii)      = -t135  * e2
-#else
   chpdft(ii+nxyz) = -t135  * e2
-#endif
 
 !      else
 !         chpdft(ii+nxyz) = 0.0
@@ -553,11 +607,8 @@ DO ii=1,mysize
   t2 = rp
   t3=ABS((t1+t2)/2.0)   !  *e2
   t4=ABS((t1-t2)/2.0)   !  *e2
-#if(parayes)
-  t5= chpdftnod1(ii)*t3+chpdftnod2(ii)*t4
-#else
+
  t5= chpdft(ii)*t3+chpdft(ii+nxyz)*t4
-#endif
   
   IF(directenergy) THEN
     enerpw = -t70*e2 + enerpw
@@ -569,18 +620,6 @@ DO ii=1,mysize
 
 END DO
 !!!!$OMP END PARALLEL DO
-#if(parayes)
-CALL pi_allgatherv(chpdftnod1,mysize,chpdft,nxyz,icode)
-CALL pi_allgatherv(chpdftnod2,mysize,chpdft(nxyz+1),nxyz,icode)
-DEALLOCATE(chpdftnod1,chpdftnod2)
-DEALLOCATE(rhonod1,rhonod2)
-CALL mpi_allreduce(ec,e,1,mpi_double_precision,mpi_sum,mpi_comm_world,icode)
-IF(directenergy) &
-     CALL mpi_allreduce(enerpw,ep,1,mpi_double_precision,&
-     mpi_sum,mpi_comm_world,icode)
-ec=e
-enerpw=ep
-#endif
 
 #else(lda_gpu)
 enrear = 0D0

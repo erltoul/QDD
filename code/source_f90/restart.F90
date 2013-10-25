@@ -364,6 +364,8 @@ END IF
         WRITE(*,*) 'read totintegprob: istat,irest=',istat,irest 
         READ(60) totintegprob
         WRITE(*,*) totintegprob
+        READ(60) reference_energy
+        WRITE(*,*) reference_energy
      END IF
   END IF
 #endif
@@ -382,7 +384,6 @@ DEALLOCATE(amoya,epotspa,ekinspa)
 DEALLOCATE(amoys,epotsps,ekinsps)
 DEALLOCATE(nrel2absf)
 #endif
-
 
 RETURN
 
@@ -498,8 +499,8 @@ IF(mynact==0) THEN
   trealin=.false.
 END IF
 
-#endif
-  
+#endif 
+ 
   
 !  write iteration at which the data is saved
 IF(mynact==0) THEN
@@ -662,7 +663,10 @@ END IF
 #endif
 
 #ifdef COMPLEXSWITCH
-IF (jattach /=0) WRITE(60) totintegprob
+IF (jattach /=0) THEN
+   WRITE(60) totintegprob
+   WRITE(60) reference_energy
+END IF
 #endif
 
 IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')

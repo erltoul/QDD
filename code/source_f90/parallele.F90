@@ -1128,3 +1128,95 @@ END SUBROUTINE prispe_parallele
 
 #endif
 
+#if(parayes)
+!-----init_boxpara-------------------------------------------------
+
+SUBROUTINE init_boxpara()
+
+!     Initializes the length of the subarrays used in pi_scatterv
+!     and pi_gatherv.
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+
+INTEGER :: ntranche,rest,nprocs
+!------------------------------------------------------------------
+
+CALL mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL mpi_comm_size(mpi_comm_world,nprocs,icode)
+
+ALLOCATE(lengnod(nprocs))
+ALLOCATE(displ(0:nprocs-1))
+
+IF (myn == 0) THEN
+   ntranche=nxyz/nprocs
+   rest=MOD(nxyz,nprocs)
+   displ(0)=0
+   DO i=1,nprocs-1
+      lengnod(i)=ntranche
+      displ(i)=lengnod(i)+displ(i-1)
+   END DO
+   lengnod(nprocs)=ntranche+rest
+END IF
+CALL mpi_bcast(lengnod,nprocs,mpi_integer,0,mpi_comm_world,icode)
+CALL mpi_bcast(displ,nprocs,mpi_integer,0,mpi_comm_world,icode)
+
+RETURN
+END SUBROUTINE init_boxpara
+#endif
+
+
+#if(parayes)
+!-----pi_scatterv-------------------------------------------------
+
+SUBROUTINE pi_scatterv(sendbuf,N,recvbuf,sizenod,ic)
+
+!     Scatters from node 0 a partition of the array 'sendbuf' of 
+!     size 'N'=(nxyz) into nprocs subarrays, locally called on the current
+!     process 'recvbuf', which size is stored in the array 'lengnod'.
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+
+REAL(DP), INTENT(IN OUT)         :: sendbuf(N)
+REAL(DP), INTENT(IN OUT)         :: recvbuf(sizenod)
+INTEGER, INTENT(IN OUT)          :: ic
+
+IF (N /= sum(lengnod)) &
+     STOP 'wrong size for sender array in pi_scatterv'
+
+!ALLOCATE(recvbuf(sizenod))
+!WRITE(*,*) 'allocation of recvbuf'
+
+CALL mpi_scatterv(sendbuf,lengnod,displ,mpi_double_precision,&
+     recvbuf,sizenod,mpi_double_precision,0,mpi_comm_world,ic)
+RETURN
+END SUBROUTINE pi_scatterv
+#endif
+
+#if(parayes)
+!-----pi_allgatherv-------------------------------------------------
+
+SUBROUTINE pi_allgatherv(sendbuf,sizenod,recvbuf,N,ic)
+
+!     Gathers all subarrays 'sendbuf' of size sizenod, into the 
+!     array 'recvbf' of size 'N'(=nxyz), and communicates it to all 
+!     processes.
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+
+REAL(DP), INTENT(IN OUT)          :: sendbuf(nxyz)
+REAL(DP), INTENT(IN OUT)         :: recvbuf(N)
+
+CALL mpi_allgatherv(sendbuf,sizenod,mpi_double_precision,&
+     recvbuf,lengnod,displ,mpi_double_precision,mpi_comm_world,ic)
+RETURN
+END SUBROUTINE pi_allgatherv
+#endif

@@ -34,7 +34,7 @@ INTEGER :: ng
 
 
 INTEGER,PARAMETER :: maxnang=100    ! max. angular bins for PAD
-INTEGER,PARAMETER :: maxmps=100    ! max. nr. analyzing points for PES
+INTEGER,PARAMETER :: maxmps=180    ! max. nr. analyzing points for PES
 ! parameter(drtab=1e-4)
 
 
@@ -172,7 +172,7 @@ INTEGER :: ishutdown=0
 ! INTEGER :: icheckformessages=1,jcheckformessages=50
 INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
-INTEGER :: jovlp=100000000,jnorms=0
+INTEGER :: jovlp=100000000,jnorms=50
 INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
 
 INTEGER,ALLOCATABLE :: ispin_target(:)
@@ -209,8 +209,8 @@ INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP
 INTEGER :: iffastpropag=1,ifexpevol=0
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
-INTEGER :: jpos=0,jvel=0,jener=10,jesc=0,jforce=0,jposcm=0,jgeomion=0
-INTEGER :: jinfo=10,jdip=10,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
+INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
+INTEGER :: jinfo=10,jdip=-9999,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0

@@ -175,10 +175,9 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     WRITE(*,*) ' title is now: '//outnam
     WRITE(iu,*) ' title is now: '//outnam
     CLOSE(5)
+
     
     OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
-    
-    
     
 !     read input from namelists
 
@@ -190,14 +189,24 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,surface,END=99999)
     WRITE(*,*) ' SURFACE read'
     
-    
     99999    CLOSE(5)
+
+    IF(jdip<0) STOP "you must specify JDIP in namelist DYNAMIC"
+    IF(jesc<0) STOP "you must specify JESC in namelist DYNAMIC"
+
 #if(simpara)
   ELSE IF(myn > 5) THEN
     STOP ' this node not  active'
 #endif
   END IF
   
+  IF (ionmdtyp==0) THEN
+     jpos=0
+     jvel=0
+  ELSE IF
+    IF(jpos<0) STOP "you must specify JPOS in namelist DYNAMIC"
+    IF(jvel<0) STOP "you must specify JVEL in namelist DYNAMIC"
+  END IF
 ! adapt input parameters if necessary
   IF(nion2 == 0) iemomsrel=0    ! relat. to center of box for jellium
 
@@ -1550,6 +1559,7 @@ IF(myn == 0)THEN
           'r1g=',r1g(np(ion)), 'r2g=',r2g(np(ion)),  &
           'radiong=',radiong(np(ion))
       WRITE(iunit,*) 'tblock=',tblock(ion)
+      WRITE(iunit,*) 'tnonloc=',tnonloc(ion)
     END DO
     
     IF(ipsptyp == 1) THEN
@@ -1638,14 +1648,14 @@ IF (ekin0pp > 0D0) THEN
 END IF ! initial kinetic energy for ions
 
 
-!     Initialization of the last ion (= projectile) velocity
+!     Initialization of the first ion (= projectile) velocity
 !     In the case of an atom, the w.f. are boosted accordingly in tinit
 IF (eproj > 0D0 .AND. taccel<1D-5) THEN
-  v0 = SQRT(2.*eproj/(amu(np(nion))*1836.0*ame))
+  v0 = SQRT(2.*eproj/(amu(np(1))*1836.0*ame))
   rnorm = vpx**2 + vpy**2+ vpz**2
   rnorm = SQRT(rnorm)
   IF (rnorm == 0) STOP 'Velocity vector not normalizable'
-  tempv=v0*ame*amu(np(nion))*1836.0/rnorm
+  tempv=v0*ame*amu(np(1))*1836.0/rnorm
   cpx(nion) = vpx*tempv
   cpy(nion) = vpy*tempv
   cpz(nion) = vpz*tempv
@@ -1762,7 +1772,9 @@ IF(ifhamdiag==1 .AND. nstate>nclust) THEN
    ' Presently: nstate,nclust=',nstate,nclust
   STOP  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST'
 END IF
+WRITE(*,*) 'before ininqb'
 CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
+WRITE(*,*) 'after ininqb'
 
 
 !     initialize H.O. wavefunctions
@@ -1801,8 +1813,6 @@ ELSE
   
 !  CALL ininodes()
   occup=1D0
-! new MD
-  nstate=nclust
   CALL genermowf(psir,nmaxst)
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
@@ -1915,7 +1925,6 @@ DATA tocc/.false./
 REAL(DP),PARAMETER :: third=1D0/3D0
 
 !-----------------------------------------------------------------------
-write(6,*)'lionel',ksttot
 
 ALLOCATE(ph(2*ksttot))
 IF(numspin==2) THEN
