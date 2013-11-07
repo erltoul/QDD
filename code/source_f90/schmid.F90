@@ -58,9 +58,11 @@ END IF
 DO nbes=1,nstate
   nbe = isort(nbes)
   
-  DO ncs=1,nstate
+!  DO ncs=1,nstate
+  DO ncs=1,nbes
     ncc = isort(ncs)
-    IF((ispin(nbe) == ispin(ncc)) .AND. ncc <= nbe) THEN
+!    IF((ispin(nbe) == ispin(ncc)) .AND. ncc <= nbe) THEN
+    IF((ispin(nbe) == ispin(ncc))) THEN
       cs=0.0
       DO i=1,nxyz
         cs=cs+q0(i,nbe)*q0(i,ncc)

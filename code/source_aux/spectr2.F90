@@ -13,9 +13,9 @@ PARAMETER (escl=13.6)          ! conversion energy from Ry to eV
 !      parameter (escl=1.0)          ! conversion energy from Ry to ...
 !                                     e.g. from Ry to eV  --> 13.6
 !                                     set 1 to leave output as is
-PARAMETER (ncosfilt=4)          ! order of cosine filtering
+PARAMETER (ncosfilt=0)          ! order of cosine filtering
 !     ! 0 ==> Gaussian filtering with 'twidth'
-PARAMETER (twidth=33.0/0.048)        ! time width for filtering (input units)
+PARAMETER (twidth=5.0/0.048)        ! time width for filtering (input units)
 !      parameter (twidth=12.0/0.048)        ! time width for filtering (input units)
 
 !     Fourier transforms the columns of input data on file 5
@@ -69,7 +69,7 @@ DATA iftims/0/                  ! print protocol of filtered time signal
 
 !     internal statement function for complex abs. value squared
 
-cabs2(c) = REAL(c*CONJG(c))
+!cabs2(c) = REAL(c*CONJG(c))
 
 !-------------------------------------------------------------------------------
 
