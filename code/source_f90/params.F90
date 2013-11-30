@@ -231,7 +231,7 @@ INTEGER :: ntheta=0,nphi=0
 INTEGER :: ifhamdiag=0
 #endif
 #if(parano)
-INTEGER :: ifhamdiag=1
+INTEGER :: ifhamdiag=20
 #endif
 
 

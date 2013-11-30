@@ -556,7 +556,7 @@ ALLOCATE(q2(kdfull2))
 
 
 #if(parano)
-IF(ifhamdiag == 1) THEN
+IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
   ktridig=(kstate+kstate*kstate)/2
   ALLOCATE(hmatr(ktridig,2),heigen(kstate),vect(kstate,kstate))
   ALLOCATE(psistate(kstate),npoi(kstate,2))
@@ -673,7 +673,7 @@ ALLOCATE(psipr(kdfull2))
 
   
 #if(parano)
-  IF(ifhamdiag == 1) THEN
+  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
@@ -835,7 +835,7 @@ ENDDO
   END IF
   
 #if(parano)
-  IF(ifhamdiag == 1) THEN
+  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
@@ -921,7 +921,7 @@ IF(ifsicp == 5)  DEALLOCATE(qex)
 
 
 #if(parano)
-IF(ifhamdiag == 1) THEN
+IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 
 
 !  symmetrize Hamiltonian matrix

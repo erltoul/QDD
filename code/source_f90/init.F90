@@ -203,7 +203,7 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
   IF (ionmdtyp==0) THEN
      jpos=0
      jvel=0
-  ELSE IF
+  ELSE
     IF(jpos<0) STOP "you must specify JPOS in namelist DYNAMIC"
     IF(jvel<0) STOP "you must specify JVEL in namelist DYNAMIC"
   END IF
@@ -349,7 +349,7 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
 #endif
 
 #if(findiff|numerov)
-IF(ifhamdiag == 1) STOP ' step with H diagonalization not yet for fin.diff.'
+IF(ifhamdiag>0) STOP ' step with H diagonalization not yet for fin.diff.'
 #endif
 
 
@@ -465,7 +465,7 @@ ELSE IF(numspin==1) THEN
 ELSE
   STOP "invalid uinput parameter NUMSPIN"
 END IF
-IF(ifhamdiag == 1) THEN
+IF(ifhamdiag>0) THEN
   WRITE(iu,'(a)') ' static step: Hamiltonian in subspace diagonalized'
 ELSE
   WRITE(iu,'(a)') ' static step: Hamiltonian in subspace not diagonalized'
@@ -1765,12 +1765,12 @@ omeg=0.25*h2m
 !      if(nclust.gt.0)
 !     &    call ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
-IF(ifhamdiag==1 .AND. nstate>nclust) THEN
-  WRITE(6,'(2a,2i5)')  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST', &
+IF(ifhamdiag>0 .AND. nstate>nclust) THEN
+  WRITE(6,'(2a,2i5)')  ' IFHAMDIAG>0 only allowed for NSTATE=NCLUST', &
    ' Presently: nstate,nclust=',nstate,nclust
-  WRITE(7,'(2a,2i5)')  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST', &
+  WRITE(7,'(2a,2i5)')  ' IFHAMDIAG>0 only allowed for NSTATE=NCLUST', &
    ' Presently: nstate,nclust=',nstate,nclust
-  STOP  ' IFHAMDIAG=1 only allowed for NSTATE=NCLUST'
+  STOP  ' IFHAMDIAG>0 only allowed for NSTATE=NCLUST'
 END IF
 WRITE(*,*) 'before ininqb'
 CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
@@ -3032,9 +3032,9 @@ IF(ivdw /=0) STOP " set raregas=1 when using VdW"
 #endif
 
 #if(twostsic)
-!IF(ifhamdiag==1 .AND. ifsicp==8) &
+!IF(ifhamdiag>0 .AND. ifsicp==8) &
 !  STOP "Hamiltonian diagonalization presently not compatible with full SIC"
-IF(ifhamdiag==1 .AND. ifsicp==7) &
+IF(ifhamdiag>0 .AND. ifsicp==7) &
   STOP "Hamiltonian diagonalization presently not compatible with localized SIC"
 #endif
 
