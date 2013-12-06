@@ -4,7 +4,7 @@ USE, intrinsic :: iso_c_binding
 USE FFTW
 USE kinetic, ONLY: FFTW_planflag
 #endif
-USE params, ONLY: DP,numthr
+USE params, ONLY: DP,numthr,e2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 SAVE
@@ -237,7 +237,7 @@ nxk=nx1
 ikzero = nxy1*(nz-1)+nxi*(ny-1)+nx
 write(*,*) ' nzi,nyi,nxi,nx,ny,nz,ikzero=',nzi,nyi,nxi,nx,ny,nz,ikzero
 #if(coudoub3D && fftw_cpu)
-factor = 2D0*(dx*dy*dz)/(nx*ny*nz*8D0)  ! 2D0 for e**2
+factor = e2*(dx*dy*dz)/(nx*ny*nz*8D0)  
 ii=0
 DO i3=1,nzi
   IF(i3<=nz) THEN
@@ -489,7 +489,7 @@ DO i3=1,nzi
       ii=ii+1
       IF(i3 <= nz .AND. i2 <= ny .AND. i1 <= nx) THEN
         i0 = i0+1
-        chpfalr(i0) = 2D0*rhokr(ii)
+        chpfalr(i0) = e2*rhokr(ii)
       END IF
     END DO
   END DO

@@ -40,7 +40,7 @@ DEBUG  = NO
 # Available options:
 #   * YES
 #   * NO
-LINK_STATIC = NO
+LINK_STATIC = YES
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
@@ -227,8 +227,8 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	STATIC = -static
-	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = -fpp -w -axsse4.1 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  = -fpp -w -axsse4.1 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  = -fpp -w        -g                            -align all -autodouble
   ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
@@ -427,10 +427,11 @@ else
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
+        EXEC = essai.omp
     else
 	MPI_NAME = Mono
+        EXEC = essai.seq
     endif
-    EXEC = essai.seq
   endif
 endif
 
