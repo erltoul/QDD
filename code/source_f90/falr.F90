@@ -1631,7 +1631,9 @@ END IF
 
 #if(fftw_cpu)
 IF(mxini == 0) THEN
+#if(fftwnomkl)
   wisdomtest=fftw_import_wisdom_from_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+#endif
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'wisdom_fftw.dat not found, creating it'
     WRITE(7,*) 'wisdom_fftw.dat not found, creating it'
@@ -1661,7 +1663,9 @@ IF(mzini == 0) THEN
   CALL dfftw_plan_dft_1d(pforwz,kfftx,fftax,fftax,FFTW_FORWARD,FFTW_EXHAUSTIVE)
   CALL dfftw_plan_dft_1d(pbackz,kfftx,fftax,fftax,FFTW_BACKWARD,FFTW_EXHAUSTIVE)
   mzini  = kfftz
+#if(fftwnomkl)
   wisdomtest=fftw_export_wisdom_to_filename(C_CHAR_'wisdom_fftw.dat'//C_NULL_CHAR)
+#endif
   IF (wisdomtest == 0) THEN
     WRITE(6,*) 'Error exporting wisdom to file wisdom_fftw.dat'
     WRITE(7,*) 'Error exporting wisdom to file wisdom_fftw.dat'

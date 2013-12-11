@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = YES
+OMP_THREADS = NO
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -46,7 +46,7 @@ LINK_STATIC = YES
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = YES
+MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
@@ -227,8 +227,8 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	STATIC = -static
-	OPT1  = -fpp -w -axsse4.1 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  = -fpp -w -axsse4.1 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = -fpp -w -axavx -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  = -fpp -w -axavx -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  = -fpp -w        -g                            -align all -autodouble
   ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
