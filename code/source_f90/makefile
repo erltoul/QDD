@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -46,7 +46,7 @@ LINK_STATIC = YES
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = NO
+MKL_THREADS = YES
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:

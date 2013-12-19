@@ -226,14 +226,18 @@ IF(mynact==0) THEN
 
 !  read protonic coordinates and momenta
   IF(nion > 0) THEN
+#ifdef REALSWITCH
+      READ(60) dummy
+#else
     IF(tstatin) THEN
       READ(60) dummy
     ELSE
       READ(60) cx(1:nion),cy(1:nion),cz(1:nion), &
                cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
     END IF
+#endif
     IF(ttest) THEN
-      WRITE(*,*) '  ionix positions/velocities:'
+      WRITE(*,*) '  ionic positions/velocities:'
       DO n=1,nion
         WRITE(*,*) cx(n),cy(n),cz(n),cpx(n),cpy(n),cpz(n)
       END DO

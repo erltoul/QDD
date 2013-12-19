@@ -1559,7 +1559,7 @@ IF(myn == 0)THEN
           'r1g=',r1g(np(ion)), 'r2g=',r2g(np(ion)),  &
           'radiong=',radiong(np(ion))
       WRITE(iunit,*) 'tblock=',tblock(ion)
-      WRITE(iunit,*) 'tnonloc=',tnonloc(ion)
+      IF(ipsptyp == 1) WRITE(iunit,*) 'tnonloc=',tnonloc(ion)
     END DO
     
     IF(ipsptyp == 1) THEN
