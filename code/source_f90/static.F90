@@ -529,7 +529,10 @@ nph=3-numspin
 
 !     set timer
 
-IF(tcpu) CALL cpu_time(time_init)
+IF(tcpu) THEN
+  CALL cpu_time(time_init)
+  CALL system_clock(ncount_init,ncount_rate,ncount_max)
+END IF
 
 
 !     exact exchange, to be completed before wavefunctions are modified
@@ -559,7 +562,7 @@ ALLOCATE(q2(kdfull2))
 IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
   ktridig=(kstate+kstate*kstate)/2
   ALLOCATE(hmatr(ktridig,2),heigen(kstate),vect(kstate,kstate))
-  ALLOCATE(psistate(kstate),npoi(kstate,2))
+  ALLOCATE(npoi(kstate,2))
   ntridig(1) = 0
   ntridig(2) = 0
   nstsp(1) = 0
@@ -919,6 +922,10 @@ DEALLOCATE(q2)
 
 IF(ifsicp == 5)  DEALLOCATE(qex)
 
+IF(tcpu) THEN
+  CALL cpu_time(time_step)
+  CALL system_clock(ncount_step,ncount_rate,ncount_max)
+END IF
 
 #if(parano)
 IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
@@ -954,6 +961,9 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
     END DO
   END IF
 
+#if(!paropenmp)
+  ALLOCATE(psistate(kstate))
+#endif
   DO iactsp=1,2
     CALL givens(hmatr(1,iactsp),heigen,vect, nstsp(iactsp),nstsp(iactsp),kstate)
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
@@ -968,6 +978,12 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
      vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
      WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
    END IF
+#endif
+#if(paropenmp)
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(ii,psistate,nbes,nbe,nbcs,nbc)
+    ALLOCATE(psistate(kstate))
+!    WRITE(7,*) ' PSISTATE allocated, thread=',OMP_GET_THREAD_NUM()
+!$OMP DO SCHEDULE(STATIC)
 #endif
     DO ii=1,nxyz
       psistate = 0D0
@@ -986,9 +1002,17 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
         q0(ii,nbe) = psistate(nbe)
       END DO
     END DO
+#if(paropenmp)
+!$OMP END DO
+    DEALLOCATE(psistate)
+!$OMP END PARALLEL
+#endif
   END DO
   DEALLOCATE(hmatr,heigen,vect)
-  DEALLOCATE(psistate,npoi)
+  DEALLOCATE(npoi)
+#if(!paropenmp)
+  DEALLOCATE(psistate)
+#endif
 
 END IF
 #endif
@@ -996,6 +1020,10 @@ END IF
 
 !     Schmidt ortho-normalisation
 
+IF(tcpu) THEN
+  CALL cpu_time(time_orth)
+  CALL system_clock(ncount_orth,ncount_rate,ncount_max)
+END IF
 
 CALL schmidt(q0)
 
@@ -1012,12 +1040,22 @@ IF(tocc .AND. nclust < nstate*nph .AND. iter > istinf) CALL reocc()
 IF(tcpu) THEN
   CALL cpu_time(time_fin)
   time_cpu = time_fin-time_init
+  CALL system_clock(ncount_fin,ncount_rate,ncount_max)
+  ncount_syst=ncount_fin-ncount_init
 !        write(6,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 !        write(7,'(a,1pg13.5)') ' CPU time in SSTEP',time_cpu
 END IF
-WRITE(6,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
-WRITE(7,'(a,i5,6(f10.4))') 'iter,up/down,CPU=',iter,se(4),se(5),time_cpu
-
+WRITE(6,'(a,i5,6(f10.4))') &
+  'iter,up/down,CPU=',iter,se(4),se(5),time_cpu,ncount_syst*1D-4
+!WRITE(6,*) ' rate,max=',ncount_rate,ncount_max  
+WRITE(7,'(a,i5,6(f10.4))') &
+  'iter,up/down,CPU=',iter,se(4),se(5),time_cpu,ncount_syst*1D-4
+IF(tcpu) THEN
+  WRITE(7,'(a,6(f9.3))') ' times: step,diag,orth=',&
+    time_step-time_init,time_orth-time_step,time_fin-time_orth,&
+    (ncount_step-ncount_init)*1D-4,(ncount_orth-ncount_step)*1D-4,&
+    (ncount_fin-ncount_orth)*1D-4
+END IF
 
 
 RETURN

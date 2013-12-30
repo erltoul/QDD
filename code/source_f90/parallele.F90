@@ -43,14 +43,20 @@ nprocs= 1
 #endif
 
 #if(paropenmp)
+#if(fftwnomkl)
 numprocs = OMP_GET_NUM_THREADS()
 numprocm = OMP_GET_MAX_THREADS()
 numthr=numprocm
+#endif
 nthr=numthr-1  
+#if(fftwnomkl)
 WRITE(*,*) 'max. num. procs from system=',numprocm
 CALL OMP_SET_NUM_THREADS(numthr)
 WRITE(*,*) ' init. OMP:  Nr. threads=',numthr,OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
 nthr = OMP_GET_MAX_THREADS()-1
+#else
+nthr=numthr-1
+#endif
 #else
 nthr = 0
 #endif

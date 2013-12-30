@@ -55,31 +55,43 @@ END IF
 
 !     Schmidt ortho-normalisation
 
+
+#if(paropenmp)
+
+DO nbes=1,nstate
+  nbe = isort(nbes)
+  q0(1:nxyz,nbe)=q0(1:nxyz,nbe)/SQRT(SUM(q0(1:nxyz,nbe)**2)*dvol)
+  
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(ncs,ncc,cs) SCHEDULE(STATIC)
+  DO ncs=nbes+1,nstate
+    ncc = isort(ncs)
+    IF((ispin(nbe) == ispin(ncc))) THEN
+      cs=SUM(q0(1:nxyz,nbe)*q0(1:nxyz,ncc))*dvol
+      q0(1:nxyz,ncc)=q0(1:nxyz,ncc)-cs*q0(1:nxyz,nbe)
+    END IF
+  END DO
+!$OMP END PARALLEL DO 
+
+END DO
+
+#else
+
 DO nbes=1,nstate
   nbe = isort(nbes)
   
-!  DO ncs=1,nstate
-  DO ncs=1,nbes
+  DO ncs=1,nbes-1
     ncc = isort(ncs)
-!    IF((ispin(nbe) == ispin(ncc)) .AND. ncc <= nbe) THEN
     IF((ispin(nbe) == ispin(ncc))) THEN
-      cs=0.0
-      DO i=1,nxyz
-        cs=cs+q0(i,nbe)*q0(i,ncc)
-      END DO
-      cs=cs*dvol
-      IF(ncc == nbe) THEN
-        DO i=1,nxyz
-          q0(i,nbe)=q0(i,nbe)/SQRT(cs)
-        END DO
-      ELSE
-        DO  i=1,nxyz
-          q0(i,nbe)=q0(i,nbe)-cs*q0(i,ncc)
-        END DO
-      END IF
+      cs=SUM(q0(1:nxyz,nbe)*q0(1:nxyz,ncc))*dvol
+      q0(1:nxyz,nbe)=q0(1:nxyz,nbe)-cs*q0(1:nxyz,ncc)
     END IF
   END DO
+
+  q0(1:nxyz,nbe)=q0(1:nxyz,nbe)/SQRT(SUM(q0(1:nxyz,nbe)**2)*dvol)
+
 END DO
+
+#endif
 
 RETURN
 END SUBROUTINE schmidt

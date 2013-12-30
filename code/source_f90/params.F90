@@ -296,6 +296,7 @@ INTEGER :: ndims(2)
 ! dynamic variables of ionic motion
 
 INTEGER,PARAMETER :: nxsg=7,nysg=7,nzsg=7      ! size of subgrids
+INTEGER :: modionstep=1                        ! modulus for ion step
 INTEGER :: inewforce
 INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
 INTEGER :: nrare=0,nfix=0                    !  Nr. of raregas atoms

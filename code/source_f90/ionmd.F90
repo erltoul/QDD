@@ -702,7 +702,7 @@ IF (nk > 0) THEN
   ALLOCATE(xm(1:nk))
   xm = mkat*1836D0*ame
   CALL velverlet1(xk(1),yk(1),zk(1),pxk(1),pyk(1),pzk(1), &
-                  fxk(1),fyk(1),fzk(1),dt1,xm,nk,3)
+                  fxk(1),fyk(1),fzk(1),dt1*modionstep,xm,nk,3)
   DEALLOCATE(xm)
 END IF
 #endif
@@ -721,7 +721,7 @@ IF (nion > 0 .AND.imob /= 0) THEN
   ALLOCATE(xm(1:nion))
   xm(:)=amu(np(:))*1836D0*ame
   CALL velverlet1(cx(1),cy(1),cz(1), cpx(1),cpy(1),cpz(1), &
-                  fx(1),fy(1),fz(1),dt1,xm,nion,4)
+                  fx(1),fy(1),fz(1),dt1*modionstep,xm,nion,4)
   DEALLOCATE(xm)
 
 ! correct ionic c.m. to restore value before step
@@ -786,12 +786,12 @@ IF (isurf /= 0) THEN
 !     propagation of rare gas cores
   IF(nc > 0)THEN
     CALL velverlet2(pxc(1),pyc(1),pzc(1), &
-                    fxc(1),fyc(1),fzc(1),dt1,nc,1)
+                    fxc(1),fyc(1),fzc(1),dt1*modionstep,nc,1)
   END IF
   
   IF (nk > 0) THEN
     CALL velverlet2(pxk(1),pyk(1),pzk(1), &
-                    fxk(1),fyk(1),fzk(1),dt1,nc,3)
+                    fxk(1),fyk(1),fzk(1),dt1*modionstep,nc,3)
   END IF
 END IF
 #endif
@@ -799,7 +799,7 @@ END IF
 
 !     propagation of cluster ions
 IF (nion > 0 .AND. imob /= 0) CALL velverlet2(cpx(1),cpy(1),cpz(1),  &
-    fx(1),fy(1),fz(1), dt1,nion,4)
+    fx(1),fy(1),fz(1), dt1*modionstep,nion,4)
 
 WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)
 WRITE(6,'(a,3f15.6)') 'pix,piy,piz',cpx(1),cpy(1),cpz(1)

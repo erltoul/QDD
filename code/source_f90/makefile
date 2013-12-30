@@ -132,7 +132,7 @@ ifeq "$(CF90)" "IFORT"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL =  -openmp -openmp-report=1
   endif
 endif
 
@@ -144,7 +144,7 @@ ifeq "$(CF90)" "IFORT1"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL =  -openmp -openmp-report=1
   endif
 endif
 
@@ -328,7 +328,7 @@ else
 endif
 
 # Compiler flags
-COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
+COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(OMPADDL) $(FFTWADD))
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 GPUCOMPILERFLAGS = $(OPTGPU) $(MPIADD) $(OMPADD)
@@ -743,7 +743,7 @@ kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 ifneq "$(TYPE_FFT)" "cuFFT"
 coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.mod $(FFT_OBJ)
 endif
-static.o: pseudosoft.F90 $(DEPS_KINCOUL)
+static.o: static.F90 pseudosoft.F90 $(DEPS_KINCOUL)
 
 rho.o: rho.F90
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<

@@ -64,7 +64,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
 !*************************************************************
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
-    iemomsrel,ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
+    iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iforce,iexcit,iangmo,  &

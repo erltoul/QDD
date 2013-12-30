@@ -480,7 +480,7 @@ DO it=irest,itmax   ! time-loop
     ELSE
       IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt,.true.)
     END IF
-    IF(ionmdtyp >= 1) THEN
+    IF(ionmdtyp==1 .OR. (ionmdtyp==2 .AND. MOD(it,modionstep)==0)) THEN
       
 !            ionic propagation
       
