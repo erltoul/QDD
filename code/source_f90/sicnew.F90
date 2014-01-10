@@ -329,8 +329,6 @@ size=nxyz
 #endif
 
 
-IF(numspin==2) ALLOCATE(rhospu(2*kdfull2),rhospd(2*kdfull2),  &
-                        chpdftspu(2*kdfull2),chpdftspd(2*kdfull2))
 
 enrearsave=enrear
 enerpwsave=enerpw
@@ -340,6 +338,9 @@ enpw1  = 0D0
 enpw2  = 0D0
 encadd = 0D0
 IF(numspin==2) THEN
+
+  ALLOCATE(rhospu(2*kdfull2),rhospd(2*kdfull2),  &
+                  chpdftspu(2*kdfull2),chpdftspd(2*kdfull2))
 
 !     averaged spinup and spindown density
 
@@ -446,8 +447,7 @@ ELSE
   factotal=1.0/npartto
 
 #if(parayes)
-  ALLOCATE(tp1(size))
-  ALLOCATE(tp2(size))
+  ALLOCATE(aloc1(size))
 #endif
 
 !  DO ind=1,nxyz
@@ -612,7 +612,7 @@ ELSE
   END DO
 #if(parayes)
   CALL pi_allgatherv(aloc1,size,aloc,nxyz,icode)
-  DEALLOCATE(aloc1,aloc2,tp1)
+  DEALLOCATE(aloc1,tp1,tp2)
 #endif
 
 END IF

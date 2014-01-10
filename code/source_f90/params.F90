@@ -433,7 +433,7 @@ ALLOCATE(nhome(ksttot))                        !  home node of wf
 #if(parayes)
 ALLOCATE(nstate_node(0:knodem))                !  book-keeping parallele
 ALLOCATE(nstart_node(0:knodem))                !          "
-ALLOCATE(ispin_node(kstate,0:knodem))
+ALLOCATE(ispin_node(ksttot,0:knodem))
 #endif
 
 

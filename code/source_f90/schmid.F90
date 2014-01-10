@@ -70,7 +70,7 @@ DO nbes=1,nstate
       q0(1:nxyz,ncc)=q0(1:nxyz,ncc)-cs*q0(1:nxyz,nbe)
     END IF
   END DO
-!$OMP END PARALLEL DO 
+!$OMP END PARALLEL DO
 
 END DO
 

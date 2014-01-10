@@ -48,19 +48,21 @@ LINK_STATIC = YES
 #   * NO
 MKL_THREADS = YES
 
+FFTWDIR=/opt/intel/composer_xe_2011_sp1.7.256/mkl
+#FFTWDIR = /usr/local/FFTW/FFTW3/mkl
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
-MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
+MKL_WRAPPERS = $FFTWDIR/interfaces/fftw3xf
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
-MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
+MKLPATH = $FFTWDIR/lib/em64t
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
-MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
+MKLINCLUDE = $FFTWDIR/include/fftw
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
