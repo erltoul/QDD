@@ -600,7 +600,7 @@ ELSE
 #if(parayes)
   CALL pi_scatterv(chpcoul,nxyz,tp1,size,icode)
   CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
-  WRITE(*,*) 'scattering of chpcoul and aloc done'
+!  WRITE(*,*) 'scattering of chpcoul and aloc done'
 #endif
 !  DO ind=1,nxyz
   DO ind=1,size

@@ -370,11 +370,14 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 myn = 0
 #endif
 
+
+
 !WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
 ALLOCATE(q1(2*kdfull2,0:nthr))
 ALLOCATE(q2(kdfull2,0:nthr))
 
 CALL cpu_time(time_init)
+CALL system_clock(ncount_init,ncount_rate,ncount_max)
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
 
 
@@ -542,9 +545,11 @@ DEALLOCATE(q1)
 
 CALL cpu_time(time_fin)
 time_cpu = time_fin-time_init
+CALL system_clock(ncount_fin,ncount_rate,ncount_max)
+ncount_syst=ncount_fin-ncount_init
 IF(myn == 0)THEN
-  WRITE(6,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
-  WRITE(7,'(a,1pg13.5)') ' CPU time in TSTEP',time_cpu
+  WRITE(6,'(a,2(1pg13.5))') ' CPU time in TSTEP',time_cpu,ncount_syst*1D-4
+  WRITE(7,'(a,2(1pg13.5))') ' CPU time in TSTEP',time_cpu,ncount_syst*1D-4
   CALL FLUSH(6)
   CALL FLUSH(7)
 END IF
@@ -3204,8 +3209,8 @@ IF(trequest > 0D0) THEN
   !iiii=etime(tarray)
   CALL cpu_time(time_act)
   time_elapse=time_act-time_absinit
-  !WRITE(6,'(a,5(1pg13.5))') &
-  ! ' etime: trequest,timefrac,tarray=',trequest,timefrac,tarray,time_elapse
+  WRITE(6,'(a,5(1pg13.5))') &
+   ' etime: trequest,timefrac,t_elapse=',trequest,timefrac,time_elapse
   CALL FLUSH(6)
   !IF ((tarray(1)+tarray(2)) > trequest*timefrac) THEN
  END IF
