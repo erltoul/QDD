@@ -1,4 +1,5 @@
 //All sum and multiplication routines on GPU
+#include"values_gpu.h"
 
 __global__ void multiply_device(cufftDoubleComplex *d_ffta,int nxyz,double norm)
 {
@@ -28,10 +29,10 @@ extern "C" void multiply_gpu_(cufftDoubleComplex *d_ffta,int *N,double *tnorm)
 #endif
 	int nxyz = *N;
 	double norm = *tnorm;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//Multiplication d_ffta*norm on the GPU
 #if(asynclaunch)
@@ -60,10 +61,10 @@ extern "C" void multiply_ak_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ak
 	cudaSetDevice(params_mp_mygpu_);
 #endif
 	int nxyz = *N;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//Multiplication d_ffta*d_ak on the GPU
 #if(asynclaunch)
@@ -92,10 +93,10 @@ extern "C" void multiply_ak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_a
 	cudaSetDevice(params_mp_mygpu_);
 #endif
 	int nxyz = *N;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//Multiplication d_ffta*d_ak on the GPU
 #if(asynclaunch)
@@ -124,10 +125,10 @@ extern "C" void multiply_rak2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_
 	cudaSetDevice(params_mp_mygpu_);
 #endif
 	int nxyz = *N;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//Multiplication d_ffta*d_ak on the GPU
 #if(asynclaunch)
@@ -154,10 +155,10 @@ extern "C" void multiply_ak_real_(cufftDoubleComplex *d_ffta,cufftDoubleReal *d_
 	cudaSetDevice(params_mp_mygpu_);
 #endif
 	int nxyz = *N;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//Multiplication d_ffta*d_ak on the GPU
 #if(asynclaunch)
@@ -203,10 +204,10 @@ extern "C" void multiply_shift_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d
 #endif
 	int nxyz = *N;
 	cufftDoubleComplex shix,shiy,shiz;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	shix.x = *sx;
 	shix.y = *sx;
@@ -242,10 +243,10 @@ extern "C" void hpsi_cuda_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta
 #endif
 	int nxyz = *N;
 	int kdfull2=*kd;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//d_ffta*d_ak+d_ffta2 on the GPU
 #if(asynclaunch)
@@ -275,10 +276,10 @@ extern "C" void d_grad1_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,
 	int nxyz = *N;
 	double epswf = *ep, e0dmp = *e0;
 	int kstate=*nbe-1;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//grad on the GPU
 #if(asynclaunch)
@@ -308,10 +309,10 @@ extern "C" void d_grad2_(cufftDoubleComplex *d_ffta,cufftDoubleComplex *d_ffta2,
 	int nxyz = *N;
 	double epswf = *ep;
 	int kstate=*nbe-1;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 
 	//grad on the GPU
 #if(asynclaunch)
@@ -342,10 +343,10 @@ extern "C" void sum_calc_(double *s0,double *sk,double *se,double *s2,cufftDoubl
 #endif
 	int nxyz = *N;
 	int nbe  = *nb-1;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 	//Declaration of the vectors on the GPU
 	thrust::device_vector<double> d_sum0(nxyz);
 	thrust::device_vector<double> d_sumk(nxyz);
@@ -384,10 +385,10 @@ extern "C" void sum_calc2_(double *s0,double *sk,cufftDoubleComplex *d_ffta,cuff
 	cudaSetDevice(params_mp_mygpu_);
 #endif
 	int nxyz = *N;
-	int blocksize=192;
+	int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(nxyz/(float)blocksize);
-	dim3 dimgrid(gridx,1,1);
-	dim3 dimblock(blocksize,1,1);
+	;dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+	dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 	//Declaration of the vectors on the GPU
 	thrust::device_vector<double> d_sum0(nxyz);
 	thrust::device_vector<double> d_sumk(nxyz);
@@ -439,9 +440,9 @@ extern "C" void build_kgpu_(int *NX,int *NY,int *NZ,double *hm,double *dt,double
 #endif
 	int nx=*NX,ny=*NY,nz=*NZ;
 	double h2m=*hm,dt1=*dt,dkx=*dx,dky=*dy,dkz=*dz;
-	int blocksize=8;
+	int blocksize=BLOCK1B;
 	int gridx=(int)ceil(nx/(float)blocksize),gridy=(int)ceil(ny/(float)blocksize),gridz=(int)ceil(nz/(float)blocksize);
-	dim3 dimgrid(gridx,gridy,gridz);
+	dim3 dimgrid(gridx+1,gridy,gridz);
 	dim3 dimblock(blocksize,blocksize,blocksize);
 #if(asynclaunch)
 	d_build_k<<<dimgrid,dimblock,0,stream2[params_mp_mygpu_]>>>(nx,ny,nz,h2m,dt1,dkx,dky,dkz,d_ak,d_akv,d_akx,d_aky,d_akz);

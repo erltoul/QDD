@@ -113,7 +113,7 @@ scatterelectrony=0.0,
 scatterelectronz=0.0,
 drcharges=5.0,
 iflocaliz=0,                       
-ismax=2,
+ismax=200,
 itmax=10,
 istinf=1,
 ipasinf=1,
@@ -810,8 +810,13 @@ nclust=None,nion=None,nspdw=None
 
         a = 0
         for pos, Z in zip(self.positions, self.numbers):
+            spin = a % 2 *2-1
             a += 1
-            fion.write('%.14f %.14f %.14f 11\n' %  tuple(pos))
+#            fion.write('%.14f %.14f %.14f 1 xyz 1,., ' %  tuple(pos))
+#            fion.write('%i\n' %  spin)
+            fion.write('%.14f %.14f %.14f ' %  tuple(pos))
+            fion.write('%i xyz  1.0 ' %  Z)
+            fion.write('%i\n' %  spin)
 
         fh.flush()
         fion.flush()

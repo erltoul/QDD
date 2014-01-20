@@ -14,7 +14,7 @@
 #define coufou 0
 #define coudoub 1
 !   switch to 3D FFTW in Coulomb solver (preliminary option)
-#define coudoub3D 1
+#define coudoub3D 0
 !
 ! full SIC and localized SIC
 !

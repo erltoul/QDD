@@ -1,6 +1,6 @@
 import os
 import time
-pwteleman = '~/pw-teleman/code/Python_ASE/Na/tdks_v030112_Mono_cuFFT.bin'
+pwteleman = '~/pwteleman/pw-teleman_dev-all_20131009/code/essai.seq'
 line = open('for005', 'r').readlines()
 label = line[0].split(" \n")
 
