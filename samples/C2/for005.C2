@@ -10,6 +10,8 @@ epswf=0.4,e0dmp=2.0,
 deocc=0.0,b2occ=0.5,
 &END
 &DYNAMIC
+jdip=10,
+jesc=10,
 dt1=0.025,
 istinf=10,
 jenergy=10,
