@@ -6,14 +6,14 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = MPIF90
+CF90 = IFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
 #   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
-MPI_PARALLEL = YES
+MPI_PARALLEL = NO
 
 # OMP_THREADS: Invoke OpenMP
 # Available options:

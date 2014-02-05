@@ -19,7 +19,7 @@ ismax=200,
 itmax=30,
 isave=100,
 ifsicp=2,
-ipsptyp=1,
+ipsptyp=3,
 jinfo=10,jstinf=10,
 ionmdtyp=0,nabsorb=4,
 &END
