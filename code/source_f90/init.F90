@@ -238,7 +238,7 @@ SUBROUTINE changeperio
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!      namelist /perio/ ch(-92:92),amu(-92:92),
+!      namelist /perio/ ch(-99:99),amu(-99:99),
 NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
     h0_11g,h0_12g,h0_22g,h0_33g, h1_11g,h1_22g,h2_11g,  &
     dr1,dr2,prho1,prho2, r0g,r1g,r2g,radiong
@@ -530,6 +530,10 @@ ELSE IF(ipsptyp == 1) THEN
   WRITE(iu,'(a)') 'full Goedecker pseudopotentials'
 ELSE IF(ipsptyp == 2) THEN
   WRITE(iu,'(a)') 'local Goedecker pseudopotentials'
+ELSE IF(ipsptyp == 3) THEN
+  WRITE(iu,'(a)') 'full Goedecker pseudopotentials form file goed.asci'
+ELSE IF(ipsptyp == 4) THEN
+  WRITE(iu,'(a)') 'full semicore Goedecker pseudopotentials form file goed.asci'
 ELSE
   STOP ' this type IPSPTYP not yet implemented'
 END IF
@@ -852,8 +856,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-92:92),dr2(-92:92)
-REAL(DP) :: prho1(-92:92),prho2(-92:92)
+REAL(DP) :: dr1(-99:99),dr2(-99:99)
+REAL(DP) :: prho1(-99:99),prho2(-99:99)
 character (len=3) ::  naml
 character (len=2)  ::  namc,symb(99)
 character(len=80) ::  a
@@ -864,7 +868,7 @@ character(len=80) ::  a
 WRITE(6,*) 'Entering iperio'
 
 
-DO iel=-92,92
+DO iel=-99,99
   amu(iel)= 0D0   ! masses as a function of atomic number
 END DO
 
@@ -1297,6 +1301,9 @@ ch(icountt)=0.0
 crloc(icountt)=0.0
 cc1(icountt)=0.0
 cc2(icountt)=0.0
+r0g(icountt)=0.0
+r1g(icountt)=0.0
+r2g(icountt)=0.0
 l=0
 
 !       we read a new line if not already done
@@ -1360,7 +1367,7 @@ ENDIF
    if(nactual.eq.0) stop 'not found in periodic table'
 if(icountt.ne.99) then
 if(nactual.ne.icountt) then
-!write(6,*)  'nactual',nactual,'icount',icountt
+write(6,*)  'nactual',nactual,'icount',icountt
         stop 'lost in pseudop. coef table'
 endif
 endif
@@ -1379,7 +1386,8 @@ endif
 112   format(A,4(f10.6))
    if(iskip.ne.99) then
          if(crr.eq.0.0) then
-          l=l-1
+                 l=l-1
+          endif
            if(l.eq.0) then
                 r0g(icountt)=crr
                 h0_11g(icountt)=h11
@@ -1396,7 +1404,6 @@ endif
                 h2_11g(icountt)=h11
            endif
       l=l+1
-   endif
 endif
 endif
 
@@ -1408,6 +1415,9 @@ goto 70
 1000 write(6,*) 'all parameters have been read in file goed.asci'
 
 close(unit=19)
+
+
+
 ipsptyp =1
   
 ELSE

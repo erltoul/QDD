@@ -26,14 +26,14 @@ write('na13.xyz',na13)
 #from ase.calculators.pwteleman import pwteleman
 from ase.calculators.pwtelemandynr import pwtelemandynr
 
-na13.set_calculator(pwtelemandynr(isurf=0,modecalc='static'))
+na13.set_calculator(pwtelemandynr(ipsptyp=0,isurf=0,modecalc='static'))
 #e = na13.get_potential_energy()
 #print e
 traj=PickleTrajectory('na13.traj','w')
 #dyn=QuasiNewton(na13).run(fmax=0.01)
 e = na13.get_potential_energy()
 print e
-na13.set_calculator(pwtelemandynr(isurf=0,modecalc='dynamic'))
+na13.set_calculator(pwtelemandynr(ipsptyp=0,isurf=0,modecalc='dynamic'))
 dyn = FIRE(na13, dt=0.1)
 dyn.run(fmax=0.01,steps=3)
 
