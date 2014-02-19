@@ -16,10 +16,10 @@
 using namespace std;
 
 #include "params_gpu.h"
+#include "values_gpu.h"
 #include "gpu_compute.cu"
 #include "coulex.cu"
 
-#define BATCH 1 //The number of batched ffts 
 
 #if(lda_gpu)
 __device__ __constant__ double e2  = 2.0;
@@ -424,6 +424,7 @@ __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int n
 
        unsigned int ind = blockIdx.x*blockDim.x+threadIdx.x;
 
+     //  for (ind = blockIdx.x*blockDim.x+threadIdx.x ; ind < nxyz ; ind+=blockIdx.x*blockDim.x) 
        if (ind<nxyz)
        {
          t2 = max(d_chpdft[ind],1e-16);
@@ -490,10 +491,13 @@ __global__ void lda_enerpw(double *d_chpdft,double *d_ec,double *d_enerpw, int n
 extern "C" void calc_lda_enerpw_gpu_(double *rho,double *chpdft,double *ec,double *enerpw)
 {
 	cudaSetDevice(params_mp_mygpu_);
-        int blocksize=192;
+        int blocksize=BLOCK1;int warpSize=WARPSIZE;
+	// int numSMs;
+	// cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, params_mp_mygpu_);
+	 // blocksize=32*numSMs;
 	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
-        dim3 dimgrid(gridx,1,1);
-        dim3 dimblock(blocksize,1,1);
+        dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+        dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 	thrust::device_vector<double> d_ec(params_mp_nxyz_);
 	thrust::device_vector<double> d_enerpw(params_mp_nxyz_);
 
@@ -587,10 +591,10 @@ extern "C" void calc_lda_gpu_(double *rho,double *chpdft,double *ec)
 #if(parayes)
 	cudaSetDevice(params_mp_mygpu_);
 #endif
-        int blocksize=192;
+        int blocksize=BLOCK1;int warpSize=WARPSIZE;
 	int gridx=(int)ceil(params_mp_nxyz_/(float)blocksize);
-        dim3 dimgrid(gridx,1,1);
-        dim3 dimblock(blocksize,1,1);
+        dim3 dimgrid(gridx+1,GRIDY,GRIDZ);
+        dim3 dimblock(blocksize,BLOCK2,BLOCK3);
 	thrust::device_vector<double> d_ec(params_mp_nxyz_);
 #if(asynclaunch)
         error=cudaMemcpyAsync(d_chpdft[params_mp_mygpu_],rho,2*params_mp_nxyz_*sizeof(double),cudaMemcpyHostToDevice,stream1[params_mp_mygpu_]);

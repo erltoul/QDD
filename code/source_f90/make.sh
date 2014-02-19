@@ -3,12 +3,12 @@ NAME=essai
 
 . /usr/share/modules/init/bash
 
-module unload default-intel-cc
-module unload default-intel-fc
-module unload default-intel-mkl
-module load intel-mkl/12.1
-module load intel-fc-12/12.1
-module load intel-cc-12/12.1
+#module unload default-intel-cc
+#module unload default-intel-fc
+#module unload default-intel-mkl
+#module load intel-mkl/12.1
+#module load intel-fc-12/12.1
+#module load intel-cc-12/12.1
 
 para=0
 if [ $1 ] ; then
@@ -123,7 +123,7 @@ else
 fi
 
 
-make clean
+#make clean
 make
-make clean
+#make clean
 

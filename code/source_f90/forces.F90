@@ -50,10 +50,29 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
   CALL calcf_goenonl(rho,it,psi)
   CALL laserf()
   CALL forceproject()
+         OPEN(772,FILE='forces.'//outnam)
+         do i=1,nion
+         write(772,*) fx(i)
+         write(772,*) fy(i)
+         write(772,*) fz(i)
+         enddo
+         CALL flush(772)
+         CLOSE(772)
+
+
+
   RETURN
 ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   CALL calcf_goeloc(rho,it,psi)
   CALL forceproject()
+         OPEN(772,FILE='forces.'//outnam)
+         do i=1,nion
+         write(772,*) fx(i)
+         write(772,*) fy(i)
+         write(772,*) fz(i)
+         enddo
+         CALL flush(772)
+         CLOSE(772)
   RETURN
 END IF
 

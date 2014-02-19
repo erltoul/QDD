@@ -1,17 +1,17 @@
 !     the "periodic table"
 !       (negative numbers stand for the local electron cloud of an element)
 
-REAL(DP) :: ch(-92:92),amu(-92:92),cc1(-92:92),cc2(-92:92)
-REAL(DP) :: crloc(-92:92),crs(-92:92),chs(-92:92),chg1(-92:92),chg2(-92:92)
-REAL(DP) :: sgm1(-92:92),sgm2(-92:92)
-REAL(DP) :: r0g(-92:92),r1g(-92:92),r2g(-92:92),h0_11g(-92:92),h0_22g(-92:92)
-REAL(DP) :: h0_33g(-92:92),h1_11g(-92:92),h1_22g(-92:92)
-REAL(DP) :: h2_11g(-92:92),radiong(-92:92)
-REAL(DP) :: h0_12g(-92:92)=-1D20               ! default signal "automatic"
-!INTEGER :: nrow(-92:92)
+REAL(DP) :: ch(-99:99),amu(-99:99),cc1(-99:99),cc2(-99:99)
+REAL(DP) :: crloc(-99:99),crs(-99:99),chs(-99:99),chg1(-99:99),chg2(-99:99)
+REAL(DP) :: sgm1(-99:99),sgm2(-99:99)
+REAL(DP) :: r0g(-99:99),r1g(-99:99),r2g(-99:99),h0_11g(-99:99),h0_22g(-99:99)
+REAL(DP) :: h0_33g(-99:99),h1_11g(-99:99),h1_22g(-99:99)
+REAL(DP) :: h2_11g(-99:99),radiong(-99:99)
+REAL(DP) :: h0_12g(-99:99)=-1D20               ! default signal "automatic"
+!INTEGER :: nrow(-99:99)
 !fix! INTEGER :: np(0:ng)
 
-INTEGER,PARAMETER :: knl=4000       ! storage for PsP projectors
+INTEGER,PARAMETER :: knl=8000       ! storage for PsP projectors
 !fix! LOGICAL :: tblock(0:ng)
 !fix! REAL(DP) :: p0_1(knl,0:ng),p0_2(knl,0:ng),p1_1(knl,0:ng),p1_1x(knl,0:ng)
 !fix! REAL(DP) :: p1_1y(knl,0:ng),p1_1z(knl,0:ng) 

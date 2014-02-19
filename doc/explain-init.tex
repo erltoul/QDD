@@ -4,6 +4,15 @@
 \usepackage{epsfig}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{hyperref} 
+\usepackage{xcolor}
+\definecolor{dark}{rgb}{0.4,0.15,0.15}
+\definecolor{dark-blue}{rgb}{0.15,0.15,0.4}
+\definecolor{medium-blue}{rgb}{0,0,0.5}
+\hypersetup{
+    colorlinks, linkcolor={black},
+    citecolor={dark-blue}, urlcolor={medium-blue}
+}
 
 \textwidth 15.8cm
 \textheight 22cm
@@ -27,7 +36,7 @@
 \begin{document}
 
 \title{Handling of the cluster 3D Fortran90-code}
-\author{Instructions and status reprot}
+\author{Instructions and status report}
 \date{Started 23 April 2010; status 4. December 2012}
 \maketitle
 
@@ -35,14 +44,30 @@
 \newpage
 
 \section{Installation and usage}
-
+\pagestyle{plain}
 \subsection{Installation}
-The following steps assume that you have successfully unpacked
-the code and that you are now in the sub-directory 'source\_f90'.
 
-Before compilation, one should update some settings
+\begin{enumerate}
+\item Choose and create a directory where to install a code.
+\item Download in the chosen directory the package \href{http://redmine.pw-teleman.org/projects/pw-teleman/activity}{pw-teleman\_dev-all\_20131009.tar.gz}  
+\item Uncompress and unpackage the file:
+
+\hspace*{1cm}
+{\tt gunzip pw-teleman\_dev-all\_20131009.tar.gz
+
+\hspace*{1cm}
+tar- xvf pw-teleman\_dev-all\_20131009.tar}
+
+A directory 'pw-teleman\_dev-all\_20131009' will be created.
+\item Enter the the sub-directory 'source\_f90' :
+
+\hspace*{1cm}
+{\tt cd pw-teleman\_dev-all\_20131009/code/source\_f90/
+}
+
+\item Before compilation, one should update some settings
 (for detailed explanations of the parameters see section \ref{sec:inputs}):
-\begin{itemize}
+\begin{enumerate}
 \item
  Edit 'define.h' to choose the wanted code options.
 \item
@@ -52,17 +77,81 @@ Before compilation, one should update some settings
  Edit 'makefile' and insert your compiler with its appropriate
  options. Some lines for that are provided and presently commented out.
  Fill the lines and remove the comments if needed.
-\item
- Finally execute 'make'. The executable will be copied to the working
- directory which is one level below the sub-directory 'source\_f90'.
- Go back to the working directory. The last file called 'tdks*' is
- the new executable.
-\end{itemize}
+\end{enumerate}
+\item To use environment modules for compiling or running a code, load a particular module. To see all available modules, run {\tt module avail}, when you get command not found you must do for bash:
+
+\hspace*{1cm}
+{\tt .~/etc/profile.d/modules.sh} 
+
+and for csh: 
+
+\hspace*{1cm}
+{\tt .~/etc/profile.d/modules.csh}. 
+
+Once you have done this, you can run: 
+
+\hspace*{1cm}
+{\tt module load <module name>}
+
+
+For example:
+
+\hspace*{1cm}
+{\tt module load intel/composer\_xe\_2013.4.183}
+
+\hspace*{1cm}
+{\tt module load cuda/5.0
+
+\hspace*{1cm}
+  module load openmpi/1.6.4-intel}
+
+\newpage
+\item Finally execute {\tt make} command which you can modify in the following ways:
+\begin{enumerate}
+\item Sequential -produce serial code
+
+\hspace*{1cm}
+{\tt ./make.sh 0 netlib} - to compile with netlib fftpack
+
+\hspace*{1cm}
+{\tt ./make.sh 0 fftw} - to compile with FFTW functions
+ 
+\hspace*{1cm}
+{\tt ./make.sh 0 gpu} - to compile with cuda functions
+
+\item Parallel - use parallelization for wavefunctions
+
+\hspace*{1cm}
+{\tt ./make.sh 1 netlib} 
+
+\hspace*{1cm}
+{\tt ./make.sh 1 fftw} 
+ 
+\hspace*{1cm}
+{\tt ./make.sh 1 gpu} 
+
+\item Simpara - pseudo-parallel code, runs different inputs simultaneously
+
+\hspace*{1cm}
+{\tt ./make.sh 2 netlib} 
+
+\hspace*{1cm}
+{\tt ./make.sh 2 fftw}
+ 
+\hspace*{1cm}
+{\tt ./make.sh 2 gpu} 
+\end{enumerate}
+
+The executable will be copied to the working
+ directory which is one level below the sub-directory 'source\_f90'. The file called 'essai.*' is
+ the new executable and depending on the way of make command modification will be essai.par (parallel),
+ essai.seq (sequential) or 
+ essai.sim (simpara).
 
 
 
 \subsection{Basic input structure}
-The cluster 3D code has six entries for options:
+The cluster 3D code has five entries for options:
 \\[-28pt]
 \begin{center}
 \begin{tabular}{ll}
@@ -80,7 +169,7 @@ The cluster 3D code has six entries for options:
 \hline
 \end{tabular}
 \end{center}
-The first two entries have to be set before compilation. The
+The first entry have to be set before compilation. The
 other four are read in for an actual run and can be varied from
 run to run. The input structure for these files is summarized
 in section \ref{sec:inputs}.
@@ -90,10 +179,10 @@ in section \ref{sec:inputs}.
 \begin{description}
 
  \item{Important compile-time settings:}\\
-  You have to chose the wnated options in 'define.h'.
+  You have to chose the wanted options in 'define.h'.
 
  \item{Save and restart:}\\
-  The parameters 'isave', 'istat', and 'irest' allow to switch
+  The parameters 'isave', 'istat', and 'irest' (in {\tt for005.<name>}) allow to switch 
   saving wavefunctions and restarting from them.\\
   For {\tt ismax>0} and  {\tt isave>1}, 
   the static wavefunctions are saved on {\tt rsave}
@@ -175,8 +264,9 @@ simultaneously\\
 & box sizes must fulfill {\tt kxbox}$\geq${\tt kybox}$\geq$ {\tt kzbox}\\
 {\tt numspin}          & number of spin components (2=full spin treatment)\\
                        & (1=spin averaged, possible problem for ADSIC)\\
-{\tt kstate           }& maximum nr. of s.p. states\\
+{\tt kstate           }& maximum nr. of s.p. states which is possible (greater than {\tt nclust})\\
 {\tt nclust           }& number of QM electrons\\
+& {\tt nclust} = $\sum_{i=1}^{nion} Z_{ion} = charge$, where $Z_{ion}$ is charge of each ion\\
 {\tt nion             }& number of cluster ions\\
 {\tt nspdw            }& number of spin down electrons \\
 {\tt nion2            }& selects type of ionic background \\
@@ -189,6 +279,8 @@ simultaneously\\
 {\tt gamma         }& triaxiality of jellium background\\
 {\tt dx,dy,dz,        }& grid spacing (in  Bohr) for the 3D numerical grid\\
 &the grid size is defined before compilation in {\tt params.F90}\\
+&it has to be correlant with pseudopotentails\\
+&corresponds to ecut in solid state\\
 {\tt imob          }& global switch to allow ionic motion (if set to 1) \\
 {\tt isurf            }& switch for Ar or MgO surface (isurf=1 activates
           surface\\
@@ -215,7 +307,7 @@ moved
 \hline
 \multicolumn{2}{c}{\it convergence issues} \\
 \hline
-{\tt e0dmp            }& damping paramter for static solution of Kohn-Shahm equations\\
+{\tt e0dmp            }& damping parameter for static solution of Kohn-Sham equations\\
 & (typically about the energy of the lowest bound state)\\
 {\tt epswf            }& step size for static solution of Kohn-Shahm
 equations\\
@@ -233,7 +325,7 @@ equations\\
 \hline
 \multicolumn{2}{c}{\it numerical and physical parameters for statics and dynamics} \\
 \hline
-{\tt dt1              }& time step for propagating electronic wavefunctions\\
+{\tt dt1              }& time step for propagating electronic wavefunctions,  $\frac{\Delta t}{\Delta x^{2}}\leq 1$\\
 {\tt ismax            }& maximum number of static iterations \\
 {\tt idyniter         }& switch to s.p. energy as E0DMP for 'iter$>$idyniter'\\
 {\tt ifhamdiag} & diagonalization of m.f. Hamiltonian in static step\\
@@ -290,8 +382,8 @@ equations\\
 \multicolumn{2}{c}{\it way of excitation} \\
 \hline
 {\tt centfx           }& initial boost of electronic wavefuncftions in x-direction\\
-{\tt centfy           }& initial boost of electronic wavefuncftions in x-direction\\
-{\tt centfz           }& initial boost of electronic wavefuncftions in x-direction\\
+{\tt centfy           }& initial boost of electronic wavefuncftions in y-direction\\
+{\tt centfz           }& initial boost of electronic wavefuncftions in z-direction\\
 {\tt tempion          }& initial temperature of cluster ions \\
 {\tt ekmat} & initial kinetic energy of substrate atom (boost in $x$, in eV)\\
 {\tt itft   }& choice of shape of laser pulse \\

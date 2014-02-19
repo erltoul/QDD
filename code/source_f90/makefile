@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT1
+CF90 = IFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = YES
+OMP_THREADS = NO
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -28,7 +28,7 @@ OMP_THREADS = YES
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = FFTW
+TYPE_FFT = cuFFT
 
 # DEBUG: enable debugging
 # Available options:
@@ -36,11 +36,12 @@ TYPE_FFT = FFTW
 #   * NO
 DEBUG  = NO
 
+
 # LINK_STATIC: select static linkage of the binary
 # Available options:
 #   * YES
 #   * NO
-LINK_STATIC = YES
+LINK_STATIC = NO
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
@@ -48,21 +49,19 @@ LINK_STATIC = YES
 #   * NO
 MKL_THREADS = YES
 
-FFTWDIR=/opt/intel/composer_xe_2011_sp1.7.256/mkl
-#FFTWDIR = /usr/local/FFTW/FFTW3/mkl
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
-MKL_WRAPPERS = $FFTWDIR/interfaces/fftw3xf
+MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
-MKLPATH = $FFTWDIR/lib/em64t
+MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
-MKLINCLUDE = $FFTWDIR/include/fftw
+MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
@@ -134,7 +133,7 @@ ifeq "$(CF90)" "IFORT"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp -openmp-report=1
+	OMPADDL =  -openmp
   endif
 endif
 
@@ -146,7 +145,7 @@ ifeq "$(CF90)" "IFORT1"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp -openmp-report=1
+	OMPADDL =  -openmp
   endif
 endif
 
@@ -216,7 +215,7 @@ ifeq "$(CF90)" "IFORT"
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
-	OPT1  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = -openmp -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  =  -fpp -w       -g                 -align all -autodouble
   ifeq "$(DEBUG)" "YES"
@@ -229,8 +228,8 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	STATIC = -static
-	OPT1  = -fpp -w -axavx -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  = -fpp -w -axavx -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  = -fpp -w        -g                            -align all -autodouble
   ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
@@ -261,9 +260,9 @@ endif
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 	#OPTGPU = -O3 --gpu-architecture sm_13 
-	OPTGPU = -O3 --gpu-architecture sm_20 
+	#OPTGPU = -O3 --gpu-architecture sm_20 
 	#OPTGPU = -O3 --gpu-architecture sm_30 
-	#OPTGPU = -O3 --gpu-architecture sm_35 
+	OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
   ifeq "$(DEBUG)" "YES"
 	#OPTGPU = -g -G --gpu-architecture sm_13 
 	OPTGPU = -g -G --gpu-architecture sm_20 
@@ -330,7 +329,7 @@ else
 endif
 
 # Compiler flags
-COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(OMPADDL) $(FFTWADD))
+COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 GPUCOMPILERFLAGS = $(OPTGPU) $(MPIADD) $(OMPADD)
@@ -429,11 +428,10 @@ else
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
-        EXEC = essai.omp
     else
 	MPI_NAME = Mono
-        EXEC = essai.seq
     endif
+    EXEC = essai.seq
   endif
 endif
 
@@ -458,6 +456,7 @@ define.h: ;
 *.cu: ;
 define_cuda.h: ;
 params_gpu.h: ;
+values_gpu.h: ;
 
 #####################################################################
 #                             Checks                                #
@@ -745,7 +744,7 @@ kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 ifneq "$(TYPE_FFT)" "cuFFT"
 coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.mod $(FFT_OBJ)
 endif
-static.o: static.F90 pseudosoft.F90 $(DEPS_KINCOUL)
+static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 
 rho.o: rho.F90
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
@@ -789,7 +788,7 @@ parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 ifeq "$(TYPE_FFT)" "cuFFT"
-cuda.o: cuda.cu define_cuda.h params_gpu.h static_gpu.cu makefile
+cuda.o: cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu makefile
 	$(GPUCOMPILER) $(GPUCOMPILERFLAGS) -c $<
 endif
 

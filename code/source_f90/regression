@@ -1,0 +1,31 @@
+#!/bin/bash
+rm -f ../../code/essai.seq
+if [ -e "../../samples/C2/resultcpuok" ]
+then
+	echo "sequential reference present"
+else
+	echo "no sequential reference present"
+./make.sh 0 fftw
+cd ../../samples/C2
+../../code/essai.seq > resultcpuok
+ sed '/time/d' resultcpuok > resultcpuokt
+fi
+cd ../../code/source_f90
+./make.sh 0 gpu
+cd ../../samples/C2
+ ../../code/essai.seq > test
+ sed '/time/d' test > testt
+ cat resultcpuokt resultcpuokt > reference
+ cat resultcpuokt testt > try
+ rm -f reference.bz2
+ rm -f try.bz2
+ bzip2 reference try
+ stat  --format=%s  reference.bz2  > refs
+ stat  --format=%s  try.bz2 > trys
+ echo '-' > plus
+ echo '(' > leftp
+ echo ')' > rightp
+ echo '/' > over
+ cat leftp refs plus trys rightp over refs | tr -d '\n' > bc
+ echo -e '\n' >> bc
+ bc -l  < bc 

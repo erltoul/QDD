@@ -238,7 +238,7 @@ SUBROUTINE changeperio
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!      namelist /perio/ ch(-92:92),amu(-92:92),
+!      namelist /perio/ ch(-99:99),amu(-99:99),
 NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
     h0_11g,h0_12g,h0_22g,h0_33g, h1_11g,h1_22g,h2_11g,  &
     dr1,dr2,prho1,prho2, r0g,r1g,r2g,radiong
@@ -530,6 +530,10 @@ ELSE IF(ipsptyp == 1) THEN
   WRITE(iu,'(a)') 'full Goedecker pseudopotentials'
 ELSE IF(ipsptyp == 2) THEN
   WRITE(iu,'(a)') 'local Goedecker pseudopotentials'
+ELSE IF(ipsptyp == 3) THEN
+  WRITE(iu,'(a)') 'full Goedecker pseudopotentials form file goed.asci'
+ELSE IF(ipsptyp == 4) THEN
+  WRITE(iu,'(a)') 'full semicore Goedecker pseudopotentials form file goed.asci'
 ELSE
   STOP ' this type IPSPTYP not yet implemented'
 END IF
@@ -852,8 +856,11 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-92:92),dr2(-92:92)
-REAL(DP) :: prho1(-92:92),prho2(-92:92)
+REAL(DP) :: dr1(-99:99),dr2(-99:99)
+REAL(DP) :: prho1(-99:99),prho2(-99:99)
+character (len=3) ::  naml
+character (len=2)  ::  namc,symb(99)
+character(len=80) ::  a
 
 !----------------------------------------------------------------
 
@@ -861,7 +868,7 @@ REAL(DP) :: prho1(-92:92),prho2(-92:92)
 WRITE(6,*) 'Entering iperio'
 
 
-DO iel=-92,92
+DO iel=-99,99
   amu(iel)= 0D0   ! masses as a function of atomic number
 END DO
 
@@ -979,6 +986,7 @@ IF(ipsptyp == 0) THEN
   
 ELSE IF(ipsptyp == 1) THEN
   
+
 !       hydrogen
   
   amu(1)   = 1D0
@@ -1256,6 +1264,161 @@ ELSE IF(ipsptyp == 2) THEN
 !09        crloc(18)= 0.9
 !  nrow(18) = 3
 !        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
+ELSE IF((ipsptyp == 3).OR.(ipsptyp ==4)) THEN
+!Goedecker read from two files, with valence electrons only
+do iel=1,92
+        amu(iel)=0.0   ! masses as a function of atomic number
+enddo
+
+!       read atomic number and masses of the elements
+
+OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='periodic')
+do i=1,86
+   read(96,*) natom,symb(natom),amu(natom)
+enddo
+close(unit=96)
+!write(6,*) 'periodic table read from file periodic'
+
+!       read pseudopotential parameters
+
+OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='goed.asci')
+
+!       beginning of reading loop
+
+icountt=-1
+iskip=-1
+
+!       start of loop
+
+inew=1
+open(unit=19,status='scratch')
+50	continue
+if(icountt.gt.0) then
+!write(6,*) symb(icountt),ch(icountt),crloc(icountt),cc1(icountt)
+endif
+icountt=icountt+1
+ch(icountt)=0.0
+crloc(icountt)=0.0
+cc1(icountt)=0.0
+cc2(icountt)=0.0
+r0g(icountt)=0.0
+r1g(icountt)=0.0
+r2g(icountt)=0.0
+l=0
+
+!       we read a new line if not already done
+
+70	continue
+if(inew.eq.1) then 
+   read(96,'(a)',end=1000) a
+endif
+if(a(1:1).ne.' ') then
+
+!       we have a new element
+
+
+   if(inew.eq.1) then
+      inew=0
+      goto 50
+   endif
+   rewind 19
+   write(19,'(a)') a
+   rewind 19
+100  read(19,101) naml,nval,rloc,c1,c2,c3,c4
+101  format(a3,i2,5(f10.6))
+   if(naml(3:3).eq.'1') then 
+!     write(6,*) 'semi-core'
+!      write(6,103) naml(1:3),' ',nval,rloc,c1,c2,c3,c4
+      isave=icountt-1
+      icountt=99 
+      iskip=99
+
+!we skip semicore pseudos excepted if asked 
+
+IF(ipsptyp == 4) THEN
+     icountt=isave
+     iskip=icountt
+ENDIF
+   else
+        iskip=icountt
+      rewind 19
+      read(19,102) namc,nval,rloc,c1,c2,c3,c4
+102     format(a2,i2,5(f10.6))
+!      write(6,103) namc(1:2),' ',nval,rloc,c1,c2,c3,c4
+   endif
+   ch(icountt)=nval
+   crloc(icountt)=rloc
+   cc1(icountt)=c1
+   cc2(icountt)=c2
+103   format(2A,i2,5(f10.6))
+
+!       we search for the element in the periodic table
+
+   nactual=0
+   do iel=1,86
+      if(naml(1:2).eq.symb(iel)) then
+! write(6,*) naml(1:2),' found in periodic table, Z=',iel,icountt
+         nactual=iel
+      endif
+   enddo    
+   if(nval.eq.nactual) then
+!      write(6,*) 'all electron pseudopotential'
+   endif
+   if(nactual.eq.0) stop 'not found in periodic table'
+if(icountt.ne.99) then
+if(nactual.ne.icountt) then
+write(6,*)  'nactual',nactual,'icount',icountt
+        stop 'lost in pseudop. coef table'
+endif
+endif
+ else
+
+
+!       we have nonlocal coefficients in this line
+
+     rewind 19
+   write(19,'(a)') a(6:80)
+   rewind 19
+!  write(6,'(a)') a(6:80)
+110  read(19,111) crr,h11,h22,h33
+! write(6,112) 'nonlocal reread',crr,h11,h22,h33
+111 format(4(f10.6))
+112   format(A,4(f10.6))
+   if(iskip.ne.99) then
+         if(crr.eq.0.0) then
+                 l=l-1
+          endif
+           if(l.eq.0) then
+                r0g(icountt)=crr
+                h0_11g(icountt)=h11
+                h0_22g(icountt)=h22
+                h0_33g(icountt)=h33
+           endif
+           if(l.eq.1) then
+                r1g(icountt)=crr
+                h1_11g(icountt)=h11
+                h1_22g(icountt)=h22
+           endif
+           if(l.eq.2) then
+                r2g(icountt)=crr
+                h2_11g(icountt)=h11
+           endif
+      l=l+1
+endif
+endif
+
+
+!       go back to read a new line
+inew=1
+if(icountt.eq.99) icountt=isave
+goto 70
+1000 write(6,*) 'all parameters have been read in file goed.asci'
+
+close(unit=19)
+
+
+
+ipsptyp =1
   
 ELSE
   STOP ' IPERIO: this type PsP not yet implemented '
