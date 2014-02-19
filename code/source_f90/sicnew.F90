@@ -369,7 +369,7 @@ IF(numspin==2) THEN
 !    DO ind=1,nxyz
     DO ind=1,size
 #if(parayes)
-      tp1(ind)=rhonod1(ind)*(1.0-rhonod2(ind))*facuph
+      tp1(ind)=rhonod1(ind)*(1.0-rhonod2(ind))*facdwh
       tp2(ind)=-1.0
 #else
       rhospd(ind)=rho(ind)*(1.0-rho(ind+nxyz))*facdwh
