@@ -67,7 +67,7 @@ END IF
 WRITE(6,'(a,5i5)')  &
     ' ndiff,nmaxval,nstate,ncycle,nadd=',ndiff,nmaxval,nstate, ncycle,nadd
 WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
-WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
+!WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
 
 !     loop through ions and fill electron states successively
 

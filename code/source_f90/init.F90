@@ -1386,7 +1386,7 @@ endif
 112   format(A,4(f10.6))
    if(iskip.ne.99) then
          if(crr.eq.0.0) then
-                 l=l-1
+ !                l=l-1
           endif
            if(l.eq.0) then
                 r0g(icountt)=crr
