@@ -33,12 +33,17 @@ if [ ! -f define.h ] || [ ! -f params.F90 ] || [ ! -f makefile ] ; then
     exit 0
 fi
 
+export PCF=GFORT
+if which ifort ; then
+        export PCF=IFORT
+fi
+
 # For parallel setups: if mpif90 is available, use it; else, use ifort.
 if [ $para = 1 ] || [ $para = 2 ] ; then
     if which mpif90 ; then
-        PCF=MPIF90
+        export PCF=MPIF90
     else
-        PCF=IFORT
+        export PCF=GFORT
     fi
 fi
 
@@ -70,7 +75,8 @@ if [ $para = 0 ] ; then
 #    sed -i -e 's/parayes.*/parayes 0/' define.h
 #    sed -i -e 's/simpara.*/simpara 0/' define.h
 #    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" makefile
-    sed -i -e 's/CF90 = .*/CF90 = IFORT/' makefile
+#    sed -i -e 's/CF90 = .*/CF90 = GFORT/' makefile
+    sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
     sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = NO/' makefile
 elif [ $para = 1 ] ; then
     echo '*** parallel compilation, simpara = no ***'
