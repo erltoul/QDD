@@ -113,6 +113,7 @@ DO ind=1,nxyz
 END DO
 
 CALL emoms(rho)
+IF(eproj/=0) CALL projmoms(rho,q0)
 
 
 #if(gridfft)

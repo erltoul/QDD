@@ -887,7 +887,7 @@ DO ion = 1,nion
   
   
   CALL calc_proj(xion,yion,zion,xion,yion,zion,ion)
-  WRITE(*,*) ' projectors restored'
+!  WRITE(*,*) ' projectors restored'
 !  IF(nrow(np(1)) == 2) CALL calpr2(xion,yion,zion,ion)
 !  IF(nrow(np(1)) == 3) CALL calpr3(xion,yion,zion,ion)
 !  IF(nrow(np(1)) == 4) CALL calpr4(xion,yion,zion,ion)

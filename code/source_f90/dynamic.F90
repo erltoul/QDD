@@ -200,8 +200,9 @@ COMPLEX(DP) :: cfac
 
 
 !------------------------------------------------------------------
+! lionel : np(nion) ==> np(nproj)
 
-v0 = SQRT(2.*eproj/(amu(np(nion))*1836.0*ame))
+v0 = SQRT(2.*eproj/(amu(np(nproj))*1836.0*ame))
 rnorm = vpx**2 + vpy**2+ vpz**2
 rnorm = SQRT(rnorm)
 
@@ -217,22 +218,32 @@ IF(init_lcao.NE.1) THEN
   WRITE(*,*) ' instantaneous acceleration only for INIT_LCAO==1'
   STOP  ' instantaneous acceleration only for INIT_LCAO==1'
 END IF
-ind = 0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    DO ix=minx,maxx
-      x1=(ix-nxsh)*dx
-      ind = ind + 1
-      arg = x1*vpx+y1*vpy+z1*vpz
-      cfac = CMPLX(COS(arg),SIN(arg),DP)
-      DO nbe=1,nmaxst(nion)
-        psi(ind,nbe)=cfac*psi(ind,nbe)
-      END DO
-    END DO
+IF(nproj_states==0) THEN
+  WRITE(*,*) ' CAUTION : atomic projectile without wf to boost'
+  WRITE(*,*) ' if there are electrons on the projectile, please use'
+  WRITE(*,*) ' nproj_states in GLOBAL, proj_states and nproj in DYNAMIC'
+ELSE
+  WRITE(*,*)'Input states of the projectile',proj_states(:)
+  ind = 0
+  DO iz=minz,maxz
+     z1=(iz-nzsh)*dz
+     DO iy=miny,maxy
+        y1=(iy-nysh)*dy
+        DO ix=minx,maxx
+           x1=(ix-nxsh)*dx
+           ind = ind + 1
+           arg = x1*vpx+y1*vpy+z1*vpz
+           cfac = CMPLX(COS(arg),SIN(arg),DP)
+           DO nbe=1,nstate
+              nbee=nrel2abs(nbe)
+              DO kk=1,nproj_states
+                 IF (nbee == proj_states(kk)) psi(ind,nbe)=cfac*psi(ind,nbe)
+              END DO
+           END DO
+        END DO
+     END DO
   END DO
-END DO
+END IF
 
 RETURN
 END SUBROUTINE init_projwf
@@ -1898,6 +1909,23 @@ LOGICAL :: topenf
 
 
 IF(irest <= 0) THEN                    !  write file headers
+
+#if(simpara)
+  IF(jdip /= 0 .AND. eproj /=0 ) THEN
+#else
+  IF(myn == 0 .AND. jdip /= 0 .AND. eproj/=0 ) THEN
+#endif
+    OPEN(88,STATUS='unknown',FORM='formatted',FILE='pprojdip.'//outnam)
+    WRITE(88,'(a)') ' & '
+    WRITE(88,'(a)') 'x:time'
+    WRITE(88,'(a)') 'y:dipole-momenta of projectile'
+    WRITE(88,'(a)') 'z:dipole-momenta of target'
+    WRITE(88,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
+    WRITE(88,'(a)') 'n: time in fs  dipole-momenta: x   y   z'
+    WRITE(88,'(a)') 'H:   X        Yl            Yd           Yq         Zl          Zd          Zq'
+    CLOSE(88)
+  END IF
+
   
 #if(simpara)
   IF(jdip /= 0) THEN
@@ -2701,6 +2729,7 @@ IF(nclust > 0 .AND. myn == 0)THEN
 #endif
   
   CALL safeopen(8,it,jdip,'pdip')
+  CALL safeopen(88,it,jdip,'pprojdip')
   CALL safeopen(810,it,jdiporb,'pdiporb.x')
   CALL safeopen(811,it,jdiporb,'pdiporb.y')
   CALL safeopen(812,it,jdiporb,'pdiporb.z')
@@ -3111,6 +3140,12 @@ IF(myn==0) THEN
   IF(jdip > 0 .AND. MOD(it,jdip) == 0) THEN
     WRITE(8,'(f10.5,3e17.8)') tfs,qe(2),qe(3),qe(4)
     CALL flush(8)
+  END IF
+
+  IF(jdip > 0 .AND. MOD(it,jdip) == 0 .AND. eproj /=0 ) THEN
+    WRITE(88,'(f10.5,6e17.8)') tfs,qeproj(2),qeproj(3),qeproj(4),&
+                               qetarget(2),qetarget(3),qetarget(4)
+    CALL flush(88)
   END IF
 
   IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN

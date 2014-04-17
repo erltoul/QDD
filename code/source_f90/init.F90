@@ -37,7 +37,8 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     rotclustx,rotclusty,rotclustz,imob,  &
     idebug,ishiftcmtoorigin,iaddcluster,  &
     iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
-    ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep
+    ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
+    nproj_states
 
 
 !*************************************************************
@@ -85,7 +86,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
     ifreezekspot,powabso,ispherabso,ifixcmion,  &
     ekin0pp,vxn0,vyn0,vzn0,jescmask,itof,jescmaskorb,  &
-    eproj,vpx,vpy,vpz,taccel,   &
+    eproj,nproj,proj_states,vpx,vpy,vpz,taccel,   &
     trequest,timefrac,  &
     nmptheta,nmpphi,jmp,jovlp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
@@ -184,6 +185,10 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,global,END=99999)
     WRITE(*,*) ' GLOBAL read'
     IF(dx*dy*dz == 0D0) STOP ' DX & DY & DZ must be given explicitely'
+    IF(nproj_states>0)THEN
+      ALLOCATE(proj_states(nproj_states))
+      proj_states(:)=0
+    END IF
     READ(5,dynamic,END=99999)
     WRITE(*,*) ' DYNAMIC read'
     READ(5,surface,END=99999)
@@ -1811,17 +1816,18 @@ IF (ekin0pp > 0D0) THEN
 END IF ! initial kinetic energy for ions
 
 
-!     Initialization of the first ion (= projectile) velocity
+!     Initialization of the projectile velocity
 !     In the case of an atom, the w.f. are boosted accordingly in tinit
+! lionel : np(nion)=> np(nproj)
 IF (eproj > 0D0 .AND. taccel<1D-5) THEN
-  v0 = SQRT(2.*eproj/(amu(np(1))*1836.0*ame))
+  v0 = SQRT(2.*eproj/(amu(np(nproj))*1836.0*ame))
   rnorm = vpx**2 + vpy**2+ vpz**2
   rnorm = SQRT(rnorm)
   IF (rnorm == 0) STOP 'Velocity vector not normalizable'
-  tempv=v0*ame*amu(np(1))*1836.0/rnorm
-  cpx(nion) = vpx*tempv
-  cpy(nion) = vpy*tempv
-  cpz(nion) = vpz*tempv
+  tempv=v0*ame*amu(np(nproj))*1836.0/rnorm
+  cpx(nproj) = vpx*tempv
+  cpy(nproj) = vpy*tempv
+  cpz(nproj) = vpz*tempv
   WRITE(*,*) ' projectile momenta initialized: eproj,v0=',eproj,v0
 ENDIF
 
@@ -1976,6 +1982,10 @@ ELSE
   
 !  CALL ininodes()
   occup=1D0
+#if(parano) 
+  nstate_all=nclust
+  nstate=nclust
+#endif
   CALL genermowf(psir,nmaxst)
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
@@ -2372,6 +2382,7 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 !     compute equidistribution of wfs on nodes
 
 nstate_all = nstate
+IF (init_lcao==1) nstate_all = nclust !lionel
 nstpernode = nstate_all/knode
 nodeplus   = nstate_all-nstpernode*knode
 nstaccum = 0

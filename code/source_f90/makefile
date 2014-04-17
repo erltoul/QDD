@@ -28,7 +28,7 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = cuFFT
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:

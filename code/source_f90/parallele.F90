@@ -195,6 +195,13 @@ IF(myn == 0 .AND. knode /= 1)THEN
     
     CALL mpi_send(nion2,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
+    CALL mpi_send(eproj,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(nproj,1,mpi_integer,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(nproj_states,1,mpi_integer,nod,1, mpi_comm_world,ic)
+    WRITE(*,*) 'proj_states=',proj_states
+    DO ii=1,nproj_states
+       CALL mpi_send(proj_states(ii),1,mpi_integer,nod,1, mpi_comm_world,ic)
+    END DO
 
     CALL mpi_send(nabsorb,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(ifsicp,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -364,6 +371,21 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(outnam,13,mpi_character,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(nion2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+
+  CALL mpi_recv(eproj,1,mpi_double_precision,0,mpi_any_tag,  &
+      mpi_comm_world,is,ic)
+  CALL mpi_recv(nproj,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  WRITE(*,*) 'nproj=',nproj
+  CALL mpi_recv(nproj_states,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  WRITE(*,*) 'nproj_states=',nproj_states
+  IF (nproj_states>0)THEN
+    ALLOCATE(proj_states(nproj_states))
+    DO ii=1,nproj_states
+       CALL mpi_recv(proj_states(ii),1,mpi_integer,0,mpi_any_tag,  &
+         mpi_comm_world,is,ic)
+       WRITE(*,*) 'proj_states(',ii,')=',proj_states(ii)
+    END DO
+  END IF  
   
   CALL mpi_recv(nabsorb,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(ifsicp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)

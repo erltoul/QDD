@@ -1589,6 +1589,154 @@ END SUBROUTINE emoms
 
 
 
+!-----projmoms-------------------------------------------------------projmoms
+
+SUBROUTINE projmoms(rho,psi)
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+#ifdef REALSWITCH
+REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
+#else
+COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
+#endif
+
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+REAL(DP) :: sprojec
+#endif
+
+
+
+REAL(DP), INTENT(IN)                :: rho(2*kdfull2)
+REAL(DP)                            :: summ,sumx,sumy,sumz
+!----------------------------------------------------------------------
+nrmom=35
+IF(nrmom > kmom) STOP ' too many moments in projmoms'
+
+DO k=1,nrmom
+  qetarget(k)=0D0
+  qeproj(k)=0D0
+END DO
+
+
+!     switch for calculating moments relative to center of mass (1)
+!     or center of box (0)
+
+
+rvectmp = 0D0
+IF (iemomsrel == 1 .AND. nion2 > 0) THEN
+   
+  DO i=1,nion
+    IF (i/=nproj) THEN
+      summ = summ + amu(np(i))
+      sumx = sumx + amu(np(i))*cx(i)
+      sumy = sumy + amu(np(i))*cy(i)
+      sumz = sumz + amu(np(i))*cz(i)
+    END IF
+  END DO
+
+  rvectmp(1) = sumx/summ
+  rvectmp(2) = sumy/summ
+  rvectmp(3) = sumz/summ
+
+
+END IF
+
+ind=0
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  z1t=z1-rvectmp(3)
+  z1p=z1-cz(nproj)
+
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    y1t=y1-rvectmp(2)
+    y1p=y1-cy(nproj)
+
+    DO ix=minx,maxx
+      ind=ind+1
+!test               if((ix.ne.nx2).and.(iy.ne.ny2).and.(iz.ne.nz2)) then
+      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
+        x1=(ix-nxsh)*dx
+        x1t=x1-rvectmp(1)
+        x1p=x1-cx(nproj)
+
+
+       sproj=0D0
+
+#if(parano)
+       DO ik=1,nproj_states
+         ikk=proj_states(ik)
+#ifdef REALSWITCH
+         sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
+       END DO
+#else
+         sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk))
+       END DO
+#endif
+#endif
+
+#if(parayes)
+      sprojec=0D0 
+      DO nbe=1,nstate
+        nbee=nrel2abs(nbe)
+        DO kk=1,nproj_states
+           IF (nbee == proj_states(kk)) THEN
+#ifdef REALSWITCH
+         sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
+#else
+         sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe))
+#endif
+           END IF
+        END DO
+      END DO
+
+CALL mpi_barrier(mpi_comm_world, mpi_ierror)
+CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
+   mpi_sum,mpi_comm_world,ic)
+CALL mpi_barrier(mpi_comm_world, mpi_ierror)
+
+#endif
+
+
+
+
+
+
+       starget=rho(ind)-sproj
+!                                                     monopole
+        qetarget(1)=qetarget(1)+starget
+        qeproj(1)=qeproj(1)+sproj
+!                                                     dipole
+        qetarget(2)=qetarget(2)+starget*x1t
+        qetarget(3)=qetarget(3)+starget*y1t
+        qetarget(4)=qetarget(4)+starget*z1t
+
+        qeproj(2)=qeproj(2)+sproj*x1p
+        qeproj(3)=qeproj(3)+sproj*y1p
+        qeproj(4)=qeproj(4)+sproj*z1p
+
+      END IF
+    END DO
+  END DO
+END DO
+
+DO k=1,nrmom
+  qetarget(k)=qetarget(k)*dvol
+  qeproj(k)=qeproj(k)*dvol
+END DO
+
+DO k=2,nrmom
+  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
+  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
+END DO
+
+RETURN
+END SUBROUTINE projmoms
+
+
 
 
 

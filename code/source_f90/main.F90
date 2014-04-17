@@ -618,6 +618,7 @@ if (jattach>0) THEN
   DEALLOCATE(spe_target)
   DEALLOCATE(match)
 END IF
+IF(nproj_states>0) DEALLOCATE(proj_states)
 
 
 CLOSE(163)
