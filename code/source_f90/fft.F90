@@ -453,7 +453,7 @@ DO i3=1,nz2
   modz(i3)=MOD(i3+nz,nz2)+1
 END DO
 
-WRITE(*,*) ' end: fftay:',fftay
+!WRITE(*,*) ' end: fftay:',fftay
 
 END SUBROUTINE init_grid_fft
 

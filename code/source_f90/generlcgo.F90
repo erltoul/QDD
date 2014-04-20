@@ -71,7 +71,24 @@ WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
 
 !     loop through ions and fill electron states successively
 
-nmaxact = nstate/nion+1                ! max. states per atom
+!nmaxact = nstate/nion+1                ! max. states per atom
+
+!lionel
+
+IF(numspin==2) THEN
+  ind=0
+  DO ion=1,nion
+    DO iki=1,nmxst(ion)
+        ind=ind+1
+        ispin(ind) = 2-MOD(iki,2)
+        IF (ipol(ion).eq.-1) ispin(ind) = 2-mod(ispin(ind)+1,2)
+    END DO
+  END DO
+END IF
+
+
+! the following part has to be cleaned a little
+
 numstate = 0
 DO ion=1,nion
   DO natlevel=1,nmxst(ion)
@@ -80,14 +97,14 @@ DO ion=1,nion
     IF(numspin==2) THEN
       nactst(ion) = nactst(ion)+MOD(natlevel,2)
       ispin(numstate) = 2-MOD(natlevel,2)
-      if (ipol(ion).eq.-1) then ! ipol=-1 serves to force spin down on some hydrogen atoms
+      IF(ipol(ion).eq.-1) THEN ! ipol=-1 serves to force spin down on 
+                               ! some hydrogen atoms
         ispin(numstate) = 2-mod(ispin(numstate)+1,2)
-!       ispin(numstate) = 2
-!      else
-!        ispin(numstate) = 1
-      endif
+      END IF
       write(6,*) 'ion,natlev,numst,ispin', &
                   ion,natlevel,numstate,ispin(numstate)
+      write(7,*) 'ksttot,nstate,ion,natlev,numst,ispin', &
+                  ksttot,nstate,ion,natlevel,numstate,ispin(numstate)
     ELSE
       nactst(ion) = nactst(ion)+1
     END IF

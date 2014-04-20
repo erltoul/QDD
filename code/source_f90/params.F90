@@ -188,6 +188,8 @@ INTEGER  :: nstate_target,nmatch
 INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
+INTEGER :: nproj=1,nproj_states=0
+INTEGER,ALLOCATABLE :: proj_states(:)
 REAL(DP) :: trequest=0D0,timefrac=0.98D0
 REAL(DP) :: rheatclust
 REAL(DP) :: igeneratesurffile
@@ -267,7 +269,7 @@ REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 !      common /moment/ ql(kmom),
 INTEGER,PARAMETER :: kmom=35
 INTEGER :: nrmom
-REAL(DP) :: qe(kmom),se(5),ajx,ajy,ajz
+REAL(DP) :: qe(kmom),qeproj(kmom),qetarget(kmom),se(5),ajx,ajy,ajz
 REAL(DP),ALLOCATABLE :: qeorb_all(:,:)
 !COMMON /moment/ qe,se,ajx,ajy,ajz,nrmom
 
