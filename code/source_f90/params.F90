@@ -9,7 +9,7 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 !
 
 ! number of nodes (=1 for serial version)
-INTEGER :: knode=10
+INTEGER :: knode=2
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
 INTEGER :: kstate=0

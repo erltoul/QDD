@@ -1,7 +1,7 @@
 import os
 import time
 pwteleman = 'mpirun -np 2 ~/gitcalv/code/essai.par'
-pwteleman = '~/gitcalv/code/essai.seq'
+#pwteleman = '~/gitcalv/code/essai.seq'
 line = open('for005', 'r').readlines()
 label = line[0].split(" \n")
 

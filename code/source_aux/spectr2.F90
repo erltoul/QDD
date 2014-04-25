@@ -2,7 +2,7 @@
  
 PROGRAM spectr
 
-PARAMETER (klinmx=29999,kcolmx=9)
+PARAMETER (klinmx=199999,kcolmx=9)
 PARAMETER (kcoly=kcolmx-1)
 !      parameter (timefc=197.32)       ! input data in fm/c output MeV
 PARAMETER (timefc=0.0484)     ! input data in fs output Ry
