@@ -28,7 +28,7 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = FFTW
+TYPE_FFT = NETLIB
 
 # DEBUG: enable debugging
 # Available options:

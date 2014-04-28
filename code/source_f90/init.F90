@@ -198,6 +198,10 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
 
     IF(jdip<0) STOP "you must specify JDIP in namelist DYNAMIC"
     IF(jesc<0) STOP "you must specify JESC in namelist DYNAMIC"
+    if(nclust<=0) then ! total charge of the cluster is read
+           write(*,*) 'zero or negative nclust : global charge of',nclust
+    endif
+
 
 #if(simpara)
   ELSE IF(myn > 5) THEN
@@ -622,11 +626,20 @@ END IF
 
 !     dynamical options
 
+
 WRITE(iu,'(a,3i6)') ' kxbox,kybox,kzbox=',kxbox,kybox,kzbox
+if(nclust<=0) then
 #if(raregas)
-WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
+        WRITE(iu,'(a,4i6)') ' charge,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
-WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
+       WRITE(iu,'(a,3i6)') ' charge,nion,nstate=',nclust,nion,kstate
+#endif
+else
+#if(raregas)
+        WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
+#else
+        WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
+endif
 #endif
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
@@ -710,9 +723,22 @@ WRITE(6,'(a,3i5,i8,g12.4)') ' INIT: nx,ny,nz,nxyz,dvol=',  &
 
 !       output static parameters (traditional sodium case)
 
-WRITE(7,'(5x,a,i2,a,i2/a/)')  &
-    '# electr.: ',nclust,'# ions: ',nion,'=========='
-WRITE(7,'(a,i3)') 'number of wave-fkts nstate = ',nstate
+if(nclust>0) then
+        WRITE(7,'(5x,a,i2,a,i2/a/)')  &
+        '# electr.: ',nclust,'# ions: ',nion,'=========='
+else
+       WRITE(7,'(5x,a,i2,a,i2/a/)')  &
+      '# charge.: ',nclust,'# ions: ',nion,'=========='
+             nstate=nion+nclust
+       if(ipsptyp<1) then
+       if(ipseudo<1) then
+                   nclust=nstate
+                   nspdw=nstate/2
+       endif
+       endif
+endif
+WRITE(7,'(a,i3)') 'number of alkali wave-fkts nstate = ',nstate
+
 WRITE(7,'(a,f4.2)') 'initialisation : osfac=',osfac
 WRITE(7,'(a,10(/t2,3(3i4,5x),3i4))')  &
     'quantumnumbers :  ',((nq(i,j),i=1,3),j=1,nstate)
@@ -861,7 +887,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-99:99),dr2(-99:99)
+REAL(DP) :: dr1(-99:99),dr2(-99:99),totvalelec=0.0
 REAL(DP) :: prho1(-99:99),prho2(-99:99)
 character (len=3) ::  naml
 character (len=2)  ::  namc,symb(99)
@@ -1462,7 +1488,6 @@ END IF
 WRITE(6,*) 'Mass of na: ',amu(11)
 
 WRITE(6,*) 'END OF IPERIO.'
-!WRITE(6,*) 'h0_12g:',h0_12g
 
 RETURN
 END SUBROUTINE iperio
@@ -1478,7 +1503,8 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: orderxyz
-REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
+REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0.0
+
 
 IF(nion2 == 0) THEN
   ecorr = 0D0
@@ -1507,6 +1533,7 @@ IF(myn == 0)THEN
     IF(init_lcao == 1) THEN
       READ(9,*) cx(ion),cy(ion),cz(ion),np(ion),orderxyz, radini(ion)&
            ,ipol(ion)
+        totvalec=totvalec+ch(np(ion))
 !                          translate ordering of atomic states
       IF(orderxyz == 'xyz') THEN
         initord(1,ion) = 1
@@ -1549,6 +1576,18 @@ IF(myn == 0)THEN
   END DO
   CLOSE(UNIT=9)
   
+  write(6,*) 'total number of valence electrons',totvalec
+    if(nclust<=0) then
+         nstate=totvalec+nclust
+         nclust=nstate
+         nspdw=nclust/2
+         write(6,*) 'nstate set to',nstate
+         write(6,*) 'kstate is',kstate
+        write(6,*) 'nclust set to',nclust
+         write(6,*) 'nspdw set to',nspdw
+           if(nstate>kstate) stop 'kstate too small - increase' 
+    endif
+
   
   
 !       re-scale cluster if desired
@@ -1788,8 +1827,8 @@ END IF
 WRITE(6,*) 'Calculating ionic energy ...'
 
 sumion = energ_ions()     !  ???
-WRITE(7,'(a,f7.4)') 'sumion=',sumion
-WRITE(6,'(a,f7.4)') 'sumion=',sumion
+WRITE(7,'(a,f17.4)') 'sumion=',sumion
+WRITE(6,'(a,f17.4)') 'sumion=',sumion
 WRITE(7,*)
 WRITE(6,*)
 !k
