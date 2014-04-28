@@ -1462,6 +1462,7 @@ END IF
 WRITE(6,*) 'Mass of na: ',amu(11)
 
 WRITE(6,*) 'END OF IPERIO.'
+!WRITE(6,*) 'h0_12g:',h0_12g
 
 RETURN
 END SUBROUTINE iperio

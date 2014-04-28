@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT
+CF90 = IFORT1
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:

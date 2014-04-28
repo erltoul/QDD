@@ -1,12 +1,12 @@
 !     the "periodic table"
 !       (negative numbers stand for the local electron cloud of an element)
 
-REAL(DP) :: ch(-99:99),amu(-99:99),cc1(-99:99),cc2(-99:99)
-REAL(DP) :: crloc(-99:99),crs(-99:99),chs(-99:99),chg1(-99:99),chg2(-99:99)
-REAL(DP) :: sgm1(-99:99),sgm2(-99:99)
-REAL(DP) :: r0g(-99:99),r1g(-99:99),r2g(-99:99),h0_11g(-99:99),h0_22g(-99:99)
-REAL(DP) :: h0_33g(-99:99),h1_11g(-99:99),h1_22g(-99:99)
-REAL(DP) :: h2_11g(-99:99),radiong(-99:99)
+REAL(DP) :: ch(-99:99)=0D0,amu(-99:99)=0D0,cc1(-99:99)=0D0,cc2(-99:99)=0D0
+REAL(DP) :: crloc(-99:99)=0D0,crs(-99:99)=0D0,chs(-99:99)=0D0,chg1(-99:99)=0D0,chg2(-99:99)=0D0
+REAL(DP) :: sgm1(-99:99)=0D0,sgm2(-99:99)=0D0
+REAL(DP) :: r0g(-99:99)=0D0,r1g(-99:99)=0D0,r2g(-99:99)=0D0,h0_11g(-99:99)=0D0,h0_22g(-99:99)=0D0
+REAL(DP) :: h0_33g(-99:99)=0D0,h1_11g(-99:99)=0D0,h1_22g(-99:99)=0D0
+REAL(DP) :: h2_11g(-99:99)=0D0,radiong(-99:99)=0D0
 REAL(DP) :: h0_12g(-99:99)=-1D20               ! default signal "automatic"
 !INTEGER :: nrow(-99:99)
 !fix! INTEGER :: np(0:ng)
