@@ -640,8 +640,12 @@ IF(n == 0 .AND. knode /= 1)THEN
     IF(init_lcao == 1) THEN
       CALL mpi_send(radini(1),nion,mpi_double_precision,  &
           nod,1,mpi_comm_world,ic)
+      CALL mpi_send(ipol(1),nion,mpi_double_precision,  &
+          nod,1,mpi_comm_world,ic)
+      CALL mpi_send(nmaxst(1),nion,mpi_integer,  &
+          nod,1,mpi_comm_world,ic)
       DO ion=1,nion
-        CALL mpi_send(initord(1,nion),3,mpi_integer,nod,1, mpi_comm_world,ic)
+        CALL mpi_send(initord(1,ion),3,mpi_integer,nod,1, mpi_comm_world,ic)
       END DO
     END IF
     CALL mpi_send(tblock,ng+1,mpi_logical,nod,1, mpi_comm_world,ic)
@@ -669,8 +673,12 @@ ELSE IF(n /= 0 .AND. knode /= 1)THEN
   IF(init_lcao == 1) THEN
     CALL mpi_recv(radini(1),nion,mpi_double_precision,  &
         0,mpi_any_tag,mpi_comm_world,is,ic)
+    CALL mpi_recv(ipol(1),nion,mpi_double_precision,  &
+        0,mpi_any_tag,mpi_comm_world,is,ic)
+    CALL mpi_recv(nmaxst(1),nion,mpi_integer,  &
+        0,mpi_any_tag,mpi_comm_world,is,ic)
     DO ion=1,nion
-      CALL mpi_recv(initord(1,nion),3,mpi_integer,0,  &
+      CALL mpi_recv(initord(1,ion),3,mpi_integer,0,  &
           mpi_any_tag,mpi_comm_world,is,ic)
     END DO
   END IF

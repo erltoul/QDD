@@ -45,7 +45,7 @@ DO ion=1,nion
   nmxst(ion) = ch(np(ion))
   nmaxval = nmaxval + ch(np(ion))
 END DO
-ndiff = nmaxval - nstate
+ndiff = nmaxval - nclust
 ncycle = ndiff/nion+1
 IF(ndiff > 0) THEN
   nadd = +1
@@ -73,8 +73,6 @@ WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
 
 !nmaxact = nstate/nion+1                ! max. states per atom
 
-!lionel
-
 IF(numspin==2) THEN
   ind=0
   DO ion=1,nion
@@ -87,8 +85,6 @@ IF(numspin==2) THEN
 END IF
 
 
-! the following part has to be cleaned a little
-
 numstate = 0
 DO ion=1,nion
   DO natlevel=1,nmxst(ion)
@@ -96,11 +92,6 @@ DO ion=1,nion
     numstate = 1 + numstate
     IF(numspin==2) THEN
       nactst(ion) = nactst(ion)+MOD(natlevel,2)
-      ispin(numstate) = 2-MOD(natlevel,2)
-      IF(ipol(ion).eq.-1) THEN ! ipol=-1 serves to force spin down on 
-                               ! some hydrogen atoms
-        ispin(numstate) = 2-mod(ispin(numstate)+1,2)
-      END IF
       write(6,*) 'ion,natlev,numst,ispin', &
                   ion,natlevel,numstate,ispin(numstate)
       write(7,*) 'ksttot,nstate,ion,natlev,numst,ispin', &
