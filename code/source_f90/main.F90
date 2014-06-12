@@ -156,7 +156,7 @@ CALL timer(1)
 
 !                                     initialize parameters for FSIC
 IF(nclust > 0 .AND. ifsicp >= 7) THEN
-   CALL init_fsicr()
+  CALL init_fsicr()
 END IF
 
 !IF(nclust > 0 .AND. irest == 0 .AND. istat == 0 .AND. ismax > 0)  
@@ -405,13 +405,13 @@ END IF
 ekionold=0D0
 
 
-
-!---           here starts true propagation  --------------
-
  IF(irest == 0) THEN
       totintegprob=0.D0
       reference_energy=etot
  END IF
+
+
+!---           here starts true propagation  --------------
 
 CALL flush(7)
 CALL stimer(1)
@@ -438,12 +438,11 @@ DO it=irest,itmax   ! time-loop
 !test           call calcrho(rho,psi)      !  ??????????
   
   
-  IF(jattach /=0 .and. it == irest) then
+  IF(jattach/=0 .AND. it==irest) THEN
      CALL init_occ_target()
      WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
      ALLOCATE(psi_target(kdfull2,nstate_target))
      CALL init_psitarget()
-     WRITE(*,*) 'after init_psitarget'
   END IF
 
   IF(it > irest)THEN
@@ -517,7 +516,7 @@ DO it=irest,itmax   ! time-loop
       IF(isurf > 0) CALL analyze_surf(it)
     END IF
     IF(nclust > 0) THEN
-        CALL analyze_elect(psi,rho,aloc,it)
+      CALL analyze_elect(psi,rho,aloc,it)
     ELSE IF(MOD(it,100) == 0)THEN
       ecorr = energ_ions()
       etot = ecorr + ekion
@@ -550,7 +549,7 @@ DO it=irest,itmax   ! time-loop
     END IF
   
     IF(nclust > 0) CALL savings(psi,tarray,it)
- END IF
+  END IF
 
 
 #if(simpara)

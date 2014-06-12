@@ -1035,6 +1035,7 @@ ELSE IF(ipsptyp == 1) THEN
   cc2(2)   = 1.698368D0
   crloc(2) = 0.2D0
 !  nrow(2)  = 1
+
   
 !       bor
   

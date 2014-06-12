@@ -28,7 +28,7 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -41,7 +41,7 @@ DEBUG  = NO
 # Available options:
 #   * YES
 #   * NO
-LINK_STATIC = NO
+LINK_STATIC = YES
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
