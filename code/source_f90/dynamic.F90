@@ -1984,11 +1984,12 @@ IF(irest <= 0) THEN                    !  write file headers
   END IF
   
   IF(jnorms /= 0) THEN
-    OPEN(806,STATUS='unknown',FILE='pescOrb.'//outnam)
+    OPEN(806,STATUS='unknown',FORM='formatted',FILE='pescOrb.'//outnam)
     WRITE(806,'(a,i6,a,3f12.1)') '# tfs, 1.0-norms of orbitals'
-    OPEN(808,STATUS='unknown',FILE='pproba.'//outnam)
+    CLOSE(806)
+    OPEN(808,STATUS='unknown',FORM='formatted',FILE='pproba.'//outnam)
     WRITE(808,'(a,i6,a,3f12.1)') '# tfs, charge state probabilities'
-!    CLOSE(806)
+    CLOSE(806)
   END IF
   
   IF(e0 /= 0) THEN
@@ -3117,8 +3118,13 @@ IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 !    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
 !  END DO
 !call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'
+  CALL safeopen(806,it,jnorms,'pescOrb')
   WRITE(806,'(500f12.8)') tfs,1D0-spnorm(1:nstate)
+  CALL flush(806)
+
+  CALL safeopen(808,it,jnorms,'pescOrb')
   CALL probab(psi)
+  CALL flush(808)
 END IF
 #endif
 

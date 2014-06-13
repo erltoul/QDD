@@ -625,7 +625,10 @@ CLOSE(68)
 CLOSE(8)
 CLOSE(9)
 CLOSE(78)
-CLOSE(806)
+IF (jnorms > 0) THEN
+  CLOSE(806)
+  CLOSE(808)
+ENDIF
 
 !  ********************  end of main program ****************************
 
