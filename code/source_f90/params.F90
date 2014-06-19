@@ -149,7 +149,7 @@ LOGICAL :: tdipolxyz                     ! switch to dipole fields
 INTEGER :: iexcit=0,irotat=0,ispidi=0          !  dynam. initialisation
 REAL(DP) :: phirot=0D0
 INTEGER :: nclust=1,nion=1,nion2=1
-LOGICAL ::  xmnotallocated=.true. ! xm array allocated or not (to fix bug with gfortran on Debian64)
+!LOGICAL ::  xmnotallocated=.true. ! xm array allocated or not (to fix bug with gfortran on Debian64)
 REAL(DP) :: charge             !  Nr. el. & ions
 REAL(DP) :: scaleClust=1D0,scaleClustx=1D0,scaleClusty=1D0
 REAL(DP) :: scaleClustz=1D0
