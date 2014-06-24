@@ -165,11 +165,11 @@ endif
 
 
 ifeq "$(CF90)" "XLF_R"
-	COMPILER  = xlf90_r -Wl,-z,muldefs -qsuffix=f=f90
+	COMPILER  = xlf90_r -Wl,-z,muldefs -qsuffix=cpp=f90
 	LDLIBS    = -L /work/IBM/FFTW3/lib -qextname=flush
   ifeq "$(USE_MPI)" "YES"
 #	COMPILER  = mpxlf90_r  -Wl,-z,muldefs
-	COMPILER  = mpfort -qsuffix=f=f90 -O3 -qstrict -qmaxmem=-1 -qsimd=auto -qtune=pwr7 -qarch=pwr7 -c
+	COMPILER  = mpfort -qsuffix=cpp=f90 -O3 -qstrict -qmaxmem=-1 -qsimd=auto -qtune=pwr7 -qarch=pwr7 -c
 #	COMPILER  = mpfort -qsuffix=f=f90 -O2 -qstrict -qmaxmem=-1 -qsimd=auto -qtune=pwr7 -qarch=pwr7 -c
 #	LDLIBS    = -lpesslsmp -lesslsmp
 	LDLIBS    = -L /work/IBM/FFTW3/lib -qextname=flush
@@ -295,6 +295,17 @@ endif
 #                        Compilation rules                          #
 #####################################################################
 
+# This will be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
+YODA =
+ifeq "$(CF90)" "XLF_R"
+	YODA    = -WF,
+ifeq "$(USE_MPI)" "YES"
+	LINKER = mpfort
+else
+        LINKER = $(COMPILER)  
+endif
+
+endif
 # MKL only used to provide FFTW support through wrappers.
 ifeq ($(TYPE_FFT), FFTW)
 	calls_FFTW = YES
@@ -308,40 +319,40 @@ endif
 
 # Switches used to preprocess files.
 ifeq ($(calls_FFTW), YES)
-#	FFTWADD = -Dfftw_cpu
+	FFTWADD = $(YODA)-Dfftw_cpu
 	fftw_cpu_value := 1
   ifeq ($(TYPE_FFT), FFTW)
-#	FFTWADD += -Dfftwnomkl
+	FFTWADD += $(YODA)-Dfftwnomkl
 	fftwnomkl_value := 1
   endif
 else
   ifeq ($(TYPE_FFT), NETLIB)
-#	FFTWADD = -Dnetlib_fft
+	FFTWADD = $(YODA)-Dnetlib_fft
 	netlib_fft_value := 1
   endif
   ifeq ($(TYPE_FFT), cuFFT)
-#	FFTWADD = -Dfftw_gpu
+	FFTWADD = $(YODA)-Dfftw_gpu
 	fftw_gpu_value := 1
   endif
 endif
 
 ifeq ($(MPI_PARALLEL), YES)
-#	MPIADD := -Dparayes
+	MPIADD := $(YODA)-Dparayes
 	parayes_value := 1
 else
-#	MPIADD = -Dparano
+	MPIADD = $(YODA)-Dparano
 	parano_value := 1
   ifeq ($(MPI_PARALLEL), SIM)
-	MPIADD += -Dsimpara
+	MPIADD += $(YODA)-Dsimpara
 	simpara_value := 1
   endif
 endif
 
 ifeq ($(OMP), YES)
-	OMPADD = -Dparopenmp
+	OMPADD = $(YODA)-Dparopenmp
 	paropenmp_value := 1
   ifeq ($(OMP_THREADS), DYN)
-	OMPADD += -Ddynopenmp
+	OMPADD += $(YODA)-Ddynopenmp
 	dynopenmp_value :=1
   endif
 else
@@ -353,17 +364,6 @@ COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 GPUCOMPILERFLAGS = $(OPTGPU) $(MPIADD) $(OMPADD)
-# This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
-IDRIS =
-ifeq "$(CF90)" "XLF_R"
-	IDRIS    = -WF,
-ifeq "$(USE_MPI)" "YES"
-	LINKER = mpfort
-else
-        LINKER = $(COMPILER)  
-endif
-
-endif
 
 #####################################################################
 #                             Linker                                #
@@ -446,7 +446,7 @@ DATE =$(shell date +%d.%m.%y)
 # Set type of parallelization.
 ifeq ($(MPI_PARALLEL), YES)
 	MPI_NAME = MPI
-        EXEC = test.par
+        EXEC = test2.par
 else
   ifeq ($(MPI_PARALLEL), SIM)
 	MPI_NAME = SIM
@@ -457,7 +457,7 @@ else
     else
 	MPI_NAME = Mono
     endif
-    EXEC = test.seq
+    EXEC = test2.seq
   endif
 endif
 
@@ -734,11 +734,11 @@ $(EXEC): initial_checks $(OBJS)
 
 # Implicit rule for objects:
 %.o: %.F90
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS) -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA) -c $<
 
 # Implicit rule for modules:
 %.o %.mod: %.F90
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS) -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA) -c $<
 
 # Additions for twostsic:
 ifneq ($(twostsic_value), 0)
@@ -752,16 +752,16 @@ $(OBJS_TWOSTSIC):     twost.mod
 $(OBJS_TWOSTSIC_R):   twostr.mod
 
 localize_rad.o localize_rad.mod: localize_rad.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o localize_rad.o -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o localize_rad.o -c $<
 
 2stUTc.o twost.mod: 2stUT.F90 kinetic.mod twostr.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o 2stUTc.o -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DCOMPLEXSWITCH -o 2stUTc.o -c $<
 
 2stUT.o twostr.mod: 2stUT.F90 kinetic.mod localize_rad.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2stUT.o -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o 2stUT.o -c $<
 else
 2stUT.o: 2stUT.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o $@ -c $<
 endif
 
 # Particular rules
@@ -775,45 +775,45 @@ endif
 static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 
 rho.o: rho.F90
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o $@ -c $<
 
 rhoc.o: rho.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DCOMPLEXSWITCH -o $@ -c $<
 
 localizer.o: localize.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o $@ -c $<
 
 localize.o: localize.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DCOMPLEXSWITCH -o $@ -c $<
 
 sicnew.o: sicnew.F90 $(DEPS_KINCOUL)
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o $@ -c $<
 
 sicnewc.o: sicnew.F90 $(DEPS_KINCOUL)
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DCOMPLEXSWITCH -o $@ -c $<
 
 nonloc.o: nonloc.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DREALSWITCH    -o $@ -c $<
 
 nonlocc.o: nonloc.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) $(YODA)-DCOMPLEXSWITCH -o $@ -c $<
 
 ifeq ($(TYPE_FFT), NETLIB)
 fftpack.o: fftpack.F90 fftpack2.F90
-	$(COMPILER) $(COMPILERFLAGS2) $(IDRIS) -c $<
+	$(COMPILER) $(COMPILERFLAGS2) $(YODA) -c $<
 endif
 
 givens.o: givens.F90
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS) -c $<
+	$(COMPILER) $(COMPILERFLAGS3) $(YODA) -c $<
 
 restart.o: restart.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS3) $(YODA)-DREALSWITCH    -o $@ -c $<
 
 restartc.o: restart.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS3) $(YODA)-DCOMPLEXSWITCH -o $@ -c $<
 
 parallele.o: parallele.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS) -c $<
+	$(COMPILER) $(COMPILERFLAGS3) $(YODA) -c $<
 
 ifeq "$(TYPE_FFT)" "cuFFT"
 cuda.o: cuda.cu define_cuda.h params_gpu.h static_gpu.cu makefile
