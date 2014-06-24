@@ -1151,7 +1151,9 @@ ELSE
   END IF
 
   IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
+    CALL safeopen(806,it,jnorms,'pescOrb')
     WRITE(806,'(1f15.6,500f12.8)') tfs,1D0-prisav_all(1:nstate_all,5)
+    CALL flush(806)
   END IF
 
 
@@ -1218,9 +1220,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
+INTEGER, INTENT(IN OUT)          :: ic
+INTEGER, INTENT(IN)              :: sizenod,N
 REAL(DP), INTENT(IN OUT)         :: sendbuf(N)
 REAL(DP), INTENT(IN OUT)         :: recvbuf(sizenod)
-INTEGER, INTENT(IN OUT)          :: ic
 
 IF (N /= sum(lengnod)) &
      STOP 'wrong size for sender array in pi_scatterv'
@@ -1248,7 +1251,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
-REAL(DP), INTENT(IN OUT)          :: sendbuf(nxyz)
+INTEGER, INTENT(IN OUT)          :: ic
+INTEGER, INTENT(IN)              :: sizenod,N
+REAL(DP), INTENT(IN OUT)         :: sendbuf(nxyz)
 REAL(DP), INTENT(IN OUT)         :: recvbuf(N)
 
 CALL mpi_allgatherv(sendbuf,sizenod,mpi_double_precision,&

@@ -338,7 +338,7 @@ EXTERNAL dvsdr,dgaussdr
 DO ii=1,nion
   
   IF (ipseudo == 0) THEN
-    
+#if(raregas)    
     IF(idielec == 1) THEN
       
       ALLOCATE(rhotmp(2*kdfull2))
@@ -349,7 +349,7 @@ DO ii=1,nion
       CALL addimage(rho,1)
       
     END IF
-    
+#endif    
     CALL foldgradfunc(rho,v_soft,cx(ii),cy(ii),cz(ii), sgm1(np(ii))*sq2)
 !               call dIntFieldFunc(rho,dVsdr,cx(ii),cy(ii),cz(ii),
 !     &                    sgm1(np(ii))*SQ2)

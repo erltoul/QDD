@@ -1989,7 +1989,7 @@ IF(irest <= 0) THEN                    !  write file headers
     CLOSE(806)
     OPEN(808,STATUS='unknown',FORM='formatted',FILE='pproba.'//outnam)
     WRITE(808,'(a,i6,a,3f12.1)') '# tfs, charge state probabilities'
-    CLOSE(806)
+    CLOSE(808)
   END IF
   
   IF(e0 /= 0) THEN
@@ -3110,8 +3110,8 @@ END IF
 
 !     escaped electrons analyzed orbital by orbital
 
-#if(!parayes)
 IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
+#if(!parayes)
 !  DO i=1,nstate
 !    cscal=orbitaloverlap(psi(1,i),psi(1,i))
 !    rtmp(i,1)=REAL(cscal)**2+AIMAG(cscal)**2
@@ -3121,12 +3121,13 @@ IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
   CALL safeopen(806,it,jnorms,'pescOrb')
   WRITE(806,'(500f12.8)') tfs,1D0-spnorm(1:nstate)
   CALL flush(806)
+#endif
 
-  CALL safeopen(808,it,jnorms,'pescOrb')
+  CALL safeopen(808,it,jnorms,'pproba')
   CALL probab(psi)
   CALL flush(808)
 END IF
-#endif
+
 
 
 

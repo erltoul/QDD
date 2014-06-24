@@ -26,7 +26,7 @@ REAL(DP), ALLOCATABLE :: rhotmp(:)
 
 !     copy density on intermediate storage
 !     add images for dielectric contribution
-
+#if(raregas)
 IF(idielec == 1) THEN
   
   ALLOCATE(rhotmp(2*kdfull2))
@@ -37,7 +37,7 @@ IF(idielec == 1) THEN
   CALL addimage(rho,1)
   
 END IF
-
+#endif
 
 ! Coulomb of the electronic density
 

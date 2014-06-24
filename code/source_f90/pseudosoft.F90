@@ -23,8 +23,10 @@ END IF
 IF(ipsptyp == 0) THEN
   IF(idielec == 0) THEN
     CALL pseudosoft()
+#if(raregas)
   ELSE
     CALL pseudosoft_dielec()
+#endif
   END IF
 ELSE IF(ipsptyp >= 1) THEN
   CALL pseudogoed()

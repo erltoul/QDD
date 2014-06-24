@@ -3848,8 +3848,18 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN)                :: psitmp(kdfull2,kstate)
+
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+REAL(DP)                               :: prob(ksttot+1),pold(ksttot+1)
+REAL(DP)                               :: rtmpuse(nstate)
+REAL(DP)                               :: rtmpuse_all(ksttot)
+#else
 REAL(DP)                               :: prob(nstate+1),pold(nstate+1)
 REAL(DP)                               :: rtmpuse(nstate)
+#endif
+
 COMPLEX(DP)                            :: cscal
 COMPLEX(DP)                            :: orbitaloverlap
 
@@ -3861,8 +3871,52 @@ DO i=1,nstate
    prob(i)=0D0
 ENDDO
 
+#if(parayes)
+CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+IF(myn/=0) THEN
+  prob(ksttot+1)=0D0
+  CALL mpi_send(rtmpuse,nstate,mpi_double_precision,0,myn,mpi_comm_world,ic)
+  DO n=1,nstate
+    nact = nrel2abs_other(n,0) 
+!    rtmpuse_all(nact) = rtmuse(n)
+  ENDDO
+ELSE
+  DO nod2=0,knode-1
+    IF(nod2 > 0) CALL mpi_recv(rtmpuse,nstate,mpi_double_precision,  &
+          nod2,mpi_any_tag,mpi_comm_world,is,ic)
+    DO nb=1,nstate_node(nod2)
+      nact = nrel2abs_other(nb,nod2) 
+      rtmpuse_all(nact) = rtmpuse(nb)
+    END DO
+  END DO
+ENDIF
+#else
 prob(nstate+1)=0D0
+#endif
 
+#if(parayes)
+IF(myn==0) THEN
+   prob(1)=rtmpuse_all(1)
+   prob(2)=1D0-rtmpuse_all(1)
+   DO i=2,ksttot
+      DO k=1,i
+      	 pold(k)=prob(k)
+      ENDDO
+   
+      DO k=1,i
+         prob(k)=pold(k)*rtmpuse_all(i)
+      ENDDO
+   
+      DO k=2,i+1
+         prob(k)=prob(k)+pold(k-1)*(1D0-rtmpuse_all(i))
+      ENDDO
+   ENDDO
+
+   CALL safeopen(808,it,jnorms,'pproba')
+   WRITE(808,'(500f12.8)') tfs,prob(1:(ksttot+1))    
+   CALL flush(808)
+ENDIF
+#else
 prob(1)=rtmpuse(1)
 prob(2)=1D0-rtmpuse(1)
            
@@ -3880,7 +3934,10 @@ DO i=2,nstate
    ENDDO
 ENDDO
 
+CALL safeopen(808,it,jnorms,'pproba')
 WRITE(808,'(500f12.8)') tfs,prob(1:(nstate+1))      
+CALL flush(808)
+#endif
 
 RETURN
 END SUBROUTINE probab

@@ -1210,7 +1210,9 @@ END IF
 esh1=esh1
 eshell=eshell/2D0  !(=t+v/2)
 
+#if(raregas)
 CALL energ_dielec(rho)
+#endif
 energy = espnb/2.+esh1/2.+enrear+ecback+ecorr+enonlc/2. -ecrhoimage
 IF(directenergy) &
      energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
