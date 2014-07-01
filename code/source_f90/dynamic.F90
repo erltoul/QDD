@@ -774,11 +774,13 @@ myn = 0
 #endif
 tinfs=it*dt1*0.0484/2.0/ame
 tfs=it*dt1*0.0484
+#if(raregas)
 IF(idielec == 1) THEN
   CALL energ_dielec(rho)
 ELSE
   ecrhoimage = 0D0
 END IF
+#endif
 
 !test      call prifld(aloc,'ALOC1       ')
 
@@ -831,17 +833,17 @@ CALL FLUSH(441)
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
 IF(tstinf) then
   IF(ifsicp==5)  psisavex = psi
-#if(!parayes)
   ALLOCATE(qtmp(kdfull2))
   DO nb=1,nstate
     qtmp = psi(:,nb)
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
     CALL hpsi(qtmp,aloc(ishift+1),nb,1)  
+#if(!parayes)
     CALL cproject(qtmp,qtmp,ispin(nb),psi)
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp)))
+#endif
   END DO
   DEALLOCATE(qtmp)
-#endif
 
 #if(!parayes)
   CALL safeopen(77,it,jstinf,'pspenergies')
@@ -3123,9 +3125,9 @@ IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
   CALL flush(806)
 #endif
 
-  CALL safeopen(808,it,jnorms,'pproba')
+!  CALL safeopen(808,it,jnorms,'pproba')
   CALL probab(psi)
-  CALL flush(808)
+!  CALL flush(808)
 END IF
 
 

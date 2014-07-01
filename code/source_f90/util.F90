@@ -3053,8 +3053,8 @@ SUBROUTINE cproject(qin,qout,ispact,q0)
 
 !     projects all occupied states 'q0' out of 'qin'.
 
-!      q0     = set of s.p. wavefunctions (real)
-!      qin    = wavefunction from which 'q0' are to be removed (real)
+!      q0     = set of s.p. wavefunctions (complex)
+!      qin    = wavefunction from which 'q0' are to be removed (complex)
 !      qout   = resulting wavefunction
 !      ispact = spin of 'qin'
 
