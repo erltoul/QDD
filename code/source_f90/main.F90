@@ -74,6 +74,8 @@ CALL init_parallele()
 CALL cuda_gpu_init()
 #endif
 
+
+
 CALL checkoptions()
 
 CALL initnamelists          ! read all input parameters
@@ -83,7 +85,6 @@ CALL init_baseparams()
 CALL initisrtyp
 
 CALL iperio                     ! initializing the 'periodic table'
-
 CALL changeperio   ! overwrites default periodic system if necessary
 
 CALL iparams()               ! check dynamic  parameters
@@ -108,8 +109,8 @@ rho=0D0
 
 IF(myn == 0) CALL ocoption(7)   ! output compiled options
 IF(myn == 0) CALL ocoption(8)   ! output compiled options
-CALL init_output()              ! headers for basic output files
 
+CALL init_output()              ! headers for basic output files
 WRITE(*,*) ' nion2=',nion2
 IF(nion2 == 1) THEN
   WRITE(*,*) ' ions switch'
@@ -120,10 +121,17 @@ ELSE IF(nion2 > 1) THEN
 ELSE
   CALL init_jellium()
 END IF
+if(dx.lt.0.0) then
+        write(6,*) 'negative dx was given - reread from file dx and restart'
+        write(7,*) 'negative dx was given - reread from file dx and restart'
+        stop 7
+endif
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
 
 !                                     initialize surface
+
+
 #if(raregas)
 IF (isurf == 1) THEN
   CALL initfunctions

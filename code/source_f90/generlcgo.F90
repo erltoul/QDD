@@ -10,6 +10,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
 #endif
 
 
@@ -17,6 +18,7 @@ REAL(DP), INTENT(OUT)                        :: psiom(kdfull2,kstate)
 INTEGER, INTENT(OUT) :: nmxst(1:ng)       ! maximum nr. for each atom
 
 INTEGER,ALLOCATABLE :: nactst(:)       ! keep track of actual atomic state
+INTEGER,ALLOCATABLE :: ncount(:)       ! keep track of actual atomic state
 INTEGER :: nnodes(1:3,1:10)
 DATA nnodes/0,0,0,   1,0,0,  0,1,0,   0,0,1,   2,0,0,  &
     1,1,0,   0,2,0,  1,0,1,   0,1,1,   0,0,2/
@@ -26,7 +28,9 @@ DATA nnodes/0,0,0,   1,0,0,  0,1,0,   0,0,1,   2,0,0,  &
 !      reset wavefunctions 'psiom'
 
 ALLOCATE(nactst(1:ng))
+ALLOCATE(ncount(0:knode))
 nactst=0
+ncount=0
 
 WRITE(6,*) ' GENERLCGO entered. NION,NSTATE=',nion,nstate
 WRITE(6,*) ' CH(ion):',(ch(np(ion)),ion=1,nion)
@@ -67,40 +71,50 @@ END IF
 WRITE(6,'(a,5i5)')  &
     ' ndiff,nmaxval,nstate,ncycle,nadd=',ndiff,nmaxval,nstate, ncycle,nadd
 WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
-!WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
+WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
+WRITE(6,*) '  ipolcheck:',(ipol(ion),ion=1,nion)
 
 !     loop through ions and fill electron states successively
 
 !nmaxact = nstate/nion+1                ! max. states per atom
 
-IF(numspin==2) THEN
-  ind=0
-  DO ion=1,nion
-    DO iki=1,nmxst(ion)
-        ind=ind+1
-        ispin(ind) = 2-MOD(iki,2)
-        IF (ipol(ion).eq.-1) ispin(ind) = 2-mod(ispin(ind)+1,2)
-    END DO
-  END DO
-END IF
 
 
 numstate = 0
+numlocstate = 0 ! in case of parallelism
 DO ion=1,nion
   DO natlevel=1,nmxst(ion)
-    IF(numstate == ksttot) GO TO 99
+    IF(numstate == ksttot) then
+           write(6,*) 'numstate = ksttot, increase kstate or nproc'
+           write(7,*) 'numstate = ksttot, increase kstate or nproc'
+           GO TO 99
+    endif
     numstate = 1 + numstate
+    ncount(nhome(numstate))=ncount(nhome(numstate))+1
     IF(numspin==2) THEN
-      nactst(ion) = nactst(ion)+MOD(natlevel,2)
-      write(6,*) 'ion,natlev,numst,ispin', &
-                  ion,natlevel,numstate,ispin(numstate)
-      write(7,*) 'ksttot,nstate,ion,natlev,numst,ispin', &
-                  ksttot,nstate,ion,natlevel,numstate,ispin(numstate)
+       ispin(numstate) = 2-MOD(numstate,2)
+       IF (ipol(ion).eq.-1) ispin(numstate) = 2-mod(numstate+1,2)
+       nactst(ion) = nactst(ion)+MOD(natlevel,2)
     ELSE
-      nactst(ion) = nactst(ion)+1
+        nactst(ion) = nactst(ion)+1
     END IF
-    IF(nactst(ion) > 10) STOP 'GENERMOWF: too high atomic level'
-    IF(numstate > nstate) GO TO 99
+#if(parayes)
+        ispin_node(ncount(nhome(numstate)),nhome(numstate)) = ispin(numstate)
+#endif
+    if(nhome(numstate)==myn) then
+       numlocstate=numlocstate+1
+
+
+         write(6,*) 'ion,natlev,numst,ispin', &
+                  ion,natlevel,numstate,ispin(numstate)
+         write(7,*) 'ksttot,nstate,ion,natlev,numst,ispin', &
+                  ksttot,nstate,ion,natlevel,numstate,ispin(numstate)
+       IF(nactst(ion) > 10) STOP 'GENERMOWF: too high atomic level'
+       IF(numlocstate > nstate) then
+           write(6,*) 'numlocstate > nstate, increase kstate or nproc'
+           write(7,*) 'numlocstate > nstate, increase kstate or nproc'
+           goto 99
+       endif
 !                                                 select nodes
     nstx = nnodes(initord(1,ion),nactst(ion))
     nsty = nnodes(initord(2,ion),nactst(ion))
@@ -114,16 +128,18 @@ DO ion=1,nion
         DO ix=1,nx2
           x1=((ix-nxsh)*dx-cx(ion))/radini(ion)
           ind = ind+1
-          psiom(ind,numstate) = (x1**nstx-0.5*MAX(0,nstx-1))  &
+          psiom(ind,numlocstate) = (x1**nstx-0.5*MAX(0,nstx-1))  &
               *(y1**nsty-0.5*MAX(0,nsty-1)) *(z1**nstz-0.5*MAX(0,nstz-1))  &
               *EXP(-(x1*x1+y1*y1+z1*z1)*0.5)
         END DO
       END DO
     END DO
+
     WRITE(6,'(a,i3,a,a,5i3,1pg13.5)')  &
         ' electron state nr.',numstate,': ',  &
         ' ion,nstx,nsty,nstz=',ion,nstx,nsty,nstz,ispin(numstate), &
-         SUM(psiom(:,numstate)**2)*dvol
+         SUM(psiom(:,numlocstate)**2)*dvol
+    endif
   END DO
 END DO
 99   CONTINUE
@@ -131,39 +147,41 @@ END DO
 DEALLOCATE(nactst)
 
 
+!nstate=numlocstate
+
 !     Schmidt ortho-normalisation
 
 !CALL schmidt(psiom)
 
 
-DO nbe=1,nstate
-  
-  DO in=1,nbe
-    IF((ispin(nbe) == ispin(in))) THEN
+!DO nbe=1,nstate
+!  
+!  DO in=1,nbe
+!    IF((ispin(nbe) == ispin(in))) THEN
 !      sum=0D0
 !      DO i=1,nxyz
 !        sum=sum+psiom(i,nbe)*psiom(i,in)
 !      END DO
 !      sum=sum*dvol
-      cs = SUM(psiom(:,nbe)*psiom(:,in))*dvol      
-      IF(in == nbe) THEN
-        cs = 1D0/SQRT(cs)
+!      cs = SUM(psiom(:,nbe)*psiom(:,in))*dvol      
+!      IF(in == nbe) THEN
+!        cs = 1D0/SQRT(cs)
 !        DO i=1,nxyz
-          psiom(:,nbe)=psiom(:,nbe)*cs
+!          psiom(:,nbe)=psiom(:,nbe)*cs
 !        END DO
-      ELSE
+!      ELSE
 !        DO  i=1,nxyz
-          psiom(:,nbe)=psiom(:,nbe)-cs*psiom(:,in)
+!          psiom(:,nbe)=psiom(:,nbe)-cs*psiom(:,in)
 !        END DO
-      END IF
-    END IF
-  END DO
-END DO
+!      END IF
+!    END IF
+!  END DO
+!END DO
 
-DO n=1,numstate
-   WRITE(*,*) ' INITLCGO after Schmidt: state nr. norm=', &
-   n,SUM(psiom(:,n)**2)*dvol
-END DO
+!DO n=1,numstate
+!   WRITE(*,*) ' INITLCGO after Schmidt: state nr. norm=', &
+!   n,SUM(psiom(:,n)**2)*dvol
+!END DO
 CALL flush(6)
 
 

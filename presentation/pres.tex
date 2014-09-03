@@ -61,7 +61,7 @@ Tutorial }
 \begin{enumerate}
 \item Useful information about PW-Teleman:\\
 \vspace*{0.2cm}
-{\tt prompt > cd \$pw-teleman\_dev-all\_20131009/doc}\\
+{\tt prompt > cd \$pw-teleman\_dev-all\_201409/doc}\\
 \vspace*{0.2cm}
 {\tt prompt > ls}\\
 \vspace*{0.4cm}
@@ -81,7 +81,7 @@ Tutorial }
 \vspace*{0.2cm}
 \item Several examples that illustrate some of the features implemented in the code:\\
 \vspace*{0.2cm}
-{\tt prompt > cd \$pw-teleman\_dev-all\_20131009/doc}
+{\tt prompt > cd \$pw-teleman\_dev-all\_201409/doc}
 \end{enumerate}
 \end{frame}
 
@@ -91,7 +91,15 @@ Tutorial }
 \begin{frame}
 \frametitle{Before you start the calculations}
 \begin{enumerate}  
-\item Go to {\tt source\_f90} directory :\\
+\item Just go in the pwteleman directory and enter {\tt source ./install_pwteleman} and follow the instructions
+\item The only prerequisite is a working {\tt gfortran} in your path (type  {\tt sudo apt-get install gfortran} if you have root on Linux)
+\item Enter {\tt source ./install_pwteleman d } for gfortran compilation with debug options 
+\item  {\tt source ./install_pwteleman a }for all possible compilations, if you have Intel Fortran Compiler and NVCC 
+
+\item   {\tt source ./install_pwteleman t }to test your results and cross-correlate them against reference results  (quite long) 
+\item  At any time you can try {\tt code/source_f90/regressionmatrix} to measure the change in your results vs reference results 
+\item   {\tt source ./install_pwteleman i } for GPU compilations only (if you have Intel Fortran and NVCC) 
+\item if it fails  to {\tt source\_f90} directory :\\
 \vspace*{0.2cm}
 {\tt cd pw-teleman\_dev-all\_20131009/code/source\_f90/
 }\\
@@ -102,12 +110,14 @@ Before compilation, you might want to update some settings,\\ for detailed expla
 \vspace*{0.2cm}
 {\tt module load <module name>}
 \vspace*{0.2cm}
+\item For GPUs see {\tt gpu\_explain.txt}).
 \item Execute {\tt make} command which you can modify in several ways (see {\tt openmp\_explain.txt}). In our example we compile the code with FFTW functions using parallelization for wavefunctions:\\
+\vspace*{0.2cm}
 \vspace*{0.2cm}
 {\tt ./make.sh 1 fftw} 
 \vspace*{0.2cm}
 \item The executable will be copied to the working
- directory which is one level below the sub-directory {\tt source\_f90}. The file called {\tt essai.par} is
+ directory which is one level below the sub-directory {\tt source\_f90}. The file called {\tt pwteleman.par} is
  the new executable.
 \end{enumerate} 
  
@@ -151,13 +161,13 @@ In file {\tt openmp\_explain.txt} you can find complete description of the param
 \begin{frame}
 \frametitle{ }
 \begin{enumerate}  
-\item  Run the code using mpirun shell script:\\
+\item  Run the code using mpirun command or mpiexec depending on your installation (or include it in a batch submission):\\
 \vspace*{0.2cm}
-{\tt mpirun [mpirun\_options] ../../code/essai.par}\\
+{\tt mpirun [mpirun\_options] ../../code/pwteleman.par}\\
 \vspace*{0.2cm}
 e.g.:\\
 \vspace*{0.2cm}
-{\tt mpirun -np 8 ../../code/essai.par}\\
+{\tt mpirun -np 8 ../../code/pwteleman.par}\\
 \vspace*{0.2cm}
 (using 8 processors to run on)
 \vspace*{0.4cm}
@@ -223,6 +233,8 @@ gnuplot> plot './pdip'  w l}\\
 
 \begin{frame}
 \frametitle{Let's plot the results- Absorption spectra}
+You need to increase {\tt ismax}  and {\tt itmax}  to larger values in file  {\tt for005.na8jel  } 
+and rerun the code, maybe  in batch mode 
 To obtain the data for absorption spectra you need to compile and run a {\tt spectr2.F90} code:\\
 \vspace*{0.2cm}
 {\tt cd pw-teleman\_dev-all\_20131009/code/source\_aux}\\
@@ -268,7 +280,7 @@ gnuplot>  plot './spectra' u 2:3 w l
 \begin{enumerate}
 \item Go the {\tt H2} directory\\
 \vspace*{0.2cm}
-{\tt cd pw-teleman\_dev-all\_20131009/samples/H2}\\
+{\tt cd pw-teleman\_dev-all\_20131009/samples_py/H2}\\
 \vspace*{0.2cm}
 you should see following files:\\
 \vspace*{0.2cm}
@@ -290,6 +302,14 @@ you should see following files:\\
  \vspace*{0.2cm}
 \end{tabular}
 In file {\tt openmp\_explain.txt} you can find complete description of the parameters used in the input. 
+You can alternatively input  {\tt ipsptype=3} or  {\tt ipsptype=4} in which case the pseudopotential
+parameters are read from file {\tt goed.asci} and {\tt periodic}  which you need in the present directory.
+You can alternatively use  {\tt nclust=0} in which case the total number of electrons is automatically computed.
+(see anilin example)
+If you set a negative {\tt dx,dy,dz} the optimal value will be determinated from the pseudopotential file
+and a recommanded {\tt kxbox, kybox,kzbox} will be given and written to file {\tt nx}. The program then quits. In the
+next run, this value will be used.
+
 \end{enumerate}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -385,11 +405,11 @@ In case when the number of the wavefunctions is too little the calculations migh
 \vspace*{0.2cm}
 {\tt ./make.sh 0 fftw}\\
 \vspace*{0.2cm}
-The new executable called {\tt essai.seq} will be in the directory {\tt code} which is one level below the sub-directory {\tt source\_f90}\\
+The new executable called {\tt pwteleman.seq} will be in the directory {\tt code} which is one level below the sub-directory {\tt source\_f90}\\
 \vspace*{0.4cm}
 \item  Go back to the {\tt H2} directory and run the code:\\
 \vspace*{0.2cm}
-{\tt ../../code/essai.seq}\\
+{\tt ../../code/pwteleman.seq}\\
 \vspace*{0.2cm}
 
 \end{enumerate} 
@@ -447,7 +467,7 @@ This will show following graph:\\
 \centering
  \includegraphics[width=11.5cm]{fig/period}
 
-From closer inspection you can see that the corresponds period of the oscillation is 4 ?s. \textcolor{red}{TO BE CONTINUED}
+From closer inspection you can see that the corresponding period of the oscillation is 4 units.
 
 \end{frame}
 
@@ -491,22 +511,23 @@ Documentation \href{https://wiki.fysik.dtu.dk/ase/ase/ase.html}{\beamerbutton{cl
 \begin{enumerate}
 
 \item \small{First thing, you need to install ASE: \href{https://wiki.fysik.dtu.dk/ase/download.html}{https://wiki.fysik.dtu.dk/ase/download.html}
+\item \small{Run the install script in order to get paths correcly, or look into it }
+\item \small{{\tt source ./install_pwteleman}
      \vspace*{0.2cm}
      
 \item Then, go to {\tt Na} directory:}\\
-\small{{\tt cd pw-teleman\_dev-all\_20131009/code/source\_py}}\\
-You should see 3 following files : \\
-{\tt na.py}~~~~~~~~{\tt pwtelemanscript.py}~~~~~~~~{\tt pwtelemandynr.py}\\
+\small{{\tt cd pw-teleman\_dev-all\_20131009/code/source\_py/Na_ase}}\\
+You should see the  following files : \\
+{\tt na.py}
 \vspace*{0.2cm}
 
-\item Move the file {\tt pwtelemandynr.py} to directory {\tt calculators}:\\
-\footnotesize{{\tt mv pwtelemandynr.py} {\tt [your\_ase\_path]/ase/calculators/}}\\
-\vspace*{0.2cm}
 
 \item \small{Place the file {\tt na.py} in your working directory}
 \vspace*{0.2cm}
 
-\item Set {\tt pwteleman\_SCRIPT} environment variable as follow :\\ 
+\item Run the python script with the following command : }\\
+{\tt python na.py}
+\item If it fails, edit the  {\tt pwteleman\_SCRIPT} environment variable as follow :\\ 
 \footnotesize{{\tt 
 export pwteleman\_SCRIPT=\textasciitilde/pwtelemanscript.py}}
 \vspace*{0.2cm}
@@ -514,8 +535,6 @@ export pwteleman\_SCRIPT=\textasciitilde/pwtelemanscript.py}}
 \item \small{In the file {\tt pwtelemanscript.py}, replace the location of PWTELEMAN code by your actual path (line 3)
 \vspace*{0.2cm}
 
-\item Run the python script with the following command : }\\
-{\tt python na.py}
 \end{enumerate}
 
 \small{ASE will automatically generate the input files for the PWTELEMAN code (the for005* files) and then run the code itself. }
@@ -532,16 +551,8 @@ PWTELEMAN-ASE coupling example of H2}
 \item \small{Create a sub-directory {\tt H2py} for example in {\tt samples}:\\
 {\tt cd pwteleman/pw-teleman\_dev-all\_20131009/samples/}
 {\tt mkdir H2py}
-\item Copy the files {\tt na.py},{\tt pwtelemanscript.py} and {\tt pwtelemandynr.py} to {\tt H2py}\\
 {\tt cd H2py}\\
-{\tt cp ../../code/Python\_ASE/Na/pwtelemandynr.py .}\\
-{\tt cp ../../code/Python\_ASE/Na/pwtelemanscript.py .}\\
 {\tt cp ../../code/Python\_ASE/Na/na.py .}\\
-\item Move the file {\tt pwtelemandynr.py} to directory {\tt calculators}:\\
-{\tt mv pwtelemandynr.py} {\tt [your\_ase\_path]/ase/calculators/}\\
-\item Set {\tt pwteleman\_SCRIPT} environment variable as follow :\\ 
-{\tt export pwteleman\_SCRIPT=\textasciitilde/pwtelemanscript.py}
-\item In the file {\tt pwtelemanscript.py}, replace the location of PWTELEMAN code by your actual path (line 3)}
 \end{enumerate}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -631,7 +642,7 @@ you should see following files:\\
 
 \item Run the code:
 
-{\tt ../../code/essai.seq}
+{\tt ../../code/pwteleman.seq}
 
 \item To obtain the data for absorption spectra run a {\tt spectr2.F90} code:
 
@@ -682,7 +693,7 @@ gnuplot>  plot './pdip'  w l
 \begin{enumerate}
 \item Go the {\tt na9-jel} directory\\
 \vspace*{0.2cm}
-{\tt cd pw-teleman\_dev-all\_20131009/samples/na9-jel}\\
+{\tt cd pw-teleman\_dev-all\_20131009/samples/na8-jel}\\
 \vspace*{0.2cm}
 you should see following files:\\
 \vspace*{0.2cm}
@@ -729,7 +740,7 @@ To check the total energy of the molecule as a function of time follow the steps
 
 \begin{enumerate}
 \item go to the {\tt H2} directory\\
-{\tt cd pw-teleman\_dev-all\_20131009/samples/H2}
+{\tt cd pw-teleman\_dev-all\_20131009/samples_py/H2}
 \item If you performed the previous calculations concerning H2, you should find there a file containing energy informations called {\tt penergies.H2}. 
 \item To draw   'Positions vs Time' graph, you can use e.g. gnuplot:\\
 \vspace*{0.1cm}
@@ -759,6 +770,23 @@ To check the total energy of the molecule as a function of time follow the steps
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Anilin - porphyrin spectrum}
+\begin{enumerate}
+\item Go the {\tt anilin} directory\\
+\vspace*{0.2cm}
+{\tt cd pw-teleman\_dev-all\_20131009/samples/anilin}\\
+\vspace*{0.2cm}
+
+\item In this case we use in {\tt anilin.py} the default settings of the ASE-PWTELEMAN calculator,
+\item Grid spacing and total charge will be set automatically from the {\tt goed.asci} Goedecker pseudopotential file 
+\item Default values have to be given for the 'static' mode of calculation 
+\item Only the number of dynamic iterations and time steps/excitation have to be given for the 
+'plasmon' mode
+\item The same goes for the simplified porphyrin_mg molecule, with a much larger number of electrons
+
+\end{frame}
 
 \begin{frame}
 ~~

@@ -1,5 +1,0 @@
-module load intel/composer_xe_2013.4.183 
-module load cuda/5.0 
-export pwteleman_SCRIPT=~/gitcalv/code/source_py/utils/pwtelemanscript.py
-export PYTHONPATH=$PYTHONPATH:~/gitcalv/code/source_py/;
-module load openmpi/1.6.4-intel 

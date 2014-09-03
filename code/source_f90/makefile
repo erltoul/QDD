@@ -6,21 +6,21 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT1
+CF90 = MPIF90
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
 #   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
-MPI_PARALLEL = NO
+MPI_PARALLEL = YES
 
 # OMP_THREADS: Invoke OpenMP
 # Available options:
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = DYN
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -28,40 +28,47 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = FFTW
+TYPE_FFT = cuFFT
 
 # DEBUG: enable debugging
 # Available options:
 #   * YES
 #   * NO
-DEBUG  = NO
+DEBUG = NO
 
 
 # LINK_STATIC: select static linkage of the binary
 # Available options:
 #   * YES
 #   * NO
-LINK_STATIC = YES
+LINK_STATIC = NO
 
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = YES
+MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
 MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
+#for CCC
+MKL_WRAPPERS = $(MKL_ROOT)/mkl/interfaces/fftw3xf
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
 MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
+#for CCC
+MKLPATH = $(MKL_LIBDIR)
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
 MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
+#for CCC
+MKLINCLUDE =  $(MKL_INCDIR)/fftw
+
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
@@ -242,6 +249,9 @@ endif
 ifeq "$(CF90)" "MPIF90"
         STATIC = -static
         OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble
+	ifeq "$(FCOMP)" "gfortran"
+		OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	endif
         OPT2  =  $(OPT1)
         OPT3  =  -fpp -w -g               -align all -autodouble
   ifeq "$(DEBUG)" "YES"
@@ -263,6 +273,8 @@ ifeq "$(TYPE_FFT)" "cuFFT"
 	#OPTGPU = -O3 --gpu-architecture sm_20 
 	#OPTGPU = -O3 --gpu-architecture sm_30 
 	OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
+#for CCC with older GPU cards 
+   # OPTGPU = -O3 --gpu-architecture sm_20  -maxrregcount=20 --use_fast_math --ptxas-options=-v
   ifeq "$(DEBUG)" "YES"
 	#OPTGPU = -g -G --gpu-architecture sm_13 
 	OPTGPU = -g -G --gpu-architecture sm_20 
@@ -351,6 +363,7 @@ ifeq ($(TYPE_FFT), MKL)
 	MKLFLAGS =
 	FFTWFLAGS =
 
+
   ifneq "$(MKL_WRAPPERS)" ""
 	MKLFLAGS += -L$(MKL_WRAPPERS)
   endif
@@ -386,21 +399,27 @@ ifeq ($(TYPE_FFT), MKL)
   endif
 
 	MKLFLAGS += -lpthread
-	FFTWFLAGS = $(MKLFLAGS)
+	FFTWFLAGS = $(MKLFLAGS) -L$(FFTW3_LIBDIR)
 
 # Flags for directly linking the original FFTW libraries.
 else
   ifeq ($(TYPE_FFT), FFTW)
     ifeq ($(OMP), YES)
-	FFTWFLAGS += -lfftw3_omp
+	FFTWFLAGS += -lfftw3_omp -L$(FFTW3_LIBDIR)
     endif
-	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib
+	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
+
   endif
 endif
 
 #Flags for directly linking the cuda libraries
 ifeq ($(TYPE_FFT), cuFFT)
         CUDAFLAGS += -L/opt/cuda/5.0/lib64/ -lcufft -lcudart
+# for CCC
+        CUDAFLAGS += -L$(CUDA_LIBDIR)   -lcufft -lcudart
+#for CRIHAN
+	CUDAFLAGS += -L /soft/cuda_5.0/cuda/lib64/ -lcufft -lcudart
+
 endif
 
 LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL) $(CUDAFLAGS) 
@@ -420,18 +439,18 @@ DATE =$(shell date +%d.%m.%y)
 # Set type of parallelization.
 ifeq ($(MPI_PARALLEL), YES)
 	MPI_NAME = MPI
-        EXEC = essai.par
+        EXEC = pwteleman.par
 else
   ifeq ($(MPI_PARALLEL), SIM)
 	MPI_NAME = SIM
-        EXEC = essai.sim
+        EXEC = pwteleman.par
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
     else
 	MPI_NAME = Mono
     endif
-    EXEC = essai.seq
+    EXEC = pwteleman.par
   endif
 endif
 

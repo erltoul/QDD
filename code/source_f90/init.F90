@@ -86,7 +86,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
     ifreezekspot,powabso,ispherabso,ifixcmion,  &
     ekin0pp,vxn0,vyn0,vzn0,jescmask,itof,jescmaskorb,  &
-    eproj,nproj,proj_states,vpx,vpy,vpz,taccel,   &
+    eproj,nproj,nproj_states,vpx,vpy,vpz,taccel,   &
     trequest,timefrac,  &
     nmptheta,nmpphi,jmp,jovlp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
@@ -185,6 +185,34 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,global,END=99999)
     WRITE(*,*) ' GLOBAL read'
     IF(dx*dy*dz == 0D0) STOP ' DX & DY & DZ must be given explicitely'
+    If(dx<0.0) then
+            write(6,*) 'negative DX'
+            write(7,*) 'negative DX'
+           OPEN(119, FILE='dx', STATUS='UNKNOWN')
+           read (119,*) dx2
+           close(119)
+           OPEN(120, FILE='nx', STATUS='UNKNOWN')
+           read (120,*) nnx2
+           close(120)
+              If(dx2<0.0) then
+                   write(6,*) 'negative DX in file DX'
+                   write(6,*) 'DX,NX are computed then program restart'
+                   write(7,*) 'negative DX in file DX'
+                   write(7,*) 'DX,NX are computed then program restart'
+              else
+                      dx=dx2
+                      dy=dx2
+                      dz=dx2
+                      kxbox=nnx2
+                      kybox=nnx2
+                      kzbox=nnx2
+                   write(6,*) 'DXDYDZ changed to',DX,'from file DX'
+                   write(7,*) 'DXDYDZ changed to',DX,'from file DX'
+                   write(6,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
+                   write(7,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
+              endif
+    endif
+            
     IF(nproj_states>0)THEN
       ALLOCATE(proj_states(nproj_states))
       proj_states(:)=0
@@ -1505,6 +1533,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: orderxyz
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0.0
+integer ::  igrid(7)
+data igrid /32,48,64,72,96,128,160/
 
 
 IF(nion2 == 0) THEN
@@ -1519,9 +1549,10 @@ WRITE (6,*) 'Entering initions()'
 
 
 !     readings and basic transformation are only done for node "0"
+! why ? (fc)
 
 #if(parayes)
-IF(myn == 0)THEN
+!IF(myn == 0)THEN
 #endif
   
   
@@ -1529,11 +1560,15 @@ IF(myn == 0)THEN
   
   
   WRITE(6,*) 'Reading positions...'
+  distmax=0.0
   DO ion=1,nion
     
     IF(init_lcao == 1) THEN
       READ(9,*) cx(ion),cy(ion),cz(ion),np(ion),orderxyz, radini(ion)&
            ,ipol(ion)
+        dd=sqrt(cx(ion)*cx(ion)+cy(ion)*cy(ion)+cz(ion)*cz(ion))
+        if(dd.gt.distmax) distmax=dd
+
         totvalec=totvalec+ch(np(ion))
 !                          translate ordering of atomic states
       IF(orderxyz == 'xyz') THEN
@@ -1565,6 +1600,7 @@ IF(myn == 0)THEN
       END IF
     ELSE
       READ(9,*) cx(ion),cy(ion),cz(ion),np(ion)
+        totvalec=totvalec+ch(np(ion))
     END IF
     WRITE(6,*) ' ion,initord=',ion,initord(:,ion)    
     
@@ -1583,10 +1619,10 @@ IF(myn == 0)THEN
          nclust=nstate
          nspdw=nclust/2
          write(6,*) 'nstate set to',nstate
-         write(6,*) 'kstate is',kstate
+         write(6,*) 'kstate*knode is',kstate*knode
         write(6,*) 'nclust set to',nclust
          write(6,*) 'nspdw set to',nspdw
-           if(nstate>kstate) stop 'kstate too small - increase' 
+           if(nstate>kstate*knode) stop 'kstate too small - increase' 
     endif
 
   
@@ -1715,7 +1751,9 @@ IF(myn == 0)THEN
 !     rotation completed
   
   tnonlocany = .false.  
+  optis=1e10
   DO ion=1,nion
+      tblock(ion) = .FALSE.
     IF(ipsptyp == 0) THEN
       tblock(ion) = .NOT.(ABS(np(ion)) > 99)
       np(ion) = MOD(np(ion),100)
@@ -1773,18 +1811,40 @@ IF(myn == 0)THEN
     
     IF(ipsptyp == 1) THEN
       dgrid = crloc(np(ion))/0.8493218
-      WRITE(7,*) ' optimal grid spacing=',dgrid
-      WRITE(6,*) ' optimal grid spacing=',dgrid
+      WRITE(7,*) ' optimal grid spacing for this element=',dgrid
+      WRITE(6,*) ' optimal grid spacing for this element=',dgrid
+      if(dgrid.lt.optis) optis=dgrid
     END IF
   END DO
-  
+      WRITE(7,*) 'dx=',dx,' absolute optimal grid spacing =',optis
+      WRITE(6,*) 'dx=',dx,' absolute optimal grid spacing =',optis
+           OPEN(119, FILE='dx', STATUS='UNKNOWN')
+           write(119,*) optis
+           close(119)
+
+           nxopti=(distmax+1.0)/optis
+           nxopti=(nxopti/4)*8
+           inx=0
+           inxg=0
+           do while(inx<=nxopti) 
+               inxg=inxg+1
+               if(inxg.lt.7) then
+                inx=igrid(inxg)
+               else
+                inx=nxopti
+              endif
+           ENDdo
+      WRITE(6,*) 'distmax of ions',distmax,'recommended nx ny nz',inx
+           OPEN(120, FILE='nx', STATUS='UNKNOWN')
+           write(120,*) inx
+           close(120)
   
   IF (tempion > 0D0 .AND.imob /= 0) THEN
     CALL givetemperature(cpx,cpy,cpz,nion,tempion, amu(np(1))*1836*ame,4)
   END IF
   
 #if(parayes)
-END IF                                             ! myn=0
+!END IF                                             ! myn=0
 #endif
 
 !     Part for node "0" finished. Now distribute to all nodes.

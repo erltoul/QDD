@@ -2,7 +2,7 @@ PROGRAM master_MPI
 
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-INTEGER,PARAMETER :: knode=6
+INTEGER,PARAMETER :: knode=2
 
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(icode)

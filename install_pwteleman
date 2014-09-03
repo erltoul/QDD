@@ -1,0 +1,216 @@
+#!/bin/bash
+#depending on the local installation change the modules below
+
+# for example 
+#module load cuda
+INTELON="module load intel/composer_xe_2013.4.183 ;  module load openmpi/1.6.4-intel";
+INTELOFF="module unload intel/composer_xe_2013.4.183";
+
+module load fftw/3.3.3-intel
+module load cuda/5.0
+
+
+
+#start of the process 
+
+
+echo $INTELON > intelon
+echo $INTELOFF > inteloff
+chmod +x intelon inteloff
+
+
+
+echo $PWD > telemanroot
+export TELEMANROOT=`cat ./telemanroot`
+export TELEMANNAME=pwteleman
+export TELEMANMPI=16
+export pwteleman_SCRIPT=$TELEMANROOT/code/source_py/utils/pwtelemanscript.py
+export PYTHONPATH=$PYTHONPATH:$TELEMANROOT/code/source_py/;
+
+if [ "$#" -eq 0 ];then
+		echo "paths for pwteleman have been set if you ran this command in bash with :  source ./install_pwteleman"
+		echo "for all possible compilations : source ./install_pwteleman a"
+		echo "for compilation and debug : source ./install_pwteleman d"
+		echo "for compilation gpu only : source ./install_pwteleman i"
+		echo "for tests under bash : source ./install_pwteleman t"
+		echo "for cleaning installation : source ./install_pwteleman c"
+		echo "for cleaning test results : source ./install_pwteleman ct"
+else
+	case $1 in 
+		d)
+			echo "compilations with  debugging on"
+			cd code/source_f90
+ 			./make.sh 0 netlib debug
+ 			./make.sh 1 netlib debug
+			./make.sh 0 gpu debug
+			./make.sh 1 gpu debug
+                        cd $TELEMANROOT
+			;;
+		i)
+
+			echo "only gpu compilations"
+			cd code/source_f90
+			./make.sh 0 gpu
+			./make.sh 1 gpu 
+                        cd $TELEMANROOT
+			;;
+		a)
+			echo "all possible compilations - one of them might work if you have gfortran"
+ 			echo "for parallel tests you need mpif90 and 2 processors accessible with mpirun"
+			rm -Rf $TELEMANROOT/bin
+			mkdir $TELEMANROOT/bin
+                        for LIBFFT in netlib fftw gpu
+                        do 
+                        for INTEL in  $TELEMANROOT/intel*
+			do
+                        for PARA in 0 1 
+ 			do
+	                if [ $INTEL = "$TELEMANROOT/intelon" ] ; then
+				export FCOMP="intel";
+				source $TELEMANROOT/intelon
+			else
+				export FCOMP="gfortran";
+				source $TELEMANROOT/inteloff
+			fi
+                        cd $TELEMANROOT/code/
+			cd $TELEMANROOT/code/source_f90
+#			for OPENMP in	none  mkl openmp debug
+			for OPENMP in	none   openmp 
+			do 
+                        rm $TELEMANROOT/code/*.par $TELEMANROOT/code/*.seq
+			touch $TELEMANROOT/code/void.seq
+			touch $TELEMANROOT/code/void.par
+			./make.sh  $PARA $LIBFFT $OPENMP
+                        for CODE in $TELEMANROOT/code/*.seq $TELEMANROOT/code/*.par
+			do
+			PARAS=${CODE##*/}
+			cp  $CODE  $TELEMANROOT/bin/$FCOMP$LIBFFT$OPENMP$PARAS
+                        done 
+                        done 
+                        done 
+                        done 
+                        done 
+                        cd $TELEMANROOT
+			rm -Rf $TELEMANROOT/bin/*void*
+			;;
+		t)
+			echo "all possible  tests of samples  "
+ 			echo "for parallel tests you need at least 2 processors accessible with mpirun"
+ 			echo "for openmp tests you need at least 2 processors accessible with OMP_NUM_THREADS"
+ 			echo "for GPU you need cuda"
+			rm -f  $TELEMANROOT/code/source_f90/resultregression
+                        cd $TELEMANROOT/samples 
+                        for CODE in $TELEMANROOT/bin/*.seq
+			do
+			cp $CODE $TELEMANROOT/code/$TELEMANNAME.seq
+			CODES=${CODE##*/}
+                          export TELEMANMPI=1;  
+                          export PROCS=1;  
+			  export OMP_NUM_THREADS=1;
+			  export MKL_NUM_THREADS=1;
+                        cd $TELEMANROOT/samples 
+                        for SAMPLE in *
+                        do 
+			cd $TELEMANROOT/code/source_f90
+                        echo "CODE=" $CODES   >> resultregression
+                        echo "SAMPLE=" $SAMPLE >> resultregression
+			tail -2 resultregression
+			touch  $TELEMANROOT/samples/$SAMPLE/Time  
+			echo $PROCS $CODES >>   $TELEMANROOT/samples/$SAMPLE/Time  
+                        ./regression  $SAMPLE >> resultregression 
+			tail -2 resultregression
+			mv  $TELEMANROOT/samples/result2$SAMPLE  $TELEMANROOT/samples_ref/$SAMPLE$PROCS$CODES 
+                        cd $TELEMANROOT/samples 
+                        done 
+                        done 
+                        for CODE in $TELEMANROOT/bin/*openmp*
+			do
+			cp $CODE $TELEMANROOT/code/$TELEMANNAME.seq
+			CODES=${CODE##*/}
+                        for PROCS in 2 4 8 16 1
+			do 
+                          export TELEMANMPI=1;  
+			  export OMP_NUM_THREADS=$PROCS;
+			  export MKL_NUM_THREADS=$PROCS;
+                        cd $TELEMANROOT/samples 
+                        for SAMPLE in *
+                        do 
+			cd $TELEMANROOT/code/source_f90
+                        echo "PROCS=" $PROCS   >> resultregression
+                        echo "CODE=" $CODES   >> resultregression
+                        echo "SAMPLE=" $SAMPLE >> resultregression
+			tail -3 resultregression
+			touch  $TELEMANROOT/samples/$SAMPLE/Time  
+			echo $PROCS $CODES >>   $TELEMANROOT/samples/$SAMPLE/Time  
+                        ./regression  $SAMPLE >> resultregression 
+			mv  $TELEMANROOT/samples/result2$SAMPLE  $TELEMANROOT/samples_ref/$SAMPLE$PROCS$CODES 
+			tail -2 resultregression
+                        cd $TELEMANROOT/samples 
+                        done 
+                        done 
+                        done 
+			cd $TELEMANROOT/code/source_f90
+                        for CODE in $TELEMANROOT/bin/*.par
+			do
+			cp $CODE $TELEMANROOT/code/$TELEMANNAME.par
+			CODES=${CODE##*/}
+                        for PROCS in 2 4 8 16 1
+			do 
+                          export TELEMANMPI=$PROCS;  
+			  export OMP_NUM_THREADS=1;
+			  export MKL_NUM_THREADS=1;
+                        cd $TELEMANROOT/samples 
+                        for SAMPLE in *
+                        do 
+			cd $TELEMANROOT/code/source_f90
+                        echo "PROCS=" $PROCS   >> resultregression
+                        echo "CODE=" $CODE   >> resultregression
+                        echo "SAMPLE=" $SAMPLE >> resultregression
+			tail -3 resultregression
+			touch  $TELEMANROOT/samples/$SAMPLE/Time  
+			echo $PROCS $CODES >>   $TELEMANROOT/samples/$SAMPLE/Time  
+                        ./regression  $SAMPLE >> resultregression 
+			mv  $TELEMANROOT/samples/result2$SAMPLE  $TELEMANROOT/samples_ref/$SAMPLE$PROCS$CODES 
+			tail -2 resultregression
+                        cd $TELEMANROOT/samples 
+                        done 
+                        done 
+                        done 
+			cd $TELEMANROOT/code/source_f90
+                        cat resultregression
+                        cd $TELEMANROOT
+			;;
+                c)
+			echo "clean source and exec"
+			rm -Rf $TELEMANROOT/bin
+                        cd $TELEMANROOT/code/source_f90
+                        rm *.o 
+                        cd $TELEMANROOT/code/
+                        rm *.par *.seq
+			rm *.mod
+                        cd $TELEMANROOT
+			;;
+                ct)
+			echo "clean sample results"
+                        rm -Rf $TELEMANROOT/samples_ref/*
+                        cd $TELEMANROOT/samples
+                        for SAMPLE in *
+			do
+				cd $SAMPLE
+				rm -f povlp* nohup.out pesc* pproba* gmon.out  pwtelemancall wisdom* telemanroot bc* p*.$SAMPLE pstat* poptions* progstatus psp*  command*  reference* try* command* test* result* Time* pdip.* result* impi.* for006* save* rsave* logg *energies* infosp.* penerclu.* outputpwteleman*  fort.* fort* forces.* new*.xyz pprojdip.*
+				cd ..
+			done
+                        cd $TELEMANROOT/samples_py
+                        for SAMPLE in *
+			do
+				cd $SAMPLE
+				rm -f polvp* gmon.out pesc* pproba*  pwtelemancall wisdom* telemanroot bc* p*.$SAMPLE pstat* poptions* progstatus psp*  command*  reference* try* command* test* result* Time* pdip.* result* impi.* for006* save* rsave* logg *energies* infosp.* penerclu.* outputpwteleman*  fort.* fort* forces.* new*.xyz pprojdip.*
+				cd ..
+			done
+                        cd $TELEMANROOT
+			;;
+	        ?)
+			echo "unknown flag"
+			;;
+	esac
+fi

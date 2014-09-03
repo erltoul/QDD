@@ -1,31 +1,43 @@
 #!/bin/bash
-rm -f ../../code/essai.seq
-if [ -e "../../samples/C2/resultcpuok" ]
-then
-	echo "sequential reference present"
-else
-	echo "no sequential reference present"
-./make.sh 0 fftw
-cd ../../samples/C2
-../../code/essai.seq > resultcpuok
- sed '/time/d' resultcpuok > resultcpuokt
+
+NAME=$TELEMANNAME
+if [ -z $NAME ]  ; then
+	NAME=essai
+	echo "no name given - prefix changed to $NAME"
 fi
-cd ../../code/source_f90
-./make.sh 0 gpu
-cd ../../samples/C2
- ../../code/essai.seq > test
- sed '/time/d' test > testt
- cat resultcpuokt resultcpuokt > reference
- cat resultcpuokt testt > try
- rm -f reference.bz2
- rm -f try.bz2
- bzip2 reference try
- stat  --format=%s  reference.bz2  > refs
- stat  --format=%s  try.bz2 > trys
- echo '-' > plus
- echo '(' > leftp
- echo ')' > rightp
- echo '/' > over
- cat leftp refs plus trys rightp over refs | tr -d '\n' > bc
- echo -e '\n' >> bc
- bc -l  < bc 
+
+
+if [ -z $1 ] ; then
+    SAMPLE=C2
+else
+    SAMPLE=$1
+fi
+
+echo "regression test for" $SAMPLE
+
+cd $TELEMANROOT/samples/$SAMPLE
+rm -f psp* 
+rm -f  2st-* pescel* pMP* pminpos* pposion* pgemion* pvelion* pkinenion* pr*
+rm -f ptempion* penerclu* pforce* plforce* projforce* pfrcel* pforce* 
+rm -f  pstatmom* infosp* penerstat* 
+
+ $TELEMANROOT/code/telemanexec > result
+	cat Time >> ../../samples_ref/Time_$SAMPLE
+	if [[ $(find result -type f -size +200c 2>/dev/null) ]] 
+	then
+# 		sed '/time/d' result >  result_t
+		rm -f  result
+		rm -f for006*
+		rm -f  pstat*
+		rm -f *dat
+		rm -f gmon.out
+		tail -2 Time
+		rm -f  Time
+		rm -f save*  rsave*
+
+		cd $TELEMANROOT/samples
+		tar -cf result2$SAMPLE $SAMPLE
+	else
+		echo "result file to small - probable error"
+		exit 114
+	 fi

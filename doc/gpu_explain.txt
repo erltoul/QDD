@@ -1,0 +1,52 @@
+For GPU compilation you need CUDA development library installed as well
+as an NVIDIA card which supports GPU.
+
+For instance type 
+
+module load cuda
+
+or 
+module load cuda/5.0
+
+depending on your installation ; nvcc should give some result, and
+the cuda libraries should be somewhere on your system, typically
+in /opt/cuda (check for those locations in makefile).
+
+Depending on the capabilities of your card you should change the  --gpu-architecture
+option in the makefile, from sm_20 for older cards to sm_ 35 for newer cards.
+In the makefile you can also change the number of registers for   -maxrregcount option.
+
+In the same fashion, look in the file values_gpu.h situated in code/source_f90
+
+You should find the better compromise of values to get higher performance
+for the grid size you have chosen, for instance changing the values of BLOCK1,
+GRIDX , BATCH.
+
+You can try if the  lda_gpu option or the asynclaunch option in define.h bring anything in terms
+of speed, it depends on the problem
+
+
+If you change  the line 
+
+#define lda_gpu 1
+
+then the code will not compile on machines without GPUs.
+
+The type 
+
+./make.sh 0 gpu 
+for a serial version
+
+and
+
+./make.sh 1 gpu 
+
+for a parallel version using one or several GPUs on each node with MPI.
+
+(if you have the Intel Fortran Compiler, else some underscores have to be removed from procedure calls) 
+
+
+
+
+
+

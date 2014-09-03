@@ -11,7 +11,7 @@ REAL(DP) :: h0_12g(-99:99)=-1D20               ! default signal "automatic"
 !INTEGER :: nrow(-99:99)
 !fix! INTEGER :: np(0:ng)
 
-INTEGER,PARAMETER :: knl=8000       ! storage for PsP projectors
+INTEGER,PARAMETER :: knl=18000       ! storage for PsP projectors
 !fix! LOGICAL :: tblock(0:ng)
 !fix! REAL(DP) :: p0_1(knl,0:ng),p0_2(knl,0:ng),p1_1(knl,0:ng),p1_1x(knl,0:ng)
 !fix! REAL(DP) :: p1_1y(knl,0:ng),p1_1z(knl,0:ng) 

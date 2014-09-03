@@ -1,5 +1,9 @@
 #!/bin/bash
-NAME=essai
+NAME=$TELEMANNAME
+if [ -z $NAME ]  ; then
+	NAME=essai
+	echo "no name given - prefix changed to $NAME"
+fi
 
 . /usr/share/modules/init/bash
 
@@ -13,7 +17,7 @@ NAME=essai
 para=0
 if [ $1 ] ; then
  para=$1
- module load sgi-mpt/2.0.4
+# module load sgi-mpt/2.0.4
 fi
 
 if [ -z $2 ] ; then
@@ -21,6 +25,31 @@ if [ -z $2 ] ; then
 else
     type_check=$2
 fi
+
+debug=0
+openmp=0
+mkl=0
+if [ -z $3 ] ; then
+    debug=none
+else
+	if [ $3 = "debug" ] ; then
+    		debug=$3
+    	        echo "DEBUG is on"
+	fi
+if [ $3 = "openmp" ] ; then
+	openmp=$3
+        echo "OPENMP is on - set OMP_NUM_THREADS"
+fi
+fi
+if [ -z $4 ] ; then
+	mkl=none 
+else
+if [ $4 = "mkl" ] ; then
+	mkl=$4
+        echo "MKL_OPENMP is on- set MKL_NUM_THREADS"
+fi
+fi
+
 
 #if [ -z $3 ] ; then
 #    dim_check=1d
@@ -37,6 +66,7 @@ export PCF=GFORT
 if which ifort ; then
         export PCF=IFORT
 fi
+
 
 # For parallel setups: if mpif90 is available, use it; else, use ifort.
 if [ $para = 1 ] || [ $para = 2 ] ; then
@@ -68,13 +98,33 @@ case "$LD_LIBRARY_PATH" in
         ;;
 esac
 
+if [ $debug = debug ] ; then
+    sed -i -e 's/DEBUG = .*/DEBUG = YES/' makefile
+else
+    sed -i -e 's/DEBUG = .*/DEBUG = NO/' makefile
+fi
+if [ $openmp = openmp ] ; then
+    sed -i -e 's/OMP_THREADS = .*/OMP_THREADS = DYN/' makefile
+else
+    sed -i -e 's/OMP_THREADS = .*/OMP_THREADS = NO/' makefile
+fi
+if [ $mkl = mkl ] ; then
+    sed -i -e 's/MKL_THREADS = .*/MKL_THREADS = YES/' makefile
+else
+    sed -i -e 's/MKL_THREADS = .*/MKL_THREADS = NO/' makefile
+fi
+
+
+
+
+
 if [ $para = 0 ] ; then
     echo '*** serial compilation, simpara = no ***'
     echo "*** the executable for serial code is named '$NAME.seq' ***"
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
 #    sed -i -e 's/parayes.*/parayes 0/' define.h
 #    sed -i -e 's/simpara.*/simpara 0/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" makefile
+    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.seq/g" makefile
 #    sed -i -e 's/CF90 = .*/CF90 = GFORT/' makefile
     sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
     sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = NO/' makefile
@@ -84,7 +134,7 @@ elif [ $para = 1 ] ; then
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 0/' define.h
 #    sed -i -e 's/parayes.*/parayes 1/' define.h
 #    sed -i -e 's/simpara.*/simpara 0/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.par/g" makefile
+    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.par/g" makefile
     sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
     sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = YES/' makefile
 elif [ $para = 2 ] ; then
@@ -93,7 +143,7 @@ elif [ $para = 2 ] ; then
 #    sed -i -e 's/parano[[:space:]]*[0-9]\+/parano 1/' define.h
 #    sed -i -e 's/parayes.*/parayes 0/' define.h
 #    sed -i -e 's/simpara.*/simpara 1/' define.h
-#    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.sim/g" makefile
+    sed -i -e "/^ *#/!s/\(EXEC\) *=.*/\\1 = $NAME.sim/g" makefile
     sed -i -e 's/CF90 = .*/CF90 = '$PCF'/' makefile
     sed -i -e 's/MPI_PARALLEL = .*/MPI_PARALLEL = SIM/' makefile
 else

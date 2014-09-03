@@ -312,8 +312,8 @@ REAL(DP),ALLOCATABLE :: fx(:),fy(:),fz(:), flx(:),fly(:),flz(:)
 REAL(DP),ALLOCATABLE :: fprojx(:),fprojy(:),fprojz(:)
 
 !                                      book keeping for LCGO initialization
-REAL(DP),ALLOCATABLE :: radini(:),ipol(:)
-INTEGER,ALLOCATABLE :: initord(:,:)
+REAL(DP),ALLOCATABLE :: radini(:)
+INTEGER,ALLOCATABLE :: initord(:,:),ipol(:)
 INTEGER,ALLOCATABLE :: nmaxst(:)
 
 

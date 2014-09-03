@@ -1,0 +1,15 @@
+#!/bin/bash                                                                    
+#MSUB -r MyJob_ParaHyb             # Request name                              
+#MSUB -n 32                        # Total number of tasks to use              
+#MSUB -c 1                      # Number of threads per task to use         
+#MSUB -T 86400                      # Elapsed time limit in seconds             
+#MSUB -o example_%I.o              # Standard output. %I is the job id         
+#MSUB -e example_%I.e              # Error output. %I is the job id            
+#MSUB -q hybrid            # Ch¤osing standard nodes                   
+#MSUB -A gen6171                    # Project ID                                
+                                                                                
+set -x                                                                         
+cd ${BRIDGE_MSUB_PWD}                                                 
+export OMP_NUM_THREADS=1                                                 
+module load cuda
+ccc_mprun ../../code/essai.par

@@ -1,0 +1,18 @@
+#!/bin/bash
+NAME=$TELEMANNAME
+if [ -z $NAME ]  ; then
+	NAME=essai
+	echo "no name given - prefix changed to $NAME"
+fi
+
+
+if [ $TELEMANMPI = "1" ] ; then
+        echo "serial version of teleman with 1 processes"
+	echo "maybe increase OMP_NUM_THREADS and MKL_NUM_THREADS if you have several cores"
+       $TELEMANROOT/code/$NAME.seq 
+else
+        echo "parallel version of teleman with" $TELEMANMPI "processes"
+	mpirun -np $TELEMANMPI $TELEMANROOT/code/$NAME.par
+fi
+
+

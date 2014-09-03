@@ -18,9 +18,9 @@ kybox=36,
 kzbox=36,
 kstate=100,
 nspdw=50,
-dx=0.8,
-dy=0.8,
-dz=0.8,
+dx=-0.8,
+dy=-0.8,
+dz=-0.8,
 iforce=0,
 ipseudo=1,          
 epswf=0.2,
@@ -33,7 +33,7 @@ osfac=1.0 ,
 temp=0.0,
 occmix=0.5,
 epsoro=1e-6,    
-isurf=1,
+isurf=0,
 nk=100,
 nc=100,
 endcon=1e-5,
@@ -222,7 +222,7 @@ iPotStatic=0,
 write_for005=1,
 modecalc=None,
 calls=1,
-nclust=None,nion=None
+nclust=0,nion=None
 ):
 	self.modecalc = modecalc
         if self.modecalc is None:
@@ -559,7 +559,10 @@ nclust=None,nion=None
         fcalls.close()
         exitcode = locals['exitcode']
         if exitcode != 0:
-            raise RuntimeError(('pwteleman exited with exit code: %d.  ' +
+        	execfile(pwteleman, {}, locals)
+        	exitcode = locals['exitcode']
+                if exitcode != 0:
+       	       		 raise RuntimeError(('after retry  pwteleman exited with exit code: %d.  ' +
                                 'Check %s.txt for more information.') %
                                (exitcode, self.label))
 
@@ -589,6 +592,14 @@ nclust=None,nion=None
 
         fh = open('for005.' +self.label, 'w')
         fion = open('for005ion.' +self.label, 'w')
+        fdx = open('dx','w')
+	fdx.write('%s \n' %self.dx)
+	fdx.flush()
+	fdx.close()
+        fdx = open('nx','w')
+	fdx.write('%s \n' %self.kxbox)
+	fdx.flush()
+	fdx.close()
         for005g = {
         'nclust':0,
 	'nion':len(atoms),
@@ -836,6 +847,7 @@ nclust=None,nion=None
 
         a = 0
         for pos, Z in zip(self.positions, self.numbers):
+            pos = pos / 0.52
             spin = a % 2 *2-1
             a += 1
 #            fion.write('%.14f %.14f %.14f 1 xyz 1,., ' %  tuple(pos))

@@ -1,0 +1,644 @@
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   24.2655160000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   149.501343000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   4.97231100000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   12.3167700000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   49.0950680000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   77.8448650000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   15.2929560000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   17.6411020000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   371.251201000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   23.0374390000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   117.227326000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   4.68029200000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   11.6287270000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   43.4747160000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   63.6639780000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   14.4049000000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   17.1170700000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   273.269078000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   25.8856170000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   119.155447000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   5.20432500000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   13.3368330000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   44.2587650000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   67.7522340000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   15.8889930000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   19.3892110000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   247.491467000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   35.2262010000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   163.190198000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   7.00043700000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   17.3290830000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   59.5757220000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   91.7497330000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   25.8936180000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   26.2056380000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelfftwnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   267.836739000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   13.6088500000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   66.2521400000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   3.33220800000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   6.82042600000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   27.1136940000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   65.4480910000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   8.78054800000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   7.02043900000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   335.036938000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   13.2288270000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   52.6672920000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   3.12819600000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   6.62441400000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   22.8854300000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   54.8594280000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   8.10050600000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   7.22845200000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   250.315644000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   16.9370580000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+8 intelgpunonepwteleman.par
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   4.06025400000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   8.42052600000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   27.7297330000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   57.0115630000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   10.2766430000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   9.70460600000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   226.090130000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   24.5975380000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+16 intelgpunonepwteleman.par
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   5.60835100000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   12.3167700000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+16 intelgpunonepwteleman.par
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   64.6120380000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   15.2249520000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   16.0770040000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelgpunonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+16 intelgpunonepwteleman.par
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   31.7099820000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   183.647477000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   6.65241600000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   16.8250510000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   61.5398450000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   98.6221630000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   23.1574470000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   23.9534960000000     
+PROCS= 2
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   451.416211000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   29.0898180000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   141.664853000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   5.88836700000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   14.7929240000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   53.4633410000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   76.7927990000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   19.6852300000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   22.7774230000000     
+PROCS= 4
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   313.399586000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   31.6099750000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   139.124694000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   6.38439900000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   15.6369770000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   53.7153560000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   73.1045690000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   19.8532410000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   24.7895480000000     
+PROCS= 8
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   268.388773000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2-ionmot
+regression test for C2-ionmot
+ Box :          64          64          64
+ Walltime =   38.2103870000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_128
+regression test for C2_128
+ Box :         128         128         128
+ Walltime =   186.419650000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_48
+regression test for C2_48
+ Box :          48          48          48
+ Walltime =   7.80448800000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_64
+regression test for C2_64
+ Box :          64          64          64
+ Walltime =   19.3692100000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= C2_96
+regression test for C2_96
+ Box :          96          96          96
+ Walltime =   67.7722350000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= anilin
+regression test for anilin
+ Box :          64          64          64
+ Walltime =   78.0968800000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-ionmot
+regression test for na8-ionmot
+ Box :          64          64          64
+ Walltime =   23.5574720000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= na8-jel
+regression test for na8-jel
+ Box :          64          64          64
+ Walltime =   30.9419340000000     
+PROCS= 16
+CODE= /home/permanent/fcalvay/pwteleman_9_14rc/bin/intelnetlibnonepwteleman.par
+SAMPLE= porphyrin_mg
+regression test for porphyrin_mg
+ Box :          72          72          72
+ Walltime =   281.729606000000     
