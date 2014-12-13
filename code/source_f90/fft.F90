@@ -135,9 +135,9 @@ WRITE(*,*) ' FFTA allocated with NACTHR=',nacthr
 !
 !  central setting of FFTW planning expense --> edit here
 !
-!  FFTW_planflag = FFTW_MEASURE  
+  FFTW_planflag = FFTW_MEASURE  
 !  FFTW_planflag = FFTW_PATIENT
-  FFTW_planflag = FFTW_EXHAUSTIVE
+!  FFTW_planflag = FFTW_EXHAUSTIVE
 #endif
 #if(fftw_gpu)
 CALL my_cuda_allocate() !Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster

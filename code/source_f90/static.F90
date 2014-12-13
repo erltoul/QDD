@@ -166,7 +166,7 @@ DO iter1=1,ismax
     
     IF(myn == 0)THEN
       WRITE(7,'(a,i5)') 'iter= ',iter1
-      WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
+      WRITE(7,'(a,f12.4,a,2(/5x,5f13.5))') 'binding energy=',binerg,  &
           ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
           qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
 
@@ -191,6 +191,9 @@ IF(myn == 0)THEN
   CALL prifld(rho,'density    ')
   CALL prifld(aloc,'potential   ')
   CALL prifld(chpcoul,'Coul-potent.')
+  CALL prifldz(rho,'density    ')
+  CALL prifldz(aloc,'potential   ')
+  CALL prifldz(chpcoul,'Coul-potent.')
 END IF
 
 

@@ -347,11 +347,12 @@ IF(ifsicp >= 6) THEN
 #ifdef COMPLEXSWITCH
   WRITE(*,*) ' before reading VECS'
   READ(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  WRITE(*,*) vecs(1,1,1)
   IF(.NOT.tstatin) THEN
     READ(60) ExpDABold(1:kstate,1:kstate,1:2)
     READ(60) wfrotate(1:kstate,1:kstate,1:2)
   END IF
-  WRITE(*,*) ' READ vecs:'
+  WRITE(*,*) ' READ vecs:',ndims
   DO n=1,ndims(1)
     WRITE(*,'(8f10.6)') vecs(1:ndims(1),n,1)
   END DO
@@ -612,7 +613,7 @@ IF(mynact==0) THEN
       IF(TTEST) WRITE(*,*) 'electronic moments written'
     
 #ifdef COMPLEXSWITCH
-      IF (nabsorb > 0) THEN
+      IF (isa>0 .AND. nabsorb > 0) THEN
         WRITE(60) rhoabso(1:kdfull2)
         IF(jescmaskorb /=0) THEN
 #if(parayes)
@@ -625,6 +626,7 @@ IF(mynact==0) THEN
           ENDDO
 #endif
         END IF
+        WRITE(*,*) ' RHOABSO written'
       END IF
 !     writing cumulators for laser field
       IF(isa.GE.0) THEN

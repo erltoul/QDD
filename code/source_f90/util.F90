@@ -2389,6 +2389,38 @@ END DO
 RETURN
 END SUBROUTINE prifld
 
+SUBROUTINE prifldz(field,comment)
+
+!       *************************
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(IN)             :: field(kdfull2)
+CHARACTER (LEN=*), INTENT(IN)   :: comment
+
+LOGICAL :: tnopri
+DATA tnopri/.false./
+
+!c       print field along z-axis
+
+IF(tnopri) RETURN
+WRITE(6,'(/2a)') 'field along z:',comment
+ind = 0
+DO jz=minz,maxz
+  DO jy=miny,maxy
+    DO jx=minx,maxx
+      ind    = 1 + ind
+      IF(jx == nxsh .AND. jy == nysh)  &
+          WRITE(6,'(1x,f6.2,g13.5)') (jz-nzsh)*dx,field(ind)
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE prifldz
+
 
 
 !       **************************

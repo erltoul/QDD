@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -28,7 +28,7 @@ OMP_THREADS = NO
 #   * FFTW
 #   * MKL
 #   * cuFFT
-TYPE_FFT = MKL
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -53,7 +53,10 @@ MKL_THREADS = YES
 # Default value:
 MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 #for CCC
-MKL_WRAPPERS = $(MKL_ROOT)/mkl/interfaces/fftw3xf
+#MKL_WRAPPERS = $(MKL_ROOT)/mkl/interfaces/fftw3xf
+# for Ubuntu
+MKL_WRAPPERS = /opt/intel/mkl/interfaces/fftw3xf
+
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
@@ -235,8 +238,8 @@ endif
 
 ifeq "$(CF90)" "IFORT1"
 	STATIC = -static
-	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = -fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+	OPT2  = -fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  = -fpp -w        -g                            -align all -autodouble
   ifeq "$(DEBUG)" "YES"
 	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
@@ -367,7 +370,8 @@ ifeq ($(TYPE_FFT), MKL)
   ifneq "$(MKL_WRAPPERS)" ""
 	MKLFLAGS += -L$(MKL_WRAPPERS)
   endif
-	MKLFLAGS += -lfftw3xf_intel
+#	MKLFLAGS += -lfftw3xf_intel
+	MKLFLAGS += -lfftw3xf
 
   ifneq "$(MKLPATH)" ""
 	MKLFLAGS += -L$(MKLPATH)
@@ -405,7 +409,8 @@ ifeq ($(TYPE_FFT), MKL)
 else
   ifeq ($(TYPE_FFT), FFTW)
     ifeq ($(OMP), YES)
-	FFTWFLAGS += -lfftw3_omp -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3_omp -L/home/mpt218/util/.libs
+#	FFTWFLAGS += -lfftw3_omp -L$(FFTW3_LIBDIR)
     endif
 	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
 
@@ -447,10 +452,11 @@ else
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
+        EXEC = pwteleman.par
     else
 	MPI_NAME = Mono
+        EXEC = pwteleman.seq
     endif
-    EXEC = pwteleman.par
   endif
 endif
 
