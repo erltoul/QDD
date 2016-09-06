@@ -19,9 +19,9 @@
 #include"define.h"
 
 #if(findiff|numerov)
-SUBROUINTE dummypack()
+SUBROUTINE dummypack()
 RETURN
-END SUBROUINTE dummypack
+END SUBROUTINE dummypack
 #endif
 
 
