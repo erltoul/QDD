@@ -70,17 +70,6 @@ endif
 if USE_MPI
 LDLIBS+=$(LD_MPI)
 endif
-#Add MKL linkerflags (including particularities regarding -static)
-# if MKLwrappers -L $mklwrappers
-#	-lfftw3xf
-# if MKLpath    -I $mklpath  
-#  if static : -Wl,--start-group
-#    if threads: -lmkl_intel_lp64
-#  			else   : -lmkl_sequential
-#   -lmkl_core
-#  if static : -Wl,--end-group
-#  if threads: -liomp5
-#  -lpthreads
 
 #Add FFTW Linkerflags
 if CALLS_FFTW
@@ -90,8 +79,6 @@ endif
 if USE_CUDA
 LDLIBS+=$(LD_CUDA)
 endif
-
-
 
 DEPENDENCIES = define.h
 ########################################################################
@@ -129,26 +116,13 @@ OBJCOMMON = $(OBJKINPARA)\
 						short.$(OBJEXT) image.$(OBJEXT) lattice.$(OBJEXT) attachement.$(OBJEXT)\
 						sicnew.$(OBJEXT) sicnewc.$(OBJEXT)\
 						init.$(OBJEXT) generlcgo.$(OBJEXT)\
-						2stUT.$(OBJEXT)
+						2stUT.$(OBJEXT) orthmat.$(OBJEXT)
 #sic-conditional objects:
 if USE_TWOSTSIC
 OBJCOMMON+= 2stUTc.$(OBJEXT) localize_rad.$(OBJEXT)
 endif
 
 #in that order order:
-# -main source
-# -compilation flags
-# -objets and library to link
-# -flags for linker
-# -dependencies of pwteleman-main.o (to force creation of .mod BEFORE compilation of main.o)
-if USE_gridfft
-initial_checks:
-	@echo "gridfft: $(gridfft)"
-endif
-if !USE_gridfft
-initial_checks:
-	@echo "pas gridfft: $(gridfft)"
-endif
 
 if USE_NETLIB
 bin_PROGRAMS= pwteleman
@@ -157,7 +131,6 @@ pwteleman_FCFLAGS = $(COMPILERFLAGS1)
 pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 pwteleman_LDFLAGS = $(LINKERFLAGS)
 pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON)
-pwteleman_DEPENDENCIES = initial_checks 
 endif
 if USE_FFTW
 bin_PROGRAMS = fftw_pwteleman
@@ -190,18 +163,22 @@ endif
 # twostr and twost modules are contained in 2stUT.o and 2stUTc.o, respectively. 
 # Dependencies concerning objects are needed,  due to numerous #include statement 
 
+# params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< 
 
+# fftpack.o
 fftpack.$(OBJEXT): fftpack.F90 define.h fftpack2.F90 params.$(OBJEXT) Makefile
 	$(FC) $(COMPILERFLAGS2) -c -o $@ $<
 
+# fftw.o
 fftw.$(OBJEXT): fftw.F90 define.h fftw3.f03 params.$(OBJEXT) Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 cuda_alloc.$(OBJEXT): cuda_alloc.F90 Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
+#kinetic.o
 if USE_NETLIB
 kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -215,7 +192,7 @@ kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90  $(OBJCUDA) params.$
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 
-# variantes parayes, fftw_cpu -> induit use kinetic
+# coulsolv.o
 if USE_NETLIB
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -230,16 +207,15 @@ endif
 #~ 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< $(AM_LDFLAGS)
 #~ endif
 
-# attention variante parayes gridfft
+# sicnew.o
 sicnew.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
-# attention variante parayes gridfft
+# sicnewc.o
 sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
-# restart.a #attention variantes avec twostic, parayes, simpara
-
+# restart.o
 if USE_TWOSTSIC
 restart.$(OBJEXT): restart.F90 define.h 2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
@@ -248,32 +224,31 @@ restart.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
 endif
 
-
-# restartc.a #attention variantes avec twostic
+# restartc.o
 restartc.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
-# init.a #attention variantes avec parayes ou   netlib_fft|fftw_cpu
+# init.o
 init.$(OBJEXT): init.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# generlcgo.a  #attention variantes avec parayes
+# generlcgo.o
 generlcgo.$(OBJEXT): generlcgo.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# localize.a  #attention variante  gridfft  netlib_fft|fftw_cpu  fftw_gpu
+# localize.o
 localize.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
-# localizer.a  #attention variante  gridfft  netlib_fft|fftw_cpu  fftw_gpu
+# localizer.o
 localizer.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
-# localize_rad.a   # Used only if twostsic=1  
-localize_rad.$(OBJEXT): localize_rad.F90 define.h $(OBJKINPARA)
+# localize_rad.o
+localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
-# static.a  # Variant with GPU or with twostsic
+# static.o
 if USE_CUDA
 if USE_TWOSTSIC
 static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
@@ -292,111 +267,115 @@ static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJC
 endif
 endif
 
-# 2stUT.a  #variante twostsic (forces use of module localize_rad), variant with cmplxsic
+# orthmat.o
+orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+
+# 2stUT.o
 if USE_TWOSTSIC
-2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-2stUT.$(OBJEXT): 2stUT.F90 define.h $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 endif
 
-# 2stUTc.a 
+# 2stUTc.o 
 if USE_TWOSTSIC
-2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) $(OBJKINPARA)
+2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 endif
 
-# dynamic.a   #attention variantes twotsic parayes|simpara
+# dynamic.o
 if USE_TWOSTSIC
-dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) $(OBJKINPARA)
+dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 else
 dynamic.$(OBJEXT): dynamic.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-# lda.a #attention variantes parayes  netlib_fft|fftw_cpu  
+# lda.o
 lda.$(OBJEXT): lda.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# util.a  #attention variante parayes
+# util.o
 util.$(OBJEXT): util.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# abso_bc.a # attention variante parayes
+# abso_bc.o
 
 abso_bc.$(OBJEXT): abso_bc.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# pseudosoft.a #attention variantes netlib_fft|fftw_cpu  
+# pseudosoft.o
 pseudosoft.$(OBJEXT): pseudosoft.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# pseudogoed.a
+# pseudogoed.o
 pseudogoed.$(OBJEXT): pseudogoed.F90 params.$(OBJEXT) define.h
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< 
 
-# ionmd.a #attention variantes parayes netlib_fft|fftw_cpu  
+# ionmd.o
 ionmd.$(OBJEXT): ionmd.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# forces.a #attention variante parayes 
+# forces.o
 forces.$(OBJEXT): forces.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# carlo.a  #attention variante parayes , depend peut-etre de parallele.F90 ???
+# carlo.o  #Beware, peraps implicitly dependent to parallele.F90 ?
 carlo.$(OBJEXT): carlo.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# subgrids.a   #attention variante raregas
+# subgrids.o
 subgrids.$(OBJEXT): subgrids.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# analyse.a   #attention variante raregas
+# analyse.o
 analyse.$(OBJEXT): analyse.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# rho.a  #attention variante parayes
+# rho.o
 rho.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH  -c -o $@ $<
 
-# rhoc.a  #attention variante parayes
+# rhoc.o
 rhoc.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
-# nonloc.a 
+# nonloc.o 
 nonloc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH  -c -o $@ $<
 
-# nonlocc.a 
+# nonlocc.o 
 nonlocc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
-	$(FC) $(COMPILERFLAGS1)  $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 	
-# schmid.a #variante parano, parayes, paraopenmp
+# schmid.o
 schmid.$(OBJEXT): schmid.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# zeroforce.a #variantes gridff tnetlib_fft|fftw_cpu fftw_gpu
+# zeroforce.o
 zeroforce.$(OBJEXT): zeroforce.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# functions.a #variante raregas
+# functions.o
 functions.$(OBJEXT): functions.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 	
-# loc_mfield.a  #variantes raregas gridff tnetlib_fft|fftw_cpu fftw_gpu
+# loc_mfield.o
 loc_mfield.$(OBJEXT): loc_mfield.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# givens.a 
+# givens.o 
 givens.$(OBJEXT): givens.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS3) -c -o $@ $<
 
-# parallele.a #variantes parayes|simpara paraopenmp fftwnomkl
+# parallele.o
 parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) -c -o $@ $<
 
-# expevol.a #variante twostsic
+# expevol.o
 if USE_TWOSTSIC
 expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -404,35 +383,36 @@ else
 expevol.$(OBJEXT): expevol.F90 define.h  $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-# pot_substrate.a  #variante raregas
+
+# pot_substrate.o
 pot_substrate.$(OBJEXT): pot_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# forces_substrate.a  #variante raregas
+# forces_substrate.o
 forces_substrate.$(OBJEXT): forces_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 	
-# md_substrate.a  #variante parayes
+# md_substrate.o
 md_substrate.$(OBJEXT): md_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 	
-# short.a #variante raregas
+# short.o
 short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# image.a  #variante netlib_fft|fftw_cpu
+# image.o
 image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 	
-# lattice.a #variante raregas
+# lattice.o
 lattice.$(OBJEXT): lattice.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-# attachement.a
+# attachement.o
 attachement.$(OBJEXT): attachement.F90 define.h params.$(OBJEXT)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
-#cuda.a
+#cuda.o
 cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
 	$(GPU_COMPILER) $(GPUCOMPILERFLAGS) -c -o $@ $<
 
@@ -480,4 +460,4 @@ cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
 #~ 	@echo "dynopenmp     $(dynopenmp_value)"
 #~ 	@echo "#######################################################"
 
-CLEANFILES=*.mod
+CLEANFILES=*.mod *.MOD
