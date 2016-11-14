@@ -25,6 +25,7 @@ SUBROUTINE init_dynwf(psi)
 USE params
 #if(twostsic)
 USE twost
+USE orthmat
 #endif
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -40,8 +41,8 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #if(twostsic)
   IF(ifsicp==8) THEN
     do is=1,2         !MV initialise ExpDabOld                                  
-       call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
-       call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
+       call MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
+       call MatUnite(wfrotate(:,:,is), kstate,ndims(is))
     enddo
   END IF
 #endif

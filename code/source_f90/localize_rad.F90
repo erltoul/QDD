@@ -26,6 +26,7 @@ MODULE localize_rad
 
 USE params
 USE kinetic
+USE orthmat
 !IMPLICIT REAL(DP) (A-H,O-Z)
 
 !SAVE
@@ -285,8 +286,7 @@ IF(tdiag .AND. iter > iterdiag .AND. ndim(1) > 0  &
         h_matrix(nb,na,is) = h_matrix(na,nb,is)
       END DO
     END DO
-    CALL vecgradstep(h_matrix(1,1,is),eigvec(1,1,is),  &
-        ndim(is),kstate,eigval(1,is))
+    CALL vecgradstep(h_matrix(1,1,is),eigvec(:,:,is),ndim(is),kstate,eigval(1,is))
     IF(ttest) THEN
       WRITE(6,'(a,i3)') 'after diag: is=',is
       DO nb=1,ndim(is)
@@ -809,7 +809,7 @@ DO iter=1,itmax
       
       w(na) = acc
     END DO
-    averstate(i) =  vecovlp(vecsr(1,i,is),w,ndim(1))
+    averstate(i) =  vecovlp(vecsr(:,i,is),w,ndim(1))
     varstate(i) =  vecnorm(w,ndim(1))
     variance = variance + varstate(i)-averstate(i)**2
     variance2 = variance2 + varstate(i)
@@ -828,7 +828,7 @@ DO iter=1,itmax
   
 !       ortho-normalization
   
-  CALL orthnorm(vecsr(1,1,is),ndim(is),kdim)
+  CALL orthnorm(vecsr(:,:,is),ndim(is),kdim)
   
 END DO
 
@@ -860,7 +860,7 @@ SUBROUTINE vecgradstep(a,vecs,ndim,kdimin,averstate)
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                   :: a(kdimin,kdimin)
-REAL(DP), INTENT(IN OUT)                  :: vecs
+REAL(DP), INTENT(IN OUT)                  :: vecs(kdimin,kdimin)
 INTEGER, INTENT(IN)                      :: ndim
 INTEGER, INTENT(IN)                  :: kdimin
 REAL(DP), INTENT(OUT)                      :: averstate(kdimin)
@@ -912,7 +912,7 @@ DO iter=1,itmax
   avmin = 1.0D30
   DO i=1,ndim
     CALL operate(a,vecsr(1,i),w,ndim,kdimin)
-    aver = vecovlp(vecsr(1,i),w,ndim)
+    aver = vecovlp(vecsr(:,i),w,ndim)
     averstate(i) = aver
     avmax = MAX(aver,avmax)
     avmin = MIN(aver,avmin)
@@ -1044,106 +1044,6 @@ avermatrix = aver
 RETURN
 END FUNCTION avermatrix
 
-!-----orthnorm-----------------------------------------
-
-SUBROUTINE orthnorm(vecs,ndim,kdimin)
-!USE params, ONLY: DP
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN OUT)                  :: vecs
-INTEGER, INTENT(IN)                      :: ndim
-INTEGER, INTENT(IN)                  :: kdimin
-
-!     ortho-normalizes system of vectors 'vecs' with
-!     dimension 'ndim'.
-
-
-REAL(DP) :: vecsr(kdimin,kdimin)
-
-!REAL(DP) :: vecnorm,vecovlp   ! function names ??
-
-REAL(DP) :: acc
-INTEGER :: i,j,n
-
-!-------------------------------------------------------
-
-DO i=1,ndim
-  IF(i > 1) THEN
-    DO j=1,i-1
-      acc = vecovlp(vecsr(1,j),vecsr(1,i),ndim)
-      DO n=1,ndim
-        vecsr(n,i) = vecsr(n,i)-acc*vecsr(n,j)
-      END DO
-    END DO
-  END IF
-  acc = 1.0D0/SQRT(vecnorm(vecsr(1,i),ndim))
-  DO n=1,ndim
-    vecsr(n,i) = vecsr(n,i)*acc
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE orthnorm
-
-!-----vecnorm-----------------------------------------
-
-REAL(DP) FUNCTION vecnorm(vec,ndim)
-!USE params, ONLY: DP
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN)                       :: vec(ndim)
-INTEGER, INTENT(IN)                      :: ndim
-
-!     ortho-normalizes system of vectors 'vecs' with
-!     dimension 'ndim'.
-
-
-
-
-REAL(DP) :: acc
-INTEGER :: n
-
-!-------------------------------------------------------
-
-acc = 0D0
-DO n=1,ndim
-  acc = acc + vec(n)*vec(n)
-END DO
-vecnorm = acc
-
-RETURN
-END FUNCTION vecnorm
-!-----vecovlp----------------------------------------------
-
-REAL(DP) FUNCTION vecovlp(vec1,vec2,ndim)
-!USE params, ONLY: DP
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN)                       :: vec1(ndim)
-REAL(DP), INTENT(IN)                       :: vec2(ndim)
-INTEGER, INTENT(IN)                      :: ndim
-
-!     Overlap 'vec1' with 'vec2' having dimension 'ndim'.
-
-
-
-
-REAL(DP) :: acc
-INTEGER :: n
-
-!-------------------------------------------------------
-
-acc = 0.0D0
-DO n=1,ndim
-  acc = acc + vec1(n)*vec2(n)
-END DO
-vecovlp = acc
-
-RETURN
-END FUNCTION vecovlp
 !bufc-----bsqrt----------------------------------------------
 !bufc
 !buf      real*8 function bsqrt(x)

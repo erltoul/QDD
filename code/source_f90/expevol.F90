@@ -359,9 +359,8 @@ SUBROUTINE eval_unitrot(qact,qold)
 ! transformation is transferred via 'wfrotate'.
 
 USE params
-#if(twostsic)
 USE twost
-#endif
+USE orthmat, ONLY: matdorth
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
@@ -403,7 +402,7 @@ DO is=1,2
 ! transpose for further use
   wfrotate(1:ni,1:ni,is) = CONJG(TRANSPOSE(wfrotate(1:ni,1:ni,is)))
 
-  rmo = matdorth(wfrotate(1,1,is),kstate,ni)
+  rmo = matdorth(wfrotate(:,:,is),kstate,ni)
   WRITE(*,*) 'is,unitarity wfrotate:',is,rmo
   IF(ABS(rmo)>1D-10) WRITE(*,*) ' WFROTATE:',wfrotate(1:ni,1:ni,is)
 

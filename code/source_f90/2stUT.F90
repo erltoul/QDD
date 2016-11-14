@@ -24,7 +24,14 @@ MODULE twostr
 USE params
 USE kinetic
 USE localize_rad
+USE orthmat
 IMPLICIT REAL(DP) (A-H,O-Z)
+
+INTERFACE spmomsmatrix
+! This is to make automated choice between real and complex version of spmomsmatrix,
+! with spmomsmatrix_r, spmomsmatrix_c both defined at first compilation of twostr.
+  MODULE PROCEDURE spmomsmatrix_r, spmomsmatrix_c
+END INTERFACE spmomsmatrix
 
 LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
@@ -50,10 +57,10 @@ INTEGER,PRIVATE :: kdim
 
 #if(cmplxsic)
 COMPLEX(DP),ALLOCATABLE :: rExpDABold(:,:,:)
-COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
+COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
 #else
 REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
-REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvevtors
+REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
 #endif
 
 #endif
@@ -63,6 +70,7 @@ MODULE twost
 USE params
 USE kinetic
 USE twostr, ONLY:step,precis,symutbegin,precisfact,itut,vecsr,tconv,ener_2st,toptsicstep,steplim,dampopt
+USE orthmat
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP),ALLOCATABLE :: qnewut(:,:)
@@ -74,7 +82,7 @@ INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
 COMPLEX(DP),ALLOCATABLE :: ExpDABold(:,:,:),wfrotate(:,:,:)
-COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvevtors
+COMPLEX(DP),ALLOCATABLE,SAVE :: vecs(:,:,:)    ! searched eigenvectors
 
 ! This parameter 'tnearest' activates the computation of the
 ! rotation amongst occupuied states. The result ist stored on
@@ -100,9 +108,6 @@ SUBROUTINE init_fsicr()
 
 USE params
 USE kinetic
-#if(cmplxsic)
-USE twost, ONLY: orthnorm
-#endif
 !USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -166,7 +171,7 @@ ALLOCATE(psirut(kdfull2,kstate))
 
 kdim=kstate
 ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
-ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvevtors
+ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvectors
 
 !     initialize unitary matrix
 
@@ -207,7 +212,7 @@ IF(istat==0) THEN
         if(nim==0) nim=ndims(is)
         vecsr(ni,nim,is) = -csi
       END DO
-      CALL orthnorm(vecsr(1,1,is),ndims(is),kdim)
+      CALL orthnorm(vecsr(:,:,is),ndims(is),kdim)
     END IF
 #endif    
   END DO
@@ -240,7 +245,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !   frees workspace for static SIC
 
 DEALLOCATE(rExpDABold)!MV added
-DEALLOCATE(vecsr)   ! searched eigenvevtors
+DEALLOCATE(vecsr)   ! searched eigenvectors
 
 
 RETURN
@@ -270,7 +275,7 @@ NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
 kdim=kstate
 ALLOCATE(ExpDABold(kstate,kstate,2),wfrotate(kstate,kstate,2))
-ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvevtors
+ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvectors
 
 ALLOCATE(qnewut(kdfull2,kstate))
 ALLOCATE(psiut(kdfull2,kstate))
@@ -436,7 +441,7 @@ USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'twost.inc'
 !INCLUDE 'radmatrixr.inc'
-!COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvevtors
+!COMPLEX(DP) :: vecs(kdim,kdim,2)    ! searched eigenvectors
 
 !----------------------------------------------------------------
 
@@ -519,9 +524,6 @@ SUBROUTINE infor_sic(psir)
 
 USE params
 USE kinetic
-#if(cmplxsic)
-USE twost, ONLY: spmomsmatrix
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !REAL(DP) :: rho(2*kdfull2)
@@ -539,12 +541,12 @@ IF(ifsicp < 7) RETURN
 !     TESTS
 
 WRITE(6,'(a)') 'DIAGONAL STATES :'
-CALL spmomsmatrixr(psir,1)       !!! to print the total variance
+CALL spmomsmatrix(psir,1)       !!! to print the total variance
 WRITE(6,'(a)') 'LOCALIZED STATES :'
 #if(cmplxsic)
 CALL spmomsmatrix(psirut,1)
 #else
-CALL spmomsmatrixr(psirut,1)
+CALL spmomsmatrix(psirut,1)
 #endif
 
 IF(ifsicp == 8) THEN   !!! to calculate the total
@@ -653,12 +655,12 @@ END DO
 ifsicp=8
 
 WRITE(6,*) 'DIAGONAL STATES :'
-CALL spmomsmatrixr(psir,1)  !!! to print the total variance
+CALL spmomsmatrix(psir,1)  !!! to print the total variance
 WRITE(6,*) 'LOCALIZED STATES :'
 #if(cmplxsic)
 CALL spmomsmatrix(psirut,1)
 #else
-CALL spmomsmatrixr(psirut,1)
+CALL spmomsmatrix(psirut,1)
 #endif
 
 RETURN
@@ -846,8 +848,8 @@ COMPLEX(DP) :: xlambda(kdim,kdim)
 COMPLEX(DP) :: acc
 COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)           !MV! workspace
 COMPLEX(DP) :: dabsto(kdim,kdim)          !MV! workspace
-COMPLEX(DP) :: vecovlpc   ! function names
-REAL(DP) :: vecnorm   ! function names
+!COMPLEX(DP) :: vecovlpc   ! function names
+!REAL(DP) :: vecnorm   ! function names
 !REAL(DP) :: matdorth !MV function
 !REAL(DP) :: matnorme !MV function
 COMPLEX(DP) :: wfovlp
@@ -945,14 +947,14 @@ DO iter=1,itmax2
   END IF
   IF(tconv) THEN
     WRITE(353,'(i4,6(1pg13.5))') &
-      iter,matdorth(vecs(1,1,is),kdim,ndims(is)),ABS(norm),&
+      iter,matdorth(vecs(:,:,is),kdim,ndims(is)),ABS(norm),&
          actstep*norm**2/(ener_2st(is)-enold_2st),actstep,&
          ener_2st(is)-enold_2st
        CALL FLUSH(353)
 
   ELSE
     WRITE(6,'(a,4f16.13)')' Ortho , variance, erreur, actstep',  &
-      matdorth(vecs(1,1,is), kdim, ndims(is)), ABS(norm), ABS(ERR_c),actstep
+      matdorth(vecs(:,:,is), kdim, ndims(is)), ABS(norm), ABS(ERR_c),actstep
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
   IF(ABS(norm) < precis) GO TO 99
@@ -981,9 +983,6 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
-#if(cmplxsic)
-USE twost, ONLY: matexp,matdorth
-#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -1126,11 +1125,7 @@ DO iter=1,itmax2
   norm=SQRT(SUM(dab(1:ni,1:ni)**2))  ! rmatnorme(dab,kdim,ni)
 #endif
   dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
-#if(cmplxsic)
-  CALL matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
-#else
-  CALL rmatexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
-#endif
+  CALL  matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
   rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
   vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
 #if(cmplxsic)
@@ -1145,22 +1140,21 @@ DO iter=1,itmax2
   ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)**2)-ndims(is))) 
 #endif
   IF(tconv) THEN
-#if(cmplxsic)
-       WRITE(353,'(i4,8(1pg13.5))')   &
-         iter,matdorth(vecsr(1,1,is),kdim,ndims(is)),&
-         norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
-         actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
-#else
-       WRITE(353,'(i4,8(1pg13.5))')   &
-         iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
-         norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
-         actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
-#endif
-       CALL FLUSH(353)
+    WRITE(353,'(i4,8(1pg13.5))')   &
+     iter,matdorth(vecsr(:,:,is),kdim,ndims(is)),&
+     norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
+     actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
+    CALL FLUSH(353)
   ELSE
+#if(cmplxsic)
     WRITE(6,'(i4,5(1pg13.5))')   &
-       iter,rmatdorth(vecsr(1,1,is),kdim,ndims(is)),&
+       iter,matdorth_cmplxsic(vecsr(:,:,is),kdim,ndims(is)),&
        norm, ERR_r,ener_2st(is)-enold_2st,actstep
+#else
+    WRITE(6,'(i4,5(1pg13.5))')   &
+       iter,matdorth(vecsr(:,:,is),kdim,ndims(is)),&
+       norm, ERR_r,ener_2st(is)-enold_2st,actstep
+#endif
     CALL FLUSH(6)
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
@@ -1238,7 +1232,7 @@ WRITE(353,'(a)') ' step-size  energy old-energy  energy-ratio '
 DO i=0,numteststep
   actstep = MAX(i*dactstep,2D-3)
   dabstep(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
-  CALL rmatexp(dabstep,expdab,kdim,ni)
+  CALL matexp(dabstep,expdab,kdim,ni)
   vecsr(1:ni,1:ni,is) = MATMUL(vecsav(1:ni,1:ni),expdab(1:ni,1:ni))
   CALL dalphabetar(is, dabstep, q0)
   WRITE(353,'(f8.3,6(1pg13.5))')   &
@@ -1649,161 +1643,6 @@ END FUNCTION ovlpmatrixr
 END FUNCTION ovlpmatrix
 #endif
 
-!-----orthnorm-----------------------------------------
-
-#ifdef REALSWITCH
-SUBROUTINE orthnormr(vecs,ndim,kdim)
-#else
-SUBROUTINE orthnorm(vecs,ndim,kdim)
-#endif
-USE params, ONLY: DP
-
-!      implicit none
-
-!     ortho-normalizes system of vectors 'vecs' with
-!     dimension 'ndim'.
-
-INTEGER,INTENT(IN) :: ndim,kdim
-INTEGER :: i,j,n
-REAL(DP) :: acc2
-#ifdef REALSWITCH
-REAL(DP) :: acc
-REAL(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
-!REAL(DP) :: vecovlpr
-!REAL(DP) :: vecnormr
-#else
-COMPLEX(DP) :: acc
-COMPLEX(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
-!COMPLEX(DP) :: vecovlp
-!REAL(DP) :: vecnorm
-#endif
-
-!-------------------------------------------------------
-
-DO i=1,ndim
-  IF(i > 1) THEN
-    DO j=1,i-1
-#ifdef REALSWITCH
-      acc = vecovlpr(vecs(1,j),vecs(1,i),ndim)
-#else
-      acc = vecovlp(vecs(1,j),vecs(1,i),ndim)
-#endif
-      DO n=1,ndim
-        vecs(n,i) = vecs(n,i)-acc*vecs(n,j)
-      END DO
-    END DO
-  END IF
-#ifdef REALSWITCH
-  acc2 = 1D0/SQRT(vecnormr(vecs(1,i),ndim))
-#else
-  acc2 = 1D0/SQRT(vecnorm(vecs(1,i),ndim))
-#endif
-  DO n=1,ndim
-    vecs(n,i) = vecs(n,i)*acc2
-  END DO
-END DO
-
-RETURN
-#ifdef REALSWITCH
-END SUBROUTINE orthnormr
-#else
-END SUBROUTINE orthnorm
-#endif
-
-#ifdef REALSWITCH
-REAL(DP) FUNCTION vecnormr(vec,ndim)
-#else
-REAL(DP) FUNCTION vecnorm(vec,ndim)
-#endif
-USE params, ONLY: DP
-
-!      implicit none
-
-!     ortho-normalizes system of vectors 'vecs' with
-!     dimension 'ndim'.
-
-INTEGER :: ndim
-INTEGER :: n
-#ifdef REALSWITCH
-REAL(DP),INTENT(IN) :: vec(ndim)
-#else
-COMPLEX(DP),INTENT(IN) :: vec(ndim)
-#endif
-
-REAL(DP) :: acc
-
-!-------------------------------------------------------
-
-acc = 0D0
-DO n=1,ndim
-#ifdef REALSWITCH
-  acc = acc + vec(n)**2
-#else
-  acc = acc + ABS(vec(n))**2
-#endif
-END DO
-#ifdef REALSWITCH
-vecnormr = acc
-#else
-vecnorm = acc
-#endif
-
-RETURN
-#ifdef REALSWITCH
-END FUNCTION vecnormr
-#else
-END FUNCTION vecnorm
-#endif
-
-!-----vecovlp----------------------------------------------
-
-#ifdef REALSWITCH
-REAL(DP) FUNCTION vecovlpr(vec1,vec2,ndim)
-#else
-COMPLEX(DP) FUNCTION vecovlp(vec1,vec2,ndim)
-#endif
-USE params, ONLY: DP
-
-!      implicit none
-
-!     Overlap 'vec1' with 'vec2' having dimension 'ndim'.
-
-INTEGER :: ndim
-INTEGER :: n
-#ifdef REALSWITCH
-REAL(DP),INTENT(IN) :: vec1(ndim),vec2(ndim)
-REAL(DP) :: acc
-#else
-COMPLEX(DP),INTENT(IN) :: vec1(ndim),vec2(ndim)
-COMPLEX(DP) :: acc
-#endif
-
-!-------------------------------------------------------
-
-#ifdef REALSWITCH
-acc = 0D0
-#else
-acc = CMPLX(0D0,0D0,DP)
-#endif
-DO n=1,ndim
-#ifdef REALSWITCH
-  acc = acc + vec1(n)*vec2(n)
-#else
-  acc = acc + CONJG(vec1(n))*vec2(n)
-#endif
-END DO
-#ifdef REALSWITCH
-vecovlpr = acc
-#else
-vecovlp = acc
-#endif
-
-RETURN
-#ifdef REALSWITCH
-END FUNCTION vecovlpr
-#else
-END FUNCTION vecovlp
-#endif
 
 !-----superpose_state--------------------------------------------------
 
@@ -1878,20 +1717,19 @@ END SUBROUTINE superpose_stater
 END SUBROUTINE superpose_state
 #endif
 
-!-----spmomsmatrix----------------------------------------------spmoms
 
 #ifdef REALSWITCH
-SUBROUTINE spmomsmatrixr(wfr,PRINT)
-#else
-SUBROUTINE spmomsmatrix(wfr,PRINT)
-#endif
+!-----spmomsmatrix----------------------------------------------
 
 !     Matrix of spatial moments between single-particle states
 !     from real  wf's:
 !      wfr    = set of single particle wavefunctions
 !     The result is stored in common/radmatrix/ for further
 !     use in localization transformation.
-
+!----------------------------------------------------------------------
+! REAL version
+!----------------------------------------------------------------------
+SUBROUTINE spmomsmatrix_r(wfr,PRINT)
 USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -1904,7 +1742,6 @@ REAL(DP) :: var
 LOGICAL :: tfirst
 DATA tfirst/.true./
 
-#ifdef REALSWITCH
 REAL(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 REAL(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
@@ -1914,7 +1751,182 @@ REAL(DP),ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
 REAL(DP),ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 REAL(DP),ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 REAL(DP),ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
-#else
+!----------------------------------------------------------------------
+
+kdim=kstate
+ALLOCATE(rrmatr(kdim,kdim,2))  ! matrix of r**2
+ALLOCATE(xxmatr(kdim,kdim,2))  ! matrix of x**2
+ALLOCATE(yymatr(kdim,kdim,2))  ! matrix of y**2
+ALLOCATE(zzmatr(kdim,kdim,2))  ! matrix of z**2
+ALLOCATE(xmatr(kdim,kdim,2))   ! matrix of x
+ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
+ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
+!
+IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
+
+!     check spin of states
+
+!      ndims(1) = 0
+!      ndims(2) = 0
+!      do na=1,nstate
+!        if(ispin(nrel2abs(na)).eq.1) then
+!          if(ndims(2).ne.0) stop ' spins out of order'
+!          ndims(1) = na
+!        else
+!          if(ndims(1).eq.0) stop ' spins out of order'
+!          ndims(2) = na-ndims(1)
+!        endif
+!      enddo
+
+noff = ndims(1)
+
+write(*,'(a,2i5)') 'NDIMS=',ndims
+
+!     compute matrix elements and store
+
+IF(iunit > 0) THEN
+  WRITE(iunit,'(a)') 'matrix of s.p. moments:',  &
+      '   na   nb      x     y      z     xx     yy     zz'
+  tfirst = .false.
+END IF
+DO na=1,nstate
+  
+  DO nb=1,na
+    IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
+      wfmom = 0D0
+      xmom = 0D0
+      ymom = 0D0
+      zmom = 0D0
+      xxmom = 0D0
+      yymom = 0D0
+      zzmom = 0D0
+      ind=0
+      DO iz=minz,maxz
+        z1=(iz-nzsh)*dz
+        z2=z1*z1
+        DO iy=miny,maxy
+          y1=(iy-nysh)*dy
+          y2=y1*y1
+          DO ix=minx,maxx
+            ind=ind+1
+            IF((ix /= nx2).AND.(iy /= ny2).AND.(iz /= nz2)) THEN
+              x1=(ix-nxsh)*dx
+              x2=x1*x1
+              s=wfr(ind,na)*wfr(ind,nb)
+              wfmom=wfmom+s       ! monopole
+              xmom=xmom+s*x1      ! dipole
+              ymom=ymom+s*y1
+              zmom=zmom+s*z1
+              xxmom=xxmom+s*x2    ! quadrupole
+              yymom=yymom+s*y2
+              zzmom=zzmom+s*z2
+            END IF
+          END DO
+        END DO
+      END DO
+      
+      wfmom = dvol*wfmom
+      xmom = dvol*xmom
+      ymom = dvol*ymom
+      zmom = dvol*zmom
+      xxmom = dvol*xxmom
+      yymom = dvol*yymom
+      zzmom = dvol*zzmom
+      
+      IF(iunit > 0) WRITE(iunit,'(3i4,6(1pg13.5))')  &
+          na,nb,ispin(nrel2abs(nb)),xmom,ymom,zmom, xxmom,yymom,zzmom
+      
+      is = ispin(nrel2abs(nb))
+      
+      IF(is == 1) THEN
+        ma = na
+        mb = nb
+      ELSE
+        ma = na-noff
+        mb = nb-noff
+      END IF
+      IF(iunit > 0) WRITE(iunit,*) 'ma,mb=',ma,mb,na,nb
+      xmatr(ma,mb,is) = xmom
+      ymatr(ma,mb,is) = ymom
+      zmatr(ma,mb,is) = zmom
+      xxmatr(ma,mb,is) = xxmom
+      yymatr(ma,mb,is) = yymom
+      zzmatr(ma,mb,is) = zzmom
+      xmatr(mb,ma,is) = xmom
+      ymatr(mb,ma,is) = ymom
+      zmatr(mb,ma,is) = zmom
+      xxmatr(mb,ma,is) = xxmom
+
+      yymatr(mb,ma,is) = yymom
+      zzmatr(mb,ma,is) = zzmom
+    END IF
+  END DO
+END DO
+
+!      write(6,'(10(/3i4,6(1pg13.5)))')
+!     &   ((na,nb,is,
+!     &    xmatr(na,nb,is),ymatr(na,nb,is),zmatr(na,nb,is),
+!     &    xxmatr(na,nb,is),yymatr(na,nb,is),
+!     &    zzmatr(na,nb,is),
+!     &    na=1,ndims(is)),nb=1,ndims(is))
+
+!     initialize eigen-vectors
+
+DO is=1,2
+  DO na=1,ndims(is)
+    DO nb=1,ndims(is)
+      rrmatr(na,nb,is) = xxmatr(na,nb,is) + yymatr(na,nb,is)  &
+          + zzmatr(na,nb,is)
+    END DO
+  END DO
+END DO
+
+IF(PRINT == 1)THEN
+  DO is=1,2
+    var=0D0
+    WRITE(6,'(a)') ' na  x   y   z     xx    yy     zz'
+    DO na=1,ndims(is)
+      var = var + rrmatr(na,na,is) - xmatr(na,na,is)**2 -  &
+          ymatr(na,na,is)**2 - zmatr(na,na,is)**2
+      nac = na+(is-1)*noff
+      WRITE(6,'(i5,6(1pg13.5))')  &
+       na,REAL(xmatr(na,na,is),DP),REAL(ymatr(na,na,is),DP), &
+       REAL(zmatr(na,na,is),DP),REAL(xxmatr(na,na,is),DP), &
+       REAL(yymatr(na,na,is),DP),REAL(zzmatr(na,na,is),DP)
+    END DO
+    WRITE(6,*)'For spin =',is,' Total spacial variance ',var
+  END DO
+END IF
+
+IF(iunit > 0) CLOSE(iunit)
+DEALLOCATE(rrmatr)  ! matrix of r**2
+DEALLOCATE(xxmatr)  ! matrix of x**2
+DEALLOCATE(yymatr)  ! matrix of y**2
+DEALLOCATE(zzmatr)  ! matrix of z**2
+DEALLOCATE(xmatr)   ! matrix of x
+DEALLOCATE(ymatr)   ! matrix of y
+DEALLOCATE(zmatr)   ! matrix of z
+
+RETURN
+END SUBROUTINE spmomsmatrix_r
+
+!-----------------------------------------------------------------------
+! COMPLEX version
+!-----------------------------------------------------------------------
+
+SUBROUTINE spmomsmatrix_c(wfr,PRINT)
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+
+INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
+INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
+
+REAL(DP) :: var
+LOGICAL :: tfirst
+DATA tfirst/.true./
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
@@ -1925,7 +1937,6 @@ COMPLEX(DP),ALLOCATABLE :: zzmatr(:,:,:)  ! matrix of z**2
 COMPLEX(DP),ALLOCATABLE :: xmatr(:,:,:)   ! matrix of x
 COMPLEX(DP),ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 COMPLEX(DP),ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
-#endif
 
 !----------------------------------------------------------------------
 
@@ -1969,15 +1980,6 @@ DO na=1,nstate
   
   DO nb=1,na
     IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
-#ifdef REALSWITCH
-      wfmom = 0D0
-      xmom = 0D0
-      ymom = 0D0
-      zmom = 0D0
-      xxmom = 0D0
-      yymom = 0D0
-      zzmom = 0D0
-#else
       wfmom = CMPLX(0D0,0D0,DP)
       xmom = CMPLX(0D0,0D0,DP)
       ymom = CMPLX(0D0,0D0,DP)
@@ -1985,7 +1987,6 @@ DO na=1,nstate
       xxmom = CMPLX(0D0,0D0,DP)
       yymom = CMPLX(0D0,0D0,DP)
       zzmom = CMPLX(0D0,0D0,DP)
-#endif
       
       ind=0
       DO iz=minz,maxz
@@ -1999,11 +2000,7 @@ DO na=1,nstate
             IF((ix /= nx2).AND.(iy /= ny2).AND.(iz /= nz2)) THEN
               x1=(ix-nxsh)*dx
               x2=x1*x1
-#ifdef REALSWITCH
-              s=wfr(ind,na)*wfr(ind,nb)
-#else
               s=CONJG(wfr(ind,na))*wfr(ind,nb)
-#endif
               wfmom=wfmom+s       ! monopole
               xmom=xmom+s*x1      ! dipole
               ymom=ymom+s*y1
@@ -2043,22 +2040,12 @@ DO na=1,nstate
       xxmatr(ma,mb,is) = xxmom
       yymatr(ma,mb,is) = yymom
       zzmatr(ma,mb,is) = zzmom
-#ifdef REALSWITCH
-      xmatr(mb,ma,is) = xmom
-      ymatr(mb,ma,is) = ymom
-      zmatr(mb,ma,is) = zmom
-      xxmatr(mb,ma,is) = xxmom
-
-      yymatr(mb,ma,is) = yymom
-      zzmatr(mb,ma,is) = zzmom
-#else
       xmatr(mb,ma,is) = CONJG(xmom)
       ymatr(mb,ma,is) = CONJG(ymom)
       zmatr(mb,ma,is) = CONJG(zmom)
       xxmatr(mb,ma,is) = CONJG(xxmom)
       yymatr(mb,ma,is) = CONJG(yymom)
       zzmatr(mb,ma,is) = CONJG(zzmom)
-#endif
     END IF
   END DO
 END DO
@@ -2083,11 +2070,7 @@ END DO
 
 IF(PRINT == 1)THEN
   DO is=1,2
-#ifdef REALSWITCH
-    var=0D0
-#else
     var=CMPLX(0D0,0D0,DP)
-#endif
     WRITE(6,'(a)') ' na  x   y   z     xx    yy     zz'
     DO na=1,ndims(is)
       var = var + rrmatr(na,na,is) - xmatr(na,na,is)**2 -  &
@@ -2112,177 +2095,17 @@ DEALLOCATE(ymatr)   ! matrix of y
 DEALLOCATE(zmatr)   ! matrix of z
 
 RETURN
-#ifdef REALSWITCH
-END SUBROUTINE spmomsmatrixr
-#else
-END SUBROUTINE spmomsmatrix
-#endif
+END SUBROUTINE spmomsmatrix_c
 
+#endif
 
 !#endif
 
-
-
 #ifdef REALSWITCH
-!_________________________________________rMat Orth__________________________________________________
- 
- 
-!                                         sigma(Vi*cjg(Vj))
-
-REAL(8) FUNCTION rmatdorth(aa,n,ndim)
-
-#if(cmplxsic)
-COMPLEX(8), INTENT(IN)                       :: aa(n,n)
-#else
-REAL(8), INTENT(IN)                       :: aa(n,n)
-#endif
-INTEGER, INTENT(IN OUT)                  :: n
-INTEGER, INTENT(IN)                      :: ndim
-
-
-
-rmatdorth=0D0
-DO i=1,ndim
-  DO j=i,ndim
-    IF(i==j) THEN
-      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))-1D0
-    ELSE
-      rmatdorth=rmatdorth+SUM(aa(i,1:ndim)*aa(j,1:ndim))
-    END IF
-  END DO
-END DO
-END FUNCTION rmatdorth
-!_________________________________________rMat Exp__________________________________________________
-!                                         BB=Exp(AA)
-
-SUBROUTINE rmatexp(aa,bb,n,ndim)
-
-REAL(8), INTENT(IN OUT)                   :: aa(n,n)
-REAL(8), INTENT(IN OUT)                   :: bb(n,n)
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: ndim
-
-REAL(8) cc(n,n), dd(n,n)
-
-REAL(8) eps, delta,rn
-
-CALL rmatunite(bb,n,ndim)
-CALL rmatunite(cc,n,ndim)
-eps=1D-20
-rn=1D0
-delta=1D0
-DO WHILE (delta > eps)
-  dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
-  cc(1:ndim,1:ndim) = dd(1:ndim,1:ndim)/rn
-  delta = SQRT(SUM(cc(1:ndim,1:ndim)**2))
-  bb(1:ndim,1:ndim) = cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim) 
-  rn=rn+1D0
-END DO
-
-END SUBROUTINE rmatexp
-!_________________________________________rMat Unite__________________________________________________
-!                                         AA=II
-
-SUBROUTINE rmatunite(aa,n,ndim)
-!     BB=unite
-
-REAL(8), INTENT(OUT)                 :: aa(n,n)
-INTEGER, INTENT(IN)                  :: n
-INTEGER, INTENT(IN)                  :: ndim
-
-
-
-DO i=1,ndim
-  DO j=1,ndim
-    aa(i,j)=0D0
-  END DO
-  aa(i,i)=1D0
-END DO
-END SUBROUTINE rmatunite
-
 END MODULE twostr
 #endif
 
 #ifdef COMPLEXSWITCH
-!_________________________________________Mat Orth__________________________________________________
- 
-
-REAL(8) FUNCTION matdorth(aa,n,ndim)
-
-COMPLEX(8), INTENT(IN)               :: aa(n,n)
-INTEGER, INTENT(IN)                  :: n
-INTEGER, INTENT(IN)                  :: ndim
-
-
-
-matdorth=0D0
-DO i=1,ndim
-  DO j=i,ndim
-    IF(i==j) THEN
-      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))-1D0
-    ELSE
-      matdorth=matdorth+SUM(aa(i,1:ndim)*CONJG(aa(j,1:ndim)))
-    END IF
-  END DO
-END DO
-END FUNCTION matdorth
-!_________________________________________Mat Exp__________________________________________________
-!                                         BB=Exp(AA)
-
-SUBROUTINE matexp(aa,bb,n,ndim)
-
-COMPLEX(8), INTENT(IN OUT)                  :: aa(n,n)
-COMPLEX(8), INTENT(IN OUT)                  :: bb(n,n)
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: ndim
-
-COMPLEX(8) :: cc(n,n), dd(n,n)
-
-!REAL(8) matnorme
-REAL(8) eps, delta,rn
-
-eps=1D-20
-CALL matunite(bb,n,ndim)
-CALL matunite(cc,n,ndim)
-rn=CMPLX(1D0,0D0)
-delta= 1D0
-!        call matprint('AAds exp',AA,N,Ndim)
-!        call matprint('BB ds exp',BB,N,Ndim)
-
-DO WHILE (delta > eps)
-!  CALL matmult(aa,cc,dd,n,ndim)
-!        call matprint('CC ds exp avant const',CC,N,Ndim)
-!  CALL matconst(dd,cc, 1D0/rn,n,ndim)
-  dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
-  cc(1:ndim,1:ndim) =  dd(1:ndim,1:ndim)/rn
-!        call matprint('CC ds exp',CC,N,Ndim)
-!  delta= matnorme(cc, n, ndim)
-  delta = SQRT(SUM(cc(1:ndim,1:ndim)*CONJG(cc(1:ndim,1:ndim))))
-!  CALL matadd(bb,cc,bb,n,ndim)
-  bb(1:ndim,1:ndim) =  cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim)
-  rn=rn+1
-END DO
-END SUBROUTINE matexp
-!_________________________________________Mat Unite__________________________________________________
-!                                         AA=II
-
-SUBROUTINE matunite(aa,n,ndim)
-!     BB=unite
-
-COMPLEX(8), INTENT(OUT)              :: aa(n,n)
-INTEGER, INTENT(IN)                  :: n
-INTEGER, INTENT(IN)                  :: ndim
-
-
-
-DO i=1,ndim
-  DO j=1,ndim
-    aa(i,j)=CMPLX(0D0,0D0)
-  END DO
-  aa(i,i)=CMPLX(1D0,0D0)
-END DO
-END SUBROUTINE matunite
-
 END MODULE twost
 #endif
 

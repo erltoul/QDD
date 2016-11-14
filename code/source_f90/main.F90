@@ -42,6 +42,7 @@ USE coulsolv
 USE twostr
 USE twost
 USE localize_rad
+USE orthmat
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -215,8 +216,8 @@ IF(isitmax>0 .AND. ismax>0) THEN
    END IF
    IF(ifsicp==8) THEN
      do is=1,2         !MV initialise ExpDabOld                              
-       call MatUnite(ExpDabOld(1,1,is), kstate,ndims(is))
-       call MatUnite(wfrotate(1,1,is), kstate,ndims(is))
+       call MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
+       call MatUnite(wfrotate(:,:,is), kstate,ndims(is))
      enddo
    END IF
 #endif
