@@ -1017,7 +1017,7 @@ REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
 USE params, ONLY: DP
 IMPLICIT NONE
 
-!REAL(8) :: avermatrix
+!REAL(DP) :: avermatrix
 REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
 REAL(DP), INTENT(IN)                       :: vec(kdimin)
 INTEGER, INTENT(IN)                      :: ndim

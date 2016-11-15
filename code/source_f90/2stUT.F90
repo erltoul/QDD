@@ -111,7 +111,7 @@ USE kinetic
 !USE symcond
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(8) :: ccr,csi
+COMPLEX(DP) :: ccr,csi
 
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'

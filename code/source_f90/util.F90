@@ -4370,17 +4370,17 @@ DEALLOCATE(wftest)
 END SUBROUTINE testgradient
 
 
-COMPLEX(8) FUNCTION determinant(a,n,np)
+COMPLEX(DP) FUNCTION determinant(a,n,np)
  
 ! determinant complex matrix 'a'
-
+USE params, ONLY:DP
 IMPLICIT NONE
 
-COMPLEX(8), INTENT(IN OUT)         :: a(np,np)
+COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
 INTEGER, INTENT(IN)                :: n
 INTEGER, INTENT(IN)                :: np
 
-COMPLEX(8)  :: d
+COMPLEX(DP)  :: d
 INTEGER :: nst
 INTEGER :: indx(n)
 
@@ -4401,19 +4401,19 @@ END FUNCTION determinant
 SUBROUTINE cludcmp(a,n,np,indx,d)
  
 ! LU decomposition for complex matrix 'a'
-
-COMPLEX(8), INTENT(IN OUT)         :: a(np,np)
+USE params, ONLY:DP
+COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
 INTEGER, INTENT(IN)                      :: n
 INTEGER, INTENT(IN OUT)                  :: np
 INTEGER, INTENT(OUT)                     :: indx(n)
-COMPLEX(8), INTENT(OUT)            :: d
+COMPLEX(DP), INTENT(OUT)            :: d
 
 
 INTEGER, PARAMETER :: nmax=500
 DOUBLE PRECISION, PARAMETER :: tiny=1.0D-20
 INTEGER :: i,imax,j,k
-COMPLEX(8) :: csum,cdum
-REAL(8) :: dum,aamax,vv(nmax)
+COMPLEX(DP) :: csum,cdum
+REAL(DP) :: dum,aamax,vv(nmax)
 
 d=1.d0
 DO  i=1,n
