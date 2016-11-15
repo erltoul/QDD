@@ -1,5 +1,5 @@
 #read variable defined in header
-# AC_DEFUN("header", variable)
+# FL_READ_DEF("header", variable)
 # header must be given with cotes " ", and with full path from folder containing configure.ac.
 AC_DEFUN([FL_READ_DEF],
 [
