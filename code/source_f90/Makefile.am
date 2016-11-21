@@ -1,10 +1,22 @@
 # Compiler-dependent options
 if GFORT
+if USE_DEBUG
+OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
+OPT2  =  $(OPT1)
+OPT3  =  $(OPT2)
+else
 OPT1=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 OPT2=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 OPT3=-w -g  -fdefault-real-8 -fdefault-double-8
 endif
+endif
+
 if IFORT
+if USE_DEBUG
+OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT3  =  -pg -fpp -w -g                -align all -autodouble
+else
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 OPT3  = -fpp -w       -g                 -align all -autodouble
@@ -12,32 +24,72 @@ OPT3  = -fpp -w       -g                 -align all -autodouble
 #~ OPT2  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
 #~ OPT3  =-fpp -w        -g                            -align all -autodouble
 endif
-if MPIF90
-OPT1  =-fpp -w -O2 -no-prec-div -align all -autodouble
-OPT2  =$(OPT1)
-OPT3  =-fpp -w -g -align all -autodouble
 endif
+
+
 if XLF_R
 OPT1  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
 OPT2  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
 OPT3  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
-endif 
+endif
+
+# underlying compiler for mpif90
+if MPIF90
+if MPI_GFORT
+if USE_DEBUG
+OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
+OPT2  =  $(OPT1)
+OPT3  =  $(OPT2)
+else
+OPT1=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+OPT2=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+OPT3=-w -g  -fdefault-real-8 -fdefault-double-8
+endif
+endif
+
+if MPI_IFORT
+if USE_DEBUG
+OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT3  =  -pg -fpp -w -g                -align all -autodouble
+else
+OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+OPT3  = -fpp -w       -g                 -align all -autodouble
+endif
+endif
+
+if MPI_XLF_R
+if USE_DEBUG
+OPT1  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
+OPT2  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
+OPT3  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
+else
+OPT1  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
+OPT2  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
+OPT3  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
+endif
+endif
+endif
+
 if USE_CUDA
-#OPTGPU = -O3 --gpu-architecture sm_13 
-#OPTGPU = -O3 --gpu-architecture sm_20 
-#OPTGPU = -O3 --gpu-architecture sm_30 
-#~ OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
-#for CCC with older GPU cards 
-# OPTGPU = -O3 --gpu-architecture sm_20  -maxrregcount=20 --use_fast_math --ptxas-options=-v
-#~   ifeq "$(DEBUG)" "YES"
+if USE_DEBUG
 #OPTGPU = -g -G --gpu-architecture sm_13 
 OPTGPU = -g -G --gpu-architecture sm_20 
 #OPTGPU = -g -G --gpu-architecture sm_30 
 #OPTGPU = -g -G --gpu-architecture sm_35 
-#~   endif
-
-
+else
+#OPTGPU = -O3 --gpu-architecture sm_13 
+#OPTGPU = -O3 --gpu-architecture sm_20 
+#OPTGPU = -O3 --gpu-architecture sm_30 
+OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
 endif
+endif
+#for CCC with older GPU cards 
+# OPTGPU = -O3 --gpu-architecture sm_20  -maxrregcount=20 --use_fast_math --ptxas-options=-v
+#endif
+
+
 if !XLF_R
 if USE_STATIC
 STATIC=-static
@@ -121,9 +173,7 @@ OBJCOMMON = $(OBJKINPARA)\
 if USE_TWOSTSIC
 OBJCOMMON+= 2stUTc.$(OBJEXT) localize_rad.$(OBJEXT)
 endif
-
-#in that order order:
-
+# Programs
 if USE_NETLIB
 bin_PROGRAMS= pwteleman
 pwteleman_SOURCES = main.F90

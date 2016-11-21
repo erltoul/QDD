@@ -16,39 +16,43 @@ AC_ARG_WITH([compiler],
   [Use specified compiler, choose among gfortran, ifort, mpif90 and xlf_r])],
   [])
 #Choice of compiler
-AC_CHECK_PROGS( [best_compiler], [ifort gfortran xlf_r])
-if test -z $with_compiler ; then 
-  #search for ifort as default compiler. If not found, search for gfortran or xlfr .
-  echo "No compiler specified by user."
-  FC="$best_compiler"
-else 
-  if test "x$with_compiler" = xyes; then
-    # --with-compiler specified without a compiler name.
-    AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. 
-    Usage :  --with-compiler=<compilo> . 
-    <compilo> can be gfortran, ifort, xlf_r or mpif90])
-  else
-    # check if required compiler exists on the system
-    echo "user required use of $with_compiler"
-    AC_CHECK_PROG( [found_compiler], [$with_compiler], [yes], [no])
-  fi
-  if test "x$found_compiler" = xno ; then
-    AC_MSG_FAILURE([$with_compiler was not found on your system. Make sure $with_compiler is installed, or choose an other fortran compiler.])
-  else 
-    FC="$with_compiler"
-  fi
-fi
-
-echo "will use $FC"
+#search for ifort as default compiler. If not found, search for gfortran or xlfr .
+AS_IF([test -z $with_compiler],
+      [
+      AC_MSG_NOTICE([No compiler specified by user.])
+      AC_CHECK_PROGS( [best_compiler], [ifort gfortran xlf_r])
+      FC="$best_compiler"
+      ],
+      [
+  AS_IF([test "x$with_compiler" = xyes],
+        [AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpif90])],
+        [
+        AC_MSG_CHECKING([for $with_compiler, as User asked])
+        AC_CHECK_PROG( [found_compiler], [$with_compiler], [yes], [no])
+        ]
+        )
+  AS_IF([test "x$found_compiler" = xno],
+        [AC_MSG_FAILURE([$with_compiler was not found on your system. Make sure $with_compiler is installed, or choose an other fortran compiler.])],
+        [FC="$with_compiler"]
+        )
+  ])
 AC_PROG_FC([$FC])
-#~ AC_PROG_FC([$with_compiler])
-    #~ AC_MSG_ERROR([ /!\ need to check how MPI makes its choice (and how to know what it choose)])
-
-
 AM_CONDITIONAL([IFORT], [test "x$FC" = xifort])
 AM_CONDITIONAL([GFORT], [test "x$FC" = xgfortran])
 AM_CONDITIONAL([XLF_R], [test "x$FC" = xxlf_r])
 AM_CONDITIONAL([MPIF90], [test "x$FC" = xmpif90])
+#Find the underlying compiler used by mpif90:
+FCOMP=unknown
+mpif90 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
+mpif90 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
+mpif90 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
+AS_IF([test "x$FCOMP" = xunknown],
+      [AC_MSG_FAILURE([Could not identify compiler $true_comp used by mpif90. ])],
+      [AC_MSG_NOTICE([mpif90 uses $FCOMP as compiler])]
+      )
+AM_CONDITIONAL([MPI_IFORT], [test "x$FCOMP" = xifort])
+AM_CONDITIONAL([MPI_GFORT], [test "x$FCOMP" = xgfortran])
+AM_CONDITIONAL([MPI_XLF_R], [test "x$FCOMP" = xxlf_r])
 ########################################################################
 #                Special IDRIS flag for compiler xlf_r
 ########################################################################
@@ -82,7 +86,7 @@ echo "raregas:      $raregas"
 echo "lda_gpu:      $lda_gpu"
 echo "asynclaunch:  $asynclaunch"
 echo "#################################################################"
-# Check  coherence of options
+# Check  coherence of header options
 # gridfft, findfft, numerov : only one can be enalble
 AS_IF([test "x$gridfft" = x1], 
       [
@@ -105,15 +109,25 @@ AS_IF([test "x$coufou" = x1],
 #                   Check options and libraries
 ########################################################################
 #=======================================================================
+#                        Debug option
+#=======================================================================
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],[--with-debug : Use compiler specfic debug option during compilation])
+    ],
+  [],
+  [with_static=no])
+AC_MSG_NOTICE([Use Debug option at compile time: $with_static])
+AM_CONDITIONAL([USE_DEBUG],[test "x$with_debug" = xyes])
+#=======================================================================
 #                        Static compilation
 #=======================================================================
 #  Warning: may need -Wl,etc... if ill located library are used (cuda not in /usr/lib ...)
 AC_ARG_WITH([static],
   [AS_HELP_STRING([--with-static],
     [--with-static : Use static compilation : All libraries are contained in the final executable. This makes a big executable.])],
-    [],
-    [with_static=no])
-echo "Use static linking: $with_static"
+  [],
+  [with_static=no])
+AC_MSG_NOTICE([Use static linking: $with_static])
 AS_IF([test "x$with_static" = xyes],
         [],
         [test "x$with_static" = xno],
@@ -135,7 +149,7 @@ AS_IF([test "x$with_para" != xno],
       [
       AS_IF([test  "x$with_para" != xyes],
             [AS_IF([test  "x$with_para" != xsim],
-                  [AC_MSG_FAILURE([ $with_para is not a valid parallelism option. Use --with-para or --with-para=sim if you want some parallelism.])]
+                  [AC_MSG_FAILURE([$with_para is not a valid parallelism option. Use --with-para or --with-para=sim if you want some parallelism.])]
                   )
             ])
       LD_MPI=
@@ -155,7 +169,9 @@ AS_IF([test "x$with_para" = xno],
       [DMPI="-Dparano -Dsimpara"],
       [DMPI=""])
 AC_MSG_NOTICE([Using parallelism : $with_para])
-AC_MSG_NOTICE([Compiler taking MPI into account: $FC])
+AS_IF([test  "x$with_para" != xno],
+      [AC_MSG_NOTICE([Compiler taking MPI into account: $FC])]
+      )
 AM_CONDITIONAL([USE_MPI],[test "x$with_para" != xno])
 AC_SUBST(DMPI)
 #=======================================================================
@@ -166,7 +182,7 @@ AC_ARG_WITH([openmp],
   [--with-openmp : Invoke OpenMP. --with-openmp : use threads for FFT.  --with-openmp=dyn : wave function parallelization.])],
   [],
   [with_openmp=no])
-echo "Use OpenMp : $with_openmp"
+AC_MSG_NOTICE([Use OpenMp : $with_openmp])
 #check collision of MPI and OMP
 AS_IF([test "x$with_para" != xno],
       [AS_IF([test "x$with_openmp" != xno], 
@@ -198,12 +214,10 @@ AC_OPENMP
 AC_LANG(C)
 AC_SUBST(DOMP)
 AC_SUBST(OPENMP_FCFLAGS)
-echo "OPENMP_FCFLAGS : $OPENMP_FCFLAGS"
 #=======================================================================
-# Check option --with-fft, sets fftw flags and -D flags for fft
+# Check and set FFT (options and -D flags)
 #=======================================================================
-# Read options 
-#FFT option:
+# FFT related  option:
 AC_ARG_WITH([fft],
   [AS_HELP_STRING([--with-fft],
     [Choice of library for FFT: --with-fft=<choice> , with choice in : NETLIB, FFTW, MKL, CUFFT. If not set, default library is NETLIB.])
@@ -222,6 +236,7 @@ AC_ARG_WITH([fft],
           [with_fft=no])
   ])
 AS_IF([test "x$with_fft" != xno], [AC_MSG_NOTICE([Use FFT : $with_fft]) ])
+
 # coudoub3D only enabled when using FFTW cals:
 AS_IF([test "x$coudoub3D" = x1 ],
       [AS_IF([test "x$with_fft" != xFFTW],
@@ -279,15 +294,8 @@ AC_ARG_WITH([mklthreads],
     ])
   ],
   [mklthreads=no])
-  echo "with wrappers = $with_wrappers"
-  echo "with mklthreads = $mklthreads"
-#~ # Error messages if MKL threads and MKL wrappers are callded without MKL
-#~ AS_IF([test "x$with_fft" != "xMKL"], 
-      #~ [AS_IF([test "x$with_wrappers" != xno],
-            #~ AC_MSG_FAILURE([Option --with-wrappers is only available with option --with-fft=MKL]))
-      #~ AS_IF([test "x$mklthreads" != xno], 
-            #~ AC_MSG_FAILURE([Option --with-wrappers is only available with option --with-fft=MKL]))]
-      #~ )
+AC_MSG_NOTICE([wrappers = $with_wrappers])
+AC_MSG_NOTICE([mklthreads = $mklthreads])
 # Creation of flags
 MKL_IS_HERE=unknown
 FFTW_IS_HERE=unknown
@@ -301,112 +309,25 @@ AS_IF(
       #........................MKL......................................
       [test "x$with_fft" = xMKL],
       [
-      # PATH to MKL
-      AS_IF([test "x$mklpath" != xno],
-              [mklroot=${mklpath}],
-              [mklroot=${MKLROOT}]
-            )
-      AS_IF([test "x$mklroot" = x],[AC_MSG_FAILURE([Path to MKL is empty. Load intel module or give MKL location using --with-mklpath=<path/to/mkl>])])
-      # Linker flags for wrappers, includes and library
-      AS_IF([test "x$with_wrappers" = xyes],
-            [MKL_WRAPPERS="$mklroot/interfaces/fftw3xf"],
-            [MKL_WRAPPERS="$with_wrappers"])
-      MKL_INCLUDE="$mklroot/include"
-      AS_IF([test "x$flag64" = xyes],
-            [MKL_LIBPATH="$mklroot/lib/intel64"],
-            [MKL_LIBPATH="$mklroot/lib/ia32"] 
-              )
-      #~ AS_IF([test "x$with_wrappers" != xno],
-            #~ [
-      CFLAGS="$CFLAGS "
-      LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH -I$MKL_INCLUDE"
-            #~ ],
-            #~ [LDFLAGS="$LDFLAGS -L$MKL_LIBPATH -I$MKL_INCLUDE"])
-             
-      #Check common libraries
-      AC_CHECK_LIB([dl], [main],[],[MKL_IS_HERE=no],[])
-      AC_CHECK_LIB([m], [main],[],[MKL_IS_HERE=no])
-      AC_CHECK_LIB([pthread], [main],[],[MKL_IS_HERE=no])
-      AS_IF([test "x$mklthreads" = xyes],
-            [AC_CHECK_LIB([iomp5], [main], [], [MKL_IS_HERE=no], [])
-            ])
-      #check mkl libraries
-      MKLFLAGS=
-      AC_CHECK_LIB([mkl_core], [main], 
-                    [MKLFLAGS="-lmkl_core $MKLFLAGS"
-                      LIBS="-lmkl_core $LIBS"],
-                    [MKL_IS_HERE=no], [-lmkl_sequential])
-      AC_CHECK_LIB([mkl_intel_lp64], [main],
-                    [MKLFLAGS="-lmkl_intel_lp64 $MKLFLAGS"
-                      LIBS="-lmkl_intel_lp64 $LIBS"],
-                    [MKL_IS_HERE=no], [-lmkl_sequential])
-      AS_IF([test "x$mklthreads" = xno],
-            [AC_CHECK_LIB([mkl_sequential], [main], 
-                          [MKLFLAGS="-lmkl_sequential  $MKLFLAGS"
-                          LIBS="-lmkl_sequential $LIBS"],
-                           [MKL_IS_HERE=no], [-lmkl_core])],
-            [AC_CHECK_LIB([mkl_intel_thread], [main], 
-                          [
-                          MKLFLAGS="-lmkl_intel_thread $MKLFLAGS"
-                          LIBS="-lmkl_intel_thread $LIBS"
-                          ], [MKL_IS_HERE=no], [-lmkl_intel_lp64 -lmkl_core])]
-        )
-      AS_IF([test "$MKL_IS_HERE" = xno], 
-            [AC_MSG_FAILURE([One or more library of MKL was not found or conflicted with an other library.])],
-            [MKL_IS_HERE=yes]
-            )
-      # Static libraries : Transmit group flags to the linker
-      AS_IF([test "x$with_static" = xyes],[MKLFLAGS="-Wl,--start-group $MKLFLAGS -Wl,--end-group "],[])
-      # Check wrapper library
-      #~ AS_IF([test "x$with_wrappers" != xno],
-            #~ [
-            AC_CHECK_LIB([fftw3xf_intel], [main], [],
-                      [AC_MSG_FAILURE([Could not find -lfftw3xf_intel library. Make sure the library is located in $MKLROOT/interfaces/fftw3xf, or give path to wrappers using --with-wrappers=<path/to/libfftw3xf_intel.a> .  Instructions on how to build your own wrappers library can be found on Intel Website : https://software.intel.com/en-us/node/522277], [])]
-                      )
-            echo "$MKLFLAGS"
-             LD_FFTW="-lfftw3xf_intel $MKLFLAGS -liomp5 -lpthread -lm -ldl"
-             #~ ],
-            #~ [LD_FFTW="$MKLFLAGS -liomp5 -lpthread -lm -ldl"])
-      AC_SUBST([LD_FFTW])
-      DFFT="-Dfftw_cpu"
+        FL_CHECK_MKL_LIBS
+        AC_SUBST([LD_FFTW])
+        DFFT="-Dfftw_cpu"
       ],
       #........................FFTW.....................................
       [test "x$with_fft" = xFFTW],
       [    
+        FL_CHECK_FFTW_LIBS
+        AC_SUBST([LD_FFTW])
         # Switches used to preprocess files
         DFFT="-Dfftw_cpu -Dfftwnomkl"
-        # Flags for FFTW
-        if test "x$with_openmp" = xyes || test "x$with_openmp" = xdyn; then
-          # with openmp
-          fftw_flags="-lfftw3_omp"
-          AC_CHECK_LIB([fftw3_omp], [main], [FFTW_IS_HERE=yes], 
-              [AC_MSG_FAILURE([FFTW was asked, but test for $fftw_flags failed.
-                    Please run configure with option LDFLAGS=-L<path to fftw>, or install fftw in default library path.])]
-          )
-        else
-          # without openmp
-          fftw_flags="-lfftw3 -lm"
-          AC_CHECK_LIB([fftw3], [main],
-              [AC_CHECK_LIB([m], [main], [FFTW_IS_HERE=yes],
-                  [AC_MSG_FAILURE([FFTW was asked, but test for -lm failed.])
-                  ])
-              ],
-              [AC_MSG_FAILURE([FFTW was asked, but test for -lfftw3 failed. Please run configure with option LDFLAGS=-L<path to fftw>, or install fftw in default library path.])]
-          )
-        fi
-        LD_FFTW="$fftw_flags"
-        AC_SUBST([LD_FFTW])
-        echo "FFTW flags : $LD_FFTW" 
       ],
       #........................CUDA.....................................
       [test "x$with_fft" = xCUFFT],
       [
-        # Ecrire macro de localisation de cuda.
         FL_LOCATE_CUDA
         AC_CHECK_LIB([stdc++], [main], [], [AC_MSG_FAILURE([Standart C++ library -lstdc++ library was not found.])])
         AC_SUBST([LD_CUDA], ["-lcudart -lcufft -lstdc++"])
         DFFT="-Dfftw_gpu"
-        #insert tests for cudart, etc...
       ],
       #......................NoFFT......................................
       [test "x$with_fft" = xno],
@@ -418,7 +339,7 @@ AS_IF(
         AC_MSG_FAILURE([Unvalid FFT option. --with-fft=<choice> .  <choice> can can be : NETLIB, FFTW, MKL or CUFFT. If not set, default library is NETLIB. ])
       ]
       )
-
+AC_MSG_NOTICE([FFTW flags : $LD_FFTW])
 LIBS=
 AC_SUBST(DFFT)
 AM_CONDITIONAL([USE_NETLIB],[test "x$with_fft" = xNETLIB])
@@ -426,11 +347,6 @@ AM_CONDITIONAL([USE_FFTW],[test "x$FFTW_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_MKL], [test "x$MKL_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_CUDA],[test "x$CUDA_IS_HERE" = xyes ])
 AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ])
-
-# par defaut :
-# a modifier avec des conditions selon bibliotheque utilisée
-#~ AC_SUBST(DFFTW, "-Dfftw_cpu")
-
 
 AC_SUBST(DIDRIS,[])
 AC_CONFIG_HEADERS([config.h])

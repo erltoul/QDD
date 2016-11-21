@@ -27,5 +27,5 @@ AS_IF([test "x$COMPILER" = xifort],
       )
 AS_IF([test "x$flag64" = xyes], [BITS_SIZE=64], [BITS_SIZE=32])
 AS_IF([test "x$flagosx" = xyes], [OS_TYPE=MacOSX ])
-AC_MSG_NOTICE([ Detected $BITS_SIZE bits config using info on compiler $FC])
+AC_MSG_NOTICE([Detected $BITS_SIZE bits config using info on compiler $FC])
 ])
