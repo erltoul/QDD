@@ -83,6 +83,7 @@ END SUBROUTINE dummypack
 
 
 SUBROUTINE dcfti1 (n,wa,ifac)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, PARAMETER :: kdim=512
 
@@ -161,6 +162,7 @@ END SUBROUTINE dcfti1
 
 
 SUBROUTINE dcftf1 (n,c,ch,wa,ifac)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -242,6 +244,7 @@ END SUBROUTINE dcftf1
 
 
 SUBROUTINE dcftb1 (n,c,ch,wa,ifac)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -322,6 +325,7 @@ RETURN
 END SUBROUTINE dcftb1
 
 SUBROUTINE dpssb (nac,ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -465,6 +469,7 @@ RETURN
 END SUBROUTINE dpssb
 
 SUBROUTINE dpssb2 (ido,l1,cc,ch,wa1)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -500,6 +505,7 @@ RETURN
 END SUBROUTINE dpssb2
 
 SUBROUTINE dpssb3 (ido,l1,cc,ch,wa1,wa2)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -558,6 +564,7 @@ RETURN
 END SUBROUTINE dpssb3
 
 SUBROUTINE dpssb4 (ido,l1,cc,ch,wa1,wa2,wa3)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -623,6 +630,7 @@ RETURN
 END SUBROUTINE dpssb4
 
 SUBROUTINE dpssb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -722,6 +730,7 @@ RETURN
 END SUBROUTINE dpssb5
 
 SUBROUTINE dpssf (nac,ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -865,6 +874,7 @@ RETURN
 END SUBROUTINE dpssf
 
 SUBROUTINE dpssf2 (ido,l1,cc,ch,wa1)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -900,6 +910,7 @@ RETURN
 END SUBROUTINE dpssf2
 
 SUBROUTINE dpssf3 (ido,l1,cc,ch,wa1,wa2)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -956,6 +967,7 @@ RETURN
 END SUBROUTINE dpssf3
 
 SUBROUTINE dpssf4 (ido,l1,cc,ch,wa1,wa2,wa3)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1021,6 +1033,7 @@ RETURN
 END SUBROUTINE dpssf4
 
 SUBROUTINE dpssf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1115,6 +1128,7 @@ RETURN
 END SUBROUTINE dpssf5
 
 SUBROUTINE dradb2 (ido,l1,cc,ch,wa1)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1159,6 +1173,7 @@ END DO
 END SUBROUTINE dradb2
 
 SUBROUTINE dradb3 (ido,l1,cc,ch,wa1,wa2)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1210,6 +1225,7 @@ RETURN
 END SUBROUTINE dradb3
 
 SUBROUTINE dradb4 (ido,l1,cc,ch,wa1,wa2,wa3)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1287,6 +1303,7 @@ END DO
 END SUBROUTINE dradb4
 
 SUBROUTINE dradb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1369,6 +1386,7 @@ RETURN
 END SUBROUTINE dradb5
 
 SUBROUTINE dradbg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1558,6 +1576,7 @@ END DO
 END SUBROUTINE dradbg
 
 SUBROUTINE dradf2 (ido,l1,cc,ch,wa1)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1602,6 +1621,7 @@ END DO
 END SUBROUTINE dradf2
 
 SUBROUTINE dradf3 (ido,l1,cc,ch,wa1,wa2)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1651,6 +1671,7 @@ RETURN
 END SUBROUTINE dradf3
 
 SUBROUTINE dradf4 (ido,l1,cc,ch,wa1,wa2,wa3)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1724,6 +1745,7 @@ END DO
 END SUBROUTINE dradf4
 
 SUBROUTINE dradf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
@@ -1802,6 +1824,7 @@ RETURN
 END SUBROUTINE dradf5
 
 SUBROUTINE dradfg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
+USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, PARAMETER :: kdim=512
