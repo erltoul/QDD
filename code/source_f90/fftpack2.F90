@@ -69,9 +69,12 @@ SUBROUTINE cosqb (n,x,wsave)
 !
 !  WSAVE   contains initialization calculations which must not
 !          be destroyed between calls of COSQB or COSQF.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: x(10)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(OUT)                        :: x(10)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 DATA tsqrt2 /2.82842712474619/
 
@@ -97,10 +100,13 @@ SUBROUTINE cosqb1 (n,x,w,xh)
 !  wave data. That is, COSQB1 computes a sequence from its
 !  representation in terms of a cosine series with odd wave numbers.
 !  The transform is defined below at output parameter X.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(1)
-REAL(8), INTENT(IN)                         :: w(1)
-REAL(8), INTENT(OUT)                        :: xh(1)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN)                         :: w(1)
+REAL(DP), INTENT(OUT)                        :: xh(1)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -131,11 +137,14 @@ END SUBROUTINE cosqb1
 SUBROUTINE radb2 (ido,l1,cc,ch,wa1)
 !  Calculate the fast Fourier transform of subvectors of
 !  length two.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,2,l1)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,2)
-REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
+REAL(DP), INTENT(IN)                         :: wa1(1)
 
 DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
@@ -169,12 +178,15 @@ END SUBROUTINE radb2
 SUBROUTINE radb3 (ido,l1,cc,ch,wa1,wa2)
 !  Calculate the fast Fourier transform of subvectors of
 !  length three.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,3,l1)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,3)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,3,l1)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
 
 DATA taur,taui /-.5,.866025403784439/
 
@@ -215,13 +227,16 @@ END SUBROUTINE radb3
 SUBROUTINE radb4 (ido,l1,cc,ch,wa1,wa2,wa3)
 !  Calculate the fast Fourier transform of subvectors of
 !  length four.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,4,l1)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,4)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
-REAL(8), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,4,l1)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,4)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
 
 DATA sqrt2 /1.414213562373095/
 
@@ -286,14 +301,17 @@ END SUBROUTINE radb4
 SUBROUTINE radb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 !  Calculate the fast Fourier transform of subvectors of
 !  length five.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,5,l1)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,5)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
-REAL(8), INTENT(IN)                         :: wa3(1)
-REAL(8), INTENT(IN)                         :: wa4(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,5,l1)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,5)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: wa4(1)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
     -.809016994374947,.587785252292473/
@@ -360,16 +378,19 @@ END SUBROUTINE radb5
 SUBROUTINE radbg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 !  Calculate the fast Fourier transform of subvectors of
 !  arbitrary length.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL(8), INTENT(IN)                         :: cc(ido,ip,l1)
-REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL(8), INTENT(OUT)                        :: c2(idl1,ip)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL(8), INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL(8), INTENT(IN)                         :: wa(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,ip,l1)
+REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(DP), INTENT(OUT)                        :: c2(idl1,ip)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
+REAL(DP), INTENT(IN)                         :: wa(1)
 
 DATA tpi/6.28318530717959/
 
@@ -530,6 +551,21 @@ END DO
 END SUBROUTINE radbg
 
 SUBROUTINE rfftb (n,r,wsave)
+!Calls for rfftb1
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+INTEGER, INTENT(IN)                      :: n
+REAL(DP), INTENT(IN OUT)                     :: r(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+
+IF (n == 1) RETURN
+CALL rfftb1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
+RETURN
+END SUBROUTINE rfftb
+
+SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
+! Called by rfftb
 !   Compute the backward fast Fourier transform of a real
 !   coefficient array
 !   Subroutine RFFTB computes the real periodic sequence from its
@@ -581,22 +617,13 @@ SUBROUTINE rfftb (n,r,wsave)
 !
 !   WSAVE  contains results which must not be destroyed between
 !          calls of RFFTB or RFFTF.
-INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: r(1)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
-
-IF (n == 1) RETURN
-CALL rfftb1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
-RETURN
-END SUBROUTINE rfftb
-
-SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
-
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: c(1)
-REAL(8), INTENT(IN)                         :: ch(1)
-REAL(8), INTENT(IN OUT)                     :: wa(1)
+REAL(DP), INTENT(OUT)                        :: c(1)
+REAL(DP), INTENT(IN)                         :: ch(1)
+REAL(DP), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 nf = ifac(2)
@@ -701,10 +728,12 @@ SUBROUTINE cosqf (n,x,wsave)
 !
 !  WSAVE   contains initialization calculations which must not
 !          be destroyed between calls of COSQF or COSQB.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(10)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: x(10)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 DATA sqrt2 /1.4142135623731/
 
@@ -728,11 +757,13 @@ SUBROUTINE cosqf1 (n,x,w,xh)
 !  wave data. That is, COSQF1 computes the coefficients in a cosine
 !  series representation with only odd wave numbers.  The transform
 !  is defined below at Output Parameter X
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(1)
-REAL(8), INTENT(IN)                         :: w(1)
-REAL(8), INTENT(OUT)                        :: xh(1)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN)                         :: w(1)
+REAL(DP), INTENT(OUT)                        :: xh(1)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -761,12 +792,14 @@ END SUBROUTINE cosqf1
 SUBROUTINE radf2 (ido,l1,cc,ch,wa1)
 !  Calculate the fast Fourier transform of subvectors of
 !  length two.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,l1,2)
-REAL(8), INTENT(OUT)                        :: ch(ido,2,l1)
-REAL(8), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
+REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
 
 DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
@@ -800,12 +833,15 @@ END SUBROUTINE radf2
 SUBROUTINE radf3 (ido,l1,cc,ch,wa1,wa2)
 !  Calculate the fast Fourier transform of subvectors of
 !  length three.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,l1,3)
-REAL(8), INTENT(OUT)                        :: ch(ido,3,l1)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,3)
+REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
 
 DATA taur,taui /-.5,.866025403784439/
 
@@ -844,13 +880,16 @@ END SUBROUTINE radf3
 SUBROUTINE radf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 !  Calculate the fast Fourier transform of subvectors of
 !  length four.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,l1,4)
-REAL(8), INTENT(OUT)                        :: ch(ido,4,l1)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
-REAL(8), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,4)
+REAL(DP), INTENT(OUT)                        :: ch(ido,4,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
 
 DATA hsqt2 /.7071067811865475/
 
@@ -911,14 +950,17 @@ END SUBROUTINE radf4
 SUBROUTINE radf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 !  Calculate the fast Fourier transform of subvectors of
 !  length five.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
-REAL(8), INTENT(IN)                         :: cc(ido,l1,5)
-REAL(8), INTENT(OUT)                        :: ch(ido,5,l1)
-REAL(8), INTENT(IN)                         :: wa1(1)
-REAL(8), INTENT(IN)                         :: wa2(1)
-REAL(8), INTENT(IN)                         :: wa3(1)
-REAL(8), INTENT(IN)                         :: wa4(1)
+REAL(DP), INTENT(IN)                         :: cc(ido,l1,5)
+REAL(DP), INTENT(OUT)                        :: ch(ido,5,l1)
+REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: wa4(1)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
     -.809016994374947,.587785252292473/
@@ -981,16 +1023,19 @@ END SUBROUTINE radf5
 SUBROUTINE radfg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 !  Calculate the fast Fourier transform of subvectors of
 !  arbitrary length.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
-REAL(8), INTENT(OUT)                        :: cc(ido,ip,l1)
-REAL(8), INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL(8), INTENT(IN OUT)                     :: c2(idl1,ip)
-REAL(8), INTENT(OUT)                        :: ch(ido,l1,ip)
-REAL(8), INTENT(OUT)                        :: ch2(idl1,ip)
-REAL(8), INTENT(IN)                         :: wa(1)
+REAL(DP), INTENT(OUT)                        :: cc(ido,ip,l1)
+REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
+REAL(DP), INTENT(IN OUT)                     :: c2(idl1,ip)
+REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
+REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
+REAL(DP), INTENT(IN)                         :: wa(1)
 
 DATA tpi/6.28318530717959/
 
@@ -1158,9 +1203,12 @@ END SUBROUTINE radfg
 
 SUBROUTINE rfftf (n,r,wsave)
 ! Calls for rfftf1 if n is not 1
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: r(1)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: r(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 CALL rfftf1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
@@ -1227,10 +1275,13 @@ SUBROUTINE rfftf1 (n,c,ch,wa,ifac)
 !           WA and IFAC contain initialization calculations which must
 !           not be destroyed between calls of subroutine RFFTF1 or
 !           RFFTB1.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: c(1)
-REAL(8), INTENT(IN)                         :: ch(1)
-REAL(8), INTENT(IN OUT)                     :: wa(1)
+REAL(DP), INTENT(OUT)                        :: c(1)
+REAL(DP), INTENT(IN)                         :: ch(1)
+REAL(DP), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 nf = ifac(2)
@@ -1309,8 +1360,11 @@ SUBROUTINE cosqi (n,wsave)
 !          as long as N remains unchanged.  Different WSAVE arrays
 !          are required for different values of N.  The contents of
 !          WSAVE must not be changed between calls of COSQF1 or COSQB1.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                        :: wsave(1)
 
 DATA pih /1.57079632679491/
 
@@ -1325,6 +1379,9 @@ RETURN
 END SUBROUTINE cosqi
 
 SUBROUTINE cost (n,x,wsave)
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 !  Subroutine COST computes the discrete Fourier cosine transform
 !  of an even sequence X(I).  The transform is defined below at output
 !  parameter X.
@@ -1372,8 +1429,8 @@ SUBROUTINE cost (n,x,wsave)
 !
 
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(10)
-REAL(8), INTENT(IN)                         :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: x(10)
+REAL(DP), INTENT(IN)                         :: wsave(1)
 
 nm1 = n-1
 np1 = n+1
@@ -1444,8 +1501,11 @@ SUBROUTINE costi (n,wsave)
 !          Different WSAVE arrays are required for different values
 !          of N.  The contents of WSAVE must not be changed between
 !          calls of COST.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                        :: wsave(1)
 
 DATA pi /3.14159265358979/
 
@@ -1467,8 +1527,11 @@ END SUBROUTINE costi
 
 SUBROUTINE rffti (n,wsave)
 ! Calls rffti1 if n is not 1 
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 CALL rffti1 (n,wsave(n+1),wsave(2*n+1))
@@ -1519,9 +1582,12 @@ SUBROUTINE sinqb (n,x,wsave)
 !  WSAVE   contains initialization calculations which must not
 !          be destroyed between calls of SINQB or SINQF.
 !
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: x(1)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(OUT)                        :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n > 1) GO TO 101
 x(1) = 4.*x(1)
@@ -1585,9 +1651,12 @@ SUBROUTINE sinqf (n,x,wsave)
 !
 !  WSAVE   contains initialization calculations which must not
 !          be destroyed between calls of SINQF or SINQB.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(1)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n == 1) RETURN
 ns2 = n/2
@@ -1607,8 +1676,11 @@ END SUBROUTINE sinqf
 SUBROUTINE sinqi (n,wsave)
 ! Initialize a work array for SINQF and SINQB  
 ! Same as COSQI
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN OUT)                  :: n
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 CALL cosqi (n,wsave)
 RETURN
@@ -1657,9 +1729,12 @@ SUBROUTINE sint (n,x,wsave)
 !
 !  WSAVE   contains initialization calculations which must not be
 !          destroyed between calls of SINT.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: x(1)
-REAL(8), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 np1 = n+1
 iw1 = n/2+1
@@ -1671,11 +1746,14 @@ END SUBROUTINE sint
 
 SUBROUTINE sint1(n,war,was,xh,x,ifac)
 ! See sint
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(IN OUT)                     :: war(1)
-REAL(8), INTENT(IN)                         :: was(1)
-REAL(8), INTENT(OUT)                        :: xh(10)
-REAL(8), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: war(1)
+REAL(DP), INTENT(IN)                         :: was(1)
+REAL(DP), INTENT(OUT)                        :: xh(10)
+REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
 
 DATA sqrt3 /1.73205080756888/
@@ -1725,9 +1803,11 @@ RETURN
 END SUBROUTINE sint1
 
 SUBROUTINE sinti (n,wsave)
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                        :: wsave(1)
 
 DATA pi /3.14159265358979/
 
@@ -1762,8 +1842,11 @@ SUBROUTINE rffti1 (n,wa,ifac)
 !   as N remains unchanged.  Different WA and IFAC arrays are required
 !   for different values of N.  The contents of WA and IFAC must not be
 !   changed between calls of RFFTF1 or RFFTB1.
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+
 INTEGER, INTENT(IN)                      :: n
-REAL(8), INTENT(OUT)                        :: wa(1)
+REAL(DP), INTENT(OUT)                        :: wa(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 INTEGER :: ntryh(4)
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/
