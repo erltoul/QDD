@@ -290,7 +290,7 @@ ELSE IF (isrtyp(ityp1,ityp2) == 2) THEN ! Ar-case
       END IF
       
       
-      radfor = radfor /2./rder*signum
+      radfor = radfor /2D0/rder*signum
       
       forx = radfor*xr/dist
       fory = radfor*yr/dist
@@ -572,11 +572,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: r
 DATA  alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar  &
-    /  1.7301, 1.7966,55.465,3672.9,794.21/
+    /  1.7301D0, 1.7966D0,55.465D0,3672.9D0,794.21D0/
 
 
 rabs = MAX(ABS(r),small)
-core = a_ar*EXP(-alpha_ar*rabs)/rabs -2.0/(1D0+EXP((beta_ar/rabs)**2))  &
+core = a_ar*EXP(-alpha_ar*rabs)/rabs -2D0/(1D0+EXP((beta_ar/rabs)**2))  &
     *(c6_ar/rabs**6+c8_ar/rabs**8)
 
 vararshort = e2*core
@@ -598,12 +598,12 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN OUT)                     :: r
-DATA  epslj,sigmalj /  0.0007647,6.42503/
+DATA  epslj,sigmalj /  0.0007647D0,6.42503D0/
 
 
 rabs = MAX(ABS(r),small)
 
-vararlj = 4.0*epslj*((sigmalj/rabs)**12.0- (sigmalj/rabs)**6.0)
+vararlj = 4.0D0*epslj*((sigmalj/rabs)**12- (sigmalj/rabs)**6)
 
 RETURN
 END FUNCTION vararlj
@@ -737,7 +737,7 @@ IF (cd /= 0D0) THEN
 END IF
 
 
-acc = acc/2./rder
+acc = acc/2D0/rder
 
 fbornmayermod = acc+sum2
 
@@ -1360,7 +1360,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-funkderfermi=-a*b*EXP(b*(r-c))/(1+EXP(b*(r-c)))**2D0
+funkderfermi=-a*b*EXP(b*(r-c))/(1D0+EXP(b*(r-c)))**2D0
 
 RETURN
 END FUNCTION funkderfermi

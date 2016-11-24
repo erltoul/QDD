@@ -84,7 +84,7 @@ IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 IF(ifsicp==5) psisavex = q0
 
 IF(.NOT.timagtime) THEN
-  cdtact = CMPLX(dt1/2D0,0D0)
+  cdtact = CMPLX(dt1/2D0,0D0,DP)
   IF(tnorotate .OR. ifsicp .NE. 8) THEN
     DO nb=1,nstate
       qwork(:,nb) = q0(:,nb)
@@ -112,9 +112,9 @@ END IF
 !     use exponential evolution to fourth order
 
 IF(timagtime) THEN
-  cdtact = CMPLX(0D0,-dt1)
+  cdtact = CMPLX(0D0,-dt1,DP)
 ELSE
-  cdtact = CMPLX(dt1,0D0)
+  cdtact = CMPLX(dt1,0D0,DP)
 END IF
 
 nterms = 4
@@ -292,7 +292,7 @@ DO nbe=1,nstate
     IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
       chmatrix(nc,nbe) = wfovlp(psi(1,nc),qact(1,nbe))
     ELSE
-      chmatrix(nc,nbe) = CMPLX(0D0,0D0)
+      chmatrix(nc,nbe) = CMPLX(0D0,0D0,DP)
     END IF
   END DO
 END DO
@@ -320,7 +320,7 @@ DO nbe=1,nstate
     ELSE
       DO nc=1,nstate
         IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
-          cacc(nc) = CMPLX(0D0,0D0)
+          cacc(nc) = CMPLX(0D0,0D0,DP)
           DO na=1,nstate
             IF(ispin(nrel2abs(na)) == ispin(nrel2abs(nc))) THEN
               cacc(nc) = cacc(nc) + chmatrix(nc,na)*wfovlp(psi(1,na),qwork)
@@ -396,7 +396,7 @@ DO is=1,2
       wfrotate(:,nb,is) = wfrotate(:,nb,is)-wfrotate(:,na,is)*ovl
     END DO
     ovl=SUM(CONJG(wfrotate(1:ni,nb,is))*wfrotate(1:ni,nb,is))
-    wfrotate(1:ni,nb,is) = wfrotate(1:ni,nb,is)*CMPLX(1D0/SQRT(REAL(ovl,DP)),0D0)
+    wfrotate(1:ni,nb,is) = wfrotate(1:ni,nb,is)*CMPLX(1D0/SQRT(REAL(ovl,DP)),0D0,DP)
   END DO
 
 ! transpose for further use
@@ -539,8 +539,8 @@ IF(tpri) THEN
   epotsp(nbe) = wfovlp(qact,q1)
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
   q2 = q1+q2
-!  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-amoy(nbe)**2)
-  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2))-ABS(wfovlp(qact,q2))**2)
+!  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2),DP)-amoy(nbe)**2)
+  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2)
   is=ispin(nrel2abs(nbe))
   IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
    ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &

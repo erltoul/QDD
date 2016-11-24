@@ -950,11 +950,11 @@ IF(nprocs /= kstate) STOP
 CALL  mpi_comm_rank(mpi_comm_world,n,icode)
 l=LOG(kstate*1D0)/LOG(2D0)-1
 DO it=0,l
-  j=(n/(2D0**FLOAT(it)))
+  j=(n/(2D0**REAL(it,DP)))
   IF(MOD(j,2) == 0) THEN
-    nt=n+2D0**FLOAT(it)
+    nt=n+2D0**REAL(it,DP)
   ELSE
-    nt=n-2D0**FLOAT(it)
+    nt=n-2D0**REAL(it,DP)
   END IF
   IF(MOD(j,2) == 0) THEN
     CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,icode)
@@ -1004,11 +1004,11 @@ DO i=nin,nin+nax
   rout(i)=rin(i)
 END DO
 DO it=0,l
-  j=(n/(2D0**FLOAT(it)))
+  j=(n/(2D0**REAL(it,DP)))
   IF(MOD(j,2) == 0) THEN
-    nt=n+2D0**FLOAT(it)
+    nt=n+2D0**REAL(it,DP)
   ELSE
-    nt=n-2D0**FLOAT(it)
+    nt=n-2D0**REAL(it,DP)
   END IF
   IF(MOD(j,2) == 0) THEN
     CALL mpi_send(nax,1,mpi_integer,nt,1,mpi_comm_world,icode)

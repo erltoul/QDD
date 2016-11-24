@@ -94,9 +94,9 @@ FUNCTION v_ion_el_lgoed(rr,rloc,c1,c2,zion)
 !     ***********************
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
-IF(rr <= 7.0*rloc) THEN
+IF(rr <= 7.0D0*rloc) THEN
   f1=-zion*v_soft(rr,sq2*rloc)
-  f3= (c1+c2*((rr/rloc)**2D0))* EXP(-0.5*((rr/rloc)**2D0))
+  f3= (c1+c2*((rr/rloc)**2D0))* EXP(-0.5D0*((rr/rloc)**2))
   v_ion_el_lgoed = -e2*(f1+f3)
 ELSE
   v_ion_el_lgoed = e2*zion/rr
@@ -119,7 +119,7 @@ SUBROUTINE calc_proj(cxa,cya,cza,cxg,cyg,czg,ion)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP),PARAMETER :: fac0_12=-0.387298334621 ! -0.5D0*SQRT(3D0/5D0)
+REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
 
 !---------------------------------------------------------
 
@@ -202,7 +202,7 @@ DO i3=0,icrsz
             inn=in
             il=0
             rfac=r0
-            gamfac=0.5*SQRT(pi)
+            gamfac=0.5D0*SQRT(pi)
 !          ELSE IF(in == 2) THEN
 !!     projectors p1_1:
 !            il=1
@@ -324,16 +324,16 @@ DO i3=0,icrsz
             il=0
             rfac=r0
             IF(in == 1) THEN
-              gamfac=0.5*SQRT(pi)
+              gamfac=0.5D0*SQRT(pi)
             ELSE IF(in == 2) THEN
-              gamfac=2.5*1.5*0.5*SQRT(pi)
+              gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
             END IF
           ELSE IF(in == 3) THEN
 !     projectors p1_1,p1_2:
             il=1
             rfac=r1
             inn=1
-            gamfac=1.5*0.5*SQRT(pi)
+            gamfac=1.5D0*0.5D0*SQRT(pi)
           END IF
           proj=SQRT(2D0)*rr**(il+2*(inn-1))*  &
               EXP(-(rr*rr)/(2D0*rfac**2D0))/(rfac**(il+(4*inn-1)/2D0)*  &
@@ -458,11 +458,11 @@ DO i3=0,icrsz
             il=0
             rfac=r0
             IF(in == 1) THEN
-              gamfac=0.5*SQRT(pi)
+              gamfac=0.5D0*SQRT(pi)
             ELSE IF(in == 2) THEN
-              gamfac=2.5*1.5*0.5*SQRT(pi)
+              gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
             ELSE IF(in == 3) THEN
-              gamfac=4.5*3.5*2.5*1.5*0.5*SQRT(pi)
+              gamfac=4.5D0*3.5D0*2.5D0*1.5D0*0.5D0*SQRT(pi)
             END IF
           ELSE IF(in == 4 .OR. in == 5) THEN
 !     projectors p1_1,p1_2:
@@ -470,17 +470,17 @@ DO i3=0,icrsz
             rfac=r1
             IF(in == 4) THEN
               inn=1
-              gamfac=1.5*0.5*SQRT(pi)
+              gamfac=1.5D0*0.5D0*SQRT(pi)
             ELSE IF(in == 5) THEN
               inn=2
-              gamfac=3.5*2.5*1.5*0.5*SQRT(pi)
+              gamfac=3.5D0*2.5D0*1.5D0*0.5D0*SQRT(pi)
             END IF
           ELSE IF(in == 6) THEN
 !     projector p2_1:
             il=2
             inn=1
             rfac=r2
-            gamfac=2.5*1.5*0.5*SQRT(pi)
+            gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
           END IF
           proj=SQRT(2D0)*rr**(il+2*(inn-1))*  &
               EXP(-(rr*rr)/(2D0*rfac**2D0))/(rfac**(il+(4*inn-1)/2D0)*  &

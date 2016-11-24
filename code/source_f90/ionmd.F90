@@ -198,7 +198,7 @@ IF(idielec /= 0) THEN
     IF(nion2 /= 0) THEN
       DO ion=1,nion
         DO ion1=1,nion
-          dist2  = (cx(ion)+cx(ion1)-2.*xdielec)**2 +(cy(ion)-cy(ion1))**2  &
+          dist2  = (cx(ion)+cx(ion1)-2D0*xdielec)**2 +(cy(ion)-cy(ion1))**2  &
               +(cz(ion)-cz(ion1))**2
           dist   = SQRT(dist2)
           sumion = sumion - (epsdi-1)/(epsdi+1)* v_ion_ion(dist,ion,ion1)
@@ -209,7 +209,7 @@ IF(idielec /= 0) THEN
     IF(nion2 /= 0) THEN
       DO ion1=1,nion
         DO ion2=1,nion1
-          dist2 = (cx(ion1)+cx(ion2)-2.*xdielec)**2 +(cy(ion1)-cy(ion2))**2  &
+          dist2 = (cx(ion1)+cx(ion2)-2D0*xdielec)**2 +(cy(ion1)-cy(ion2))**2  &
               +(cz(ion1)-cz(ion2))**2
           dist = SQRT(dist2)
           sumion = sumion - (epsdi-1)/(epsdi+1)*  &
@@ -265,7 +265,7 @@ IF (isurf /= 0) THEN
 
         IF(idielec /= 0) THEN
           
-          dist2 = (-rvectmp(1)+2.*xdielec-cx(ion))**2+  &
+          dist2 = (-rvectmp(1)+2D0*xdielec-cx(ion))**2+  &
               (rvectmp(2)-cy(ion))**2+ (rvectmp(3)-cz(ion))**2
           dist = SQRT(dist2)
           dist = MAX(dist,small)
@@ -363,7 +363,7 @@ WRITE(*,*) ' GSM: sumion=',sumion,idielec
         
         CALL getparas(jj)
         
-        dist2 = (xtmp+rvectmp(1)-2.0*xdielec)**2+ (ytmp-rvectmp(2))**2+  &
+        dist2 = (xtmp+rvectmp(1)-2D0*xdielec)**2+ (ytmp-rvectmp(2))**2+  &
             (ztmp-rvectmp(3))**2
         
         dist = dist2**0.5D0
@@ -374,7 +374,7 @@ WRITE(*,*) ' GSM: sumion=',sumion,idielec
         
         
 !     electrostatic part
-        sumion = sumion - (epsdi-1.0)/(epsdi+1.0)*  &
+        sumion = sumion - (epsdi-1D0)/(epsdi+1D0)*  &
             ccc1*ccc2*e2*v_soft(dist,sss*sq2)
         
       END DO
@@ -420,7 +420,7 @@ LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceler
 
 
 ! what time is it ?
-tfs = it*dt1*0.0484/(2.0*ame)
+tfs = it*dt1*0.0484D0/(2D0*ame)
 !WRITE(*,*) ' ITSTEP entered. tfs=',tfs
 
 #if(raregas)
@@ -538,7 +538,7 @@ CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
     ALLOCATE(tfac(1:nion))
-    tfac(:) = ame*amu(np(:))*1836.0*0.048/taccel
+    tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
     IF(tsmooth) THEN
       dtaccel=taccel/10D0
       tfac = tfac*taccel/(taccel-dtaccel/2D0)
@@ -679,7 +679,7 @@ LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceler
 
 
 ! what time is it ?
-tfs = it*dt1*0.0484/(2.0*ame)
+tfs = it*dt1*0.0484D0/(2D0*ame)
 WRITE(*,*) 'enter ITSTEPV: tfs,cpx,cpy,cpz=',tfs,cpx(nion),cpy(nion),cpz(nion)
 
 #if(raregas)
@@ -786,7 +786,7 @@ CALL getforces(rho,psi,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
     ALLOCATE(tfac(1:nion))
-    tfac(:) = ame*amu(np(:))*1836.0*0.048/taccel
+    tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
     IF(tsmooth) THEN
       dtaccel=taccel/10D0
       tfac = tfac*taccel/(taccel-dtaccel/2D0)
@@ -1053,19 +1053,19 @@ END IF
 !   a sphere of radius r. results are x(i), y(i),z(i)
 
 DATA im,ia,ic/259200,7141,54773/
-DATA pi/3.1415927/
+DATA pi/3.1415927D0/
 jran = 12345
 
 WRITE(6,*)r,n
 DO i = 1,n
   rr = r
   jran = MOD(jran*ia + ic,im)
-  xx = FLOAT(jran) / FLOAT(im)
-  cth = 1. - 2. * xx
-  sth = SQRT ( 1. - cth * cth )
+  xx = REAL(jran,DP) / REAL(im,DP)
+  cth = 1D0 - 2D0 * xx
+  sth = SQRT ( 1D0 - cth * cth )
   jran = MOD(jran*ia + ic,im)
-  xx = FLOAT(jran) / FLOAT(im)
-  phi = 2. * pi * xx
+  xx = REAL(jran,DP) / REAL(im,DP)
+  phi = 2D0 * pi * xx
   cosp = COS (phi)
   sinp = SIN (phi)
   x(i) = rr * sth * cosp
@@ -1111,7 +1111,7 @@ rixy = 0D0
 rixz = 0D0
 riyz = 0D0
 npart = n
-reno = 1./FLOAT(n)
+reno = 1D0/REAL(n,DP)
 
 DO i =1,n
   rx = x(i)
@@ -1279,8 +1279,8 @@ qold3=qe(3)
 query4=qe(4)*qold4
 qold4=qe(4)
 !test
-query2=1.0
-query3=1.0
+query2=1.0D0
+query3=1.0D0
 !test
 IF(tfs == 0D0) THEN
   iquery4=0
@@ -1380,9 +1380,9 @@ ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
 
 !   init derivative
 
-dkx=pi/(dx*REAL(nx))
-dky=pi/(dy*REAL(ny))
-dkz=pi/(dz*REAL(nz))
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
 
 !ind=0
 !DO i3=1,nz2
@@ -1446,7 +1446,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     exjx(nb)=exjx(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
     ajtx(ind)=ajtx(ind)+ajalpha
@@ -1471,7 +1471,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     exjy(nb)=exjy(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
     ajty(ind)=ajty(ind)+ajalpha
@@ -1496,7 +1496,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     exjz(nb)=exjz(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
     ajtz(ind)=ajtz(ind)+ajalpha
@@ -1576,7 +1576,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
     ajalpha=ajalpha/rhoalpha
@@ -1602,7 +1602,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
     ajalpha=ajalpha/rhoalpha
@@ -1628,7 +1628,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
     ajalpha=test
     rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
     ajalpha=ajalpha/rhoalpha
@@ -1637,7 +1637,7 @@ DO nb=1,nstate
   
 END DO                     !loop over states
 
-eeth=tel*dvol*0.5D0*hbar*hbar/2.0/ame !atomic units (h/2m)**2
+eeth=tel*dvol*0.5D0*hbar*hbar/2D0/ame !atomic units (h/2m)**2
 #if(parayes)
 tel=eeth
 CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,ic)

@@ -76,7 +76,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: x(10)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
-DATA tsqrt2 /2.82842712474619/
+DATA tsqrt2 /2.82842712474619D0/
 
 IF (n-2 < 0) THEN
   GO TO   101
@@ -188,7 +188,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
-DATA taur,taui /-.5,.866025403784439/
+DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   tr2 = cc(ido,2,k)+cc(ido,2,k)
@@ -238,7 +238,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 
-DATA sqrt2 /1.414213562373095/
+DATA sqrt2 /1.414213562373095D0/
 
 DO  k=1,l1
   tr1 = cc(1,1,k)-cc(ido,4,k)
@@ -313,8 +313,8 @@ REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
 
-DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
-    -.809016994374947,.587785252292473/
+DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
+    -.809016994374947D0,.587785252292473D0/
 
 DO  k=1,l1
   ti5 = cc(1,3,k)+cc(1,3,k)
@@ -392,7 +392,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959/
+DATA tpi/6.28318530717959D0/
 
 arg = tpi/FLOAT(ip)
 dcp = COS(arg)
@@ -449,7 +449,7 @@ GO TO 116
   END DO
 END DO
 116 ar1 = 1.
-ai1 = 0.
+ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
   ar1h = dcp*ar1-dsp*ai1
@@ -735,7 +735,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(10)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
-DATA sqrt2 /1.4142135623731/
+DATA sqrt2 /1.4142135623731D0/
 
 IF (n-2 < 0) THEN
   GO TO   102
@@ -843,7 +843,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
-DATA taur,taui /-.5,.866025403784439/
+DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,2)+cc(1,k,3)
@@ -891,7 +891,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 
-DATA hsqt2 /.7071067811865475/
+DATA hsqt2 /.7071067811865475D0/
 
 DO  k=1,l1
   tr1 = cc(1,k,2)+cc(1,k,4)
@@ -962,8 +962,8 @@ REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
 
-DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
-    -.809016994374947,.587785252292473/
+DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
+    -.809016994374947D0,.587785252292473D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,5)+cc(1,k,2)
@@ -1037,7 +1037,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959/
+DATA tpi/6.28318530717959D0/
 
 arg = tpi/FLOAT(ip)
 dcp = COS(arg)
@@ -1366,7 +1366,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pih /1.57079632679491/
+DATA pih /1.57079632679491D0/
 
 dt = pih/FLOAT(n)
 fk = 0.
@@ -1507,7 +1507,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pi /3.14159265358979/
+DATA pi /3.14159265358979D0/
 
 IF (n <= 3) RETURN
 nm1 = n-1
@@ -1756,7 +1756,7 @@ REAL(DP), INTENT(OUT)                        :: xh(10)
 REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
 
-DATA sqrt3 /1.73205080756888/
+DATA sqrt3 /1.73205080756888D0/
 
 DO  i=1,n
   xh(i) = war(i)
@@ -1809,7 +1809,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pi /3.14159265358979/
+DATA pi /3.14159265358979D0/
 
 IF (n <= 1) RETURN
 ns2 = n/2
@@ -1881,7 +1881,7 @@ ifac(3) = 2
 107 IF (nl /= 1) GO TO 104
 ifac(1) = n
 ifac(2) = nf
-tpi = 6.28318530717959
+tpi = 6.28318530717959D0
 argh = tpi/FLOAT(n)
 is = 0
 nfm1 = nf-1

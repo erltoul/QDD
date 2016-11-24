@@ -103,7 +103,7 @@ IF(jescmaskorb /=0) THEN
     DO ind=1,kdfull2
       IF(tgridabso(ind)) THEN
         rhoabsoorb(ind,nbe) = rhoabsoorb(ind,nbe) + spherloss(ind)*(  &
-            REAL(psi(ind,nbe))*REAL(psi(ind,nbe))  &
+            REAL(psi(ind,nbe),DP)*REAL(psi(ind,nbe),DP)  &
             +AIMAG(psi(ind,nbe))*AIMAG(psi(ind,nbe))  )
       END IF
     END DO
@@ -335,7 +335,7 @@ DO iz=minz,maxz
       
       ind=ind+1
       IF (dist2 <= dmin12) THEN
-        sphermask(ind)=1.0
+        sphermask(ind)=1.0D0
         tgridabso(ind)=.false.
       ELSE IF (dist2 > dmin22) THEN
         sphermask(ind)=0D0
@@ -390,14 +390,14 @@ DO iz = 1,nz2
   zmask(iz) = 1.0D0
 END DO
 DO iz = 1,nabsorb
-  zmask(iz) = COS(pi*0.5D0*(nabsorb+1.0-iz)/nabsorb)**powabso
+  zmask(iz) = COS(pi*0.5D0*(nabsorb+1.0D0-iz)/nabsorb)**powabso
   zmask(nz2+1-iz) = zmask(iz)
 END DO
 DO iy = 1,ny2
   ymask(iy) = 1.0D0
 END DO
 DO iy = 1,nabsorb
-  ymask(iy) = COS(pi*0.5D0*(nabsorb+1.0-iy)/nabsorb)**powabso
+  ymask(iy) = COS(pi*0.5D0*(nabsorb+1.0D0-iy)/nabsorb)**powabso
   ymask(ny2+1-iy) = ymask(iy)
 END DO
 DO ix = 1,nx2
@@ -650,7 +650,7 @@ IF(myn == 0) THEN
       ndig=1
       
       DO i=1,10
-        IF (it0/10. >= 1.) THEN
+        IF (it0/10D0 >= 1.) THEN
           ndig=ndig+1
           it0=INT(it0/10)
         END IF
@@ -776,8 +776,8 @@ DO itheta=1,nangtheta
       END DO
     END DO
     
-    WRITE(47,'(1f14.5,2f12.3,1e17.5)') tfs,tt/pi*180.0,  &
-        pp/pi*180.0,absocone(jj)
+    WRITE(47,'(1f14.5,2f12.3,1e17.5)') tfs,tt/pi*180.0D0,  &
+        pp/pi*180.0D0,absocone(jj)
     
   END DO
   
@@ -808,7 +808,7 @@ REAL(DP), INTENT(IN)                         :: rho(kdfull2)
 !------------------------------------------------------------
 
 
-tinfs=it*dt1*0.0484/2D0/ame
+tinfs=it*dt1*0.0484D0/2D0/ame
 !apnum=0D0
 !DO i=1,nxyz
 !  apnum=apnum+rho(i)
@@ -819,7 +819,7 @@ absosum = dvol*SUM(rhoabso)
 
 CALL safeopen(23,it,jesc,'pescel')
 !      open(23,position='append',file='pescel.'//outnam)
-WRITE(23,'(f13.5,3(1pg13.5))') tinfs,1.0-apnum/nclust,nclust-apnum,absosum
+WRITE(23,'(f13.5,3(1pg13.5))') tinfs,1D0-apnum/nclust,nclust-apnum,absosum
 CALL flush(23)
 
 RETURN
@@ -869,7 +869,7 @@ DO nbe=1,nstate
     q0phase = q0(ii,nbe)*  &
              EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2),DP))
     j=j+1
-    rp(j)=REAL(q0phase)
+    rp(j)=REAL(q0phase,DP)
     j=j+1
     rp(j)=AIMAG(q0phase)
   END DO
@@ -898,7 +898,7 @@ DO nba=1,nstate_all
       q0phase = q0(ii,nbe)*  &
                EXP(CMPLX(0D0,-e0*(scal1*fpulseinteg1+scal2*fpulseinteg2),DP))
       j=j+1
-      rp(j)=REAL(q0phase)
+      rp(j)=REAL(q0phase,DP)
       j=j+1
       rp(j)=AIMAG(q0phase)
     END DO

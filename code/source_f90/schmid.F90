@@ -417,7 +417,7 @@ DO nbes=1,nstate
       cs=cs*dvol
       IF(ncc == nbe) THEN
         DO i=1,nxyz
-          q0(i,nbe)=q0(i,nbe)/SQRT(REAL(cs))
+          q0(i,nbe)=q0(i,nbe)/SQRT(REAL(cs,DP))
         END DO
       ELSE
         DO  i=1,nxyz

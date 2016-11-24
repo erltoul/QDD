@@ -420,7 +420,7 @@ DO ii=1,nion
 !               call dIntFieldFuncOnSubGrid(chpcoul,dgaussdr,cx(ii),
 !     &              cy(ii),cz(ii),sgm2(np(ii))*SQ2)
     
-    prefac = chg2(np(ii))/(2*pi*sgm2(np(ii))**2)**1.5
+    prefac = chg2(np(ii))/(2*pi*sgm2(np(ii))**2)**1.5D0
 ! no factor e2, because it is already in the
 ! field chpcoul()
     
@@ -491,7 +491,7 @@ DO is=1,nion
           rx=x1-cx(is)
           ry=y1-cy(is)
           rz=z1-cz(is)
-          r2=rx*rx+ry*ry+rz*rz+1E-12
+          r2=rx*rx+ry*ry+rz*rz+1D-12
           rr=SQRT(r2)
           rr3=rr*r2
           chpddr =-(v_ion_el_lgoed(rr+rder,rloc,c1,c2,zion)  &
@@ -682,7 +682,7 @@ power=e0*e0*foft*foft
 !      write(6,*) 'time = ',time
 
 !mb      time = tfs/0.0484 ! dangerous!!! time is global and conflicts somewhere
-try = tfs/0.0484
+try = tfs/0.0484D0
 
 
 !wzp       open(8887,position='append',file='laserforce')
@@ -1047,7 +1047,7 @@ ELSE IF(ipsptyp >= 1) THEN
         ry=y1-cyact
         rz=z1-czact
         rr=SQRT(rx*rx+ry*ry+rz*rz)
-        rr=rr+1E-6             ! avoid zero
+        rr=rr+1D-6             ! avoid zero
         rhopsp(ind)=rhopsp(ind)+v_ion_el_lgoed(rr,rloc,c1,c2,zion)
 !        IF(rr <= 4.0) THEN
 !          f1=-zion*(v_soft(rr,SQRT(2D0)*rloc))

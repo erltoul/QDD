@@ -368,14 +368,14 @@ WRITE(*,*) 'Inititalisierung der Koeffizienten fuer fin. Differenzen'
 IF(dx /= dy .OR. dy /= dz .OR. dz /= dy)  &
     STOP 'only same gridstep in every direction'
 
-fac = CMPLX(-2.0E0,2.0E0*dx*dx/deltim,DP)
+fac = CMPLX(-2.0D0,2.0D0*dx*dx/deltim,DP)
 invnum(1) = one/fac
 
 DO n = 2, 2*(maxx+maxy+maxz)+3
   invnum (n) = one/(fac - invnum(n-1))
 END DO
 
-diag = CMPLX(2.0E0,2.0E0*dx*dx/deltim,DP)
+diag = CMPLX(2.0D0,2.0D0*dx*dx/deltim,DP)
 
 !      write(6,*) ' init: diag,invnum=',diag,invnum
 

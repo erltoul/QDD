@@ -246,7 +246,7 @@ DO i3=1,nzi
   DO i2=1,nyi
     DO i1=1,nxi
       ii=ii+1
-      chpfalr(ii) = 2.0*potc(ii)
+      chpfalr(ii) = 2D0*potc(ii)
     END DO
   END DO
 END DO
@@ -668,7 +668,7 @@ binup = SQRT(xmax*xmax+ymax*ymax+zmax*zmax)
 rad0 = xyzmax
 fzrm = xyzmin/5.5
 
-agen = 6.0*SQRT(LOG(two))/xyzmin
+agen = 6D0*SQRT(LOG(two))/xyzmin
 ax2(0) = agen*agen
 bdiv(0) = 1D0
 agen = SQRT(LOG(two))/fzrm
@@ -789,7 +789,7 @@ DO l=0,4
         IF(rad < 1.d-2) THEN
           t1 = zero
         ELSE
-          radpow = 2.*l+2.
+          radpow = 2D0*l+2.
 !          CALL qgaus(fx1,zero,rad,t1)
           CALL qgaus_fx1(zero,rad,t1)
           t1 = t1/(rad**(2*l+1))
@@ -797,7 +797,7 @@ DO l=0,4
         radpow = one
 !        CALL qgaus(fx1,rad,binup,t2)
         CALL qgaus_fx1(rad,binup,t2)
-        gfc = 4.*pi/(2D0*l+1D0)*qg*(t1+t2)
+        gfc = 4D0*pi/(2D0*l+1D0)*qg*(t1+t2)
         
         IF(l == 0) THEN
           pcoall(1,i) = gfc*y00
@@ -1044,31 +1044,31 @@ IF(refmom) THEN
   
 ELSE
   
-  qlcows(1) = 1./pfy00
-  qlcows(2) = 1./pfy10
-  qlcows(3) = 1./pfy11
-  qlcows(4) = 1./pfy11
-  qlcows(5) = 1./pfy20
-  qlcows(6) = 1./pfy21
-  qlcows(7) = 1./pfy21
-  qlcows(8) = 1./pfy22
-  qlcows(9) = 1./pfy22
-  qlcows(10) = 1./pfy30
-  qlcows(11) = 1./pfy31
-  qlcows(12) = 1./pfy31
-  qlcows(13) = 1./pfy32
-  qlcows(14) = 1./pfy32
-  qlcows(15) = 1./pfy33
-  qlcows(16) = 1./pfy33
-  qlcows(17) = 1./pfy40
-  qlcows(18) = 1./pfy41
-  qlcows(19) = 1./pfy41
-  qlcows(20) = 1./pfy42
-  qlcows(21) = 1./pfy42
-  qlcows(22) = 1./pfy43
-  qlcows(23) = 1./pfy43
-  qlcows(24) = 1./pfy44
-  qlcows(25) = 1./pfy44
+  qlcows(1) = 1D0/pfy00
+  qlcows(2) = 1D0/pfy10
+  qlcows(3) = 1D0/pfy11
+  qlcows(4) = 1D0/pfy11
+  qlcows(5) = 1D0/pfy20
+  qlcows(6) = 1D0/pfy21
+  qlcows(7) = 1D0/pfy21
+  qlcows(8) = 1D0/pfy22
+  qlcows(9) = 1D0/pfy22
+  qlcows(10) = 1D0/pfy30
+  qlcows(11) = 1D0/pfy31
+  qlcows(12) = 1D0/pfy31
+  qlcows(13) = 1D0/pfy32
+  qlcows(14) = 1D0/pfy32
+  qlcows(15) = 1D0/pfy33
+  qlcows(16) = 1D0/pfy33
+  qlcows(17) = 1D0/pfy40
+  qlcows(18) = 1D0/pfy41
+  qlcows(19) = 1D0/pfy41
+  qlcows(20) = 1D0/pfy42
+  qlcows(21) = 1D0/pfy42
+  qlcows(22) = 1D0/pfy43
+  qlcows(23) = 1D0/pfy43
+  qlcows(24) = 1D0/pfy44
+  qlcows(25) = 1D0/pfy44
   
 END IF
 
@@ -1836,14 +1836,14 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      psxr(ii) = REAL(fftax(i1))
+      psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
     END DO
 !        negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      psxr(ii) = REAL(fftax(i1))
+      psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
     END DO
     
@@ -1922,14 +1922,14 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
     
@@ -2052,7 +2052,7 @@ DO i2=1,kffty
     i3m   = MOD(i3+nzh,kfftz)+1
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      psxr(ind)= REAL(fftb(i3m,i1))
+      psxr(ind)= REAL(fftb(i3m,i1),DP)
       psxi(ind)= AIMAG(fftb(i3m,i1))
     END DO
   END DO
@@ -2161,7 +2161,7 @@ DO i2=1,kffty
     i3m   = MOD(i3+nzh,kfftz)+1
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      psxr(ind) = REAL(fftb(i3m,i1))
+      psxr(ind) = REAL(fftb(i3m,i1),DP)
       psxi(ind) = AIMAG(fftb(i3m,i1))
     END DO
   END DO
@@ -2230,14 +2230,14 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
     
@@ -2302,14 +2302,14 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      psxr(ii)=REAL(fftax(i1))
+      psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
     END DO
 !         negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      psxr(ii)=REAL(fftax(i1))
+      psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
     END DO
   END DO

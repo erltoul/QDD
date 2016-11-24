@@ -17,7 +17,7 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 INTEGER,PARAMETER :: klmax=2     !  ????
-REAL(DP),PARAMETER :: varelcorelimit=1E-8  ! limiting value for V_elArcore [Ry]
+REAL(DP),PARAMETER :: varelcorelimit=1D-8  ! limiting value for V_elArcore [Ry]
 
 !INTEGER,PARAMETER :: kfermi=kxbox*17330  ! length of interpolation table
 INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
@@ -115,8 +115,8 @@ REAL(DP) :: ccel6,ccel8,ccel10, ckel6,ckel8,ckel10
 REAL(DP) :: sigmac=1.01116D0,sigmav=1.01116D0,sigmak=1D0,sigmacc,sigmacv
 REAL(DP) :: sigmack, sigmavv,sigmakk,sigmakv,epsdi=1D0,zsurf
 REAL(DP) :: chgcore,chgval,chgkat,delx,dely,delz
-REAL(DP) :: cspr=6.7585128              ! =6.119**2*e2/11.08
-REAL(DP) :: me=0.00238562               ! =4.38/1836.0
+REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
+REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
 REAL(DP) :: xdielec=0D0
 INTEGER :: NE=0,nc=0,nk=0

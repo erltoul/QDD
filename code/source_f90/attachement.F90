@@ -91,13 +91,13 @@ nmatch=0
 !Nmatchmax=(nstate-1)*(nstate_target-nstate)*(nstate_target-nstate-1)
 ALLOCATE(match(Nmatchmax,3))
 DO ih=1,nstate_target ! loop over the holes
-   IF(ispin_target(ih) == ispin(nstate) .AND. (occ_target(ih) > 0.5)) THEN
+   IF(ispin_target(ih) == ispin(nstate) .AND. (occ_target(ih) > 0.5D0)) THEN
 
       DO ip1=1,nstate_target-1  ! loop over the first particles
-         IF(ispin_target(ip1) == ispin(nstate) .AND. (occ_target(ip1) < 0.5)) THEN
+         IF(ispin_target(ip1) == ispin(nstate) .AND. (occ_target(ip1) < 0.5D0)) THEN
 
             DO ip2=ip1+1,nstate_target ! loops over the second particles
-               IF(ispin_target(ip2) == ispin(nstate).AND.(occ_target(ip2) < 0.5)) THEN
+               IF(ispin_target(ip2) == ispin(nstate).AND.(occ_target(ip2) < 0.5D0)) THEN
 
                   delta_e = spe_target(ip2)+spe_target(ip1)-spe_target(ih)
                   IF(ttest) WRITE(*,'(a,3i5,4(1pg13.5))') 'ih etc:',ih,ip1,ip2,&
@@ -248,8 +248,8 @@ DO iener=1,nmatch
    IF (ttest) write(*,*) 'ipoi_act: ',ipoi_act
 
 !     build matrix overlaps of s.p. states                                            
-   overlaps=CMPLX(0D0,0D0)
-   submatr=CMPLX(0D0,0D0)
+   overlaps=CMPLX(0D0,0D0,DP)
+   submatr=CMPLX(0D0,0D0,DP)
    
    IF(ttestb) write(6,*) 'entering overlap comp. loop'
    
@@ -259,7 +259,7 @@ DO iener=1,nmatch
          IF(ispin_target(inn) == ispin(j)) THEN
             overlaps(i,j) = wfovlp(psi_target(1,inn),psi(1,j))
          ELSE
-            overlaps(i,j) = CMPLX(0D0,0D0)
+            overlaps(i,j) = CMPLX(0D0,0D0,DP)
          END IF
       END DO
    END DO
@@ -277,13 +277,13 @@ DO iener=1,nmatch
 !
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
    CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
-   IF(ierror == 99) det = CMPLX(0D0,0D0)
+   IF(ierror == 99) det = CMPLX(0D0,0D0,DP)
    totalovlp=ABS(det)**2+totalovlp
 
 !     accumulate total transition matrix element                                     
    IF(ttestb) WRITE(*,*) ' accumulate transition matrix'
-   tbelement = CMPLX(0D0,0D0)
-   testovlp =  CMPLX(0D0,0D0)
+   tbelement = CMPLX(0D0,0D0,DP)
+   testovlp =  CMPLX(0D0,0D0,DP)
 !   WRITE(*,'(a,i5)') ' for iener=',iener
 !   WRITE(*,'(a)') ' i1,i2,j1,j2,tbacc,det,tbacc*dvol*det:'
    DO i1=1,nstate
@@ -311,7 +311,7 @@ DO iener=1,nmatch
                      END DO
                   END DO
                   CALL cludcmp_d(submatr,nstate-2,index,d,det,ierror)
-                  IF(ierror == 99) det = CMPLX(0D0,0D0)
+                  IF(ierror == 99) det = CMPLX(0D0,0D0,DP)
                   
                   testovlp = det*(2*MOD(i1,2)-1)*(2*MOD(i2,2)-1) &
                                 *(2*MOD(j1,2)-1)*(2*MOD(j2,2)-1) &
@@ -323,7 +323,7 @@ DO iener=1,nmatch
                      det = det*(2*MOD(i1,2)-1)*(2*MOD(i2,2)-1) &
                               *(2*MOD(j1,2)-1)*(2*MOD(j2,2)-1)
                      IF(ispin_target(i1nn).NE.ispin(j1)) det = -det
-                     tbacc = CMPLX(0D0,0D0)
+                     tbacc = CMPLX(0D0,0D0,DP)
                      DO ind=1,kdfull2
                         temp1=psi_target(ind,i1nn)*psi_target(ind,i2nn)
                         temp2=psi(ind,j1)*psi(ind,j2)
@@ -447,7 +447,7 @@ DO j=1,n
     vv(imax)=vv(j)
   END IF
   indx(j)=imax
-  IF(a(j,j) == CMPLX(0D0,0D0)) a(j,j)=tiny
+  IF(a(j,j) == CMPLX(0D0,0D0,DP)) a(j,j)=tiny
   IF(j /= n)THEN
     dum2=1D0/a(j,j)
     DO i=j+1,n
@@ -456,7 +456,7 @@ DO j=1,n
   END IF
 END DO
 
-newd = CMPLX(d,0D0)
+newd = CMPLX(d,0D0,DP)
 !      write(6,*) newd                                                                        
 DO i=1,n
 !        write(6,*)'i,a(i,i)',i,a(i,i)                                                        

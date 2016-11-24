@@ -236,8 +236,8 @@ END IF
 trd4pi = 3D0/(4D0*3.141592653589793D0)
 onetrd = (1D0/3D0)
 enrear = 0D0
-expot  = 4.0*expar/3.0
-exfpot = 4.0*exfpar/3.0
+expot  = 4D0*expar/3D0
+exfpot = 4D0*exfpar/3D0
 e2fac  = e2          ! *0.5
 ii     = 0
 ec=0D0
@@ -291,7 +291,7 @@ DO ii=mini,maxi
 !old        chpdfu(ii) = 0.5D0*(ubase-ebase*xip)*e2fac
   chpdft(ii+nxyz) = 0.5D0*(ubase-ebase*xip)*e2fac
   exx1   = rp*(excp+(excp-excf)*fofxi)*0.5D0*e2fac
-  exx    = exx1-0.25*rp*(chpdft(ii)*xip+chpdft(ii+nxyz)*xim)
+  exx    = exx1-0.25D0*rp*(chpdft(ii)*xip+chpdft(ii+nxyz)*xim)
   ec1=exx1+ec1
   ec=exx+ec
 END DO
@@ -360,7 +360,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-REAL,SAVE                                    :: et
+REAL(DP), SAVE                               :: et
 INTEGER :: mysize
 
 #if(parayes)
@@ -485,7 +485,7 @@ DO ii=1,mysize
   t109 = t**2
   t135 = t44*t68+t2*(da0*t77*t17+da1*t77*t17*t83/4D0-t23*t25*t88/12D0+da2  &
       *t77*t17*t93/4D0-t35*t24*t98/6D0+3D0/4D0*da3*t77*t102-3D0/4D0*t42  &
-      *t71)*t68-t2*t44/t109*(db1*t77*t17*t83/4-t48*t25*t88/12+db2*t77*t17  &
+      *t71)*t68-t2*t44/t109*(db1*t77*t17*t83/4-t48*t25*t88/12D0+db2*t77*t17  &
       *t93/4D0-t53*t24*t98/6D0+3D0/4D0*db3*t77*t102-3D0/4D0*t58*t71+3D0  &
       /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4D0)
   
@@ -569,8 +569,8 @@ DO ii=1,mysize
   
   t1 = xi*rp
   t2 = rp
-  t3=ABS((t1+t2)/2.0)   !  *e2
-  t4=ABS((t1-t2)/2.0)   !  *e2
+  t3=ABS((t1+t2)/2D0)   !  *e2
+  t4=ABS((t1-t2)/2D0)   !  *e2
 #if(parayes)
   t5= chpdftnod1(ii)*t3+chpdftnod2(ii)*t4
 #else

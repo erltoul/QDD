@@ -1,3 +1,21 @@
+!This file is a part of PW-TELEMAN project.
+!PW-TELEMAN is a Time-Dependent Electronic Dynamics in Molecules And Nanosystems library.
+!Copyright (C) 2011-2015  Paul-Gerhard Reinhard, Eric Suraud, Florent Calvayrac,
+!Phuong Mai Dinh, David Brusson, Philipp Wopperer, José María Escartín Esteban.
+!
+!PW-Teleman is free software: you can redistribute it and/or modify
+!it under the terms of the GNU General Public License as published by
+!the Free Software Foundation, either version 3 of the License, or
+!(at your option) any later version.
+!
+!PW-Teleman is distributed in the hope that it will be useful,
+!but WITHOUT ANY WARRANTY; without even the implied warranty of
+!MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!GNU General Public License for more details.
+!
+!You should have received a copy of the GNU General Public License
+!along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
+
 MODULE orthmat
 USE params
 IMPLICIT NONE
@@ -121,9 +139,9 @@ COMPLEX(DP), INTENT(OUT) :: aa(n,n)
 INTEGER, INTENT(IN)     :: n
 INTEGER, INTENT(IN)     :: ndim
 INTEGER                 :: i
-aa(1:ndim, 1:ndim)=CMPLX(0D0,0D0)
+aa(1:ndim, 1:ndim)=CMPLX(0D0,0D0,DP)
 DO i=1,ndim
-  aa(i,i)=CMPLX(1D0,0D0)
+  aa(i,i)=CMPLX(1D0,0D0,DP)
 END DO
 
 END SUBROUTINE matunite_c
@@ -176,7 +194,7 @@ REAL(DP) eps, delta,rn
 eps=1D-20
 CALL matunite(bb,n,ndim)
 CALL matunite(cc,n,ndim)
-rn=CMPLX(1D0,0D0)
+rn=CMPLX(1D0,0D0,DP)
 delta= 1D0
 !        call matprint('AAds exp',AA,N,Ndim)
 !        call matprint('BB ds exp',BB,N,Ndim)

@@ -1209,7 +1209,7 @@ LOGICAL,PARAMETER :: ttest=.false.
 REAL(DP) :: actstep,enold_2st,norm,enorm
 INTEGER :: ni,i
 
-REAL(DP),PARAMETER :: dactstep=0.1
+REAL(DP),PARAMETER :: dactstep=0.1D0
 INTEGER,PARAMETER :: numteststep=40
 
 REAL(DP),ALLOCATABLE :: vecsav(:,:),dabstep(:,:),dab(:,:),expdab(:,:)

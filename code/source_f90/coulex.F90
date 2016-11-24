@@ -234,16 +234,16 @@ END IF
 
 !     initialize grid in Fourier space
 
-dkx=pi/(dx*REAL(nx))
-dky=pi/(dy*REAL(ny))
-dkz=pi/(dz*REAL(nz))
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
 
 dxsp=dx*dy*dz
 dksp=dkx*dky*dkz
 WRITE(*,*) ' dkx,dky,dkz,dksp=',dkx,dky,dkz,dksp
 
 grnorm=SQRT(dxsp/dksp)
-fnorm=1.0/SQRT(REAL(nx*ny*nz))
+fnorm=1.0D0/SQRT(REAL(nx*ny*nz,DP))
 !test      akmax=sqrt(3*(nx*nx)*dx*dx)+2.0
 !test      nxk=int(akmax/dkx)+1
 !test      if(nxk.gt.nx1) nxk=nx1
@@ -878,14 +878,14 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      psxr(ii) = REAL(fftax(i1))
+      psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
     END DO
 !        negative space
     ii=i0
     DO  i1=nx11,nxi
       ii=ii+1
-      psxr(ii) = REAL(fftax(i1))
+      psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
     END DO
     
@@ -959,14 +959,14 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
     
@@ -1024,7 +1024,7 @@ DO i2=1,kffty
 !test          do i1=1,kfftx
     DO i1=nx,nxi ! 1,nx1
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      psxr(ind)= REAL(fftb(i3m,i1))
+      psxr(ind)= REAL(fftb(i3m,i1),DP)
       psxi(ind)= AIMAG(fftb(i3m,i1))
     END DO
   END DO
@@ -1076,7 +1076,7 @@ DO i2=1,kffty
     i3m   = MOD(i3+nzh,kfftz)+1
     DO i1=nx,nxi ! 1,nx1
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      psxr(ind) = REAL(fftb(i3m,i1))
+      psxr(ind) = REAL(fftb(i3m,i1),DP)
       psxi(ind) = AIMAG(fftb(i3m,i1))
     END DO
   END DO
@@ -1141,14 +1141,14 @@ DO i3=1,nz1
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
-      psxr(ii)=REAL(fftay(i2))
+      psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
     END DO
     
@@ -1207,14 +1207,14 @@ DO i3=1,nz1
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      psxr(ii)=REAL(fftax(i1))
+      psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
     END DO
 !         negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      psxr(ii)=REAL(fftax(i1))
+      psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
     END DO
   END DO  

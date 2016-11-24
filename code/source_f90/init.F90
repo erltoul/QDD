@@ -161,10 +161,10 @@ WRITE(6,*) 'Reading for005.// ...'
 
 
 
-delomega=(angthetah-angthetal)/4./nangtheta
-delomega=MIN(delomega,(angphih-angphil)/4./nangphi)
+delomega=(angthetah-angthetal)/4D0/nangtheta
+delomega=MIN(delomega,(angphih-angphil)/4D0/nangphi)
 
-scatterelectronz=nzsh*dz-4.*scatterelectronw
+scatterelectronz=nzsh*dz-4D0*scatterelectronw
 
 #if(raregas)
 CALL init_raregas()
@@ -868,10 +868,10 @@ IF(iexcit == 0) THEN
   ELSE
     IF(ispidi == 1) THEN
       WRITE(7,*) 'shift of spinup density by'
-      WRITE(7,*) 0.5*centfx,0.5*centfy,0.5*centfz
+      WRITE(7,*) 0.5D0*centfx,0.5D0*centfy,0.5D0*centfz
     ELSE IF(ispidi == -1) THEN
       WRITE(7,*) 'shift of spindown density by'
-      WRITE(7,*) -0.5*centfx,-0.5*centfy,-0.5*centfz
+      WRITE(7,*) -0.5D0*centfx,-0.5D0*centfy,-0.5D0*centfz
     END IF
   END IF
 ELSE
@@ -904,8 +904,8 @@ IF(e0 /= 0D0) THEN
   WRITE(7,*) 'pulsation',omega,'units'
   WRITE(7,*) 'field strength',e0
   IF(phi == 0D0) WRITE(7,*) 'linear polarization'
-  IF(phi == 0.25) WRITE(7,*) 'circular right polarization'
-  IF(phi == -0.25) WRITE(7,*) 'circular left polarization'
+  IF(phi == 0.25D0) WRITE(7,*) 'circular right polarization'
+  IF(phi == -0.25D0) WRITE(7,*) 'circular left polarization'
   ascal=e1x*e2x+e1y*e2y+e1z*e2z
   IF(ascal /= 0D000) WRITE(7,*) 'warning : e1 e2 non orthogon.'
   WRITE(7,*)  e1x,e1y,e1z,e2x,e2y,e2z,phi
@@ -957,57 +957,57 @@ IF(ipsptyp == 0) THEN
   
   amu(1)=1D0
   ch(1)=1D0
-  dr1(1)=0.3
-  dr2(1)=0.45
-  prho1(1)=6.94527
-  prho2(1)=-0.92056
-  sgm1(1)=dr1(1)*0.8493218
-  sgm2(1)=dr2(1)*0.8493218
-  chg1(1)=((sgm1(1)*SQRT(pi*2.0))**3)*prho1(1)*ch(1)
-  chg2(1)=((sgm2(1)*SQRT(pi*2.0))**3)*prho2(1)*ch(1)
+  dr1(1)=0.3D0
+  dr2(1)=0.45D0
+  prho1(1)=6.94527D0
+  prho2(1)=-0.92056D0
+  sgm1(1)=dr1(1)*0.8493218D0
+  sgm2(1)=dr2(1)*0.8493218D0
+  chg1(1)=((sgm1(1)*SQRT(pi*2D0))**3)*prho1(1)*ch(1)
+  chg2(1)=((sgm2(1)*SQRT(pi*2D0))**3)*prho2(1)*ch(1)
   WRITE(6,*) 'ch(1)=',ch(1)
   WRITE(6,*) 'total charge of Psphydr=',chg1(1)+chg2(1)
   
 !       sodium
   
-  amu(11)=23.0
+  amu(11)=23.0D0
   ch(11)=1D0  ! charge of pseudopotential
-  dr1(11)=0.8018
-  dr2(11)=1.3693
-  prho1(11)=-0.46073
-  prho2(11)=0.13287
-  sgm1(11)=dr1(11)*0.8493218
-  sgm2(11)=dr2(11)*0.8493218
-  chg1(11)=((sgm1(11)*SQRT(pi*2.0))**3)*prho1(11)*ch(11)
-  chg2(11)=((sgm2(11)*SQRT(pi*2.0))**3)*prho2(11)*ch(11)
+  dr1(11)=0.8018D0
+  dr2(11)=1.3693D0
+  prho1(11)=-0.46073D0
+  prho2(11)=0.13287D0
+  sgm1(11)=dr1(11)*0.8493218D0
+  sgm2(11)=dr2(11)*0.8493218D0
+  chg1(11)=((sgm1(11)*SQRT(pi*2D0))**3)*prho1(11)*ch(11)
+  chg2(11)=((sgm2(11)*SQRT(pi*2D0))**3)*prho2(11)*ch(11)
   WRITE(6,*) 'ch(11)=',ch(11)
   WRITE(6,*) 'total charge of Pspsodi=',chg1(11)+chg2(11)
   
 !       magnesium
   
-  amu(12)=24.312
-  ch(12)=2.0
-  dr1(12)=0.5
+  amu(12)=24.312D0
+  ch(12)=2D0
+  dr1(12)=0.5D0
   dr2(12)=1D0
-  prho1(12)=-1.6582
-  prho2(12)=0.31091
-  sgm1(12)=dr1(12)*0.8493218
-  sgm2(12)=dr2(12)*0.8493218
-  chg1(12)=((sgm1(12)*SQRT(pi*2.0))**3)*prho1(12)*ch(12)
-  chg2(12)=((sgm2(12)*SQRT(pi*2.0))**3)*prho2(12)*ch(12)
+  prho1(12)=-1.6582D0
+  prho2(12)=0.31091D0
+  sgm1(12)=dr1(12)*0.8493218D0
+  sgm2(12)=dr2(12)*0.8493218D0
+  chg1(12)=((sgm1(12)*SQRT(pi*2D0))**3)*prho1(12)*ch(12)
+  chg2(12)=((sgm2(12)*SQRT(pi*2D0))**3)*prho2(12)*ch(12)
   WRITE(6,*) 'ch(12)=',ch(12)
   WRITE(6,*) 'total charge of Pspmagn=',chg1(12)+chg2(12)
   
 !       Argon , positive core part
   
-  amu(18)   = 39.95
-  ch(18)    = 6.119  ! charge of pseudopotential
-  sgm1(18)  = 1.43/sq2
-  dr1(18)   = sgm1(18)/0.8493218
-  sgm2(18)  = 1
-  dr2(18)   = 1
+  amu(18)   = 39.95D0
+  ch(18)    = 6.119D0  ! charge of pseudopotential
+  sgm1(18)  = 1.43D0/sq2
+  dr1(18)   = sgm1(18)/0.8493218D0
+  sgm2(18)  = 1D0
+  dr2(18)   = 1D0
   chg1(18)  = ch(18)
-  prho1(18) = chg1(18)/((sgm1(18)*SQRT(pi*2.0))**3)
+  prho1(18) = chg1(18)/((sgm1(18)*SQRT(pi*2D0))**3)
   chg2(18)  = 0D0
   prho2(18) = 0D0
   WRITE(6,*) 'ch(18)=',ch(18)
@@ -1015,14 +1015,14 @@ IF(ipsptyp == 0) THEN
   
 !       Argon , negative valence cloud (inert)
   
-  amu(-18)  = 4.38/1836.0
-  ch(-18)   = -6.119  ! charge of pseudopotential
-  sgm1(-18) = 1.43/sq2
-  dr1(-18)  = sgm1(-18)/0.8493218
-  sgm2(-18) = 1
-  dr2(-18)  = 1
+  amu(-18)  = 4.38D0/1836.0D0
+  ch(-18)   = -6.119D0  ! charge of pseudopotential
+  sgm1(-18) = 1.43D0/sq2
+  dr1(-18)  = sgm1(-18)/0.8493218D0
+  sgm2(-18) = 1D0
+  dr2(-18)  = 1D0
   chg1(-18) = ch(-18)
-  prho1(-18)= chg1(-18)/((sgm1(-18)*SQRT(pi*2.0))**3)
+  prho1(-18)= chg1(-18)/((sgm1(-18)*SQRT(pi*2D0))**3)
   chg2(-18) = 0D0
   prho2(-18)= 0D0
 !  c_dipmod  = 3.378  !  ch(-18)**2*e2/11.08
@@ -1031,16 +1031,16 @@ IF(ipsptyp == 0) THEN
   
 !       potassium
   
-  amu(19)=39.0
+  amu(19)=39.0D0
   ch(19)=1D0  ! charge of pseudopotential
-  dr1(19)=0.9973
-  dr2(19)=1.9957
-  prho1(19)=-0.13771
-  prho2(19)=0.030223
-  sgm1(19)=dr1(19)*0.8493218
-  sgm2(19)=dr2(19)*0.8493218
-  chg1(19)=((sgm1(19)*SQRT(pi*2.0))**3)*prho1(19)*ch(19)
-  chg2(19)=((sgm2(19)*SQRT(pi*2.0))**3)*prho2(19)*ch(19)
+  dr1(19)=0.9973D0
+  dr2(19)=1.9957D0
+  prho1(19)=-0.13771D0
+  prho2(19)=0.030223D0
+  sgm1(19)=dr1(19)*0.8493218D0
+  sgm2(19)=dr2(19)*0.8493218D0
+  chg1(19)=((sgm1(19)*SQRT(pi*2D0))**3)*prho1(19)*ch(19)
+  chg2(19)=((sgm2(19)*SQRT(pi*2D0))**3)*prho2(19)*ch(19)
   WRITE(6,*) 'ch(19)=',ch(19)
   WRITE(6,*) 'total charge of Psppotassium=',chg1(19)+chg2(19)
   
@@ -1048,14 +1048,14 @@ IF(ipsptyp == 0) THEN
   
   amu(58)=140D0
   ch(58)=1D0  ! charge of pseudopotential
-  dr1(58)=1.12
-  dr2(58)= 2.552
-  prho1(58)=-0.62923E-01
-  prho2(58)=0.11554E-01
-  sgm1(58)=dr1(58)*0.8493218
-  sgm2(58)=dr2(58)*0.8493218
-  chg1(58)=((sgm1(58)*SQRT(pi*2.0))**3)*prho1(58)*ch(58)
-  chg2(58)=((sgm2(58)*SQRT(pi*2.0))**3)*prho2(58)*ch(58)
+  dr1(58)=1.12D0
+  dr2(58)= 2.552D0
+  prho1(58)=-0.62923D-01
+  prho2(58)=0.11554D-01
+  sgm1(58)=dr1(58)*0.8493218D0
+  sgm2(58)=dr2(58)*0.8493218D0
+  chg1(58)=((sgm1(58)*SQRT(pi*2D0))**3)*prho1(58)*ch(58)
+  chg2(58)=((sgm2(58)*SQRT(pi*2D0))**3)*prho2(58)*ch(58)
   WRITE(6,*) 'ch(58)=',ch(58)
   WRITE(6,*) 'total charge of Psppotassium=',chg1(58)+chg2(58)
   
@@ -1108,7 +1108,7 @@ ELSE IF(ipsptyp == 1) THEN
 !  nrow(6)  = 2
   r0g(6)=0.304533D0
   r1g(6)=0.232677D0
-  radiong(6)=2.0
+  radiong(6)=2D0
   h0_11g(6)=9.522842D0
   h1_11g(6)=0D0
   
@@ -1137,20 +1137,20 @@ ELSE IF(ipsptyp == 1) THEN
   r0g(8)=0.2222028      !  0.221786D0
   r1g(8)=0.256829D0
   radiong(8)=1.5D0
-  h0_11g(8)=18.19996387   ! 18.266917D0
+  h0_11g(8)=18.19996387D0   ! 18.266917D0
   h1_11g(8)=0D0
   
 !       fluor   (row 2)
   
   amu(9)  = 18D0
   ch(9)   = 7.0D0
- cc1(9)   =-21.307361
- cc2(9)   = 3.072869
- crloc(9) = 0.218525
- r0g(9)=0.195567
- r1g(9)=0.2
- radiong(9)=1.3
- h0_11g(9)=23.58494 
+ cc1(9)   =-21.307361D0
+ cc2(9)   = 3.072869D0
+ crloc(9) = 0.218525D0
+ r0g(9)=0.195567D0
+ r1g(9)=0.2D0
+ radiong(9)=1.3D0
+ h0_11g(9)=23.58494D0
  h1_11g(9) =0D0
   
 !       neon   (row 2)
@@ -1234,7 +1234,7 @@ ELSE IF(ipsptyp == 1) THEN
   
 !       argon   (row 3)
   
-  amu(18)  = 40
+  amu(18)  = 40D0
   ch(18)   = 8.0D0
   cc1(18)  = -7.1D0 !nbf9.883 !  9.236   !  -7.1
   cc2(18)  = 0D0     !  -2.5265 !  0.0
@@ -1313,25 +1313,25 @@ ELSE IF(ipsptyp == 2) THEN
   
 !       Na (approximate local pseudo built on Goedecker local part)
   
-  amu(11)  = 23.0
+  amu(11)  = 23.0D0
   ch(11)   = 1D0
-  cc1(11)  = 1.5 ! 1.55 ! 2.5 ! 3.0   !  3.1
+  cc1(11)  = 1.5D0 ! 1.55 ! 2.5 ! 3.0   !  3.1
   cc2(11)  = 0D0
-  crloc(11)= 0.9
+  crloc(11)= 0.9D0
 !  nrow(11) = 3
 !        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
   
 !       Ar (approximate local pseudo built on Goedecker local part)
   
-  amu(18)  = 39.95
-  ch(18)   = 8.0
+  amu(18)  = 39.95D0
+  ch(18)   = 8D0
 !        cc1(18)  = 60.37    ! 13.375   !  2.5034  ! 2.482
 !        cc2(18)  = -8.972   ! -3.4762  ! -1.4664  ! -1.4526
 !        crloc(18)= 0.4      ! 0.6      ! 0.9      ! 0.9
   
-  cc1(18)  =   2.482   ! 2.5034  !
-  cc2(18)  =  -1.4526  ! -1.4664  !
-  crloc(18)=  0.9
+  cc1(18)  =   2.482D0   ! 2.5034  !
+  cc2(18)  =  -1.4526D0  ! -1.4664  !
+  crloc(18)=  0.9D0
   
   
 !        cc1(18)  = 4.9558   !  9.9117
@@ -1345,7 +1345,7 @@ ELSE IF(ipsptyp == 2) THEN
 ELSE IF((ipsptyp == 3).OR.(ipsptyp ==4)) THEN
 !Goedecker read from two files, with valence electrons only
 do iel=1,92
-        amu(iel)=0.0   ! masses as a function of atomic number
+        amu(iel)=0D0   ! masses as a function of atomic number
 enddo
 
 !       read atomic number and masses of the elements
@@ -1375,13 +1375,13 @@ if(icountt.gt.0) then
 !write(6,*) symb(icountt),ch(icountt),crloc(icountt),cc1(icountt)
 endif
 icountt=icountt+1
-ch(icountt)=0.0
-crloc(icountt)=0.0
-cc1(icountt)=0.0
-cc2(icountt)=0.0
-r0g(icountt)=0.0
-r1g(icountt)=0.0
-r2g(icountt)=0.0
+ch(icountt)=0D0
+crloc(icountt)=0D0
+cc1(icountt)=0D0
+cc2(icountt)=0D0
+r0g(icountt)=0D0
+r1g(icountt)=0D0
+r2g(icountt)=0D0
 l=0
 
 !       we read a new line if not already done
@@ -1463,7 +1463,7 @@ endif
 111 format(4(f10.6))
 112   format(A,4(f10.6))
    if(iskip.ne.99) then
-         if(crr.eq.0.0) then
+         if(crr.eq.0D0) then
  !                l=l-1
           endif
            if(l.eq.0) then
@@ -1511,13 +1511,13 @@ IF(ifredmas == 1) THEN
   IF (ipsptyp == 0) THEN
      DO i=-92,92
         !           amu(i)=0.0484
-        amu(i)=0.5
+        amu(i)=0.5D0
      END DO
   ELSE
      amfac = 1D0/amu(6)
      DO i=-92,92
         amu(i) = amu(i)*amfac
-        amu(i)=0.5
+        amu(i)=0.5D0
      ENDDO
   ENDIF
 !         do i=-92,92
@@ -1550,7 +1550,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: orderxyz
-REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0.0
+REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
 integer ::  igrid(7)
 data igrid /32,48,64,72,96,128,160/
 
@@ -1578,7 +1578,7 @@ WRITE (6,*) 'Entering initions()'
   
   
   WRITE(6,*) 'Reading positions...'
-  distmax=0.0
+  distmax=0D0
   DO ion=1,nion
     
     IF(init_lcao == 1) THEN
@@ -1769,7 +1769,7 @@ WRITE (6,*) 'Entering initions()'
 !     rotation completed
   
   tnonlocany = .false.  
-  optis=1e10
+  optis=1D10
   DO ion=1,nion
       tblock(ion) = .FALSE.
     IF(ipsptyp == 0) THEN
@@ -1828,7 +1828,7 @@ WRITE (6,*) 'Entering initions()'
     END DO
     
     IF(ipsptyp == 1) THEN
-      dgrid = crloc(np(ion))/0.8493218
+      dgrid = crloc(np(ion))/0.8493218D0
       WRITE(7,*) ' optimal grid spacing for this element=',dgrid
       WRITE(6,*) ' optimal grid spacing for this element=',dgrid
       if(dgrid.lt.optis) optis=dgrid
@@ -1840,7 +1840,7 @@ WRITE (6,*) 'Entering initions()'
            write(119,*) optis
            close(119)
 
-           nxopti=(distmax+1.0)/optis
+           nxopti=(distmax+1D0)/optis
            nxopti=(nxopti/4)*8
            inx=0
            inxg=0
@@ -1858,7 +1858,7 @@ WRITE (6,*) 'Entering initions()'
            close(120)
   
   IF (tempion > 0D0 .AND.imob /= 0) THEN
-    CALL givetemperature(cpx,cpy,cpz,nion,tempion, amu(np(1))*1836*ame,4)
+    CALL givetemperature(cpx,cpy,cpz,nion,tempion, amu(np(1))*1836.0D0*ame,4)
   END IF
   
 #if(parayes)
@@ -1918,14 +1918,14 @@ ecorr=sumion           !analytical case   ??
 !     initialize common velocity
 
 IF (ekin0pp > 0D0) THEN
-  v0 = SQRT(2.*ekin0pp/(amu(np(nion))*1836.0*ame))
+  v0 = SQRT(2D0*ekin0pp/(amu(np(nion))*1836.0D0*ame))
   rnorm = vxn0**2 + vyn0**2+ vzn0**2
   rnorm = SQRT(rnorm)
   IF (rnorm == 0) STOP 'Velocity vector not normalizable'
   vxn02 = vxn0/rnorm*v0*ame
   vyn02 = vyn0/rnorm*v0*ame
   vzn02 = vzn0/rnorm*v0*ame
-  xm = amu(np(nion))*1836.0
+  xm = amu(np(nion))*1836.0D0
   DO i=1,nion
     cpx(i)=vxn02*xm
     cpy(i)=vyn02*xm
@@ -1939,11 +1939,11 @@ END IF ! initial kinetic energy for ions
 !     In the case of an atom, the w.f. are boosted accordingly in tinit
 ! lionel : np(nion)=> np(nproj)
 IF (eproj > 0D0 .AND. taccel<1D-5) THEN
-  v0 = SQRT(2.*eproj/(amu(np(nproj))*1836.0*ame))
+  v0 = SQRT(2D0*eproj/(amu(np(nproj))*1836.0D0*ame))
   rnorm = vpx**2 + vpy**2+ vpz**2
   rnorm = SQRT(rnorm)
   IF (rnorm == 0) STOP 'Velocity vector not normalizable'
-  tempv=v0*ame*amu(np(nproj))*1836.0/rnorm
+  tempv=v0*ame*amu(np(nproj))*1836.0D0/rnorm
   cpx(nproj) = vpx*tempv
   cpy(nproj) = vpy*tempv
   cpz(nproj) = vpz*tempv
@@ -1992,7 +1992,7 @@ IF(nion2 /= 0) RETURN              ! case of detailed ions
 
 gamarg = gamma * pi / 180D0
 a20fac = COS(gamarg)
-a22fac = SIN(gamarg) / SQRT(2.0)
+a22fac = SIN(gamarg) / SQRT(2D0)
 
 !     transformation from hill-wheeler coordinates
 
@@ -2049,7 +2049,7 @@ END IF
 
 !     prepare book-keeping for wavefunctions
 
-omeg=0.25*h2m
+omeg=0.25D0*h2m
 !      if(nclust.gt.0)
 !     &    call ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
@@ -2238,7 +2238,7 @@ END IF
 !     where 'nelect,spin' is the nr. of electrons for given spin.
 !     this relation is resolved approximately for N.
 
-q20fac = SQRT(5.D0/(16.D0*pi))
+q20fac = SQRT(5D0/(16D0*pi))
 IF(numspin==2) THEN
   nelup  = nelect-nspdw
   neldw  = nspdw
@@ -2252,14 +2252,14 @@ ELSE
   nelup  = nclust/2
 END IF
 efacto = 0.25D0/(1D0*nelect)**third
-efrmup = (6.D0*nelup)**third
+efrmup = (6D0*nelup)**third
 efrmup = efrmup/(1D0-1D0/(efrmup*efrmup))**third-1.5D0
 ecutup = efrmup+deoccin
-nomxup = ecutup*(1D0+2.D0*q20fac*betain)+0.5D0
+nomxup = ecutup*(1D0+2D0*q20fac*betain)+0.5D0
 ecutup = efacto*ecutup
 IF(numspin==2) THEN
   IF(neldw > 0) THEN
-    efrmdw = (6.0D0*neldw)**third
+    efrmdw = (6D0*neldw)**third
     efrmdw = efrmdw/(1D0-1D0/(efrmdw*efrmdw))**third-1.5D0
   ELSE
     efrmdw = -0.00001D0
@@ -2269,10 +2269,10 @@ IF(numspin==2) THEN
   ecutdw = efacto*ecutdw
 END IF
 cosfac = q20fac*COS(gamin)
-sinfac = q20fac*SQRT(2.D0)*SIN(gamin)
+sinfac = q20fac*SQRT(2D0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
 yfac   = efacto/(1D0-betain*(cosfac+sinfac))
-zfac   = efacto/(1D0+2.0D0*betain*cosfac)
+zfac   = efacto/(1D0+2D0*betain*cosfac)
 !      write(*,*) ' efacto,efrmup,ecutup,deoccin=',
 !     &   efacto,efrmup,ecutup,deoccin
 
@@ -2342,7 +2342,7 @@ IF(numspin==2) THEN
        DO noscy=0,nomxdw
        DO noscx=0,nomxdw
         speact = noscz*zfac+noscy*yfac+noscx*xfac
-        IF(nelup /= neldw) speact = speact*1.01    ! enhance for spin asymmetry
+        IF(nelup /= neldw) speact = speact*1D01    ! enhance for spin asymmetry
         IF(speact <= ecutdw) THEN
           n     = 1+n
           nq(1,n)  = noscx
@@ -2581,7 +2581,7 @@ REAL(DP), INTENT(IN OUT)                     :: betael
 REAL(DP), INTENT(IN)                         :: hexel
 REAL(DP), INTENT(OUT)                        :: sqr
 INTEGER, INTENT(IN)                      :: iturn
-DATA astep/0.6/
+DATA astep/0.6D0/
 
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),vecalp(3)
 
@@ -2625,12 +2625,12 @@ END IF
 
 !     dimensionless deformation parameters
 !      zero = 0.0
-onetrd = 1D0 / 3.0
-d4pi   = 1D0/(4.0*pi)
-alpfac = 4.0*pi/5.0
-q20fac = SQRT(5.0/(16.0*pi))
-q22fac = SQRT(15.0/(8.0*pi))
-q40fac = SQRT(9.0/(4.0*pi))
+onetrd = 1D0 / 3D0
+d4pi   = 1D0/(4D0*pi)
+alpfac = 4D0*pi/5D0
+q20fac = SQRT(5D0/(16D0*pi))
+q22fac = SQRT(15D0/(8D0*pi))
+q40fac = SQRT(9D0/(4D0*pi))
 !----------------------------------------------------------------------
 
 !     set initial values for iteration of deformation
@@ -2641,23 +2641,23 @@ hexabk = hexel
 
 !     effective angle 'gamma' to determine principle axis for y40
 
-bet2ef = (alphbk*alphbk+2.0*betabk*betabk)
+bet2ef = (alphbk*alphbk+2D0*betabk*betabk)
 IF(bet2ef /= 0D0) THEN
   bet2ef  = 1D0/SQRT(bet2ef)
   y20fac  = alphbk*bet2ef
   y20obs  = y20fac*q20fac
   y22fac  = betabk*bet2ef
   y22obs  = y22fac*q22fac
-  q40red = 7.0*SQRT(pi/9.0)          ! factor for y40 from y20^2
-  q20red = SQRT(5.0/pi)/7.0          ! cofactor on y20 in y40 from
-  q40obs = 8.0*q40red/q40fac
+  q40red = 7D0*SQRT(pi/9D0)          ! factor for y40 from y20^2
+  q20red = SQRT(5D0/pi)/7D0          ! cofactor on y20 in y40 from
+  q40obs = 8D0*q40red/q40fac
 END IF
 
 radius = radjel * partn**onetrd
-rhoc   = 3.0*d4pi / radjel**3
+rhoc   = 3D0*d4pi / radjel**3
 
 argum  = radius / surjel
-IF(argum < 38.) THEN
+IF(argum < 38D0) THEN
   rho0 = rhoc * (1D0 + EXP(-argum))
 ELSE
   rho0 = rhoc
@@ -2732,8 +2732,8 @@ DO iter=1,itback
           y22   = q22fac*(xx-yy)/rr
           
           IF(bet2ef == 0D0) THEN
-            y40   = q40fac*(8.0*zz*zz+3.0*xx*xx+ 3.0*yy*yy-24.0*zz*xx-  &
-                24.0*zz*yy+6.0*xx*yy)/ (8.0*rr*rr)
+            y40   = q40fac*(8D0*zz*zz+3D0*xx*xx+ 3D0*yy*yy-24D0*zz*xx-  &
+                24D0*zz*yy+6D0*xx*yy)/ (8D0*rr*rr)
           ELSE
             y2eff = y20fac*y20+y22fac*y22
             y40   = q40red*(y2eff*y2eff-q20red*y2eff-d4pi)
@@ -2744,11 +2744,11 @@ DO iter=1,itback
           y40   = 0D0
         END IF
         reff = radius*(1D0+alphbk*y20+betabk*y22 +hexabk*y40  &
-            -(alphbk*alphbk+2.0*betabk*betabk+hexabk*hexabk)*d4pi)
+            -(alphbk*alphbk+2D0*betabk*betabk+hexabk*hexabk)*d4pi)
         argum = (r-reff)/surjel
-        IF(argum > +38.0) THEN
+        IF(argum > +38D0) THEN
           rhojel(ii) = 0D0
-        ELSE IF(argum < -38.0) THEN
+        ELSE IF(argum < -38D0) THEN
           rhojel(ii) = rho0
         ELSE
           rhojel(ii) = rho0/(1D0+EXP(argum))
@@ -2778,12 +2778,12 @@ DO iter=1,itback
   qoct   = volel*qoct
   sqt    = volel*sqt
   sqhe   = volel*sqhe
-  theta0 = (thetax+thetay+thetaz)/3.0
+  theta0 = (thetax+thetay+thetaz)/3D0
   thetax = thetax/theta0
   thetay = thetay/theta0
   thetaz = thetaz/theta0
   alpha  = alpfac*q20fac*sqq/(sqn*sqr*sqr)
-  beta   = alpfac*0.5*q22fac*sqt/(sqn*sqr*sqr)
+  beta   = alpfac*0.5D0*q22fac*sqt/(sqn*sqr*sqr)
   deralp = 1D0
   derbet = 1D0
   delalp = -astep*(alpha-alphel)/deralp
@@ -2796,7 +2796,7 @@ DO iter=1,itback
   
   radius = radius * (partn/sqn)**onetrd
   argum  = radius / surjel
-  IF(argum < 38.) THEN
+  IF(argum < 38D0) THEN
     rho0 = rhoc * (1D0 + EXP(-argum))
   ELSE
     rho0 = rhoc
@@ -2825,8 +2825,8 @@ WRITE(7,'(a,i4,a,f12.7,a,2(/3(a,f12.7)),5(/2(a,f12.7)))')  &
 WRITE(7,*) 'thetax=',thetax
 WRITE(7,*) 'thetay=',thetay
 WRITE(7,*) 'thetaz=',thetaz
-beta2j = SQRT(alpha*alpha+2.0*beta*beta)
-gammaj = ATAN(1.4142136*beta/alpha)*180D0/pi
+beta2j = SQRT(alpha*alpha+2D0*beta*beta)
+gammaj = ATAN(1.4142136D0*beta/alpha)*180D0/pi
 WRITE(7,*) 'effective jellium deformations: beta2j=',beta2j,  &
     '  gammaj=',gammaj
 
@@ -2864,20 +2864,20 @@ REAL(DP),PARAMETER :: sixth=1D0/6D0
 !     check workspace
 
 
-an  = REAL(2*nclust)
+an  = REAL(2*nclust,DP)
 IF(temp > 0D0) THEN
   homx = omeg*an**(-third)*xfac
   homy = omeg*an**(-third)*yfac
   homz = omeg*an**(-third)*zfac
-  bxx  = (2.0*h2m/homx)**3
-  bxy  = (2.0*h2m/homy)**3
-  bxz  = (2.0*h2m/homz)**3
+  bxx  = (2D0*h2m/homx)**3
+  bxy  = (2D0*h2m/homy)**3
+  bxz  = (2D0*h2m/homz)**3
   bxx  = osfac*(bxx**sixth)
   bxy  = osfac*(bxy**sixth)
   bxz  = osfac*(bxz**sixth)
 ELSE
   hom  = omeg*an**(-third)
-  bk1  = (2.0*h2m/hom)**3
+  bk1  = (2D0*h2m/hom)**3
   bk1   = osfac*(bk1**sixth)
 END IF
 
@@ -2982,13 +2982,13 @@ fak = 1
 DO i=2,in
   fak = fak * i
 END DO
-coef=1./SQRT(b*1.772454*(2.**in)*fak)
+coef=1D0/SQRT(b*1.772454D0*(2D0**in)*fak)
 
 
 DO j=1,n1
   
   tau=(x(j)-z)/b
-  argum = -0.5*tau*tau
+  argum = -0.5D0*tau*tau
   IF(argum < -38D0) THEN
     val(j) = 0D0
   ELSE
@@ -2998,17 +2998,17 @@ DO j=1,n1
     ELSE IF(in == 1) THEN
       val(j)=v*2*tau
     ELSE IF(in == 2) THEN
-      val(j)=v*(4.*tau*tau-2.)
+      val(j)=v*(4D0*tau*tau-2D0)
     ELSE IF(in == 3) THEN
-      val(j)=v*(8.*tau**3-12.*tau)
+      val(j)=v*(8D0*tau**3-12D0*tau)
     ELSE IF(in == 4) THEN
-      val(j)=v*(16.*tau**4-48.*tau**2+12.)
+      val(j)=v*(16D0*tau**4-48D0*tau**2+12D0)
     ELSE IF(in == 5) THEN
-      val(j)=v*(32.*tau**5-160D0*tau**3+120D0*tau)
+      val(j)=v*(32D0*tau**5-160D0*tau**3+120D0*tau)
     ELSE IF(in == 6) THEN
-      val(j)=v*8.0*(8.*tau**6-60D0*tau**4+90D0*tau**2-15.0)
+      val(j)=v*8D0*(8D0*tau**6-60D0*tau**4+90D0*tau**2-15D0)
     ELSE IF(in == 7) THEN
-      val(j)=v*16.0*(8.*tau**7-84.*tau**5+210D0*tau**3-105.0*tau)
+      val(j)=v*16D0*(8D0*tau**7-84D0*tau**5+210D0*tau**3-105D0*tau)
     ELSE IF(in == 8) THEN
       val(j)=v*tau**8              ! ortho-normalize later
     ELSE
@@ -3088,7 +3088,7 @@ REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 IF(numspin==2) THEN
   WRITE(*,*) ' SPINSEP invoked'
   DO nb=1,nstate
-    sgeps = (3-2*ispin(nb))*0.01
+    sgeps = (3-2*ispin(nb))*0.01D0
     ii  = 0
     DO iz=minz,maxz
       z1=(iz-nzsh)*dz
@@ -3480,13 +3480,13 @@ bk  = 1D0          ! use temperature in units of Ry
 ekin=0.5D0*bk*tempion
 WRITE(7,'(a,f9.4)')  'wanted temp',tempion
 WRITE (7,'(a,f9.4)') 'wanted energ  per degree of freedom',ekin
-xm=0.5D0*1836.0*amu(np(1))*ame
+xm=0.5D0*1836.0D0*amu(np(1))*ame
 WRITE(7,*) 'warning : ithion not yet able to treat unhomogeneous systems'
 
 !     attention to masses !
 
-ekin=ekin/3/nion*(3*nion-6.0)
-vmoy=SQRT(3.0*2.0*ekin/xm)
+ekin=ekin/3/nion*(3*nion-6D0)
+vmoy=SQRT(3D0*2D0*ekin/xm)
 WRITE(7,'(a,f9.4)') 'corresponding speed',vmoy
 pmoy=xm*vmoy
 
@@ -3513,16 +3513,16 @@ DO ion=1,nion
   ek=ek+cpx(ion)*cpx(ion)
   ek=ek+cpy(ion)*cpy(ion)
   ek=ek+cpz(ion)*cpz(ion)
-  xm=0.5D0*1836.0*amu(np(1))*ame
-  ek=ek/2.0/xm
+  xm=0.5D0*1836D0*amu(np(1))*ame
+  ek=ek/2D0/xm
   WRITE(7,'(a,i2,a,f9.4)') 'ion',ion,'ek=',ek
   ekion=ekion+ek
   WRITE(7,'(a,i2,3f9.4)') 'ion',ion,cpx(ion),cpy(ion),cpz(ion)
 END DO
 WRITE(7,'(a,f9.4)') 'kin.energ after renormalization',ekion
-ekion=ekion/(3*nion-6.0)
+ekion=ekion/(3*nion-6D0)
 WRITE(7,'(a,f9.4)') 'av.kin.energ per net degree of freedom',ekion
-ekion=ekion*2.0/bk
+ekion=ekion*2D0/bk
 WRITE(7,'(a,f9.4)') 'corresponding temperature',ekion
 
 
@@ -3651,7 +3651,7 @@ IF(iswap == 1) THEN
   
 !   find and fix z-axis = axis with outstanding moment of inertia
   
-  aviner = 1./3. * (dminer(1) + dminer(2) + dminer(3))
+  aviner = 1D0/3D0 * (dminer(1) + dminer(2) + dminer(3))
   delmx  = dminer(3) - aviner
   iax    = 3
 !   check whether x or y are outstanding

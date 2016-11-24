@@ -351,7 +351,7 @@ END IF
 !     re-scale distances in inner region if desired
 
 
-IF (ABS(scaledist-1.0) > small .AND. iusecell == 0) THEN
+IF (ABS(scaledist-1D0) > small .AND. iusecell == 0) THEN
   
   
   xcm = 0D0
@@ -414,13 +414,13 @@ energyg = 0D0
 CALL initimpulses(0)
 
 IF(ekmat > 0D0)THEN
-  rarmass = (REAL(nc))*mion*1836.*ame
+  rarmass = (REAL(nc,DP))*mion*1836.D0*ame
 !c     ekmat in eV
-  ekmat = ekmat/13.6
+  ekmat = ekmat/13.6D0
 !c     ekmat in Ry
   DO ion=1,nc
-    pxc(ion)=(1836.*mion*ame)*(2.*ekmat/rarmass)**0.5
-    pxe(ion)=(1836.*me*ame)*(2.*ekmat/rarmass)**0.5
+    pxc(ion)=(1836.D0*mion*ame)*SQRT(2D0*ekmat/rarmass)
+    pxe(ion)=(1836.D0*me*ame)*SQRT(2D0*ekmat/rarmass)
   END DO
   ekion = ekmat
 END IF
@@ -1565,10 +1565,10 @@ END DO
 
 !     temp is not T but rather kT
 
-ttempc = ttempc + 2.0/3.0*sumc/nc**2
-ttempe = ttempe + 2.0/3.0*sume/NE**2
-ttempk = ttempk + 2.0/3.0*sumk/nc**2
-ttemp = ttemp + 2.0/3.0*(sumc+sume+sumk)/(nc+NE+nk)**2
+ttempc = ttempc + 2D0/3D0*sumc/nc**2
+ttempe = ttempe + 2D0/3D0*sume/NE**2
+ttempk = ttempk + 2D0/3D0*sumk/nc**2
+ttemp = ttemp + 2D0/3D0*(sumc+sume+sumk)/(nc+NE+nk)**2
 
 IF (MOD(itindex,10) == 0) THEN
   tempc = ttempc/10
@@ -1583,7 +1583,7 @@ END IF
 
 IF (MOD(itindex,ithermevry) == 0) THEN
   WRITE(128,'(1f15.5,5e15.5)') t,tempc,tempe,tempk,temper,  &
-      temp*1.5789E5*(nc+NE+nk)
+      temp*1.5789D5*(nc+NE+nk)
 END IF
 
 END SUBROUTINE calctemp
