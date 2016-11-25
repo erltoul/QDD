@@ -141,7 +141,7 @@ IF(isurf /= 0)THEN
       
       varelcore1(ind) =  &
           e2*coreheight*corewidth*EXP(corewidth*(r-coreradius))/  &
-          (1.+EXP(corewidth*(r-coreradius)))**2
+          (1D0+EXP(corewidth*(r-coreradius)))**2
       
       add0 = v_soft(r,sigvdw)
       add0 =  add0**8*e2*r*r*vdwh

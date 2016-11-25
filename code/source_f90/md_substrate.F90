@@ -2029,7 +2029,7 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-rgetmaxpol = -1.
+rgetmaxpol = -1D0
 
 DO i=1,nc
   rr = (xc(i)-xe(i))**2+(yc(i)-ye(i))**2 +(zc(i)-ze(i))**2

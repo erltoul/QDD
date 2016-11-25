@@ -155,7 +155,7 @@ INTEGER :: iforce=0
 INTEGER :: ipseudo=1          ! switch on/off subgrids and pseudo-densities
 REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
-REAL(DP) :: b2occ=0.4,gamocc=10.0,deocc=0D0,osfac=1D0 !  h.o.initalization
+REAL(DP) :: b2occ=0.4D0,gamocc=10D0,deocc=0D0,osfac=1D0 !  h.o.initalization
 REAL(DP) :: temp=0D0,occmix=0.5D0,epsoro=1D-6        !  electron temperature
 INTEGER :: isurf=0
 REAL(DP) :: endcon=1D-5,radjel=4D0,surjel=1D0     !  jellium params

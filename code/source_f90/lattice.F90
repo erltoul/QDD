@@ -359,7 +359,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -400,7 +400,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -516,7 +516,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**.5
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       

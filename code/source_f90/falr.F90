@@ -666,7 +666,7 @@ xyzmin = MIN(xmax,ymax,zmax)
 xyzmax = MAX(xmax,ymax,zmax)
 binup = SQRT(xmax*xmax+ymax*ymax+zmax*zmax)
 rad0 = xyzmax
-fzrm = xyzmin/5.5
+fzrm = xyzmin/5.5D0
 
 agen = 6D0*SQRT(LOG(two))/xyzmin
 ax2(0) = agen*agen
@@ -789,7 +789,7 @@ DO l=0,4
         IF(rad < 1.d-2) THEN
           t1 = zero
         ELSE
-          radpow = 2D0*l+2.
+          radpow = 2D0*l+2D0
 !          CALL qgaus(fx1,zero,rad,t1)
           CALL qgaus_fx1(zero,rad,t1)
           t1 = t1/(rad**(2*l+1))

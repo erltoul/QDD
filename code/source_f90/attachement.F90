@@ -402,13 +402,13 @@ IF(kstate > nmax) STOP 'LUDCMP: too large matrix'
 ierror = 0
 d=1D0
 DO i=1,n
-  aamax=0.D0
+  aamax=0D0
   DO j=1,n
     IF (ABS(a(i,j)) > aamax) aamax=ABS(a(i,j))
   END DO
 !  WRITE(*,*) 'aamax:',aamax
   if (aamax.eq.0D0) stop 'singular matrix in ludcmp'
-  IF (aamax == 0.D0) THEN
+  IF (aamax == 0D0) THEN
     ierror = 99
 !    WRITE(6,*)'ierror=99'
     RETURN

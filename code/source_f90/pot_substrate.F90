@@ -146,7 +146,7 @@ DO is=1,nc
         rr = MAX(rr,small)    ! avoid zero
         ind = ind + 1
         
-        potvdw(ind) = potvdw(ind) + v_vdw(ri,rr,is,1.)
+        potvdw(ind) = potvdw(ind) + v_vdw(ri,rr,is,1D0)
         
         
       END DO

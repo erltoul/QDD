@@ -614,7 +614,7 @@ ELSE
   STOP ' ADSIC not yet ready for nospin and finite diff.'
 #endif
 
-  fac = 1.0/npartto
+  fac = 1D0/npartto
 #if(parayes)
   CALL pi_scatterv(chpcoul,nxyz,tp1,size,icode)
   CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)

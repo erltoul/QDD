@@ -313,9 +313,9 @@ DO loop2 = 1,nloop2
 !     vary the coordinates of this ion:
     
     5          CALL RANDOM_NUMBER(rand3)
-    deltax = 2.*delps3*(rand3(1)-oh)
-    deltay = 2.*delps3*(rand3(2)-oh)
-    deltaz = 2.*delps3*(rand3(3)-oh)
+    deltax = 2D0*delps3*(rand3(1)-oh)
+    deltay = 2D0*delps3*(rand3(2)-oh)
+    deltaz = 2D0*delps3*(rand3(3)-oh)
     delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
     IF (delta2 > delps3*delps3) GO TO 5
     

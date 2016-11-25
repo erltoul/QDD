@@ -372,8 +372,8 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 COMPLEX(DP) :: csum
 !WRITE(6,*) 'Entering orbitalOverlap'
 
-sumr=0.
-sumi=0.
+sumr=0D0
+sumi=0D0
 
 DO ind=1,kdfull2
   sumr=sumr+REAL(q1(ind),DP)*REAL(q2(ind),DP) + AIMAG(q1(ind))*AIMAG(q2(ind))
@@ -405,7 +405,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 
 
-sumr=0.
+sumr=0D0
 
 DO ind=1,kdfull2
   sumr=sumr+REAL(q1(ind),DP)*REAL(q2(ind),DP) + AIMAG(q1(ind))*AIMAG(q2(ind))
@@ -3567,7 +3567,7 @@ ELSE
     DO i=1,nmax
       gapeq = ph(i)/SQRT((e(i)-eferm)*(e(i)-eferm)+delta*delta) + gapeq
     END DO
-    gp     = 4.0/gapeq                       !?? account for wate=2.
+    gp     = 4D0/gapeq                       !?? account for wate=2.
   END IF
   
 !     end of big switch between cases
@@ -3591,7 +3591,7 @@ IF(iab >= -1 .AND. iwarng == 1) WRITE(7,'(2(a,g11.3),2(a,i3))')  &
 
 IF(iab >= 0) THEN
   IF(ipair /= 4) THEN
-    gphalf = gp*0.5
+    gphalf = gp*0.5D0
     del2   = MAX(xmaxlw,delta*delta)
     gapeq  = zero
     partnm = zero
