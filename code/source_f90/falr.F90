@@ -1304,7 +1304,7 @@ IF(mumpri) THEN
       ' q33r=',q33r,' q33i=',q33i
   WRITE(7,'(a,e12.4,4(a,e12.4)/4(a,e12.4))') ' q40 =',q40,  &
       ' q41r=',q41r,' q41i=',q41i, ' q42r=',q42r,' q42i=',q42i,  &
-      ' q43r=',q43r,' q43i=',q42i, ' q44r=',q44r,' q44i=',q44i
+      ' q43r=',q43r,' q43i=',q43i, ' q44r=',q44r,' q44i=',q44i
 END IF
 
 IF(mumpri) THEN
