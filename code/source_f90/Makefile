@@ -86,13 +86,13 @@ POST_UNINSTALL = :
 #Add FFTW Linkerflags
 #am__append_3 = $(LD_FFTW)
 #Add CUDA linkerflags
-am__append_4 = $(LD_CUDA)
+#am__append_4 = $(LD_CUDA)
 #sic-conditional objects:
 #am__append_5 = 2stUTc.$(OBJEXT) localize_rad.$(OBJEXT)
-##bin_PROGRAMS = pwteleman$(EXEEXT)
-##bin_PROGRAMS = mkl_pwteleman$(EXEEXT)
-##bin_PROGRAMS = fftw_pwteleman$(EXEEXT)
-bin_PROGRAMS = gpu_pwteleman$(EXEEXT)
+bin_PROGRAMS = pwteleman$(EXEEXT)
+#bin_PROGRAMS = mkl_pwteleman$(EXEEXT)
+#bin_PROGRAMS = fftw_pwteleman$(EXEEXT)
+#bin_PROGRAMS = gpu_pwteleman$(EXEEXT)
 subdir = code/source_f90
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -117,7 +117,7 @@ fftw_pwteleman_OBJECTS = $(am_fftw_pwteleman_OBJECTS)
 am__DEPENDENCIES_1 =
 #am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 #am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
-am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
+#am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
 am__DEPENDENCIES_5 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 	$(am__DEPENDENCIES_4)
 #fftw_pwteleman_DEPENDENCIES = $(OBJFFTW) $(OBJCOULSOLV) \
@@ -125,11 +125,11 @@ am__DEPENDENCIES_5 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 fftw_pwteleman_LINK = $(FCLD) $(fftw_pwteleman_FCFLAGS) $(FCFLAGS) \
 	$(fftw_pwteleman_LDFLAGS) $(LDFLAGS) -o $@
 am__gpu_pwteleman_SOURCES_DIST = main.F90
-am_gpu_pwteleman_OBJECTS =  \
-	gpu_pwteleman-main.$(OBJEXT)
+#am_gpu_pwteleman_OBJECTS =  \
+#	gpu_pwteleman-main.$(OBJEXT)
 gpu_pwteleman_OBJECTS = $(am_gpu_pwteleman_OBJECTS)
-gpu_pwteleman_DEPENDENCIES = $(OBJCUDA) $(OBJCOMMON) \
-	$(am__DEPENDENCIES_5)
+#gpu_pwteleman_DEPENDENCIES = $(OBJCUDA) $(OBJCOMMON) \
+#	$(am__DEPENDENCIES_5)
 gpu_pwteleman_LINK = $(FCLD) $(gpu_pwteleman_FCFLAGS) $(FCFLAGS) \
 	$(gpu_pwteleman_LDFLAGS) $(LDFLAGS) -o $@
 am__mkl_pwteleman_SOURCES_DIST = main.F90
@@ -140,10 +140,10 @@ mkl_pwteleman_OBJECTS = $(am_mkl_pwteleman_OBJECTS)
 mkl_pwteleman_LINK = $(FCLD) $(mkl_pwteleman_FCFLAGS) $(FCFLAGS) \
 	$(mkl_pwteleman_LDFLAGS) $(LDFLAGS) -o $@
 am__pwteleman_SOURCES_DIST = main.F90
-#am_pwteleman_OBJECTS = pwteleman-main.$(OBJEXT)
+am_pwteleman_OBJECTS = pwteleman-main.$(OBJEXT)
 pwteleman_OBJECTS = $(am_pwteleman_OBJECTS)
-#pwteleman_DEPENDENCIES = $(OBJFFTPACK) $(OBJCOULSOLV) \
-#	$(OBJCOMMON) $(am__DEPENDENCIES_5)
+pwteleman_DEPENDENCIES = $(OBJFFTPACK) $(OBJCOULSOLV) \
+	$(OBJCOMMON) $(am__DEPENDENCIES_5)
 pwteleman_LINK = $(FCLD) $(pwteleman_FCFLAGS) $(FCFLAGS) \
 	$(pwteleman_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_$(V))
@@ -222,7 +222,7 @@ CPPFLAGS =
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
-DFFT = -Dfftw_gpu
+DFFT = -Dnetlib_fft
 DIDRIS = 
 DMPI = -Dparano
 DOMP = 
@@ -240,8 +240,8 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS =  -L/opt/cuda/7.5/lib64
-LD_CUDA = -lcudart -lcufft -lstdc++
+LDFLAGS = 
+LD_CUDA = 
 LD_FFTW = 
 LD_MPI = 
 LIBOBJS = 
@@ -249,7 +249,7 @@ LIBS =
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/permanent/flabbe/Documents/TELEMAN/pw-teleman/missing makeinfo
 MKDIR_P = /bin/mkdir -p
-NVCC_PATH = /opt/cuda/7.5
+NVCC_PATH = 
 OBJEXT = o
 OPENMP_FCFLAGS = -fopenmp
 PACKAGE = pw-teleman
@@ -323,14 +323,14 @@ twostsic = 0
 #OPT1 = -w -O3 -mfpmath=sse
 
 # Compiler-dependent options
-##OPT1 = -pg -w -g -fbacktrace
+##OPT1 = -pg -w -g -fbacktrace -fdefault-double-8
 OPT1 = -fpp -w -xW -O3 -ip -no-prec-div -align all
-#OPT1 = -pg -fpp -w -g -CB -traceback -align all
-#OPT1 = -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+#OPT1 = -pg -fpp -w -g -CB -traceback -align all -autodouble
+#OPT1 = -w -O3 -mfpmath=sse
 
 # underlying compiler for mpif90
 ##OPT1 = -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-##OPT1 = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+##OPT1 = -fpp -w -xW -O3 -ip -no-prec-div -align all
 ###OPT1 = -pg -fpp -w -g -CB -traceback -align all -autodouble
 ##OPT1 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
 ###OPT1 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
@@ -339,12 +339,12 @@ OPT1 = -fpp -w -xW -O3 -ip -no-prec-div -align all
 #~ OPT3  =-fpp -w        -g                            -align all -autodouble
 #OPT1 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
 #OPT2 = -w -O3 -mfpmath=sse
-##OPT2 = $(OPT1)
+##OPT2 = $(OPT1) 
 OPT2 = -fpp -w -xW -O3 -ip -no-prec-div -align all
-#OPT2 = -pg -fpp -w -g -CB -traceback -align all
-#OPT2 = -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+#OPT2 = -pg -fpp -w -g -CB -traceback -align all -autodouble
+#OPT2 = -w -O3 -mfpmath=sse
 ##OPT2 = $(OPT1)
-##OPT2 = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+##OPT2 = -fpp -w -xW -O3 -ip -no-prec-div -align all
 ###OPT2 = -pg -fpp -w -g -CB -traceback -align all -autodouble
 ##OPT2 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
 ###OPT2 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
@@ -352,10 +352,10 @@ OPT2 = -fpp -w -xW -O3 -ip -no-prec-div -align all
 #OPT3 = -w -g  
 ##OPT3 = $(OPT2)
 OPT3 = -fpp -w       -g                 -align all
-#OPT3 = -pg -fpp -w -g                -align all
-#OPT3 = -w -g  -fdefault-real-8 -fdefault-double-8
+#OPT3 = -pg -fpp -w -g                -align all -autodouble
+#OPT3 = -w -g  
 ##OPT3 = $(OPT2)
-##OPT3 = -fpp -w       -g                 -align all -autodouble
+##OPT3 = -fpp -w       -g                 -align all
 ###OPT3 = -pg -fpp -w -g                -align all -autodouble
 ##OPT3 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
 ###OPT3 = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
@@ -365,10 +365,10 @@ OPT3 = -fpp -w       -g                 -align all
 #OPTGPU = -O3 --gpu-architecture sm_13 
 #OPTGPU = -O3 --gpu-architecture sm_20 
 #OPTGPU = -O3 --gpu-architecture sm_30 
-OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
+#OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
 
 #OPTGPU = -g -G --gpu-architecture sm_13 
-#OPTGPU = -g -G --gpu-architecture sm_20 
+##OPTGPU = -g -G --gpu-architecture sm_20 
 #for CCC with older GPU cards 
 # OPTGPU = -O3 --gpu-architecture sm_20  -maxrregcount=20 --use_fast_math --ptxas-options=-v
 #endif
@@ -380,7 +380,7 @@ OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-
 COMPILERFLAGS1 = $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT1) $(DMPI) $(DOMP) $(DFFT) 
 COMPILERFLAGS2 = $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT2) $(DMPI) $(DOMP) $(DFFT) 
 COMPILERFLAGS3 = $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT3) $(DMPI) $(DOMP) $(DFFT) 
-GPUCOMPILERFLAGS = $(OPTGPU) $(DMPI) $(DOMP)
+#GPUCOMPILERFLAGS = $(OPTGPU) $(DMPI) $(DOMP)
 #default compilation rules 
 AM_FCFLAGS = $(COMPILERFLAGS1)
 
@@ -392,11 +392,11 @@ DEPENDENCIES = define.h
 #						 libraries list
 ########################################################################
 # FFT libraries
-#OBJFFTPACK = fftpack.$(OBJEXT)
+OBJFFTPACK = fftpack.$(OBJEXT)
 #OBJFFTW = fftw.$(OBJEXT)
-OBJCUDA = cuda.$(OBJEXT) cuda_alloc.$(OBJEXT)
-GPU_COMPILER = nvcc
-#OBJCOULSOLV = coulsolv.$(OBJEXT)
+#OBJCUDA = cuda.$(OBJEXT) cuda_alloc.$(OBJEXT)
+#GPU_COMPILER = nvcc
+OBJCOULSOLV = coulsolv.$(OBJEXT)
 ########################################################################
 # 		        	Program name and complation rules
 ########################################################################
@@ -416,10 +416,10 @@ OBJCOMMON = $(OBJKINPARA) restart.$(OBJEXT) restartc.$(OBJEXT) \
 	attachement.$(OBJEXT) sicnew.$(OBJEXT) sicnewc.$(OBJEXT) \
 	init.$(OBJEXT) generlcgo.$(OBJEXT) 2stUT.$(OBJEXT) \
 	orthmat.$(OBJEXT) $(am__append_5)
-#pwteleman_SOURCES = main.F90
-#pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-#pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
-#pwteleman_LDFLAGS = $(LINKERFLAGS)
+pwteleman_SOURCES = main.F90
+pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
+pwteleman_LDFLAGS = $(LINKERFLAGS)
 #fftw_pwteleman_SOURCES = main.F90
 #fftw_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 #fftw_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
@@ -428,10 +428,10 @@ OBJCOMMON = $(OBJKINPARA) restart.$(OBJEXT) restartc.$(OBJEXT) \
 #mkl_pwteleman_FCFLAGS = $(COMPILERFLAGS1)
 #mkl_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
 #mkl_pwteleman_LDFLAGS = $(LINKERFLAGS)
-gpu_pwteleman_SOURCES = main.F90
-gpu_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
-gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
+#gpu_pwteleman_SOURCES = main.F90
+#gpu_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+#gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
+#gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
 
 #~ initial_checks: makefile define.mk define.h
 #~ 	@echo "#######################################################"
@@ -807,10 +807,10 @@ uninstall-am: uninstall-binPROGRAMS
 	ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-binPROGRAMS
 
-#pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON)
+pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON)
 #fftw_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON)
 #mkl_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON)
-gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
+#gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
 
 ########################################################################
 #               Compilation rules for objects
@@ -835,22 +835,22 @@ cuda_alloc.$(OBJEXT): cuda_alloc.F90 Makefile
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 #kinetic.o
-#kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
-#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 #kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTW) params.$(OBJEXT)  Makefile
 #	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
-kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90  $(OBJCUDA) params.$(OBJEXT) Makefile
-	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+#kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90  $(OBJCUDA) params.$(OBJEXT) Makefile
+#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 # coulsolv.o
-#coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
-#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 #coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTW) $(OBJKINPARA) Makefile
 #	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 # coulsolv does not work with cuda (yet ?)
 #~ if USE_CUDA
 #~ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJCUDA) params.o Makefile
-#~ 	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $< $(AM_LDFLAGS)
+#~ 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< $(AM_LDFLAGS)
 #~ endif
 
 # sicnew.o
@@ -863,7 +863,7 @@ sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 
 # restart.o
 #restart.$(OBJEXT): restart.F90 define.h 2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -autodouble -autodouble -c -o $@ $<
+#	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
 restart.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
@@ -889,17 +889,17 @@ localizer.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 
 # localize_rad.o
 localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # static.o
-#static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
-##static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
-##	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
-#static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+##static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+##	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
+#static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 #	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+#static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
+static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 # orthmat.o
 orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
@@ -907,17 +907,17 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 
 # 2stUT.o
 #2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+#	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 2stUT.$(OBJEXT): 2stUT.F90 define.h  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # 2stUTc.o 
-#2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -autodouble -c -o $@ $<
+2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # dynamic.o
 #dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS1) -autodouble -autodouble -c -o $@ $<
+#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 dynamic.$(OBJEXT): dynamic.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 # lda.o
@@ -970,11 +970,11 @@ rhoc.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
 
 # nonloc.o 
 nonloc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # nonlocc.o 
 nonlocc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # schmid.o
 schmid.$(OBJEXT): schmid.F90 define.h params.$(OBJEXT)
@@ -1002,7 +1002,7 @@ parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
 
 # expevol.o
 #expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) $(OBJKINPARA)
-#	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+#	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 expevol.$(OBJEXT): expevol.F90 define.h  $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
