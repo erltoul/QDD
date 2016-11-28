@@ -1,8 +1,8 @@
 # Compiler-dependent options
 if GFORT
 if USE_DEBUG
-OPT1  =  -pg -w -g -fbacktrace
-OPT2  =  $(OPT1)
+OPT1  =  -pg -w -g -fbacktrace -fdefault-double-8
+OPT2  =  $(OPT1) 
 OPT3  =  $(OPT2)
 else
 OPT1=-w -O3 -mfpmath=sse
@@ -13,9 +13,9 @@ endif
 
 if IFORT
 if USE_DEBUG
-OPT1  =  -pg -fpp -w -g -CB -traceback -align all
-OPT2  =  -pg -fpp -w -g -CB -traceback -align all
-OPT3  =  -pg -fpp -w -g                -align all
+OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
+OPT3  =  -pg -fpp -w -g                -align all -autodouble
 else
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all
@@ -41,9 +41,9 @@ OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 OPT2  =  $(OPT1)
 OPT3  =  $(OPT2)
 else
-OPT1=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
-OPT2=-w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
-OPT3=-w -g  -fdefault-real-8 -fdefault-double-8
+OPT1=-w -O3 -mfpmath=sse
+OPT2=-w -O3 -mfpmath=sse
+OPT3=-w -g  
 endif
 endif
 
@@ -53,9 +53,9 @@ OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
 OPT3  =  -pg -fpp -w -g                -align all -autodouble
 else
-OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-OPT3  = -fpp -w       -g                 -align all -autodouble
+OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
+OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all
+OPT3  = -fpp -w       -g                 -align all
 endif
 endif
 
