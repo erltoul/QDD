@@ -14,12 +14,12 @@
 #define coufou 0
 #define coudoub 1
 !   switch to 3D FFTW in Coulomb solver (preliminary option)
-#define coudoub3D 1
+#define coudoub3D 0
 !
 ! full SIC and localized SIC
 !
-#define twostsic 1
-#define cmplxsic 1
+#define twostsic 0
+#define cmplxsic 0
 !
 !  
 ! switch to extended model with polarizable raregas

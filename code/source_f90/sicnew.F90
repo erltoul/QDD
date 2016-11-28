@@ -158,7 +158,7 @@ IF(ifsicp == 1 .OR. ifsicp >= 3) THEN
 #ifdef REALSWITCH
         rhosp(ind)       = q0(ind,nb)*q0(ind,nb)
 #else
-        rhosp(ind)       = REAL(CONJG(q0(ind,nb))*q0(ind,nb))
+        rhosp(ind)       = REAL(CONJG(q0(ind,nb))*q0(ind,nb),DP)
 #endif
         rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
         rho1(ind)        = rhosp(ind)
@@ -182,9 +182,9 @@ IF(ifsicp == 1 .OR. ifsicp >= 3) THEN
 !           GAM: subtract with global weight from pure LDA potential
         
         IF(ishift == 0) THEN
-          fac = occup(nb)/(npartup*1.0)
+          fac = occup(nb)/(npartup*1D0)
         ELSE
-          fac = occup(nb)/(1.0*npartdw)
+          fac = occup(nb)/(1D0*npartdw)
         END IF
         DO ind=1,nxyz
           idx = ind+ishift
@@ -194,7 +194,7 @@ IF(ifsicp == 1 .OR. ifsicp >= 3) THEN
       END IF
     END IF
   END DO
-  encadd=encadd/2.0
+  encadd=encadd/2D0
   enrear   = enrearsave-enrear1-enrear2
   IF(directenergy) THEN
     enerpw   = enerpwsave-enpw1-enpw2-encadd
@@ -229,15 +229,15 @@ IF(numspin==2) THEN
   CALL solv_fft(rho1(1),couldif,dx,dy,dz)
 !      call solv_FFT(rho2(1),coulsum,dx,dy,dz)
 #endif
-  facup = 1.0/npartup
-  facdw = 1.0/npartdw
+  facup = 1D0/npartup
+  facdw = 1D0/npartdw
 
 
   DO ind=1,nxyz
 !        coulup    = 0.5*(coulsum(ind)+couldif(ind))
 !        couldw    = 0.5*(coulsum(ind)-couldif(ind))
-    coulup    = 0.5*(chpcoul(ind)+couldif(ind))    ! reuse total Coul
-    couldw    = 0.5*(chpcoul(ind)-couldif(ind))
+    coulup    = 0.5D0*(chpcoul(ind)+couldif(ind))    ! reuse total Coul
+    couldw    = 0.5D0*(chpcoul(ind)-couldif(ind))
     aloc(ind) = aloc(ind) - coulup*facup
     idx       = ind + nxyz
     aloc(idx) = aloc(idx) - facdw*couldw
@@ -257,7 +257,7 @@ ELSE
   STOP ' SIC-GAM not yet ready for nospin and finite diff.'
 #endif
 
-  fac = 1.0/npartto
+  fac = 1D0/npartto
   DO ind=1,nxyz
     aloc(ind) = aloc(ind) - fac*chpcoul(ind)
   END DO
@@ -363,16 +363,16 @@ IF(numspin==2) THEN
 !     averaged spinup and spindown density
 
   IF(npartup > 0) THEN
-    facuph = 0.5/npartup
+    facuph = 0.5D0/npartup
   
 !    DO ind=1,nxyz
     DO ind=1,size
 #if(parayes)
-      tp1(ind)=rhonod1(ind)*(1.0+rhonod2(ind))*facuph
-      tp2(ind)=1.0
+      tp1(ind)=rhonod1(ind)*(1D0+rhonod2(ind))*facuph
+      tp2(ind)=1D0
 #else
-      rhospu(ind)=rho(ind)*(1.0+rho(ind+nxyz))*facuph
-      rhospu(ind+nxyz)=1.0
+      rhospu(ind)=rho(ind)*(1D0+rho(ind+nxyz))*facuph
+      rhospu(ind+nxyz)=1D0
 #endif
     END DO
   END IF
@@ -382,16 +382,16 @@ IF(numspin==2) THEN
 #endif
 
   IF(npartdw > 0) THEN
-    facdwh = 0.5/npartdw
+    facdwh = 0.5D0/npartdw
   
 !    DO ind=1,nxyz
     DO ind=1,size
 #if(parayes)
-      tp1(ind)=rhonod1(ind)*(1.0-rhonod2(ind))*facdwh
-      tp2(ind)=-1.0
+      tp1(ind)=rhonod1(ind)*(1D0-rhonod2(ind))*facdwh
+      tp2(ind)=-1D0
 #else
-      rhospd(ind)=rho(ind)*(1.0-rho(ind+nxyz))*facdwh
-      rhospd(ind+nxyz)=-1.0
+      rhospd(ind)=rho(ind)*(1D0-rho(ind+nxyz))*facdwh
+      rhospd(ind+nxyz)=-1D0
 #endif
     END DO
   END IF
@@ -462,7 +462,7 @@ ELSE
   ALLOCATE(chpdftsp(2*kdfull2))
   ALLOCATE(rhosp(2*kdfull2))
 
-  factotal=1.0/npartto
+  factotal=1D0/npartto
 
 #if(parayes)
   ALLOCATE(aloc1(size))
@@ -472,10 +472,10 @@ ELSE
   DO ind=1,size
 #if(parayes)
     tp1(ind)=rhonod1(ind)*factotal
-    tp2(ind)=1.0
+    tp2(ind)=1D0
 #else
     rhosp(ind)=rho(ind)*factotal
-    rhosp(ind+nxyz)=1.0
+    rhosp(ind+nxyz)=1D0
 #endif
   END DO
 
@@ -550,7 +550,7 @@ IF(numspin==2) THEN
   CALL solv_fft(rho1(1),couldif,dx,dy,dz)
   CALL solv_fft(rho2(1),coulsum,dx,dy,dz)
 #endif
-  facup = 1.0/npartup
+  facup = 1D0/npartup
 
 #if(parayes)
   CALL pi_scatterv(coulsum,nxyz,tp1,size,icode)
@@ -560,10 +560,10 @@ IF(numspin==2) THEN
 !  DO ind=1,nxyz
   DO ind=1,size
 #if(parayes)
-    coulup    = 0.5*(tp1(ind)+tp2(ind))
+    coulup    = 0.5D0*(tp1(ind)+tp2(ind))
     aloc1(ind) = aloc1(ind) - coulup*facup
 #else
-    coulup    = 0.5*(coulsum(ind)+couldif(ind))
+    coulup    = 0.5D0*(coulsum(ind)+couldif(ind))
     aloc(ind) = aloc(ind) - coulup*facup
 #endif
   END DO
@@ -577,14 +577,14 @@ IF(numspin==2) THEN
 #if(parayes)
     CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,icode)
 #endif
-    facdw = 1.0/npartdw
+    facdw = 1D0/npartdw
 !    DO ind=1,nxyz
     DO ind=1,size
 #if(parayes)
-      couldw    = 0.5*(tp1(ind)-tp2(ind))
+      couldw    = 0.5D0*(tp1(ind)-tp2(ind))
       aloc2(ind) = aloc2(ind) - facdw*couldw
 #else
-      couldw    = 0.5*(coulsum(ind)-couldif(ind))
+      couldw    = 0.5D0*(coulsum(ind)-couldif(ind))
       idx       = ind + nxyz
       aloc(idx) = aloc(idx) - facdw*couldw
 #endif
@@ -614,7 +614,7 @@ ELSE
   STOP ' ADSIC not yet ready for nospin and finite diff.'
 #endif
 
-  fac = 1.0/npartto
+  fac = 1D0/npartto
 #if(parayes)
   CALL pi_scatterv(chpcoul,nxyz,tp1,size,icode)
   CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
@@ -714,12 +714,12 @@ encadd = 0D0
 
 IF(npartup > 0) THEN
   DO ind=1,nxyz
-    rhospu(ind)=MAX(rho(ind)*(1.0+rho(ind+nxyz))*0.5,small)
+    rhospu(ind)=MAX(rho(ind)*(1D0+rho(ind+nxyz))*0.5D0,small)
   END DO
 END IF
 IF(npartdw > 0) THEN
   DO ind=1,nxyz
-    rhospd(ind)=MAX(rho(ind)*(1.0-rho(ind+nxyz))*0.5,small)
+    rhospd(ind)=MAX(rho(ind)*(1D0-rho(ind+nxyz))*0.5D0,small)
   END DO
 END IF
 
@@ -761,7 +761,7 @@ DO nb=1,nstate
     END IF
   END IF
 END DO
-encadd=encadd/2.0
+encadd=encadd/2D0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd
@@ -800,7 +800,7 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-PARAMETER (sgnkli=-1.0)
+PARAMETER (sgnkli=-1D0)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -834,17 +834,17 @@ CALL act_part_num(npartup,npartdw,npartto)
 IF(temp /= 0D0) STOP 'KLI not yet compatible with temperature'
 nfup = 0
 nfdw = 0
-IF(sgnkli == -1.0) THEN
+IF(sgnkli == -1D0) THEN
   efermup = -1000D0
   efermdw = -1000D0
   DO nb=1,nstate
     IF (ispin(nrel2abs(nb)) == 1) THEN      ! M : 1=up 2=down
-      IF(amoy(nb) > efermup .AND. occup(nb) > 0.5) THEN
+      IF(amoy(nb) > efermup .AND. occup(nb) > 0.5D0) THEN
         nfup = nb
         efermup = amoy(nb)
       END IF
     ELSE
-      IF(amoy(nb) > efermdw .AND. occup(nb) > 0.5) THEN
+      IF(amoy(nb) > efermdw .AND. occup(nb) > 0.5D0) THEN
         nfdw = nb
         efermdw = amoy(nb)
       END IF
@@ -873,12 +873,12 @@ ALLOCATE(rhospu(2*kdfull2),rhospd(2*kdfull2))
 
 IF(npartup > 0) THEN
   DO ind=1,nxyz
-    rhospu(ind)=MAX(rho(ind)*(1.0+rho(ind+nxyz))*0.5,small)
+    rhospu(ind)=MAX(rho(ind)*(1D0+rho(ind+nxyz))*0.5D0,small)
   END DO
 END IF
 IF(npartdw > 0) THEN
   DO ind=1,nxyz
-    rhospd(ind)=MAX(rho(ind)*(1.0-rho(ind+nxyz))*0.5,small)
+    rhospd(ind)=MAX(rho(ind)*(1D0-rho(ind+nxyz))*0.5D0,small)
   END DO
 END IF
 
@@ -950,7 +950,7 @@ DO nb=1,nstate
     END IF
   END IF
 END DO
-encadd=encadd/2.0
+encadd=encadd/2D0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd
@@ -1004,8 +1004,8 @@ DO itkli=1,itmaxkli
       END IF
     END IF
   END DO
-  addn = 0.3
-  addo = 1.0-addn
+  addn = 0.3D0
+  addo = 1D0-addn
   sumup = 0D0
   sumdw = 0D0
   DO ind=1,nxyz
@@ -1021,7 +1021,7 @@ DO itkli=1,itmaxkli
   END DO
   sumup = dvol*sumup
   sumdw = dvol*sumdw
-  IF(sgnkli == -1.0) THEN        ! asymptotic correction
+  IF(sgnkli == -1D0) THEN        ! asymptotic correction
     acc = 0D0
     DO ind=1,nxyz
       acc = rhospu(ind)*rhokli(ind,nfup)*ukli(ind)+acc
@@ -1046,7 +1046,7 @@ DO itkli=1,itmaxkli
       sumup,sumdw,epsoro
 !old   &      sumup-sumslup,sumdw-sumsldw,epsoro
 !old        if(abs(sumup-sumslup)+abs(sumdw-sumsldw).lt.epsoro) goto 99
-  IF(sumup+sumdw < epsoro**2*2.0) GO TO 99
+  IF(sumup+sumdw < epsoro**2*2D0) GO TO 99
   sumslup = sumup
   sumsldw = sumdw
 END DO
@@ -1202,7 +1202,7 @@ IF(occup(nb) > small) THEN
 !         density for s.p. state
   
   DO ind=1,nxyz
-    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
+    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind),DP)
     rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
     rho1(ind)        = rhosp(ind)
   END DO
@@ -1357,7 +1357,7 @@ IF(occup(nb) > small) THEN
 #ifdef REALSWITCH
     rhosp(ind)  = q0state(ind)*q0state(ind)
 #else
-    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind))
+    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind),DP)
 #endif
     rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
     rho1(ind)        = rhosp(ind)
@@ -1520,7 +1520,7 @@ DO nbe=1,nstate
         rh(ind)= q0(ind,nb2)*q0(ind,nbe)
 #else
         rhoc= CONJG(psisavex(ind,nb2))*q0(ind)
-        rh(ind)= REAL(rhoc)
+        rh(ind)= REAL(rhoc,DP)
         rhi(ind)= AIMAG(rhoc)
 #endif
       END DO

@@ -29,23 +29,23 @@ INTEGER :: ifall
 
     ionsin    = 3
     iknow     = 0
-    facann    = 1.5
+    facann    = 1.5D0
     nrun      = 100
     nloop1    = 100
     nloop2    = 200
-    cptemp    = 0.008
-    delpos    = 0.2
+    cptemp    = 0.008D0
+    delpos    = 0.2D0
     ERR       = 6.0D-5
     ifall     = 121466
-    trfac2    = 0.03
-    prfac2    = 0.05
-    errsim    = 0.001
+    trfac2    = 0.03D0
+    prfac2    = 0.05D0
+    errsim    = 0.001D0
     ncsim     = 10
-    errtot    = 0.002
+    errtot    = 0.002D0
     ncon      = 8
-    erfac1    = 0.1
-    trfac1    = 0.08
-    prfac1    = 0.05
+    erfac1    = 0.1D0
+    trfac1    = 0.08D0
+    prfac1    = 0.05D0
     errks0    = 5.0D-3
 
 ! Initialize random seed.
@@ -313,9 +313,9 @@ DO loop2 = 1,nloop2
 !     vary the coordinates of this ion:
     
     5          CALL RANDOM_NUMBER(rand3)
-    deltax = 2.*delps3*(rand3(1)-oh)
-    deltay = 2.*delps3*(rand3(2)-oh)
-    deltaz = 2.*delps3*(rand3(3)-oh)
+    deltax = 2D0*delps3*(rand3(1)-oh)
+    deltay = 2D0*delps3*(rand3(2)-oh)
+    deltaz = 2D0*delps3*(rand3(3)-oh)
     delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
     IF (delta2 > delps3*delps3) GO TO 5
     
@@ -329,8 +329,8 @@ DO loop2 = 1,nloop2
     
 !     Ion within sensible grid area?
     
-    radone = 3.0
-    facmo =  2.0
+    radone = 3D0
+    facmo =  2D0
     
     xred2 = xvar+facmo*radone
     yred2 = yvar+facmo*radone
@@ -339,9 +339,9 @@ DO loop2 = 1,nloop2
     yled2 = yvar-facmo*radone
     zled2 = zvar-facmo*radone
     
-    gxr = REAL(nx)*dx
-    gyr = REAL(ny)*dy
-    gzr = REAL(nz)*dz
+    gxr = REAL(nx,DP)*dx
+    gyr = REAL(ny,DP)*dy
+    gzr = REAL(nz,DP)*dz
     gxl = -gxr
     gyl = -gyr
     gzl = -gzr
@@ -533,7 +533,7 @@ INTEGER, INTENT(OUT)                     :: idum
 !REAL(8):: ran0              !danger, do not declare ran0 as real*8
 INTEGER, PARAMETER :: ia=16807
 INTEGER, PARAMETER :: im=2147483647
-REAL(DP), PARAMETER :: am=1./im
+REAL(DP), PARAMETER :: am=1D0/im
 INTEGER, PARAMETER :: iq=127773
 INTEGER, PARAMETER :: ir=2836
 INTEGER, PARAMETER :: mask=123459876

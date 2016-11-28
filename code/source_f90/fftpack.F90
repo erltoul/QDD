@@ -1464,8 +1464,8 @@ GO TO 116
   END DO
 END DO
 
-116 ar1 = 1.
-ai1 = 0.
+116 ar1 = 1D0
+ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
   ar1h = dcp*ar1-dsp*ai1

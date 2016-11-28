@@ -119,7 +119,7 @@ IF(ihalfspace == 1) THEN
       k=-iindtmp(1)+2*(nint(xdielec/dx)+nxsh)
       IF(k <= maxx) THEN
         ind=conv3to1(k,iindtmp(2),iindtmp(3))
-        rh(ii)=rh(ii)-(epsdi-1.)/(epsdi+1.)*rh(ind)
+        rh(ii)=rh(ii)-(epsdi-1D0)/(epsdi+1D0)*rh(ind)
 !                 write(6,'(4i)') iIndTmp(1),k,ii,ind
       END IF
     END IF
@@ -132,7 +132,7 @@ ELSE IF(ihalfspace == 0) THEN
       k=-iindtmp(1)+2*(nint(xdielec/dx)+nxsh)
       IF(k >= minx) THEN
         ind=conv3to1(k,iindtmp(2),iindtmp(3))
-        rh(ii)=rh(ii)+(epsdi-1.)/(epsdi+1.)*rh(ind)
+        rh(ii)=rh(ii)+(epsdi-1D0)/(epsdi+1D0)*rh(ind)
       END IF
     END IF
   END DO
@@ -220,9 +220,9 @@ IF(ipseudo == 1)THEN
               
               pseudorho(ind) = pseudorho(ind)  &
                   + chg1(np(ist))*EXP(-rr/(2D0*sgm1(np(ist))**2D0))  &
-                  /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.)  &
+                  /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3)  &
                   + chg2(np(ist))*EXP(-rr/(2D0*sgm2(np(ist))**2D0))  &
-                  /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.)
+                  /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3)
               
             ELSE
               IF(cx(ist) < xdielec) THEN
@@ -230,17 +230,17 @@ IF(ipseudo == 1)THEN
                 pseudorho(ind) = pseudorho(ind)  &
                     + 2D0*epsdi/(epsdi+1D0)*chg1(np(ist))*  &
                     EXP(-rr/(2D0*sgm1(np(ist))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.)  &
+                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3)  &
                     + 2D0*epsdi/(epsdi+1D0)*chg2(np(ist))*  &
                     EXP(-rr/(2D0*sgm2(np(ist))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.)
+                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3)
                 
               ELSE
                 pseudorho(ind) = pseudorho(ind)  &
                     + chg1(np(ist))*EXP(-rr/(2D0*sgm1(np(ist))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.)  &
+                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3)  &
                     + chg2(np(ist))*EXP(-rr/(2D0*sgm2(np(ist))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.)
+                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3)
               END IF
             END IF
             
@@ -275,9 +275,9 @@ IF(ipseudo == 1)THEN
                   
                   pseudorho(ind) = pseudorho(ind) - (epsdi-1)/(epsdi+1)*  &
                       (chg1(np(ist))*EXP(-rr/(2D0*sgm1(np(ist))**2D0))  &
-                      /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.)  &
+                      /(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3)  &
                       + chg2(np(ist))*EXP(-rr/(2D0*sgm2(np(ist))**2D0))  &
-                      /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.))
+                      /(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3))
                   
                   
                 END DO
@@ -482,9 +482,9 @@ IF(ipseudo == 1) THEN
               
               pseudorho(ind) = pseudorho(ind)  &
                   + chg1(np(is))*EXP(-rr/(2D0*sgm1(np(is))**2D0))  &
-                  /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3.)  &
+                  /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3)  &
                   + chg2(np(is))*EXP(-rr/(2D0*sgm2(np(is))**2D0))  &
-                  /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3.)
+                  /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3)
               
             ELSE
               IF(cx(is) > xdielec) THEN
@@ -492,17 +492,17 @@ IF(ipseudo == 1) THEN
                 pseudorho(ind) = pseudorho(ind)  &
                     + 2D0/(epsdi+1D0)*chg1(np(is))*  &
                     EXP(-rr/(2D0*sgm1(np(is))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3.)  &
+                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3)  &
                     + 2D0/(epsdi+1D0)*chg2(np(is))*  &
                     EXP(-rr/(2D0*sgm2(np(is))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3.)
+                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3)
                 
               ELSE
                 pseudorho(ind) = pseudorho(ind)  &
                     + chg1(np(is))*EXP(-rr/(2D0*sgm1(np(is))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3.)  &
+                    /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3)  &
                     + chg2(np(is))*EXP(-rr/(2D0*sgm2(np(is))**2D0))  &
-                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3.)
+                    /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3)
               END IF
             END IF
             
@@ -541,9 +541,9 @@ IF(ipseudo == 1) THEN
                   pseudorho(ind) = pseudorho(ind) +  &
                       (epsdi-1D0)/(epsdi+1D0)*  &
                       (chg1(np(is))*EXP(-rr/(2D0*sgm1(np(is))**2D0))  &
-                      /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3.)  &
+                      /(pi**1.5D0*2D0**1.5D0*sgm1(np(is))**3)  &
                       + chg2(np(is))*EXP(-rr/(2D0*sgm2(np(is))**2D0))  &
-                      /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3.))
+                      /(pi**1.5D0*2D0**1.5D0*sgm2(np(is))**3))
                   
                   
                 END DO

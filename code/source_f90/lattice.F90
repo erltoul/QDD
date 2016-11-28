@@ -93,9 +93,9 @@ DO iz=1,1000
         rvy = jy*rlattvec(2)
         rvz = 0
         
-        rrm = 0.
-        potex = 0.
-        potme = 0.
+        rrm = 0D0
+        potex = 0D0
+        potme = 0D0
         
         DO i=1,n
           IF (ipsort(i) == 1) THEN
@@ -132,7 +132,7 @@ DO iz=1,1000
         xr(3) = z - (jz-1)*rlattvec(3)
         
         rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-        r = rr**.5
+        r = SQRT(rr)
         rrr = r*rr
         rrrrr = rrr*rr
         
@@ -253,7 +253,7 @@ DO jx=-iup,iup
             (xatom(i,3)-z2+rvz)**2
         rr2=MAX(small,SQRT(rr2))
         
-        radforx = (v_soft(rr1,ss)-v_soft(rr2,ss))/2.0/rder
+        radforx = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
         
         
         fxex = fxex - cqq*e2*radforx
@@ -322,7 +322,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**.5
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -359,7 +359,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -400,7 +400,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -437,7 +437,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -479,7 +479,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**0.5D0
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -516,7 +516,7 @@ DO jx=-iup,iup
       xr(3) = z1 - (jz-1)*rlattvec(3)
       
       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = rr**.5
+      r = SQRT(rr)
       rrr = r*rr
       rrrrr = rrr*rr
       
@@ -581,8 +581,8 @@ COMPLEX(DP) :: sumo
 
 sumo = CMPLX(0D0,0D0,DP)
 
-sumd = 0.
-sumq = 0.
+sumd = 0D0
+sumq = 0D0
 
 
 !         write(6,*) 'HERE', ncells1x,ncells2x
@@ -601,7 +601,7 @@ DO jx = -(ncells1x+ncells2x),(ncells1x+ncells2x)
         xr(3) = z - (jz-1)*rlattvec(3)
         
         rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-        r = rr**0.5D0
+        r = SQRT(rr)
         rrr = r*rr
         rrrrr = rrr*rr
         
@@ -699,7 +699,7 @@ DO k=1,ilayers
     END IF
     
     
-    y = 0.5*a*(m-1)-(i-1)*a
+    y = 0.5D0*a*(m-1)-(i-1)*a
     
     DO j=1,m
       itypion2 = itypion2 + 1

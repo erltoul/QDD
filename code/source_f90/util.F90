@@ -372,12 +372,12 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 COMPLEX(DP) :: csum
 !WRITE(6,*) 'Entering orbitalOverlap'
 
-sumr=0.
-sumi=0.
+sumr=0D0
+sumi=0D0
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
-  sumi=sumi+REAL(q1(ind))*AIMAG(q2(ind))- REAL(q2(ind))*AIMAG(q1(ind))
+  sumr=sumr+REAL(q1(ind),DP)*REAL(q2(ind),DP) + AIMAG(q1(ind))*AIMAG(q2(ind))
+  sumi=sumi+REAL(q1(ind),DP)*AIMAG(q2(ind))- REAL(q2(ind),DP)*AIMAG(q1(ind))
 END DO
 
 
@@ -405,10 +405,10 @@ COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
 
 
-sumr=0.
+sumr=0D0
 
 DO ind=1,kdfull2
-  sumr=sumr+REAL(q1(ind))*REAL(q2(ind)) + AIMAG(q1(ind))*AIMAG(q2(ind))
+  sumr=sumr+REAL(q1(ind),DP)*REAL(q2(ind),DP) + AIMAG(q1(ind))*AIMAG(q2(ind))
 END DO
 
 realoverlap=sumr*dvol
@@ -438,10 +438,10 @@ INTEGER, INTENT(IN OUT)                  :: ion
 !-------------------------------------------------------------
 
 
-sumr=0.
+sumr=0D0
 DO i=1,ifin(ion)
   ii = icount(i,ion)
-  sumr = REAL(q2(ii))*REAL(q1(ii)) +AIMAG(q2(ii))*AIMAG(q1(ii)) + sumr
+  sumr = REAL(q2(ii),DP)*REAL(q1(ii),DP) +AIMAG(q2(ii))*AIMAG(q1(ii)) + sumr
 END DO
 
 realovsubgrid=sumr*dvol
@@ -470,21 +470,21 @@ IF (iflag == 4) THEN
     pcmz=pcmz+cpz(i)
   END DO
   
-  rmcm = nion * amu(np(1))*1836*0.5
-  rm = amu(np(1))*1836*0.5
+  rmcm = nion * amu(np(1))*1836D0*0.5D0
+  rm = amu(np(1))*1836D0*0.5D0
   ekcm= pcmx**2+pcmy**2+pcmz**2
-  ekcm = ekcm/2./rmcm
+  ekcm = ekcm/2D0/rmcm
   
   ek=0D0
   DO i=1,nion
-    ek = ek + (cpx(i)**2+cpy(i)**2+cpz(i)**2)/2./rm
+    ek = ek + (cpx(i)**2+cpy(i)**2+cpz(i)**2)/2D0/rm
   END DO
   
-  rkt = 2./(3.*nion-3.)*(ek - ekcm) ! thermal energy kT in Ry
+  rkt = 2D0/(3D0*nion-3D0)*(ek - ekcm) ! thermal energy kT in Ry
   
 ! Temperature in Kelvin
   
-  tt = rkt/(6.507E-6)
+  tt = rkt/(6.507D-6)
   
   WRITE(151,'(2f12.4)') tfs,tt
 
@@ -513,7 +513,7 @@ ELSE IF (iflag <= 3) THEN
   rmk = mkat*1836*ame
   
   ekcm= pcmx**2+pcmy**2+pcmz**2
-  ekcm = ekcm/2./rmcm
+  ekcm = ekcm/2D0/rmcm
   
   ek=0D0
   DO i=1,nc
@@ -523,11 +523,11 @@ ELSE IF (iflag <= 3) THEN
     ek = ek + (pxk(i)**2+pyk(i)**2+pzk(i)**2)/2./rmk
   END DO
   
-  rkt = 2./(3.*(nc+nk)-3.)*(ek - ekcm) ! thermal energy kT in Ry
+  rkt = 2D0/(3D0*(nc+nk)-3D0)*(ek - ekcm) ! thermal energy kT in Ry
   
 ! Temperature in Kelvin
   
-  tt = rkt/(6.507E-6)
+  tt = rkt/(6.507D-6)
   
   WRITE(157,'(2f12.4)') tfs,tt
 #endif  
@@ -1042,18 +1042,18 @@ IF(ipsptyp == 1) STOP  ' CHECKSTABILITY must not be used with Goedecker PsP'
 
 CALL getforces(rho,psidummy,0)
 
-dmaxfxc=0.
-dmaxfyc=0.
-dmaxfzc=0.
-dmaxfxe=0.
-dmaxfye=0.
-dmaxfze=0.
-dmaxfxk=0.
-dmaxfyk=0.
-dmaxfzk=0.
-dmaxfxn=0.
-dmaxfyn=0.
-dmaxfzn=0.
+dmaxfxc=0D0
+dmaxfyc=0D0
+dmaxfzc=0D0
+dmaxfxe=0D0
+dmaxfye=0D0
+dmaxfze=0D0
+dmaxfxk=0D0
+dmaxfyk=0D0
+dmaxfzk=0D0
+dmaxfxn=0D0
+dmaxfyn=0D0
+dmaxfzn=0D0
 
 #if(raregas)
 DO i=1,nc
@@ -1137,9 +1137,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #if(raregas)
 DO iz=1,1000
-  z=-10.+iz*0.1
+  z=-10D0*0.1D0
   
-  potex = 0.
+  potex = 0D0
   
   DO i=1,nc+NE+nk
     CALL getparas(i)
@@ -1553,12 +1553,12 @@ DO iz=minz,maxz
         qe(34)=qe(34)+s*z3*y1
         qe(35)=qe(35)+s*z4
 !                                                    spin dipole
-        updens = 0.5*(rho(ind)*rho(ind+nxyz)+rho(ind))
+        updens = 0.5D0*(rho(ind)*rho(ind+nxyz)+rho(ind))
         sux = sux+updens*x1
         suy = suy+updens*y1
         suz = suz+updens*z1
         s1 = s1+updens
-        dodens = -0.5*(rho(ind)*rho(ind+nxyz)-rho(ind))
+        dodens = -0.5D0*(rho(ind)*rho(ind+nxyz)-rho(ind))
         sdx = sdx+dodens*x1
         sdy = sdy+dodens*y1
         sdz = sdz+dodens*z1
@@ -1691,7 +1691,7 @@ DO iz=minz,maxz
          sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
        END DO
 #else
-         sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk))
+         sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk),DP)
        END DO
 #endif
 #endif
@@ -1705,7 +1705,7 @@ DO iz=minz,maxz
 #ifdef REALSWITCH
          sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
 #else
-         sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe))
+         sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe),DP)
 #endif
            END IF
         END DO
@@ -1888,13 +1888,13 @@ IF(itft == 1) THEN
   tend   = tstart + deltat
   tvend  = tend   + tpeak
   
-  IF(tfs <= tnode.OR.tfs >= tvend) foft = 0.
+  IF(tfs <= tnode.OR.tfs >= tvend) foft = 0D0
 !mb         if(tfs.gt.tnode.and.tfs.le.tstart)
 !mb     &        foft = sin (.5 * pi * tfs / tpeak)
 !mb it should rather be:
-  IF(tfs > tnode.AND.tfs <= tstart) foft = SIN(.5*pi*(tfs-tnode)/tpeak)
-  IF(tfs > tstart.AND.tfs <= tend) foft = 1.
-  IF(tfs > tend.AND.tfs < tvend) foft = SIN (.5 * pi * (tvend-tfs) / tpeak)
+  IF(tfs > tnode.AND.tfs <= tstart) foft = SIN(0.5D0*pi*(tfs-tnode)/tpeak)
+  IF(tfs > tstart.AND.tfs <= tend) foft = 1D0
+  IF(tfs > tend.AND.tfs < tvend) foft = SIN (0.5D0 * pi * (tvend-tfs) / tpeak)
 END IF
 
 IF(itft == 2) THEN
@@ -1915,7 +1915,7 @@ IF(itft == 3) THEN
   IF(ABS(e0_2) > small) THEN
     tpulse2 = tpeak2+tpeak2
     IF(tfs >= tstart2 .AND. tfs <= tstart2+tpulse2) THEN
-      foft2 = COS((-0.5+(tfs-tstart2)/tpulse2)*pi)**2
+      foft2 = COS((-0.5D0+(tfs-tstart2)/tpulse2)*pi)**2
     END IF
   END IF
 
@@ -1924,9 +1924,9 @@ END IF
 IF(itft == 4) THEN
   tvend = tnode + 2*tpeak + deltat
   IF(tfs <= tnode.OR.tfs >= tvend) THEN
-    foft = 0.
+    foft = 0D0
   ELSE
-    foft = COS((-0.5+(tfs-tnode)/(2*tpeak+deltat))*pi)**4
+    foft = COS((-0.5D0+(tfs-tnode)/(2*tpeak+deltat))*pi)**4
   END IF
 END IF
 
@@ -1938,13 +1938,13 @@ power=e0*e0*foft*foft
 !     implement time profile in space
 
 
-foft1 = COS(omega*tfs/0.0484)*foft
-foft2 = COS(omega2*tfs/0.0484+phase2)*foft2
-fpulseinteg1 = fpulseinteg1 + (foft1+foft1old)*0.5D0*(tfs/0.0484-timeold)
-fpulseinteg2 = fpulseinteg2 + (foft2+foft2old)*0.5D0*(tfs/0.0484-timeold)
+foft1 = COS(omega*tfs/0.0484D0)*foft
+foft2 = COS(omega2*tfs/0.0484D0+phase2)*foft2
+fpulseinteg1 = fpulseinteg1 + (foft1+foft1old)*0.5D0*(tfs/0.0484D0-timeold)
+fpulseinteg2 = fpulseinteg2 + (foft2+foft2old)*0.5D0*(tfs/0.0484D0-timeold)
 
       write(7,'(a,2f9.3,2(1pg12.4))') &
-         ' tfs,tRy,foft1,foft2=',tfs,tfs/0.048,foft1,foft2
+         ' tfs,tRy,foft1,foft2=',tfs,tfs/0.048D0,foft1,foft2
 ind = 0
 acc1 = 0D0
 acc2 = 0D0
@@ -1975,7 +1975,7 @@ acc1old = acc1
 acc2old = acc2
 foft1old = foft1
 foft2old = foft2 
-timeold = tfs/0.0484
+timeold = tfs/0.0484D0
 
 ex=e1x*foft1+e2x*foft2
 ey=e1y*foft1+e2y*foft2
@@ -2056,7 +2056,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc   = REAL(psi(ii))*REAL(psi(ii)) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
+  acc   = REAL(psi(ii),DP)*REAL(psi(ii),DP) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
 END DO
 wfnorm = acc*dvol
 
@@ -2079,7 +2079,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = REAL(psi1(ii))*REAL(psi2(ii)) + AIMAG(psi1(ii))*AIMAG(psi2(ii)) + acc
+  acc = REAL(psi1(ii),DP)*REAL(psi2(ii),DP) + AIMAG(psi1(ii))*AIMAG(psi2(ii)) + acc
 END DO
 wfnorm_r = acc*dvol
 
@@ -2102,7 +2102,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
 acc = 0D0
 DO ii=1,nxyz
-  acc = -REAL(psi1(ii))*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii)) + acc
+  acc = -REAL(psi1(ii),DP)*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii),DP) + acc
 END DO
 wfnorm_i = acc*dvol
 
@@ -2248,7 +2248,7 @@ IF(modrho == 0) THEN
 END IF
 IF(MOD(itime,modrho) /= 0) RETURN
 time=itime*dt1
-tfs=time*0.0484
+tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=28,FORM='unformatted',FILE='rhointxy')
   WRITE(28) minz,maxz,nzsh,dz,centfz,dt1,itime,modrho
@@ -2298,7 +2298,7 @@ DATA tfirst/.true./
 
 IF(MOD(itime,modrho) /= 0) RETURN
 time=itime*dt1
-tfs=time*0.0484
+tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=29,FORM='unformatted',FILE='rhointyz')
   WRITE(29) minx,maxx,nxsh,dx,centfx,dt1,itime,modrho
@@ -2348,7 +2348,7 @@ DATA tfirst/.true./
 
 IF(MOD(itime,modrho) /= 0) RETURN
 time=itime*dt1
-tfs=time*0.0484
+tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=27,FORM='unformatted',FILE='rhointxz')
   WRITE(27) miny,maxy,nysh,dy,centfy,dt1,itime,modrho
@@ -2794,7 +2794,7 @@ INTEGER, INTENT(IN)          :: isp
 
 IF(temp /= 0D0) STOP ' ORTHOGWFR requires temperature 0'
 DO nbe=1,nstate
-  IF(ispin(nbe) == isp .AND. occup(nbe) > 0.999) THEN
+  IF(ispin(nbe) == isp .AND. occup(nbe) > 0.999D0) THEN
     overlap = rwfovlp(wfr,q0(1,nbe))
     DO  i=1,nxyz
       wfr(i)=wfr(i)-overlap*q0(i,nbe)
@@ -2817,8 +2817,8 @@ REAL(DP) FUNCTION ran1(idum)
 USE params, ONLY: DP
 INTEGER :: idum,ia,im,iq,ir,ntab,ndiv
 REAL(DP) :: am,eps,rnmx
-PARAMETER (ia=16807,im=2147483647,am=1./im,iq=127773,ir=2836,  &
-    ntab=32,ndiv=1+(im-1)/ntab,eps=1.2E-7,rnmx=1.-eps)
+PARAMETER (ia=16807,im=2147483647,am=1D0/im,iq=127773,ir=2836,  &
+    ntab=32,ndiv=1+(im-1)/ntab,eps=1.2D-7,rnmx=1D0-eps)
 
 !     Minimal random number generator of Park and Miller with Bays-Durham
 !     shuffle and added safeguards. Returns a uniform random deviate
@@ -2870,11 +2870,11 @@ SAVE iset,gset
 DATA iset/0/
 IF (iset == 0) THEN
   1       CONTINUE
-  v1=2.*ran1(idum)-1.
-  v2=2.*ran1(idum)-1.
+  v1=2D0*ran1(idum)-1D0
+  v2=2D0*ran1(idum)-1D0
   rsq=v1**2+v2**2
-  IF (rsq >= 1. .OR. rsq == 0.) GO TO 1
-  fac=SQRT(-2.*LOG(rsq)/rsq)
+  IF (rsq >= 1D0 .OR. rsq == 0D0) GO TO 1
+  fac=SQRT(-2D0*LOG(rsq)/rsq)
   gset=v1*fac
   gasdev=v2*fac
   iset=1
@@ -2903,13 +2903,13 @@ REAL(DP) :: masse
 
 WRITE(6,*) 'ENTERING GIVETEMPERATURE'
 
-temper=temper*6.507E-6
+temper=temper*6.507D-6
 
 fac=SQRT(temper/masse)
 
-sumx=0.
-sumy=0.
-sumz=0.
+sumx=0D0
+sumy=0D0
+sumz=0D0
 minusvier=-4
 DO i=1,nteil
   pxt(i)=gasdev(minusvier)*fac
@@ -2952,7 +2952,7 @@ ELSE
   STOP 'Error in routine giveTemperature'
 END IF
 
-eksoll = (3.*ntmob-3.)/2.*temper
+eksoll = (3D0*ntmob-3D0)/2D0*temper
 
 !      write(6,*) 'eksoll: ',eksoll
 
@@ -2998,7 +2998,7 @@ DO i=1,nteil
   END IF
 END DO
 
-ekhaben = ekhaben /2./masse
+ekhaben = ekhaben /2D0/masse
 !      write(6,*) 'ekhaben nachher: ',ekhaben
 
 RETURN
@@ -3346,7 +3346,7 @@ IF(eferm == zero) THEN
   isum   = 0
   DO it=1,nmax
     itsum  = it
-    isum   = INT(ph(it)+.000001) +isum
+    isum   = INT(ph(it)+.000001D0) +isum
     IF(isum+isum-nz >= 0) GO TO 199
   END DO
   STOP ' not enough states to reach particle number'
@@ -3395,13 +3395,13 @@ IF(ipair == 1) THEN
       gapeq  = zero
       DO i=1,nmax
         equasi = SQRT((e(i)-elam)*(e(i)-elam)+delact*delact)
-        gw(i)  = 0.5-0.5*(e(i)-elam)/equasi
+        gw(i)  = 0.5D0-0.5D0*(e(i)-elam)/equasi
         gapeq  = ph(i)/equasi   + gapeq
         parnum = gw(i)*ph(i)    + parnum
       END DO
 !                                         store actual part.number and
 !                                         gap-equation
-      dgap(k)  = 0.25*gp*gapeq-one          !?? extra 1/2 because of w
+      dgap(k)  = 0.25D0*gp*gapeq-one          !?? extra 1/2 because of w
       dparn(k) = parnum-nz
     END DO
     
@@ -3537,7 +3537,7 @@ ELSE
   eferm1 = emin-4*delta
   eferm2 = emax+4*delta
   DO it=1,itmaxp
-    eferm3 = 0.5*(eferm2+eferm1)
+    eferm3 = 0.5D0*(eferm2+eferm1)
     parn3  = parnm(e,gw,ph,nmax,delta,eferm3,ipair)
     IF(iab >= 0) WRITE(7,'(a,i4,2(a,g11.3))')  &
         ' bisection it=',it,'  :  eferm=',eferm3, '  dparn(1)=',parn3-nz
@@ -3567,7 +3567,7 @@ ELSE
     DO i=1,nmax
       gapeq = ph(i)/SQRT((e(i)-eferm)*(e(i)-eferm)+delta*delta) + gapeq
     END DO
-    gp     = 4.0/gapeq                       !?? account for wate=2.
+    gp     = 4D0/gapeq                       !?? account for wate=2.
   END IF
   
 !     end of big switch between cases
@@ -3591,7 +3591,7 @@ IF(iab >= -1 .AND. iwarng == 1) WRITE(7,'(2(a,g11.3),2(a,i3))')  &
 
 IF(iab >= 0) THEN
   IF(ipair /= 4) THEN
-    gphalf = gp*0.5
+    gphalf = gp*0.5D0
     del2   = MAX(xmaxlw,delta*delta)
     gapeq  = zero
     partnm = zero
@@ -3641,7 +3641,7 @@ acc    = zero
 IF(ipair == 0) THEN
   DO i=1,nmax
     equasi = SQRT( (e(i)-elam)*(e(i)-elam) + delta*delta )
-    gw(i)  = 0.5-0.5*(e(i)-elam)/equasi
+    gw(i)  = 0.5D0-0.5D0*(e(i)-elam)/equasi
     acc    = gw(i)*ph(i)    + acc
   END DO
 ELSE IF(ipair == 4) THEN            ! case of temperature
@@ -3729,8 +3729,8 @@ IF(ipsptyp == 0) THEN
             i=i+1
             rx=x1-cx(ii)
             r2=rx*rx+ry*ry+rz*rz
-            psrho1=prho1*EXP(-r2/(2.0*sgm1(11)*sgm1(11)))
-            psrho2=prho2*EXP(-r2/(2.0*sgm2(11)*sgm2(11)))
+            psrho1=prho1*EXP(-r2/(2.0D0*sgm1(11)*sgm1(11)))
+            psrho2=prho2*EXP(-r2/(2.0D0*sgm2(11)*sgm2(11)))
             rhops(i)=rhops(i)+psrho1+psrho2
           END DO
         END DO
@@ -3749,7 +3749,7 @@ IF(ipsptyp == 0) THEN
   
 !     16*pi = 4*pi * e^2 * hbar^2/4m
   
-  omegam=SQRT(16.0*pi/3.0*rhomix/apnum)
+  omegam=SQRT(16.0D0*pi/3.0D0*rhomix/apnum)
 ELSE
   omegam = 0D0                 ! Mie plasmon not installed for Goedecker
   apnum = 0D0
@@ -3917,7 +3917,7 @@ COMPLEX(DP)                            :: orbitaloverlap
 
 DO i=1,nstate
    cscal=orbitaloverlap(psitmp(1,i),psitmp(1,i))
-   rtmpuse(i)=SQRT(REAL(cscal)**2 + AIMAG(cscal)**2)
+   rtmpuse(i)=SQRT(REAL(cscal,DP)**2 + AIMAG(cscal)**2)
    prob(i)=0D0
 ENDDO
 
@@ -4073,8 +4073,8 @@ END IF
 covo = SUM(CONJG(oldhole)*psi(:,nhstate))*dvol
 covn = SUM(CONJG(newhole)*psi(:,nhstate))*dvol
 WRITE(381,'(f10.3,8(1pg13.5))') tfs, &
-  covo,SQRT(REAL(covo)**2+AIMAG(covo)**2),atan2(AIMAG(covo),REAl(covo)), &
-  covn,SQRT(REAL(covn)**2+AIMAG(covn)**2),atan2(AIMAG(covn),REAl(covn))
+  covo,SQRT(REAL(covo,DP)**2+AIMAG(covo)**2),atan2(AIMAG(covo),REAl(covo,DP)), &
+  covn,SQRT(REAL(covn,DP)**2+AIMAG(covn)**2),atan2(AIMAG(covn),REAl(covn,DP))
 CALL FLUSH(381)
 
 
@@ -4182,9 +4182,9 @@ CALL fftf(q0,q1,ffta,gpu_ffta)
 #endif
 
 
-dkx=pi/(dx*REAL(nx))
-dky=pi/(dy*REAL(ny))
-dkz=pi/(dz*REAL(nz))
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
 !      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2

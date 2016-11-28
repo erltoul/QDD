@@ -192,11 +192,11 @@ DO nbe=1,nstate
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
+      vol   = REAL(psipr(i),DP)*REAL(psipr(i),DP) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
+      sume =  REAL(q2(i),DP)*REAL(psipr(i),DP) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i),DP)*REAL(q2(i),DP) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
@@ -214,7 +214,7 @@ DO nbe=1,nstate
   ELSE IF(tdiag .AND. fftnorm > 0D0) THEN
     sume = 0D0
     DO i=1,nxyz
-      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sume =  REAL(q2(i),DP)*REAL(psipr(i),DP) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
     END DO
     sume = sume/fftnorm
     WRITE(6,'(a,i3,2(1pg12.4))') ' nbe,spe,amoy=',nbe,sume,amoy(nbe)
@@ -421,7 +421,7 @@ DO nb=1,nstate
     END IF
   END IF
 END DO
-encadd=encadd/2.0
+encadd=encadd/2D0
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd

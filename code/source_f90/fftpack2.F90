@@ -76,7 +76,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: x(10)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
-DATA tsqrt2 /2.82842712474619/
+DATA tsqrt2 /2.82842712474619D0/
 
 IF (n-2 < 0) THEN
   GO TO   101
@@ -188,7 +188,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
-DATA taur,taui /-.5,.866025403784439/
+DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   tr2 = cc(ido,2,k)+cc(ido,2,k)
@@ -238,7 +238,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 
-DATA sqrt2 /1.414213562373095/
+DATA sqrt2 /1.414213562373095D0/
 
 DO  k=1,l1
   tr1 = cc(1,1,k)-cc(ido,4,k)
@@ -313,8 +313,8 @@ REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
 
-DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
-    -.809016994374947,.587785252292473/
+DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
+    -.809016994374947D0,.587785252292473D0/
 
 DO  k=1,l1
   ti5 = cc(1,3,k)+cc(1,3,k)
@@ -392,9 +392,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959/
+DATA tpi/6.28318530717959D0/
 
-arg = tpi/FLOAT(ip)
+arg = tpi/REAL(ip,DP)
 dcp = COS(arg)
 dsp = SIN(arg)
 idp2 = ido+2
@@ -448,8 +448,8 @@ GO TO 116
     END DO
   END DO
 END DO
-116 ar1 = 1.
-ai1 = 0.
+116 ar1 = 1D0
+ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
   ar1h = dcp*ar1-dsp*ai1
@@ -735,7 +735,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(10)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
-DATA sqrt2 /1.4142135623731/
+DATA sqrt2 /1.4142135623731D0/
 
 IF (n-2 < 0) THEN
   GO TO   102
@@ -843,7 +843,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
-DATA taur,taui /-.5,.866025403784439/
+DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,2)+cc(1,k,3)
@@ -891,7 +891,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 
-DATA hsqt2 /.7071067811865475/
+DATA hsqt2 /.7071067811865475D0/
 
 DO  k=1,l1
   tr1 = cc(1,k,2)+cc(1,k,4)
@@ -962,8 +962,8 @@ REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
 
-DATA tr11,ti11,tr12,ti12 /.309016994374947,.951056516295154,  &
-    -.809016994374947,.587785252292473/
+DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
+    -.809016994374947D0,.587785252292473D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,5)+cc(1,k,2)
@@ -1037,9 +1037,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959/
+DATA tpi/6.28318530717959D0/
 
-arg = tpi/FLOAT(ip)
+arg = tpi/REAL(ip,DP)
 dcp = COS(arg)
 dsp = SIN(arg)
 ipph = (ip+1)/2
@@ -1117,8 +1117,8 @@ END DO
   END DO
 END DO
 
-ar1 = 1.
-ai1 = 0.
+ar1 = 1D0
+ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
   ar1h = dcp*ar1-dsp*ai1
@@ -1366,10 +1366,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pih /1.57079632679491/
+DATA pih /1.57079632679491D0/
 
-dt = pih/FLOAT(n)
-fk = 0.
+dt = pih/REAL(n,DP)
+fk = 0D0
 DO  k=1,n
   fk = fk+1.
   wsave(k) = COS(fk*dt)
@@ -1507,19 +1507,19 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pi /3.14159265358979/
+DATA pi /3.14159265358979D0/
 
 IF (n <= 3) RETURN
 nm1 = n-1
 np1 = n+1
 ns2 = n/2
-dt = pi/FLOAT(nm1)
-fk = 0.
+dt = pi/REAL(nm1,DP)
+fk = 0D0
 DO  k=2,ns2
   kc = np1-k
-  fk = fk+1.
-  wsave(k) = 2.*SIN(fk*dt)
-  wsave(kc) = 2.*COS(fk*dt)
+  fk = fk+1D0
+  wsave(k) = 2D0*SIN(fk*dt)
+  wsave(kc) = 2D0*COS(fk*dt)
 END DO
 CALL rffti (nm1,wsave(n+1))
 RETURN
@@ -1590,7 +1590,7 @@ REAL(DP), INTENT(OUT)                        :: x(1)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 
 IF (n > 1) GO TO 101
-x(1) = 4.*x(1)
+x(1) = 4D0*x(1)
 RETURN
 101 ns2 = n/2
 DO  k=2,n,2
@@ -1756,7 +1756,7 @@ REAL(DP), INTENT(OUT)                        :: xh(10)
 REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
 
-DATA sqrt3 /1.73205080756888/
+DATA sqrt3 /1.73205080756888D0/
 
 DO  i=1,n
   xh(i) = war(i)
@@ -1777,7 +1777,7 @@ xh(1) = xhold
 GO TO 106
 103 np1 = n+1
 ns2 = n/2
-x(1) = 0.
+x(1) = 0D0
 DO  k=1,ns2
   kc = np1-k
   t1 = xh(k)-xh(kc)
@@ -1788,7 +1788,7 @@ END DO
 modn = MOD(n,2)
 IF (modn /= 0) x(ns2+2) = 4.*xh(ns2+1)
 CALL rfftf1 (np1,x,xh,war,ifac)
-xh(1) = .5*x(1)
+xh(1) = .5D0*x(1)
 DO  i=3,n,2
   xh(i-1) = -x(i)
   xh(i) = xh(i-2)+x(i-1)
@@ -1809,14 +1809,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 
-DATA pi /3.14159265358979/
+DATA pi /3.14159265358979D0/
 
 IF (n <= 1) RETURN
 ns2 = n/2
 np1 = n+1
-dt = pi/FLOAT(np1)
+dt = pi/REAL(np1,DP)
 DO  k=1,ns2
-  wsave(k) = 2.*SIN(k*dt)
+  wsave(k) = 2D0*SIN(k*dt)
 END DO
 CALL rffti (np1,wsave(ns2+1))
 RETURN
@@ -1881,8 +1881,8 @@ ifac(3) = 2
 107 IF (nl /= 1) GO TO 104
 ifac(1) = n
 ifac(2) = nf
-tpi = 6.28318530717959
-argh = tpi/FLOAT(n)
+tpi = 6.28318530717959D0
+argh = tpi/REAL(n,DP)
 is = 0
 nfm1 = nf-1
 l1 = 1
@@ -1896,11 +1896,11 @@ DO  k1=1,nfm1
   DO  j=1,ipm
     ld = ld+l1
     i = is
-    argld = FLOAT(ld)*argh
+    argld = REAL(ld,DP)*argh
     fi = 0.
     DO  ii=3,ido,2
       i = i+2
-      fi = fi+1.
+      fi = fi+1D0
       arg = fi*argld
       wa(i-1) = COS(arg)
       wa(i) = SIN(arg)

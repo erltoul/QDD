@@ -146,9 +146,9 @@ DO ion=1,nion
         DO ix=1,nx2
           x1=((ix-nxsh)*dx-cx(ion))/radini(ion)
           ind = ind+1
-          psiom(ind,numlocstate) = (x1**nstx-0.5*MAX(0,nstx-1))  &
-              *(y1**nsty-0.5*MAX(0,nsty-1)) *(z1**nstz-0.5*MAX(0,nstz-1))  &
-              *EXP(-(x1*x1+y1*y1+z1*z1)*0.5)
+          psiom(ind,numlocstate) = (x1**nstx-0.5D0*MAX(0,nstx-1))  &
+              *(y1**nsty-0.5D0*MAX(0,nsty-1)) *(z1**nstz-0.5D0*MAX(0,nstz-1))  &
+              *EXP(-(x1*x1+y1*y1+z1*z1)*0.5D0)
         END DO
       END DO
     END DO

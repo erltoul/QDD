@@ -170,7 +170,7 @@ DO iz=minz,maxz
     DO ix=minx,maxx
       x1=(ix-nxsh)*dx
       rx=x1-x0
-      rr=(rx*rx+ry*ry+rz*rz)**0.5D0
+      rr=SQRT(rx*rx+ry*ry+rz*rz)
       
       rr=MAX(rr,small)
       
@@ -219,7 +219,7 @@ DO iz=minz,maxz
     DO ix=minx,maxx
       x1=(ix-nxsh)*dx
       rx=x1-x0
-      rr=(rx*rx+ry*ry+rz*rz)**0.5D0
+      rr=SQRT(rx*rx+ry*ry+rz*rz)
       
       rr=MAX(rr,small)
       
@@ -282,7 +282,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             x1=(ix-nxsh)*dx
             rx=x1-x0
             
-            rr=(rx*rx+ry*ry+rz*rz)**0.5D0
+            rr=SQRT(rx*rx+ry*ry+rz*rz)
             
             rr=MAX(rr,small) ! avoid zero
             
@@ -354,7 +354,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             x1=(ix-nxsh)*dx
             rx=x1-x0
             
-            rr=(rx*rx+ry*ry+rz*rz)**0.5D0
+            rr=SQRT(rx*rx+ry*ry+rz*rz)
             
             rr=MAX(rr,small) ! avoid zero
             
@@ -428,7 +428,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             x1=(ix-nxsh)*dx
             rx=x1-x0
             
-            rr=(rx*rx+ry*ry+rz*rz)**0.5D0
+            rr=SQRT(rx*rx+ry*ry+rz*rz)
             
             rr=MAX(rr,small) ! avoid zero
             
@@ -1167,7 +1167,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     single index to triple index:
 ind1 = ind
 
-rupper = REAL(ind1)/(2*nx*2*ny)
+rupper = REAL(ind1,DP)/(2*nx*2*ny)
 IF (rupper == INT(rupper)) THEN
   iupper = INT(rupper)
 ELSE
@@ -1179,7 +1179,7 @@ indz = iupper
 
 ind1 = ind1 - (indz-1)*2*nx*2*ny
 
-rupper = REAL(ind1)/(2*nx)
+rupper = REAL(ind1,DP)/(2*nx)
 IF (rupper == INT(rupper)) THEN
   iupper = INT(rupper)
 ELSE

@@ -66,9 +66,9 @@ ALLOCATE(tau(2*kdfull2))
 
 !   init derivative
 
-dkx=pi/(dx*REAL(nx))
-dky=pi/(dy*REAL(ny))
-dkz=pi/(dz*REAL(nz))
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
 
 
 

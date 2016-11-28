@@ -373,7 +373,7 @@ IF(nclust > 0)THEN
   
   
   
-  time = irest*dt1*0.0484/(2.0*ame)
+  time = irest*dt1*0.0484D0/(2D0*ame)
 #if(!simpara)
   IF(myn == 0 .OR. knode == 1) THEN
 #endif
@@ -456,7 +456,7 @@ DO it=irest,itmax   ! time-loop
 
   iterat = it      ! to communicate time step
   ijel=it
-  tfs=it*dt1*0.0484  !/(2.0*ame)
+  tfs=it*dt1*0.0484D0 !/(2.0*ame)
   
   CALL print_densdiff(rho,it)       ! right place here ???
   
@@ -538,7 +538,7 @@ DO it=irest,itmax   ! time-loop
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
-      tfs=it*dt1*0.0484
+      tfs=it*dt1*0.0484D0
       IF(nion2 > 0) CALL analyze_ions(it)
       IF(isurf > 0) CALL analyze_surf(it)
     END IF
@@ -565,7 +565,7 @@ DO it=irest,itmax   ! time-loop
     !    labeled by nstate.
     IF(jattach /= 0 .AND. it>irest .AND. MOD(it,jattach) == 0) then
        call attach_prob(totalprob,totalovlp,psi)
-       totintegprob=totintegprob+dt1*0.0484*jattach*totalprob
+       totintegprob=totintegprob+dt1*0.0484D0*jattach*totalprob
        write(6,'(a,e12.5,1x,i8,3(1x,1pg13.5))') &
             'after ATTACHEMENT:',&
             tfs,nmatch,totalprob,totintegprob,totalovlp

@@ -19,6 +19,7 @@
 #include "define.h"
 
 MODULE params
+IMPLICIT NONE
 SAVE
 INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 
@@ -154,7 +155,7 @@ INTEGER :: iforce=0
 INTEGER :: ipseudo=1          ! switch on/off subgrids and pseudo-densities
 REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
-REAL(DP) :: b2occ=0.4,gamocc=10.0,deocc=0D0,osfac=1D0 !  h.o.initalization
+REAL(DP) :: b2occ=0.4D0,gamocc=10D0,deocc=0D0,osfac=1D0 !  h.o.initalization
 REAL(DP) :: temp=0D0,occmix=0.5D0,epsoro=1D-6        !  electron temperature
 INTEGER :: isurf=0
 REAL(DP) :: endcon=1D-5,radjel=4D0,surjel=1D0     !  jellium params
@@ -540,14 +541,14 @@ ipotfixed=0
 ifmdshort=1
 ifadiadip=0
 enerinfty=0D0
-chgc0=6.119
-chge0=-6.119
-chgk0=2.0
+chgc0=6.119D0
+chge0=-6.119D0
+chgk0=2D0
 
 iararlj=1
 scaledist=1D0
-distlayers=4.0
-disttolerance=0.5
+distlayers=4D0
+disttolerance=0.5D0
 nunflayc=20
 nunflaye=20
 nunflayk=20
@@ -617,7 +618,7 @@ ccn8=0D0
 ccn9=0D0
 ccn10=0D0
 ccnd=0D0
-dcn=1.
+dcn=1D0
 ccncu2=1.0D-10
 ccncu3=1.0D-10
 ccncu4=1.0D-10
@@ -639,7 +640,7 @@ ccncul9=1.0D10
 ccncul10=1.0D10
 ccnculd=1.0D10
 
-sigkn=1.
+sigkn=1D0
 bkn=0D0
 ekn=0D0
 fkn=0D0
@@ -658,7 +659,7 @@ ckn8=0D0
 ckn9=0D0
 ckn10=0D0
 cknd=0D0
-dkn=1.
+dkn=1.0D0
 ckncu2=1.0D-10
 ckncu3=1.0D-10
 ckncu4=1.0D-10

@@ -192,7 +192,7 @@ DATA testpr/.false./
 
 !     stabilised sinh as internal statement function
 
-sins(x) = SINH(SIGN(MIN(ABS(x),72.0),x))
+sins(x) = SINH(SIGN(MIN(ABS(x),72.0D0),x))
 
 !-----------------------------------------------------------------------
 
@@ -412,12 +412,12 @@ REAL(DP), PARAMETER :: rms2ini=2.0D0
 !     forefactors of the spherical harmonics
 
 
-REAL(DP), PARAMETER :: pfy00 = 0.282094791
-REAL(DP), PARAMETER :: pfy10 = 0.488602511
-REAL(DP), PARAMETER :: pfy11 = 0.488602511
-REAL(DP), PARAMETER :: pfy20 = 0.315391565
-REAL(DP), PARAMETER :: pfy21 = 1.092548431
-REAL(DP), PARAMETER :: pfy22 = 0.546274215
+REAL(DP), PARAMETER :: pfy00 = 0.282094791D0
+REAL(DP), PARAMETER :: pfy10 = 0.488602511D0
+REAL(DP), PARAMETER :: pfy11 = 0.488602511D0
+REAL(DP), PARAMETER :: pfy20 = 0.315391565D0
+REAL(DP), PARAMETER :: pfy21 = 1.092548431D0
+REAL(DP), PARAMETER :: pfy22 = 0.546274215D0
 
 
 DATA testpr/.false./
@@ -432,7 +432,7 @@ y20(x,y,z)   = pfy20*(2.0D0*(z*z)-(x*x)-(y*y))
 y21r(x,y,z)  = -pfy21*(x*z)
 y21i(x,y,z)  = -pfy21*(y*z)
 y22r(x,y,z)  = pfy22*((x*x)-(y*y))
-y22i(x,y,z)  = pfy22*2.0*(x*y)
+y22i(x,y,z)  = pfy22*2.0D0*(x*y)
 
 
 
@@ -716,7 +716,7 @@ DO iz=-maxmz,maxmz
     n = 0
     DO ix=-maxmx,maxmx
       n = 1 + n
-      workx (n)  = REAL(fieldin(ix,iy,iz))
+      workx (n)  = REAL(fieldin(ix,iy,iz),DP)
       workxi (n) = AIMAG(fieldin(ix,iy,iz))
     END DO
     
@@ -745,7 +745,7 @@ DO iz=-maxmz,maxmz
     n = 0
     DO iy=-maxmy,maxmy
       n = 1 + n
-      worky (n)  = REAL(fieldout(ix,iy,iz))
+      worky (n)  = REAL(fieldout(ix,iy,iz),DP)
       workyi (n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '2 ON'
@@ -775,7 +775,7 @@ DO iy=-maxmy,maxmy
     n = 0
     DO iz=-maxmz,maxmz
       n = 1 + n
-      workz (n) = REAL(fieldout(ix,iy,iz))
+      workz (n) = REAL(fieldout(ix,iy,iz),DP)
       workzi(n) = AIMAG(fieldout(ix,iy,iz))
     END DO
 !        write(*,*) '3 ON'
@@ -1412,14 +1412,14 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA pi /3.14159265358979E0/
+DATA pi /3.14159265358979D0/
 
 IF (n <= 1) RETURN
 ns2 = n/2
 np1 = n+1
 dt = pi/DBLE(np1)
 DO  k=1,ns2
-  wsave(k) = 2.0E0*SIN(k*dt)
+  wsave(k) = 2.0D0*SIN(k*dt)
 END DO
 CALL rffti (np1,wsave(ns2+1))
 RETURN
@@ -1476,7 +1476,7 @@ ifac(3) = 2
 107 IF (nl /= 1) GO TO 104
 ifac(1) = n
 ifac(2) = nf
-tpi = 6.28318530717959E0
+tpi = 6.28318530717959D0
 argh = tpi/DBLE(n)
 is = 0
 nfm1 = nf-1
@@ -1572,7 +1572,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA taur,taui /-.5E0,.866025403784439E0/
+DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,2)+cc(1,k,3)
@@ -1617,7 +1617,7 @@ REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA hsqt2 /.7071067811865475E0/
+DATA hsqt2 /.7071067811865475D0/
 
 DO  k=1,l1
   tr1 = cc(1,k,2)+cc(1,k,4)
@@ -1685,8 +1685,8 @@ REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA tr11,ti11,tr12,ti12 /.309016994374947E0,.951056516295154E0,  &
-    -.809016994374947E0,.587785252292473E0/
+DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
+    -.809016994374947D0,.587785252292473D0/
 
 DO  k=1,l1
   cr2 = cc(1,k,5)+cc(1,k,2)
@@ -1757,7 +1757,7 @@ REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(*)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA tpi/6.28318530717959E0/
+DATA tpi/6.28318530717959D0/
 
 arg = tpi/DBLE(ip)
 dcp = COS(arg)
@@ -1837,8 +1837,8 @@ END DO
   END DO
 END DO
 
-ar1 = 1.e0
-ai1 = 0.e0
+ar1 = 1D0
+ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
   ar1h = dcp*ar1-dsp*ai1
@@ -1999,7 +1999,7 @@ REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
 IMPLICIT REAL(DP)(a-h,o-z)
 
-DATA sqrt3 /1.73205080756888E0/
+DATA sqrt3 /1.73205080756888D0/
 
 DO  i=1,n
   xh(i) = war(i)
@@ -2020,7 +2020,7 @@ xh(1) = xhold
 GO TO 106
 103 np1 = n+1
 ns2 = n/2
-x(1) = 0.
+x(1) = 0D0
 DO  k=1,ns2
   kc = np1-k
   t1 = xh(k)-xh(kc)
@@ -2031,7 +2031,7 @@ END DO
 modn = MOD(n,2)
 IF (modn /= 0) x(ns2+2) = 4.*xh(ns2+1)
 CALL rfftf1 (np1,x,xh,war,ifac)
-xh(1) = .5*x(1)
+xh(1) = .5D0*x(1)
 DO  i=3,n,2
   xh(i-1) = -x(i)
   xh(i) = xh(i-2)+x(i-1)

@@ -125,7 +125,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: ri(3)
 
 DO ind=1,nxyz
-  potvdw(ind) = 0.0
+  potvdw(ind) = 0D0
 END DO
 
 
@@ -146,7 +146,7 @@ DO is=1,nc
         rr = MAX(rr,small)    ! avoid zero
         ind = ind + 1
         
-        potvdw(ind) = potvdw(ind) + v_vdw(ri,rr,is,1.)
+        potvdw(ind) = potvdw(ind) + v_vdw(ri,rr,is,1D0)
         
         
       END DO
@@ -597,8 +597,8 @@ DO iz=iindtmp(3)-nzsg,iindtmp(3)+nzsg
       ind = conv3to1(ix,iy,iz)
       
       field(ind) = field(ind)  &
-          + (-1.)**iparit*ccharge*EXP(-rr/(2D0*sigm**2.))  &
-          /(pi**1.5D0*2D0**1.5D0*sigm**3.)
+          + (-1D0)**iparit*ccharge*EXP(-rr/(2D0*sigm**2))  &
+          /(pi**1.5D0*2D0**1.5D0*sigm**3)
     END DO
   END DO
 END DO
@@ -647,8 +647,8 @@ DO is=1,nc
           ind = conv3to1(ix,iy,iz)
           
           
-          field(ind) = field(ind) + chgtmp*EXP(-rr/(2D0*sigc**2.))  &
-              /(pi**1.5D0*2D0**1.5D0*sigc**3.)
+          field(ind) = field(ind) + chgtmp*EXP(-rr/(2D0*sigc**2))  &
+              /(pi**1.5D0*2D0**1.5D0*sigc**3)
         END DO
       END DO
     END DO
@@ -682,8 +682,8 @@ DO is=1,NE
           ind = conv3to1(ix,iy,iz)
           
           
-          field(ind) = field(ind) + chgtmp*EXP(-rr/(2D0*sigv**2.))  &
-              /(pi**1.5D0*2D0**1.5D0*sigv**3.)
+          field(ind) = field(ind) + chgtmp*EXP(-rr/(2D0*sigv**2))  &
+              /(pi**1.5D0*2D0**1.5D0*sigv**3)
         END DO
       END DO
     END DO
@@ -829,7 +829,7 @@ sgm = sigmac*sq2
 
 dvsdrtmp = dvsdr(r,sgm)
 
-v_vdw = - 0.5*dvsdrtmp**2.
+v_vdw = - 0.5D0*dvsdrtmp**2
 
 DO ico=1,3
   v_vdw = v_vdw + frho(is,ico)*dvsdrtmp*ri(ico)/(elnum*r)*fac
@@ -902,7 +902,7 @@ REAL(DP),PARAMETER :: alpha_ar=10.6D0             ! polarizability of Ar
 
 REAL(DP) :: rfit(0:2)
 !      data rfit/7.629608,15.47005,0.2018586/    ! fitted for a=11.08
-DATA rfit/8.161628,15.60000,0.4996526/    ! fitted for a=10.6
+DATA rfit/8.161628D0,15.60000D0,0.4996526D0/    ! fitted for a=10.6
 
 
 !-------------------------------------------------------------------
@@ -948,16 +948,16 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: r
 !DATA c_dipmod/3.378/       ! spring constant of dipole model in Ha
 !      data sigma_Ar/1.43/
-DATA rstep/1.0E-3/
-DATA vdip/11.08/            ! effective polar.pot. in Ha
-DATA vrep/52.8/             ! repulsive core in Ha
-DATA rcut/3.1/              ! cut radius for pol.pot.
-DATA rcor/1.35/             ! inverse radius**2 for core
+DATA rstep/1.0D-3/
+DATA vdip/11.08D0/            ! effective polar.pot. in Ha
+DATA vrep/52.8D0/             ! repulsive core in Ha
+DATA rcut/3.1D0/              ! cut radius for pol.pot.
+DATA rcor/1.35D0/             ! inverse radius**2 for core
 !      dimension ch(18:18)
 !      data ch(18)/6.119/
 !      data e2/2.0/
-DATA epsil/1.0E-6/
-DATA rsmall/0.012/
+DATA epsil/1.0D-6/
+DATA rsmall/0.012D0/
 
 !     switch to simple core potential
 
@@ -988,8 +988,8 @@ ELSE
   END DO
   19      CONTINUE
   v_dipa  = effch*(v_soft(r+rpmin,sigma_ar)-v_soft(r,sigma_ar))  &
-      +0.5*effc*rpmin*rpmin
-  v_core  = vrep*e2*EXP(-rcor*r*r) -vdip*e2/(1D0+EXP((3.1/r)**8))/r**4  &
+      +0.5D0*effc*rpmin*rpmin
+  v_core  = vrep*e2*EXP(-rcor*r*r) -vdip*e2/(1D0+EXP((3.1D0/r)**8))/r**4  &
       -v_dipa
 END IF
 
@@ -1044,7 +1044,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: r
 DATA  alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar  &
-    /  1.7301, 1.7966,55.465,3672.9,794.21/
+    /  1.7301D0, 1.7966D0,55.465D0,3672.9D0,794.21D0/
 
 !----------------------------------------------------------------------
 

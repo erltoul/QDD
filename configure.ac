@@ -350,8 +350,6 @@ AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE
 
 AC_SUBST(DIDRIS,[])
 AC_CONFIG_HEADERS([config.h])
-AC_PROG_RANLIB
-AM_PROG_AR
 AC_CONFIG_FILES([Makefile
                  code/source_f90/Makefile])
 AC_OUTPUT

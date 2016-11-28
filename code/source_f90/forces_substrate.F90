@@ -107,7 +107,7 @@ IF (nclust > 0) THEN
 !               call dIntFieldFuncOnSubGrid(chpcoul,dgaussdr,rVecTmp(1),
 !     &                 rVecTmp(2),rVecTmp(3),sigTmp*SQ2)
         
-        prefc = chgtmp/(2*pi*sigtmp**2)**1.5
+        prefc = chgtmp/(2*pi*sigtmp**2)**1.5D0
 ! no factor e2, because it is already in the
 ! field chpcoul()
 !WRITE(*,*) ' GETFORCE: ',prefc,rvectmp        
@@ -1321,7 +1321,7 @@ ELSE ! ipseudo = 1
     CALL foldgradfunconsubgrid(potstat,gauss,cx(i),cy(i),cz(i),  &
         sgm1(np(1))*sq2)
     
-    prefac = chg1(np(i))/(2*pi*sgm1(np(i))**2)**1.5
+    prefac = chg1(np(i))/(2*pi*sgm1(np(i))**2)**1.5D0
 !  check if factor e2 is already in phim!! yes it is!!
     
     fx(i) = fx(i) - prefac*rvectmp(1)
@@ -1551,9 +1551,9 @@ DO iit=1,200
     IF (imobe(i) == 1) THEN
       icoun = icoun + 1
       
-      fxe(i) = fxe(i) - 1E2*pxe(i)/xm
-      fye(i) = fye(i) - 1E2*pye(i)/xm
-      fze(i) = fze(i) - 1E2*pze(i)/xm
+      fxe(i) = fxe(i) - 1D2*pxe(i)/xm
+      fye(i) = fye(i) - 1D2*pye(i)/xm
+      fze(i) = fze(i) - 1D2*pze(i)/xm
       
       dmsfx = dmsfx + fxe(i)**2
       dmsfy = dmsfy + fye(i)**2

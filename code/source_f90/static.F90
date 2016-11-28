@@ -678,11 +678,11 @@ ALLOCATE(psipr(kdfull2))
     sume = 0D0
     sum2 = 0D0
     DO  i=1,nxyz
-      vol   = REAL(psipr(i))*REAL(psipr(i)) +AIMAG(psipr(i))*AIMAG(psipr(i))
+      vol   = REAL(psipr(i),DP)*REAL(psipr(i),DP) +AIMAG(psipr(i))*AIMAG(psipr(i))
       sum0  = vol + sum0
       sumk  = vol*akv(i) + sumk
-      sume =  REAL(q2(i))*REAL(psipr(i)) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
-      sum2 =  REAL(q2(i))*REAL(q2(i)) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
+      sume =  REAL(q2(i),DP)*REAL(psipr(i),DP) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      sum2 =  REAL(q2(i),DP)*REAL(q2(i),DP) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
     END DO
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
@@ -1099,7 +1099,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: i
-REAL(DP), PARAMETER :: alpha_ar=10.6
+REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
@@ -1189,8 +1189,8 @@ sumvar = sumvarp
 sumvar2 = sumvar2p
 CALL prispe_parallele(6,-1)
 #endif
-sumvar = SQRT(sumvar/REAL(nclust))
-sumvar2 = SQRT(sumvar2/REAL(nclust))
+sumvar = SQRT(sumvar/REAL(nclust,DP))
+sumvar2 = SQRT(sumvar2/REAL(nclust,DP))
 IF(myn == 0) WRITE(6,'(a,2(1pg12.4))') ' total variance  =',sumvar,sumvar2
 
 
@@ -1221,7 +1221,7 @@ IF(nc > 0 .AND. ivdw == 1)THEN
   evdw = esub
   DO ion=1,nc
     DO ico=1,3
-      evdw = evdw - 0.5*e2*alpha_ar*frho(ion,ico)*frho(ion,ico)/elnum
+      evdw = evdw - 0.5D0*e2*alpha_ar*frho(ion,ico)*frho(ion,ico)/elnum
     END DO
   END DO
   espnb = espnb - esub
@@ -1234,7 +1234,7 @@ eshell=eshell/2D0  !(=t+v/2)
 #if(raregas)
 CALL energ_dielec(rho)
 #endif
-energy = espnb/2.+esh1/2.+enrear+ecback+ecorr+enonlc/2. -ecrhoimage
+energy = espnb/2D0+esh1/2D0+enrear+ecback+ecorr+enonlc/2D0 -ecrhoimage
 IF(directenergy) &
      energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
 IF(ivdw == 1) energy = energy + evdw

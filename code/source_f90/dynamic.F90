@@ -122,7 +122,7 @@ ELSE IF(iexcit == 1) THEN
     pbeta=fbeta
     phexe=fhexe
     sqtest=0D0
-    xion=1.0*nion
+    xion=1D0*nion
     CALL jelbak(xion,palph,pbeta,phexe,sqtest,1)
 !    acc=0D0
 !    DO i=1,nxyz
@@ -169,7 +169,7 @@ COMPLEX(DP) :: cfac
 
 !------------------------------------------------------------------
 
-v0 = SQRT(2.*ekin0pp/(amu(np(nion))*1836.0*ame))
+v0 = SQRT(2D0*ekin0pp/(amu(np(nion))*1836.0D0*ame))
 rnorm = vxn0**2 + vyn0**2+ vzn0**2
 rnorm = SQRT(rnorm)
 
@@ -221,7 +221,7 @@ COMPLEX(DP) :: cfac
 !------------------------------------------------------------------
 ! lionel : np(nion) ==> np(nproj)
 
-v0 = SQRT(2.*eproj/(amu(np(nproj))*1836.0*ame))
+v0 = SQRT(2D0*eproj/(amu(np(nproj))*1836.0D0*ame))
 rnorm = vpx**2 + vpy**2+ vpz**2
 rnorm = SQRT(rnorm)
 
@@ -295,7 +295,7 @@ scatterelectronvxn = scatterelectronvxn/pnorm
 scatterelectronvyn = scatterelectronvyn/pnorm
 scatterelectronvzn = scatterelectronvzn/pnorm
 
-pnorm = SQRT(scatterelectronenergy*2.*ame)
+pnorm = SQRT(scatterelectronenergy*2D0*ame)
 
 scatterelectronvxn = scatterelectronvxn*pnorm
 scatterelectronvyn = scatterelectronvyn*pnorm
@@ -313,7 +313,7 @@ DO i=1,nstate
   IF(occup(i)<0.5D0) STOP "only occupied states allowed in case of attachement"
 END DO
 
-fac = 1D0/SQRT(pi**1.5*scatterelectronw**3)
+fac = 1D0/SQRT(pi**1.5D0*scatterelectronw**3)
 
 ind = 0
 
@@ -330,7 +330,7 @@ DO iz=minz,maxz
       rr = (x1 - scatterelectronx)**2 &
           + (y1 - scatterelectrony)**2 &
           + (z1 - scatterelectronz)**2
-      fr = fac*EXP(-rr/2./scatterelectronw**2)
+      fr = fac*EXP(-rr/2D0/scatterelectronw**2)
       psi(ind,nstate) = CMPLX(fr,0D0,DP)*CMPLX(COS(arg),SIN(arg),DP)
     END DO
   END DO
@@ -645,7 +645,7 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 #if(twostsic)
 ELSE IF(ifsicp >= 7)THEN
 !  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
-  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484)))           !MV
+  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))           !MV
 !ccccccJM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3
@@ -765,7 +765,7 @@ REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: it
 
-REAL(DP), PARAMETER :: alpha_ar=10.6             !  for VdW
+REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
 REAL(DP) ::  en(kstate)
 COMPLEX(DP),ALLOCATABLE :: qtmp(:)
 REAL(DP),ALLOCATABLE :: current(:,:)
@@ -791,8 +791,8 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 #else
 myn = 0
 #endif
-tinfs=it*dt1*0.0484/2.0/ame
-tfs=it*dt1*0.0484
+tinfs=it*dt1*0.0484D0/2.0D0/ame
+tfs=it*dt1*0.0484D0
 #if(raregas)
 IF(idielec == 1) THEN
   CALL energ_dielec(rho)
@@ -859,7 +859,7 @@ IF(tstinf) then
     CALL hpsi(qtmp,aloc(ishift+1),nb,1)  
 #if(!parayes)
     CALL cproject(qtmp,qtmp,ispin(nb),psi)
-    spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp)))
+    spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP))
 #endif
   END DO
   DEALLOCATE(qtmp)
@@ -889,8 +889,8 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
     qtmp = psi(:,nb)
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
     CALL hpsi_boostinv(qtmp,aloc(ishift+1),current,rho,nbe)
-    spenergybi(nb) = REAL(wfovlp(psi(1,nb),qtmp))
-    spvariancebi(nb) = SQRT(REAL(wfovlp(qtmp,qtmp))-spenergybi(nb)**2)
+    spenergybi(nb) = REAL(wfovlp(psi(1,nb),qtmp),DP)
+    spvariancebi(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP)-spenergybi(nb)**2)
   END DO
   CALL safeopen(91,it,jstboostinv,'pspenergybi')
   WRITE(91,'(1f15.6,500f12.6)') tfs,(spenergybi(nb),nb=1,nstate)
@@ -953,8 +953,8 @@ ELSE ! jellium case
     ecrho=ecrho+rho(ind)*chpcoul(ind)
   END DO
 END IF
-ecback=ecback*dvol/2.0
-ecrho=ecrho*dvol/2.0
+ecback=ecback*dvol/2.0D0
+ecrho=ecrho*dvol/2.0D0
 
 #if(raregas)
 IF(nc > 0 .AND. ivdw == 1)THEN
@@ -968,7 +968,7 @@ IF(nc > 0 .AND. ivdw == 1)THEN
   evdw = esub
   DO iss=1,nc
     DO ico=1,3
-      evdw = evdw - 0.5D0*e2*alpha_ar*frho(iss,ico)*frho(iss,ico)/(REAL(nclust))
+      evdw = evdw - 0.5D0*e2*alpha_ar*frho(iss,ico)*frho(iss,ico)/(REAL(nclust,DP))
     END DO
   END DO
   eshell = eshell - esub
@@ -976,7 +976,7 @@ END IF
 #endif
 
 esh1=esh1
-eshell=eshell/2.0  !(=t+v/2)
+eshell=eshell/2.0D0  !(=t+v/2)
 
 
 !     ionic contributions to the energy
@@ -999,19 +999,19 @@ IF(ionmdtyp > 0) THEN
   DO ion=1,nc
     ek=pxc(ion)*pxc(ion)+pyc(ion)*pyc(ion)+pzc(ion)*pzc(ion)
     xm=1836.0D0*mion*ame
-    ek=ek/2.0/xm
+    ek=ek/2.0D0/xm
     ekinion=ekinion+ek
   END DO
   DO ion=1,NE
     ek=pxe(ion)*pxe(ion)+pye(ion)*pye(ion)+pze(ion)*pze(ion)
     xm=1836.0D0*me*ame
-    ek=ek/2.0/xm
+    ek=ek/2.0D0/xm
     ekinel=ekinel+ek
   END DO
   DO ion=1,nk
     ek=pxk(ion)*pxk(ion)+pyk(ion)*pyk(ion)+pzk(ion)*pzk(ion)
     xm=1836.0D0*mkat*ame
-    ek=ek/2.0/xm
+    ek=ek/2.0D0/xm
     ekinkat=ekinkat+ek
   END DO
 #endif
@@ -1062,14 +1062,14 @@ IF(myn == 0) THEN
 #endif
   WRITE(6,'(a)') ' '
 !mb        write(6,*) 'tot sp energ     = ',eshell*2.-esh1/2.
-  WRITE(6,*) 'tot sp energ     = ',eshell*2.-esh1
+  WRITE(6,*) 'tot sp energ     = ',eshell*2-esh1
   WRITE(6,*) 'rearge. energ    = ',enrear
   WRITE(6,*) 'e_coul:ion-ion   = ',ecorr
-  WRITE(6,*) 'e_coul:el-ion    = ',2.*ecback
-  WRITE(6,*) 'extern. energy   = ',2.*ecback+ecorr
+  WRITE(6,*) 'e_coul:el-ion    = ',2*ecback
+  WRITE(6,*) 'extern. energy   = ',2*ecback+ecorr
   WRITE(6,*) 'Hartree energy   = ',ecrho-ecback-ecrhoimage
   WRITE(6,*) 'nonlocal energy  = ',enonlc
-  WRITE(6,*) 'sim.ann.energy   = ',2.*ecback+ecorr+enonlc
+  WRITE(6,*) 'sim.ann.energy   = ',2*ecback+ecorr+enonlc
   WRITE(6,*) 'laser energy     = ',elaser
   WRITE(6,*) 'internal exc. energy per spin    = ',estar(1),estar(2)
   IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
@@ -1144,7 +1144,7 @@ sum0 = 0D0
 sumk = 0D0
 #if(netlib_fft|fftw_cpu)
 DO ii=1,kdfull2
-  vol   = REAL(psi2(ii))*REAL(psi2(ii)) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
+  vol   = REAL(psi2(ii),DP)*REAL(psi2(ii),DP) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
@@ -1166,12 +1166,12 @@ CALL ckin3d(psi(1,nb),psi2)
 sum0 = 0D0
 acc = 0D0
 DO i=1,nxyz
-  acc = REAL(psi(i,nb))*REAL(psi2(i)) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
+  acc = REAL(psi(i,nb),DP)*REAL(psi2(i),DP) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
       + acc
-  sum0 = REAL(psi(i,nb))*REAL(psi(i,nb)) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
+  sum0 = REAL(psi(i,nb),DP)*REAL(psi(i,nb),DP) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
       + sum0
 END DO
-ekinout = REAL(wfovlp(psi(1,nb),psi2))
+ekinout = REAL(wfovlp(psi(1,nb),psi2),DP)
 #endif
 
 DEALLOCATE(psi2)
@@ -1651,9 +1651,9 @@ COMPLEX(DP) :: jalpha
 !         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 ALLOCATE(q2(kdfull2),jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 
-dkx=pi/(dx*REAL(nx))
-dky=pi/(dy*REAL(ny))
-dkz=pi/(dz*REAL(nz))
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
 !      eye=CMPLX(0.0,1.0,DP)
 !      nxyf=nx2*ny2
 !      nyf=nx2
@@ -1720,7 +1720,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     
     jalpha=test
     jtx(ind)=jtx(ind)-o*jalpha
@@ -1743,7 +1743,7 @@ DO nb=1,nstate
   CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
     jty(ind)=jty(ind)-o*jalpha
   END DO
@@ -1766,7 +1766,7 @@ DO nb=1,nstate
 #endif
 
   DO ind=1,kdfull2
-    test=eye/2.0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
+    test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
     jtz(ind)=jtz(ind)-o*jalpha
   END DO
@@ -1852,7 +1852,7 @@ CALL nonlocalc(qact,q1,0)
 IF(tenerg) THEN !  add nonloc.pot energy
   sumadd = 0D0
   DO  i=1,nxyz
-    sumadd  = REAL(qact(i))*REAL(q1(i)) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
+    sumadd  = REAL(qact(i),DP)*REAL(q1(i),DP) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
   END DO
   enonlo(nb) = sumadd*dvol
   epotsp(nb) = sumadd*dvol + epotsp(nb)
@@ -1870,21 +1870,21 @@ DO ind=1,nxyz
 END DO
 
 CALL nonlocalc(q1,q2,0)
-ri2=ri*ri/2.0
+ri2=ri*ri/2D0
 DO ind=1,nxyz
   qact(ind) = qact(ind) - ri2*q2(ind)
 END DO
 IF(norder <= 2) RETURN
 
 CALL nonlocalc(q2,q1,0)
-cfac = ri*ri*ri/6.0*eye
+cfac = ri*ri*ri/6D0*eye
 DO ind=1,nxyz
   qact(ind) = qact(ind) + cfac*q1(ind)
 END DO
 IF(norder <= 3) RETURN
 
 CALL nonlocalc(q1,q2,0)
-rfac = ri2*ri2/6.0
+rfac = ri2*ri2/6D0
 DO ind=1,nxyz
   qact(ind) = qact(ind) + rfac*q2(ind)
 END DO
@@ -2819,9 +2819,9 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
         tfs,cx(ion),cy(ion),cz(ion),r2iona   !  ecorr
     IF(MOD(it,jvel) == 0) WRITE(22,'(1f13.5,3e17.8,1pg13.5)')  &
         tfs,cpx(ion),cpy(ion),cpz(ion),ekion
-    sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836.
-    sumy = sumy + cpy(ion)**2/amu(np(ion))/1836.
-    sumz = sumz + cpz(ion)**2/amu(np(ion))/1836.
+    sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836D0
+    sumy = sumy + cpy(ion)**2/amu(np(ion))/1836D0
+    sumz = sumz + cpz(ion)**2/amu(np(ion))/1836D0
   END DO
   IF(MOD(it,jvel) == 0) THEN
     WRITE(149,'(1f13.5,4e17.8,i5)') tfs,sumx,sumy,sumz,sumx+sumy+sumz,nion
@@ -2849,7 +2849,7 @@ IF(jener > 0 .AND. MOD(it,jener) == 0 .AND. (nion) > 0)THEN
   ekx = 0D0
   eky = 0D0
   ekz = 0D0
-  amfac = amu(np(nion))*1836.*ame*2.
+  amfac = amu(np(nion))*1836D0*ame*2D0
   DO ion=1,nion
     ekx = ekx + cpx(ion)*cpx(ion)
     eky = eky + cpy(ion)*cpy(ion)
@@ -2950,9 +2950,9 @@ IF(nc+NE+nk > 0) THEN
       END IF
       
       IF (imobc(ion) /= 0) THEN
-        sumcx = sumcx + (pxc(ion)**2)/mion/1836.
-        sumcy = sumcy + (pyc(ion)**2)/mion/1836.
-        sumcz = sumcx + (pzc(ion)**2)/mion/1836.
+        sumcx = sumcx + (pxc(ion)**2)/mion/1836D0
+        sumcy = sumcy + (pyc(ion)**2)/mion/1836D0
+        sumcz = sumcx + (pzc(ion)**2)/mion/1836D0
       END IF
       
     END DO
@@ -2979,9 +2979,9 @@ IF(nc+NE+nk > 0) THEN
     END IF
     
     IF (imobk(ion) /= 0) THEN
-      sumkx = sumkx + (pxk(ion)**2)/mkat/1836.
-      sumky = sumky + (pyk(ion)**2)/mkat/1836.
-      sumkz = sumkx + (pzk(ion)**2)/mkat/1836.
+      sumkx = sumkx + (pxk(ion)**2)/mkat/1836D0
+      sumky = sumky + (pyk(ion)**2)/mkat/1836D0
+      sumkz = sumkx + (pzk(ion)**2)/mkat/1836D0
     END IF
   END DO
   
@@ -3003,8 +3003,8 @@ IF(myn == 0 .AND. jener > 0 .AND. MOD(it,jener) == 0 .AND. nrare > 0 )THEN
   ekvx = 0D0
   ekvy = 0D0
   ekvz = 0D0
-  amfac1 = amu(np(1))*1836.*ame*2.
-  amfac2 = amu(np(nrare+1))*1836.*ame*2.
+  amfac1 = amu(np(1))*1836D0*ame*2D0
+  amfac2 = amu(np(nrare+1))*1836D0*ame*2D0
   DO ion=1,nrare
     ekcx = ekcx + pxc(ion)*pxc(ion)
     ekcy = ekcy + pyc(ion)*pyc(ion)
@@ -3399,7 +3399,7 @@ END DO
 !      xm=amu(np(nrare+1))*1836.0*ame
 
 ALLOCATE(xm(1:ne))
-xm=amu(-18)*1836.0*ame
+xm=amu(-18)*1836D0*ame
 CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
                 fxe(1),fye(1),fze(1),dt,xm,ne,2)
 DEALLOCATE(xm)

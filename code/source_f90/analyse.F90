@@ -266,7 +266,7 @@ END DO
 
 !      ! calculate root mean square radius
 
-rmsion=0.
+rmsion=0D0
 
 DO ion=1,nion
   rmsion=rmsion+cw(ion,1)**2+cw(ion,2)**2+cw(ion,3)**2
@@ -277,7 +277,7 @@ rmsion=SQRT(rmsion/nion)
 ! determine maximum distance; allows to see if
 ! cluster is dissociating
 
-dmdistion=0.
+dmdistion=0D0
 DO i=1,nion-1
   DO j=i+1,nion
     dist=0D0
@@ -408,7 +408,7 @@ END DO
 ! get root mean square radius
 
 ind=0
-rmsel=0.
+rmsel=0D0
 DO iz=minz,maxz
   xic(3)=(iz-nzsh)*dz-codz
   DO iy=miny,maxy

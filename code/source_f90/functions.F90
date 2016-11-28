@@ -123,11 +123,11 @@ IF(isurf /= 0)THEN
   IF (ivdw == 0 .OR. ivdw == 1) THEN
     
     DO ind=1,kfermi
-      r=ind*dx/1733.
-      varelcore0(ind) = -e2*coreheight/(1.+EXP(corewidth*(r-coreradius)))
+      r=ind*dx/1733D0
+      varelcore0(ind) = -e2*coreheight/(1D0+EXP(corewidth*(r-coreradius)))
       varelcore1(ind) =  &
           e2*coreheight*corewidth*EXP(corewidth*(r-coreradius))/  &
-          (1.+EXP(corewidth*(r-coreradius)))**2
+          (1D0+EXP(corewidth*(r-coreradius)))**2
     END DO
     
   ELSE IF (ivdw == 2) THEN
@@ -141,7 +141,7 @@ IF(isurf /= 0)THEN
       
       varelcore1(ind) =  &
           e2*coreheight*corewidth*EXP(corewidth*(r-coreradius))/  &
-          (1.+EXP(corewidth*(r-coreradius)))**2
+          (1D0+EXP(corewidth*(r-coreradius)))**2
       
       add0 = v_soft(r,sigvdw)
       add0 =  add0**8*e2*r*r*vdwh
@@ -177,7 +177,7 @@ END IF
 
 !     general Fermi function
 DO ind=1,kfermi
-  r=ind*dx/1733.
+  r=ind*dx/1733D0
   
   vfermi0(ind) =-e2*fermia/(1D0+EXP(fermib*(r-fermic)))
   

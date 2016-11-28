@@ -173,8 +173,8 @@ IF(ipseudo == 1)THEN
       CALL conv1to3(ind)
 !      WRITE(*,*) ' PsD: ion,ind,iindtmp=',ion,ind,iindtmp
       
-      cfac1 = chg1(np(ist))/(pi**1.5*2D0**1.5*sgm1(np(ist))**3.)
-      cfac2 = chg2(np(ist))/(pi**1.5*2D0**1.5*sgm2(np(ist))**3.)
+      cfac1 = chg1(np(ist))/(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.D0)
+      cfac2 = chg2(np(ist))/(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.D0)
       exfac1 = 1D0/(2D0*sgm1(np(ist))**2D0)
       exfac2 = 1D0/(2D0*sgm2(np(ist))**2D0)
       DO iz=iindtmp(3)-nzsg,iindtmp(3)+nzsg
@@ -437,7 +437,7 @@ IF(npmin == -18) THEN
 !g          V_ion_ion = e2*ch(-18)**2*V_soft(dist,sgm1(-18)*SQ2)
   ELSE IF(npmax == 18) THEN
     IF(ABS(n1-n2) == nrare)THEN
-      v_ion_ion = 0.5*c_dipmod*dist*dist
+      v_ion_ion = 0.5D0*c_dipmod*dist*dist
     ELSE
       v_ion_ion = ch(18)*ch(-18)*e2*v_soft(dist,2D0*sgm1(18))
 !g              V_ion_ion = e2*ch(18)*ch(-18)*V_soft(dist,sgm1(18)*SQ2)
@@ -482,7 +482,7 @@ REAL(DP), INTENT(IN OUT)                     :: r
 REAL(DP), INTENT(IN OUT)                     :: s
 DOUBLE PRECISION :: rder
 
-rder = 1.0E-5
+rder = 1.0D-5
 
 !         ftemp = erf((r+rder)/s)/(r+rder)
 !         ftemp = ftemp - erf((r-rder)/s)/(r-rder)
