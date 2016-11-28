@@ -204,7 +204,7 @@ gpu_pwteleman_SOURCES = main.F90
 gpu_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
 gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
-gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
+gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
 endif
 
 ########################################################################
@@ -223,11 +223,11 @@ fftpack.$(OBJEXT): fftpack.F90 define.h fftpack2.F90 params.$(OBJEXT) Makefile
 
 # fftw.o
 fftw.$(OBJEXT): fftw.F90 define.h fftw3.f03 params.$(OBJEXT) Makefile
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 # cuda_alloc.o
 cuda_alloc.$(OBJEXT): cuda_alloc.F90 Makefile
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 
 #kinetic.o
 if USE_NETLIB
@@ -236,11 +236,11 @@ kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params
 endif
 if CALLS_FFTW
 kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTW) params.$(OBJEXT)  Makefile
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 if USE_CUDA
 kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90  $(OBJCUDA) params.$(OBJEXT) Makefile
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 
 # coulsolv.o
@@ -250,12 +250,12 @@ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 
 endif
 if CALLS_FFTW
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTW) $(OBJKINPARA) Makefile
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 # coulsolv does not work with cuda (yet ?)
 #~ if USE_CUDA
 #~ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJCUDA) params.o Makefile
-#~ 	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $< $(AM_LDFLAGS)
+#~ 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< $(AM_LDFLAGS)
 #~ endif
 
 # sicnew.o
@@ -269,7 +269,7 @@ sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 # restart.o
 if USE_TWOSTSIC
 restart.$(OBJEXT): restart.F90 define.h 2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
 restart.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS3) $(IDRIS) -DREALSWITCH -c -o $@ $<
@@ -297,21 +297,21 @@ localizer.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 
 # localize_rad.o
 localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # static.o
 if USE_CUDA
 if USE_TWOSTSIC
 static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
 static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 else
 if USE_TWOSTSIC
 static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 else
 static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -325,22 +325,20 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 # 2stUT.o
 if USE_TWOSTSIC
 2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
 2stUT.$(OBJEXT): 2stUT.F90 define.h  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 endif
 
 # 2stUTc.o 
-if USE_TWOSTSIC
 2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -autodouble -c -o $@ $<
-endif
+	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # dynamic.o
 if USE_TWOSTSIC
 dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 else
 dynamic.$(OBJEXT): dynamic.F90 define.h $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -428,7 +426,7 @@ parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
 # expevol.o
 if USE_TWOSTSIC
 expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) -autodouble -c -o $@ $<
+	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
 else
 expevol.$(OBJEXT): expevol.F90 define.h  $(OBJKINPARA)
 	$(FC) $(COMPILERFLAGS1) -c -o $@ $<
@@ -464,7 +462,7 @@ attachement.$(OBJEXT): attachement.F90 define.h params.$(OBJEXT)
 
 #cuda.o
 cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
-	$(GPU_COMPILER) $(GPUCOMPILERFLAGS) -autodouble -c -o $@ $<
+	$(GPU_COMPILER) $(GPUCOMPILERFLAGS) -c -o $@ $<
 
 
 

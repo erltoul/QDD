@@ -409,7 +409,7 @@ ELSE IF (isrtyp(ityp1,ityp2) == 2) THEN ! Ar-case
                     
                     
                     chpddr = rho(ind)*(varelcore(rr+rder)  &
-                        - varelcore(rr-rder))/(rr*2.*rder)
+                        - varelcore(rr-rder))/(rr*2D0*rder)
                     
                     
 !                        chpddr = rho(ind)*(V_Ar_el_core(rr+rder)
