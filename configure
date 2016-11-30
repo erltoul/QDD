@@ -589,7 +589,6 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-DIDRIS
 CALLS_FFTW_FALSE
 CALLS_FFTW_TRUE
 USE_CUDA_FALSE
@@ -693,8 +692,8 @@ MPI_GFORT_FALSE
 MPI_GFORT_TRUE
 MPI_IFORT_FALSE
 MPI_IFORT_TRUE
-MPIF90_FALSE
-MPIF90_TRUE
+MPIFORT_FALSE
+MPIFORT_TRUE
 XLF_R_FALSE
 XLF_R_TRUE
 GFORT_FALSE
@@ -1427,7 +1426,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-compiler         Use specified compiler, choose among gfortran,
-                          ifort, mpif90 and xlf_r
+                          ifort, mpifort and xlf_r
   --with-debug            --with-debug : Use compiler specfic debug option
                           during compilation
 
@@ -1435,7 +1434,7 @@ Optional Packages:
                           libraries are contained in the final executable.
                           This makes a big executable.
   --with-para             --with-para : Use MPI for FFT parallelism. Use
-                          --with-para=dyn for simultaneous mono jobs. Only for
+                          --with-para=sim for simultaneous mono jobs. Only for
                           some compilers.
   --with-openmp           --with-openmp : Invoke OpenMP. --with-openmp : use
                           threads for FFT. --with-openmp=dyn : wave function
@@ -2783,7 +2782,7 @@ else
   if test "x$with_compiler" = xyes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpif90
+as_fn_error $? "Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort
 See \`config.log' for more details" "$LINENO" 5; }
 else
 
@@ -3308,27 +3307,31 @@ else
   XLF_R_FALSE=
 fi
 
- if test "x$FC" = xmpif90; then
-  MPIF90_TRUE=
-  MPIF90_FALSE='#'
+ if test "x$FC" = xmpifort; then
+  MPIFORT_TRUE=
+  MPIFORT_FALSE='#'
 else
-  MPIF90_TRUE='#'
-  MPIF90_FALSE=
+  MPIFORT_TRUE='#'
+  MPIFORT_FALSE=
 fi
 
-#Find the underlying compiler used by mpif90:
+#Find the underlying compiler used by mpifort:
 FCOMP=unknown
-mpif90 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
-mpif90 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
-mpif90 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
-if test "x$FCOMP" = xunknown; then :
+if test "x$FC" = xmpifort; then :
+
+      mpifort 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
+      mpifort 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
+      mpifort 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
+      if test "x$FCOMP" = xunknown; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "Could not identify compiler $true_comp used by mpif90.
+as_fn_error $? "Could not identify compiler $true_comp used by mpifort.
 See \`config.log' for more details" "$LINENO" 5; }
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: mpif90 uses $FCOMP as compiler" >&5
-$as_echo "$as_me: mpif90 uses $FCOMP as compiler" >&6;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: mpifort uses $FCOMP as compiler" >&5
+$as_echo "$as_me: mpifort uses $FCOMP as compiler" >&6;}
+
+fi
 
 fi
  if test "x$FCOMP" = xifort; then
@@ -5005,6 +5008,7 @@ else
 fi
 
 #check and flags
+
 if test "x$with_para" != xno; then :
 
       if test  "x$with_para" != xyes; then :
@@ -5018,8 +5022,180 @@ fi
 
 fi
       LD_MPI=
+      if test "x$FC" = xgfortran; then :
+
+            #~ AC_MSG_FAILURE([mpif.h uses array of rank > 7, which is not yet implemented in gfortran. Try with an other compiler.])
+            LD_MPI="-lmpi_f90 -lmpi_f77 -lmpi"
+
+LDLIBS="$LD_MPI"
+echo "Checking presence of mpif.h for compiler $FC"
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing COMPILATION including 'mpif.h'" >&5
+$as_echo "$as_me: Testing COMPILATION including 'mpif.h'" >&6;}
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+                  IMPLICIT NONE
+                  INCLUDE 'mpif.h'
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  echo "success"
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+    Could not COMPILE simple fortran program including 'mpif.h'.
+    If you really want to use $FC, you should give includes path:
+        ./configure  --with-para --with-compiler=$FC  FCFLAGS=-I/path/to/mpi/include
+
+    You should use mpifort instead of $FC.
+         ./configure  --with-para --with-compiler=mpifort
+    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
+
+    mpif90 and mpiF77 are obsolete versions of mpifort.
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing LINKING using $LD_MPI" >&5
+$as_echo "$as_me: Testing LINKING using $LD_MPI" >&6;}
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+                  IMPLICIT NONE
+                  INCLUDE 'mpif.h'
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  echo "success"
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+    Could not LINK simple fortran program including 'mpif.h'.
+    If you really want to use $FC, you should give libraries path:
+        ./configure  --with-para --with-compiler=$FC  LDFLAGS=-L/path/to/lib
+
+    You should use mpifort instead of $FC.
+         ./configure  --with-para --with-compiler=mpifort
+    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
+
+    mpif90 and mpiF77 are obsolete versions of mpifort.
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+LDLIBS=
+
+
+
+fi
       if test "x$FC" = xifort; then :
-  LD_MPI="-lmpi"
+
+            #~ AC_CHECK_LIB([mpi],[main],
+                    #~ [AC_CHECK_LIB([mpi_mpifh],[main],[LD_MPI="-lmpi_mpifh -lmpi"],[AC_MSG_FAILURE([-lmpi_mpif flag failed])])]
+                    #~ ,[AC_MSG_FAILURE([-lmpi flag failed])])
+            LD_MPI="-lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi"
+
+LDLIBS="$LD_MPI"
+echo "Checking presence of mpif.h for compiler $FC"
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing COMPILATION including 'mpif.h'" >&5
+$as_echo "$as_me: Testing COMPILATION including 'mpif.h'" >&6;}
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+                  IMPLICIT NONE
+                  INCLUDE 'mpif.h'
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  echo "success"
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+    Could not COMPILE simple fortran program including 'mpif.h'.
+    If you really want to use $FC, you should give includes path:
+        ./configure  --with-para --with-compiler=$FC  FCFLAGS=-I/path/to/mpi/include
+
+    You should use mpifort instead of $FC.
+         ./configure  --with-para --with-compiler=mpifort
+    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
+
+    mpif90 and mpiF77 are obsolete versions of mpifort.
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing LINKING using $LD_MPI" >&5
+$as_echo "$as_me: Testing LINKING using $LD_MPI" >&6;}
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+                  IMPLICIT NONE
+                  INCLUDE 'mpif.h'
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  echo "success"
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+    Could not LINK simple fortran program including 'mpif.h'.
+    If you really want to use $FC, you should give libraries path:
+        ./configure  --with-para --with-compiler=$FC  LDFLAGS=-L/path/to/lib
+
+    You should use mpifort instead of $FC.
+         ./configure  --with-para --with-compiler=mpifort
+    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
+
+    mpif90 and mpiF77 are obsolete versions of mpifort.
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+LDLIBS=
+
+
 fi
       if test "x$FC" = xxlf_r; then :
 
@@ -5030,17 +5206,26 @@ fi
 
 
 fi
+
+
+
 if test "x$with_para" = xno; then :
   DMPI="-Dparano"
+       EXEEXT=".seq"
 elif test "x$with_para" = xyes; then :
   DMPI="-Dparayes"
+       EXEEXT=".par"
 elif test "x$with_para" = xsim; then :
   DMPI="-Dparano -Dsimpara"
-else
-  DMPI=""
+       EXEEXT=".sim"
+
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Using parallelism : $with_para" >&5
-$as_echo "$as_me: Using parallelism : $with_para" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Using parallelism: $with_para" >&5
+$as_echo "$as_me: Using parallelism: $with_para" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Additional flag for parallelism: $LD_MPI" >&5
+$as_echo "$as_me: Additional flag for parallelism: $LD_MPI" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Binary extension will be : \"$EXEEXT\"" >&5
+$as_echo "$as_me: Binary extension will be : \"$EXEEXT\"" >&6;}
 if test  "x$with_para" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: Compiler taking MPI into account: $FC" >&5
 $as_echo "$as_me: Compiler taking MPI into account: $FC" >&6;}
@@ -5053,6 +5238,7 @@ else
   USE_MPI_TRUE='#'
   USE_MPI_FALSE=
 fi
+
 
 
 #=======================================================================
@@ -5110,7 +5296,6 @@ ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
 
 
   OPENMP_FCFLAGS=
@@ -5223,6 +5408,20 @@ if test "x$with_fft" != xno; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: Use FFT : $with_fft" >&5
 $as_echo "$as_me: Use FFT : $with_fft" >&6;}
 fi
+# CUFFT only availaible when using IFORT (name of variables in cuda.cu : module_mp_variable)
+if test "x$with_fft" = xCUFFT; then :
+  if test "x$FC" != xifort; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "FFT using CUDA is only available with compiler ifort.
+                              Sorry.
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+
+fi
+
+
 
 # coudoub3D only enabled when using FFTW cals:
 if test "x$coudoub3D" = x1 ; then :
@@ -5330,6 +5529,7 @@ elif #........................MKL......................................
       test "x$with_fft" = xMKL; then :
 
 
+LDLIBS=
 # PATH to MKL
   if test "x$mklpath" != xno; then :
   mklroot=${mklpath}
@@ -6197,8 +6397,10 @@ else
   CALLS_FFTW_FALSE=
 fi
 
-
-
+echo "FCFLAGS: $FCFLAGS"
+echo "LDFLAGS: $LDFLAGS"
+echo "LD_MPI: $LD_MPI"
+echo "LD_FFTW: $LD_FFTW"
 ac_config_headers="$ac_config_headers config.h"
 
 ac_config_files="$ac_config_files Makefile code/source_f90/Makefile"
@@ -6340,8 +6542,8 @@ if test -z "${XLF_R_TRUE}" && test -z "${XLF_R_FALSE}"; then
   as_fn_error $? "conditional \"XLF_R\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${MPIF90_TRUE}" && test -z "${MPIF90_FALSE}"; then
-  as_fn_error $? "conditional \"MPIF90\" was never defined.
+if test -z "${MPIFORT_TRUE}" && test -z "${MPIFORT_FALSE}"; then
+  as_fn_error $? "conditional \"MPIFORT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPI_IFORT_TRUE}" && test -z "${MPI_IFORT_FALSE}"; then

@@ -1,6 +1,7 @@
 #Make all checks for MKL library
 AC_DEFUN([FL_CHECK_MKL_LIBS],
 [
+LDLIBS=
 # PATH to MKL
   AS_IF([test "x$mklpath" != xno],
           [mklroot=${mklpath}],

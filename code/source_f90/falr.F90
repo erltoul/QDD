@@ -1523,7 +1523,7 @@ dxsp=dx*dy*dz
 dksp=dkx*dky*dkz
 
 grnorm=SQRT(dxsp/dksp)
-fnorm=1D0/SQRT(REAL(nx*ny*nz))
+fnorm=1D0/SQRT(REAL(nx*ny*nz,DP))
 akmax=SQRT(3D0*(nx*nx)*dx*dx)+2D0
 nxk=INT(akmax/dkx)+1
 IF(nxk > nx1) nxk=nx1

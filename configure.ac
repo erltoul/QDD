@@ -13,7 +13,7 @@ AC_CONFIG_MACRO_DIR([m4])
 ########################################################################
 AC_ARG_WITH([compiler],
   [AS_HELP_STRING([--with-compiler],
-  [Use specified compiler, choose among gfortran, ifort, mpif90 and xlf_r])],
+  [Use specified compiler, choose among gfortran, ifort, mpifort and xlf_r])],
   [])
 #Choice of compiler
 #search for ifort as default compiler. If not found, search for gfortran or xlfr .
@@ -25,7 +25,7 @@ AS_IF([test -z $with_compiler],
       ],
       [
   AS_IF([test "x$with_compiler" = xyes],
-        [AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpif90])],
+        [AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort])],
         [
         AC_MSG_CHECKING([for $with_compiler, as User asked])
         AC_CHECK_PROG( [found_compiler], [$with_compiler], [yes], [no])
@@ -40,16 +40,19 @@ AC_PROG_FC([$FC])
 AM_CONDITIONAL([IFORT], [test "x$FC" = xifort])
 AM_CONDITIONAL([GFORT], [test "x$FC" = xgfortran])
 AM_CONDITIONAL([XLF_R], [test "x$FC" = xxlf_r])
-AM_CONDITIONAL([MPIF90], [test "x$FC" = xmpif90])
-#Find the underlying compiler used by mpif90:
+AM_CONDITIONAL([MPIFORT], [test "x$FC" = xmpifort])
+#Find the underlying compiler used by mpifort:
 FCOMP=unknown
-mpif90 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
-mpif90 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
-mpif90 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
-AS_IF([test "x$FCOMP" = xunknown],
-      [AC_MSG_FAILURE([Could not identify compiler $true_comp used by mpif90. ])],
-      [AC_MSG_NOTICE([mpif90 uses $FCOMP as compiler])]
-      )
+AS_IF([test "x$FC" = xmpifort],
+      [
+      mpifort 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
+      mpifort 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
+      mpifort 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
+      AS_IF([test "x$FCOMP" = xunknown],
+            [AC_MSG_FAILURE([Could not identify compiler $true_comp used by mpifort. ])],
+            [AC_MSG_NOTICE([mpifort uses $FCOMP as compiler])]
+            )
+      ])
 AM_CONDITIONAL([MPI_IFORT], [test "x$FCOMP" = xifort])
 AM_CONDITIONAL([MPI_GFORT], [test "x$FCOMP" = xgfortran])
 AM_CONDITIONAL([MPI_XLF_R], [test "x$FCOMP" = xxlf_r])
@@ -141,7 +144,7 @@ AM_CONDITIONAL([USE_STATIC],[test "x$with_static" = xyes])
 #Choice of parallelism
 AC_ARG_WITH([para],
             [AS_HELP_STRING([--with-para],
-            [--with-para : Use MPI for FFT parallelism. Use --with-para=dyn for simultaneous mono jobs. Only for some compilers.])],
+            [--with-para : Use MPI for FFT parallelism. Use --with-para=sim for simultaneous mono jobs. Only for some compilers.])],
             [],
             [with_para=no])
 #check and flags
@@ -153,7 +156,21 @@ AS_IF([test "x$with_para" != xno],
                   )
             ])
       LD_MPI=
-      AS_IF([test "x$FC" = xifort], [LD_MPI="-lmpi"])
+      AS_IF([test "x$FC" = xgfortran],
+            [
+            #~ AC_MSG_FAILURE([mpif.h uses array of rank > 7, which is not yet implemented in gfortran. Try with an other compiler.])
+            LD_MPI="-lmpi_f90 -lmpi_f77 -lmpi"
+            FL_CHECK_MPIF_HEADER
+            ]
+            )
+      AS_IF([test "x$FC" = xifort],
+            [
+            #~ AC_CHECK_LIB([mpi],[main],
+                    #~ [AC_CHECK_LIB([mpi_mpifh],[main],[LD_MPI="-lmpi_mpifh -lmpi"],[AC_MSG_FAILURE([-lmpi_mpif flag failed])])]
+                    #~ ,[AC_MSG_FAILURE([-lmpi flag failed])])
+            LD_MPI="-lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi"
+            FL_CHECK_MPIF_HEADER
+            ])
       AS_IF([test "x$FC" = xxlf_r],
             [
             FC=mpxlf90_r
@@ -161,19 +178,28 @@ AS_IF([test "x$with_para" != xno],
             ])
       AC_SUBST(LD_MPI)
       ])
+
+
+      
 AS_IF([test "x$with_para" = xno],
-      [DMPI="-Dparano"],
+      [DMPI="-Dparano"
+       EXEEXT=".seq"],
       [test "x$with_para" = xyes],
-      [DMPI="-Dparayes"],
+      [DMPI="-Dparayes"
+       EXEEXT=".par"],
       [test "x$with_para" = xsim],
-      [DMPI="-Dparano -Dsimpara"],
-      [DMPI=""])
-AC_MSG_NOTICE([Using parallelism : $with_para])
+      [DMPI="-Dparano -Dsimpara"
+       EXEEXT=".sim"]
+      )
+AC_MSG_NOTICE([Using parallelism: $with_para])
+AC_MSG_NOTICE([Additional flag for parallelism: $LD_MPI])
+AC_MSG_NOTICE([Binary extension will be : "$EXEEXT"])
 AS_IF([test  "x$with_para" != xno],
       [AC_MSG_NOTICE([Compiler taking MPI into account: $FC])]
       )
 AM_CONDITIONAL([USE_MPI],[test "x$with_para" != xno])
 AC_SUBST(DMPI)
+AC_SUBST(EXEEXT)
 #=======================================================================
 # Choice of OpenMP
 #=======================================================================
@@ -236,6 +262,15 @@ AC_ARG_WITH([fft],
           [with_fft=no])
   ])
 AS_IF([test "x$with_fft" != xno], [AC_MSG_NOTICE([Use FFT : $with_fft]) ])
+# CUFFT only availaible when using IFORT (name of variables in cuda.cu : module_mp_variable)
+AS_IF([test "x$with_fft" = xCUFFT],
+      [AS_IF([test "x$FC" != xifort], 
+             [AC_MSG_FAILURE([FFT using CUDA is only available with compiler ifort.]
+                              [Sorry.])
+              ])
+      ])
+          
+
 
 # coudoub3D only enabled when using FFTW cals:
 AS_IF([test "x$coudoub3D" = x1 ],
@@ -347,8 +382,10 @@ AM_CONDITIONAL([USE_FFTW],[test "x$FFTW_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_MKL], [test "x$MKL_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_CUDA],[test "x$CUDA_IS_HERE" = xyes ])
 AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ])
-
-AC_SUBST(DIDRIS,[])
+echo "FCFLAGS: $FCFLAGS"
+echo "LDFLAGS: $LDFLAGS"
+echo "LD_MPI: $LD_MPI" 
+echo "LD_FFTW: $LD_FFTW" 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
                  code/source_f90/Makefile])

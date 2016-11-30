@@ -1,7 +1,7 @@
 # Compiler-dependent options
 if GFORT
 if USE_DEBUG
-OPT1  =  -pg -w -g -fbacktrace -fdefault-double-8
+OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 OPT2  =  $(OPT1) 
 OPT3  =  $(OPT2)
 else
@@ -34,7 +34,7 @@ OPT3  =-d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
 endif
 
 # underlying compiler for mpif90
-if MPIF90
+if MPIFORT
 if MPI_GFORT
 if USE_DEBUG
 OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
@@ -99,9 +99,9 @@ endif
 #~ LDLIBS=-L/usr/local/FFTW/fftw-3.3.3/lib
 
 #Compiler options
-COMPILERFLAGS1= $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT1) $(DMPI) $(DOMP) $(DFFT) 
-COMPILERFLAGS2= $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT2) $(DMPI) $(DOMP) $(DFFT) 
-COMPILERFLAGS3= $(STATIC) $(LD_MPI) $(OPENMP_FCFLAGS) $(OPT3) $(DMPI) $(DOMP) $(DFFT) 
+COMPILERFLAGS1= $(STATIC) $(OPENMP_FCFLAGS) $(OPT1) $(DMPI) $(DOMP) $(DFFT) $(FCFLAGS)
+COMPILERFLAGS2= $(STATIC) $(OPENMP_FCFLAGS) $(OPT2) $(DMPI) $(DOMP) $(DFFT) $(FCFLAGS)
+COMPILERFLAGS3= $(STATIC) $(OPENMP_FCFLAGS) $(OPT3) $(DMPI) $(DOMP) $(DFFT) $(FCFLAGS)
 if USE_CUDA
 GPUCOMPILERFLAGS =  $(OPTGPU) $(DMPI) $(DOMP)
 endif
@@ -155,7 +155,7 @@ endif
 
 OBJKINPARA =  params.$(OBJEXT) kinetic.$(OBJEXT)
 
-OBJCOMMON = $(OBJKINPARA)\
+OBJCOMMON = $(OBJKINPARA) \
 						restart.$(OBJEXT) restartc.$(OBJEXT)\
 						static.$(OBJEXT) dynamic.$(OBJEXT) lda.$(OBJEXT) util.$(OBJEXT) abso_bc.$(OBJEXT) \
 						pseudosoft.$(OBJEXT) pseudogoed.$(OBJEXT) ionmd.$(OBJEXT) forces.$(OBJEXT)\
@@ -180,7 +180,7 @@ pwteleman_SOURCES = main.F90
 pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 pwteleman_LDFLAGS = $(LINKERFLAGS)
-pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON)
+pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_FFTW
 bin_PROGRAMS = fftw_pwteleman
@@ -188,7 +188,7 @@ fftw_pwteleman_SOURCES = main.F90
 fftw_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 fftw_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
 fftw_pwteleman_LDFLAGS = $(LINKERFLAGS)
-fftw_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON)
+fftw_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_MKL
 bin_PROGRAMS = mkl_pwteleman
@@ -196,7 +196,7 @@ mkl_pwteleman_SOURCES = main.F90
 mkl_pwteleman_FCFLAGS = $(COMPILERFLAGS1)
 mkl_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
 mkl_pwteleman_LDFLAGS= $(LINKERFLAGS)
-mkl_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON)
+mkl_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_CUDA
 bin_PROGRAMS= gpu_pwteleman
