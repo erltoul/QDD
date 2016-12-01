@@ -356,9 +356,9 @@ REAL(DP) :: e2x=0D0,e2y=0D0,e2z=0D0,phase2=0D0,omega2=0D0,e0_2=0D0
 REAL(DP) :: tstart2=0D0,tpeak2
 REAL(DP) :: fl(6),power
 REAL(DP) :: elaser
-INTEGER :: ijel
-REAL(DP),SAVE :: acc1old,acc2old,foft1old,foft2old,timeold
-INTEGER,SAVE :: ilas=0
+INTEGER  :: ijel
+REAL(DP) :: acc1old,acc2old,foft1old,foft2old,timeold
+INTEGER  :: ilas=0
 REAL(DP) :: fpulseinteg1        ! integrated pulse for gauge trasnf
 REAL(DP) :: fpulseinteg2        ! integrated pulse for gauge trasnf.
 REAL(DP) :: projcharge=0D0                   ! projectile charge

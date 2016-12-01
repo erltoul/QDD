@@ -13,7 +13,7 @@ AC_CONFIG_MACRO_DIR([m4])
 ########################################################################
 AC_ARG_WITH([compiler],
   [AS_HELP_STRING([--with-compiler],
-  [Use specified compiler, choose among gfortran, ifort, mpifort and xlf_r])],
+  [Use specified compiler, choose among gfortran, ifort, mpifort (mpif90) and xlf_r])],
   [])
 #Choice of compiler
 #search for ifort as default compiler. If not found, search for gfortran or xlfr .
@@ -25,7 +25,7 @@ AS_IF([test -z $with_compiler],
       ],
       [
   AS_IF([test "x$with_compiler" = xyes],
-        [AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort])],
+        [AC_MSG_FAILURE([Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort (mpif90)])],
         [
         AC_MSG_CHECKING([for $with_compiler, as User asked])
         AC_CHECK_PROG( [found_compiler], [$with_compiler], [yes], [no])
@@ -40,19 +40,20 @@ AC_PROG_FC([$FC])
 AM_CONDITIONAL([IFORT], [test "x$FC" = xifort])
 AM_CONDITIONAL([GFORT], [test "x$FC" = xgfortran])
 AM_CONDITIONAL([XLF_R], [test "x$FC" = xxlf_r])
-AM_CONDITIONAL([MPIFORT], [test "x$FC" = xmpifort])
+AM_CONDITIONAL([MPIFORT], [test "x$FC" = xmpifort || test "x$FC" = xmpif90])
 #Find the underlying compiler used by mpifort:
 FCOMP=unknown
-AS_IF([test "x$FC" = xmpifort],
+AS_IF([test "x$FC" = xmpifort || test "x$FC" = xmpif90  ],
       [
-      mpifort 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
-      mpifort 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
-      mpifort 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
+      $FC 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
+      $FC 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
+      $FC 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
       AS_IF([test "x$FCOMP" = xunknown],
             [AC_MSG_FAILURE([Could not identify compiler $true_comp used by mpifort. ])],
-            [AC_MSG_NOTICE([mpifort uses $FCOMP as compiler])]
+            [AC_MSG_NOTICE([$FC uses $FCOMP as compiler])]
             )
       ])
+echo "FCOMP=$FCOMP"
 AM_CONDITIONAL([MPI_IFORT], [test "x$FCOMP" = xifort])
 AM_CONDITIONAL([MPI_GFORT], [test "x$FCOMP" = xgfortran])
 AM_CONDITIONAL([MPI_XLF_R], [test "x$FCOMP" = xxlf_r])
@@ -158,9 +159,10 @@ AS_IF([test "x$with_para" != xno],
       LD_MPI=
       AS_IF([test "x$FC" = xgfortran],
             [
+            AC_MSG_FAILURE([Sorry, parallel option using MPI is not available with gfortran yet. Try using mpifort or mpif90 (configured with gfortran)])
             #~ AC_MSG_FAILURE([mpif.h uses array of rank > 7, which is not yet implemented in gfortran. Try with an other compiler.])
-            LD_MPI="-lmpi_f90 -lmpi_f77 -lmpi"
-            FL_CHECK_MPIF_HEADER
+            LD_MPI=" -lmpi"
+            #~ FL_CHECK_MPIF_HEADER
             ]
             )
       AS_IF([test "x$FC" = xifort],
@@ -180,7 +182,6 @@ AS_IF([test "x$with_para" != xno],
       ])
 
 
-      
 AS_IF([test "x$with_para" = xno],
       [DMPI="-Dparano"
        EXEEXT=".seq"],
@@ -382,6 +383,7 @@ AM_CONDITIONAL([USE_FFTW],[test "x$FFTW_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_MKL], [test "x$MKL_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_CUDA],[test "x$CUDA_IS_HERE" = xyes ])
 AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ])
+echo "CPPFLAGS: $CPPFLAGS"
 echo "FCFLAGS: $FCFLAGS"
 echo "LDFLAGS: $LDFLAGS"
 echo "LD_MPI: $LD_MPI" 

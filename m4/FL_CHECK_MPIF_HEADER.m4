@@ -16,7 +16,7 @@ AC_COMPILE_IFELSE(
   [AC_MSG_FAILURE([
     [Could not COMPILE simple fortran program including 'mpif.h'. ]
     [If you really want to use $FC, you should give includes path:]
-    [    ./configure  --with-para --with-compiler=$FC  FCFLAGS=-I/path/to/mpi/include]
+    [    ./configure  --with-para --with-compiler=$FC  CPPFLAGS=-I/path/to/mpi/include]
     []
     [You should use mpifort instead of $FC.]
     [     ./configure  --with-para --with-compiler=mpifort]

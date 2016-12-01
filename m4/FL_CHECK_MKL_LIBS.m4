@@ -19,8 +19,9 @@ LDLIBS=
           )
   #~ AS_IF([test "x$with_wrappers" != xno],
         #~ [
+  CPPFLAGS="$CPPFLAGS  -I$MKL_INCLUDE"
   CFLAGS="$CFLAGS "
-  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH -I$MKL_INCLUDE"
+  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH"
         #~ ],
         #~ [LDFLAGS="$LDFLAGS -L$MKL_LIBPATH -I$MKL_INCLUDE"])
          

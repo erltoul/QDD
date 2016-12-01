@@ -169,7 +169,7 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(kdim)
-REAL(DP), INTENT(IN)                         :: ch(kdim)
+REAL(DP), INTENT(IN OUT)                     :: ch(kdim)
 REAL(DP), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
@@ -251,7 +251,7 @@ INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(kdim)
-REAL(DP), INTENT(IN)                         :: ch(kdim)
+REAL(DP), INTENT(IN OUT)                     :: ch(kdim)
 REAL(DP), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 

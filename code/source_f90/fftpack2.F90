@@ -622,7 +622,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(1)
-REAL(DP), INTENT(IN)                         :: ch(1)
+REAL(DP), INTENT(IN OUT)                     :: ch(1)
 REAL(DP), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
