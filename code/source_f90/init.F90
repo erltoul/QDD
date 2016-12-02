@@ -2181,7 +2181,7 @@ INTEGER :: is(mpi_status_size)
 INTEGER, INTENT(IN)                      :: nelect
 REAL(DP), INTENT(IN)                         :: deoccin
 REAL(DP), INTENT(IN)                         :: betain
-REAL(DP), INTENT(IN OUT)                     :: gamin
+REAL(DP), INTENT(IN)                     :: gamin
 
 !     initialization of book-keeping arrays of states nq, ispin.
 
@@ -2969,9 +2969,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 INTEGER, INTENT(IN OUT)                  :: in
-REAL(DP), INTENT(IN)                         :: b
-REAL(DP), INTENT(IN OUT)                     :: z
-REAL(DP), INTENT(IN)                         :: x(*)
+REAL(DP), INTENT(IN)                     :: b
+REAL(DP), INTENT(IN)                     :: z
+REAL(DP), INTENT(IN)                     :: x(*)
 REAL(DP), INTENT(OUT)                        :: val(*)
 INTEGER, INTENT(IN)                      :: n1
 
@@ -2993,28 +2993,29 @@ DO j=1,n1
     val(j) = 0D0
   ELSE
     v=coef*EXP(argum)
-    IF(in == 0) THEN
-      val(j)=v
-    ELSE IF(in == 1) THEN
-      val(j)=v*2*tau
-    ELSE IF(in == 2) THEN
-      val(j)=v*(4D0*tau*tau-2D0)
-    ELSE IF(in == 3) THEN
-      val(j)=v*(8D0*tau**3-12D0*tau)
-    ELSE IF(in == 4) THEN
-      val(j)=v*(16D0*tau**4-48D0*tau**2+12D0)
-    ELSE IF(in == 5) THEN
-      val(j)=v*(32D0*tau**5-160D0*tau**3+120D0*tau)
-    ELSE IF(in == 6) THEN
-      val(j)=v*8D0*(8D0*tau**6-60D0*tau**4+90D0*tau**2-15D0)
-    ELSE IF(in == 7) THEN
-      val(j)=v*16D0*(8D0*tau**7-84D0*tau**5+210D0*tau**3-105D0*tau)
-    ELSE IF(in == 8) THEN
-      val(j)=v*tau**8              ! ortho-normalize later
-    ELSE
-      WRITE(6,'(a,1pg12.4)') ' wrong radial quantum number in clust: in=',in
-      STOP 'wrong radial quantum number in clust'
-    END IF
+    SELECT CASE(in)
+      CASE(0)
+        val(j)=v
+      CASE(1)
+        val(j)=v*2*tau
+      CASE(2)
+        val(j)=v*(4D0*tau*tau-2D0)
+      CASE(3)
+        val(j)=v*(8D0*tau**3-12D0*tau)
+      CASE(4)
+        val(j)=v*(16D0*tau**4-48D0*tau**2+12D0)
+      CASE(5)
+        val(j)=v*(32D0*tau**5-160D0*tau**3+120D0*tau)
+      CASE(6)
+        val(j)=v*8D0*(8D0*tau**6-60D0*tau**4+90D0*tau**2-15D0)
+      CASE(7)
+        val(j)=v*16D0*(8D0*tau**7-84D0*tau**5+210D0*tau**3-105D0*tau)
+      CASE(8)
+        val(j)=v*tau**8              ! ortho-normalize later
+      CASE DEFAULT
+        WRITE(6,'(a,1pg12.4)') ' wrong radial quantum number in clust: in=',in
+        STOP 'wrong radial quantum number in clust'
+    END SELECT
   END IF
   
 END DO
@@ -3735,7 +3736,7 @@ USE params, ONLY: DP
 
 REAL(DP), INTENT(IN OUT)                     :: a(np,np)
 INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: np
+INTEGER, INTENT(IN)                      :: np
 REAL(DP), INTENT(OUT)                        :: d(np)
 REAL(DP), INTENT(OUT)                        :: v(np,np)
 INTEGER, INTENT(OUT)                     :: nrot
@@ -3784,7 +3785,7 @@ DO i=1,50
           t=a(ip,iq)/h
         ELSE
           theta=0.5D0*h/a(ip,iq)
-          t=1./(ABS(theta)+SQRT(1.+theta**2))
+          t=1./(ABS(theta)+SQRT(1D0+theta**2))
           IF(theta < 0D0)t=-t
         END IF
         c=1./SQRT(1+t**2)

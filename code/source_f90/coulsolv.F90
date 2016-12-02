@@ -19,18 +19,16 @@
 #include "define.h"
  
 #if(gridfft)
+
 #if(coufou)
-
 #include "falr.F90"
-
-#endif !coufou
+#endif
 
 #if(coudoub)
-
 #include "coulex.F90"
+#endif
 
-#endif !coudoub
-#endif !gridfft
+#endif
 
 #if(findiff|numerov)
 !INCLUDE "gridcoul.F90"

@@ -280,7 +280,7 @@ IF(mynact==0) THEN
   IF(nclust > 0) THEN
     READ(60) qe(1:kmom),se(1:3)
     IF(ttest) WRITE(*,*) ' moments read in:',qe(1:4)
-#ifdef COMPLEXSWITCH                                          !new
+#ifdef COMPLEXSWITCH
     IF (nabsorb > 0) THEN
       IF(tstatin) THEN
         rhoabso = 0D0
@@ -317,7 +317,7 @@ IF(mynact==0) THEN
       READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
       IF(ttest) WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
     END IF
-#endif                                                        !new
+#endif
   END IF
 
 END IF

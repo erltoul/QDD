@@ -621,7 +621,7 @@ REAL(DP), INTENT(IN)                     :: yprop(n)
 REAL(DP), INTENT(IN)                     :: zprop(n)
 REAL(DP), INTENT(IN)                     :: ddt
 REAL(DP), INTENT(IN)                     ::  xm(1:n)   
-INTEGER, INTENT(IN OUT)                  :: ityp
+INTEGER, INTENT(IN)                      :: ityp
 
 
 

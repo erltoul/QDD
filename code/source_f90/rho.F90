@@ -159,7 +159,7 @@ USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT) :: current(kdfull2,3)
 
 COMPLEX(DP), ALLOCATABLE :: dq0(:)

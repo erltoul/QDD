@@ -416,7 +416,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)                  :: iter1
+INTEGER, INTENT(IN)                  :: iter1
 
 
 

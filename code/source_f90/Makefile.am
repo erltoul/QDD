@@ -180,7 +180,7 @@ pwteleman_SOURCES = main.F90
 pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 pwteleman_LDFLAGS = $(LINKERFLAGS)
-pwteleman-main.$(OBJEXT):  $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+pwteleman-main.$(OBJEXT): $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_FFTW
 bin_PROGRAMS = fftw_pwteleman
@@ -385,7 +385,7 @@ analyse.$(OBJEXT): analyse.F90 define.h params.$(OBJEXT)
 
 # rho.o
 rho.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
-	$(FC) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # rhoc.o
 rhoc.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)

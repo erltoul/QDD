@@ -366,8 +366,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     returns \int\d^3r q_1^* q_2
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
 
 COMPLEX(DP) :: csum
 !WRITE(6,*) 'Entering orbitalOverlap'
@@ -401,8 +401,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
 
 
 sumr=0D0
@@ -430,9 +430,9 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: q2(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: ion
+COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
+INTEGER, INTENT(IN)                  :: ion
 
 
 !-------------------------------------------------------------
@@ -4403,9 +4403,9 @@ SUBROUTINE cludcmp(a,n,np,indx,d)
 ! LU decomposition for complex matrix 'a'
 USE params, ONLY:DP
 COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: np
-INTEGER, INTENT(OUT)                     :: indx(n)
+INTEGER, INTENT(IN)                 :: n
+INTEGER, INTENT(IN)                 :: np
+INTEGER, INTENT(OUT)                :: indx(n)
 COMPLEX(DP), INTENT(OUT)            :: d
 
 
@@ -4421,7 +4421,10 @@ DO  i=1,n
   DO  j=1,n
     IF (ABS(a(i,j)) > aamax) aamax=ABS(a(i,j))
   END DO
-  IF (aamax == 0.d0) PAUSE 'singular matrix in ludcmp'
+  IF (aamax == 0.d0) THEN
+    WRITE(6,*) 'singular matrix in ludcmp. Press ENTER to continue.'
+    READ(*,*)
+  ENDIF
   vv(i)=1.d0/aamax
 END DO
 DO  j=1,n

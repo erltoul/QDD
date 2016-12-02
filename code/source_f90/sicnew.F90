@@ -1467,9 +1467,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT)                        :: qex(kdfull2,kstate)
+INTEGER :: nbe
 #else
 COMPLEX(DP), INTENT(IN)                         :: q0(kdfull2)
 COMPLEX(DP), INTENT(OUT)                        :: qex(kdfull2)
+INTEGER,INTENT(IN)                              :: nbe
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acli
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhi
 COMPLEX(DP) :: rhoc

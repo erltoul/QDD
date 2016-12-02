@@ -670,7 +670,10 @@ DO i2=1,ny2
 END DO
 
 DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
-#endif !netlib/fftw switch
+
+!netlib/fftw switch
+#endif 
+
 
 #if(fftw_gpu)
 facnr = 1D0/(nx2*ny2*nz2)
@@ -806,7 +809,7 @@ USE FFTW
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 
 ! ************************************************************
@@ -877,7 +880,7 @@ USE FFTW
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 
 ! ************************************************************
@@ -948,7 +951,7 @@ USE FFTW
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
+COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 #if(netlib_fft)
 COMPLEX(DP), ALLOCATABLE :: fftaz(:)

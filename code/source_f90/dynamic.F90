@@ -367,7 +367,7 @@ USE twost, ONLY:tnearest
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
@@ -759,7 +759,7 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
@@ -817,7 +817,7 @@ DO nb=1,nstate
   CALL  calc_ekin(psi(1,nb),ekin)
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
   !WRITE(*,*) ' before CALC_EPOT',nb,it,ishift
-  CALL calc_epot(psi(1,nb),aloc(ishift+1), epot,enonlo(nb),nb,it)
+  CALL calc_epot(psi(1,nb),aloc(ishift+1), epot,enonlo(nb),nb)
   ekinsp(nb) = ekin
   ehilf= epot
   epot =epot+ekin
@@ -1119,7 +1119,7 @@ USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psin(kdfull2)
+COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(OUT)                        :: ekinout
 
@@ -1182,7 +1182,7 @@ END SUBROUTINE calc_ekin
 
 !-----calc_epot------------------------------------------------------------
 
-SUBROUTINE calc_epot(psin,alocact,epotout,enonlocout,nb,it)
+SUBROUTINE calc_epot(psin,alocact,epotout,enonlocout,nb)
 
 !     Calculates total potential energy 'epotout' and non-local
 !     part of potential energy 'enonlocout' for the
@@ -1201,8 +1201,7 @@ COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
 REAL(DP), INTENT(IN)                         :: alocact(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: epotout
 REAL(DP), INTENT(OUT)                        :: enonlocout
-INTEGER, INTENT(IN)                      :: nb
-INTEGER, INTENT(IN OUT)                  :: it
+INTEGER, INTENT(IN)                          :: nb
 
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
@@ -1638,7 +1637,7 @@ USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
 !COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
 COMPLEX(DP), ALLOCATABLE :: q2(:)

@@ -41,6 +41,7 @@ AM_CONDITIONAL([IFORT], [test "x$FC" = xifort])
 AM_CONDITIONAL([GFORT], [test "x$FC" = xgfortran])
 AM_CONDITIONAL([XLF_R], [test "x$FC" = xxlf_r])
 AM_CONDITIONAL([MPIFORT], [test "x$FC" = xmpifort || test "x$FC" = xmpif90])
+
 #Find the underlying compiler used by mpifort:
 FCOMP=unknown
 AS_IF([test "x$FC" = xmpifort || test "x$FC" = xmpif90  ],
@@ -53,10 +54,10 @@ AS_IF([test "x$FC" = xmpifort || test "x$FC" = xmpif90  ],
             [AC_MSG_NOTICE([$FC uses $FCOMP as compiler])]
             )
       ])
-echo "FCOMP=$FCOMP"
 AM_CONDITIONAL([MPI_IFORT], [test "x$FCOMP" = xifort])
 AM_CONDITIONAL([MPI_GFORT], [test "x$FCOMP" = xgfortran])
 AM_CONDITIONAL([MPI_XLF_R], [test "x$FCOMP" = xxlf_r])
+
 ########################################################################
 #                Special IDRIS flag for compiler xlf_r
 ########################################################################
@@ -160,7 +161,6 @@ AS_IF([test "x$with_para" != xno],
       AS_IF([test "x$FC" = xgfortran],
             [
             AC_MSG_FAILURE([Sorry, parallel option using MPI is not available with gfortran yet. Try using mpifort or mpif90 (configured with gfortran)])
-            #~ AC_MSG_FAILURE([mpif.h uses array of rank > 7, which is not yet implemented in gfortran. Try with an other compiler.])
             LD_MPI=" -lmpi"
             #~ FL_CHECK_MPIF_HEADER
             ]

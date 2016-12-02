@@ -38,7 +38,7 @@ INTEGER,PARAMETER :: knl=18000       ! storage for PsP projectors
 !fix! REAL(DP) :: p2_1(knl,0:ng),p2_xy(knl,0:ng),p2_xz(knl,0:ng) 
 !fix! REAL(DP) :: p2_yz(knl,0:ng),p2_xy2(knl,0:ng),p2_z2(knl,0:ng)
 
-LOGICAL,SAVE :: tnonlocany                     ! flag to invoke non-local part
+LOGICAL :: tnonlocany                          ! flag to invoke non-local part
 LOGICAL,ALLOCATABLE :: tnonloc(:)              ! flag to invoke non-local part
 INTEGER,ALLOCATABLE :: ifin(:),icount(:,:),np(:)
 REAL(DP),ALLOCATABLE :: p0_1(:,:),p0_2(:,:),p1_1(:,:),p1_1x(:,:)

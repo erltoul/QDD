@@ -489,6 +489,7 @@ REAL(DP) :: aloc(2*kdfull2)
 REAL(DP) :: psir(kdfull2,kstate)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
+INTEGER,INTENT(IN)::iter1
 
 !----------------------------------------------------------------
 
@@ -785,6 +786,7 @@ COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: q0ut(kdfull2,kstate)
 !COMPLEX(DP) :: wfovlp
 #endif
+INTEGER,INTENT(IN) :: iter1
 
 !------------------------------------------------------------------
 
@@ -862,7 +864,7 @@ REAL(DP) :: actstep
 REAL(DP) :: enstore(3),stepstore(3)      ! storage for optimized step
 !REAL(DP) :: varstate(kdim),averstate(kdim)
 
-
+INTEGER,INTENT(IN) :: is,iprint,iter1
 !-------------------------------------------------------
 
 itmax2=symutbegin 

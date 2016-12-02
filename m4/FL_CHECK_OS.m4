@@ -2,8 +2,8 @@
 #Detect 32 bits of 64 bit config, as well as 
 AC_DEFUN([FL_CHECK_OS],
 [
-AS_IF([test "x$FC" = xmpif90], 
-      [COMPILER="$(mpif90 --showme:command)"],
+AS_IF([test "x$FC" = xmpif90 || test "x$FC" = xmpifort], 
+      [COMPILER="$($FC --showme:command)"],
       [COMPILER="$FC"]
       )
 

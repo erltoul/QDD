@@ -26,7 +26,7 @@
 !                 Computations (G. Rodrigue, ed.), Academic Press,
 !                 1982, pp. 51-83.
 
-SUBROUTINE cosqb (n,x,wsave)
+SUBROUTINE cosqb (n,x,wsave,ifac)
 !  Subroutine COSQB computes the fast Fourier transform of quarter
 !  wave data. That is, COSQB computes a sequence from its
 !  representation in terms of a cosine series with odd wave numbers.
@@ -36,7 +36,7 @@ SUBROUTINE cosqb (n,x,wsave)
 !  followed by a call of COSQF will multiply the input sequence X
 !  by 4*N.
 !
-!  The array WSAVE which is used by subroutine COSQB must be
+!  The WSAVE and IFAC arrays  which are used by subroutine COSQB must be
 !  initialized by calling subroutine COSQI(N,WSAVE).
 !
 !  Input Parameters
@@ -54,6 +54,9 @@ SUBROUTINE cosqb (n,x,wsave)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+!
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -67,14 +70,15 @@ SUBROUTINE cosqb (n,x,wsave)
 !               Therefore COSQF is the unnormalized inverse
 !               of COSQB.
 !
-!  WSAVE   contains initialization calculations which must not
+!  WSAVE and IFAC contain initialization calculations which must not
 !          be destroyed between calls of COSQB or COSQF.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: x(10)
+REAL(DP), INTENT(OUT)                        :: x(n)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 DATA tsqrt2 /2.82842712474619D0/
 
@@ -91,11 +95,11 @@ RETURN
 x(2) = tsqrt2*(x(1)-x(2))
 x(1) = x1
 RETURN
-103 CALL cosqb1 (n,x,wsave,wsave(n+1))
+103 CALL cosqb1 (n,x,wsave,wsave(n+1),ifac)
 RETURN
 END SUBROUTINE cosqb
 
-SUBROUTINE cosqb1 (n,x,w,xh)
+SUBROUTINE cosqb1 (n,x,w,xh,ifac)
 !  Subroutine COSQB1 computes the fast Fourier transform of quarter
 !  wave data. That is, COSQB1 computes a sequence from its
 !  representation in terms of a cosine series with odd wave numbers.
@@ -104,9 +108,10 @@ USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
+INTEGER, INTENT(OUT)                         :: ifac(10)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -118,7 +123,7 @@ END DO
 x(1) = x(1)+x(1)
 modn = MOD(n,2)
 IF (modn == 0) x(n) = x(n)+x(n)
-CALL rfftb (n,x,xh)
+CALL rfftb (n,x,xh,ifac)
 DO  k=2,ns2
   kc = np2-k
   xh(k) = w(k-1)*x(kc)+w(kc-1)*x(k)
@@ -550,22 +555,8 @@ END DO
 143 RETURN
 END SUBROUTINE radbg
 
-SUBROUTINE rfftb (n,r,wsave)
+SUBROUTINE rfftb (n,r,wsave,ifac)
 !Calls for rfftb1
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: r(1)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
-
-IF (n == 1) RETURN
-CALL rfftb1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
-RETURN
-END SUBROUTINE rfftb
-
-SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
-! Called by rfftb
 !   Compute the backward fast Fourier transform of a real
 !   coefficient array
 !   Subroutine RFFTB computes the real periodic sequence from its
@@ -581,7 +572,7 @@ SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
 !   R       a real array of length N which contains the sequence
 !           to be transformed.
 !
-!   WSAVE   a work array which must be dimensioned at least 2*N+15
+!   WSAVE   a work array which must be dimensioned at least 2*N
 !           in the program that calls RFFTB.  The WSAVE array must be
 !           initialized by calling subroutine RFFTI, and a different
 !           WSAVE array must be used for each different value of N.
@@ -590,6 +581,9 @@ SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
 !           obtained faster than the first.  Moreover, the same WSAVE
 !           array can be used by RFFTF and RFFTB as long as N remains
 !           unchanged.
+!
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
 !
 !   Output Argument
 !
@@ -615,13 +609,28 @@ SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
 !          followed by a call of RFFTB will multiply the input
 !          sequence by N.
 !
-!   WSAVE  contains results which must not be destroyed between
+!   WSAVE and IFAC contain results which must not be destroyed between
 !          calls of RFFTB or RFFTF.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: c(1)
+REAL(DP), INTENT(IN OUT)                     :: r(n)
+REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+INTEGER, INTENT(IN OUT)                      :: ifac(10)
+
+IF (n == 1) RETURN
+CALL rfftb1 (n,r,wsave,wsave(n+1),ifac)
+RETURN
+END SUBROUTINE rfftb
+
+SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
+
+USE params, ONLY:DP
+IMPLICIT REAL(DP) (A-H,O-Z)
+!See rfftb1 above
+INTEGER, INTENT(IN)                      :: n
+REAL(DP), INTENT(OUT)                        :: c(n)
 REAL(DP), INTENT(IN OUT)                     :: ch(1)
 REAL(DP), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
@@ -685,7 +694,7 @@ RETURN
 END SUBROUTINE rfftb1
 
 
-SUBROUTINE cosqf (n,x,wsave)
+SUBROUTINE cosqf (n,x,wsave,ifac)
 !  Subroutine COSQF computes the fast Fourier transform of quarter
 !  wave data. That is, COSQF computes the coefficients in a cosine
 !  series representation with only odd wave numbers.  The transform
@@ -695,8 +704,8 @@ SUBROUTINE cosqf (n,x,wsave)
 !  followed by a call of COSQB will multiply the input sequence X
 !  by 4*N.
 !
-!  The array WSAVE which is used by subroutine COSQF must be
-!  initialized by calling subroutine COSQI(N,WSAVE).
+!  The WSAVE and IFAC arrays which are used by subroutine COSQF must be
+!  initialized by calling subroutine COSQI(N,WSAVE,IFAC).
 !
 !  Input Parameters
 !
@@ -713,6 +722,9 @@ SUBROUTINE cosqf (n,x,wsave)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+!
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -726,14 +738,15 @@ SUBROUTINE cosqf (n,x,wsave)
 !               Therefore COSQB is the unnormalized inverse
 !               of COSQF.
 !
-!  WSAVE   contains initialization calculations which must not
+!  WSAVE and IFAC contain initialization calculations which must not
 !          be destroyed between calls of COSQF or COSQB.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(10)
+REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 DATA sqrt2 /1.4142135623731D0/
 
@@ -748,11 +761,11 @@ END IF
 x(2) = x(1)-tsqx
 x(1) = x(1)+tsqx
 102 RETURN
-103 CALL cosqf1 (n,x,wsave,wsave(n+1))
+103 CALL cosqf1 (n,x,wsave,wsave(n+1),ifac)
 RETURN
 END SUBROUTINE cosqf
 
-SUBROUTINE cosqf1 (n,x,w,xh)
+SUBROUTINE cosqf1 (n,x,w,xh,ifac)
 !  Subroutine COSQF1 computes the fast Fourier transform of quarter
 !  wave data. That is, COSQF1 computes the coefficients in a cosine
 !  series representation with only odd wave numbers.  The transform
@@ -761,9 +774,10 @@ USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(1)
+REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
+INTEGER, INTENT(OUT)                         :: ifac(10)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -780,7 +794,7 @@ DO  k=2,ns2
   x(kc) = w(k-1)*xh(k)-w(kc-1)*xh(kc)
 END DO
 IF (modn == 0) x(ns2+1) = w(ns2)*xh(ns2+1)
-CALL rfftf (n,x,xh)
+CALL rfftf (n,x,xh,ifac)
 DO  i=3,n,2
   xim1 = x(i-1)-x(i)
   x(i) = x(i-1)+x(i)
@@ -1201,7 +1215,7 @@ END DO
 RETURN
 END SUBROUTINE radfg
 
-SUBROUTINE rfftf (n,r,wsave)
+SUBROUTINE rfftf (n,r,wsave,ifac)
 ! Calls for rfftf1 if n is not 1
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -1209,9 +1223,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: r(1)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+INTEGER, INTENT(IN)                      ::ifac(10)
 
 IF (n == 1) RETURN
-CALL rfftf1 (n,r,wsave,wsave(n+1),wsave(2*n+1))
+CALL rfftf1 (n,r,wsave,wsave(n+1), ifac)
 RETURN
 END SUBROUTINE rfftf
 
@@ -1220,12 +1235,12 @@ SUBROUTINE rfftf1 (n,c,ch,wa,ifac)
 !   periodic sequence (Fourier analysis).  The transform is defined
 !   below at output parameter C.
 !
-!   The arrays WA and IFAC which are used by subroutine RFFTB1 must be
+!   The WA and IFAC arrays which are used by subroutine RFFTB1 must be
 !   initialized by calling subroutine RFFTI1.
 !
 !   Input Arguments
 !
-!   N       the length of the array R to be transformed.  The method
+!   N       the length of the array C to be transformed.  The method
 !           is most efficient when N is a product of small primes.
 !           N may change so long as different work arrays are provided.
 !
@@ -1279,9 +1294,9 @@ USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: c(1)
-REAL(DP), INTENT(IN)                         :: ch(1)
-REAL(DP), INTENT(IN OUT)                     :: wa(1)
+REAL(DP), INTENT(OUT)                    :: c(n)
+REAL(DP), INTENT(IN OUT)                 :: ch(1)
+REAL(DP), INTENT(IN)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 nf = ifac(2)
@@ -1342,11 +1357,11 @@ END DO
 RETURN
 END SUBROUTINE rfftf1
 
-SUBROUTINE cosqi (n,wsave)
+SUBROUTINE cosqi (n,wsave,ifac)
 !  Subroutine COSQI initializes the work array WSAVE which is used in
 !  both COSQF1 and COSQB1.  The prime factorization of N together with
 !  a tabulation of the trigonometric functions are computed and
-!  stored in WSAVE.
+!  stored in WSAVE and IFAC.
 !
 !  Input Parameter
 !
@@ -1355,16 +1370,20 @@ SUBROUTINE cosqi (n,wsave)
 !
 !  Output Parameter
 !
-!  WSAVE   a work array which must be dimensioned at least 3*N+15.
+!  WSAVE   a work array which must be dimensioned at least 3*N.
 !          The same work array can be used for both COSQF1 and COSQB1
 !          as long as N remains unchanged.  Different WSAVE arrays
 !          are required for different values of N.  The contents of
 !          WSAVE must not be changed between calls of COSQF1 or COSQB1.
+!
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(1)
+INTEGER, INTENT(OUT)                     :: ifac(10)
 
 DATA pih /1.57079632679491D0/
 
@@ -1374,11 +1393,11 @@ DO  k=1,n
   fk = fk+1.
   wsave(k) = COS(fk*dt)
 END DO
-CALL rffti (n,wsave(n+1))
+CALL rffti (n,wsave(n+1),ifac)
 RETURN
 END SUBROUTINE cosqi
 
-SUBROUTINE cost (n,x,wsave)
+SUBROUTINE cost (n,x,wsave,ifac)
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -1390,8 +1409,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !  followed by another call of COST will multiply the input sequence
 !  X by 2*(N-1).  The transform is defined below at output parameter X.
 !
-!  The array WSAVE which is used by subroutine COST must be
-!  initialized by calling subroutine COSTI(N,WSAVE).
+!  The WSAVE and IFAC arrays which are used by subroutine COST must be
+!  initialized by calling subroutine COSTI(N,WSAVE,IFAC).
 !
 !  Input Parameters
 !
@@ -1401,7 +1420,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !
 !  X       an array which contains the sequence to be transformed
 !
-!  WSAVE   a work array which must be dimensioned at least 3*N+15
+!  WSAVE   a work array which must be dimensioned at least 3*N
 !          in the program that calls COST.  The WSAVE array must be
 !          initialized by calling subroutine COSTI(N,WSAVE), and a
 !          different WSAVE array must be used for each different
@@ -1409,6 +1428,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -1424,13 +1446,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !               Hence COST is the unnormalized inverse
 !               of itself.
 !
-!  WSAVE   contains initialization calculations which must not be
+!  WSAVE and IFAC  contain initialization calculations which must not be
 !          destroyed between calls of COST.
 !
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(10)
-REAL(DP), INTENT(IN)                         :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: x(n)
+REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+INTEGER, INTENT(IN)                      :: ifac(10)
 
 nm1 = n-1
 np1 = n+1
@@ -1466,7 +1489,7 @@ DO  k=2,ns2
 END DO
 modn = MOD(n,2)
 IF (modn /= 0) x(ns2+1) = x(ns2+1)+x(ns2+1)
-CALL rfftf (nm1,x,wsave(n+1))
+CALL rfftf (nm1,x,wsave(n+1),ifac)
 xim2 = x(2)
 x(2) = c1
 DO  i=4,n,2
@@ -1484,11 +1507,11 @@ END SUBROUTINE cost
 
 
 
-SUBROUTINE costi (n,wsave)
-!  Subroutine COSTI initializes the array WSAVE which is used in
+SUBROUTINE costi (n,wsave,ifac)
+!  Subroutine COSTI initializes array WSAVE and IFAC which is used in
 !  subroutine COST.  The prime factorization of N together with
 !  a tabulation of the trigonometric functions are computed and
-!  stored in WSAVE.
+!  stored in WSAVE and IFAC.
 !
 !  Input Parameter
 !
@@ -1497,15 +1520,21 @@ SUBROUTINE costi (n,wsave)
 !
 !  Output Parameter
 !
-!  WSAVE   a work array which must be dimensioned at least 3*N+15.
+!  WSAVE   a work array which must be dimensioned at least 3*N.
 !          Different WSAVE arrays are required for different values
 !          of N.  The contents of WSAVE must not be changed between
+!          calls of COST.
+!
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Different IFAC arrays are required for different values
+!          of N.  The contents of IFAC must not be changed between
 !          calls of COST.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(1)
+INTEGER, INTENT(OUT)                     :: ifac(10)
 
 DATA pi /3.14159265358979D0/
 
@@ -1521,24 +1550,26 @@ DO  k=2,ns2
   wsave(k) = 2D0*SIN(fk*dt)
   wsave(kc) = 2D0*COS(fk*dt)
 END DO
-CALL rffti (nm1,wsave(n+1))
+CALL rffti (nm1,wsave(n+1),ifac)
 RETURN
 END SUBROUTINE costi
 
-SUBROUTINE rffti (n,wsave)
+SUBROUTINE rffti (n,wsave,ifac)
 ! Calls rffti1 if n is not 1 
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(1)
+INTEGER, INTENT(OUT)                     :: ifac(10)
+
 
 IF (n == 1) RETURN
-CALL rffti1 (n,wsave(n+1),wsave(2*n+1))
+CALL rffti1 (n,wsave(n+1),ifac)
 RETURN
 END SUBROUTINE rffti
 
-SUBROUTINE sinqb (n,x,wsave)
+SUBROUTINE sinqb (n,x,wsave,ifac)
 !  Subroutine SINQB computes the fast Fourier transform of quarter
 !  wave data.  That is, SINQB computes a sequence from its
 !  representation in terms of a sine series with odd wave numbers.
@@ -1548,8 +1579,8 @@ SUBROUTINE sinqb (n,x,wsave)
 !  followed by a call of SINQF will multiply the input sequence X
 !  by 4*N.
 !
-!  The array WSAVE which is used by subroutine SINQB must be
-!  initialized by calling subroutine SINQI(N,WSAVE).
+!  The WSAVE and IFAC arrays which are used by subroutine SINQB must be
+!  initialized by calling subroutine SINQI(N,WSAVE,IFAC).
 !
 !  Input Parameters
 !
@@ -1566,6 +1597,9 @@ SUBROUTINE sinqb (n,x,wsave)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+!
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -1579,15 +1613,16 @@ SUBROUTINE sinqb (n,x,wsave)
 !               Therefore SINQF is the unnormalized inverse
 !               of SINQB.
 !
-!  WSAVE   contains initialization calculations which must not
+!  WSAVE and IFAC contain initialization calculations which must not
 !          be destroyed between calls of SINQB or SINQF.
 !
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: x(1)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: x(n)
+REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 IF (n > 1) GO TO 101
 x(1) = 4D0*x(1)
@@ -1596,7 +1631,7 @@ RETURN
 DO  k=2,n,2
   x(k) = -x(k)
 END DO
-CALL cosqb (n,x,wsave)
+CALL cosqb (n,x,wsave,ifac)
 DO  k=1,ns2
   kc = n-k
   xhold = x(k)
@@ -1606,7 +1641,7 @@ END DO
 RETURN
 END SUBROUTINE sinqb
 
-SUBROUTINE sinqf (n,x,wsave)
+SUBROUTINE sinqf (n,x,wsave,ifac)
 !  Subroutine SINQF computes the fast Fourier transform of quarter
 !  wave data.  That is, SINQF computes the coefficients in a sine
 !  series representation with only odd wave numbers.  The transform
@@ -1616,8 +1651,8 @@ SUBROUTINE sinqf (n,x,wsave)
 !  followed by a call of SINQB will multiply the input sequence X
 !  by 4*N.
 !
-!  The array WSAVE which is used by subroutine SINQF must be
-!  initialized by calling subroutine SINQI(N,WSAVE).
+!  The WSAVE and IFAC arrays which are used by subroutine SINQF must be
+!  initialized by calling subroutine SINQI(N,WSAVE,IFAC).
 !
 !  Input Parameters
 !
@@ -1634,6 +1669,10 @@ SUBROUTINE sinqf (n,x,wsave)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+!
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -1649,14 +1688,15 @@ SUBROUTINE sinqf (n,x,wsave)
 !               Therefore SINQB is the unnormalized inverse
 !               of SINQF.
 !
-!  WSAVE   contains initialization calculations which must not
+!  WSAVE and IFAC   contains initialization calculations which must not
 !          be destroyed between calls of SINQF or SINQB.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(1)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: x(n)
+REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 IF (n == 1) RETURN
 ns2 = n/2
@@ -1666,27 +1706,28 @@ DO  k=1,ns2
   x(k) = x(kc+1)
   x(kc+1) = xhold
 END DO
-CALL cosqf (n,x,wsave)
+CALL cosqf (n,x,wsave,ifac)
 DO  k=2,n,2
   x(k) = -x(k)
 END DO
 RETURN
 END SUBROUTINE sinqf
 
-SUBROUTINE sinqi (n,wsave)
-! Initialize a work array for SINQF and SINQB  
+SUBROUTINE sinqi (n,wsave,ifac)
+! Initialize work arrays for SINQF and SINQB  
 ! Same as COSQI
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN OUT)                  :: n
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
-CALL cosqi (n,wsave)
+CALL cosqi (n,wsave,ifac)
 RETURN
 END SUBROUTINE sinqi
 
-SUBROUTINE sint (n,x,wsave)
+SUBROUTINE sint (n,x,wsave,ifac)
 !  Subroutine SINT computes the discrete Fourier sine transform
 !  of an odd sequence X(I).  The transform is defined below at
 !  output parameter X.
@@ -1695,8 +1736,8 @@ SUBROUTINE sint (n,x,wsave)
 !  followed by another call of SINT will multiply the input sequence
 !  X by 2*(N+1).
 !
-!  The array WSAVE which is used by subroutine SINT must be
-!  initialized by calling subroutine SINTI(N,WSAVE).
+!  The WSAVE and IFAC arrays which are used by subroutine SINT must be
+!  initialized by calling subroutine SINTI(N,WSAVE,IFAC).
 !
 !  Input Parameters
 !
@@ -1714,6 +1755,9 @@ SUBROUTINE sint (n,x,wsave)
 !          repeated so long as N remains unchanged.  Thus subsequent
 !          transforms can be obtained faster than the first.
 !
+!  IFAC    an integer work array which must be dimensioned at least 15.
+!          Condtions applying on WSAVE also apply on IFAC. 
+!
 !  Output Parameters
 !
 !  X       For I=1,...,N
@@ -1727,20 +1771,21 @@ SUBROUTINE sint (n,x,wsave)
 !               Hence SINT is the unnormalized inverse
 !               of itself.
 !
-!  WSAVE   contains initialization calculations which must not be
+!  WSAVE and IFAC contain initialization calculations which must not be
 !          destroyed between calls of SINT.
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: x(1)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: x(n)
+REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 np1 = n+1
 iw1 = n/2+1
 iw2 = iw1+np1
 iw3 = iw2+np1
-CALL sint1(n,x,wsave,wsave(iw1),wsave(iw2),wsave(iw3))
+CALL sint1(n,x,wsave,wsave(iw1),wsave(iw2),ifac)
 RETURN
 END SUBROUTINE sint
 
@@ -1750,11 +1795,11 @@ USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: war(1)
-REAL(DP), INTENT(IN)                         :: was(1)
-REAL(DP), INTENT(OUT)                        :: xh(10)
-REAL(DP), INTENT(IN OUT)                     :: x(1)
-INTEGER, INTENT(IN OUT)                  :: ifac(1)
+REAL(DP), INTENT(IN OUT)                 :: war(1)
+REAL(DP), INTENT(IN)                     :: was(1)
+REAL(DP), INTENT(OUT)                    :: xh(10)
+REAL(DP), INTENT(IN OUT)                 :: x(1)
+INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 DATA sqrt3 /1.73205080756888D0/
 
@@ -1802,12 +1847,13 @@ END DO
 RETURN
 END SUBROUTINE sint1
 
-SUBROUTINE sinti (n,wsave)
+SUBROUTINE sinti (n,wsave,ifac)
 USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(1)
+INTEGER,INTENT(OUT)                      :: ifac(10)
 
 DATA pi /3.14159265358979D0/
 
@@ -1818,7 +1864,7 @@ dt = pi/REAL(np1,DP)
 DO  k=1,ns2
   wsave(k) = 2D0*SIN(k*dt)
 END DO
-CALL rffti (np1,wsave(ns2+1))
+CALL rffti (np1,wsave(ns2+1),ifac)
 RETURN
 END SUBROUTINE sinti
 
@@ -1846,7 +1892,7 @@ USE params, ONLY:DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                        :: wa(1)
+REAL(DP), INTENT(OUT)                    :: wa(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 INTEGER :: ntryh(4)
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/

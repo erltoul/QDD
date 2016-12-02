@@ -41,7 +41,7 @@ USE twost, ONLY:tnearest
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN)                  :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN OUT)              :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
@@ -437,8 +437,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN)                    :: akv(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: nbe
-INTEGER, INTENT(IN OUT)                  :: itpri
+INTEGER, INTENT(IN)                      :: nbe
+INTEGER, INTENT(IN)                      :: itpri
 COMPLEX(DP),ALLOCATABLE :: qex(:)
 
 COMPLEX(DP) :: wfovlp

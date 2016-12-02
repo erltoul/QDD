@@ -34,7 +34,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
 
-REAL(DP), INTENT(IN OUT) :: psi(kdfull2),aux(kdfull2)
+REAL(DP), INTENT(IN)     :: psi(kdfull2)
+REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
 
 DO i=1,kdfull2
   aux(i)=0D0
@@ -50,7 +51,8 @@ END DO
 
 #else
 
-COMPLEX(DP), INTENT(IN OUT) :: psi(kdfull2),aux(kdfull2)
+COMPLEX(DP), INTENT(IN)     :: psi(kdfull2)
+COMPLEX(DP), INTENT(IN OUT) :: aux(kdfull2)
 
 DO i=1,kdfull2
   aux(i)=CMPLX(0D0,0D0,DP)
@@ -94,10 +96,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
-REAL(DP), INTENT(IN OUT) :: psi(kdfull2)
+REAL(DP), INTENT(IN) :: psi(kdfull2)
 #else
 COMPLEX(DP), INTENT(IN OUT) :: aux(kdfull2)
-COMPLEX(DP), INTENT(IN OUT) :: psi(kdfull2)
+COMPLEX(DP), INTENT(IN) :: psi(kdfull2)
 COMPLEX(DP) :: sumr01,sumr04,sumr05,sumr06
 COMPLEX(DP) :: f0_11,f1_1x,f1_1y,f1_1z
 
@@ -190,10 +192,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
-REAL(DP), INTENT(IN OUT) :: psi(kdfull2)
+REAL(DP), INTENT(IN) :: psi(kdfull2)
 #else
 COMPLEX(DP), INTENT(IN OUT) :: aux(kdfull2)
-COMPLEX(DP), INTENT(IN OUT) :: psi(kdfull2)
+COMPLEX(DP), INTENT(IN) :: psi(kdfull2)
 COMPLEX(DP) :: sumr01,sumr02,sumr04,sumr05,sumr06
 COMPLEX(DP) :: f0_11,f0_22,f1_1x,f1_1y,f1_1z
 #endif
@@ -299,7 +301,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
-REAL(DP), INTENT(IN OUT) :: psi(kdfull2)
+REAL(DP), INTENT(IN) :: psi(kdfull2)
 REAL(DP) :: sumr01,sumr02,sumr03,sumr04,sumr05,sumr06
 REAL(DP) :: sumr07,sumr08,sumr09
 REAL(DP) :: sumr16,sumr17,sumr18,sumr19,sumr20
@@ -307,7 +309,7 @@ REAL(DP) :: f0_1,f0_2,f0_3,f1_1x,f1_1y,f1_1z,f1_2x,f1_2y,f1_2z, &
             f2_xy,f2_xz,f2_yz,f2_xy2,f2_z2
 #else
 COMPLEX(DP), INTENT(IN OUT) :: aux(kdfull2)
-COMPLEX(DP), INTENT(IN OUT) :: psi(kdfull2)
+COMPLEX(DP), INTENT(IN) :: psi(kdfull2)
 COMPLEX(DP) :: sumr01,sumr02,sumr03,sumr04,sumr05,sumr06
 COMPLEX(DP) :: sumr07,sumr08,sumr09
 COMPLEX(DP) :: sumr16,sumr17,sumr18,sumr19,sumr20

@@ -600,7 +600,8 @@ ec=e
 enerpw=ep
 #endif
 
-#else(lda_gpu)
+#else
+! lda_gpu
 enrear = 0D0
 ec=0D0
 
