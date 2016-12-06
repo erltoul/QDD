@@ -266,7 +266,8 @@ simultaneously\\
 {\tt numspin}          & number of spin components (2=full spin treatment)\\
                        & (1=spin averaged, possible problem for ADSIC)\\
 {\tt kstate           }& maximum nr. of s.p. states which is possible (greater than {\tt nclust})\\
-{\tt nclust           }& number of QM electrons - if set to 0 or a negative value (charge)  this will be automatically calculated\\
+{\tt nclust           }& number of QM electrons - if set to 0 or a negative value (charge) this \\
+&will be automatically calculated\\
 & {\tt nclust} = $\sum_{i=1}^{nion} Z_{ion} = charge$, where $Z_{ion}$ is charge of each ion\\
 {\tt nion             }& number of cluster ions\\
 {\tt nspdw            }& number of spin down electrons \\
@@ -278,8 +279,9 @@ simultaneously\\
 {\tt surjel         }& surface thickness of jellium background\\
 {\tt bbeta         }& quadrupole deformation of jellium background\\
 {\tt gamma         }& triaxiality of jellium background\\
-{\tt dx,dy,dz,        }& grid spacing (in  Bohr) for the 3D numerical grid - if negative this will be set to an optimal value and a value will
-be suggested for KXBOX in file NX - the code stops and has to be restarted\\
+{\tt dx,dy,dz,        }& grid spacing (in  Bohr) for the 3D numerical grid - if negative this will \\
+&be set to an optimal value and a value will be suggested for KXBOX \\
+&in file NX - the code stops and has to be restarted\\
 &the grid size is defined before compilation in {\tt params.F90}\\
 &it has to be correlant with pseudopotentails\\
 &corresponds to ecut in solid state\\
@@ -307,17 +309,24 @@ moved
 & =1 $\Longrightarrow$ atomic orbitals = WFs centered at ionic sites
 \\
 \hline
+\end{tabular}
+
+\newpage
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
+\hline
 \multicolumn{2}{c}{\it convergence issues} \\
 \hline
 {\tt e0dmp            }& damping parameter for static solution of Kohn-Sham equations\\
 & (typically about the energy of the lowest bound state)\\
 {\tt epswf            }& step size for static solution of Kohn-Shahm
-equations\\
-& (of order of 0.5)\\
-{\tt epsoro           }& required variance to terminate static iteration\\
-&(order of 10$^{-5}$)\\
+equations (of order of 0.5)\\
+{\tt epsoro           }& required variance to terminate static iteration (order of 10$^{-5}$)\\
 \hline
 \end{tabular}
+
 
 \newpage
 
@@ -351,8 +360,9 @@ equations\\
 {\tt ipseudo          }& switch for using pseudo-densities to represent substrate\\
 {\tt                  }& atoms \\
 {\tt ipsptype         }& type of pseudopotentials: 0 = soft local (errf);\\
-                       & 1 = full Goedecker; 2 = local Goedecker\\
-                       & 3 = read from file goed.asci (no need to specify)  ; 4 = semicore read from file goed.asci\\
+                       & 1 = full Goedecker; 2 = local Goedecker;\\
+                       & 3 = read from file goed.asci (no need to specify)  ;\\
+                       & 4 = semicore read from file goed.asci\\
 {\tt directenergy}   & {\tt .true.} = direct computation of energy \\
                        & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
 {\tt ifsicp           }& selects type of self-interaction correction\\

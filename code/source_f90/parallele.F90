@@ -964,7 +964,6 @@ DO it=0,l
     CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,icode)
   END IF
   DO i=1,mx
-!dir$     unroll 8
     rin(i)=rin(i)+rout(i)
   END DO
 END DO

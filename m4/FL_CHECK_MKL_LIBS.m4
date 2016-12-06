@@ -17,23 +17,28 @@ LDLIBS=
         [MKL_LIBPATH="$mklroot/lib/intel64"],
         [MKL_LIBPATH="$mklroot/lib/ia32"] 
           )
-  #~ AS_IF([test "x$with_wrappers" != xno],
-        #~ [
   CPPFLAGS="$CPPFLAGS  -I$MKL_INCLUDE"
   CFLAGS="$CFLAGS "
-  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH"
-        #~ ],
-        #~ [LDFLAGS="$LDFLAGS -L$MKL_LIBPATH -I$MKL_INCLUDE"])
-         
+  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH -Wl,-rpath,$MKL_WRAPPERS -Wl,-rpath,$MKL_LIBPATH"
+  
   #Check common libraries
   AC_CHECK_LIB([dl], [main],[],[MKL_IS_HERE=no],[])
   AC_CHECK_LIB([m], [main],[],[MKL_IS_HERE=no])
   AC_CHECK_LIB([pthread], [main],[],[MKL_IS_HERE=no])
+  # Add iomp5 library if mkl threads are used
   AS_IF([test "x$mklthreads" = xyes],
-        [AC_CHECK_LIB([iomp5], [main], [], [MKL_IS_HERE=no], [])
-        ])
+        [AS_IF([test "x$flag64" = xyes],
+              [OMP5_LIBPATH="$mklroot/../compiler/lib/intel64"],
+              [OMP5_LIBPATH="$mklroot/../compiler/lib/ia32"])
+        LDFLAGS="-L$OMP5_LIBPATH  $LDFLAGS -Wl,-rpath,$OMP5_LIBPATH"
+        AC_CHECK_LIB([iomp5], [main], 
+                      [MKLFLAGS="-liomp5"
+                      LIBS="-liomp5 $LIBS"],
+                      [AC_MSG_FAILURE([Library libiomp5 not found])]
+                    )
+        ],
+        [MKLFLAGS=])
   #check mkl libraries
-  MKLFLAGS=
   AC_CHECK_LIB([mkl_core], [main], 
                 [MKLFLAGS="-lmkl_core $MKLFLAGS"
                   LIBS="-lmkl_core $LIBS"],
@@ -53,7 +58,7 @@ LDLIBS=
                       LIBS="-lmkl_intel_thread $LIBS"
                       ], [MKL_IS_HERE=no], [-lmkl_intel_lp64 -lmkl_core])]
     )
-  AS_IF([test "$MKL_IS_HERE" = xno], 
+  AS_IF([test "x$MKL_IS_HERE" = xno], 
         [AC_MSG_FAILURE([One or more library of MKL was not found or conflicted with an other library.])],
         [MKL_IS_HERE=yes]
         )
@@ -65,7 +70,7 @@ LDLIBS=
   AC_CHECK_LIB([fftw3xf_intel], [main], [],
           [AC_MSG_FAILURE([Could not find -lfftw3xf_intel library. Make sure the library is located in $MKLROOT/interfaces/fftw3xf, or give path to wrappers using --with-wrappers=<path/to/libfftw3xf_intel.a> .  Instructions on how to build your own wrappers library can be found on Intel Website : https://software.intel.com/en-us/node/522277], [])]
           )
-  LD_FFTW="-lfftw3xf_intel $MKLFLAGS -liomp5 -lpthread -lm -ldl"
+  LD_FFTW="-lfftw3xf_intel $MKLFLAGS -lpthread -lm"
          #~ ],
         #~ [LD_FFTW="$MKLFLAGS -liomp5 -lpthread -lm -ldl"])
 ])

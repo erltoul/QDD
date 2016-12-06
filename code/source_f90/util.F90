@@ -3157,7 +3157,7 @@ REAL(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
 
 !*********************************************************
-
+qout=0D0  !to avoid warning at compile time
 STOP ' subroutine PROJECT not yet for parallel'
 
 RETURN
@@ -3187,7 +3187,7 @@ INTEGER, INTENT(IN)    :: ispact
 COMPLEX(DP) :: ovl
 
 !*********************************************************
-
+qout=0D0  !to avoid warning at compile time
 STOP ' subroutine CPROJECT not yet for parallel'
 
 RETURN

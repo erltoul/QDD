@@ -120,7 +120,7 @@ AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],[--with-debug : Use compiler specfic debug option during compilation])
     ],
   [],
-  [with_static=no])
+  [with_debug=no])
 AC_MSG_NOTICE([Use Debug option at compile time: $with_static])
 AM_CONDITIONAL([USE_DEBUG],[test "x$with_debug" = xyes])
 #=======================================================================
@@ -233,12 +233,11 @@ AS_IF([test "x$with_openmp" != xno],
       DOMP="-Dparopenmp"
       AS_IF([test "x$with_openmp" = xdyn], [DOMP="$DOMP -Ddynopenmp"])
 # OpenMP flags (-fopenmp, -openmp...)  in accordance with compiler in variable OPENMP_FCFLAGS :
+      AC_LANG_PUSH([Fortran])
+      AC_OPENMP
+      # Because Autotools can't properlly handle library tests :
+      AC_LANG_POP([Fortran])
       ])
-#substitue variables with values in Makefile.in
-AC_LANG(Fortran)
-AC_OPENMP
-# Because Autotools can't properlly handle library tests :
-AC_LANG(C)
 AC_SUBST(DOMP)
 AC_SUBST(OPENMP_FCFLAGS)
 #=======================================================================

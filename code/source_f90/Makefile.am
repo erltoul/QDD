@@ -36,22 +36,22 @@ endif
 # underlying compiler for mpif90
 if MPIFORT
 if MPI_GFORT
-#~ if USE_DEBUG
+if USE_DEBUG
 OPT1  =  -pg -g -fbacktrace -fdefault-real-8 -fdefault-double-8
 OPT2  =  $(OPT1)
 OPT3  =  $(OPT2)
-#~ else
-#~ OPT1=-w -O3 -mfpmath=sse
-#~ OPT2=-w -O3 -mfpmath=sse
-#~ OPT3=-w -g  
-#~ endif
+else
+OPT1=-w -O3 -mfpmath=sse
+OPT2=-w -O3 -mfpmath=sse
+OPT3=-w -g  
+endif
 endif
 
 if MPI_IFORT
 if USE_DEBUG
 OPT1  =  -pg -fpp -g -CB -traceback -align all -autodouble
 OPT2  =  -pg -fpp -g -CB -traceback -align all -autodouble
-OPT3  =  -pg -fpp -g                -align all -autodouble
+OPT3  =  -pg -fpp -g -CB -traceback -align all -autodouble
 else
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all

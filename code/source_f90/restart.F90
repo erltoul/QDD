@@ -197,7 +197,7 @@ IF(nclust > 0)THEN
       END IF
         IF(ttest) WRITE(*,*) ' READ: psiaux at myn,nb,occup=',myn,nb,occupact
     END IF
-    CALL send_and_receive(occupact,occup(nba),1,0,nod)
+    CALL send_and_receive([occupact],occup(nba),1,0,nod)
 #ifdef REALSWITCH
     CALL send_and_receive(psiaux,psi(1,nba),kdfull2,0,nod)
 #else
@@ -464,7 +464,7 @@ REAL(DP),ALLOCATABLE :: psiaux(:)
 COMPLEX(DP),ALLOCATABLE :: psiaux(:)
 #endif
 
-REAL(DP) :: occupact
+REAL(DP) :: occupact(1)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: amoya,epotspa,ekinspa
 REAL(DP),DIMENSION(:),ALLOCATABLE :: amoys,epotsps,ekinsps
 INTEGER,DIMENSION(:,:),ALLOCATABLE :: nrel2absf
@@ -930,6 +930,8 @@ IF(dest_node == in_node .AND. myn == dest_node) THEN
   outstring = instring
   RETURN
 END IF
+
+write(6,*) "in", size(instring)," out ",  size(outstring)
 
 IF(myn == dest_node) &
    CALL mpi_recv(outstring,length,mpi_double_complex,in_node, &

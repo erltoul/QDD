@@ -10,15 +10,15 @@ AC_DEFUN([FL_LOCATE_CUDA],[
                 AS_IF([test "x$NVCC_PATH" = xmissing],
                       [AC_MSG_FAILURE([Could not find nvcc. Please check cuda install.])
                       ])
-                #Attention, prevoir une autre solution pour MacOS ?
+                # Beware, check configuration for other OS (MacOS)?
                 NVCC_PATH="$(which nvcc)"
                 NVCC_PATH="$(dirname $NVCC_PATH)" 
                 NVCC_PATH="$(readlink -f $NVCC_PATH/..)"
                 AC_MSG_NOTICE([nvcc has been located in $NVCC_PATH])
-                #ajouter choix lib ou lib64
+                # lib or lib64 ?
                 AS_IF([test "x$BITS_SIZE" = x64],
-                      [LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib64"],
-                      [LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib"]
+                      [LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib64 -Wl,-rpath,$NVCC_PATH/lib64 "],
+                      [LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib -Wl,-rpath,$NVCC_PATH/lib"]
                       )
                 AC_MSG_NOTICE([Will add $LDFLAGS to linker search path])
                 unset ac_cv_lib_cudart_main
