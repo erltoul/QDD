@@ -57,15 +57,21 @@ REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 LOGICAL,PARAMETER                       :: tstatin=.false.
 #else
 COMPLEX(DP), INTENT(IN OUT)               :: psi(kdfull2,kstate)
+#if(parayes)
 REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
+#endif
 LOGICAL, INTENT(IN)                       :: tstatin
 #endif
 
 CHARACTER (LEN=13), INTENT(IN)            :: outna
 
 REAL(DP), ALLOCATABLE                     :: psiauxr(:)
-LOGICAL :: topenf,trealin
+LOGICAL :: trealin
 LOGICAL,PARAMETER :: ttest = .TRUE.
+
+#ifdef COMPLEXSWITCH
+LOGICAL :: topenf
+#endif
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -429,7 +435,7 @@ SUBROUTINE SAVE(psi,isa,outna)
 !     **************************
 
 !  writes out the data if mod(iter,isave)=0
-!  all the data is saved in the same file called 'save', even in the parallel case
+!  all the data is saved in the same file called 'save.outna' or 'rsave.outna', even in the parallel case
 
 USE params
 USE kinetic
@@ -445,11 +451,13 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+#if(parayes)
 REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 #endif
+#endif
 
-INTEGER, INTENT(IN OUT)                     :: isa
-CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
+INTEGER, INTENT(IN)                     :: isa
+CHARACTER (LEN=13), INTENT(IN)       :: outna
 LOGICAL,PARAMETER :: ttest = .TRUE.
 LOGICAL :: trealin
 
@@ -761,11 +769,11 @@ USE params
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 
 
-OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save2')
+OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)
 
 
 !  read the iteration where the data has been saved last:

@@ -20,13 +20,12 @@
  
 !------------------------------------------------------------
 
-SUBROUTINE calcchargdist(i,field)
+SUBROUTINE calcchargdist(field)
 !------------------------------------------------------------
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-INTEGER, INTENT(IN OUT)                  :: i
 REAL(DP), INTENT(IN)                     :: field(kdfull2)
 
 REAL(DP) :: chfld(100)
@@ -99,7 +98,7 @@ WRITE(6,*) 'Doing some postrun evaluation only...'
 
 CALL calcrho(rho,psi)
 CALL calclocal(rho,aloc)
-CALL calcpseudo(rho)
+CALL calcpseudo()
 CALL calcrho(rho,psi)
 IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
 jenergy=1
@@ -130,7 +129,7 @@ CLOSE(163)
 
 CALL calcrho(rho,psi)
 CALL calclocal(rho,aloc)
-CALL calcpseudo(rho)
+CALL calcpseudo()
 CALL calcrho(rho,psi)
 IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
 jenergy=1

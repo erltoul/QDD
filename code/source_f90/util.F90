@@ -254,7 +254,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
+INTEGER, INTENT(IN)                      :: iunit
 INTEGER, INTENT(IN)                      :: iax1
 INTEGER, INTENT(IN)                      :: iax2
 REAL(DP), INTENT(IN)                         :: value
@@ -1271,7 +1271,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
+INTEGER, INTENT(IN)                  :: iunit
 REAL(DP), INTENT(IN OUT)                 :: field(kdfull2)
 CHARACTER (LEN=*), INTENT(IN)            :: comment
 

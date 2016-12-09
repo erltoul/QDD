@@ -75,9 +75,9 @@ endif
 if USE_CUDA
 if USE_DEBUG
 #OPTGPU = -g -G --gpu-architecture sm_13 
-OPTGPU = -g -G --gpu-architecture sm_20 
+#~ OPTGPU = -g -G --gpu-architecture sm_20 
 #OPTGPU = -g -G --gpu-architecture sm_30 
-#OPTGPU = -g -G --gpu-architecture sm_35 
+OPTGPU = -g -G --gpu-architecture sm_35 
 else
 #OPTGPU = -O3 --gpu-architecture sm_13 
 #OPTGPU = -O3 --gpu-architecture sm_20 
@@ -173,38 +173,39 @@ OBJCOMMON = $(OBJKINPARA) \
 if USE_TWOSTSIC
 OBJCOMMON+= 2stUTc.$(OBJEXT) localize_rad.$(OBJEXT)
 endif
+
 # Programs
 if USE_NETLIB
-bin_PROGRAMS= pwteleman
-pwteleman_SOURCES = main.F90
-pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
-pwteleman_LDFLAGS = $(LINKERFLAGS)
-pwteleman-main.$(OBJEXT): $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+bin_PROGRAMS= $(top_builddir)/bin/netlib_pwteleman
+__top_builddir__bin_netlib_pwteleman_SOURCES = main.F90
+__top_builddir__bin_netlib_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+__top_builddir__bin_netlib_pwteleman_LDADD = $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_netlib_pwteleman_LDFLAGS = $(LINKERFLAGS)
+__top_builddir__bin_netlib_pwteleman-main.$(OBJEXT): $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_FFTW
-bin_PROGRAMS = fftw_pwteleman
-fftw_pwteleman_SOURCES = main.F90
-fftw_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-fftw_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
-fftw_pwteleman_LDFLAGS = $(LINKERFLAGS)
-fftw_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
+bin_PROGRAMS = $(top_builddir)/bin/fftw_pwteleman
+__top_builddir__bin_fftw_pwteleman_SOURCES = main.F90
+__top_builddir__bin_fftw_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+__top_builddir__bin_fftw_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_fftw_pwteleman_LDFLAGS = $(LINKERFLAGS)
+__top_builddir__bin_fftw_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_MKL
-bin_PROGRAMS = mkl_pwteleman
-mkl_pwteleman_SOURCES = main.F90
-mkl_pwteleman_FCFLAGS = $(COMPILERFLAGS1)
-mkl_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
-mkl_pwteleman_LDFLAGS= $(LINKERFLAGS)
-mkl_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
+bin_PROGRAMS = $(top_builddir)/bin/mkl_pwteleman
+__top_builddir__bin_mkl_pwteleman_SOURCES = main.F90
+__top_builddir__bin_mkl_pwteleman_FCFLAGS = $(COMPILERFLAGS1)
+__top_builddir__bin_mkl_pwteleman_LDADD = $(OBJFFTW) $(OBJCOULSOLV)  $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_mkl_pwteleman_LDFLAGS= $(LINKERFLAGS)
+__top_builddir__bin_mkl_pwteleman-main.$(OBJEXT): $(OBJFFTW) $(OBJCOULSOLV) $(OBJKINPARA) $(OBJCOMMON)
 endif
 if USE_CUDA
-bin_PROGRAMS= gpu_pwteleman
-gpu_pwteleman_SOURCES = main.F90
-gpu_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
-gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
-gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
+bin_PROGRAMS= $(top_builddir)/bin/gpu_pwteleman
+__top_builddir__bin_gpu_pwteleman_SOURCES = main.F90
+__top_builddir__bin_gpu_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+__top_builddir__bin_gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
+__top_builddir__bin_gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
 endif
 
 ########################################################################
@@ -463,7 +464,6 @@ attachement.$(OBJEXT): attachement.F90 define.h params.$(OBJEXT)
 #cuda.o
 cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
 	$(GPU_COMPILER) $(CPPFLAGS) $(GPUCOMPILERFLAGS) -c -o $@ $<
-
 
 
 #~ initial_checks: makefile define.mk define.h

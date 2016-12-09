@@ -109,7 +109,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
 
 
-
 !     save starting values of sim. annealing for further use:
 
 delps0 = delpos
@@ -165,7 +164,7 @@ DO jrun = 1, nrun
     ismax = 200
     CALL statit(psir,rho,aloc)
     
-    CALL fmtv_fld(psir,rho,0)
+    CALL fmtv_fld(cmplx(psir,0D0,DP),rho,0)
     
     delbin = ABS(ebold-binerg)
     IF(loop1 >= 2) THEN
@@ -192,7 +191,7 @@ DO jrun = 1, nrun
     
     WRITE(6,'(a)') '-->NOW STARTING TO OPTIMIZE THE IONIC POSITIONS keep waiting ...'
     
-    CALL minpos(rho,psir,aloc)
+    CALL minpos(rho,psir)
     
     CALL cenmass()
     CALL view3d()
@@ -211,13 +210,13 @@ DO jrun = 1, nrun
   999     CONTINUE
   WRITE(6,'(A)') ' NORMAL TERMINATION IN METROPOLIS'
 END DO
-CALL rsave(psir,outnam)
+CALL rsave(psir,0,outnam)
 
 RETURN
 END SUBROUTINE simann
 !     *************************************
 
-SUBROUTINE minpos(rho,psimc,aloc)
+SUBROUTINE minpos(rho,psimc)
 
 !     *************************************
 
@@ -227,7 +226,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(kdfull2)
 REAL(DP), INTENT(IN)                         :: psimc(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
 
 REAL(DP),ALLOCATABLE ::  q1(:)

@@ -55,8 +55,6 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: iflag
 
 
-INTEGER :: itime
-
      write(6,*) 'Entering getforces: ipsptyp=',ipsptyp
 
 
@@ -66,7 +64,7 @@ INTEGER :: itime
 
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
   CALL calcf_goenonl(rho,it,psi)
-  CALL laserf()
+  CALL laserf(rho)
   CALL forceproject()
          OPEN(772,FILE='forces.'//outnam)
          do i=1,nion
@@ -81,7 +79,7 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
 
   RETURN
 ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
-  CALL calcf_goeloc(rho,it,psi)
+  CALL calcf_goeloc(rho,it)
   CALL forceproject()
          OPEN(772,FILE='forces.'//outnam)
          do i=1,nion
@@ -184,7 +182,7 @@ END IF
 
 !         if (tfs.gt.0)
 
-CALL laserf()
+CALL laserf(rho)
 
 
 
@@ -446,7 +444,7 @@ END SUBROUTINE getforceelna
 
 !     ******************************
 
-SUBROUTINE calcf_goeloc(rho,it,psi)
+SUBROUTINE calcf_goeloc(rho,it)
 
 !     ******************************
 
@@ -456,7 +454,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN OUT)                  :: it
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 !REAL(DP) :: force(kdfull2)
 CHARACTER (LEN=1) :: ext
@@ -535,7 +532,7 @@ END DO
 
 !     force from laser
 
-CALL laserf()
+CALL laserf(rho)
 
 !     protocol
 
@@ -596,14 +593,14 @@ END SUBROUTINE forceproject
 
 !       *********************
 
-SUBROUTINE laserf()
+SUBROUTINE laserf(rho)
 
 !       **********************
 
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-
+REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 !ccccccccccc  add here to be sure !
 IF (ABS(e0) <= 1D-7) THEN
   RETURN
@@ -862,7 +859,7 @@ DO ion = 1,nion
       DO nb=1,nstate
         CALL nonlocalc(psi(1,nb),q1,ion)
         sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
-        sumfulp = realoverlap(psi(1,nb),q1,ion) + sumfulp
+        sumfulp = realoverlap(psi(1,nb),q1) + sumfulp
       END DO
     
       CALL calc_proj(xion-xshift*0.5D0,yion,zion,xion,yion,zion,ion)
@@ -871,7 +868,7 @@ DO ion = 1,nion
       DO nb=1,nstate
         CALL nonlocalc(psi(1,nb),q1,ion)
         sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
-        sumfulm = realoverlap(psi(1,nb),q1,ion) + sumfulm
+        sumfulm = realoverlap(psi(1,nb),q1) + sumfulm
       END DO
       fxnl(ion) = (sumslm - sumslp) * xshinv
 !           sudiff = (sumfulm - sumfulp)
@@ -993,7 +990,7 @@ REAL(DP), INTENT(IN)                         :: cxact
 REAL(DP), INTENT(IN)                         :: cyact
 REAL(DP), INTENT(IN)                         :: czact
 REAL(DP), INTENT(OUT)                        :: rhopsp(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: is
+INTEGER, INTENT(IN)                          :: is
 
 
 DO ind=1,nxyz
