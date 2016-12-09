@@ -44,40 +44,36 @@
 \newpage
 
 \section{Installation and usage}
-\pagestyle{plain}
+\pagestyle{headings}
 \subsection{Installation}
 
 \begin{enumerate}
 \item Choose and create a directory where to install a code.
-\item Download in the chosen directory the package \href{http://redmine.pw-teleman.org/projects/pw-teleman/activity}{pw-teleman\_dev-all\_20131009.tar.gz}  
+\item Download in the chosen directory the package \href{http://redmine.pw-teleman.org/projects/pw-teleman/files}{pw-teleman\_201612.tar.gz}  
 \item Uncompress and unpackage the file:
 
 \hspace*{1cm}
-{\tt gunzip pw-teleman\_dev-all\_20131009.tar.gz
+{\tt gunzip pw-teleman\_201612.tar.gz}
 
 \hspace*{1cm}
-tar- xvf pw-teleman\_dev-all\_20131009.tar}
+{\tt tar -xvf pw-teleman\_201612.tar}
 
-A directory 'pw-teleman\_dev-all\_20131009' will be created.
-\item Enter the the sub-directory 'source\_f90' :
+A directory 'pw-teleman' will be created. Enter this directory:
 
 \hspace*{1cm}
-{\tt cd pw-teleman\_dev-all\_20131009/code/source\_f90/
-}
+{\tt cd pw-teleman}
+
 
 \item Before compilation, one should update some settings
 (for detailed explanations of the parameters see section \ref{sec:inputs}):
 \begin{enumerate}
 \item
- Edit 'define.h' to choose the wanted code options.
+ Edit {\tt pw-teleman/code/source\_f90/define.h} to choose the wanted code options.
 \item
- Edit 'params.F90' if you need to change some limiting values
+ Edit {\tt pw-teleman/code/source\_f90/params.F90} if you need to change some limiting values
  (rarely required).
-\item
- Edit 'makefile' and insert your compiler with its appropriate
- options. Some lines for that are provided and presently commented out.
- Fill the lines and remove the comments if needed.
 \end{enumerate}
+
 \item To use environment modules for compiling or running a code, load a particular module. To see all available modules, run {\tt module avail}, when you get command not found you must do for bash:
 
 \hspace*{1cm}
@@ -100,56 +96,140 @@ For example:
 {\tt module load intel/composer\_xe\_2013.4.183}
 
 \hspace*{1cm}
-{\tt module load cuda/5.0
+{\tt module load cuda/5.0}
 
 \hspace*{1cm}
-  module load openmpi/1.6.4-intel}
+{\tt module load openmpi/1.6.4-intel}
 
 \newpage
-\item Finally execute {\tt make} command which you can modify in the following ways:
-\begin{enumerate}
-\item Sequential -produce serial code
+\item Run {\tt configure} with appropriate options (see alist of option in section \ref{configure-options}).
+Configure will create an appropriate Makefile for compilation. 
+If no option is given, default compilation options will be used :
 
 \hspace*{1cm}
-{\tt ./make.sh 0 netlib} - to compile with netlib fftpack
+{\tt ./configure }
+
+or, with some options :
 
 \hspace*{1cm}
-{\tt ./make.sh 0 fftw} - to compile with FFTW functions
- 
-\hspace*{1cm}
-{\tt ./make.sh 0 gpu} - to compile with cuda functions
+{\tt ./configure --with-compiler={\it your\_compiler} --with-fft=NETLIB {\it etc ...}}
 
-\item Parallel - use parallelization for wavefunctions
+\item Finally execute {\tt make} command:
 
 \hspace*{1cm}
-{\tt ./make.sh 1 netlib} 
+{\tt make}
 
-\hspace*{1cm}
-{\tt ./make.sh 1 fftw} 
- 
-\hspace*{1cm}
-{\tt ./make.sh 1 gpu} 
-
-\item Simpara - pseudo-parallel code, runs different inputs simultaneously
-
-\hspace*{1cm}
-{\tt ./make.sh 2 netlib} 
-
-\hspace*{1cm}
-{\tt ./make.sh 2 fftw}
- 
-\hspace*{1cm}
-{\tt ./make.sh 2 gpu} 
-\end{enumerate}
 \end{enumerate}
 
-The executable will be copied to the working
- directory which is one level below the sub-directory 'source\_f90'. The file called 'essai.*' is
- the new executable and depending on the way of make command modification will be essai.par (parallel),
- essai.seq (sequential) or 
- essai.sim (simpara).
+The executable will be created in the {\tt bin} directory.
+ 
+Default name for the new executable is `{\tt <prefix>\_pwtelaman.<extension>}'.
+{\tt prefix} prefix depends on the FFT library used, and will be `{\tt gpu}' for Cuda cuFFT, `{\tt fftw}' for FFTW3, `{\tt mkl}' for FFTW3 with MKL, or `{\tt netlib}' for NETLIB FFT pack (default).
+Depending on the choice made for parallelization, {\tt <extension>} will be `{\tt par}' (parallel), `{\tt seq}' (sequential) or `{\tt sim}' (simpara).
 
+Example: an executable build using MKL and full parallelization will be named :
 
+\hspace*{1cm} {\tt mkl\_pwteleman.par}
+
+\subsection{Options for configure script.}
+\label{configure-options}
+Options can be passed to the {\tt configure} script in order to choose for:
+\begin{itemize}
+  \item compiler;
+  \item compilation options (static, debug);
+  \item parallelization (MPI, OpenMp);
+  \item FFT library (NETLIB, FFTW3, MKL, cuFFT). 
+\end{itemize}
+
+If some of your libraries are not located in the system default search path, you need to add the adequate flags by setting environnement variable {\tt LDFLAGS} when running {\tt configure}:
+
+\hspace*{1cm}
+{\tt ./configure {\it ... options ...}  LDFLAGS="-L/path/to/lib -L/path/to/other/lib"}
+
+Also, use variable CPPFLAGS in order to add nonstandard directory containing headers:
+
+\hspace*{1cm}
+{\tt ./configure {\it ... options ...}  CPPFLAGS="-I/path/to/headers"}
+
+\begin{center}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Options for {\tt configure} script}\\
+\hline
+\multicolumn{2}{c}{Usage: {\tt ./configure [--with-{\it options}]} } \\
+\hline
+
+{\tt --with-compiler=<choice>} & Choice of compiler. {\tt <choice>} can be one of : {\tt gfortran},\\
+  & {\tt ifort}, {\tt mpifort} (or older {\tt mpif90}), {\tt xlf\_r} (no warranty). \\
+  & Default is {\tt ifort} if installed, {\tt gfortran} otherwise. \\
+  \\
+{\tt --with-openmp[=dyn]} & Invoke OpenMP. \\
+& {\tt--with-openmp} : use threads for FFT. \\
+&{\tt --with-openmp=dyn} : wave function parallelization.\\
+& Cannot be used together with option {\tt --with-para}\\
+\\
+{\tt --with-para[=sim]} &  Choice of MPI parallelization.\\
+& If not specified : sequential (no parallelization) \\
+&{\tt --with-para} : use full MPI parallelization.\\
+&{\tt --with-para[=sim]}: use pseudo-parallel code (simpara, \\
+& runs different inputs simultaneously). \\
+& Not available with all compilers, it is advised\\
+& to prefer the use of {\tt mpifort} (or older {\tt mpif90}). \\
+& Cannot be used together with option {\tt --with-openmp}\\ 
+\\
+{\tt --with-fft=<choice>} & Choice of the FFT library. {\tt<choice>} can be {\tt NETLIB}, \\
+  &{\tt FFTW} (for FFTW3), {\tt MKL} (for intel MKL) or {\tt CUFFT} \\
+  &(for CUDA cuFFT). \\
+  & Default is {\tt NETLIB} (furnished sources).\\
+  & MKL requires {\tt fftw3xf} wrappers for FFTW3 functions.\\
+  & If wrappers are not intalled in standard location,\\
+  & user can indicate the location using option \\
+  & {\tt --with-wrappers}\\
+\\
+
+{\tt --with-wrappers=<path>} & Use this option to give the path to fftw3xf wrappers\\
+                             & for mkl, if the wrappers are not located in \\
+                             & {\tt \$mklroot/interfaces/}. Wrappers allow MKL routines\\
+                             & to be called intead of FFTW3 routines\\
+\\
+{\tt --with-mklthreads} & together with option {\tt --with-fft=MKL}, uses MKL threads. \\
+                        & No effect with other FFT.\\
+\\
+{\tt --with-static} & Use static compilation. The final executable \\
+& will be able to work independantly from \\
+& the external libraries.\\
+& This makes a big executable.\\
+\\
+{\tt --with-debug} & Use compiler-specfic debug option during compilation. \\
+\\
+\hline
+
+\end{tabular}
+\end{center}
+
+\newpage
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Additionnal flags for {\tt configure} script}\\
+\hline
+\multicolumn{2}{c}{Usage: {\tt ./configure [--with-{\it options}] [{\it FLAGS}]} } \\
+\hline
+{\tt CPPFLAGS="<flags>"} & Used to add flags for the preprocessor at compile time.\\
+& Use this when you have headers in a nonstandard directory, \\
+& with {\tt <flags>} being one or more flags \\
+& of the form {\tt -I/path/to/include} \\
+\\
+{\tt LDFLAGS="<flags>"} &  Used to add flags for the linker at compile time.\\
+& Use this if you have libraries in a nonstandard directory,\\
+& with {\tt <flags>} being one or more flags \\
+& of the form {\tt -L/path/to/library } \\
+\hline
+\end{tabular}
+
+\end{center}
 
 \subsection{Basic input structure}
 The cluster 3D code has five entries for options:

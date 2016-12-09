@@ -121,12 +121,11 @@ AC_ARG_WITH([debug],
     ],
   [],
   [with_debug=no])
-AC_MSG_NOTICE([Use Debug option at compile time: $with_static])
+AC_MSG_NOTICE([Use Debug option at compile time: $with_debug])
 AM_CONDITIONAL([USE_DEBUG],[test "x$with_debug" = xyes])
 #=======================================================================
 #                        Static compilation
 #=======================================================================
-#  Warning: may need -Wl,etc... if ill located library are used (cuda not in /usr/lib ...)
 AC_ARG_WITH([static],
   [AS_HELP_STRING([--with-static],
     [--with-static : Use static compilation : All libraries are contained in the final executable. This makes a big executable.])],
@@ -192,12 +191,16 @@ AS_IF([test "x$with_para" = xno],
       [DMPI="-Dparano -Dsimpara"
        EXEEXT=".sim"]
       )
+      
 AC_MSG_NOTICE([Using parallelism: $with_para])
-AC_MSG_NOTICE([Additional flag for parallelism: $LD_MPI])
 AC_MSG_NOTICE([Binary extension will be : "$EXEEXT"])
 AS_IF([test  "x$with_para" != xno],
       [AC_MSG_NOTICE([Compiler taking MPI into account: $FC])]
       )
+AS_IF([test "x$LD_MPI" != x],
+      [AC_MSG_NOTICE([Additional flag for parallelism: LD_MPI=$LD_MPI])]
+      )
+
 AM_CONDITIONAL([USE_MPI],[test "x$with_para" != xno])
 AC_SUBST(DMPI)
 AC_SUBST(EXEEXT)
@@ -263,12 +266,12 @@ AC_ARG_WITH([fft],
   ])
 AS_IF([test "x$with_fft" != xno], [AC_MSG_NOTICE([Use FFT : $with_fft]) ])
 # CUFFT only availaible when using IFORT (name of variables in cuda.cu : module_mp_variable)
-AS_IF([test "x$with_fft" = xCUFFT],
-      [AS_IF([test "x$FC" != xifort], 
-             [AC_MSG_FAILURE([FFT using CUDA is only available with compiler ifort.]
-                              [Sorry.])
-              ])
-      ])
+#~ AS_IF([test "x$with_fft" = xCUFFT],
+      #~ [AS_IF([test "x$FC" != xifort], 
+             #~ [AC_MSG_FAILURE([FFT using CUDA is only available with compiler ifort.]
+                              #~ [Sorry.])
+              #~ ])
+      #~ ])
           
 
 
@@ -353,16 +356,16 @@ AS_IF(
       [    
         FL_CHECK_FFTW_LIBS
         AC_SUBST([LD_FFTW])
-        # Switches used to preprocess files
         DFFT="-Dfftw_cpu -Dfftwnomkl"
       ],
       #........................CUDA.....................................
       [test "x$with_fft" = xCUFFT],
       [
         FL_LOCATE_CUDA
-        AC_CHECK_LIB([stdc++], [main], [], [AC_MSG_FAILURE([Standart C++ library -lstdc++ library was not found.])])
-        AC_SUBST([LD_CUDA], ["-lcudart -lcufft -lstdc++"])
+        AC_MSG_NOTICE([cuda linker flags: LD_CUDA=$LD_CUDA])
         DFFT="-Dfftw_gpu"
+        cp code/source_f90/define.h code/source_f90/define_cuda.h
+        sed -i -e 's/!/\/\//g' code/source_f90/define_cuda.h #define_cuda.h is just define.h turned into C++
       ],
       #......................NoFFT......................................
       [test "x$with_fft" = xno],
@@ -374,7 +377,6 @@ AS_IF(
         AC_MSG_FAILURE([Unvalid FFT option. --with-fft=<choice> .  <choice> can can be : NETLIB, FFTW, MKL or CUFFT. If not set, default library is NETLIB. ])
       ]
       )
-AC_MSG_NOTICE([FFTW flags : $LD_FFTW])
 LIBS=
 AC_SUBST(DFFT)
 AM_CONDITIONAL([USE_NETLIB],[test "x$with_fft" = xNETLIB])
@@ -382,11 +384,21 @@ AM_CONDITIONAL([USE_FFTW],[test "x$FFTW_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_MKL], [test "x$MKL_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_CUDA],[test "x$CUDA_IS_HERE" = xyes ])
 AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ])
-echo "CPPFLAGS: $CPPFLAGS"
-echo "FCFLAGS: $FCFLAGS"
-echo "LDFLAGS: $LDFLAGS"
-echo "LD_MPI: $LD_MPI" 
-echo "LD_FFTW: $LD_FFTW" 
+
+AS_IF([test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ],
+      [AC_MSG_NOTICE([FFTW linker flags: LD_FFTW=$LD_FFTW])])
+
+AC_MSG_NOTICE([preprocessor flags: CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([FFTW preprocessor flags : $DFFT])
+AC_MSG_NOTICE([Compiler flags:    FCFLAGS=$FCFLAGS])
+AC_MSG_NOTICE([linker flags:      LDFLAGS=$LDFLAGS])
+
+
+
+#~ echo "FCFLAGS: $FCFLAGS"
+#~ echo "LDFLAGS: $LDFLAGS"
+#~ echo "LD_MPI: $LD_MPI" 
+#~ echo "LD_FFTW: $LD_FFTW" 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
                  code/source_f90/Makefile])

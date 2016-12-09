@@ -177,6 +177,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
+INTEGER :: getnearestgridpoint
 
 IF (iangabso == 1) THEN ! origin is at center of density
   
@@ -707,7 +708,7 @@ END SUBROUTINE escmask
 
 !------------------------------------------------------------
 
-SUBROUTINE angabso(it)
+SUBROUTINE angabso
 !------------------------------------------------------------
 USE params
 !USE kinetic
@@ -715,7 +716,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-INTEGER, INTENT(IN OUT)                  :: it
 REAL(DP) :: absocone(maxnang)
 
 DO jj=1,maxnang

@@ -1322,7 +1322,7 @@ USE FFTW
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: q1(kdfull2)
+REAL(DP), INTENT(IN)                     :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 !INTEGER, PARAMETER :: kfft=2*kxmax
 !INTEGER, PARAMETER :: kfft2=kfft*2+1

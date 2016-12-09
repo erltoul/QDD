@@ -1836,7 +1836,7 @@ COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN)                      :: q2(kdfull2)
 REAL(DP), INTENT(IN)                         :: ri
 LOGICAL, INTENT(IN)                      :: tenerg
-INTEGER, INTENT(IN OUT)                  :: nb
+INTEGER, INTENT(IN)                      :: nb
 INTEGER, INTENT(IN)                      :: norder
 
 
@@ -3057,7 +3057,7 @@ COMPLEX(DP), INTENT(IN)                      :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
-INTEGER, INTENT(OUT)                     :: it
+INTEGER, INTENT(IN)                          :: it
 
 
 LOGICAL,PARAMETER :: ttest=.FALSE.
@@ -3091,7 +3091,7 @@ IF(myn == 0 .AND. jesc > 0 .AND. MOD(it,jesc) == 0) THEN
 END IF
 
 IF (jcharges /= 0 .AND. MOD(it,jcharges) == 0) THEN
-  CALL calcchargdist(it,rho)
+  CALL calcchargdist(rho)
 END IF
 
 
@@ -3193,7 +3193,7 @@ END IF
 IF(jmp > 0 .AND. MOD(it,jmp) == 0) CALL evalmp(803,psi)
 
 IF(myn == 0 .AND. jangabso > 0 .AND. MOD(it,jangabso) == 0  &
-    .AND. iangabso /= 0 ) CALL angabso(it)
+    .AND. iangabso /= 0 ) CALL angabso
 
 IF(jgeomel > 0 .AND. MOD(it,jgeomel) == 0) THEN
   CALL getelectrongeometry(psi,0)

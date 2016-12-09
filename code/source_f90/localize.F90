@@ -36,17 +36,16 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 #ifdef REALSWITCH
-REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 REAL(DP) :: p(kdfull2)
 #else
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 COMPLEX(DP) :: p(kdfull2)
 #endif
 COMPLEX(DP) :: q2(kdfull2)
 #if(netlib_fft|fftw_cpu)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
 #endif
-COMPLEX(DP) :: test
 REAL(DP) :: average_localization(2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajt
 REAL(DP),DIMENSION(:),ALLOCATABLE :: drho,arho

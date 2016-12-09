@@ -849,10 +849,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 ! if a particle has moved so far that we have to move the
 ! subgrid as well, then do so!
-
+#if(raregas)
 INTEGER :: getnearestgridpoint
 
-#if(raregas)
+
 DO i=1,nc
   ind = getnearestgridpoint(xc(i),yc(i),zc(i))
   IF (ind /= isubgcenter(i)) THEN
@@ -1066,7 +1066,9 @@ INTEGER FUNCTION getnearestgridpoint(xpos, ypos,zpos)
 !------------------------------------------------------------
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
-
+REAL(DP),INTENT(IN)              :: xpos 
+REAL(DP),INTENT(IN)              :: ypos
+REAL(DP),INTENT(IN)              :: zpos
 !------------------------------------------------------------
 !  getNearestGridPoint
 

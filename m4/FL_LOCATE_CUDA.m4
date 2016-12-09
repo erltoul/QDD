@@ -27,4 +27,6 @@ AC_DEFUN([FL_LOCATE_CUDA],[
   AC_CHECK_LIB([cufft], [main], [CUDA_IS_HERE=yes],
                [AC_MSG_FAILURE([CUFFT was asked, but test for -lcufft failed, probably because library libcufft.so was not found.])
                ])
+  AC_CHECK_LIB([stdc++], [main], [], [AC_MSG_FAILURE([Standart C++ library -lstdc++ library was not found.])])
+  AC_SUBST([LD_CUDA], ["-lcudart -lcufft -lstdc++"])
 ])

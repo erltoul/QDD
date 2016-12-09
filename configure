@@ -1426,7 +1426,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-compiler         Use specified compiler, choose among gfortran,
-                          ifort, mpifort and xlf_r
+                          ifort, mpifort (mpif90) and xlf_r
   --with-debug            --with-debug : Use compiler specfic debug option
                           during compilation
 
@@ -2782,7 +2782,7 @@ else
   if test "x$with_compiler" = xyes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort
+as_fn_error $? "Please specify a compiler when using option --with-compiler. Usage :  --with-compiler=<compilo> . <compilo> can be gfortran, ifort, xlf_r or mpifort (mpif90)
 See \`config.log' for more details" "$LINENO" 5; }
 else
 
@@ -3307,7 +3307,7 @@ else
   XLF_R_FALSE=
 fi
 
- if test "x$FC" = xmpifort; then
+ if test "x$FC" = xmpifort || test "x$FC" = xmpif90; then
   MPIFORT_TRUE=
   MPIFORT_FALSE='#'
 else
@@ -3315,21 +3315,22 @@ else
   MPIFORT_FALSE=
 fi
 
+
 #Find the underlying compiler used by mpifort:
 FCOMP=unknown
-if test "x$FC" = xmpifort; then :
+if test "x$FC" = xmpifort || test "x$FC" = xmpif90  ; then :
 
-      mpifort 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
-      mpifort 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
-      mpifort 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
+      $FC 2>&1 | grep -i "ifort" > /dev/null 2>&1 && FCOMP=ifort
+      $FC 2>&1 | grep -i "gfortran" > /dev/null 2>&1 && FCOMP=gfortran
+      $FC 2>&1 | grep -i "xlf_r" > /dev/null 2>&1 && FCOMP=xlf_r
       if test "x$FCOMP" = xunknown; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "Could not identify compiler $true_comp used by mpifort.
 See \`config.log' for more details" "$LINENO" 5; }
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: mpifort uses $FCOMP as compiler" >&5
-$as_echo "$as_me: mpifort uses $FCOMP as compiler" >&6;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: $FC uses $FCOMP as compiler" >&5
+$as_echo "$as_me: $FC uses $FCOMP as compiler" >&6;}
 
 fi
 
@@ -3358,6 +3359,7 @@ else
   MPI_XLF_R_FALSE=
 fi
 
+
 ########################################################################
 #                Special IDRIS flag for compiler xlf_r
 ########################################################################
@@ -3371,8 +3373,8 @@ fi
 #                   Check bitness and OS (according to compiler)
 ########################################################################
 
-if test "x$FC" = xmpif90; then :
-  COMPILER="$(mpif90 --showme:command)"
+if test "x$FC" = xmpif90 || test "x$FC" = xmpifort; then :
+  COMPILER="$($FC --showme:command)"
 else
   COMPILER="$FC"
 
@@ -4949,11 +4951,11 @@ fi
 if test "${with_debug+set}" = set; then :
   withval=$with_debug;
 else
-  with_static=no
+  with_debug=no
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Use Debug option at compile time: $with_static" >&5
-$as_echo "$as_me: Use Debug option at compile time: $with_static" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Use Debug option at compile time: $with_debug" >&5
+$as_echo "$as_me: Use Debug option at compile time: $with_debug" >&6;}
  if test "x$with_debug" = xyes; then
   USE_DEBUG_TRUE=
   USE_DEBUG_FALSE='#'
@@ -4965,7 +4967,6 @@ fi
 #=======================================================================
 #                        Static compilation
 #=======================================================================
-#  Warning: may need -Wl,etc... if ill located library are used (cuda not in /usr/lib ...)
 
 # Check whether --with-static was given.
 if test "${with_static+set}" = set; then :
@@ -5024,88 +5025,12 @@ fi
       LD_MPI=
       if test "x$FC" = xgfortran; then :
 
-            #~ AC_MSG_FAILURE([mpif.h uses array of rank > 7, which is not yet implemented in gfortran. Try with an other compiler.])
-            LD_MPI="-lmpi_f90 -lmpi_f77 -lmpi"
-
-LDLIBS="$LD_MPI"
-echo "Checking presence of mpif.h for compiler $FC"
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing COMPILATION including 'mpif.h'" >&5
-$as_echo "$as_me: Testing COMPILATION including 'mpif.h'" >&6;}
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-
-                  IMPLICIT NONE
-                  INCLUDE 'mpif.h'
-
-      end
-
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  echo "success"
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+            { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "
-    Could not COMPILE simple fortran program including 'mpif.h'.
-    If you really want to use $FC, you should give includes path:
-        ./configure  --with-para --with-compiler=$FC  FCFLAGS=-I/path/to/mpi/include
-
-    You should use mpifort instead of $FC.
-         ./configure  --with-para --with-compiler=mpifort
-    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
-
-    mpif90 and mpiF77 are obsolete versions of mpifort.
-
+as_fn_error $? "Sorry, parallel option using MPI is not available with gfortran yet. Try using mpifort or mpif90 (configured with gfortran)
 See \`config.log' for more details" "$LINENO" 5; }
-
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Testing LINKING using $LD_MPI" >&5
-$as_echo "$as_me: Testing LINKING using $LD_MPI" >&6;}
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-
-                  IMPLICIT NONE
-                  INCLUDE 'mpif.h'
-
-      end
-
-_ACEOF
-if ac_fn_fc_try_link "$LINENO"; then :
-  echo "success"
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "
-    Could not LINK simple fortran program including 'mpif.h'.
-    If you really want to use $FC, you should give libraries path:
-        ./configure  --with-para --with-compiler=$FC  LDFLAGS=-L/path/to/lib
-
-    You should use mpifort instead of $FC.
-         ./configure  --with-para --with-compiler=mpifort
-    Refer to mpifort documentation if you want to change subjacent compiler used by mpifort.
-
-    mpif90 and mpiF77 are obsolete versions of mpifort.
-
-See \`config.log' for more details" "$LINENO" 5; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-LDLIBS=
-
+            LD_MPI=" -lmpi"
+            #~ FL_CHECK_MPIF_HEADER
 
 
 fi
@@ -5142,7 +5067,7 @@ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "
     Could not COMPILE simple fortran program including 'mpif.h'.
     If you really want to use $FC, you should give includes path:
-        ./configure  --with-para --with-compiler=$FC  FCFLAGS=-I/path/to/mpi/include
+        ./configure  --with-para --with-compiler=$FC  CPPFLAGS=-I/path/to/mpi/include
 
     You should use mpifort instead of $FC.
          ./configure  --with-para --with-compiler=mpifort
@@ -5208,7 +5133,6 @@ fi
 fi
 
 
-
 if test "x$with_para" = xno; then :
   DMPI="-Dparano"
        EXEEXT=".seq"
@@ -5220,10 +5144,9 @@ elif test "x$with_para" = xsim; then :
        EXEEXT=".sim"
 
 fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: Using parallelism: $with_para" >&5
 $as_echo "$as_me: Using parallelism: $with_para" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Additional flag for parallelism: $LD_MPI" >&5
-$as_echo "$as_me: Additional flag for parallelism: $LD_MPI" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: Binary extension will be : \"$EXEEXT\"" >&5
 $as_echo "$as_me: Binary extension will be : \"$EXEEXT\"" >&6;}
 if test  "x$with_para" != xno; then :
@@ -5231,6 +5154,12 @@ if test  "x$with_para" != xno; then :
 $as_echo "$as_me: Compiler taking MPI into account: $FC" >&6;}
 
 fi
+if test "x$LD_MPI" != x; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Additional flag for parallelism: LD_MPI=$LD_MPI" >&5
+$as_echo "$as_me: Additional flag for parallelism: LD_MPI=$LD_MPI" >&6;}
+
+fi
+
  if test "x$with_para" != xno; then
   USE_MPI_TRUE=
   USE_MPI_FALSE='#'
@@ -5289,10 +5218,7 @@ fi
   DOMP="$DOMP -Ddynopenmp"
 fi
 # OpenMP flags (-fopenmp, -openmp...)  in accordance with compiler in variable OPENMP_FCFLAGS :
-
-fi
-#substitue variables with values in Makefile.in
-ac_ext=${ac_fc_srcext-f}
+      ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
@@ -5363,13 +5289,15 @@ $as_echo "$ac_cv_prog_fc_openmp" >&6; }
   fi
 
 
-# Because Autotools can't properlly handle library tests :
-ac_ext=c
+      # Because Autotools can't properlly handle library tests :
+      ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+fi
 
 
 #=======================================================================
@@ -5409,17 +5337,12 @@ if test "x$with_fft" != xno; then :
 $as_echo "$as_me: Use FFT : $with_fft" >&6;}
 fi
 # CUFFT only availaible when using IFORT (name of variables in cuda.cu : module_mp_variable)
-if test "x$with_fft" = xCUFFT; then :
-  if test "x$FC" != xifort; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "FFT using CUDA is only available with compiler ifort.
-                              Sorry.
-See \`config.log' for more details" "$LINENO" 5; }
-
-fi
-
-fi
+#~ AS_IF([test "x$with_fft" = xCUFFT],
+      #~ [AS_IF([test "x$FC" != xifort],
+             #~ [AC_MSG_FAILURE([FFT using CUDA is only available with compiler ifort.]
+                              #~ [Sorry.])
+              #~ ])
+      #~ ])
 
 
 
@@ -5556,12 +5479,9 @@ else
   MKL_LIBPATH="$mklroot/lib/ia32"
 
 fi
-  #~ AS_IF([test "x$with_wrappers" != xno],
-        #~ [
+  CPPFLAGS="$CPPFLAGS  -I$MKL_INCLUDE"
   CFLAGS="$CFLAGS "
-  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH -I$MKL_INCLUDE"
-        #~ ],
-        #~ [LDFLAGS="$LDFLAGS -L$MKL_LIBPATH -I$MKL_INCLUDE"])
+  LDFLAGS="$LDFLAGS -L$MKL_WRAPPERS -L$MKL_LIBPATH -Wl,-rpath,$MKL_WRAPPERS -Wl,-rpath,$MKL_LIBPATH"
 
   #Check common libraries
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -ldl" >&5
@@ -5687,8 +5607,15 @@ else
   MKL_IS_HERE=no
 fi
 
+  # Add iomp5 library if mkl threads are used
   if test "x$mklthreads" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -liomp5" >&5
+  if test "x$flag64" = xyes; then :
+  OMP5_LIBPATH="$mklroot/../compiler/lib/intel64"
+else
+  OMP5_LIBPATH="$mklroot/../compiler/lib/ia32"
+fi
+        LDFLAGS="-L$OMP5_LIBPATH  $LDFLAGS -Wl,-rpath,$OMP5_LIBPATH"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -liomp5" >&5
 $as_echo_n "checking for main in -liomp5... " >&6; }
 if ${ac_cv_lib_iomp5_main+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5719,20 +5646,21 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_iomp5_main" >&5
 $as_echo "$ac_cv_lib_iomp5_main" >&6; }
 if test "x$ac_cv_lib_iomp5_main" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBIOMP5 1
-_ACEOF
+  MKLFLAGS="-liomp5"
+                      LIBS="-liomp5 $LIBS"
+else
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Library libiomp5 not found
+See \`config.log' for more details" "$LINENO" 5; }
 
-  LIBS="-liomp5 $LIBS"
+fi
+
 
 else
-  MKL_IS_HERE=no
-fi
-
-
+  MKLFLAGS=
 fi
   #check mkl libraries
-  MKLFLAGS=
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmkl_core" >&5
 $as_echo_n "checking for main in -lmkl_core... " >&6; }
 if ${ac_cv_lib_mkl_core_main+:} false; then :
@@ -5887,7 +5815,7 @@ fi
 
 
 fi
-  if test "$MKL_IS_HERE" = xno; then :
+  if test "x$MKL_IS_HERE" = xno; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "One or more library of MKL was not found or conflicted with an other library.
@@ -5948,7 +5876,7 @@ See \`config.log' for more details" "$LINENO" 5; }
 
 fi
 
-  LD_FFTW="-lfftw3xf_intel $MKLFLAGS -liomp5 -lpthread -lm -ldl"
+  LD_FFTW="-lfftw3xf_intel $MKLFLAGS -lpthread -lm"
          #~ ],
         #~ [LD_FFTW="$MKLFLAGS -liomp5 -lpthread -lm -ldl"])
 
@@ -6091,7 +6019,6 @@ fi
   LD_FFTW="$fftw_flags"
 
 
-        # Switches used to preprocess files
         DFFT="-Dfftw_cpu -Dfftwnomkl"
 
 elif #........................CUDA.....................................
@@ -6185,17 +6112,17 @@ as_fn_error $? "Could not find nvcc. Please check cuda install.
 See \`config.log' for more details" "$LINENO" 5; }
 
 fi
-                #Attention, prevoir une autre solution pour MacOS ?
+                # Beware, check configuration for other OS (MacOS)?
                 NVCC_PATH="$(which nvcc)"
                 NVCC_PATH="$(dirname $NVCC_PATH)"
                 NVCC_PATH="$(readlink -f $NVCC_PATH/..)"
                 { $as_echo "$as_me:${as_lineno-$LINENO}: nvcc has been located in $NVCC_PATH" >&5
 $as_echo "$as_me: nvcc has been located in $NVCC_PATH" >&6;}
-                #ajouter choix lib ou lib64
+                # lib or lib64 ?
                 if test "x$BITS_SIZE" = x64; then :
-  LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib64"
+  LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib64 -Wl,-rpath,$NVCC_PATH/lib64 "
 else
-  LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib"
+  LDFLAGS="$LDFLAGS -L$NVCC_PATH/lib -Wl,-rpath,$NVCC_PATH/lib"
 
 fi
                 { $as_echo "$as_me:${as_lineno-$LINENO}: Will add $LDFLAGS to linker search path" >&5
@@ -6288,8 +6215,7 @@ See \`config.log' for more details" "$LINENO" 5; }
 
 fi
 
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lstdc++" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lstdc++" >&5
 $as_echo_n "checking for main in -lstdc++... " >&6; }
 if ${ac_cv_lib_stdcpp_main+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -6333,9 +6259,14 @@ as_fn_error $? "Standart C++ library -lstdc++ library was not found.
 See \`config.log' for more details" "$LINENO" 5; }
 fi
 
-        LD_CUDA="-lcudart -lcufft -lstdc++"
+  LD_CUDA="-lcudart -lcufft -lstdc++"
 
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: cuda linker flags: LD_CUDA=$LD_CUDA" >&5
+$as_echo "$as_me: cuda linker flags: LD_CUDA=$LD_CUDA" >&6;}
         DFFT="-Dfftw_gpu"
+        cp code/source_f90/define.h code/source_f90/define_cuda.h
+        sed -i -e 's/!/\/\//g' code/source_f90/define_cuda.h #define_cuda.h is just define.h turned into C++
 
 elif #......................NoFFT......................................
       test "x$with_fft" = xno; then :
@@ -6353,8 +6284,6 @@ See \`config.log' for more details" "$LINENO" 5; }
 
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: FFTW flags : $LD_FFTW" >&5
-$as_echo "$as_me: FFTW flags : $LD_FFTW" >&6;}
 LIBS=
 
  if test "x$with_fft" = xNETLIB; then
@@ -6397,10 +6326,27 @@ else
   CALLS_FFTW_FALSE=
 fi
 
-echo "FCFLAGS: $FCFLAGS"
-echo "LDFLAGS: $LDFLAGS"
-echo "LD_MPI: $LD_MPI"
-echo "LD_FFTW: $LD_FFTW"
+
+if test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: FFTW linker flags: LD_FFTW=$LD_FFTW" >&5
+$as_echo "$as_me: FFTW linker flags: LD_FFTW=$LD_FFTW" >&6;}
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: preprocessor flags: CPPFLAGS=$CPPFLAGS" >&5
+$as_echo "$as_me: preprocessor flags: CPPFLAGS=$CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: FFTW preprocessor flags : $DFFT" >&5
+$as_echo "$as_me: FFTW preprocessor flags : $DFFT" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: Compiler flags:    FCFLAGS=$FCFLAGS" >&5
+$as_echo "$as_me: Compiler flags:    FCFLAGS=$FCFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: linker flags:      LDFLAGS=$LDFLAGS" >&5
+$as_echo "$as_me: linker flags:      LDFLAGS=$LDFLAGS" >&6;}
+
+
+
+#~ echo "FCFLAGS: $FCFLAGS"
+#~ echo "LDFLAGS: $LDFLAGS"
+#~ echo "LD_MPI: $LD_MPI"
+#~ echo "LD_FFTW: $LD_FFTW"
 ac_config_headers="$ac_config_headers config.h"
 
 ac_config_files="$ac_config_files Makefile code/source_f90/Makefile"
