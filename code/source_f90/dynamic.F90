@@ -447,7 +447,6 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
 #else
   DO nb=1,nstate
     tenerg = itsub == ipasinf
-    tenerg = itsub == ipasinf
     CALL nonlocstep(q0(1,nb),q1,q2,dt,tenerg,nb,6)   ! 4
   END DO
 #endif
