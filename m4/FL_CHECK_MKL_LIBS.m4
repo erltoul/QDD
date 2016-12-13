@@ -9,7 +9,7 @@ LDLIBS=
         )
   AS_IF([test "x$mklroot" = x],[AC_MSG_FAILURE([Path to MKL is empty. Load intel module or give MKL location using --with-mklpath=<path/to/mkl>])])
   # Linker flags for wrappers, includes and library
-  AS_IF([test "x$with_wrappers" = xyes],
+  AS_IF([test "x$with_wrappers" = xyes ],
         [MKL_WRAPPERS="$mklroot/interfaces/fftw3xf"],
         [MKL_WRAPPERS="$with_wrappers"])
   MKL_INCLUDE="$mklroot/include"

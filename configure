@@ -2719,6 +2719,12 @@ fi
 #~ AC_LANG(Fortran)
 #~ AC_FC_SRCEXT(F90)
 ########################################################################
+# Prevent configure tu set -g as default FCFLAGS
+########################################################################
+if test "x$FCFLAGS" = x; then :
+  FCFLAGS=
+fi
+########################################################################
 #                         Check compiler
 ########################################################################
 
@@ -5403,16 +5409,17 @@ if test "${with_wrappers+set}" = set; then :
 
       { $as_echo "$as_me:${as_lineno-$LINENO}:  Call for option --with-wrappers is irrelevant. " >&5
 $as_echo "$as_me:  Call for option --with-wrappers is irrelevant. " >&6;}
-      { $as_echo "$as_me:${as_lineno-$LINENO}:  --with-wrappers shall be used to specify mkl wrappers path only when mkl is used as FFT library " >&5
-$as_echo "$as_me:  --with-wrappers shall be used to specify mkl wrappers path only when mkl is used as FFT library " >&6;}
+      { $as_echo "$as_me:${as_lineno-$LINENO}:  --with-wrappers shall be used to specify mkl wrappers path only when MKL is used as FFT library " >&5
+$as_echo "$as_me:  --with-wrappers shall be used to specify mkl wrappers path only when MKL is used as FFT library " >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}:  Ignoring option --with-wrappers " >&5
 $as_echo "$as_me:  Ignoring option --with-wrappers " >&6;}
 
 fi
 
 else
-  with_wrappers=no
+  with_wrappers=yes
 fi
+
 
 # MKL threads option
 
@@ -5467,7 +5474,7 @@ as_fn_error $? "Path to MKL is empty. Load intel module or give MKL location usi
 See \`config.log' for more details" "$LINENO" 5; }
 fi
   # Linker flags for wrappers, includes and library
-  if test "x$with_wrappers" = xyes; then :
+  if test "x$with_wrappers" = xyes ; then :
   MKL_WRAPPERS="$mklroot/interfaces/fftw3xf"
 else
   MKL_WRAPPERS="$with_wrappers"

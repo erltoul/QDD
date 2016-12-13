@@ -9,6 +9,10 @@ AC_CONFIG_MACRO_DIR([m4])
 #~ AC_LANG(Fortran)
 #~ AC_FC_SRCEXT(F90)
 ########################################################################
+# Prevent configure tu set -g as default FCFLAGS
+########################################################################
+AS_IF([test "x$FCFLAGS" = x], [FCFLAGS=])
+########################################################################
 #                         Check compiler
 ########################################################################
 AC_ARG_WITH([compiler],
@@ -313,11 +317,12 @@ AC_ARG_WITH([wrappers],
   AS_IF([test "x$with_fft" != xMKL], 
       [
       AC_MSG_NOTICE([ Call for option --with-wrappers is irrelevant.] ) 
-      AC_MSG_NOTICE([ --with-wrappers shall be used to specify mkl wrappers path only when mkl is used as FFT library] )
+      AC_MSG_NOTICE([ --with-wrappers shall be used to specify mkl wrappers path only when MKL is used as FFT library] )
       AC_MSG_NOTICE([ Ignoring option --with-wrappers] ) 
       ])
   ],
-  [with_wrappers=no])
+  [with_wrappers=yes])
+  
 # MKL threads option
 AC_ARG_WITH([mklthreads],
   [AS_HELP_STRING([--with-mklthreads],
