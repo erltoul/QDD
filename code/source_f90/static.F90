@@ -25,6 +25,7 @@ SUBROUTINE statit(psir,rho,aloc)
 !     master routine for static iteration
 
 USE params
+USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
 ! USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY:falr
@@ -48,12 +49,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
-CHARACTER (LEN=1) :: str1
-CHARACTER (LEN=2) :: str2
-CHARACTER (LEN=3) :: str3
-CHARACTER (LEN=1) :: inttostring1
-CHARACTER (LEN=2) :: inttostring2
-CHARACTER (LEN=2) :: inttostring3
 
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 
@@ -262,18 +257,12 @@ END IF
 IF (iplotorbitals /= 0) THEN
   DO nbe=1,nstate
     nbeabs = nrel2abs(nbe)
-    IF(nbeabs < 10) THEN
-      str1=inttostring1(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str1//'.'//outnam)
-    ELSE IF (nbeabs < 100) THEN
-      str2=inttostring2(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str2//'.'//outnam)
-    ELSE IF(nbeabs < 1000) THEN
-      str3=inttostring3(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str3//'.'//outnam)
+    IF(nbeabs < 1000) THEN
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//trim(adjustl(inttostring(nbeabs)))//'.'//outnam)
     ELSE
       STOP 'ERROR: Too many states for iplotorbitals'
     END IF
+    
     WRITE(522,'(a,i3)') '# state nr: ',nbeabs
     WRITE(522,'(a,f12.5)') '# occupation: ',occup(nbe)
     WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(nbe)
@@ -473,6 +462,7 @@ SUBROUTINE sstep(q0,aloc,iter)
 !     This part for the serial version.
 
 USE params
+USE util, ONLY:wfovlp,project
 USE kinetic
 !USE localize_rad
 #if(twostsic)
@@ -605,7 +595,7 @@ DO nbe=1,nstate
   
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1)
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1)
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1)
     DO  i=1,nxyz
       q1(i)=q1(i)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -622,9 +612,9 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
-  espbef = rwfovlp(q0(1,nbe),q1)
+  espbef = wfovlp(q0(:,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
-  espaft = rwfovlp(q0(1,nbe),q1)
+  espaft = wfovlp(q0(:,nbe),q1)
 !  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
 #endif
 !JM
@@ -632,7 +622,7 @@ DO nbe=1,nstate
   
 !       optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -668,7 +658,7 @@ ALLOCATE(psipr(kdfull2))
     CALL rfftback(psipr,w4)     !  ???
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
+    evarsp2(nbe) =  SQRT(wfovlp(w4,w4))
 !    WRITE(*,*) ' nbe,var2=',nbe,evarsp2(nbe)
     DEALLOCATE(w4)
 #endif
@@ -709,7 +699,7 @@ ALLOCATE(psipr(kdfull2))
       DO nbc=1,nbe
         IF(iactsp == ispin(nbc)) THEN
           ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1)
+          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
 #if(twostsic)  
@@ -721,7 +711,7 @@ ALLOCATE(psipr(kdfull2))
       END DO
 #if(twostsic)  
       DO nbc=nbe+1,nstate
-        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = rwfovlp(q0(1,nbc),q1)
+        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
       END DO
 #endif
     END IF
@@ -771,7 +761,7 @@ DO nbe=1,nstate
 
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1(1,nbe))
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1(1,nbe))
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1(:,nbe))
     DO  i=1,nxyz
       q1(i,nbe)=q1(i,nbe)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -795,7 +785,7 @@ DO nbe=1,nstate
   
 !       optionally compute Cexpectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1(1,nbe)) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1(:,nbe)) + amoy(nbe)
   
   
 #if(gridfft)
@@ -830,8 +820,8 @@ ENDDO !END LOOP OVER STATES
 
 
 DO nbe=1,nstate    
-    CALL project(w4(1,nbe),w4(1,nbe),ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4(1,nbe),w4(1,nbe)))
+    CALL project(w4(:,nbe),w4(:,nbe),ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(wfovlp(w4(:,nbe),w4(:,nbe)))
 ENDDO
     DEALLOCATE(w4)
 #endif
@@ -875,7 +865,7 @@ ENDDO
       DO nbc=1,nbe
         IF(iactsp == ispin(nbc)) THEN
           ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1(1,nbe))
+          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1(:,nbe))
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
@@ -1091,6 +1081,7 @@ SUBROUTINE infor(psi,rho,i)
 !     and prints to standard output.
 
 USE params
+USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
 #if(twostsic)
 USE localize_rad
 #endif
@@ -1292,12 +1283,12 @@ IF (idebug == 1) THEN
   WRITE(6,*) 'Printing KS potential...'
   
   WRITE(6,*) 'Printing electron density...'
-  CALL  printfieldx(2000+i,rho,0,0)
-  CALL  printfieldz(2100+i,rho,0,0)
+  CALL  printfieldx(2000+i,rho,0D0,0D0)
+  CALL  printfieldz(2100+i,rho,0D0,0D0)
   
   WRITE(6,*) 'Printing ion potential...'
-  CALL  printfieldx(3000+i,potion,0,0)
-  CALL  printfieldz(3100+i,potion,0,0)
+  CALL  printfieldx(3000+i,potion,0D0,0D0)
+  CALL  printfieldz(3100+i,potion,0D0,0D0)
   
 END IF
 
@@ -1341,7 +1332,7 @@ SUBROUTINE pri_pstat(psi,i,rho)
 
 
 USE params
-! USE kinetic
+USE util, ONLY:omega_mieplasmon
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -1560,7 +1551,7 @@ SUBROUTINE reocc()
 !     readjust occupations numbers to actual s.p. energies
 
 USE params
-!USE kinetic
+USE util, ONLY:pair
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
@@ -1610,6 +1601,7 @@ END SUBROUTINE reocc
 
 SUBROUTINE printone(rho,aloc)
 USE params
+USE util, ONLY:prifld
   REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
   REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
@@ -1645,6 +1637,7 @@ END SUBROUTINE printtwo
 
 SUBROUTINE printthree(rho,aloc)
 USE params
+USE util, ONLY:prifld
   REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
   REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
@@ -1671,6 +1664,7 @@ END SUBROUTINE print_densdiffc
 
 SUBROUTINE print_orb(psir)
 USE params
+USE util, ONLY: printfield
 
   REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 

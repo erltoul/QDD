@@ -254,7 +254,7 @@ SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
 !           call 'nterm=1'.
 
 USE params
-!USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2,kstate)
@@ -266,7 +266,7 @@ COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
 COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
 
-COMPLEX(DP) :: dti,cfac,cacc(kstate),wfovlp
+COMPLEX(DP) :: dti,cfac,cacc(kstate)
 INTEGER :: ilocbas
 INTEGER :: nbe
 !test      complex wfovlp,energexp
@@ -359,6 +359,7 @@ SUBROUTINE eval_unitrot(qact,qold)
 ! transformation is transferred via 'wfrotate'.
 
 USE params
+USE util, ONLY:wfovlp
 USE twost
 USE orthmat, ONLY: matdorth
 IMPLICIT NONE
@@ -366,7 +367,7 @@ IMPLICIT NONE
 COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN)              :: qold(kdfull2,kstate)
 
-COMPLEX(DP) :: wfovlp,ovl
+COMPLEX(DP) :: ovl
 REAL(DP) :: rmo
 INTEGER :: is,ni,na,nb,naeff,nbeff
 
@@ -426,6 +427,7 @@ SUBROUTINE hpsi(qact,aloc,nbe,itpri)
 
 
 USE params
+USE util, ONLY:wfovlp
 USE kinetic
 #if(twostsic)
 USE twost
@@ -441,7 +443,6 @@ INTEGER, INTENT(IN)                      :: nbe
 INTEGER, INTENT(IN)                      :: itpri
 COMPLEX(DP),ALLOCATABLE :: qex(:)
 
-COMPLEX(DP) :: wfovlp
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
@@ -592,7 +593,6 @@ REAL(DP), INTENT(IN)                     :: current(kdfull2,3)
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN OUT)                  :: nbe
 
-COMPLEX(DP) :: wfovlp
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 

@@ -662,6 +662,7 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 
 
 USE params
+USE util, ONLY:prifld2
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -798,6 +799,7 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 
 
 USE params
+USE util, ONLY:prifld
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 PARAMETER (sgnkli=-1D0)
@@ -1155,6 +1157,7 @@ SUBROUTINE calc_sicspc(rhosp,usicsp,q0state,nb)
 
 !#INCLUDE "all.inc"
 USE params
+USE util, ONLY: prifld2
 USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
@@ -1302,6 +1305,7 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 !       encoulsp        = Coulomb energy for 'nb'
 
 USE params
+USE util, ONLY:prifld2
 USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
@@ -1475,7 +1479,6 @@ INTEGER,INTENT(IN)                              :: nbe
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acli
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhi
 COMPLEX(DP) :: rhoc
-COMPLEX(DP) :: wfovlp
 #endif
 
 !       workspaces

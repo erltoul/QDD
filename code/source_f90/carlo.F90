@@ -98,6 +98,7 @@ SUBROUTINE simann(psir,rho,aloc)
 !     *************************************
 
 USE params
+USE util, ONLY:fmtv_fld, view3d
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 

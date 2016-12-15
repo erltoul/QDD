@@ -27,6 +27,7 @@ MODULE localize_rad
 USE params
 USE kinetic
 USE orthmat
+USE util, ONLY:wfovlp,project
 !IMPLICIT REAL(DP) (A-H,O-Z)
 
 !SAVE
@@ -146,7 +147,7 @@ DO nbe=1,nstate
   
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1)
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1)
+    enonlo(nbe)= wfovlp(q0(1,nbe),q1)
     DO  i=1,nxyz
       q1(i)=q1(i)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -170,7 +171,7 @@ DO nbe=1,nstate
   
 !      optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(1,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -210,7 +211,7 @@ DO nbe=1,nstate
 !     &       ' nbe,spe,var=',nbe,sume,evarsp(nbe)
     CALL rfftback(q2,q1)
     CALL project(q1,q1,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(q1,q1))
+    evarsp2(nbe) =  SQRT(wfovlp(q1,q1))
   ELSE IF(tdiag .AND. fftnorm > 0D0) THEN
     sume = 0D0
     DO i=1,nxyz
@@ -234,7 +235,7 @@ DO nbe=1,nstate
     nb = nbe - (is-1)*ndim(1)
     DO na=1,ndim(is)
       nae = na + (is-1)*ndim(1)
-      h_matrix(na,nb,is) = rwfovlp(q0(1,nae),q1)
+      h_matrix(na,nb,is) = wfovlp(q0(1,nae),q1)
       IF(na == nb) h_matrix(na,nb,is) =  &
           h_matrix(na,nb,is) + amoy(nbe)
     END DO

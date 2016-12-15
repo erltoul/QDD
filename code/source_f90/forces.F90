@@ -598,7 +598,7 @@ SUBROUTINE laserf(rho)
 !       **********************
 
 USE params
-!USE kinetic
+USE util, ONLY:laserp
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 !ccccccccccc  add here to be sure !
@@ -725,7 +725,7 @@ SUBROUTINE calcf_goenonl(rho,it,psi)
 !     ********************************
 
 USE params
-!USE kinetic
+USE util, ONLY:realoverlap, realovsubgrid
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'

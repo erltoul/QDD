@@ -1547,7 +1547,7 @@ SUBROUTINE initions()
 !     read ionic positions and initialize ion-related parameters
 
 USE params
-!USE kinetic
+USE util, ONLY:getcm,givetemperature,rotatevec3D
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: orderxyz
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
@@ -2026,6 +2026,7 @@ SUBROUTINE initwf(psir)
 !     master routine to initialize the electronic wavefunctions
 
 USE params
+USE util, ONLY:shiftfield
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
@@ -2171,7 +2172,7 @@ END SUBROUTINE initwf
 
 SUBROUTINE ininqb(nelect,deoccin,betain,gamin)
 USE params
-!USE kinetic
+USE util, ONLY:pair
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -2557,6 +2558,7 @@ END SUBROUTINE ininqb
 SUBROUTINE jelbak(partn,alphel,betael,hexel,sqr,iturn)
 
 USE params
+USE util, ONLY:rotatevec3D
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 

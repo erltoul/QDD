@@ -35,6 +35,7 @@ PROGRAM tdlda_m
 
 USE params
 USE kinetic
+USE util
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -70,10 +71,10 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 REAL(DP) :: totalprob,totalovlp
-
+#if(raregas)
 LOGICAL :: tmf
-
-!REAL(4) tarray(2)
+#endif
+REAL(DP) tarray(2)
 !REAL(4) etime
 
 
@@ -309,7 +310,7 @@ IF(nclust > 0)THEN
     CALL init_dynwf(psi)
     IF(nabsorb > 0) CALL  init_abs_accum()
   ELSE
-    IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi,iflag)
+    IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi)
 !                   ??: 'evaluate' should come after 'restart2' ??
     IF (iscatterelectron /=0) CALL init_scattel(psi)
     CALL restart2(psi,outnam,.false.)
@@ -493,7 +494,7 @@ DO it=irest,itmax   ! time-loop
         CALL tstep(psi,aloc,rho,it)
       END IF
 !      WRITE(*,*) ' MAIN: nabsorb=',nabsorb
-      IF(nabsorb > 0) CALL  absbc(psi,rho,it)
+      IF(nabsorb > 0) CALL  absbc(psi,rho)
       
       
 !            protocol of densities

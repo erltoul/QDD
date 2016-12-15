@@ -1102,7 +1102,7 @@ SUBROUTINE prispe_parallele(iunit,it)
 !     unit 'iunit'
 
 USE params
-!USE kinetic
+USE util, ONLY:safeopen
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN) :: iunit

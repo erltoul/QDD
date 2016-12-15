@@ -23,7 +23,7 @@
 SUBROUTINE calcchargdist(field)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:getcm
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                     :: field(kdfull2)
@@ -79,7 +79,7 @@ END SUBROUTINE calcchargdist
 
 !------------------------------------------------------------
 
-SUBROUTINE evaluate(rho,aloc,psi,iflag)
+SUBROUTINE evaluate(rho,aloc,psi)
 !------------------------------------------------------------
 USE params
 !USE kinetic
@@ -90,7 +90,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: iflag
+!INTEGER, INTENT(IN OUT)                  :: iflag
 
 
 WRITE(6,*) 'Doing some postrun evaluation only...'

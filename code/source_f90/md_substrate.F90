@@ -41,7 +41,7 @@ END FUNCTION sigsig
 SUBROUTINE initsurface
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield,printfield2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -2281,7 +2281,7 @@ SUBROUTINE init_surftemp()
 !     initializes temperature of substrate constituents (MgO)
 
 USE params
-!USE kinetic
+USE util, ONLY: givetemperature
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 CALL givetemperature(pxc,pyc,pzc, nc,surftemp,mion*1836D0*ame,1)
@@ -2300,7 +2300,7 @@ END SUBROUTINE init_surftemp
 SUBROUTINE printsurfpot(iunit)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

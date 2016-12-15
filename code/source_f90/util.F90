@@ -19,9 +19,27 @@
 
 #include "define.h"
 
+MODULE util
+
+INTERFACE projmoms
+  MODULE PROCEDURE r_projmoms, c_projmoms
+END INTERFACE projmoms
+
+INTERFACE wfovlp
+  MODULE PROCEDURE r_wfovlp, c_wfovlp
+END INTERFACE wfovlp
+
+INTERFACE wfnorm
+  MODULE PROCEDURE r_wfnorm, c_wfnorm
+END INTERFACE wfnorm
+
+INTERFACE project
+  MODULE PROCEDURE r_project, c_project
+END INTERFACE project
+
+CONTAINS
 
 !------------------------------------------------------------
-
 SUBROUTINE shiftfield(q0,shix,shiy,shiz)
 !------------------------------------------------------------
 USE params
@@ -156,93 +174,19 @@ END SUBROUTINE shiftfield
 
 !------------------------------------------------------------
 
-CHARACTER FUNCTION inttostring1(inumber)
+CHARACTER*9 FUNCTION inttostring(inumber)
 !------------------------------------------------------------
-
-
-
 INTEGER, INTENT(IN)                      :: inumber
 
-
-IF (inumber == 1) THEN
-  inttostring1='1'
-ELSE IF (inumber == 2) THEN
-  inttostring1='2'
-ELSE IF (inumber == 3) THEN
-  inttostring1='3'
-ELSE IF (inumber == 4) THEN
-  inttostring1='4'
-ELSE IF (inumber == 5) THEN
-  inttostring1='5'
-ELSE IF (inumber == 6) THEN
-  inttostring1='6'
-ELSE IF (inumber == 7) THEN
-  inttostring1='7'
-ELSE IF (inumber == 8) THEN
-  inttostring1='8'
-ELSE IF (inumber == 9) THEN
-  inttostring1='9'
-ELSE IF (inumber == 0) THEN
-  inttostring1='0'
-ELSE
-  STOP 'ERROR in intToString1'
-END IF
+SELECT CASE(inumber)
+  CASE(0:999999999)
+    WRITE(inttostring,'(i9)') inumber
+  CASE DEFAULT
+    STOP 'ERROR in intToString'
+END SELECT
 
 RETURN
-
-END FUNCTION inttostring1
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
-CHARACTER*2 FUNCTION inttostring2(inumber)
-!------------------------------------------------------------
-
-
-INTEGER, INTENT(IN)                      :: inumber
-INTEGER :: inumber1
-CHARACTER (LEN=1) :: char1,char2
-CHARACTER (LEN=1) :: inttostring1
-
-inumber1=MOD(inumber,10)
-
-char1=inttostring1(inumber1)
-
-inumber1=inumber/10
-
-char2=inttostring1(inumber1)
-
-inttostring2=char2//char1
-
-RETURN
-END FUNCTION inttostring2
-!------------------------------------------------------------
-
-
-!------------------------------------------------------------
-
-CHARACTER*3 FUNCTION inttostring3(inumber)
-!------------------------------------------------------------
-
-
-INTEGER, INTENT(IN)                      :: inumber
-INTEGER :: inumber1
-CHARACTER (LEN=1) :: char1,char2,char3
-CHARACTER (LEN=1) :: inttostring1
-
-inumber1=MOD(inumber,10)
-
-char1=inttostring1(inumber1)
-
-inumber1=inumber/10
-
-char2=inttostring1(MOD(inumber1,10))
-char3=inttostring1(inumber1/10)
-
-inttostring3=char3//char2//char1
-
-RETURN
-END FUNCTION inttostring3
+END FUNCTION inttostring
 !------------------------------------------------------------
 
 !------------------------------------------------------------
@@ -286,11 +230,8 @@ IF (iax1 == 1 .AND. iax2 == 2) THEN ! xy-plane
 !                  write(6,*)
       END IF
     END DO
-    
-    
-    
+   
   END DO
-  
   
   
 ELSE IF (iax1 == 1 .AND. iax2 == 3) THEN ! xz-plane
@@ -318,7 +259,6 @@ ELSE IF (iax1 == 1 .AND. iax2 == 3) THEN ! xz-plane
     END DO
     
   END DO
-  
   
   
   
@@ -350,7 +290,6 @@ END IF
 
 
 
-
 RETURN
 END SUBROUTINE pm3dcut
 !------------------------------------------------------------
@@ -360,7 +299,7 @@ END SUBROUTINE pm3dcut
 COMPLEX(DP) FUNCTION orbitaloverlap(q1,q2)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     returns \int\d^3r q_1^* q_2
@@ -740,9 +679,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     calculates center of density rho
 !     returns result on rVecTmp(1..3) via common
 
-
-
-
 REAL(DP), INTENT(IN)                         :: rho(kdfull2)
 
 !------------------------------------------------------------
@@ -773,11 +709,7 @@ DO iz=minz,maxz
 !               xxcm = xxcm + rho(ind)*x1*rho(ind)*x1
 !               yycm = yycm + rho(ind)*y1*rho(ind)*y1
 !               zzcm = zzcm + rho(ind)*z1*rho(ind)*z1
-      
-      
-      
       acc = acc + rho(ind)
-      
     END DO
   END DO
 END DO
@@ -1175,10 +1107,10 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
-REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
+INTEGER, INTENT(IN)                          :: iunit
+REAL(DP), INTENT(IN)                         :: field(kdfull2)
 REAL(DP), INTENT(IN)                         :: y
-REAL(DP), INTENT(IN OUT)                     :: z
+REAL(DP), INTENT(IN)                         :: z
 
 
 INTEGER :: getnearestgridpoint
@@ -1207,10 +1139,10 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
-REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: x
-REAL(DP), INTENT(IN OUT)                     :: z
+INTEGER, INTENT(IN)                          :: iunit
+REAL(DP), INTENT(IN)                         :: field(kdfull2)
+REAL(DP), INTENT(IN)                         :: x
+REAL(DP), INTENT(IN)                         :: z
 
 
 INTEGER :: getnearestgridpoint
@@ -1238,9 +1170,9 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
-REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: x
+INTEGER, INTENT(IN)                          :: iunit
+REAL(DP), INTENT(IN)                         :: field(kdfull2)
+REAL(DP), INTENT(IN)                         :: x
 REAL(DP), INTENT(IN)                         :: y
 
 
@@ -1271,8 +1203,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN)                  :: iunit
-REAL(DP), INTENT(IN OUT)                 :: field(kdfull2)
+INTEGER, INTENT(IN)                      :: iunit
+REAL(DP), INTENT(IN)                     :: field(kdfull2)
 CHARACTER (LEN=*), INTENT(IN)            :: comment
 
 
@@ -1608,25 +1540,18 @@ END SUBROUTINE emoms
 
 
 !-----projmoms-------------------------------------------------------projmoms
-
-SUBROUTINE projmoms(rho,psi)
+! REAL version
+!-----------------------------------------------------------------------
+SUBROUTINE r_projmoms(rho,psi)
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-#ifdef REALSWITCH
 REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#else
-COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#endif
-
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 REAL(DP) :: sprojec
 #endif
-
-
-
 REAL(DP), INTENT(IN)                :: rho(2*kdfull2)
 REAL(DP)                            :: summ,sumx,sumy,sumz
 !----------------------------------------------------------------------
@@ -1638,14 +1563,11 @@ DO k=1,nrmom
   qeproj(k)=0D0
 END DO
 
-
 !     switch for calculating moments relative to center of mass (1)
 !     or center of box (0)
 
-
 rvectmp = 0D0
 IF (iemomsrel == 1 .AND. nion2 > 0) THEN
-   
   DO i=1,nion
     IF (i/=nproj) THEN
       summ = summ + amu(np(i))
@@ -1654,12 +1576,9 @@ IF (iemomsrel == 1 .AND. nion2 > 0) THEN
       sumz = sumz + amu(np(i))*cz(i)
     END IF
   END DO
-
   rvectmp(1) = sumx/summ
   rvectmp(2) = sumy/summ
   rvectmp(3) = sumz/summ
-
-
 END IF
 
 ind=0
@@ -1667,63 +1586,38 @@ DO iz=minz,maxz
   z1=(iz-nzsh)*dz
   z1t=z1-rvectmp(3)
   z1p=z1-cz(nproj)
-
   DO iy=miny,maxy
     y1=(iy-nysh)*dy
     y1t=y1-rvectmp(2)
     y1p=y1-cy(nproj)
-
     DO ix=minx,maxx
       ind=ind+1
-!test               if((ix.ne.nx2).and.(iy.ne.ny2).and.(iz.ne.nz2)) then
       IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
         x1=(ix-nxsh)*dx
         x1t=x1-rvectmp(1)
         x1p=x1-cx(nproj)
-
-
-       sproj=0D0
-
+        sproj=0D0
 #if(parano)
-       DO ik=1,nproj_states
-         ikk=proj_states(ik)
-#ifdef REALSWITCH
-         sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
-       END DO
-#else
-         sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk),DP)
-       END DO
-#endif
-#endif
-
-#if(parayes)
-      sprojec=0D0 
-      DO nbe=1,nstate
-        nbee=nrel2abs(nbe)
-        DO kk=1,nproj_states
-           IF (nbee == proj_states(kk)) THEN
-#ifdef REALSWITCH
-         sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
-#else
-         sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe),DP)
-#endif
-           END IF
+        DO ik=1,nproj_states
+          ikk=proj_states(ik)
+          sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
         END DO
-      END DO
-
-CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-   mpi_sum,mpi_comm_world,ic)
-CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-
+#else
+        sprojec=0D0 
+        DO nbe=1,nstate
+          nbee=nrel2abs(nbe)
+          DO kk=1,nproj_states
+            IF (nbee == proj_states(kk)) THEN
+              sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
+            END IF
+          END DO
+        END DO
+        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
+        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
+                mpi_sum,mpi_comm_world,ic)
+        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
 #endif
-
-
-
-
-
-
-       starget=rho(ind)-sproj
+        starget=rho(ind)-sproj
 !                                                     monopole
         qetarget(1)=qetarget(1)+starget
         qeproj(1)=qeproj(1)+sproj
@@ -1735,7 +1629,6 @@ CALL mpi_barrier(mpi_comm_world, mpi_ierror)
         qeproj(2)=qeproj(2)+sproj*x1p
         qeproj(3)=qeproj(3)+sproj*y1p
         qeproj(4)=qeproj(4)+sproj*z1p
-
       END IF
     END DO
   END DO
@@ -1752,7 +1645,116 @@ DO k=2,nrmom
 END DO
 
 RETURN
-END SUBROUTINE projmoms
+END SUBROUTINE r_projmoms
+
+!-----------------------------------------------------------------------
+! COMPLEX version
+!-----------------------------------------------------------------------
+SUBROUTINE c_projmoms(rho,psi)
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+REAL(DP) :: sprojec
+#endif
+REAL(DP), INTENT(IN)                :: rho(2*kdfull2)
+REAL(DP)                            :: summ,sumx,sumy,sumz
+!----------------------------------------------------------------------
+nrmom=35
+IF(nrmom > kmom) STOP ' too many moments in projmoms'
+
+DO k=1,nrmom
+  qetarget(k)=0D0
+  qeproj(k)=0D0
+END DO
+
+!     switch for calculating moments relative to center of mass (1)
+!     or center of box (0)
+
+rvectmp = 0D0
+IF (iemomsrel == 1 .AND. nion2 > 0) THEN
+   
+  DO i=1,nion
+    IF (i/=nproj) THEN
+      summ = summ + amu(np(i))
+      sumx = sumx + amu(np(i))*cx(i)
+      sumy = sumy + amu(np(i))*cy(i)
+      sumz = sumz + amu(np(i))*cz(i)
+    END IF
+  END DO
+  rvectmp(1) = sumx/summ
+  rvectmp(2) = sumy/summ
+  rvectmp(3) = sumz/summ
+END IF
+
+ind=0
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  z1t=z1-rvectmp(3)
+  z1p=z1-cz(nproj)
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    y1t=y1-rvectmp(2)
+    y1p=y1-cy(nproj)
+    DO ix=minx,maxx
+      ind=ind+1
+      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
+        x1=(ix-nxsh)*dx
+        x1t=x1-rvectmp(1)
+        x1p=x1-cx(nproj)
+        sproj=0D0
+#if(parano)
+        DO ik=1,nproj_states
+          ikk=proj_states(ik)
+          sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk),DP)
+        END DO
+#else
+        sprojec=0D0 
+        DO nbe=1,nstate
+          nbee=nrel2abs(nbe)
+          DO kk=1,nproj_states
+            IF (nbee == proj_states(kk)) THEN
+              sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe),DP)
+            END IF
+          END DO
+        END DO
+        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
+        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
+          mpi_sum,mpi_comm_world,ic)
+        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
+#endif
+        starget=rho(ind)-sproj
+!                                                     monopole
+        qetarget(1)=qetarget(1)+starget
+        qeproj(1)=qeproj(1)+sproj
+!                                                     dipole
+        qetarget(2)=qetarget(2)+starget*x1t
+        qetarget(3)=qetarget(3)+starget*y1t
+        qetarget(4)=qetarget(4)+starget*z1t
+
+        qeproj(2)=qeproj(2)+sproj*x1p
+        qeproj(3)=qeproj(3)+sproj*y1p
+        qeproj(4)=qeproj(4)+sproj*z1p
+      END IF
+    END DO
+  END DO
+END DO
+
+DO k=1,nrmom
+  qetarget(k)=qetarget(k)*dvol
+  qeproj(k)=qeproj(k)*dvol
+END DO
+
+DO k=2,nrmom
+  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
+  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
+END DO
+
+RETURN
+END SUBROUTINE c_projmoms
 
 
 
@@ -2042,8 +2044,8 @@ END SUBROUTINE projectp
 
 !     **************************
 
-FUNCTION wfnorm(psi)
-
+REAL(DP) FUNCTION c_wfnorm(psi)
+!       COMPLEX psi version
 !     *************************
 
 USE params
@@ -2058,10 +2060,34 @@ acc = 0D0
 DO ii=1,nxyz
   acc   = REAL(psi(ii),DP)*REAL(psi(ii),DP) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
 END DO
-wfnorm = acc*dvol
+c_wfnorm = acc*dvol
 
 RETURN
-END FUNCTION wfnorm
+END FUNCTION c_wfnorm
+
+!     **************************
+
+REAL(DP) FUNCTION r_wfnorm(psi1)
+!         REAL psi version
+!     *************************
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+
+REAL(DP), INTENT(IN)                         :: psi1(kdfull2)
+
+
+acc = 0D0
+DO ii=1,nxyz
+  acc = (psi1(ii))*psi1(ii)  + acc
+END DO
+r_wfnorm = acc*dvol
+
+RETURN
+END FUNCTION r_wfnorm
+
 !     **************************
 
 FUNCTION wfnorm_r(psi1,psi2)
@@ -2110,12 +2136,12 @@ RETURN
 END FUNCTION wfnorm_i
 !     **************************
 
-COMPLEX(DP) FUNCTION wfovlp(psi1,psi2)
+COMPLEX(DP) FUNCTION c_wfovlp(psi1,psi2)
 
 !     *************************
 
 !      Overlap   <psi1|psi2>
-
+!         COMPLEX version
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -2129,18 +2155,18 @@ csum = 0D0
 DO ii=1,nxyz
   csum = CONJG(psi1(ii))*psi2(ii)  + csum
 END DO
-wfovlp = csum*dvol
+c_wfovlp = csum*dvol
 
 RETURN
-END FUNCTION wfovlp
+END FUNCTION c_wfovlp
 !     **************************
 
-REAL(DP) FUNCTION rwfovlp(psi1,psi2)
+REAL(DP) FUNCTION r_wfovlp(psi1,psi2)
 
 !     *************************
 
 !      Overlap   <psi1|psi2>
-
+!         REAL version
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -2154,58 +2180,11 @@ acc = 0D0
 DO ii=1,nxyz
   acc = (psi1(ii))*psi2(ii)  + acc
 END DO
-rwfovlp = acc*dvol
+r_wfovlp = acc*dvol
 
 RETURN
-END FUNCTION rwfovlp
-!     **************************
+END FUNCTION r_wfovlp
 
-REAL(DP) FUNCTION rwfnorm(psi1)
-
-!     *************************
-
-!      Overlap   <psi1|psi2>
-
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-REAL(DP), INTENT(IN)                         :: psi1(kdfull2)
-
-
-acc = 0D0
-DO ii=1,nxyz
-  acc = (psi1(ii))*psi1(ii)  + acc
-END DO
-rwfnorm = acc*dvol
-
-RETURN
-END FUNCTION rwfnorm
-
-
-!------------------------------------------------------------
-
-SUBROUTINE zerowf(qwf)
-!------------------------------------------------------------
-
-!     To set the wavefunction field 'cwf' all zero.
-
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-
-COMPLEX(DP), INTENT(OUT)                     :: qwf(kdfull2)
-
-qwf = 0D0
-!DO ii=1,kdfull2
-!  qwf(ii)=0D0
-!END DO
-
-RETURN
-END SUBROUTINE zerowf
 
 !--------------------------------------------------------------------
 
@@ -2453,7 +2432,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)              :: iunit
 REAL(DP), INTENT(IN)             :: field(kdfull2)
-CHARACTER (LEN=12), INTENT(IN)   :: comment
+CHARACTER (LEN=*), INTENT(IN)   :: comment
 
 LOGICAL :: tnopri
 DATA tnopri/.false./
@@ -2719,7 +2698,7 @@ SUBROUTINE mtv_3dfld(rho,iframe)
 ! **************************************************
 
 USE params
-!USE kinetic
+
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN) :: iframe
@@ -2795,7 +2774,7 @@ INTEGER, INTENT(IN)          :: isp
 IF(temp /= 0D0) STOP ' ORTHOGWFR requires temperature 0'
 DO nbe=1,nstate
   IF(ispin(nbe) == isp .AND. occup(nbe) > 0.999D0) THEN
-    overlap = rwfovlp(wfr,q0(1,nbe))
+    overlap = wfovlp(wfr,q0(:,nbe))
     DO  i=1,nxyz
       wfr(i)=wfr(i)-overlap*q0(i,nbe)
     END DO
@@ -2815,7 +2794,8 @@ END SUBROUTINE orthogwfr
 REAL(DP) FUNCTION ran1(idum)
 !------------------------------------------------------------
 USE params, ONLY: DP
-INTEGER :: idum,ia,im,iq,ir,ntab,ndiv
+INTEGER, INTENT(IN OUT)::idum
+INTEGER :: ia,im,iq,ir,ntab,ndiv
 REAL(DP) :: am,eps,rnmx
 PARAMETER (ia=16807,im=2147483647,am=1D0/im,iq=127773,ir=2836,  &
     ntab=32,ndiv=1+(im-1)/ntab,eps=1.2D-7,rnmx=1D0-eps)
@@ -2859,9 +2839,7 @@ REAL(DP) FUNCTION gasdev(idum)
 !------------------------------------------------------------
 USE params, ONLY: DP
 
-INTEGER :: idum
-!      real gasdev
-REAL(DP) :: ran1
+INTEGER,INTENT(IN OUT) :: idum
 
 INTEGER :: iset
 REAL(DP) :: fac,gset,rsq,v1,v2
@@ -2896,7 +2874,6 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP) :: pxt(*),pyt(*),pzt(*)
-REAL(DP) :: gasdev
 REAL(DP) :: masse
 
 !     temper given in Kelvin, convert to kT in Ryd now
@@ -3033,7 +3010,10 @@ END IF
 
 RETURN
 END SUBROUTINE safeopen
+!     ******************************
 
+
+!     ******************************
 SUBROUTINE cleanfile(iunit)
 
 LOGICAL :: topen
@@ -3043,15 +3023,13 @@ IF(topen) CLOSE(iunit)
 
 RETURN
 END SUBROUTINE cleanfile
-
-
-
+!     ******************************
 
 
 #if(parano)
 !     ******************************
 
-SUBROUTINE project(qin,qout,ispact,q0)
+SUBROUTINE r_project(qin,qout,ispact,q0)
 
 !     ******************************
 
@@ -3093,10 +3071,10 @@ DO nbe=1,nstate
 END DO
 
 RETURN
-END SUBROUTINE project
+END SUBROUTINE r_project
 !     ******************************
 
-SUBROUTINE cproject(qin,qout,ispact,q0)
+SUBROUTINE c_project(qin,qout,ispact,q0)
 
 !     ******************************
 
@@ -3130,13 +3108,13 @@ DO nbe=1,nstate
 END DO
 
 RETURN
-END SUBROUTINE cproject
+END SUBROUTINE c_project
 #endif
 
 #if(parayes)
 !     ******************************
 
-SUBROUTINE project(qin,qout,ispact,q0)
+SUBROUTINE r_project(qin,qout,ispact,q0)
 
 !     ******************************
 
@@ -3161,10 +3139,10 @@ qout=0D0  !to avoid warning at compile time
 STOP ' subroutine PROJECT not yet for parallel'
 
 RETURN
-END SUBROUTINE project
+END SUBROUTINE r_project
 !     ******************************
 
-SUBROUTINE cproject(qin,qout,ispact,q0)                                   ! cPW
+SUBROUTINE c_project(qin,qout,ispact,q0)                                   ! cPW
 
 !     ******************************
 
@@ -3191,7 +3169,7 @@ qout=0D0  !to avoid warning at compile time
 STOP ' subroutine CPROJECT not yet for parallel'
 
 RETURN
-END SUBROUTINE cproject
+END SUBROUTINE c_project
 #endif
 
 
@@ -3668,7 +3646,7 @@ END FUNCTION parnm
 
 !-----omega_mieplasmon--------------------------------------------------
 
-FUNCTION omega_mieplasmon(rho)
+REAL(DP) FUNCTION omega_mieplasmon(rho)
 
 !     Estimates the Mie plasmon frequency
 !     (? seems to be correct only for Na with soft local PsP ?)
@@ -3911,12 +3889,10 @@ REAL(DP)                               :: rtmpuse(nstate)
 #endif
 
 COMPLEX(DP)                            :: cscal
-COMPLEX(DP)                            :: orbitaloverlap
-
 !-----------------------------------------------------------------
 
 DO i=1,nstate
-   cscal=orbitaloverlap(psitmp(1,i),psitmp(1,i))
+   cscal=orbitaloverlap(psitmp(:,i),psitmp(:,i))
    rtmpuse(i)=SQRT(REAL(cscal,DP)**2 + AIMAG(cscal)**2)
    prob(i)=0D0
 ENDDO
@@ -4104,8 +4080,6 @@ COMPLEX(DP), ALLOCATABLE :: spoverlaps(:,:)
 
 LOGICAL,SAVE :: tfirst=.true.
 LOGICAL,PARAMETER :: ttest=.false.
-
-COMPLEX(DP),EXTERNAL ::  determinant
 
 IF(TFIRST) THEN
   OPEN(382,file='stateoverlap.'//outnam)
@@ -4468,3 +4442,5 @@ DO  j=1,n
 END DO
 RETURN
 END SUBROUTINE cludcmp
+
+END MODULE util

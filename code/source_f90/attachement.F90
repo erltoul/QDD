@@ -172,18 +172,17 @@ END SUBROUTINE init_psitarget
 
 SUBROUTINE attach_prob(totalprob,totalovlp,psi)
 USE params
-
+USE util, ONLY:wfovlp
 REAL(DP), INTENT(OUT)           :: totalprob,totalovlp
 COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 
 !COMPLEX(DP),ALLOCATABLE :: psitarget(:,:)
 
 COMPLEX(DP) :: overlaps(kstate,kstate),submatr(kstate,kstate)
-COMPLEX(DP) :: determinant,tbelement,det,tbacc,testovlp
+COMPLEX(DP) :: tbelement,det,tbacc,testovlp
 
 !COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
-COMPLEX(DP) :: wfovlp
 REAL(DP),ALLOCATABLE :: occ_act(:)
 INTEGER :: indx(nstate)             ! index field for LU decomp.                
 INTEGER :: index(nstate-2)          ! index field for LU decomp.                
@@ -257,7 +256,7 @@ DO iener=1,nmatch
       inn=ipoi_act(i)
       DO j=1,nstate
          IF(ispin_target(inn) == ispin(j)) THEN
-            overlaps(i,j) = wfovlp(psi_target(1,inn),psi(1,j))
+            overlaps(i,j) = wfovlp(psi_target(:,inn),psi(:,j))
          ELSE
             overlaps(i,j) = CMPLX(0D0,0D0,DP)
          END IF

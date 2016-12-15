@@ -303,18 +303,18 @@ localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA
 # static.o
 if USE_CUDA
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) util.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) util.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 else
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) util.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h util.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 endif

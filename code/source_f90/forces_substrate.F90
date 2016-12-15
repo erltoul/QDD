@@ -53,8 +53,6 @@ IF (nclust > 0) THEN
     
     CALL getparas(ii)
 
-!WRITE(*,*) ' GETFORCE: ',ipseudo,imobtmp,sigtmp
-    
     IF (ipseudo == 0) THEN
       
       IF (imobtmp /= 0) THEN
@@ -97,9 +95,8 @@ IF (nclust > 0) THEN
       
       
       IF (imobtmp /= 0) THEN
-!test                    write(*,*) '1. in imobTmp'
         
-        IF (isoutofbox(rvectmp(1),rvectmp(2),rvectmp(3))  == 2) GO TO 876
+        IF (isoutofbox(rvectmp(1),rvectmp(2),rvectmp(3))  == 2) CYCLE
         
         
         CALL foldgradfunconsubgrid(chpcoul,gauss,rvectmp(1),  &
@@ -110,7 +107,6 @@ IF (nclust > 0) THEN
         prefc = chgtmp/(2*pi*sigtmp**2)**1.5D0
 ! no factor e2, because it is already in the
 ! field chpcoul()
-!WRITE(*,*) ' GETFORCE: ',prefc,rvectmp        
         CALL addforce(ii,prefc*rvectmp(1),prefc*rvectmp(2), prefc*rvectmp(3))
         
       END IF
@@ -118,20 +114,13 @@ IF (nclust > 0) THEN
       
     END IF
     
-!test               write(*,*) ' before LongToShort'
-    
     ii2 = iconvlongtoshort(ii)
-    
-!test               call prifld(rho,'density getF2')
-!test               write(*,*) 'getForceElGSM: before getShort'
     
     CALL getshortforce(iptyp(ii),5,ii2,0,rho,iflag,0)
 ! last parameter=0 is a dummy parameter because it is not needed
 ! here
     
-    876        enddo
-    
-!test         write(*,*) ' end of loop'
+  END DO
     
   END IF ! nclust
   
@@ -1375,7 +1364,7 @@ SUBROUTINE adjustdip(rho)
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:prifld
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)

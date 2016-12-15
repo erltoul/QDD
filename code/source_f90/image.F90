@@ -24,7 +24,7 @@
 SUBROUTINE testimage(testpot,testrho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -52,10 +52,6 @@ EXTERNAL gauss
 
 
 
-
-
-
-
 !         ss=1.4
 !         fac=1./((PI)**(1.5D0)*(ss)**3.)
 
@@ -73,12 +69,6 @@ CALL printfield(913,testpot,'ptpotion')
 
 
 STOP
-
-
-
-
-
-
 
 RETURN
 END SUBROUTINE testimage

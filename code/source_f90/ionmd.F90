@@ -1255,7 +1255,7 @@ END SUBROUTINE conslw
 
 !     *******************
 
-SUBROUTINE stream(rho,psi)
+SUBROUTINE stream(rho)
 
 !     *******************
 
@@ -1264,7 +1264,6 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 
 REAL(DP), ALLOCATABLE :: rhos(:),drho(:)

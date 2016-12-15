@@ -26,6 +26,7 @@
 SUBROUTINE falr(rhoc,wcoul)
 use singleton, only: fftn,resetfft
 USE params
+USE util, ONLY:prifld
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 

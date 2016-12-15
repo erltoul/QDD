@@ -23,6 +23,7 @@
 SUBROUTINE init_dynwf(psi)
 !------------------------------------------------------------
 USE params
+USE util, ONLY:phstate,stateoverl,dipole_qp
 #if(twostsic)
 USE twost
 USE orthmat
@@ -375,20 +376,6 @@ COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2,qwork
 COMPLEX(DP) :: rii,cfac
 !INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
 
-
-! CHARACTER (LEN=1) :: inttostring1
-! CHARACTER (LEN=2) :: inttostring2
-! 
-! CHARACTER (LEN=1) :: str1
-! CHARACTER (LEN=2) :: str2
-! CHARACTER (LEN=3) :: str3
-! CHARACTER (LEN=4) :: str4
-! CHARACTER (LEN=5) :: str5
-! CHARACTER (LEN=6) :: str6
-! CHARACTER (LEN=7) :: str7
-! CHARACTER (LEN=8) :: str8
-! CHARACTER (LEN=9) :: str9
-
 LOGICAL :: tenerg
 
 #if(parayes)
@@ -624,8 +611,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: dt
 
-COMPLEX(DP) :: wfovlp
-
 !----------------------------------------------------------------
 
 CALL calcrho(rho,psi)
@@ -752,6 +737,7 @@ SUBROUTINE info(psi,rho,aloc,it)
 !     kinetic energy, total energy, ionic energy, ...
 
 USE params
+USE util, ONLY:wfovlp,safeopen,project
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
@@ -770,7 +756,6 @@ REAL(DP) ::  en(kstate)
 COMPLEX(DP),ALLOCATABLE :: qtmp(:)
 REAL(DP),ALLOCATABLE :: current(:,:)
 REAL(DP) ::  estar(2),estarETF(2)
-COMPLEX(DP) :: wfovlp
 COMPLEX(DP), ALLOCATABLE :: psiaux(:)
 
 LOGICAL :: topenf
@@ -813,8 +798,8 @@ esh1=0D0
 enonlc = 0D0
 
 DO nb=1,nstate
-  spnorm(nb) = wfovlp(psi(1,nb),psi(1,nb))
-  CALL  calc_ekin(psi(1,nb),ekin)
+  spnorm(nb) = wfovlp(psi(:,nb),psi(:,nb))
+  CALL  calc_ekin(psi(:,nb),ekin)
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
   !WRITE(*,*) ' before CALC_EPOT',nb,it,ishift
   CALL calc_epot(psi(1,nb),aloc(ishift+1), epot,enonlo(nb),nb)
@@ -858,7 +843,7 @@ IF(tstinf) then
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
     CALL hpsi(qtmp,aloc(ishift+1),nb,1)  
 #if(!parayes)
-    CALL cproject(qtmp,qtmp,ispin(nb),psi)
+    CALL project(qtmp,qtmp,ispin(nb),psi)
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP))
 #endif
   END DO
@@ -889,7 +874,7 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
     qtmp = psi(:,nb)
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
     CALL hpsi_boostinv(qtmp,aloc(ishift+1),current,rho,nbe)
-    spenergybi(nb) = REAL(wfovlp(psi(1,nb),qtmp),DP)
+    spenergybi(nb) = REAL(wfovlp(psi(:,nb),qtmp),DP)
     spvariancebi(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP)-spenergybi(nb)**2)
   END DO
   CALL safeopen(91,it,jstboostinv,'pspenergybi')
@@ -1117,6 +1102,7 @@ SUBROUTINE calc_ekin(psin,ekinout)
 
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
@@ -1126,7 +1112,6 @@ REAL(DP), INTENT(OUT)                        :: ekinout
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
 !COMPLEX(DP) :: psi2(kdfull2)
-COMPLEX(DP) :: wfovlp
 !EQUIVALENCE(psi2(1),w1(1))
 
 !------------------------------------------------------------------
@@ -1171,7 +1156,7 @@ DO i=1,nxyz
   sum0 = REAL(psi(i,nb),DP)*REAL(psi(i,nb),DP) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
       + sum0
 END DO
-ekinout = REAL(wfovlp(psi(1,nb),psi2),DP)
+ekinout = REAL(wfovlp(psi(:,nb),psi2),DP)
 #endif
 
 DEALLOCATE(psi2)
@@ -1190,7 +1175,7 @@ SUBROUTINE calc_epot(psin,alocact,epotout,enonlocout,nb)
 !     The local potential comes in through 'alocact'.
 
 USE params
-!USE kinetic
+USE util, ONLY:wfovlp
 #if(twostsic)
 USE twost
 USE twostr, ONLY: ndims
@@ -1205,7 +1190,6 @@ INTEGER, INTENT(IN)                          :: nb
 
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
-COMPLEX(DP) :: wfovlp
 COMPLEX(DP) :: cf
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -1457,7 +1441,7 @@ SUBROUTINE mrote
 !      Configuration and parameters are communicated via 'common'
 
 USE params
-!USE kinetic
+USE util, ONLY:rotatevec3D
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
 
@@ -1914,7 +1898,7 @@ SUBROUTINE init_dynprotocol(rho,aloc,psi)
 !     initializes file for protocol of dynamics
 
 USE params
-!USE kinetic
+USE util, ONLY:dmaximum
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -2364,6 +2348,7 @@ SUBROUTINE print_densdiff(rho,it)
 !     evaluation and print of density differences
 
 USE params
+USE util, ONLY:pm3dcut,printfield,inttostring
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -2371,20 +2356,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w1
 
-CHARACTER (LEN=1) :: str1
-CHARACTER (LEN=2) :: str2
-CHARACTER (LEN=3) :: str3
-CHARACTER (LEN=4) :: str4
-CHARACTER (LEN=5) :: str5
-CHARACTER (LEN=6) :: str6
-CHARACTER (LEN=7) :: str7
-CHARACTER (LEN=8) :: str8
-CHARACTER (LEN=9) :: str9
-
 !---------------------------------------------------------------------
-
-
-
 IF (jplotdensitydiff /= 0 .AND. MOD(it,jplotdensitydiff) == 0) THEN
   
 !  IF(usew1) STOP ' in PRINT_DENSDIFF:  W1 already active '
@@ -2395,48 +2367,14 @@ IF (jplotdensitydiff /= 0 .AND. MOD(it,jplotdensitydiff) == 0) THEN
     READ(590,*) w1(i)
   END DO
   CLOSE(590)
-  
-  
-  it0=it
-  ndig=1
-  
-  DO i=1,10
-    IF (it0/10D0 >= 1D0) THEN
-      ndig=ndig+1
-      it0=INT(it0/10)
-    END IF
-  END DO
-  
-  IF (ndig == 1) THEN
-    WRITE (str1, '(I1)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str1//'.'//outnam)
-  ELSE IF (ndig == 2) THEN
-    WRITE (str2, '(I2)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str2//'.'//outnam)
-  ELSE IF (ndig == 3) THEN
-    WRITE (str3,'(I3)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str3//'.'//outnam)
-  ELSE IF (ndig == 4) THEN
-    WRITE (str4, '(I4)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str4//'.'//outnam)
-  ELSE IF (ndig == 5) THEN
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str5//'.'//outnam)
-  ELSE IF (ndig == 6) THEN
-    WRITE (str6, '(I6)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str6//'.'//outnam)
-  ELSE IF (ndig == 7) THEN
-    WRITE (str7, '(I7)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str7//'.'//outnam)
-  ELSE IF (ndig == 8) THEN
-    WRITE (str8, '(I8)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str8//'.'//outnam)
-  ELSE IF (ndig == 9) THEN
-    WRITE (str9, '(I9)') it
-    OPEN(689,STATUS='unknown',FILE='pdensdiff.'//str9//'.'//outnam)
-  ELSE
-    STOP '::too many time steps::'
-  END IF
+
+  SELECT CASE(it)
+    CASE(0:999999999)
+      OPEN(689,STATUS='unknown',FILE='pdensdiff.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+    CASE DEFAULT
+      STOP '::too many time steps::'
+  END SELECT
+
 !  CALL addfields2(w1,rho,-1D0)
   w1=w1-rho
   CALL printfield(689,w1,'x')
@@ -2456,268 +2394,47 @@ IF (jplotdensitydiff2d /= 0 .AND. MOD(it,jplotdensitydiff2d) == 0) THEN
     READ(590,*) w1(i)
   END DO
   CLOSE(590)
-  it0=it
-  ndig=1
   
-  DO i=1,10
-    IF (it0/10D0 >= 1D0) THEN
-      ndig=ndig+1
-      it0=INT(it0/10)
-    END IF
-  END DO
-  
-  IF (ndig == 1) THEN
-    WRITE (str1, '(I1)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str1//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str1//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str1//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 2) THEN
-    WRITE (str2, '(I2)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str2//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str2//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str2//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 3) THEN
-    WRITE (str3,'(I3)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str3//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str3//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str3//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 4) THEN
-    WRITE (str4, '(I4)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str4//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str4//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str4//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 5) THEN
-    WRITE (str5, '(I5)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str5//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str5//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str5//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 6) THEN
-    WRITE (str6, '(I6)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str6//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str6//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str6//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 7) THEN
-    WRITE (str7, '(I7)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str7//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str7//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str7//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 8) THEN
-    WRITE (str8, '(I8)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str8//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str8//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str8//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE IF (ndig == 9) THEN
-    WRITE (str9, '(I9)') it
-!    CALL addfields2(w1,rho,-1D0)
-    w1=w1-rho
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//str9//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//str9//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,w1)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//str9//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,w1)
-    CLOSE(689)
-  ELSE
-    STOP '::too many time steps::'
-  END IF
+  SELECT CASE(it)
+    CASE(0:999999999)
+!      CALL addfields2(w1,rho,-1D0)
+      w1=w1-rho
+      OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxy.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,1,2,0D0,w1)
+      CLOSE(689)
+      OPEN(689,STATUS='unknown', FILE='pdensdiff2Dxz.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,1,3,0D0,w1)
+      CLOSE(689)
+      OPEN(689,STATUS='unknown', FILE='pdensdiff2Dyz.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,2,3,0D0,w1)
+      CLOSE(689)
+    CASE DEFAULT
+      STOP '::too many time steps::'
+  END SELECT
   
 !  usew1 = .false.
   DEALLOCATE(w1)
-  
-  
+   
 END IF
 
 
 !----------------------------------------
-
-
-
 IF (jplotdensity2d /= 0 .AND. MOD(it,jplotdensity2d) == 0) THEN
   
-  it0=it
-  ndig=1
-  
-  DO i=1,10
-    IF (it0/10D0 >= 1D0) THEN
-      ndig=ndig+1
-      it0=INT(it0/10)
-    END IF
-  END DO
-  
-  IF (ndig == 1) THEN
-    WRITE (str1, '(I1)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str1//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str1//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str1//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 2) THEN
-    WRITE (str2, '(I2)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str2//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str2//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str2//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 3) THEN
-    WRITE (str3,'(I3)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str3//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str3//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str3//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 4) THEN
-    WRITE (str4, '(I4)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str4//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str4//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str4//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 5) THEN
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str5//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str5//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    WRITE (str5, '(I5)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str5//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 6) THEN
-    WRITE (str6, '(I6)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str6//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str6//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str6//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 7) THEN
-    WRITE (str7, '(I7)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str7//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str7//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str7//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 8) THEN
-    WRITE (str8, '(I8)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str8//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str8//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str8//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE IF (ndig == 9) THEN
-    WRITE (str9, '(I9)') it
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//str9//'.'//outnam)
-    CALL pm3dcut(689,1,2,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//str9//'.'//outnam)
-    CALL pm3dcut(689,1,3,0D0,rho)
-    CLOSE(689)
-    OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//str9//'.'//outnam)
-    CALL pm3dcut(689,2,3,0D0,rho)
-    CLOSE(689)
-  ELSE
-    STOP '::too many time steps::'
-  END IF
-  
-  
+  SELECT CASE(it)
+    CASE(0:999999999)
+      OPEN(689,STATUS='unknown', FILE='pdens2Dxy.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,1,2,0D0,rho)
+      CLOSE(689)
+      OPEN(689,STATUS='unknown', FILE='pdens2Dxz.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,1,3,0D0,rho)
+      CLOSE(689)
+      OPEN(689,STATUS='unknown', FILE='pdens2Dyz.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+      CALL pm3dcut(689,2,3,0D0,rho)
+      CLOSE(689)
+    CASE DEFAULT
+      STOP '::too many time steps::'
+  END SELECT
   
 END IF
 
@@ -2733,7 +2450,7 @@ SUBROUTINE open_protok_el(it)
 !     open protocol files for electronic properties
 
 USE params
-!USE kinetic
+USE util, ONLY:safeopen
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !----------------------------------------------------------------
@@ -2777,6 +2494,7 @@ SUBROUTINE analyze_ions(it)
 !     open protocol files and print properties of ions
 
 USE params
+USE util, ONLY:gettemperature,getcm,safeopen,view3d
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -2887,7 +2605,8 @@ SUBROUTINE analyze_surf(it)
 !     open protocol files and print properties of substrate
 
 USE params
-!USE kinetic
+USE util, ONLY: gettemperature,safeopen
+
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !----------------------------------------------------------------
@@ -3049,7 +2768,7 @@ SUBROUTINE analyze_elect(psi,rho,aloc,it)
 !     Analysis and print of electronic properties during dynamics.
 
 USE params
-!USE kinetic
+USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -3062,7 +2781,6 @@ INTEGER, INTENT(IN)                          :: it
 
 LOGICAL,PARAMETER :: ttest=.FALSE.
 
-COMPLEX(DP) :: orbitaloverlap
 REAL(DP) :: rtmp(kstate,kstate)
 COMPLEX(DP) :: cscal
 
@@ -3071,7 +2789,7 @@ COMPLEX(DP) :: cscal
 !      tfs=it*dt1*0.0484
 
 IF(ABS(phangle) > small) CALL phoverl(psi)
-!CALL phoverl(psi)
+
 IF(jstateoverlap == 1) THEN
   CALL stateoverl(psi,psisavex)
 !  DEALLOCATE(psisavex)
@@ -3244,7 +2962,7 @@ INTEGER :: is(mpi_status_size)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: it
 
-REAL(4) :: tarray(2)
+REAL(DP) :: tarray(2)
 
 REAL(DP) :: trun
 

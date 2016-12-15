@@ -525,6 +525,7 @@ SUBROUTINE infor_sic(psir)
 
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !REAL(DP) :: rho(2*kdfull2)
@@ -532,7 +533,7 @@ REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 !INCLUDE "twost.inc"
 !INCLUDE 'radmatrixr.inc'
 #if(cmplxsic)
-COMPLEX(DP) :: wfovlp,acc
+COMPLEX(DP) :: acc
 #endif
 
 !----------------------------------------------------------------
@@ -557,13 +558,8 @@ IF(ifsicp == 8) THEN   !!! to calculate the total
       IF(ispin(na) == is)THEN
         DO nb=1,nstate
           IF(ispin(nb) == is)THEN
-#if(cmplxsic)
             acc = ( wfovlp(psirut(1,na),qnewr(1,nb)) -  &
                 wfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
-#else
-            acc = ABS( rwfovlp(psirut(1,na),qnewr(1,nb)) -  &
-                rwfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
-#endif
           END IF
         END DO
       END IF
@@ -718,6 +714,7 @@ SUBROUTINE calc_utwfc(q0,q0ut,iter1)
 
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'twost.inc'
 !INCLUDE 'radmatrix.inc'
@@ -725,7 +722,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN OUT) :: q0ut(kdfull2,kstate)
-COMPLEX(DP) :: wfovlp
 
 !------------------------------------------------------------------
 
@@ -784,7 +780,6 @@ REAL(DP) :: q0ut(kdfull2,kstate)
 !INCLUDE 'radmatrix.inc'
 COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: q0ut(kdfull2,kstate)
-!COMPLEX(DP) :: wfovlp
 #endif
 INTEGER,INTENT(IN) :: iter1
 
@@ -854,7 +849,6 @@ COMPLEX(DP) :: dabsto(kdim,kdim)          !MV! workspace
 !REAL(DP) :: vecnorm   ! function names
 !REAL(DP) :: matdorth !MV function
 !REAL(DP) :: matnorme !MV function
-COMPLEX(DP) :: wfovlp
 
 INTEGER :: itmax2,ni
 LOGICAL,PARAMETER :: ttest=.false.
@@ -1258,6 +1252,7 @@ SUBROUTINE dalphabetarc(is,dab,q0)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -1267,7 +1262,6 @@ LOGICAL,PARAMETER :: ttest=.false.
 
 
 REAL(DP) :: save1,save2,acc2
-COMPLEX(DP) :: wfovlp ! function declaration 
 
 !INCLUDE 'radmatrix.inc'   ! defines also 'KDIM'
 !INCLUDE 'vec.inc'!MV
@@ -1348,6 +1342,7 @@ SUBROUTINE dalphabetar(is,dab,q0)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -1363,7 +1358,6 @@ REAL(DP) :: save1,save2,acc2
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
 REAL(DP),ALLOCATABLE :: uqsym(:,:),symcond(:,:)
 REAL(DP),ALLOCATABLE :: utcond(:,:),qsym(:,:)
-REAL(DP) :: rwfovlp ! function declaration
 
 !-------------------------------------------------------
 
@@ -1406,7 +1400,7 @@ DO nb=1,nstate
     DO na=1,nstate
       IF(ispin(nrel2abs(na)) == is)THEN
         naa = na - (is-1)*ndims(1)
-        utcond(naa,nbeff) = -rwfovlp(qsym(1,na),uqsym(1,nb))
+        utcond(naa,nbeff) = -wfovlp(qsym(1,na),uqsym(1,nb))
       END IF !ispin
     END DO !na
   END IF
@@ -1462,7 +1456,6 @@ LOGICAL,PARAMETER :: ttest=.false.
 
 
 REAL(DP) :: save1,save2,acc2
-COMPLEX(DP) :: wfovlp ! function declaration 
 
 !INCLUDE 'radmatrix.inc'   ! defines also 'KDIM'
 !INCLUDE 'vec.inc'!MV
@@ -1684,7 +1677,6 @@ REAL(DP),INTENT(IN) :: coeff(kstate)
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
 COMPLEX(DP),INTENT(OUT) :: wfsup(kdfull2)
 COMPLEX(DP),INTENT(IN) :: coeff(kstate)
-COMPLEX(DP) :: wfovlp,orbitaloverlap
 #endif
 
 !---------------------------------------------------------------------

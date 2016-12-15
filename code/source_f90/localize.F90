@@ -31,6 +31,7 @@ SUBROUTINE localize(rho,psi)
 !  dynamical version - not up to date !!!!!!!!!!!!
 
 USE params
+USE util, ONLY:safeopen
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 

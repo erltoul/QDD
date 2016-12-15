@@ -777,7 +777,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
-INTEGER, INTENT(OUT)                         :: ifac(10)
+INTEGER, INTENT(IN)                         :: ifac(10)
 
 ns2 = (n+1)/2
 np2 = n+2
