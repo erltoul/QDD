@@ -54,514 +54,514 @@ END SUBROUTINE createouterpot
 
 
 
-!------------------------------------------------------------
+!~ !------------------------------------------------------------
 
-SUBROUTINE debugmultexp(n,isor)
-!------------------------------------------------------------
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+!~ SUBROUTINE debugmultexp(n,isor)
+!~ !------------------------------------------------------------
+!~ USE params
+!~ !USE kinetic
+!~ IMPLICIT REAL(DP) (A-H,O-Z)
 
-!      dimension xatom(ngpar,3)
+!~ !      dimension xatom(ngpar,3)
 
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: isor(ngpar)
+!~ INTEGER, INTENT(IN)                      :: n
+!~ INTEGER, INTENT(IN OUT)                  :: isor(ngpar)
 
-REAL(DP) :: xr(3)
+!~ REAL(DP) :: xr(3)
 
-DO iz=1,1000
+!~ DO iz=1,1000
   
-  x=5.8D0
-  y=5.8D0
-  z=0D0+iz*0.1D0
+!~   x=5.8D0
+!~   y=5.8D0
+!~   z=0D0+iz*0.1D0
   
   
-  sumpotex = 0D0
-  sumpotme = 0D0
+!~   sumpotex = 0D0
+!~   sumpotme = 0D0
   
-  iup = 50
-  idown = 0
+!~   iup = 50
+!~   idown = 0
   
-  DO jx=-iup,iup
+!~   DO jx=-iup,iup
     
-    DO jy=-iup,iup
+!~     DO jy=-iup,iup
       
-      IF (ABS(jx) >= idown .OR. ABS(jy) >= idown) THEN
+!~       IF (ABS(jx) >= idown .OR. ABS(jy) >= idown) THEN
         
         
-        rvx = jx*rlattvec(1)
-        rvy = jy*rlattvec(2)
-        rvz = 0
+!~         rvx = jx*rlattvec(1)
+!~         rvy = jy*rlattvec(2)
+!~         rvz = 0
         
-        rrm = 0D0
-        potex = 0D0
-        potme = 0D0
+!~         rrm = 0D0
+!~         potex = 0D0
+!~         potme = 0D0
         
-        DO i=1,n
-          IF (ipsort(i) == 1) THEN
-            cqq=chgc0
-            ss=sigmac
-          ELSE IF (ipsort(i) == 2) THEN
-            cqq=chge0
-            ss=sigmav
-          ELSE IF (ipsort(i) == 3) THEN
-            cqq=chgk0
-            ss=sigmak
-          END IF
+!~         DO i=1,n
+!~           IF (ipsort(i) == 1) THEN
+!~             cqq=chgc0
+!~             ss=sigmac
+!~           ELSE IF (ipsort(i) == 2) THEN
+!~             cqq=chge0
+!~             ss=sigmav
+!~           ELSE IF (ipsort(i) == 3) THEN
+!~             cqq=chgk0
+!~             ss=sigmak
+!~           END IF
           
-          rr = (xatom(i,1)-x+rvx)**2+(xatom(i,2)-y+rvy)**2+  &
-              (xatom(i,3)-z+rvz)**2
-          rr=MAX(small,SQRT(rr))
-          rrm = rrm + rr
+!~           rr = (xatom(i,1)-x+rvx)**2+(xatom(i,2)-y+rvy)**2+  &
+!~               (xatom(i,3)-z+rvz)**2
+!~           rr=MAX(small,SQRT(rr))
+!~           rrm = rrm + rr
           
-          potex = potex + e2*cqq*v_soft(rr,ss)
-          sumpotex=sumpotex + e2*cqq*v_soft(rr,ss)
-        END DO
+!~           potex = potex + e2*cqq*v_soft(rr,ss)
+!~           sumpotex=sumpotex + e2*cqq*v_soft(rr,ss)
+!~         END DO
         
-        rrm = rrm / n
-        
-        
-        
-        sumd = 0D0
-        sumq = 0D0
-        
-        jz = 1
-        
-        xr(1) = x - jx*rlattvec(1)
-        xr(2) = y - jy*rlattvec(2)
-        xr(3) = z - (jz-1)*rlattvec(3)
-        
-        rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-        r = SQRT(rr)
-        rrr = r*rr
-        rrrrr = rrr*rr
-        
-        DO ico=1,3
-          sumd = sumd + xr(i)*celldipole(i)/rrr
-        END DO
-        
-        DO ico1=1,3
-          DO ico2=1,3
-            sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-          END DO
-        END DO
-        
-!         write(6,*) 'sum = ',0.5*sumq+sumd
-        
-        
-        sumq = 0.5D0*sumq
-        
-        
-        potme = (sumd + sumq)*e2
-        sumpotme = sumpotme + (sumd + sumq)*e2
+!~         rrm = rrm / n
         
         
         
-!      write(6,'(1f15.3,3e17.7)') rrm , potex, potME,(potME-potEx)/potex
+!~         sumd = 0D0
+!~         sumq = 0D0
+        
+!~         jz = 1
+        
+!~         xr(1) = x - jx*rlattvec(1)
+!~         xr(2) = y - jy*rlattvec(2)
+!~         xr(3) = z - (jz-1)*rlattvec(3)
+        
+!~         rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~         r = SQRT(rr)
+!~         rrr = r*rr
+!~         rrrrr = rrr*rr
+        
+!~         DO ico=1,3
+!~           sumd = sumd + xr(i)*celldipole(i)/rrr
+!~         END DO
+        
+!~         DO ico1=1,3
+!~           DO ico2=1,3
+!~             sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~           END DO
+!~         END DO
+        
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
+        
+        
+!~         sumq = 0.5D0*sumq
+        
+        
+!~         potme = (sumd + sumq)*e2
+!~         sumpotme = sumpotme + (sumd + sumq)*e2
         
         
         
-      END IF
-    END DO
+!~ !      write(6,'(1f15.3,3e17.7)') rrm , potex, potME,(potME-potEx)/potex
+        
+        
+        
+!~       END IF
+!~     END DO
     
-  END DO
-  WRITE(6,'(1f10.2,3e17.7)') z,sumpotex,sumpotme, (sumpotme-sumpotex)/sumpotex
+!~   END DO
+!~   WRITE(6,'(1f10.2,3e17.7)') z,sumpotex,sumpotme, (sumpotme-sumpotex)/sumpotex
   
-  WRITE(407,'(1f10.2,3e17.7)') z,sumpotex,sumpotme,  &
-      (sumpotme-sumpotex)/sumpotex
+!~   WRITE(407,'(1f10.2,3e17.7)') z,sumpotex,sumpotme,  &
+!~       (sumpotme-sumpotex)/sumpotex
   
-END DO
-STOP
+!~ END DO
+!~ STOP
 
 
-RETURN
-END SUBROUTINE debugmultexp
-!------------------------------------------------------------
+!~ RETURN
+!~ END SUBROUTINE debugmultexp
+!~ !------------------------------------------------------------
 
-!------------------------------------------------------------
+!~ !------------------------------------------------------------
 
-FUNCTION debugfme(n,isor)
-!------------------------------------------------------------
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+!~ REAL(DP) FUNCTION debugfme(n,isor)
+!~ !------------------------------------------------------------
+!~ USE params
+!~ !USE kinetic
+!~ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN OUT)                  :: isor(ngpar)
+!~ INTEGER, INTENT(IN)                      :: n
+!~ INTEGER, INTENT(IN OUT)                  :: isor(ngpar)
 
-REAL(DP) :: xr(3)
+!~ REAL(DP) :: xr(3)
 
-x=1D0
-y=1D0
-z=1D0
-sumfxex=0D0
-sumfyex=0D0
-sumfzex=0D0
-sumfxme=0D0
-sumfyme=0D0
-sumfzme=0D0
+!~ x=1D0
+!~ y=1D0
+!~ z=1D0
+!~ sumfxex=0D0
+!~ sumfyex=0D0
+!~ sumfzex=0D0
+!~ sumfxme=0D0
+!~ sumfyme=0D0
+!~ sumfzme=0D0
 
-iup = 20
-idown = 10
+!~ iup = 20
+!~ idown = 10
 
-DO jx=-iup,iup
+!~ DO jx=-iup,iup
   
   
-  DO jy=-iup,iup
+!~   DO jy=-iup,iup
     
-    IF (ABS(jx) >= idown .OR. ABS(jy) >= idown) THEN
-      rvx = jx*rlattvec(1)
-      rvy = jy*rlattvec(2)
-      rvz = 0D0
+!~     IF (ABS(jx) >= idown .OR. ABS(jy) >= idown) THEN
+!~       rvx = jx*rlattvec(1)
+!~       rvy = jy*rlattvec(2)
+!~       rvz = 0D0
       
-      rrm = 0D0
-      potex = 0D0
-      potme = 0D0
-      fxex=0D0
-      fyex=0D0
-      fzex=0D0
-      fxme=0D0
-      fyme=0D0
-      fzme=0D0
-      rder=1.D-5
+!~       rrm = 0D0
+!~       potex = 0D0
+!~       potme = 0D0
+!~       fxex=0D0
+!~       fyex=0D0
+!~       fzex=0D0
+!~       fxme=0D0
+!~       fyme=0D0
+!~       fzme=0D0
+!~       rder=1.D-5
       
-      DO i=1,n
-        IF (ipsort(i) == 1) THEN
-          cqq=chgc0
-          ss=sigmac
-        ELSE IF (ipsort(i) == 2) THEN
-          cqq=chge0
-          ss=sigmav
-        ELSE IF (ipsort(i) == 3) THEN
-          cqq=chgk0
-          ss=sigmak
-        END IF
+!~       DO i=1,n
+!~         IF (ipsort(i) == 1) THEN
+!~           cqq=chgc0
+!~           ss=sigmac
+!~         ELSE IF (ipsort(i) == 2) THEN
+!~           cqq=chge0
+!~           ss=sigmav
+!~         ELSE IF (ipsort(i) == 3) THEN
+!~           cqq=chgk0
+!~           ss=sigmak
+!~         END IF
         
-        x1=x+rder
-        y1=y
-        z1=z
-        x2=x-rder
-        y2=y
-        z2=z
+!~         x1=x+rder
+!~         y1=y
+!~         z1=z
+!~         x2=x-rder
+!~         y2=y
+!~         z2=z
         
-        rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
-            (xatom(i,3)-z1+rvz)**2
-        rr1=MAX(small,SQRT(rr1))
+!~         rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
+!~             (xatom(i,3)-z1+rvz)**2
+!~         rr1=MAX(small,SQRT(rr1))
         
-        rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
-            (xatom(i,3)-z2+rvz)**2
-        rr2=MAX(small,SQRT(rr2))
+!~         rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
+!~             (xatom(i,3)-z2+rvz)**2
+!~         rr2=MAX(small,SQRT(rr2))
         
-        radforx = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
-        
-        
-        fxex = fxex - cqq*e2*radforx
-        sumfxex=sumfxex- cqq*e2*radforx
-        
-        x1=x
-        y1=y+rder
-        z1=z
-        x2=x
-        y2=y-rder
-        z2=z
-        
-        rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
-            (xatom(i,3)-z1+rvz)**2
-        rr1=MAX(small,SQRT(rr1))
-        
-        rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
-            (xatom(i,3)-z2+rvz)**2
-        rr2=MAX(small,SQRT(rr2))
+!~         radforx = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
         
         
-        radfory = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
+!~         fxex = fxex - cqq*e2*radforx
+!~         sumfxex=sumfxex- cqq*e2*radforx
+        
+!~         x1=x
+!~         y1=y+rder
+!~         z1=z
+!~         x2=x
+!~         y2=y-rder
+!~         z2=z
+        
+!~         rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
+!~             (xatom(i,3)-z1+rvz)**2
+!~         rr1=MAX(small,SQRT(rr1))
+        
+!~         rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
+!~             (xatom(i,3)-z2+rvz)**2
+!~         rr2=MAX(small,SQRT(rr2))
         
         
-        fyex = fyex - cqq*e2*radfory
-        sumfyex=sumfyex- cqq*e2*radfory
-        
-        x1=x
-        y1=y
-        z1=z+rder
-        x2=x
-        y2=y
-        z2=z-rder
-        
-        rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
-            (xatom(i,3)-z1+rvz)**2
-        rr1=MAX(small,SQRT(rr1))
-        
-        rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
-            (xatom(i,3)-z2+rvz)**2
-        rr2=MAX(small,SQRT(rr2))
+!~         radfory = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
         
         
-        radforz = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
+!~         fyex = fyex - cqq*e2*radfory
+!~         sumfyex=sumfyex- cqq*e2*radfory
+        
+!~         x1=x
+!~         y1=y
+!~         z1=z+rder
+!~         x2=x
+!~         y2=y
+!~         z2=z-rder
+        
+!~         rr1 = (xatom(i,1)-x1+rvx)**2+(xatom(i,2)-y1+rvy)**2+  &
+!~             (xatom(i,3)-z1+rvz)**2
+!~         rr1=MAX(small,SQRT(rr1))
+        
+!~         rr2 = (xatom(i,1)-x2+rvx)**2+(xatom(i,2)-y2+rvy)**2+  &
+!~             (xatom(i,3)-z2+rvz)**2
+!~         rr2=MAX(small,SQRT(rr2))
         
         
-        fzex = fzex - cqq*e2*radforz
-        sumfzex=sumfzex - cqq*e2*radforz
+!~         radforz = (v_soft(rr1,ss)-v_soft(rr2,ss))/2D0/rder
         
-      END DO
+        
+!~         fzex = fzex - cqq*e2*radforz
+!~         sumfzex=sumfzex - cqq*e2*radforz
+        
+!~       END DO
       
       
       
       
-      x1=x+rder
-      y1=y
-      z1=z
+!~       x1=x+rder
+!~       y1=y
+!~       z1=z
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = (sumd + sumq)*e2
+!~       potme = (sumd + sumq)*e2
       
       
-      x1=x-rder
-      y1=y
-      z1=z
+!~       x1=x-rder
+!~       y1=y
+!~       z1=z
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = potme - (sumd + sumq)*e2
+!~       potme = potme - (sumd + sumq)*e2
       
-      fxme = fxme - potme/2D0/rder
-      sumfxme=sumfxme - potme/2D0/rder
+!~       fxme = fxme - potme/2D0/rder
+!~       sumfxme=sumfxme - potme/2D0/rder
       
-      potme = 0D0
+!~       potme = 0D0
       
-      x1=x
-      y1=y+rder
-      z1=z
+!~       x1=x
+!~       y1=y+rder
+!~       z1=z
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = (sumd + sumq)*e2
+!~       potme = (sumd + sumq)*e2
       
       
-      x1=x
-      y1=y-rder
-      z1=z
+!~       x1=x
+!~       y1=y-rder
+!~       z1=z
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = potme - (sumd + sumq)*e2
+!~       potme = potme - (sumd + sumq)*e2
       
-      fyme = fyme - potme/2D0/rder
-      sumfyme=sumfyme - potme/2D0/rder
+!~       fyme = fyme - potme/2D0/rder
+!~       sumfyme=sumfyme - potme/2D0/rder
       
       
-      potme = 0D0
+!~       potme = 0D0
       
-      x1=x
-      y1=y
-      z1=z+rder
+!~       x1=x
+!~       y1=y
+!~       z1=z+rder
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = (sumd + sumq)*e2
+!~       potme = (sumd + sumq)*e2
       
       
-      x1=x
-      y1=y
-      z1=z-rder
+!~       x1=x
+!~       y1=y
+!~       z1=z-rder
       
-      sumd = 0D0
-      sumq = 0D0
+!~       sumd = 0D0
+!~       sumq = 0D0
       
-      jz = 1
+!~       jz = 1
       
-      xr(1) = x1 - jx*rlattvec(1)
-      xr(2) = y1 - jy*rlattvec(2)
-      xr(3) = z1 - (jz-1)*rlattvec(3)
+!~       xr(1) = x1 - jx*rlattvec(1)
+!~       xr(2) = y1 - jy*rlattvec(2)
+!~       xr(3) = z1 - (jz-1)*rlattvec(3)
       
-      rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
-      r = SQRT(rr)
-      rrr = r*rr
-      rrrrr = rrr*rr
+!~       rr = xr(1)*xr(1) + xr(2)*xr(2) + xr(3)*xr(3)
+!~       r = SQRT(rr)
+!~       rrr = r*rr
+!~       rrrrr = rrr*rr
       
-      DO ico=1,3
-        sumd = sumd + xr(i)*celldipole(i)/rrr
-      END DO
+!~       DO ico=1,3
+!~         sumd = sumd + xr(i)*celldipole(i)/rrr
+!~       END DO
       
-      DO ico1=1,3
-        DO ico2=1,3
-          sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
-        END DO
-      END DO
+!~       DO ico1=1,3
+!~         DO ico2=1,3
+!~           sumq = sumq + cellquad(ico1,ico2)*xr(ico1)*xr(ico2) /rrrrr
+!~         END DO
+!~       END DO
       
-!         write(6,*) 'sum = ',0.5*sumq+sumd
+!~ !         write(6,*) 'sum = ',0.5*sumq+sumd
       
       
-      sumq = 0.5D0*sumq
+!~       sumq = 0.5D0*sumq
       
       
-      potme = potme - (sumd + sumq)*e2
+!~       potme = potme - (sumd + sumq)*e2
       
-      fzme = fzme - potme/2D0/rder
-      sumfzme=sumfzme - potme/2D0/rder
+!~       fzme = fzme - potme/2D0/rder
+!~       sumfzme=sumfzme - potme/2D0/rder
       
-      WRITE(6,'(1f12.3,6e16.5)') rrm, fxex,fxme,fyex,fyme,fzex,fzme
+!~       WRITE(6,'(1f12.3,6e16.5)') rrm, fxex,fxme,fyex,fyme,fzex,fzme
       
-!      write(6,'(1f15.3,3e17.7)') rrm , potex, potME,(potME-potEx)/potME
+!~ !      write(6,'(1f15.3,3e17.7)') rrm , potex, potME,(potME-potEx)/potME
       
       
       
-    END IF
-  END DO
+!~     END IF
+!~   END DO
   
-END DO
+!~ END DO
 
-WRITE(6,'(3e17.7)') sumfxex,sumfxme,(sumfxme-sumfxex)/sumfxex
-WRITE(6,'(3e17.7)') sumfyex,sumfyme,(sumfyme-sumfyex)/sumfyex
-WRITE(6,'(3e17.7)') sumfyex,sumfyme,(sumfzme-sumfzex)/sumfzex
-STOP
+!~ WRITE(6,'(3e17.7)') sumfxex,sumfxme,(sumfxme-sumfxex)/sumfxex
+!~ WRITE(6,'(3e17.7)') sumfyex,sumfyme,(sumfyme-sumfyex)/sumfyex
+!~ WRITE(6,'(3e17.7)') sumfyex,sumfyme,(sumfzme-sumfzex)/sumfzex
+!~ STOP
 
 
 
-RETURN
-END FUNCTION debugfme
-!------------------------------------------------------------
+!~ RETURN
+!~ END FUNCTION debugfme
+!~ !------------------------------------------------------------
 
 !------------------------------------------------------------
 

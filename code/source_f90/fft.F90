@@ -111,8 +111,9 @@ INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
 
 REAL(DP) :: dt1,h2m
+#if(paropenmp && !dynopenmp)
 INTEGER :: omp_get_num_threads
-
+#endif
 nx2=nx0;ny2=ny0;nz2=nz0
 kxmax=nx0;kymax=ny0;kzmax=nz0
 nx=nx2/2;ny=ny2/2;nz=nz2/2

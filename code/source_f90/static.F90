@@ -57,7 +57,7 @@ IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 ! test Coulomb
 CALL calcrhor(rho,psir)
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
-CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoul,kdfull2)
 CALL prifld(chpcoul,'coulomb pot')
 
 !     Number of pre-iterations for static solution with IFSICP=6.
@@ -75,7 +75,7 @@ itersicp6=20
         CALL calcpseudo()                 ! initialize pseudo-potentials
         CALL static_mfield(rho,aloc,psir,qaux,0)
         CALL pricm(rho)
-        CALL infor(psir,rho,0)
+        CALL infor(rho,0)
     END IF
 
 
@@ -88,7 +88,7 @@ CALL static_mfield(rho,aloc,psir,qaux,0)
 CALL pricm(rho)
 IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
     rvectmp(1),rvectmp(2),rvectmp(3)
-CALL infor(psir,rho,0)
+CALL infor(rho,0)
 #if(twostsic)
 IF(ifsicp >= 7) CALL infor_sic(psir)
 #endif
@@ -172,7 +172,7 @@ DO iter1=1,ismax
   
   IF(MOD(iter1,istinf) == 0) THEN
 !test          call prifld(aloc,'KS-potential')
-    CALL infor(psir,rho,iter1)
+    CALL infor(rho,iter1)
 #if(twostsic)
     IF(ifsicp >= 7) CALL infor_sic(psir)
 #endif
@@ -237,7 +237,7 @@ END IF
 
 !     final protocol on file 'pstat.<name>''
 
-CALL pri_pstat(psir,iter1,rho)
+CALL pri_pstat(psir,rho)
 
 !     save real wavefunctions for further applications
 
@@ -291,7 +291,7 @@ CALL rsave(psir,iter1,outnam)
 istat=1                        ! prepare for reading in time step
 IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
          write(*,*) ' CALL RSAVE  1. case'
-  CALL infor(psir,rho,-1)
+  CALL infor(rho,-1)
   
 #if(parayes)
   CALL mpi_finalize(icode)
@@ -424,7 +424,7 @@ END IF
 
 CALL calclocal(rho,aloc)          ! LDA part of the potential
 
-!      call infor(psir,rho,0)
+!      call infor(rho,0)
 
 IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
@@ -477,7 +477,6 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iter
 
 
-REAL(DP) :: occold(kstate),ocwork(kstate)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -495,8 +494,6 @@ LOGICAL, PARAMETER :: tprham=.false.
 #if(fftw_gpu)
 INTEGER(C_INT) :: size_data
 #endif
-COMPLEX(DP) :: csum
-
 
 
 !REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
@@ -1075,7 +1072,7 @@ END SUBROUTINE sstep
 
 !-----infor--------------------------------------------------------
 
-SUBROUTINE infor(psi,rho,i)
+SUBROUTINE infor(rho,i)
 
 !     Computes observables (energies, radii, ...)
 !     and prints to standard output.
@@ -1087,27 +1084,17 @@ USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(INOUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: i
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
-
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psipr(kdfull2)
-!COMPLEX(DP) :: psi2(kdfull2)
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
-!EQUIVALENCE (psi2(1),w1(1))
-!EQUIVALENCE (psipr(1),w3(1))
-REAL(DP) :: en(kstate)
 
-ALLOCATE(psipr(kdfull2))
-ALLOCATE(psi2(kdfull2))
+REAL(DP) :: en(kstate)
 
 
 !   compute h*psi
@@ -1271,8 +1258,6 @@ IF(myn == 0) THEN
 END IF
 #endif
 
-DEALLOCATE(psipr)
-DEALLOCATE(psi2)
 
 IF(myn == 0) WRITE(6,'(a,f8.4,a,f7.2,a,3f9.3)')  &
     'In info: t=',tfs,' moments: monop.=',qe(1), ' dip.: ',qe(2),qe(3),qe(4)
@@ -1326,7 +1311,7 @@ END SUBROUTINE infor
 
 !-----pri_pstat----------------------------------------------------
 
-SUBROUTINE pri_pstat(psi,i,rho)
+SUBROUTINE pri_pstat(psi,rho)
 
 !     print short protocol on file 'pstat.*'
 
@@ -1342,16 +1327,8 @@ USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phii
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)              :: i
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psipr(kdfull2)
-!COMPLEX(DP) :: psi2(kdfull2)
-!EQUIVALENCE (psi2(1),w1(1))
-!EQUIVALENCE (psipr(1),w3(1))
-REAL(DP) :: en(kstate)
 LOGICAL,PARAMETER :: mumpri=.false.
 
 #if(parayes)
@@ -1360,10 +1337,6 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 omegam = omega_mieplasmon(rho)
-
-ALLOCATE(psipr(kdfull2))
-ALLOCATE(psi2(kdfull2))
-
 
 !      eshell=0.0
 !      esh1=0.0
@@ -1470,9 +1443,6 @@ IF(myn == 0) THEN
   WRITE(42,'(1x)')
   CLOSE(42)
 END IF
-
-DEALLOCATE(psipr)
-DEALLOCATE(psi2)
 
 RETURN
 END SUBROUTINE pri_pstat

@@ -150,7 +150,9 @@ INTEGER :: ifmdshort,ifadiadip
 REAL(DP) :: epots,ecoul,ekinion,ekinkat,ekinel,eshort,energyg
 REAL(DP) :: ekincsurf,ekinesurf,ekinksurf,ekinsurf, ttemp,ttempc,ttempe,ttempk
 
-
+REAL(DP) :: distlayers,disttolerance
+REAL(DP) :: runfrowc,runfrowe,runfrowk
+INTEGER :: nunflayc,nunflaye,nunflayk
 
 #if(raregas)
 !

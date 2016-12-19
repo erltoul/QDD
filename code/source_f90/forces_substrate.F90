@@ -116,7 +116,7 @@ IF (nclust > 0) THEN
     
     ii2 = iconvlongtoshort(ii)
     
-    CALL getshortforce(iptyp(ii),5,ii2,0,rho,iflag,0)
+    CALL getshortforce(iptyp(ii),5,ii2,0,rho,0)
 ! last parameter=0 is a dummy parameter because it is not needed
 ! here
     
@@ -141,7 +141,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 INTEGER, INTENT(IN)                      :: iflag
-REAL(DP) :: rho(kdfull2*2)
+REAL(DP) :: dummy(kdfull2*2)
 
 IF (iflag /= 0) THEN ! only force on valences
   ibegin = nc+1
@@ -156,7 +156,7 @@ DO ii=ibegin,iend
   
   CALL getparas(ii)
   
-  IF (isoutofbox(rvectmp(1),rvectmp(2),rvectmp(3))  == 2) GO TO 776
+  IF (isoutofbox(rvectmp(1),rvectmp(2),rvectmp(3))  == 2) CYCLE
   
   
   DO jj=1,nion
@@ -225,12 +225,11 @@ DO ii=ibegin,iend
     
     ii2 = iconvlongtoshort(ii)
     
-    CALL getshortforce(iptyp(ii),4,ii2,jj,rho,iflag,0)
-! since rho is not needed, it is a dummy field
+    CALL getshortforce(iptyp(ii),4,ii2,jj,dummy,0)
     
   END DO
   
-  776  enddo
+END DO
   
   
   RETURN
@@ -248,7 +247,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 INTEGER, INTENT(IN)                      :: iflag
-REAL(DP) :: rho(2*kdfull2)
+REAL(DP) :: dummy(2*kdfull2)
 
 cml = 0.541382D0
 
@@ -333,12 +332,8 @@ IF (ibh == 0) THEN
           
 !test               write(*,*) '1: ii2,jj2 = ', ii2,jj2,ii,jj
           
-          CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,rho,iflag,0)
-! since rho is not needed, it is a dummy field
-          
-          
-          
-          
+          CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,dummy,0)
+         
           
         END IF ! ismobile
         
@@ -421,9 +416,7 @@ ELSE ! ibh = 1
           
 !test               write(*,*) '2: ii2,jj2 = ', ii2,jj2,ii,jj
           
-          CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,rho,iflag,1)
-! since rho is not needed, it is a dummy field
-          
+          CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,dummy,1)
           
           
         END IF
@@ -547,12 +540,9 @@ ELSE ! ibh = 1
             ii2 = iconvlongtoshort(ii)
             jj2 = iconvlongtoshort(jj)
             
-!test             write(*,*) '3: ii2,jj2=',ii2,jj2
-            CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,rho,iflag,2)
-!             call getShortForce(iptyp(jj),iptyp(ii),jj2,ii2,rho,iflag,1)
-! since rho is not needed, it is a dummy field
-            
-            
+            CALL getshortforce(iptyp(ii),iptyp(jj),ii2,jj2,dummy,2)
+!             call getShortForce(iptyp(jj),iptyp(ii),jj2,ii2,rho,1)
+   
             
           END IF
           
@@ -997,7 +987,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 INTEGER, INTENT(IN)                      :: iflag
-REAL(DP) :: rho(2*kdfull2)
+REAL(DP) :: dummy(2*kdfull2)
 
 
 
@@ -1073,9 +1063,7 @@ DO ii=1,nc+NE+nk      ! mobile and fixed
     ii2 = iconvlongtoshort(iw)
     jj2 = iconvlongtoshort(jw)
     
-!test             write(*,*) ' 4:'
-    CALL getshortforce(iptyp(iw),iptyp(jw),ii2,jj2,rho,iflag,0)
-! since rho is not needed, it is a dummy field
+    CALL getshortforce(iptyp(iw),iptyp(jw),ii2,jj2,dummy,0)
     
     
   END DO
@@ -1090,7 +1078,7 @@ END SUBROUTINE getforcegsmgsm1
 
 !------------------------------------------------------------
 
-SUBROUTINE getforces_clust2cores(rho,psi,iflag)
+SUBROUTINE getforces_clust2cores(rho,iflag)
 !------------------------------------------------------------
 USE params
 !USE kinetic
@@ -1115,11 +1103,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: iflag
 
-
-INTEGER :: itime
 
 !      write(6,*) 'Entering getforces'
 
@@ -1263,9 +1248,6 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
-
 EXTERNAL v_soft,gauss
 
 
@@ -1367,7 +1349,7 @@ USE params
 USE util, ONLY:prifld
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 
 COMPLEX(DP) :: psidummy(1)
 REAL(DP),PARAMETER :: delmrmax=2D-6
@@ -1375,6 +1357,9 @@ INTEGER,PARAMETER :: maxadjust=200
 LOGICAL,PARAMETER :: ttest=.false.
 
 REAL(DP) :: delmr_iter(maxadjust)
+REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
+
+
 
 IF (NE == 0) RETURN
 
@@ -1409,8 +1394,8 @@ DO it=1,maxadjust
   
   CALL getforces(rho,psidummy,2)
   icoun = 0
-  rmaxpol = rgetmaxpol(0)
-  rrrr = rgetmeanzpol(0)
+  rmaxpol = rgetmaxpol()
+  rrrr = rgetmeanzpol()
   
   IF(ttest) WRITE(6,'(a,2e17.7)') ' maxpol, meanpol = ',rMaxPol,rrrr
   
@@ -1527,9 +1512,12 @@ DO iit=1,200
   dmspoz = 0D0
   
   
-  xm = me*ame*1836D0
+  IF(ALLOCATED(xm)) DEALLOCATE(xm)
+  ALLOCATE(xm(1:NE))
   
-  CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt1/2.,xm,NE,2)
+  xm(:)= me*ame*1836D0
+   
+  CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt1/2D0,xm,NE,2)
   
   CALL getforces(rho,psidummy,0)
   
@@ -1540,9 +1528,9 @@ DO iit=1,200
     IF (imobe(i) == 1) THEN
       icoun = icoun + 1
       
-      fxe(i) = fxe(i) - 1D2*pxe(i)/xm
-      fye(i) = fye(i) - 1D2*pye(i)/xm
-      fze(i) = fze(i) - 1D2*pze(i)/xm
+      fxe(i) = fxe(i) - 1D2*pxe(i)/xm(i)
+      fye(i) = fye(i) - 1D2*pye(i)/xm(i)
+      fze(i) = fze(i) - 1D2*pze(i)/xm(i)
       
       dmsfx = dmsfx + fxe(i)**2
       dmsfy = dmsfy + fye(i)**2
@@ -1555,8 +1543,9 @@ DO iit=1,200
     END IF
   END DO
   
+  xm=1D0  ! fxe, fye, fze are forces
   
-  CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/2D0,1D0,NE,2)
+  CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/2D0,xm,NE,2)
   
   
   IF (dmsfxold < dmsfx .OR. dmsfyold < dmsfy .OR. dmsfzold < dmsfz) THEN
@@ -1614,8 +1603,8 @@ DO it=1,200
   
   icoun = 0
   
-  rmaxpol = rgetmaxpol(0)
-  rrrr = rgetmeanzpol(0)
+  rmaxpol = rgetmaxpol()
+  rrrr = rgetmeanzpol()
   
   CALL rgetmaxforce(2)
   

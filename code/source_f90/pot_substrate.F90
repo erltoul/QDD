@@ -42,8 +42,6 @@ REAL(DP), INTENT(IN OUT)                     :: potsave(kdfull2)
 
 !      dimension potshort(kdfull2)
 !      dimension ri(3)
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
 
 EXTERNAL v_soft
 
@@ -570,9 +568,9 @@ REAL(DP), INTENT(OUT)                        :: field(kdfull2)
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
-REAL(DP), INTENT(IN OUT)                     :: sigm
-REAL(DP), INTENT(IN OUT)                     :: ccharge
-INTEGER, INTENT(IN OUT)                  :: iparit
+REAL(DP), INTENT(IN)                         :: sigm
+REAL(DP), INTENT(IN)                         :: ccharge
+INTEGER, INTENT(IN)                          :: iparit
 
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
@@ -814,10 +812,10 @@ USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: ri(3)
-DOUBLE PRECISION, INTENT(IN OUT)         :: r
-INTEGER, INTENT(IN OUT)                  :: is
-DOUBLE PRECISION, INTENT(IN OUT)         :: fac
+REAL(DP), INTENT(IN OUT)                 :: ri(3)
+REAL(DP), INTENT(IN OUT)                 :: r
+INTEGER, INTENT(IN)                  :: is
+REAL(DP), INTENT(IN)         :: fac
 
 
 ! frho is a vector of configuration space
@@ -951,7 +949,7 @@ REAL(DP), INTENT(IN)                         :: r
 DATA rstep/1.0D-3/
 DATA vdip/11.08D0/            ! effective polar.pot. in Ha
 DATA vrep/52.8D0/             ! repulsive core in Ha
-DATA rcut/3.1D0/              ! cut radius for pol.pot.
+! DATA rcut/3.1D0/              ! cut radius for pol.pot.
 DATA rcor/1.35D0/             ! inverse radius**2 for core
 !      dimension ch(18:18)
 !      data ch(18)/6.119/
@@ -1033,7 +1031,7 @@ END FUNCTION v_ion_el
 
 !-----V_Ar_Ar-----------------------------------------------------
 
-FUNCTION v_ar_ar(r)
+REAL(DP) FUNCTION v_ar_ar(r)
 
 USE params
 !USE kinetic
@@ -1041,8 +1039,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     Ar-Ar potential
 
-
-REAL(DP), INTENT(IN OUT)                     :: r
+REAL(DP), INTENT(IN)                     :: r
 DATA  alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar  &
     /  1.7301D0, 1.7966D0,55.465D0,3672.9D0,794.21D0/
 

@@ -60,7 +60,7 @@ END IF
 ! Coulomb of the electronic density
 
 #if(gridfft)
-CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
 CALL solv_fft(rho,chpcoul,dx,dy,dz)
@@ -98,7 +98,7 @@ IF(idielec == 1) THEN
   CALL addimage(rho,0)
   
 #if(gridfft)
-  CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
+  CALL falr(rho,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(rho,chpcoul,dx,dy,dz)
@@ -156,7 +156,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: dt
+REAL(DP), INTENT(IN)                     :: dt
 LOGICAL, INTENT(IN)                      :: tdyn
 
 
@@ -179,8 +179,8 @@ IF (isurf /= 0 .AND. nc+NE+nk > 0) THEN    ! check condition ??
 !            dynamic propagation of substrate dipoles
     IF(tdyn) THEN
       IF(ipsptyp == 1) STOP ' VSTEP must not be used with Goedecker PsP'  ! ???
-      IF(ionmdtyp==1) CALL vstep(rho,psidummy,idummy,dt)
-      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,idummy,dt)
+      IF(ionmdtyp==1) CALL vstep(rho,psidummy,dt)
+      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,dt)
     ELSE
       CALL adjustdip(rho)
     END IF

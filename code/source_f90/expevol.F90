@@ -596,7 +596,6 @@ INTEGER, INTENT(IN OUT)                  :: nbe
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
-LOGICAL :: tpri
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif

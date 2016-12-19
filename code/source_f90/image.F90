@@ -31,7 +31,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: testpot(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: testrho(kdfull2)
-REAL(DP) :: rho(2*kdfull2),tphi(kdfull2)
+!REAL(DP) :: rho(2*kdfull2),tphi(kdfull2)
 
 EXTERNAL gauss
 
@@ -157,7 +157,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP),ALLOCATABLE :: potsave(:)
 REAL(DP),ALLOCATABLE :: potshort(:)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 
@@ -335,7 +334,7 @@ IF(ipseudo == 1)THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -428,7 +427,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP) :: potsave(kdfull2)
 REAL(DP) :: potshort(kdfull2)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 
@@ -670,7 +668,7 @@ IF(ipseudo == 1) THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -1201,7 +1199,7 @@ DO ii=1,2*kdfull2
 END DO
 
 #if(gridfft)
-CALL falr(rho,chpcoulimage,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoulimage,kdfull2)
 #endif
 #if(findiff|numerov)
 CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
@@ -1222,7 +1220,7 @@ DO ii=1,2*kdfull2
 END DO
 
 #if(gridfft)
-CALL falr(rho,chpcoulimage,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoulimage,kdfull2)
 #endif
 #if(findiff|numerov)
 CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
@@ -1288,7 +1286,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                     :: rh(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: ihalfspace
+INTEGER, INTENT(IN)                      :: ihalfspace
 
 
 STOP ' code not compiled for image potential '

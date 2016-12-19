@@ -32,7 +32,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(gridfft)
 
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 
 
@@ -215,7 +215,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(gridfft)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 
 !REAL(DP) :: akv(kdfull2)
 

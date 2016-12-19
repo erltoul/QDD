@@ -38,7 +38,7 @@ END DO
 
 ind = 0
 
-CALL getcm(1,0,0,0)
+CALL getcm(1,0,0)
 
 DO iz=minz,maxz
   z1=(iz-nzsh)*dz

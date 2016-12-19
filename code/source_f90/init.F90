@@ -36,6 +36,7 @@ CHARACTER (LEN=80) :: title
 !     &           'for005.100','for005.101','for005.110'/
 
 INTEGER,PARAMETER :: kparall=11
+#if(simpara)
 CHARACTER (LEN=10) :: fname(0:kparall)
 !      data fname/'for005.001','for005.010','for005.011',
 !     &           'for005.100','for005.101','for005.110'/
@@ -43,7 +44,7 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'for005.100','for005.101','for005.110',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
-
+#endif
 NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
@@ -320,14 +321,11 @@ SUBROUTINE iparams()
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-CHARACTER (LEN=80) :: title
 INTERFACE 
   SUBROUTINE calc_lda_gunnar(rho,chpdft)
   USE params, ONLY: DP,kdfull2
   REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
   REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!  REAL(DPA), INTENT(IN)                         :: rho(*)
-!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
   END SUBROUTINE calc_lda_gunnar
 END INTERFACE
 INTERFACE 
@@ -335,8 +333,6 @@ INTERFACE
   USE params, ONLY: DP,kdfull2
   REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
   REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!  REAL(DPA), INTENT(IN)                         :: rho(*)
-!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
   END SUBROUTINE calc_lda_pw92
 END INTERFACE
 
@@ -685,8 +681,9 @@ else
         WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
         WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
-endif
 #endif
+endif
+
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
@@ -933,7 +930,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-99:99),dr2(-99:99),totvalelec=0.0
+REAL(DP) :: dr1(-99:99),dr2(-99:99)
 REAL(DP) :: prho1(-99:99),prho2(-99:99)
 character (len=3) ::  naml
 character (len=2)  ::  namc,symb(99)
@@ -1704,7 +1701,7 @@ WRITE (6,*) 'Entering initions()'
   
   
   IF (ishiftcmtoorigin == 1) THEN
-    CALL getcm(1,0,0,0)
+    CALL getcm(1,0,0)
     rvectmp2(1)=rvectmp(1)
     rvectmp2(2)=rvectmp(2)
     rvectmp2(3)=rvectmp(3)
@@ -2202,12 +2199,12 @@ REAL(DP), INTENT(IN)                     :: gamin
 !INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
 REAL(DP) :: efacto                ! factor to get energies from h.o.
-REAL(DP) :: efermi                ! estimate for fermi shell
+!~ REAL(DP) :: efermi                ! estimate for fermi shell
 REAL(DP) :: q20fac                ! sqrt(5/16pi)
 REAL(DP) :: cosfac,sinfac         ! weightes deduced from 'gamin'
 !     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
 REAL(DP) :: speact                ! actual s.p. energy in loop
-INTEGER :: noscmx                ! maximum oscillator number
+!~ INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
 
@@ -2854,7 +2851,7 @@ INTEGER :: is(mpi_status_size)
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
-REAL(DP), ALLOCATABLE :: phix(:)
+!~ REAL(DP), ALLOCATABLE :: phix(:)
 
 REAL(DP),PARAMETER :: third=1D0/3D0
 REAL(DP),PARAMETER :: sixth=1D0/6D0

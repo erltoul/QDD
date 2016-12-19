@@ -1296,8 +1296,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL sdensi(rhos)
+      CALL sderiv(drho)
 !           stop 'calculated a derivative of density after x-stimulation'
     END IF
   END IF
@@ -1308,8 +1308,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL sdensi(rhos)
+      CALL sderiv(drho)
 !           stop 'calculated a derivative of density after y-stimulation'
     END IF
   END IF
@@ -1320,8 +1320,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL sdensi(rhos)
+      CALL sderiv(drho)
 !           stop 'calculated a derivative of density after z-stimulation'
     END IF
   END IF
@@ -1334,7 +1334,7 @@ RETURN
 END SUBROUTINE stream
 ! ---eltherm----------------------------------------------eltherm-------
 
-SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth,iask)
+SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth)
 
 !  computes electronic thermal energy via the expectation value of the
 !  the current operator to check electronic thermalization
@@ -1349,7 +1349,6 @@ REAL(DP), INTENT(OUT)                        :: expjx
 REAL(DP), INTENT(OUT)                        :: expjy
 REAL(DP), INTENT(OUT)                        :: expjz
 REAL(DP), INTENT(OUT)                        :: eeth
-INTEGER, INTENT(IN OUT)                  :: iask
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
@@ -1362,7 +1361,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
 COMPLEX(DP) :: test
 
-CHARACTER (LEN=6) :: ext
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -1659,7 +1657,7 @@ END SUBROUTINE eltherm
 
 !     **************************
 
-SUBROUTINE sderiv(drho,outna)
+SUBROUTINE sderiv(drho)
 
 !     **************************
 USE params
@@ -1668,7 +1666,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
 CHARACTER (LEN=7) ::  chaine
-CHARACTER (LEN=13),INTENT(IN OUT) :: outna
 CHARACTER (LEN=4) :: ext
 
 j1=MOD(iquery4/10,10)
@@ -1695,7 +1692,7 @@ END SUBROUTINE sderiv
 
 !     **************************
 
-SUBROUTINE sdensi(drho,outna)
+SUBROUTINE sdensi(drho)
 
 !     **************************
 USE params
@@ -1704,7 +1701,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
 CHARACTER (LEN=7) ::  chaine
-CHARACTER (LEN=13),INTENT(IN OUT) :: outna
 CHARACTER (LEN=4) :: ext
 
 j1=MOD(iquery4/10,10)

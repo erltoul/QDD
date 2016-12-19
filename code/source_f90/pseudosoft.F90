@@ -128,7 +128,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: pseudorho,potsave,potshort
 !DIMENSION pseudorho(kdfull2)
 !DIMENSION potsave(kdfull2)
 !DIMENSION potshort(kdfull2)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 EXTERNAL v_soft
@@ -215,7 +214,7 @@ IF(ipseudo == 1)THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -341,8 +340,8 @@ END FUNCTION d2vsdr2
 
 !-----V_soft------------------------------------------------------------
 
-FUNCTION v_soft(r,sigma)
-USE params, ONLY: DP
+REAL(DP) FUNCTION v_soft(r,sigma)
+USE params, ONLY: DP,PI
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     soft Coulomb potential from Gaussian density,
@@ -353,8 +352,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: r
 REAL(DP), INTENT(IN)                         :: sigma
-REAL(DP), PARAMETER :: pi=3.141592653589793D0
-
 !------------------------------------------------------------------------
 rabs = ABS(r)
 
@@ -468,19 +465,17 @@ END FUNCTION v_ion_ion
 
 !------------------------------------------------------------
 
-FUNCTION dv_softdr(r,s)
+REAL(DP) FUNCTION dv_softdr(r,s)
 !------------------------------------------------------------
 ! returns the derivative of erf(r/s)/r by finite differences
-
-!      double precision r,s
 
 
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: r
-REAL(DP), INTENT(IN OUT)                     :: s
-DOUBLE PRECISION :: rder
+REAL(DP), INTENT(IN)                     :: r
+REAL(DP), INTENT(IN)                     :: s
+REAL(DP):: rder
 
 rder = 1.0D-5
 
@@ -500,15 +495,14 @@ END FUNCTION dv_softdr
 
 !------------------------------------------------------------
 
-FUNCTION v_coulomb(r)
+REAL(DP) FUNCTION v_coulomb(r)
 !------------------------------------------------------------
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
+REAL(DP),INTENT(IN):: r
 
-
-r = MAX(small,r)
-
-v_coulomb = 1/r
+v_coulomb = MAX(small,r)
+v_coulomb = 1D0/v_coulomb
 
 RETURN
 END FUNCTION v_coulomb

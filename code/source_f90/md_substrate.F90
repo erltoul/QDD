@@ -45,13 +45,6 @@ USE util, ONLY:printfield,printfield2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-
-
-INTEGER :: iunfix(15)
-INTEGER :: imobcold(ngpar),imobeold(ngpar),imobkold(ngpar)
-
-REAL(DP) :: aaaa(3),bbbb(3),cccc(3),dddd(3)
-
 REAL(DP) :: hfield(kdfull2),hfield2(kdfull2)
 
 #if(parayes)
@@ -1263,7 +1256,8 @@ END FUNCTION iconvshorttolong
 !#if(raregas)
 ! ------------------------------------------------------------
 
-SUBROUTINE propagate(rho)
+!~ SUBROUTINE propagate(rho)
+SUBROUTINE propagate
 ! ------------------------------------------------------------
 !  propagation using velocity Verlet step
 USE params
@@ -1872,14 +1866,12 @@ END SUBROUTINE initimpulses
 
 !------------------------------------------------------------
 
-SUBROUTINE disturblattice(maxdist)
+SUBROUTINE disturblattice
 !------------------------------------------------------------
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-
-DOUBLE PRECISION, INTENT(IN OUT)         :: maxdist
 
 LOGICAL :: tterm
 DATA tterm/.true./
@@ -2023,7 +2015,7 @@ END SUBROUTINE printoutparameters
 
 !------------------------------------------------------------
 
-FUNCTION rgetmaxpol(iflag)
+REAL(DP) FUNCTION rgetmaxpol()
 !------------------------------------------------------------
 USE params
 !USE kinetic
@@ -2075,13 +2067,11 @@ END SUBROUTINE rgetmaxforce
 
 !------------------------------------------------------------
 
-FUNCTION rgetmeanzpol(iflag)
+REAL(DP) FUNCTION rgetmeanzpol()
 !------------------------------------------------------------
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-
-rgetmeanzpol = -1D6
 
 rr=0D0
 ic = 0
@@ -2094,7 +2084,7 @@ DO i=1,nc
   END IF
 END DO
 
-rr = rr/ic
+rr = rr/ic     ! Is it not possible that ic = 0 ??
 
 rgetmeanzpol=rr
 

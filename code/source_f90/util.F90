@@ -204,8 +204,6 @@ INTEGER, INTENT(IN)                      :: iax2
 REAL(DP), INTENT(IN)                         :: value
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 
-REAL(DP) :: fcut(nx2,ny2)
-
 
 IF (iax1 == 1 .AND. iax2 == 2) THEN ! xy-plane
   
@@ -1252,7 +1250,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-INTEGER, INTENT(IN OUT)                  :: iunit
+INTEGER, INTENT(IN)                  :: iunit
 REAL(DP), INTENT(IN)                     :: field1(kdfull2)
 REAL(DP), INTENT(IN)                     :: field2(kdfull2)
 
@@ -1328,11 +1326,14 @@ END SUBROUTINE printforces
 
 !------------------------------------------------------------
 
-SUBROUTINE getcm(iflag,iflagc,iflage,iflagk)
+SUBROUTINE getcm(iflag,iflagc,iflagk)
 !------------------------------------------------------------
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
+INTEGER,INTENT(IN)      ::iflag
+INTEGER,INTENT(IN)      ::iflagc
+INTEGER,INTENT(IN)      ::iflagk
 !    calculates the center of mass and stores it in the
 !     common vector rVecTmp(1-3)
 summ = 0D0
@@ -1415,7 +1416,7 @@ END DO
 
 rvectmp = 0D0
 IF (iemomsrel == 1 .AND. nion2 > 0) THEN
-  CALL getcm(1,0,0,0)
+  CALL getcm(1,0,0)
 END IF
 
 ind=0
@@ -3991,7 +3992,6 @@ COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
 
 !COMPLEX(DP) :: csave,sa
 REAL(DP) :: phangpi
-INTEGER :: i
 
   IF(npstate > nstate) STOP ' PHSTATE: particle state out of range'
   IF(nhstate > nstate) STOP ' PHSTATE: hole state out of range'

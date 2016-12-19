@@ -51,7 +51,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: iflag
 
 
@@ -254,7 +254,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 
 
 !     Na(core)-Na(core) forces
@@ -289,8 +289,7 @@ DO ii=1,nion-1
     fy(jj) = fy(jj) + fory
     fz(jj) = fz(jj) + forz
     
-!            call getShortForce(4,4,ii,jj,rho,0,iflag,0)
-    CALL getshortforce(4,4,ii,jj,rho,iflag,0)
+    CALL getshortforce(4,4,ii,jj,rho,0)
     
     
   END DO
@@ -428,8 +427,7 @@ DO ii=1,nion
     
   END IF
   
-!            call getShortForce(4,5,ii,0,rho,0,iflag,0)
-  CALL getshortforce(4,5,ii,0,rho,iflag,0)
+  CALL getshortforce(4,5,ii,0,rho,0)
   
   
 END DO
@@ -735,7 +733,7 @@ REAL(DP) :: is(mpi_status_size)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN OUT)                  :: it
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
 COMPLEX(DP),ALLOCATABLE :: q1(:)
 REAL(DP),ALLOCATABLE :: rhoslp(:),rhoslm(:)

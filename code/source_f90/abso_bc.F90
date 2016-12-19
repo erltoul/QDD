@@ -50,7 +50,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                         :: rho(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w3
 
@@ -599,7 +599,7 @@ SUBROUTINE escmask(it)
 !     print collected information on escaping electrons
 
 USE params
-USE util, only: inttostring,printfield
+USE util, ONLY: inttostring,printfield
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 

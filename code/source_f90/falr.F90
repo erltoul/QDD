@@ -158,7 +158,7 @@ CALL coucor
 RETURN
 END SUBROUTINE init_coul
 
-SUBROUTINE falr(rhoinp,chpfalr,mx2,my2,mz2,kdf)
+SUBROUTINE falr(rhoinp,chpfalr,kdf)
 
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -168,9 +168,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdf)
 REAL(DP), INTENT(IN OUT)                     :: chpfalr(kdf)
-INTEGER, INTENT(IN)                  :: mx2
-INTEGER, INTENT(IN)                  :: my2
-INTEGER, INTENT(IN)                  :: mz2
 INTEGER, INTENT(IN)                  :: kdf
 
 
@@ -178,30 +175,27 @@ INTEGER, INTENT(IN)                  :: kdf
 !     on the array rho.
 !     remember not to send your original density array to the fcs.
 !     in this case we have a homogeneously charged sphere .
-CALL rhofld(rhoinp,mx2,my2,mz2,kdf)
+CALL rhofld(rhoinp,kdf)
 
 !     call coufou, which contains the fcs procedure.
 CALL coufou2
 
 !     call a routine written by you which outputs the results of the fcs
 !     and maybe some other things to an output file or the screen.
-CALL result(chpfalr,mx2,my2,mz2,kdf)
+CALL result(chpfalr,kdf)
 
 END SUBROUTINE falr
 
 
 !-----rhofld------------------------------------------------------------
 
-SUBROUTINE rhofld(rhoinp,mx2,my2,mz2,kdf)
+SUBROUTINE rhofld(rhoinp,kdf)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
 
 
 REAL(DP), INTENT(IN)                         :: rhoinp(kdf)
-INTEGER, INTENT(IN)                  :: mx2
-INTEGER, INTENT(IN)                  :: my2
-INTEGER, INTENT(IN)                  :: mz2
 INTEGER, INTENT(IN)                  :: kdf
 
 ii=0
@@ -226,31 +220,20 @@ END SUBROUTINE rhofld
 
 !-----result------------------------------------------------------------
 
-SUBROUTINE result(chpfalr,mx2,my2,mz2,kdf)
+SUBROUTINE result(chpfalr,kdf)
 
 !USE params, ONLY: kxbox,kybox,kzbox,DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: chpfalr(kdf)
-INTEGER, INTENT(IN)                  :: mx2
-INTEGER, INTENT(IN)                  :: my2
-INTEGER, INTENT(IN)                  :: mz2
 INTEGER, INTENT(IN)                  :: kdf
-
+INTEGER:: nmax
 !#include"falr.inc"
 
 !       inclusion of e2
 
-ii=0
-DO i3=1,nzi
-  DO i2=1,nyi
-    DO i1=1,nxi
-      ii=ii+1
-      chpfalr(ii) = 2D0*potc(ii)
-    END DO
-  END DO
-END DO
-
+nmax=nxi*nyi*nzi
+chpfalr(1:nmax) = 2D0*potc(1:nmax)
 
 RETURN
 END SUBROUTINE result

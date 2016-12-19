@@ -178,7 +178,7 @@ IF(tcoultest) THEN
   END DO; END DO; END DO
   charge = SUM(rhotest)*(dx*dy*dz)
   WRITE(*,*) '# test Coulomb for point charge:',charge
-  CALL falr(rhotest,ctest,nxdum,nydum,nzdum,kdum)
+  CALL falr(rhotest,ctest,kdum)
   ii = 0
   DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
     ii=ii+1
@@ -356,7 +356,7 @@ END SUBROUTINE fftinp
 #if(coudoub3D && fftw_cpu)
 !-------------------------------------------------------------------
 
-SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
+SUBROUTINE falr(rhoinp,chpfalr,kdum)
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 ! Coulomb solver using FFTW
@@ -364,9 +364,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: nxdum
-INTEGER, INTENT(IN)                  :: nydum
-INTEGER, INTENT(IN)                  :: nzdum
 INTEGER, INTENT(IN)                  :: kdum
 
 !WRITE(*,*) ' running new Coulomb'
@@ -411,16 +408,13 @@ END SUBROUTINE falr
 #else
 !-------------------------------------------------------------------
 
-SUBROUTINE falr(rhoinp,chpfalr,nxdum,nydum,nzdum,kdum)
+SUBROUTINE falr(rhoinp,chpfalr,kdum)
 
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: nxdum
-INTEGER, INTENT(IN)                  :: nydum
-INTEGER, INTENT(IN)                  :: nzdum
 INTEGER, INTENT(IN)                  :: kdum
 
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)

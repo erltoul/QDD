@@ -183,14 +183,13 @@ COMPLEX(DP) :: tbelement,det,tbacc,testovlp
 
 !COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
-REAL(DP),ALLOCATABLE :: occ_act(:)
 INTEGER :: indx(nstate)             ! index field for LU decomp.                
 INTEGER :: index(nstate-2)          ! index field for LU decomp.                
 INTEGER,ALLOCATABLE :: ipoint(:),ipoi_act(:)
           
 COMPLEX(DP) :: temp1,temp2
-REAL(DP) :: xxdum,d
-INTEGER :: iidum,nexpand,ierror,npoi
+REAL(DP) :: d
+INTEGER :: nexpand,ierror,npoi
 LOGICAL,PARAMETER :: ttestb=.false.   ! large test output
 LOGICAL,PARAMETER :: ttest=.true.   ! compact test output
 

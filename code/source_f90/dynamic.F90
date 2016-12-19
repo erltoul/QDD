@@ -283,8 +283,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
 
-COMPLEX(DP) :: cfac
-
 !------------------------------------------------------------------
 
 pnorm = scatterelectronvxn**2+scatterelectronvyn**2+ scatterelectronvzn**2
@@ -372,11 +370,14 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 !COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2,qwork
-COMPLEX(DP) :: rii,cfac
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
+#if(twostsic)
+COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: qwork
+#endif
 !INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
 
 LOGICAL :: tenerg
+
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -573,7 +574,7 @@ END IF
 
 IF (izforcecorr /= -1) THEN
   CALL checkzeroforce(rho,aloc)
-  CALL checkzeroforce(rho,chpdft)
+!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably hazardous. 
 END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
@@ -802,7 +803,7 @@ DO nb=1,nstate
   CALL  calc_ekin(psi(:,nb),ekin)
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
   !WRITE(*,*) ' before CALC_EPOT',nb,it,ishift
-  CALL calc_epot(psi(1,nb),aloc(ishift+1), epot,enonlo(nb),nb)
+  CALL calc_epot(psi(:,nb),aloc(ishift+1),enonlo(nb),nb)
   ekinsp(nb) = ekin
   ehilf= epot
   epot =epot+ekin
@@ -1167,7 +1168,7 @@ END SUBROUTINE calc_ekin
 
 !-----calc_epot------------------------------------------------------------
 
-SUBROUTINE calc_epot(psin,alocact,epotout,enonlocout,nb)
+SUBROUTINE calc_epot(psin,alocact,enonlocout,nb)
 
 !     Calculates total potential energy 'epotout' and non-local
 !     part of potential energy 'enonlocout' for the
@@ -1184,13 +1185,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
 REAL(DP), INTENT(IN)                         :: alocact(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: epotout
 REAL(DP), INTENT(OUT)                        :: enonlocout
 INTEGER, INTENT(IN)                          :: nb
 
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
+#if(twostsic)
 COMPLEX(DP) :: cf
+#endif
 LOGICAL,PARAMETER :: ttest=.false.
 
 !------------------------------------------------------------------
@@ -1281,7 +1283,7 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE         :: gradrhok
 #if(parayes)
 REAL(DP),DIMENSION(:),ALLOCATABLE            :: arhop
 #endif
-REAL(DP) :: fact,factgrad
+REAL(DP) :: factgrad
 
 LOGICAL,PARAMETER :: extendedTF=.TRUE.
 REAL(DP),PARAMETER :: rholimit=1D-10
@@ -1331,7 +1333,6 @@ excit=0D0
 DO i=1,kdfull2
    excit=excit+arho(i)**(5D0/3D0)
 END DO
-!fact=dvol*0.6D0*(6.0D0*pi**2)**0.666666666667D0
 excit=excit*dvol*h2m*0.6D0*(6.0D0*pi**2)**(2.D0/3.D0)
 
 IF(extendedTF) THEN
@@ -1816,8 +1817,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: qact(kdfull2)
-COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN)                      :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                      :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                      :: q2(kdfull2)
 REAL(DP), INTENT(IN)                         :: ri
 LOGICAL, INTENT(IN)                      :: tenerg
 INTEGER, INTENT(IN)                      :: nb
@@ -2502,7 +2503,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      tfs=it*dt1*0.0484
 
-CALL getcm(1,0,0,0)                  !  c.m. now on 'rvectmp(1:3)'
+CALL getcm(1,0,0)                  !  c.m. now on 'rvectmp(1:3)'
 IF (jposcm > 0 .AND. MOD(it,jposcm) == 0) THEN
   CALL  safeopen(281,it,jposcm,'pposCM')
 !  OPEN(281,POSITION='append',FILE='pposCM.'//outnam)
@@ -2609,6 +2610,7 @@ USE util, ONLY: gettemperature,safeopen
 
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+REAL(DP) :: rho(2*kdfull2)
 !----------------------------------------------------------------
 
 !      tfs=it*dt1*0.0484
@@ -2741,7 +2743,7 @@ END IF
 
 IF(isurf == 1.AND.iforcecl2co /= 0 .AND.MOD(it,iforcecl2co) == 0) THEN
   
-  CALL getforces_clust2cores(rho,psi,0)
+  CALL getforces_clust2cores(rho,0)
   
   OPEN(256,STATUS='unknown',FILE='force_clust2cores.'//outnam)
   WRITE(256,'(a,f10.5)')'core pos val pos force on cores at t=' ,tfs
@@ -2781,8 +2783,8 @@ INTEGER, INTENT(IN)                          :: it
 
 LOGICAL,PARAMETER :: ttest=.FALSE.
 
-REAL(DP) :: rtmp(kstate,kstate)
-COMPLEX(DP) :: cscal
+!REAL(DP) :: rtmp(kstate,kstate)
+!COMPLEX(DP) :: cscal
 
 !----------------------------------------------------------------
 
@@ -2946,7 +2948,7 @@ END SUBROUTINE analyze_elect
 
 !-----savings----------------------------------------------------
 
-SUBROUTINE savings(psi,tarray,it)
+SUBROUTINE savings(psi,it)
 
 !     Check status and optionally save wavefunctions
 
@@ -2961,10 +2963,6 @@ INTEGER :: is(mpi_status_size)
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: it
-
-REAL(DP) :: tarray(2)
-
-REAL(DP) :: trun
 
 !----------------------------------------------------------------
 
@@ -2983,16 +2981,13 @@ END IF
 !     if walltime has almost expired, save all relevant data to
 !     prepare for restart and stop:
 
-!      iiii=etime(tarray,trun)
 IF(trequest > 0D0) THEN
  IF(myn == 0) THEN                                                        ! cPW
-  !iiii=etime(tarray)
   CALL cpu_time(time_act)
   time_elapse=time_act-time_absinit
   WRITE(6,'(a,5(1pg13.5))') &
-   ' etime: trequest,timefrac,t_elapse=',trequest,timefrac,time_elapse
+   ' cpu_time: trequest,timefrac,t_elapse=',trequest,timefrac,time_elapse
   CALL FLUSH(6)
-  !IF ((tarray(1)+tarray(2)) > trequest*timefrac) THEN
  END IF
 #if(parayes)
  CALL pi_scatter(time_elapse)
@@ -3026,7 +3021,7 @@ END SUBROUTINE savings
 #if(raregas)
 !-----vstep--------------------------------------------------------
 
-SUBROUTINE vstep(rho,psi,it,dt)
+SUBROUTINE vstep(rho,psi,dt)
 
 !     propagation of rare gas valence clouds by leapfrog method
 
@@ -3034,9 +3029,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)         :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)          :: it
-REAL(DP), INTENT(IN OUT)         :: dt
+COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)             :: dt
 
 REAL(DP),ALLOCATABLE :: xm(:)
 
@@ -3083,7 +3077,7 @@ RETURN
 END SUBROUTINE vstep
 !-----vstep--------------------------------------------------------
 
-SUBROUTINE vstepv(rho,psi,it,dt)
+SUBROUTINE vstepv(rho,psi,dt)
 
 !     propagation of rare gas valence clouds by velocity Verlet
 
@@ -3091,9 +3085,8 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
-REAL(DP), INTENT(IN)             :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)          :: it
-REAL(DP), INTENT(IN OUT)         :: dt
+COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)         :: dt
 
 REAL(DP),ALLOCATABLE :: xm(:)
 

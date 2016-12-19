@@ -28,9 +28,6 @@ SUBROUTINE pseudogoed()
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP) :: comp,sg
-COMPLEX(DP) :: ph0,php1,phm1
-
 !       real space part of the pseudopotentials taken in
 !       PRB 54(3)1703 (1996) by Goedecker et al.
 

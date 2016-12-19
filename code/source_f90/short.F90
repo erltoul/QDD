@@ -28,7 +28,7 @@
 
 !------------------------------------------------------------
 
-SUBROUTINE getshortforce(ityp1,ityp2,ind1,ind2,rho,iflag,iflag2)
+SUBROUTINE getshortforce(itypi,itypj,ii,jj,rho,iflag2)
 !------------------------------------------------------------
 USE params
 !USE kinetic
@@ -37,17 +37,23 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     ind1 and ind2 are of the short type!
 
 
-INTEGER, INTENT(IN OUT)                  :: ityp1
-INTEGER, INTENT(IN OUT)                  :: ityp2
-INTEGER, INTENT(IN OUT)                  :: ind1
-INTEGER, INTENT(IN OUT)                  :: ind2
+INTEGER, INTENT(IN)                  :: itypi
+INTEGER, INTENT(IN)                  :: itypj
+INTEGER, INTENT(IN)                      :: ii
+INTEGER, INTENT(IN)                      :: jj
 REAL(DP), INTENT(IN)                         :: rho(kdfull2*2)
-INTEGER, INTENT(IN OUT)                  :: iflag
 INTEGER, INTENT(IN)                      :: iflag2
+
+INTEGER                :: ityp1,ityp2
+INTEGER                :: ind1,ind2
 
 INTEGER :: getnearestgridpoint
 INTEGER :: conv3to1
 
+ityp1 = itypi  !Because the result of a function or a scalar expression cannot be intent(out)/intent(in out) arguments. 
+ityp2 = itypj
+ind1=ii   ! Because ii and jj can be do-variables, that should not be modified inside a DO-loop.
+ind2=jj
 
 rder = 1.0D-5
 
@@ -597,7 +603,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     Ar-Ar potential
 
 
-REAL(DP), INTENT(IN OUT)                     :: r
+REAL(DP), INTENT(IN)                     :: r
 DATA  epslj,sigmalj /  0.0007647D0,6.42503D0/
 
 
@@ -1121,8 +1127,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
 
 
 EXTERNAL varelcore,vfermi,funkfermi,funkpower
@@ -1145,20 +1149,20 @@ IF (isrtyp(1,5) == 1) THEN ! MgO-case ! c-DFT
           xc(is),yc(is),zc(is),1D0, fermia2c,fermib2c,fermic2c,15)
       
       
-      IF (ccel6 /= 0) THEN
+      IF (ccel6 /= 0) THEN       ! Hazardous to compare a real to an integer...
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel6,6)
+            xc(is),yc(is),zc(is),ccel6,6D0,15)     ! Parameter nsgsize is missing 
         
       ELSE IF (ccel8 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel8,8)
+            xc(is),yc(is),zc(is),ccel8,8D0,15)
         
       ELSE IF (ccel10 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel10,10)
+            xc(is),yc(is),zc(is),ccel10,10D0,15)
         
       END IF
       
@@ -1232,17 +1236,17 @@ IF (isrtyp(3,5) == 1) THEN ! The MgO Case, k-DFT
       IF (ckel6 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel6,6,15)
+            xk(is),yk(is),zk(is),ckel6,6D0,15)
         
       ELSE IF (ckel8 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel8,8,15)
+            xk(is),yk(is),zk(is),ckel8,8D0,15)
         
       ELSE IF (ckel10 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel10,10,15)
+            xk(is),yk(is),zk(is),ckel10,10D0,15)
         
       END IF
       

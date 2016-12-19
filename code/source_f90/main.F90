@@ -71,13 +71,9 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 REAL(DP) :: totalprob,totalovlp
-#if(raregas)
-LOGICAL :: tmf
-#endif
-REAL(DP) tarray(2)
-!REAL(4) etime
-
-
+!~ #if(raregas)
+!~ LOGICAL :: tmf
+!~ #endif
 
 !     *******************************************
 
@@ -461,7 +457,7 @@ DO it=irest,itmax   ! time-loop
   
   CALL print_densdiff(rho,it)       ! right place here ???
   
-!         if(nclust.gt.0) call savings(psi,tarray,it)
+!         if(nclust.gt.0) call savings(psi,it)
   
 !test           call calcrho(rho,psi)      !  ??????????
   
@@ -480,10 +476,10 @@ DO it=irest,itmax   ! time-loop
     
     IF(nclust > 0) THEN
       
-#if(raregas)
-      tmf=.false.
-      IF(tmf) CALL loc_mfield_dummy(rho,aloc)   ! ???
-#endif
+!~ #if(raregas)
+!~       tmf=.false.
+!~       IF(tmf) CALL loc_mfield_dummy(rho,aloc)   ! ???
+!~ #endif
       
       
 !     propagation of the wfs
@@ -576,7 +572,7 @@ DO it=irest,itmax   ! time-loop
        CALL FLUSH(809)
     END IF
   
-    IF(nclust > 0) CALL savings(psi,tarray,it)
+    IF(nclust > 0) CALL savings(psi,it)
   END IF
 
 
@@ -703,101 +699,101 @@ ENDIF
 END PROGRAM tdlda_m
 
 
-!#include "define.h"
+!~ !#include "define.h"
 
-#if(raregas)
-!     ************************************
+!~ #if(raregas)
+!~ !     ************************************
 
-SUBROUTINE loc_mfield_dummy(rho,aloc)
+!~ SUBROUTINE loc_mfield_dummy(rho,aloc)
 
-!     ************************************
+!~ !     ************************************
 
-!     This routine is a dummy version -- usage still unclear.
-!     Most probably obsolete!!!
+!~ !     This routine is a dummy version -- usage still unclear.
+!~ !     Most probably obsolete!!!
 
-!     The local part of the mean field
-!     plus an update of the pseudo-potentials.
+!~ !     The local part of the mean field
+!~ !     plus an update of the pseudo-potentials.
 
-!     Input:
-!      rho    = electron density
-!      dt     = stepsize (in case of dynamics)
-!      tdyn   = switch to dynamic case
-!     Output:
-!      aloc   = local mean field
+!~ !     Input:
+!~ !      rho    = electron density
+!~ !      dt     = stepsize (in case of dynamics)
+!~ !      tdyn   = switch to dynamic case
+!~ !     Output:
+!~ !      aloc   = local mean field
 
-USE params
-!USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+!~ USE params
+!~ !USE kinetic
+!~ #if(netlib_fft|fftw_cpu)
+!~ USE coulsolv
+!~ #endif
+!~ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
+!~ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+!~ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
-REAL(DP),ALLOCATABLE :: rhotmp(:)
-COMPLEX(DP) :: psidummy(1)
 
 
-ALLOCATE(rhotmp(2*kdfull2))
-IF(idielec /= 1) THEN
-  CALL calcpseudo()
-  CALL calcrho(rho,psi)
-  DO ii=1,2*kdfull2
-    rhotmp(ii)=rho(ii)
-  END DO
-  CALL addimage(rho,1)
+!~ REAL(DP),ALLOCATABLE :: rhotmp(:)
+!~ COMPLEX(DP) :: psidummy(1)
+
+
+!~ ALLOCATE(rhotmp(2*kdfull2))
+!~ IF(idielec /= 1) THEN
+!~   CALL calcpseudo()
+!~   CALL calcrho(rho,psi)
+!~   DO ii=1,2*kdfull2
+!~     rhotmp(ii)=rho(ii)
+!~   END DO
+!~   CALL addimage(rho,1)
   
-! Coulomb of the electronic density
-#if(gridfft)
-  CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_fft(rho,chpcoul,dx,dy,dz)
-#endif
-  CALL calclocal(rho,aloc)
-END IF
+!~ ! Coulomb of the electronic density
+!~ #if(gridfft)
+!~   CALL falr(rho,chpcoul,kdfull2)
+!~ #endif
+!~ #if(findiff|numerov)
+!~   CALL solv_fft(rho,chpcoul,dx,dy,dz)
+!~ #endif
+!~   CALL calclocal(rho,aloc)
+!~ END IF
 
-IF(idielec == 1) THEN
+!~ IF(idielec == 1) THEN
   
-  DO ii=1,2*kdfull2
-    rho(ii)=rhotmp(ii)
-  END DO
-  DO ii=1,kdfull2
-    rfieldtmp(ii)=chpcoul(ii)
-  END DO
-  CALL addimage(rho,0)
+!~   DO ii=1,2*kdfull2
+!~     rho(ii)=rhotmp(ii)
+!~   END DO
+!~   DO ii=1,kdfull2
+!~     rfieldtmp(ii)=chpcoul(ii)
+!~   END DO
+!~   CALL addimage(rho,0)
   
-#if(gridfft)
-!         if(ipseudo.eq.1)
-  CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
-#endif
-#if(findiff|numerov)
-!         if(ipseudo.eq.1)
-  CALL solv_fft(rho,chpcoul,dx,dy,dz)
-#endif
+!~ #if(gridfft)
+!~ !         if(ipseudo.eq.1)
+!~   CALL falr(rho,chpcoul,kdfull2)
+!~ #endif
+!~ #if(findiff|numerov)
+!~ !         if(ipseudo.eq.1)
+!~   CALL solv_fft(rho,chpcoul,dx,dy,dz)
+!~ #endif
   
   
-  DO ii=1,kdfull2
-    CALL conv1to3(ii)
-    IF(iindtmp(1) > nint(xdielec/dx)+nx)THEN
-      chpcoul(ii)=rfieldtmp(ii)
-    END IF
-  END DO
-  DO ii=1,2*kdfull2
-    rho(ii)=rhotmp(ii)
-  END DO
+!~   DO ii=1,kdfull2
+!~     CALL conv1to3(ii)
+!~     IF(iindtmp(1) > nint(xdielec/dx)+nx)THEN
+!~       chpcoul(ii)=rfieldtmp(ii)
+!~     END IF
+!~   END DO
+!~   DO ii=1,2*kdfull2
+!~     rho(ii)=rhotmp(ii)
+!~   END DO
   
-END IF
+!~ END IF
 
-CALL calclocal(rho,aloc)
-IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
+!~ CALL calclocal(rho,aloc)
+!~ IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
 
-DEALLOCATE(rhotmp)
+!~ DEALLOCATE(rhotmp)
 
-RETURN
-END SUBROUTINE loc_mfield_dummy
-#endif
+!~ RETURN
+!~ END SUBROUTINE loc_mfield_dummy
+!~ #endif

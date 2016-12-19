@@ -1400,7 +1400,7 @@ DO nb=1,nstate
     DO na=1,nstate
       IF(ispin(nrel2abs(na)) == is)THEN
         naa = na - (is-1)*ndims(1)
-        utcond(naa,nbeff) = -wfovlp(qsym(1,na),uqsym(1,nb))
+        utcond(naa,nbeff) = -wfovlp(qsym(:,na),uqsym(:,nb))
       END IF !ispin
     END DO !na
   END IF
