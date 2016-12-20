@@ -1,3 +1,30 @@
+########################################################################
+# 									Program dependencies.
+########################################################################
+# List of additional files to be included in the final archive.
+# I know source files should not be listed here, but as the code uses #include instruction to add .F90 sources files, 
+# it ruins the normal dependency management of automake.
+EXTRA_DIST =define.h\
+						params.F90 surf.F90 pseudo.F90\
+						fftpack.F90 fftpack2.F90\
+						fftw.F90 fftw3.f03 cuda_alloc.F90\
+						kinetic.F90 fft.F90 findiff.F90\
+						coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90\
+						sicnew.F90 restart.F90 init.F90 generlcgo.F90\
+						localize.F90 localize_rad.F90  static.F90\
+						util.F90  orthmat.F90 2stUT.F90  \
+						dynamic.F90 lda.F90 abso_bc.F90 \
+						pseudosoft.F90 pseudogoed.F90 \
+						ionmd.F90 forces.F90 carlo.F90\
+						subgrids.F90 analyse.F90\
+						rho.F90 nonloc.F90 schmid.F90 \
+						zeroforce.F90 functions.F90\
+						functions.F90 loc_mfield.F90\
+						givens.F90 parallele.F90 expevol.F90\
+						pot_substrate.F90 forces_substrate.F90 md_substrate.F90\
+						short.F90 image.F90 lattice.F90 attachement.F90\
+						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
+
 # Compiler-dependent options
 if GFORT
 if USE_DEBUG
@@ -211,8 +238,8 @@ endif
 ########################################################################
 #               Compilation rules for objects
 ########################################################################       
-# twostr and twost modules are contained in 2stUT.o and 2stUTc.o, respectively. 
-# Dependencies concerning objects are needed,  due to numerous #include statement 
+# Dependencies concerning objects are needed,  due to numerous #include statement.
+# This breaks the normal dependencies tracking, hence the lists of source files above. 
 
 # params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
@@ -399,7 +426,7 @@ nonloc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
 # nonlocc.o 
 nonlocc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
-	
+
 # schmid.o
 schmid.$(OBJEXT): schmid.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<

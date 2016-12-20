@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([pw-teleman], [73], [francois.labbe@univ-lemans.fr])
+AC_INIT([pwteleman], [122016], [francois.labbe@univ-lemans.fr])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
 # Remark : Unable to properly use Fortran options of Autotools, due to preprocessor flags in the code.
@@ -404,7 +404,7 @@ AC_MSG_NOTICE([linker flags:      LDFLAGS=$LDFLAGS])
 #~ echo "LDFLAGS: $LDFLAGS"
 #~ echo "LD_MPI: $LD_MPI" 
 #~ echo "LD_FFTW: $LD_FFTW" 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([define.h])
 AC_CONFIG_FILES([Makefile
                  code/source_f90/Makefile])
 AC_OUTPUT

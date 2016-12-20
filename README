@@ -5,3 +5,5 @@ then run :
   make
 
 binary is named netlib_pwteleman.seq, it is located in ./bin
+
+More documentation can be found  in pwteleman/doc/  (explain-init.pdf)
