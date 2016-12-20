@@ -1134,151 +1134,6 @@ RETURN
 END SUBROUTINE act_part_num
 #endif
 
-
-#ifdef COMPLEXSWITCH
-SUBROUTINE calc_sicspc(rhosp,usicsp,q0state,nb)
-
-!     ******************************
-
-!     computes SIC potential for state 'nb'.
-!     input is
-!       q0state   = wavefunction for s.p. state
-!       nb        = number of state
-!     output is
-!       usicsp   = the s.p. SIC potential
-!     output via common
-!       enrear,enerpw   = rearrangement energies for 'nb'
-!       encoulsp        = Coulomb energy for 'nb'
-
-!#INCLUDE "all.inc"
-USE params
-USE util, ONLY: prifld2
-USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-COMPLEX(DP), INTENT(IN OUT) :: q0state(kdfull2)
-REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
-
-!     the usage of workspacss is tricky:
-!      'rhosp' from the calling list may be equivalenced with 'w1', but
-!      occupies temporarily two workspaces,. i.e. 'w2=couldif'.
-!      The upper block is obsolete after 'calc_lda' as is the whole
-!      'chpdftsp' after transfer to 'uscisp'. The free slots are then
-!      used for 'rho1' and 'couldif' in the Coulomb solver.
-
-REAL(DP),ALLOCATABLE :: chpdftsp(:)
-REAL(DP),ALLOCATABLE :: couldif(:)
-REAL(DP),ALLOCATABLE :: rho1(:)
-
-LOGICAL,PARAMETER :: testprint=.false.
-
-!--------------------------------------------------------------------
-
-IF(numspin<2) STOP ' CALC_SICSP requires fullspin code'
-
-! allocate workspace
-
-ALLOCATE(chpdftsp(2*kdfull2))
-ALLOCATE(couldif(kdfull2))
-ALLOCATE(rho1(kdfull2))
-
-enrearsave=enrear
-enerpwsave=enerpw
-enrear1=0D0
-enrear2=0D0
-enpw1  = 0D0
-enpw2  = 0D0
-encadd = 0D0
-!      write(*,*) ' CALC_SICSPC: nb,occup(nb)',nb,occup(nb)
-
-IF(occup(nb) > small) THEN
-  ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-  
-!         density for s.p. state
-  
-  DO ind=1,nxyz
-    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind),DP)
-    rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
-    rho1(ind)        = rhosp(ind)
-  END DO
-  
-!       DFT for s.p. state
-
- 
-  CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
-
-  IF (ispin(nrel2abs(nb)) == 1) THEN
-    DO ind=1,nxyz
-      usicsp(ind) = chpdftsp(ind)
-    END DO
-  ELSE
-    DO ind=1,nxyz
-      idx = ind+nxyz
-      usicsp(idx) = chpdftsp(idx)
-    END DO
-  END IF
-  
-!         s.p. Coulomb and subtract from LDA
-  
-  DO ind=1,nxyz
-    rho1(ind) = rhosp(ind)
-  END DO
-#if(gridfft)
-  CALL falr(rho1(1),couldif,kdfull2)
-#endif
-#if(findiff|numerov)
-CALL solv_fft(rho1(1),couldif,dx,dy,dz)
-#endif
-IF(testprint) THEN
-  WRITE(11,'(a)') '     ','     '
-  WRITE(11,'(a,i3)') '# NB=',nb
-  CALL prifld2(11,rhosp,' density')
-  CALL prifld2(11,couldif,' Coulomb')
-  CALL prifld2(11,chpdftsp,' P&W')
-END IF
-
-
-encsum = 0D0
-IF (ispin(nrel2abs(nb)) == 1) THEN
-  DO ind=1,nxyz
-    usicsp(ind) = usicsp(ind)+couldif(ind)
-    IF(directenergy) THEN
-      encsum=encsum+rhosp(ind)*couldif(ind)
-    END IF
-  END DO
-  encoulsp = encsum*dvol/2D0
-  IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
-ELSE
-  DO ind=1,nxyz
-    idx = ind+nxyz
-    usicsp(idx) = usicsp(idx)+couldif(ind)
-    IF(directenergy) THEN
-      encsum=encsum+rhosp(ind)*couldif(ind)
-    END IF
-  END DO
-  encoulsp = encsum*dvol/2D0
-  IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
-END IF
-ELSE
-usicsp=0D0
-encoulsp = 0D0
-END IF
-
-!WRITE(*,*) ' SICSPC: encoulsp,enerpw=',encsum,enerpw
-
-DEALLOCATE(chpdftsp)
-DEALLOCATE(couldif)
-DEALLOCATE(rho1)
-
-RETURN
-END SUBROUTINE calc_sicspc
-#endif
-
-
-
 !     ******************************
 
 #ifdef REALSWITCH
@@ -1286,7 +1141,6 @@ SUBROUTINE calc_sicspr(rhosp,usicsp,q0state,nb)
 #else
 SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 #endif
-
 !     ******************************
 
 !     computes SIC potential for state 'nb'.
@@ -1317,7 +1171,8 @@ REAL(DP), INTENT(IN) :: q0state(kdfull2)
 #else
 COMPLEX(DP), INTENT(IN) :: q0state(kdfull2)
 #endif
-REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
+REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2)
+REAL(DP), INTENT(IN OUT) :: usicsp(2*kdfull2)
 
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: chpdftsp,couldif,rho1
