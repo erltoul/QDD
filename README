@@ -1,0 +1,7 @@
+Vanilla installation (using furnished library NETLIB for fft) can be done using command:
+  ./configure
+
+then run :
+  make
+
+binary is named netlib_pwteleman.seq, it is located in ./bin
