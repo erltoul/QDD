@@ -1,4 +1,31 @@
- # Compiler-dependent options
+########################################################################
+# 									Program dependencies.
+########################################################################
+# List of additional files to be included in the final archive.
+# I know source files should not be listed here, but as the code uses #include instruction to add .F90 sources files, 
+# it ruins the normal dependency management of automake.
+EXTRA_DIST =define.h\
+						params.F90 surf.F90 pseudo.F90\
+						fftpack.F90 fftpack2.F90\
+						fftw.F90 fftw3.f03 cuda_alloc.F90\
+						kinetic.F90 fft.F90 findiff.F90\
+						coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90\
+						sicnew.F90 restart.F90 init.F90 generlcgo.F90\
+						localize.F90 localize_rad.F90  static.F90\
+						util.F90  orthmat.F90 2stUT.F90  \
+						dynamic.F90 lda.F90 abso_bc.F90 \
+						pseudosoft.F90 pseudogoed.F90 \
+						ionmd.F90 forces.F90 carlo.F90\
+						subgrids.F90 analyse.F90\
+						rho.F90 nonloc.F90 schmid.F90 \
+						zeroforce.F90 functions.F90\
+						functions.F90 loc_mfield.F90\
+						givens.F90 parallele.F90 expevol.F90\
+						pot_substrate.F90 forces_substrate.F90 md_substrate.F90\
+						short.F90 image.F90 lattice.F90 attachement.F90\
+						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
+
+# Compiler-dependent options
 if GFORT
 if USE_DEBUG
 OPT1  =  -pg -g -fbacktrace
@@ -13,9 +40,9 @@ endif
 
 if IFORT
 if USE_DEBUG
-OPT1  =  -pg -fpp -warn all -warn nodeclarations -diag-disable 8291 -diag-disable 8290 -g -CB -traceback -align all -autodouble
-OPT2  =  -pg -fpp -warn all -warn nodeclarations -diag-disable 8291 -diag-disable 8290 -g -CB -traceback -align all -autodouble
-OPT3  =  -pg -fpp -warn all -warn nodeclarations -diag-disable 8291 -diag-disable 8290 -g                -align all -autodouble
+OPT1  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -autodouble
+OPT2  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -autodouble
+OPT3  =  -pg -fpp -warn all -warn nodeclarations -g                -align all -autodouble
 else
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all
@@ -211,8 +238,8 @@ endif
 ########################################################################
 #               Compilation rules for objects
 ########################################################################       
-# twostr and twost modules are contained in 2stUT.o and 2stUTc.o, respectively. 
-# Dependencies concerning objects are needed,  due to numerous #include statement 
+# Dependencies concerning objects are needed,  due to numerous #include statement.
+# This breaks the normal dependencies tracking, hence the lists of source files above. 
 
 # params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
@@ -260,11 +287,11 @@ endif
 #~ endif
 
 # sicnew.o
-sicnew.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
+sicnew.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # sicnewc.o
-sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
+sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # restart.o
@@ -281,7 +308,7 @@ restartc.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # init.o
-init.$(OBJEXT): init.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
+init.$(OBJEXT): init.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # generlcgo.o
@@ -289,32 +316,32 @@ generlcgo.$(OBJEXT): generlcgo.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # localize.o
-localize.$(OBJEXT): localize.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+localize.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # localizer.o
-localizer.$(OBJEXT): localize.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+localizer.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # localize_rad.o
-localize_rad.$(OBJEXT): localize_rad.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # static.o
 if USE_CUDA
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) util.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) util.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 else
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) util.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h util.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 endif
@@ -325,28 +352,27 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 
 # 2stUT.o
 if USE_TWOSTSIC
-2stUT.$(OBJEXT): 2stUT.F90 define.h util.$(OBJEXT) localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-2stUT.$(OBJEXT): 2stUT.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h  orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 endif
 
 # 2stUTc.o 
-2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # dynamic.o
 if USE_TWOSTSIC
-dynamic.$(OBJEXT): dynamic.F90 define.h forces_substrate.$(OBJEXT) forces.$(OBJEXT) loc_mfield.$(OBJEXT) 2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-dynamic.$(OBJEXT): dynamic.F90 define.h forces_substrate.$(OBJEXT) forces.$(OBJEXT) loc_mfield.$(OBJEXT) util.$(OBJEXT) $(OBJKINPARA)
+dynamic.$(OBJEXT): dynamic.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-
 # lda.o
-lda.$(OBJEXT): lda.F90 define.h $(OBJCOULSOLV) zeroforce.$(OBJEXT) util.$(OBJEXT) params.$(OBJEXT)
+lda.$(OBJEXT): lda.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # util.o
@@ -354,7 +380,7 @@ util.$(OBJEXT): util.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # abso_bc.o
-abso_bc.$(OBJEXT): abso_bc.F90 define.h rho.$(OBJEXT) util.$(OBJEXT) params.$(OBJEXT)
+abso_bc.$(OBJEXT): abso_bc.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # pseudosoft.o
@@ -370,11 +396,11 @@ ionmd.$(OBJEXT): ionmd.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # forces.o
-forces.$(OBJEXT): forces.F90 define.h subgrids.$(OBJEXT) util.$(OBJEXT) params.$(OBJEXT)
+forces.$(OBJEXT): forces.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # carlo.o  #Beware, perhaps implicitly dependent to parallele.F90 ?
-carlo.$(OBJEXT): carlo.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
+carlo.$(OBJEXT): carlo.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # subgrids.o
@@ -382,11 +408,11 @@ subgrids.$(OBJEXT): subgrids.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # analyse.o
-analyse.$(OBJEXT): analyse.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
+analyse.$(OBJEXT): analyse.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # rho.o
-rho.$(OBJEXT): rho.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+rho.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # rhoc.o
@@ -400,13 +426,13 @@ nonloc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
 # nonlocc.o 
 nonlocc.$(OBJEXT): nonloc.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
-	
+
 # schmid.o
 schmid.$(OBJEXT): schmid.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # zeroforce.o
-zeroforce.$(OBJEXT): zeroforce.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+zeroforce.$(OBJEXT): zeroforce.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # functions.o
@@ -422,15 +448,15 @@ givens.$(OBJEXT): givens.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) -c -o $@ $<
 
 # parallele.o
-parallele.$(OBJEXT): parallele.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) -c -o $@ $<
 
 # expevol.o
 if USE_TWOSTSIC
-expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) util.$(OBJEXT) $(OBJKINPARA)
+expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-expevol.$(OBJEXT): expevol.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
+expevol.$(OBJEXT): expevol.F90 define.h  $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 
@@ -443,15 +469,15 @@ forces_substrate.$(OBJEXT): forces_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # md_substrate.o
-md_substrate.$(OBJEXT): md_substrate.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
+md_substrate.$(OBJEXT): md_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # short.o
-short.$(OBJEXT): short.F90 define.h pot_substrate.$(OBJEXT) params.$(OBJEXT)
+short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # image.o
-image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) params.$(OBJEXT)
+image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # lattice.o
@@ -459,7 +485,7 @@ lattice.$(OBJEXT): lattice.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # attachement.o
-attachement.$(OBJEXT): attachement.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
+attachement.$(OBJEXT): attachement.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 #cuda.o
