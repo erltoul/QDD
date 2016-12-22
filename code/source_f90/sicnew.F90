@@ -221,7 +221,7 @@ IF(numspin==2) THEN
     rho1(ind)=  rho(ind)*rho(ind+nxyz)
   END DO
 #if(gridfft)
-  CALL falr(rho1(1),couldif,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
 !                 new computation of total Coul not needed - check
 !      call falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
 #endif
@@ -251,7 +251,7 @@ ELSE
 !     recalculate Coulomb part for jellium
 
 #if(gridfft)
-  IF(nion2 == 0) CALL falr(rho(1),chpcoul,kdfull2)
+  IF(nion2 == 0) CALL falr(rho,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
   STOP ' SIC-GAM not yet ready for nospin and finite diff.'
@@ -534,11 +534,11 @@ IF(numspin==2) THEN
 #endif
 
 #if(gridfft)
-  CALL falr(rho1(1),couldif,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
   IF(idielec == 0 .AND. nion2 > 0) THEN
     coulsum = chpcoul
   ELSE
-    CALL falr(rho2(1),coulsum,kdfull2)
+    CALL falr(rho2,coulsum,kdfull2)
   END IF
 #endif
 #if(findiff|numerov)
@@ -602,7 +602,7 @@ ELSE
 
 #if(gridfft)
   IF(nion2 == 0) THEN
-    CALL falr(rho(1),chpcoul,kdfull2)
+    CALL falr(rho(1:kdfull2),chpcoul,kdfull2)
   END IF
 #endif
 #if(findiff|numerov)
@@ -1238,7 +1238,7 @@ IF(occup(nb) > small) THEN
     rho1(ind) = rhosp(ind)
   END DO
 #if(gridfft)
-  CALL falr(rho1(1),couldif,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(rho1(1),couldif,dx,dy,dz)

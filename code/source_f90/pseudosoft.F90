@@ -358,13 +358,12 @@ RETURN
 END FUNCTION v_soft
 !-------------------------------------------------------------------------
 
-
-
-!old c
+!old        Archaic pre-f95 way to approach erf(z),  simple precision
+!old            Left here as a witness of oldest times. 
 !old c
 !old c       ******************************
 !old c
-!old         function f(x)
+!old         function f(x)       
 !old c
 !old c       ******************************
 !old c
@@ -441,14 +440,13 @@ REAL(DP) FUNCTION dv_softdr(r,s)
 !------------------------------------------------------------
 ! returns the derivative of erf(r/s)/r by finite differences
 
-
 USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: r
 REAL(DP), INTENT(IN)                     :: s
-REAL(DP):: rder
-
+REAL(DP):: ftemp, rder
+REAL(DP)::v_soft
 rder = 1.0D-5
 
 !         ftemp = erf((r+rder)/s)/(r+rder)
@@ -463,19 +461,3 @@ dv_softdr = ftemp
 
 RETURN
 END FUNCTION dv_softdr
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
-REAL(DP) FUNCTION v_coulomb(r)
-!------------------------------------------------------------
-USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
-REAL(DP),INTENT(IN):: r
-
-v_coulomb = MAX(small,r)
-v_coulomb = 1D0/v_coulomb
-
-RETURN
-END FUNCTION v_coulomb
-!------------------------------------------------------------
