@@ -319,7 +319,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(OUT)                        :: r
 REAL(DP), INTENT(IN)                         :: sigma
-!DATA pi/3.141592653589793/
 
 r = ABS(r)
 
@@ -349,38 +348,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !       r     =  distance at which potential is computed
 !       sigma =  width parameter of underlying Gaussian
 
-
 REAL(DP), INTENT(IN)                         :: r
 REAL(DP), INTENT(IN)                         :: sigma
 !------------------------------------------------------------------------
 rabs = ABS(r)
-
-!                       the error function  (good for 10**-7 precision)
-
-z=rabs/sigma
-
-
-!     use Coulomb cut-off for V_soft
-!     relative error is smaller than 1e-20
-
-IF (z > 6D0) THEN
-  v_soft = 1D0/rabs
-  RETURN
-END IF
-
-IF(z <= 1D-1)THEN             ! use Taylor expansion for z < 0.1
-  v_soft=(2D0-2D0*z**2/3D0+z**4/5D0-z**6/21D0) /(SQRT(pi)*sigma)
-ELSE
-  t=1D0/(1D0+0.5D0*z)
-  erfcc=t*EXP(-z*z-1.26551223D0+t*(1.00002368D0+t*(.37409196D0+t*  &
-      (.09678418D0+t*(-.18628806D0+t*(.27886807D0+t*(-1.13520398D0+t*  &
-      (1.48851587D0+t*(-.82215223D0+t*.17087277D0)))))))))
-  IF (r < 0D0) erfcc=2D0-erfcc
-  f=1D0-erfcc
-  
-!     final composition
-  v_soft = f/rabs
-END IF
+v_soft = erf(rabs/sigma)/rabs
 
 RETURN
 END FUNCTION v_soft
