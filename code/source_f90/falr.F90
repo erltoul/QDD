@@ -57,7 +57,7 @@ REAL(DP),PRIVATE,ALLOCATABLE :: xt2(:),yt2(:),zt2(:)
 REAL(DP),PRIVATE,ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP),PRIVATE,ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER,PRIVATE,ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
+REAL(DP),PRIVATE,ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)      ! Complexes stored in real arrays for NETLIB FFT library
 #endif
 
 #if(fftw_cpu)
@@ -126,10 +126,18 @@ kfft2=kfft*2
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
+
+! Complex stored in real array for NETLIB FFT library : doubles the size of the array
+ALLOCATE(fftax(2*kxmax),fftay(2*kymax),fftb(2*kzmax,kxmax))
+
+#endif
+#if(fftw_cpu)
+ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 #endif
 ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
-ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
+
+
 !ALLOCATE(xrow(kxmax),yrow(kymax),zrow(kzmax))
 ALLOCATE(akv2(kdred))
 ALLOCATE(ikm(kxmax,kymax),indfc(kdfull))
@@ -198,21 +206,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rhoinp(kdf)
 INTEGER, INTENT(IN)                  :: kdf
 
-ii=0
-DO i3=1,nzi
-  DO i2=1,nyi
-    DO i1=1,nxi
-      ii=ii+1
-      rho(ii)=rhoinp(ii)
-    END DO
-  END DO
-END DO
+rho(1:nxyz)=rhoinp(1:nxyz)
 
 !     save the original rho data in rhozw, because rho will be overwritten
-DO ic=1,nxyz
-  rhozw(ic) = rho(ic)
-END DO
-
+rhozw(1:nxyz) = rho(1:nxyz)
 
 RETURN
 END SUBROUTINE rhofld
@@ -474,6 +471,7 @@ DO ik=1,nksp
 END DO
 
 !     Fourier back transformation
+
 CALL fourb(potc,rhokr,rhoki,iprho)
 potcor = - potc(nxyz)
 DO i=1,nxyz
@@ -1622,8 +1620,8 @@ ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
-  CALL dcfti1 (kfftz,wsavez,ifacz)              !! here was
-  mzini  = kfftz                              !! the bug
+  CALL dcfti1 (kfftz,wsavez,ifacz)
+  mzini  = kfftz
   WRITE(7,'(a)') ' z-fft initialized '
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
@@ -1686,13 +1684,11 @@ xp=ipar(1)
 yp=ipar(2)
 zp=ipar(3)
 
-DO ii=1,nxyz
-  a(ii)=0D0
-END DO
+a=0D0
 
-CALL fftx(psx,a,xp)
-CALL ffty(psx,a,yp)
-CALL fftz(psx,a,xp,yp,zp)
+CALL fftx(psx,a)
+CALL ffty(psx,a)
+CALL fftz(psx,a)
 
 
 DO i1=1,nkxyz
@@ -1750,9 +1746,9 @@ DO i1=1,nkxyz
 END DO
 
 
-CALL ffbz(psx,a,xp,yp,zp)
-CALL ffby(psx,a,yp)
-CALL ffbx(psx,a,xp)
+CALL ffbz(psx,a)
+CALL ffby(psx,a)
+CALL ffbx(psx,a)
 
 RETURN
 END SUBROUTINE fourb
@@ -1760,24 +1756,20 @@ END SUBROUTINE fourb
 
 !-----fftx-------------------------------------------------------------
 
-SUBROUTINE fftx(psxr,psxi,xp)
+SUBROUTINE fftx(psxr,psxi)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdfull)
 REAL(DP), INTENT(OUT)                        :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: xp
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
-
+#if(netlib_fft)
+INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
+#endif
 
 !     performs the Fourier-transformation in x-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
 !     is overwritten by the Fourier-transformed wave-function
-!     xp is the parity in x-direction (input!)
-
 !----------------------------------------------------------------------
 
 nx11=nx1+1
@@ -1796,14 +1788,30 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
-      fftax(i1) = psxr(ii)
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir) = psxr(ii)
+      fftax(ic) = 0D0
+#endif
+#if(fftw_cpu)      
+      fftax(i1) = CMPLX(psxr(ii),0D0,DP)
+#endif
     END DO
     
 !         negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      fftax(i1) = psxr(ii)
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir) = psxr(ii)
+      fftax(ic) = 0D0
+#endif
+#if(fftw_cpu)
+      fftax(i1) = CMPLX(psxr(ii),0D0,DP)
+#endif
     END DO
     
 !         execution of the Fourier-transformation
@@ -1819,20 +1827,34 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      psxr(ii) = fftax(ir)
+      psxi(ii) = fftax(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
+#endif
     END DO
 !        negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      psxr(ii) = fftax(ir)
+      psxi(ii) = fftax(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii) = REAL(fftax(i1),DP)
       psxi(ii) = AIMAG(fftax(i1))
+#endif
     END DO
-    
   END DO
 END DO
-
 
 RETURN
 END SUBROUTINE fftx
@@ -1840,7 +1862,7 @@ END SUBROUTINE fftx
 
 !-----ffty--------------------------------------------------------------
 
-SUBROUTINE ffty(psxr,psxi,yp)
+SUBROUTINE ffty(psxr,psxi)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
@@ -1849,16 +1871,12 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: yp
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
-
-
+#if(netlib_fft)
+INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
+#endif
 !     performs the Fourier-transformation in y-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
 !     is overwritten by the Fourier-transformed wave-function
-!     yp is the parity in y-direction (input!)
 
 !----------------------------------------------------------------------
 
@@ -1882,13 +1900,29 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir)=psxr(ii)
+      fftay(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir)=psxr(ii)
+      fftay(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)      
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
     
 !         execution of the Fourier-transformation
@@ -1905,15 +1939,31 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      psxr(ii)=fftay(ir)
+      psxi(ii)=fftay(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
+#endif
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      psxr(ii)=fftay(ir)
+      psxi(ii)=fftay(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
+#endif
     END DO
     
     
@@ -1925,26 +1975,19 @@ RETURN
 END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
-SUBROUTINE fftz(psxr,psxi,xp,yp,zp)
+SUBROUTINE fftz(psxr,psxi)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: xp
-REAL(DP), INTENT(IN OUT)                     :: yp
-REAL(DP), INTENT(IN OUT)                     :: zp
 INTEGER :: nxyf 
 INTEGER :: nyf  
 INTEGER :: nzh  
-
-!doub      complex*16 ffta
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
-
-
+#if(netlib_fft)
+INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
+#endif
 !     performs the Fourier-transformation in z-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
 !     is overwritten by the Fourier-transformed wave-function
@@ -2018,14 +2061,24 @@ nzh  = kfftz/2
 DO i2=1,kffty
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      fftb(ir,i1) = psxr(ind)
+      fftb(ic,i1) = psxi(ind)
+#endif
+#if(fftw_cpu)
       fftb(i3m,i1) = CMPLX(psxr(ind),psxi(ind),DP)
+#endif
     END DO
   END DO
   DO i1=1,kfftx
 #if(netlib_fft)
-    CALL dcftf1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftf1 (kfftz,fftb(:,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwz,fftb(1,i1),fftb(1,i1))
@@ -2033,10 +2086,20 @@ DO i2=1,kffty
   END DO
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      psxr(ind)=fftb(ir,i1)
+      psxi(ind)=fftb(ic,i1) 
+#endif
+#if(fftw_cpu)
       psxr(ind)= REAL(fftb(i3m,i1),DP)
       psxi(ind)= AIMAG(fftb(i3m,i1))
+#endif
     END DO
   END DO
 !        i1 = kfftx/2
@@ -2049,25 +2112,19 @@ RETURN
 END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
-SUBROUTINE ffbz(psxr,psxi,xp,yp,zp)
+SUBROUTINE ffbz(psxr,psxi)
 !USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 !#include"falr.inc"
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: xp
-REAL(DP), INTENT(IN OUT)                     :: yp
-REAL(DP), INTENT(IN OUT)                     :: zp
 INTEGER :: nxyf 
 INTEGER :: nyf  
 INTEGER :: nzh  
-
-!doub      complex*16 ffta
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
-
+#if(netlib_fft)
+INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
+#endif
 
 !----------------------------------------------------------------------
 
@@ -2126,15 +2183,25 @@ nzh  = kfftz/2
 
 DO i2=1,kffty
   DO i3=1,kfftz
-    i3m   = MOD(i3+nzh,kfftz)+1
+    i3m = MOD(i3+nzh,kfftz)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      fftb(ir,i1) = psxr(ind)
+      fftb(ic,i1) = psxi(ind)
+#endif
+#if(fftw_cpu)
       fftb(i3m,i1) = CMPLX(psxr(ind),psxi(ind),DP)
+#endif
     END DO
   END DO
   DO i1=1,kfftx
 #if(netlib_fft)
-    CALL dcftb1 (kfftz,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
+    CALL dcftb1 (kfftz,fftb(:,i1),wrkz,wsavez,ifacz)    ! basic fft
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackz,fftb(1,i1),fftb(1,i1))
@@ -2142,10 +2209,20 @@ DO i2=1,kffty
   END DO
   DO i3=1,kfftz                  ! copy back
     i3m   = MOD(i3+nzh,kfftz)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      psxr(ind) = fftb(ir,i1)
+      psxi(ind) = fftb(ic,i1)
+#endif
+#if(fftw_cpu)
       psxr(ind) = REAL(fftb(i3m,i1),DP)
       psxi(ind) = AIMAG(fftb(i3m,i1))
+#endif
     END DO
   END DO
 END DO
@@ -2154,19 +2231,14 @@ RETURN
 END SUBROUTINE ffbz
 !-----ffby-------------------------------------------------------------
 
-SUBROUTINE ffby(psxr,psxi,yp)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
+SUBROUTINE ffby(psxr,psxi)
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
-
-!doub      complex*16 ffta
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: yp
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
+#if(netlib_fft)
+INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
+#endif
 
 
 !----------------------------------------------------------------------
@@ -2192,13 +2264,29 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir)=psxr(ii)
+      fftay(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir)=psxr(ii)
+      fftay(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)
       fftay(i2)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
     
 !         execution
@@ -2213,15 +2301,31 @@ DO i3=1,nzi
     ii=i0+nxi*(ny-2)
     DO i2=1,ny1
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      psxr(ii)=fftay(ir)
+      psxi(ii)=fftay(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
+#endif
     END DO
 !         negative space
     ii=i0-nxi
     DO i2=ny11,nyi
       ii=ii+nxi
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      psxr(ii)=fftay(ir)
+      psxi(ii)=fftay(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftay(i2),DP)
       psxi(ii)=AIMAG(fftay(i2))
+#endif
     END DO
     
   END DO
@@ -2232,21 +2336,14 @@ RETURN
 END SUBROUTINE ffby
 !-----ffbx-------------------------------------------------------------
 
-SUBROUTINE ffbx(psxr,psxi,xp)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
+SUBROUTINE ffbx(psxr,psxi)
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
-
-!doub      complex*16 ffta
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: xp
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
-
-
+#if(netlib_fft)
+INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
+#endif
 !----------------------------------------------------------------------
 
 nx11=nx1+1
@@ -2264,13 +2361,29 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir)=psxr(ii)
+      fftax(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)
       fftax(i1)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
 !        negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir)=psxr(ii)
+      fftax(ic)=psxi(ii)
+#endif
+#if(fftw_cpu)
       fftax(i1)=CMPLX(psxr(ii),psxi(ii),DP)
+#endif
     END DO
     
 !        execution
@@ -2285,15 +2398,31 @@ DO i3=1,nzi
     ii=i0+nx-1
     DO i1=1,nx1
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      psxr(ii)=fftax(ir)
+      psxi(ii)=fftax(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
+#endif
     END DO
 !         negative space
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      psxr(ii)=fftax(ir)
+      psxi(ii)=fftax(ic)
+#endif
+#if(fftw_cpu)
       psxr(ii)=REAL(fftax(i1),DP)
       psxi(ii)=AIMAG(fftax(i1))
+#endif
     END DO
   END DO
 END DO
