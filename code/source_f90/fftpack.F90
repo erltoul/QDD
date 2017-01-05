@@ -97,27 +97,36 @@ DATA tpi   /  6.28318530717958647692528676655900577D0/
 
 nl = n
 nf = 0
-j = 0
+j=1
+ntry = ntryh(j)
 
-101 j = j+1
-IF (j <= 4) ntry = ntryh(j)
-IF (j > 4) ntry = ntry + 2
-104 nq = nl/ntry
-nr = nl-ntry*nq
-IF (nr /= 0) GO TO 101
+DO WHILE(nl /= 1)
+  nq = nl/ntry
+  nr = nl-ntry*nq
+  IF (nr /= 0) THEN
+    j = j+1
+    IF (j <= 4) THEN
+    write(6,*) "j=",j
+      ntry = ntryh(j)
+    ELSE
+      ntry = ntry + 2
+    ENDIF
+    CYCLE
+  ENDIF
 
-105 nf = nf+1
-ifac(nf+2) = ntry
-nl = nq
-IF (ntry /= 2) GO TO 107
-IF (nf == 1) GO TO 107
-DO  i=2,nf
-  ib = nf-i+2
-  ifac(ib+2) = ifac(ib+1)
-END DO
-ifac(3) = 2
+  nf = nf+1
+  ifac(nf+2) = ntry
+  nl = nq
+  IF ((ntry == 2) .AND. (nf /= 1)) THEN
+    DO  i=2,nf
+      ib = nf-i+2
+      ifac(ib+2) = ifac(ib+1)
+    ENDDO
+    ifac(3) = 2
+  ENDIF
+ENDDO
 
-107 IF (nl /= 1) GO TO 104
+
 
 ifac(1) = n
 ifac(2) = nf
@@ -173,8 +182,6 @@ REAL(DP), INTENT(IN OUT)                     :: ch(kdim)
 REAL(DP), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
-
-
 nf = ifac(2)
 na = 0
 l1 = 1
@@ -185,59 +192,65 @@ DO  k1=1,nf
   ido = n/l2
   idot = ido+ido
   idl1 = idot*l1
-  IF (ip /= 4) GO TO 103
-  ix2 = iw+idot
-  ix3 = ix2+idot
-  IF (na /= 0) GO TO 101
-  CALL dpssf4 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
-  GO TO 102
-  101    CALL dpssf4 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
-  102    na = 1-na
-  GO TO 115
+  SELECT CASE(ip)
   
-  103    IF (ip /= 2) GO TO 106
-  IF (na /= 0) GO TO 104
-  CALL dpssf2 (idot,l1,c,ch,wa(iw))
-  GO TO 105
-  104    CALL dpssf2 (idot,l1,ch,c,wa(iw))
-  105    na = 1-na
-  GO TO 115
-  
-  106    IF (ip /= 3) GO TO 109
-  ix2 = iw+idot
-  IF (na /= 0) GO TO 107
-  CALL dpssf3 (idot,l1,c,ch,wa(iw),wa(ix2))
-  GO TO 108
-  107    CALL dpssf3 (idot,l1,ch,c,wa(iw),wa(ix2))
-  108    na = 1-na
-  GO TO 115
-  
-  109    IF (ip /= 5) GO TO 112
-  ix2 = iw+idot
-  ix3 = ix2+idot
-  ix4 = ix3+idot
-  IF (na /= 0) GO TO 110
-  CALL dpssf5 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  GO TO 111
-  110    CALL dpssf5 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  111    na = 1-na
-  GO TO 115
-  
-  112    IF (na /= 0) GO TO 113
-  CALL dpssf (nac,idot,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
-  GO TO 114
-  113    CALL dpssf (nac,idot,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
-  114    IF (nac /= 0) na = 1-na
-  
-  115    l1 = l2
+    CASE(4)
+      ix2 = iw+idot
+      ix3 = ix2+idot
+      IF (na /= 0) THEN
+        CALL dpssf4 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
+      ELSE
+        CALL dpssf4 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
+      ENDIF
+      na = 1-na
+      
+    CASE(2)
+      IF (na /= 0)THEN
+        CALL dpssf2 (idot,l1,ch,c,wa(iw))
+      ELSE
+        CALL dpssf2 (idot,l1,c,ch,wa(iw))
+      ENDIF
+      na = 1-na
+
+    CASE(3)
+      ix2 = iw+idot
+      IF (na /= 0) THEN
+        CALL dpssf3 (idot,l1,ch,c,wa(iw),wa(ix2))
+      ELSE
+        CALL dpssf3 (idot,l1,c,ch,wa(iw),wa(ix2))
+      ENDIF
+      na = 1-na
+
+    CASE(5)
+      ix2 = iw+idot
+      ix3 = ix2+idot
+      ix4 = ix3+idot
+      IF (na /= 0) THEN
+        CALL dpssf5 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ELSE
+        CALL dpssf5 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ENDIF
+      na = 1-na
+
+    CASE DEFAULT
+      IF (na /= 0) THEN
+        CALL dpssf (nac,idot,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
+      ELSE
+        CALL dpssf (nac,idot,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
+      ENDIF
+      IF (nac /= 0) na = 1-na
+  END SELECT
+
+  l1 = l2
   iw = iw+(ip-1)*idot
 END DO
-IF (na == 0) RETURN
 
-n2 = n+n
-DO  i=1,n2
-  c(i) = ch(i)
-END DO
+IF (na /= 0) THEN
+  n2 = n+n
+  DO  i=1,n2
+    c(i) = ch(i)
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dcftf1
@@ -267,59 +280,64 @@ DO  k1=1,nf
   ido = n/l2
   idot = ido+ido
   idl1 = idot*l1
-  IF (ip /= 4) GO TO 103
-  ix2 = iw+idot
-  ix3 = ix2+idot
-  IF (na /= 0) GO TO 101
-  CALL dpssb4 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
-  GO TO 102
-  101    CALL dpssb4 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
-  102    na = 1-na
-  GO TO 115
-  
-  103    IF (ip /= 2) GO TO 106
-  IF (na /= 0) GO TO 104
-  CALL dpssb2 (idot,l1,c,ch,wa(iw))
-  GO TO 105
-  104    CALL dpssb2 (idot,l1,ch,c,wa(iw))
-  105    na = 1-na
-  GO TO 115
-  
-  106    IF (ip /= 3) GO TO 109
-  ix2 = iw+idot
-  IF (na /= 0) GO TO 107
-  CALL dpssb3 (idot,l1,c,ch,wa(iw),wa(ix2))
-  GO TO 108
-  107    CALL dpssb3 (idot,l1,ch,c,wa(iw),wa(ix2))
-  108    na = 1-na
-  GO TO 115
-  
-  109    IF (ip /= 5) GO TO 112
-  ix2 = iw+idot
-  ix3 = ix2+idot
-  ix4 = ix3+idot
-  IF (na /= 0) GO TO 110
-  CALL dpssb5 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  GO TO 111
-  110    CALL dpssb5 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  111    na = 1-na
-  GO TO 115
-  
-  112    IF (na /= 0) GO TO 113
-  CALL dpssb (nac,idot,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
-  GO TO 114
-  113    CALL dpssb (nac,idot,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
-  114    IF (nac /= 0) na = 1-na
-  
-  115    l1 = l2
+  SELECT CASE(ip)
+    CASE(4)
+      ix2 = iw+idot
+      ix3 = ix2+idot
+      IF (na /= 0) THEN
+        CALL dpssb4 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
+      ELSE
+        CALL dpssb4 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
+      ENDIF
+      na = 1-na
+      
+    CASE(2)
+      IF (na /= 0) THEN
+        CALL dpssb2 (idot,l1,ch,c,wa(iw))
+      ELSE
+        CALL dpssb2 (idot,l1,c,ch,wa(iw))
+      ENDIF
+      na = 1-na
+      
+    CASE(3)
+      ix2 = iw+idot
+      IF (na /= 0) THEN
+        CALL dpssb3 (idot,l1,ch,c,wa(iw),wa(ix2))
+      ELSE
+        CALL dpssb3 (idot,l1,c,ch,wa(iw),wa(ix2))
+      ENDIF
+      na = 1-na
+      
+    CASE(5)
+      ix2 = iw+idot
+      ix3 = ix2+idot
+      ix4 = ix3+idot
+      IF (na /= 0) THEN
+        CALL dpssb5 (idot,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ELSE
+        CALL dpssb5 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ENDIF
+      na = 1-na
+      
+    CASE DEFAULT
+      IF (na /= 0) THEN
+        CALL dpssb (nac,idot,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
+      ELSE
+        CALL dpssb (nac,idot,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
+      ENDIF
+      IF (nac /= 0) na = 1-na
+      
+  END SELECT
+  l1 = l2
   iw = iw+(ip-1)*idot
 END DO
-IF (na == 0) RETURN
 
-n2 = n+n
-DO  i=1,n2
-  c(i) = ch(i)
-END DO
+IF (na /= 0) THEN
+  n2 = n+n
+  DO  i=1,n2
+    c(i) = ch(i)
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dcftb1
