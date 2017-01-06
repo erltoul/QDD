@@ -131,7 +131,6 @@ ENDDO
 ifac(1) = n
 ifac(2) = nf
 
-!OLD      ARGH = TPI/DFLOAT(N)
 argh = tpi/(n)
 i = 2
 l1 = 1
@@ -149,7 +148,6 @@ DO  k1=1,nf
     wa(i) = 0.d0
     ld = ld+l1
     fi = 0.d0
-!OLD            ARGLD = DFLOAT(LD)*ARGH
     argld = (ld)*argh
     DO  ii=4,idot,2
       i = i+2
@@ -245,12 +243,7 @@ DO  k1=1,nf
   iw = iw+(ip-1)*idot
 END DO
 
-IF (na /= 0) THEN
-  n2 = n+n
-  DO  i=1,n2
-    c(i) = ch(i)
-  END DO
-ENDIF
+IF (na /= 0)  c(1:2*n) = ch(1:2*n)
 
 RETURN
 END SUBROUTINE dcftf1
@@ -332,12 +325,7 @@ DO  k1=1,nf
   iw = iw+(ip-1)*idot
 END DO
 
-IF (na /= 0) THEN
-  n2 = n+n
-  DO  i=1,n2
-    c(i) = ch(i)
-  END DO
-ENDIF
+IF (na /= 0) c(1:2*n) = ch(1:2*n)
 
 RETURN
 END SUBROUTINE dcftb1
@@ -367,41 +355,45 @@ ipp2 = ip+2
 ipph = (ip+1)/2
 idp = ip*ido
 
-IF (ido < l1) GO TO 106
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
+IF (ido < l1) THEN
+
+  DO  j=2,ipph
+    jc = ipp2-j
     DO  i=1,ido
-      ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
-      ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      DO  k=1,l1
+        ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
+        ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      END DO
     END DO
   END DO
-END DO
 
-DO  k=1,l1
-  DO  i=1,ido
-    ch(i,k,1) = cc(i,1,k)
-  END DO
-END DO
-GO TO 112
-
-106 DO  j=2,ipph
-  jc = ipp2-j
   DO  i=1,ido
     DO  k=1,l1
-      ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
-      ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      ch(i,k,1) = cc(i,1,k)
     END DO
   END DO
-END DO
+  
+ELSE
 
-DO  i=1,ido
-  DO  k=1,l1
-    ch(i,k,1) = cc(i,1,k)
+  DO  j=2,ipph
+    jc = ipp2-j
+    DO  k=1,l1
+      DO  i=1,ido
+        ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
+        ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      END DO
+    END DO
   END DO
-END DO
 
-112 idl = 2-ido
+  DO  k=1,l1
+    DO  i=1,ido
+      ch(i,k,1) = cc(i,1,k)
+    END DO
+  END DO
+  
+ENDIF
+
+idl = 2-ido
 inc = 0
 DO  l=2,ipph
   lc = ipp2-l
@@ -456,34 +448,39 @@ DO  j=2,ip
   END DO
 END DO
 
-IF (idot > l1) GO TO 127
-idij = 0
-DO  j=2,ip
-  idij = idij+2
-  DO  i=4,ido,2
-    idij = idij+2
+IF (idot > l1) THEN
+
+  idj = 2-ido
+  DO  j=2,ip
+    idj = idj+ido
     DO  k=1,l1
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      idij = idj
+      DO  i=4,ido,2
+        idij = idij+2
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
-RETURN
+  
+ELSE
 
-127 idj = 2-ido
-DO  j=2,ip
-  idj = idj+ido
-  DO  k=1,l1
-    idij = idj
+  idij = 0
+  DO  j=2,ip
+    idij = idij+2
     DO  i=4,ido,2
       idij = idij+2
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      DO  k=1,l1
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
+  
+ENDIF
 
 RETURN
+
 END SUBROUTINE dpssb
 
 SUBROUTINE dpssb2 (ido,l1,cc,ch,wa1)
@@ -499,25 +496,25 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP) :: ti2, tr2
 
-IF (ido > 2) GO TO 102
-DO  k=1,l1
-  ch(1,k,1) = cc(1,1,k)+cc(1,2,k)
-  ch(1,k,2) = cc(1,1,k)-cc(1,2,k)
-  ch(2,k,1) = cc(2,1,k)+cc(2,2,k)
-  ch(2,k,2) = cc(2,1,k)-cc(2,2,k)
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ch(i-1,k,1) = cc(i-1,1,k)+cc(i-1,2,k)
-    tr2 = cc(i-1,1,k)-cc(i-1,2,k)
-    ch(i,k,1) = cc(i,1,k)+cc(i,2,k)
-    ti2 = cc(i,1,k)-cc(i,2,k)
-    ch(i,k,2) = wa1(i-1)*ti2+wa1(i)*tr2
-    ch(i-1,k,2) = wa1(i-1)*tr2-wa1(i)*ti2
+IF (ido > 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ch(i-1,k,1) = cc(i-1,1,k)+cc(i-1,2,k)
+      tr2 = cc(i-1,1,k)-cc(i-1,2,k)
+      ch(i,k,1) = cc(i,1,k)+cc(i,2,k)
+      ti2 = cc(i,1,k)-cc(i,2,k)
+      ch(i,k,2) = wa1(i-1)*ti2+wa1(i)*tr2
+      ch(i-1,k,2) = wa1(i-1)*tr2-wa1(i)*ti2
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    ch(1,k,1) = cc(1,1,k)+cc(1,2,k)
+    ch(1,k,2) = cc(1,1,k)-cc(1,2,k)
+    ch(2,k,1) = cc(2,1,k)+cc(2,2,k)
+    ch(2,k,2) = cc(2,1,k)-cc(2,2,k)
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssb2
@@ -540,43 +537,43 @@ DATA taui  /  0.86602540378443864676372317075293618D0/
 
 !     ONE HALF SQRT(3) = .866025.....  .
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  tr2 = cc(1,2,k)+cc(1,3,k)
-  cr2 = cc(1,1,k)+taur*tr2
-  ch(1,k,1) = cc(1,1,k)+tr2
-  ti2 = cc(2,2,k)+cc(2,3,k)
-  ci2 = cc(2,1,k)+taur*ti2
-  ch(2,k,1) = cc(2,1,k)+ti2
-  cr3 = taui*(cc(1,2,k)-cc(1,3,k))
-  ci3 = taui*(cc(2,2,k)-cc(2,3,k))
-  ch(1,k,2) = cr2-ci3
-  ch(1,k,3) = cr2+ci3
-  ch(2,k,2) = ci2+cr3
-  ch(2,k,3) = ci2-cr3
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    tr2 = cc(i-1,2,k)+cc(i-1,3,k)
-    cr2 = cc(i-1,1,k)+taur*tr2
-    ch(i-1,k,1) = cc(i-1,1,k)+tr2
-    ti2 = cc(i,2,k)+cc(i,3,k)
-    ci2 = cc(i,1,k)+taur*ti2
-    ch(i,k,1) = cc(i,1,k)+ti2
-    cr3 = taui*(cc(i-1,2,k)-cc(i-1,3,k))
-    ci3 = taui*(cc(i,2,k)-cc(i,3,k))
-    dr2 = cr2-ci3
-    dr3 = cr2+ci3
-    di2 = ci2+cr3
-    di3 = ci2-cr3
-    ch(i,k,2) = wa1(i-1)*di2+wa1(i)*dr2
-    ch(i-1,k,2) = wa1(i-1)*dr2-wa1(i)*di2
-    ch(i,k,3) = wa2(i-1)*di3+wa2(i)*dr3
-    ch(i-1,k,3) = wa2(i-1)*dr3-wa2(i)*di3
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      tr2 = cc(i-1,2,k)+cc(i-1,3,k)
+      cr2 = cc(i-1,1,k)+taur*tr2
+      ch(i-1,k,1) = cc(i-1,1,k)+tr2
+      ti2 = cc(i,2,k)+cc(i,3,k)
+      ci2 = cc(i,1,k)+taur*ti2
+      ch(i,k,1) = cc(i,1,k)+ti2
+      cr3 = taui*(cc(i-1,2,k)-cc(i-1,3,k))
+      ci3 = taui*(cc(i,2,k)-cc(i,3,k))
+      dr2 = cr2-ci3
+      dr3 = cr2+ci3
+      di2 = ci2+cr3
+      di3 = ci2-cr3
+      ch(i,k,2) = wa1(i-1)*di2+wa1(i)*dr2
+      ch(i-1,k,2) = wa1(i-1)*dr2-wa1(i)*di2
+      ch(i,k,3) = wa2(i-1)*di3+wa2(i)*dr3
+      ch(i-1,k,3) = wa2(i-1)*dr3-wa2(i)*di3
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    tr2 = cc(1,2,k)+cc(1,3,k)
+    cr2 = cc(1,1,k)+taur*tr2
+    ch(1,k,1) = cc(1,1,k)+tr2
+    ti2 = cc(2,2,k)+cc(2,3,k)
+    ci2 = cc(2,1,k)+taur*ti2
+    ch(2,k,1) = cc(2,1,k)+ti2
+    cr3 = taui*(cc(1,2,k)-cc(1,3,k))
+    ci3 = taui*(cc(2,2,k)-cc(2,3,k))
+    ch(1,k,2) = cr2-ci3
+    ch(1,k,3) = cr2+ci3
+    ch(2,k,2) = ci2+cr3
+    ch(2,k,3) = ci2-cr3
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssb3
@@ -596,53 +593,53 @@ REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  ti1 = cc(2,1,k)-cc(2,3,k)
-  ti2 = cc(2,1,k)+cc(2,3,k)
-  tr4 = cc(2,4,k)-cc(2,2,k)
-  ti3 = cc(2,2,k)+cc(2,4,k)
-  tr1 = cc(1,1,k)-cc(1,3,k)
-  tr2 = cc(1,1,k)+cc(1,3,k)
-  ti4 = cc(1,2,k)-cc(1,4,k)
-  tr3 = cc(1,2,k)+cc(1,4,k)
-  ch(1,k,1) = tr2+tr3
-  ch(1,k,3) = tr2-tr3
-  ch(2,k,1) = ti2+ti3
-  ch(2,k,3) = ti2-ti3
-  ch(1,k,2) = tr1+tr4
-  ch(1,k,4) = tr1-tr4
-  ch(2,k,2) = ti1+ti4
-  ch(2,k,4) = ti1-ti4
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ti1 = cc(i,1,k)-cc(i,3,k)
-    ti2 = cc(i,1,k)+cc(i,3,k)
-    ti3 = cc(i,2,k)+cc(i,4,k)
-    tr4 = cc(i,4,k)-cc(i,2,k)
-    tr1 = cc(i-1,1,k)-cc(i-1,3,k)
-    tr2 = cc(i-1,1,k)+cc(i-1,3,k)
-    ti4 = cc(i-1,2,k)-cc(i-1,4,k)
-    tr3 = cc(i-1,2,k)+cc(i-1,4,k)
-    ch(i-1,k,1) = tr2+tr3
-    cr3 = tr2-tr3
-    ch(i,k,1) = ti2+ti3
-    ci3 = ti2-ti3
-    cr2 = tr1+tr4
-    cr4 = tr1-tr4
-    ci2 = ti1+ti4
-    ci4 = ti1-ti4
-    ch(i-1,k,2) = wa1(i-1)*cr2-wa1(i)*ci2
-    ch(i,k,2) = wa1(i-1)*ci2+wa1(i)*cr2
-    ch(i-1,k,3) = wa2(i-1)*cr3-wa2(i)*ci3
-    ch(i,k,3) = wa2(i-1)*ci3+wa2(i)*cr3
-    ch(i-1,k,4) = wa3(i-1)*cr4-wa3(i)*ci4
-    ch(i,k,4) = wa3(i-1)*ci4+wa3(i)*cr4
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ti1 = cc(i,1,k)-cc(i,3,k)
+      ti2 = cc(i,1,k)+cc(i,3,k)
+      ti3 = cc(i,2,k)+cc(i,4,k)
+      tr4 = cc(i,4,k)-cc(i,2,k)
+      tr1 = cc(i-1,1,k)-cc(i-1,3,k)
+      tr2 = cc(i-1,1,k)+cc(i-1,3,k)
+      ti4 = cc(i-1,2,k)-cc(i-1,4,k)
+      tr3 = cc(i-1,2,k)+cc(i-1,4,k)
+      ch(i-1,k,1) = tr2+tr3
+      cr3 = tr2-tr3
+      ch(i,k,1) = ti2+ti3
+      ci3 = ti2-ti3
+      cr2 = tr1+tr4
+      cr4 = tr1-tr4
+      ci2 = ti1+ti4
+      ci4 = ti1-ti4
+      ch(i-1,k,2) = wa1(i-1)*cr2-wa1(i)*ci2
+      ch(i,k,2) = wa1(i-1)*ci2+wa1(i)*cr2
+      ch(i-1,k,3) = wa2(i-1)*cr3-wa2(i)*ci3
+      ch(i,k,3) = wa2(i-1)*ci3+wa2(i)*cr3
+      ch(i-1,k,4) = wa3(i-1)*cr4-wa3(i)*ci4
+      ch(i,k,4) = wa3(i-1)*ci4+wa3(i)*cr4
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    ti1 = cc(2,1,k)-cc(2,3,k)
+    ti2 = cc(2,1,k)+cc(2,3,k)
+    tr4 = cc(2,4,k)-cc(2,2,k)
+    ti3 = cc(2,2,k)+cc(2,4,k)
+    tr1 = cc(1,1,k)-cc(1,3,k)
+    tr2 = cc(1,1,k)+cc(1,3,k)
+    ti4 = cc(1,2,k)-cc(1,4,k)
+    tr3 = cc(1,2,k)+cc(1,4,k)
+    ch(1,k,1) = tr2+tr3
+    ch(1,k,3) = tr2-tr3
+    ch(2,k,1) = ti2+ti3
+    ch(2,k,3) = ti2-ti3
+    ch(1,k,2) = tr1+tr4
+    ch(1,k,4) = tr1-tr4
+    ch(2,k,2) = ti1+ti4
+    ch(2,k,4) = ti1-ti4
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssb4
@@ -674,75 +671,75 @@ DATA ti12  /  0.58778525229247312916870595463907277D0/
 !     SIN(PI/5 ) = .58778525....    .
 !     COS(PI/5 ) = .80901699....    .
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  ti5 = cc(2,2,k)-cc(2,5,k)
-  ti2 = cc(2,2,k)+cc(2,5,k)
-  ti4 = cc(2,3,k)-cc(2,4,k)
-  ti3 = cc(2,3,k)+cc(2,4,k)
-  tr5 = cc(1,2,k)-cc(1,5,k)
-  tr2 = cc(1,2,k)+cc(1,5,k)
-  tr4 = cc(1,3,k)-cc(1,4,k)
-  tr3 = cc(1,3,k)+cc(1,4,k)
-  ch(1,k,1) = cc(1,1,k)+tr2+tr3
-  ch(2,k,1) = cc(2,1,k)+ti2+ti3
-  cr2 = cc(1,1,k)+tr11*tr2+tr12*tr3
-  ci2 = cc(2,1,k)+tr11*ti2+tr12*ti3
-  cr3 = cc(1,1,k)+tr12*tr2+tr11*tr3
-  ci3 = cc(2,1,k)+tr12*ti2+tr11*ti3
-  cr5 = ti11*tr5+ti12*tr4
-  ci5 = ti11*ti5+ti12*ti4
-  cr4 = ti12*tr5-ti11*tr4
-  ci4 = ti12*ti5-ti11*ti4
-  ch(1,k,2) = cr2-ci5
-  ch(1,k,5) = cr2+ci5
-  ch(2,k,2) = ci2+cr5
-  ch(2,k,3) = ci3+cr4
-  ch(1,k,3) = cr3-ci4
-  ch(1,k,4) = cr3+ci4
-  ch(2,k,4) = ci3-cr4
-  ch(2,k,5) = ci2-cr5
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ti5 = cc(i,2,k)-cc(i,5,k)
-    ti2 = cc(i,2,k)+cc(i,5,k)
-    ti4 = cc(i,3,k)-cc(i,4,k)
-    ti3 = cc(i,3,k)+cc(i,4,k)
-    tr5 = cc(i-1,2,k)-cc(i-1,5,k)
-    tr2 = cc(i-1,2,k)+cc(i-1,5,k)
-    tr4 = cc(i-1,3,k)-cc(i-1,4,k)
-    tr3 = cc(i-1,3,k)+cc(i-1,4,k)
-    ch(i-1,k,1) = cc(i-1,1,k)+tr2+tr3
-    ch(i,k,1) = cc(i,1,k)+ti2+ti3
-    cr2 = cc(i-1,1,k)+tr11*tr2+tr12*tr3
-    ci2 = cc(i,1,k)+tr11*ti2+tr12*ti3
-    cr3 = cc(i-1,1,k)+tr12*tr2+tr11*tr3
-    ci3 = cc(i,1,k)+tr12*ti2+tr11*ti3
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ti5 = cc(i,2,k)-cc(i,5,k)
+      ti2 = cc(i,2,k)+cc(i,5,k)
+      ti4 = cc(i,3,k)-cc(i,4,k)
+      ti3 = cc(i,3,k)+cc(i,4,k)
+      tr5 = cc(i-1,2,k)-cc(i-1,5,k)
+      tr2 = cc(i-1,2,k)+cc(i-1,5,k)
+      tr4 = cc(i-1,3,k)-cc(i-1,4,k)
+      tr3 = cc(i-1,3,k)+cc(i-1,4,k)
+      ch(i-1,k,1) = cc(i-1,1,k)+tr2+tr3
+      ch(i,k,1) = cc(i,1,k)+ti2+ti3
+      cr2 = cc(i-1,1,k)+tr11*tr2+tr12*tr3
+      ci2 = cc(i,1,k)+tr11*ti2+tr12*ti3
+      cr3 = cc(i-1,1,k)+tr12*tr2+tr11*tr3
+      ci3 = cc(i,1,k)+tr12*ti2+tr11*ti3
+      cr5 = ti11*tr5+ti12*tr4
+      ci5 = ti11*ti5+ti12*ti4
+      cr4 = ti12*tr5-ti11*tr4
+      ci4 = ti12*ti5-ti11*ti4
+      dr3 = cr3-ci4
+      dr4 = cr3+ci4
+      di3 = ci3+cr4
+      di4 = ci3-cr4
+      dr5 = cr2+ci5
+      dr2 = cr2-ci5
+      di5 = ci2-cr5
+      di2 = ci2+cr5
+      ch(i-1,k,2) = wa1(i-1)*dr2-wa1(i)*di2
+      ch(i,k,2) = wa1(i-1)*di2+wa1(i)*dr2
+      ch(i-1,k,3) = wa2(i-1)*dr3-wa2(i)*di3
+      ch(i,k,3) = wa2(i-1)*di3+wa2(i)*dr3
+      ch(i-1,k,4) = wa3(i-1)*dr4-wa3(i)*di4
+      ch(i,k,4) = wa3(i-1)*di4+wa3(i)*dr4
+      ch(i-1,k,5) = wa4(i-1)*dr5-wa4(i)*di5
+      ch(i,k,5) = wa4(i-1)*di5+wa4(i)*dr5
+    END DO
+  END DO
+ELSE
+  DO  k=1,l1
+    ti5 = cc(2,2,k)-cc(2,5,k)
+    ti2 = cc(2,2,k)+cc(2,5,k)
+    ti4 = cc(2,3,k)-cc(2,4,k)
+    ti3 = cc(2,3,k)+cc(2,4,k)
+    tr5 = cc(1,2,k)-cc(1,5,k)
+    tr2 = cc(1,2,k)+cc(1,5,k)
+    tr4 = cc(1,3,k)-cc(1,4,k)
+    tr3 = cc(1,3,k)+cc(1,4,k)
+    ch(1,k,1) = cc(1,1,k)+tr2+tr3
+    ch(2,k,1) = cc(2,1,k)+ti2+ti3
+    cr2 = cc(1,1,k)+tr11*tr2+tr12*tr3
+    ci2 = cc(2,1,k)+tr11*ti2+tr12*ti3
+    cr3 = cc(1,1,k)+tr12*tr2+tr11*tr3
+    ci3 = cc(2,1,k)+tr12*ti2+tr11*ti3
     cr5 = ti11*tr5+ti12*tr4
     ci5 = ti11*ti5+ti12*ti4
     cr4 = ti12*tr5-ti11*tr4
     ci4 = ti12*ti5-ti11*ti4
-    dr3 = cr3-ci4
-    dr4 = cr3+ci4
-    di3 = ci3+cr4
-    di4 = ci3-cr4
-    dr5 = cr2+ci5
-    dr2 = cr2-ci5
-    di5 = ci2-cr5
-    di2 = ci2+cr5
-    ch(i-1,k,2) = wa1(i-1)*dr2-wa1(i)*di2
-    ch(i,k,2) = wa1(i-1)*di2+wa1(i)*dr2
-    ch(i-1,k,3) = wa2(i-1)*dr3-wa2(i)*di3
-    ch(i,k,3) = wa2(i-1)*di3+wa2(i)*dr3
-    ch(i-1,k,4) = wa3(i-1)*dr4-wa3(i)*di4
-    ch(i,k,4) = wa3(i-1)*di4+wa3(i)*dr4
-    ch(i-1,k,5) = wa4(i-1)*dr5-wa4(i)*di5
-    ch(i,k,5) = wa4(i-1)*di5+wa4(i)*dr5
+    ch(1,k,2) = cr2-ci5
+    ch(1,k,5) = cr2+ci5
+    ch(2,k,2) = ci2+cr5
+    ch(2,k,3) = ci3+cr4
+    ch(1,k,3) = cr3-ci4
+    ch(1,k,4) = cr3+ci4
+    ch(2,k,4) = ci3-cr4
+    ch(2,k,5) = ci2-cr5
   END DO
-END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssb5
@@ -772,41 +769,41 @@ ipp2 = ip+2
 ipph = (ip+1)/2
 idp = ip*ido
 
-IF (ido < l1) GO TO 106
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
+IF (ido < l1) THEN
+  DO  j=2,ipph
+    jc = ipp2-j
     DO  i=1,ido
-      ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
-      ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      DO  k=1,l1
+        ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
+        ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      END DO
     END DO
   END DO
-END DO
 
-DO  k=1,l1
-  DO  i=1,ido
-    ch(i,k,1) = cc(i,1,k)
-  END DO
-END DO
-GO TO 112
-
-106 DO  j=2,ipph
-  jc = ipp2-j
   DO  i=1,ido
     DO  k=1,l1
-      ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
-      ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      ch(i,k,1) = cc(i,1,k)
     END DO
   END DO
-END DO
-
-DO  i=1,ido
-  DO  k=1,l1
-    ch(i,k,1) = cc(i,1,k)
+ELSE
+  DO  j=2,ipph
+    jc = ipp2-j
+    DO  k=1,l1
+      DO  i=1,ido
+        ch(i,k,j) = cc(i,j,k)+cc(i,jc,k)
+        ch(i,k,jc) = cc(i,j,k)-cc(i,jc,k)
+      END DO
+    END DO
   END DO
-END DO
 
-112 idl = 2-ido
+  DO  k=1,l1
+    DO  i=1,ido
+      ch(i,k,1) = cc(i,1,k)
+    END DO
+  END DO
+ENDIF
+
+idl = 2-ido
 inc = 0
 DO  l=2,ipph
   lc = ipp2-l
@@ -861,32 +858,32 @@ DO  j=2,ip
   END DO
 END DO
 
-IF (idot > l1) GO TO 127
-idij = 0
-DO  j=2,ip
-  idij = idij+2
-  DO  i=4,ido,2
-    idij = idij+2
+IF (idot > l1) THEN
+  idj = 2-ido
+  DO  j=2,ip
+    idj = idj+ido
     DO  k=1,l1
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)+wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)-wa(idij)*ch(i-1,k,j)
+      idij = idj
+      DO  i=4,ido,2
+        idij = idij+2
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)+wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)-wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
-RETURN
-
-127 idj = 2-ido
-DO  j=2,ip
-  idj = idj+ido
-  DO  k=1,l1
-    idij = idj
+ELSE
+  idij = 0
+  DO  j=2,ip
+    idij = idij+2
     DO  i=4,ido,2
       idij = idij+2
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)+wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)-wa(idij)*ch(i-1,k,j)
+      DO  k=1,l1
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)+wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)-wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssf
@@ -904,25 +901,25 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP) :: ti2, tr2
 
-IF (ido > 2) GO TO 102
-DO  k=1,l1
-  ch(1,k,1) = cc(1,1,k)+cc(1,2,k)
-  ch(1,k,2) = cc(1,1,k)-cc(1,2,k)
-  ch(2,k,1) = cc(2,1,k)+cc(2,2,k)
-  ch(2,k,2) = cc(2,1,k)-cc(2,2,k)
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ch(i-1,k,1) = cc(i-1,1,k)+cc(i-1,2,k)
-    tr2 = cc(i-1,1,k)-cc(i-1,2,k)
-    ch(i,k,1) = cc(i,1,k)+cc(i,2,k)
-    ti2 = cc(i,1,k)-cc(i,2,k)
-    ch(i,k,2) = wa1(i-1)*ti2-wa1(i)*tr2
-    ch(i-1,k,2) = wa1(i-1)*tr2+wa1(i)*ti2
+IF (ido > 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ch(i-1,k,1) = cc(i-1,1,k)+cc(i-1,2,k)
+      tr2 = cc(i-1,1,k)-cc(i-1,2,k)
+      ch(i,k,1) = cc(i,1,k)+cc(i,2,k)
+      ti2 = cc(i,1,k)-cc(i,2,k)
+      ch(i,k,2) = wa1(i-1)*ti2-wa1(i)*tr2
+      ch(i-1,k,2) = wa1(i-1)*tr2+wa1(i)*ti2
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    ch(1,k,1) = cc(1,1,k)+cc(1,2,k)
+    ch(1,k,2) = cc(1,1,k)-cc(1,2,k)
+    ch(2,k,1) = cc(2,1,k)+cc(2,2,k)
+    ch(2,k,2) = cc(2,1,k)-cc(2,2,k)
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssf2
@@ -943,43 +940,43 @@ REAL(DP) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
 DATA taur / -0.5D0 /
 DATA taui  / -0.86602540378443864676372317075293618D0/
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  tr2 = cc(1,2,k)+cc(1,3,k)
-  cr2 = cc(1,1,k)+taur*tr2
-  ch(1,k,1) = cc(1,1,k)+tr2
-  ti2 = cc(2,2,k)+cc(2,3,k)
-  ci2 = cc(2,1,k)+taur*ti2
-  ch(2,k,1) = cc(2,1,k)+ti2
-  cr3 = taui*(cc(1,2,k)-cc(1,3,k))
-  ci3 = taui*(cc(2,2,k)-cc(2,3,k))
-  ch(1,k,2) = cr2-ci3
-  ch(1,k,3) = cr2+ci3
-  ch(2,k,2) = ci2+cr3
-  ch(2,k,3) = ci2-cr3
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    tr2 = cc(i-1,2,k)+cc(i-1,3,k)
-    cr2 = cc(i-1,1,k)+taur*tr2
-    ch(i-1,k,1) = cc(i-1,1,k)+tr2
-    ti2 = cc(i,2,k)+cc(i,3,k)
-    ci2 = cc(i,1,k)+taur*ti2
-    ch(i,k,1) = cc(i,1,k)+ti2
-    cr3 = taui*(cc(i-1,2,k)-cc(i-1,3,k))
-    ci3 = taui*(cc(i,2,k)-cc(i,3,k))
-    dr2 = cr2-ci3
-    dr3 = cr2+ci3
-    di2 = ci2+cr3
-    di3 = ci2-cr3
-    ch(i,k,2) = wa1(i-1)*di2-wa1(i)*dr2
-    ch(i-1,k,2) = wa1(i-1)*dr2+wa1(i)*di2
-    ch(i,k,3) = wa2(i-1)*di3-wa2(i)*dr3
-    ch(i-1,k,3) = wa2(i-1)*dr3+wa2(i)*di3
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      tr2 = cc(i-1,2,k)+cc(i-1,3,k)
+      cr2 = cc(i-1,1,k)+taur*tr2
+      ch(i-1,k,1) = cc(i-1,1,k)+tr2
+      ti2 = cc(i,2,k)+cc(i,3,k)
+      ci2 = cc(i,1,k)+taur*ti2
+      ch(i,k,1) = cc(i,1,k)+ti2
+      cr3 = taui*(cc(i-1,2,k)-cc(i-1,3,k))
+      ci3 = taui*(cc(i,2,k)-cc(i,3,k))
+      dr2 = cr2-ci3
+      dr3 = cr2+ci3
+      di2 = ci2+cr3
+      di3 = ci2-cr3
+      ch(i,k,2) = wa1(i-1)*di2-wa1(i)*dr2
+      ch(i-1,k,2) = wa1(i-1)*dr2+wa1(i)*di2
+      ch(i,k,3) = wa2(i-1)*di3-wa2(i)*dr3
+      ch(i-1,k,3) = wa2(i-1)*dr3+wa2(i)*di3
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    tr2 = cc(1,2,k)+cc(1,3,k)
+    cr2 = cc(1,1,k)+taur*tr2
+    ch(1,k,1) = cc(1,1,k)+tr2
+    ti2 = cc(2,2,k)+cc(2,3,k)
+    ci2 = cc(2,1,k)+taur*ti2
+    ch(2,k,1) = cc(2,1,k)+ti2
+    cr3 = taui*(cc(1,2,k)-cc(1,3,k))
+    ci3 = taui*(cc(2,2,k)-cc(2,3,k))
+    ch(1,k,2) = cr2-ci3
+    ch(1,k,3) = cr2+ci3
+    ch(2,k,2) = ci2+cr3
+    ch(2,k,3) = ci2-cr3
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssf3
@@ -999,53 +996,53 @@ REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  ti1 = cc(2,1,k)-cc(2,3,k)
-  ti2 = cc(2,1,k)+cc(2,3,k)
-  tr4 = cc(2,2,k)-cc(2,4,k)
-  ti3 = cc(2,2,k)+cc(2,4,k)
-  tr1 = cc(1,1,k)-cc(1,3,k)
-  tr2 = cc(1,1,k)+cc(1,3,k)
-  ti4 = cc(1,4,k)-cc(1,2,k)
-  tr3 = cc(1,2,k)+cc(1,4,k)
-  ch(1,k,1) = tr2+tr3
-  ch(1,k,3) = tr2-tr3
-  ch(2,k,1) = ti2+ti3
-  ch(2,k,3) = ti2-ti3
-  ch(1,k,2) = tr1+tr4
-  ch(1,k,4) = tr1-tr4
-  ch(2,k,2) = ti1+ti4
-  ch(2,k,4) = ti1-ti4
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ti1 = cc(i,1,k)-cc(i,3,k)
-    ti2 = cc(i,1,k)+cc(i,3,k)
-    ti3 = cc(i,2,k)+cc(i,4,k)
-    tr4 = cc(i,2,k)-cc(i,4,k)
-    tr1 = cc(i-1,1,k)-cc(i-1,3,k)
-    tr2 = cc(i-1,1,k)+cc(i-1,3,k)
-    ti4 = cc(i-1,4,k)-cc(i-1,2,k)
-    tr3 = cc(i-1,2,k)+cc(i-1,4,k)
-    ch(i-1,k,1) = tr2+tr3
-    cr3 = tr2-tr3
-    ch(i,k,1) = ti2+ti3
-    ci3 = ti2-ti3
-    cr2 = tr1+tr4
-    cr4 = tr1-tr4
-    ci2 = ti1+ti4
-    ci4 = ti1-ti4
-    ch(i-1,k,2) = wa1(i-1)*cr2+wa1(i)*ci2
-    ch(i,k,2) = wa1(i-1)*ci2-wa1(i)*cr2
-    ch(i-1,k,3) = wa2(i-1)*cr3+wa2(i)*ci3
-    ch(i,k,3) = wa2(i-1)*ci3-wa2(i)*cr3
-    ch(i-1,k,4) = wa3(i-1)*cr4+wa3(i)*ci4
-    ch(i,k,4) = wa3(i-1)*ci4-wa3(i)*cr4
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ti1 = cc(i,1,k)-cc(i,3,k)
+      ti2 = cc(i,1,k)+cc(i,3,k)
+      ti3 = cc(i,2,k)+cc(i,4,k)
+      tr4 = cc(i,2,k)-cc(i,4,k)
+      tr1 = cc(i-1,1,k)-cc(i-1,3,k)
+      tr2 = cc(i-1,1,k)+cc(i-1,3,k)
+      ti4 = cc(i-1,4,k)-cc(i-1,2,k)
+      tr3 = cc(i-1,2,k)+cc(i-1,4,k)
+      ch(i-1,k,1) = tr2+tr3
+      cr3 = tr2-tr3
+      ch(i,k,1) = ti2+ti3
+      ci3 = ti2-ti3
+      cr2 = tr1+tr4
+      cr4 = tr1-tr4
+      ci2 = ti1+ti4
+      ci4 = ti1-ti4
+      ch(i-1,k,2) = wa1(i-1)*cr2+wa1(i)*ci2
+      ch(i,k,2) = wa1(i-1)*ci2-wa1(i)*cr2
+      ch(i-1,k,3) = wa2(i-1)*cr3+wa2(i)*ci3
+      ch(i,k,3) = wa2(i-1)*ci3-wa2(i)*cr3
+      ch(i-1,k,4) = wa3(i-1)*cr4+wa3(i)*ci4
+      ch(i,k,4) = wa3(i-1)*ci4-wa3(i)*cr4
+    END DO
   END DO
-END DO
+ELSE
+  DO  k=1,l1
+    ti1 = cc(2,1,k)-cc(2,3,k)
+    ti2 = cc(2,1,k)+cc(2,3,k)
+    tr4 = cc(2,2,k)-cc(2,4,k)
+    ti3 = cc(2,2,k)+cc(2,4,k)
+    tr1 = cc(1,1,k)-cc(1,3,k)
+    tr2 = cc(1,1,k)+cc(1,3,k)
+    ti4 = cc(1,4,k)-cc(1,2,k)
+    tr3 = cc(1,2,k)+cc(1,4,k)
+    ch(1,k,1) = tr2+tr3
+    ch(1,k,3) = tr2-tr3
+    ch(2,k,1) = ti2+ti3
+    ch(2,k,3) = ti2-ti3
+    ch(1,k,2) = tr1+tr4
+    ch(1,k,4) = tr1-tr4
+    ch(2,k,2) = ti1+ti4
+    ch(2,k,4) = ti1-ti4
+  END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssf4
@@ -1072,75 +1069,75 @@ DATA ti11  / -0.95105651629515357211643933337938214D0/
 DATA tr12  / -0.80901699437494742410229341718281906D0/
 DATA ti12  / -0.58778525229247312916870595463907277D0/
 
-IF (ido /= 2) GO TO 102
-DO  k=1,l1
-  ti5 = cc(2,2,k)-cc(2,5,k)
-  ti2 = cc(2,2,k)+cc(2,5,k)
-  ti4 = cc(2,3,k)-cc(2,4,k)
-  ti3 = cc(2,3,k)+cc(2,4,k)
-  tr5 = cc(1,2,k)-cc(1,5,k)
-  tr2 = cc(1,2,k)+cc(1,5,k)
-  tr4 = cc(1,3,k)-cc(1,4,k)
-  tr3 = cc(1,3,k)+cc(1,4,k)
-  ch(1,k,1) = cc(1,1,k)+tr2+tr3
-  ch(2,k,1) = cc(2,1,k)+ti2+ti3
-  cr2 = cc(1,1,k)+tr11*tr2+tr12*tr3
-  ci2 = cc(2,1,k)+tr11*ti2+tr12*ti3
-  cr3 = cc(1,1,k)+tr12*tr2+tr11*tr3
-  ci3 = cc(2,1,k)+tr12*ti2+tr11*ti3
-  cr5 = ti11*tr5+ti12*tr4
-  ci5 = ti11*ti5+ti12*ti4
-  cr4 = ti12*tr5-ti11*tr4
-  ci4 = ti12*ti5-ti11*ti4
-  ch(1,k,2) = cr2-ci5
-  ch(1,k,5) = cr2+ci5
-  ch(2,k,2) = ci2+cr5
-  ch(2,k,3) = ci3+cr4
-  ch(1,k,3) = cr3-ci4
-  ch(1,k,4) = cr3+ci4
-  ch(2,k,4) = ci3-cr4
-  ch(2,k,5) = ci2-cr5
-END DO
-RETURN
-
-102 DO  k=1,l1
-  DO  i=2,ido,2
-    ti5 = cc(i,2,k)-cc(i,5,k)
-    ti2 = cc(i,2,k)+cc(i,5,k)
-    ti4 = cc(i,3,k)-cc(i,4,k)
-    ti3 = cc(i,3,k)+cc(i,4,k)
-    tr5 = cc(i-1,2,k)-cc(i-1,5,k)
-    tr2 = cc(i-1,2,k)+cc(i-1,5,k)
-    tr4 = cc(i-1,3,k)-cc(i-1,4,k)
-    tr3 = cc(i-1,3,k)+cc(i-1,4,k)
-    ch(i-1,k,1) = cc(i-1,1,k)+tr2+tr3
-    ch(i,k,1) = cc(i,1,k)+ti2+ti3
-    cr2 = cc(i-1,1,k)+tr11*tr2+tr12*tr3
-    ci2 = cc(i,1,k)+tr11*ti2+tr12*ti3
-    cr3 = cc(i-1,1,k)+tr12*tr2+tr11*tr3
-    ci3 = cc(i,1,k)+tr12*ti2+tr11*ti3
+IF (ido /= 2) THEN
+  DO  k=1,l1
+    DO  i=2,ido,2
+      ti5 = cc(i,2,k)-cc(i,5,k)
+      ti2 = cc(i,2,k)+cc(i,5,k)
+      ti4 = cc(i,3,k)-cc(i,4,k)
+      ti3 = cc(i,3,k)+cc(i,4,k)
+      tr5 = cc(i-1,2,k)-cc(i-1,5,k)
+      tr2 = cc(i-1,2,k)+cc(i-1,5,k)
+      tr4 = cc(i-1,3,k)-cc(i-1,4,k)
+      tr3 = cc(i-1,3,k)+cc(i-1,4,k)
+      ch(i-1,k,1) = cc(i-1,1,k)+tr2+tr3
+      ch(i,k,1) = cc(i,1,k)+ti2+ti3
+      cr2 = cc(i-1,1,k)+tr11*tr2+tr12*tr3
+      ci2 = cc(i,1,k)+tr11*ti2+tr12*ti3
+      cr3 = cc(i-1,1,k)+tr12*tr2+tr11*tr3
+      ci3 = cc(i,1,k)+tr12*ti2+tr11*ti3
+      cr5 = ti11*tr5+ti12*tr4
+      ci5 = ti11*ti5+ti12*ti4
+      cr4 = ti12*tr5-ti11*tr4
+      ci4 = ti12*ti5-ti11*ti4
+      dr3 = cr3-ci4
+      dr4 = cr3+ci4
+      di3 = ci3+cr4
+      di4 = ci3-cr4
+      dr5 = cr2+ci5
+      dr2 = cr2-ci5
+      di5 = ci2-cr5
+      di2 = ci2+cr5
+      ch(i-1,k,2) = wa1(i-1)*dr2+wa1(i)*di2
+      ch(i,k,2) = wa1(i-1)*di2-wa1(i)*dr2
+      ch(i-1,k,3) = wa2(i-1)*dr3+wa2(i)*di3
+      ch(i,k,3) = wa2(i-1)*di3-wa2(i)*dr3
+      ch(i-1,k,4) = wa3(i-1)*dr4+wa3(i)*di4
+      ch(i,k,4) = wa3(i-1)*di4-wa3(i)*dr4
+      ch(i-1,k,5) = wa4(i-1)*dr5+wa4(i)*di5
+      ch(i,k,5) = wa4(i-1)*di5-wa4(i)*dr5
+    END DO
+  END DO
+ELSE
+  DO  k=1,l1
+    ti5 = cc(2,2,k)-cc(2,5,k)
+    ti2 = cc(2,2,k)+cc(2,5,k)
+    ti4 = cc(2,3,k)-cc(2,4,k)
+    ti3 = cc(2,3,k)+cc(2,4,k)
+    tr5 = cc(1,2,k)-cc(1,5,k)
+    tr2 = cc(1,2,k)+cc(1,5,k)
+    tr4 = cc(1,3,k)-cc(1,4,k)
+    tr3 = cc(1,3,k)+cc(1,4,k)
+    ch(1,k,1) = cc(1,1,k)+tr2+tr3
+    ch(2,k,1) = cc(2,1,k)+ti2+ti3
+    cr2 = cc(1,1,k)+tr11*tr2+tr12*tr3
+    ci2 = cc(2,1,k)+tr11*ti2+tr12*ti3
+    cr3 = cc(1,1,k)+tr12*tr2+tr11*tr3
+    ci3 = cc(2,1,k)+tr12*ti2+tr11*ti3
     cr5 = ti11*tr5+ti12*tr4
     ci5 = ti11*ti5+ti12*ti4
     cr4 = ti12*tr5-ti11*tr4
     ci4 = ti12*ti5-ti11*ti4
-    dr3 = cr3-ci4
-    dr4 = cr3+ci4
-    di3 = ci3+cr4
-    di4 = ci3-cr4
-    dr5 = cr2+ci5
-    dr2 = cr2-ci5
-    di5 = ci2-cr5
-    di2 = ci2+cr5
-    ch(i-1,k,2) = wa1(i-1)*dr2+wa1(i)*di2
-    ch(i,k,2) = wa1(i-1)*di2-wa1(i)*dr2
-    ch(i-1,k,3) = wa2(i-1)*dr3+wa2(i)*di3
-    ch(i,k,3) = wa2(i-1)*di3-wa2(i)*dr3
-    ch(i-1,k,4) = wa3(i-1)*dr4+wa3(i)*di4
-    ch(i,k,4) = wa3(i-1)*di4-wa3(i)*dr4
-    ch(i-1,k,5) = wa4(i-1)*dr5+wa4(i)*di5
-    ch(i,k,5) = wa4(i-1)*di5-wa4(i)*dr5
+    ch(1,k,2) = cr2-ci5
+    ch(1,k,5) = cr2+ci5
+    ch(2,k,2) = ci2+cr5
+    ch(2,k,3) = ci3+cr4
+    ch(1,k,3) = cr3-ci4
+    ch(1,k,4) = cr3+ci4
+    ch(2,k,4) = ci3-cr4
+    ch(2,k,5) = ci2-cr5
   END DO
-END DO
+ENDIF
 
 RETURN
 END SUBROUTINE dpssf5
@@ -1163,31 +1160,30 @@ DO  k=1,l1
   ch(1,k,2) = cc(1,1,k)-cc(ido,2,k)
 END DO
 
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    ch(i-1,k,1) = cc(i-1,1,k)+cc(ic-1,2,k)
-    tr2 = cc(i-1,1,k)-cc(ic-1,2,k)
-    ch(i,k,1) = cc(i,1,k)-cc(ic,2,k)
-    ti2 = cc(i,1,k)+cc(ic,2,k)
-    ch(i-1,k,2) = wa1(i-2)*tr2-wa1(i-1)*ti2
-    ch(i,k,2) = wa1(i-2)*ti2+wa1(i-1)*tr2
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido /= 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      ch(i-1,k,1) = cc(i-1,1,k)+cc(ic-1,2,k)
+      tr2 = cc(i-1,1,k)-cc(ic-1,2,k)
+      ch(i,k,1) = cc(i,1,k)-cc(ic,2,k)
+      ti2 = cc(i,1,k)+cc(ic,2,k)
+      ch(i-1,k,2) = wa1(i-2)*tr2-wa1(i-1)*ti2
+      ch(i,k,2) = wa1(i-2)*ti2+wa1(i-1)*tr2
+    END DO
   END DO
-END DO
+  IF (MOD(ido,2) == 1) RETURN
+ENDIF
 
-IF (MOD(ido,2) == 1) RETURN
-105 DO  k=1,l1
+DO  k=1,l1
   ch(ido,k,1) = cc(ido,1,k)+cc(ido,1,k)
   ch(ido,k,2) = -(cc(1,2,k)+cc(1,2,k))
 END DO
 
-107 RETURN
+RETURN
 END SUBROUTINE dradb2
 
 SUBROUTINE dradb3 (ido,l1,cc,ch,wa1,wa2)
@@ -1270,42 +1266,41 @@ DO  k=1,l1
   ch(1,k,4) = tr1+tr4
 END DO
 
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    ti1 = cc(i,1,k)+cc(ic,4,k)
-    ti2 = cc(i,1,k)-cc(ic,4,k)
-    ti3 = cc(i,3,k)-cc(ic,2,k)
-    tr4 = cc(i,3,k)+cc(ic,2,k)
-    tr1 = cc(i-1,1,k)-cc(ic-1,4,k)
-    tr2 = cc(i-1,1,k)+cc(ic-1,4,k)
-    ti4 = cc(i-1,3,k)-cc(ic-1,2,k)
-    tr3 = cc(i-1,3,k)+cc(ic-1,2,k)
-    ch(i-1,k,1) = tr2+tr3
-    cr3 = tr2-tr3
-    ch(i,k,1) = ti2+ti3
-    ci3 = ti2-ti3
-    cr2 = tr1-tr4
-    cr4 = tr1+tr4
-    ci2 = ti1+ti4
-    ci4 = ti1-ti4
-    ch(i-1,k,2) = wa1(i-2)*cr2-wa1(i-1)*ci2
-    ch(i,k,2) = wa1(i-2)*ci2+wa1(i-1)*cr2
-    ch(i-1,k,3) = wa2(i-2)*cr3-wa2(i-1)*ci3
-    ch(i,k,3) = wa2(i-2)*ci3+wa2(i-1)*cr3
-    ch(i-1,k,4) = wa3(i-2)*cr4-wa3(i-1)*ci4
-    ch(i,k,4) = wa3(i-2)*ci4+wa3(i-1)*cr4
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido /= 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      ti1 = cc(i,1,k)+cc(ic,4,k)
+      ti2 = cc(i,1,k)-cc(ic,4,k)
+      ti3 = cc(i,3,k)-cc(ic,2,k)
+      tr4 = cc(i,3,k)+cc(ic,2,k)
+      tr1 = cc(i-1,1,k)-cc(ic-1,4,k)
+      tr2 = cc(i-1,1,k)+cc(ic-1,4,k)
+      ti4 = cc(i-1,3,k)-cc(ic-1,2,k)
+      tr3 = cc(i-1,3,k)+cc(ic-1,2,k)
+      ch(i-1,k,1) = tr2+tr3
+      cr3 = tr2-tr3
+      ch(i,k,1) = ti2+ti3
+      ci3 = ti2-ti3
+      cr2 = tr1-tr4
+      cr4 = tr1+tr4
+      ci2 = ti1+ti4
+      ci4 = ti1-ti4
+      ch(i-1,k,2) = wa1(i-2)*cr2-wa1(i-1)*ci2
+      ch(i,k,2) = wa1(i-2)*ci2+wa1(i-1)*cr2
+      ch(i-1,k,3) = wa2(i-2)*cr3-wa2(i-1)*ci3
+      ch(i,k,3) = wa2(i-2)*ci3+wa2(i-1)*cr3
+      ch(i-1,k,4) = wa3(i-2)*cr4-wa3(i-1)*ci4
+      ch(i,k,4) = wa3(i-2)*ci4+wa3(i-1)*cr4
+    END DO
   END DO
-END DO
-IF (MOD(ido,2) == 1) RETURN
+  IF (MOD(ido,2) == 1) RETURN
+END IF
 
-105 CONTINUE
+CONTINUE
 DO  k=1,l1
   ti1 = cc(1,2,k)+cc(1,4,k)
   ti2 = cc(1,4,k)-cc(1,2,k)
@@ -1317,7 +1312,7 @@ DO  k=1,l1
   ch(ido,k,4) = -sqrt2*(tr1+ti1)
 END DO
 
-107 RETURN
+RETURN
 END SUBROUTINE dradb4
 
 SUBROUTINE dradb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
@@ -1430,21 +1425,22 @@ idp2 = ido+2
 nbd = (ido-1)/2
 ipp2 = ip+2
 ipph = (ip+1)/2
-IF (ido < l1) GO TO 103
-DO  k=1,l1
+IF (ido < l1) THEN
   DO  i=1,ido
-    ch(i,k,1) = cc(i,1,k)
+    DO  k=1,l1
+      ch(i,k,1) = cc(i,1,k)
+    END DO
   END DO
-END DO
-GO TO 106
-
-103 DO  i=1,ido
+ELSE
   DO  k=1,l1
-    ch(i,k,1) = cc(i,1,k)
+    DO  i=1,ido
+      ch(i,k,1) = cc(i,1,k)
+    END DO
   END DO
-END DO
+ENDIF
 
-106 DO  j=2,ipph
+
+DO  j=2,ipph
   jc = ipp2-j
   j2 = j+j
   DO  k=1,l1
@@ -1453,36 +1449,37 @@ END DO
   END DO
 END DO
 
-IF (ido == 1) GO TO 116
-IF (nbd < l1) GO TO 112
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      ic = idp2-i
-      ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
-      ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
-      ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
-      ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+IF (ido /= 1) THEN
+  IF (nbd < l1) THEN
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  i=3,ido,2
+        ic = idp2-i
+        DO  k=1,l1
+          ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
+          ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
+          ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
+          ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-GO TO 116
-
-112 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    ic = idp2-i
-    DO  k=1,l1
-      ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
-      ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
-      ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
-      ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+  ELSE
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  k=1,l1
+        DO  i=3,ido,2
+          ic = idp2-i
+          ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
+          ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
+          ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
+          ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
+  ENDIF
+ENDIF
 
-116 ar1 = 1D0
+ar1 = 1D0
 ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
@@ -1523,35 +1520,33 @@ DO  j=2,ipph
   END DO
 END DO
 
-IF (ido == 1) GO TO 132
-IF (nbd < l1) GO TO 128
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
-      ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
-      ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
-      ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
-    END DO
-  END DO
-END DO
-GO TO 132
-
-128 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    DO  k=1,l1
-      ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
-      ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
-      ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
-      ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
-    END DO
-  END DO
-END DO
-132 CONTINUE
-
 IF (ido == 1) RETURN
+IF (nbd < l1) THEN
+  DO  j=2,ipph
+    jc = ipp2-j
+    DO  i=3,ido,2
+      DO  k=1,l1
+        ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
+        ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
+        ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
+        ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+      END DO
+    END DO
+  END DO
+ELSE
+  DO  j=2,ipph
+    jc = ipp2-j
+    DO  k=1,l1
+      DO  i=3,ido,2
+        ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
+        ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
+        ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
+        ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+      END DO
+    END DO
+  END DO
+ENDIF
+
 DO  ik=1,idl1
   c2(ik,1) = ch2(ik,1)
 END DO
@@ -1562,35 +1557,35 @@ DO  j=2,ip
   END DO
 END DO
 
-IF (nbd > l1) GO TO 139
-is = -ido
-DO  j=2,ip
-  is = is+ido
-  idij = is
-  DO  i=3,ido,2
-    idij = idij+2
+IF (nbd > l1) THEN
+  is = -ido
+  DO  j=2,ip
+    is = is+ido
     DO  k=1,l1
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      idij = is
+      DO  i=3,ido,2
+        idij = idij+2
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
-GO TO 143
-
-139 is = -ido
-DO  j=2,ip
-  is = is+ido
-  DO  k=1,l1
+ELSE
+  is = -ido
+  DO  j=2,ip
+    is = is+ido
     idij = is
     DO  i=3,ido,2
       idij = idij+2
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      DO  k=1,l1
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
+ENDIF
 
-143 RETURN
+RETURN
 END SUBROUTINE dradbg
 
 SUBROUTINE dradf2 (ido,l1,cc,ch,wa1)
@@ -1610,32 +1605,32 @@ DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
   ch(ido,2,k) = cc(1,k,1)-cc(1,k,2)
 END DO
-
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    tr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
-    ti2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
-    ch(i,1,k) = cc(i,k,1)+ti2
-    ch(ic,2,k) = ti2-cc(i,k,1)
-    ch(i-1,1,k) = cc(i-1,k,1)+tr2
-    ch(ic-1,2,k) = cc(i-1,k,1)-tr2
+STOP
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido /= 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      tr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
+      ti2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
+      ch(i,1,k) = cc(i,k,1)+ti2
+      ch(ic,2,k) = ti2-cc(i,k,1)
+      ch(i-1,1,k) = cc(i-1,k,1)+tr2
+      ch(ic-1,2,k) = cc(i-1,k,1)-tr2
+    END DO
   END DO
-END DO
 
-IF (MOD(ido,2) == 1) RETURN
-105 DO  k=1,l1
+  IF (MOD(ido,2) == 1) RETURN  
+END IF
+
+DO  k=1,l1
   ch(1,2,k) = -cc(ido,k,2)
   ch(ido,1,k) = cc(ido,k,1)
 END DO
 
-107 RETURN
+RETURN
 END SUBROUTINE dradf2
 
 SUBROUTINE dradf3 (ido,l1,cc,ch,wa1,wa2)
@@ -1714,41 +1709,39 @@ DO  k=1,l1
   ch(1,3,k) = cc(1,k,4)-cc(1,k,2)
 END DO
 
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    cr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
-    ci2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
-    cr3 = wa2(i-2)*cc(i-1,k,3)+wa2(i-1)*cc(i,k,3)
-    ci3 = wa2(i-2)*cc(i,k,3)-wa2(i-1)*cc(i-1,k,3)
-    cr4 = wa3(i-2)*cc(i-1,k,4)+wa3(i-1)*cc(i,k,4)
-    ci4 = wa3(i-2)*cc(i,k,4)-wa3(i-1)*cc(i-1,k,4)
-    tr1 = cr2+cr4
-    tr4 = cr4-cr2
-    ti1 = ci2+ci4
-    ti4 = ci2-ci4
-    ti2 = cc(i,k,1)+ci3
-    ti3 = cc(i,k,1)-ci3
-    tr2 = cc(i-1,k,1)+cr3
-    tr3 = cc(i-1,k,1)-cr3
-    ch(i-1,1,k) = tr1+tr2
-    ch(ic-1,4,k) = tr2-tr1
-    ch(i,1,k) = ti1+ti2
-    ch(ic,4,k) = ti1-ti2
-    ch(i-1,3,k) = ti4+tr3
-    ch(ic-1,2,k) = tr3-ti4
-    ch(i,3,k) = tr4+ti3
-    ch(ic,2,k) = tr4-ti3
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido /= 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      cr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
+      ci2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
+      cr3 = wa2(i-2)*cc(i-1,k,3)+wa2(i-1)*cc(i,k,3)
+      ci3 = wa2(i-2)*cc(i,k,3)-wa2(i-1)*cc(i-1,k,3)
+      cr4 = wa3(i-2)*cc(i-1,k,4)+wa3(i-1)*cc(i,k,4)
+      ci4 = wa3(i-2)*cc(i,k,4)-wa3(i-1)*cc(i-1,k,4)
+      tr1 = cr2+cr4
+      tr4 = cr4-cr2
+      ti1 = ci2+ci4
+      ti4 = ci2-ci4
+      ti2 = cc(i,k,1)+ci3
+      ti3 = cc(i,k,1)-ci3
+      tr2 = cc(i-1,k,1)+cr3
+      tr3 = cc(i-1,k,1)-cr3
+      ch(i-1,1,k) = tr1+tr2
+      ch(ic-1,4,k) = tr2-tr1
+      ch(i,1,k) = ti1+ti2
+      ch(ic,4,k) = ti1-ti2
+      ch(i-1,3,k) = ti4+tr3
+      ch(ic-1,2,k) = tr3-ti4
+      ch(i,3,k) = tr4+ti3
+      ch(ic,2,k) = tr4-ti3
+    END DO
   END DO
-END DO
 IF (MOD(ido,2) == 1) RETURN
-105 CONTINUE
+END IF
 
 DO  k=1,l1
   ti1 = -hsqt2*(cc(ido,k,2)+cc(ido,k,4))
@@ -1759,7 +1752,7 @@ DO  k=1,l1
   ch(1,4,k) = ti1+cc(ido,k,3)
 END DO
 
-107 RETURN
+RETURN
 END SUBROUTINE dradf4
 
 SUBROUTINE dradf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
@@ -1868,76 +1861,76 @@ ipph = (ip+1)/2
 ipp2 = ip+2
 idp2 = ido+2
 nbd = (ido-1)/2
-IF (ido == 1) GO TO 119
-DO  ik=1,idl1
-  ch2(ik,1) = c2(ik,1)
-END DO
-DO  j=2,ip
-  DO  k=1,l1
-    ch(1,k,j) = c1(1,k,j)
+IF (ido == 1) THEN
+  DO  ik=1,idl1
+    c2(ik,1) = ch2(ik,1)
   END DO
-END DO
-
-IF (nbd > l1) GO TO 107
-is = -ido
-DO  j=2,ip
-  is = is+ido
-  idij = is
-  DO  i=3,ido,2
-    idij = idij+2
+ELSE
+  DO  ik=1,idl1
+    ch2(ik,1) = c2(ik,1)
+  END DO
+  DO  j=2,ip
     DO  k=1,l1
-      ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
-      ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+      ch(1,k,j) = c1(1,k,j)
     END DO
   END DO
-END DO
-GO TO 111
 
-107 is = -ido
-DO  j=2,ip
-  is = is+ido
-  DO  k=1,l1
-    idij = is
-    DO  i=3,ido,2
-      idij = idij+2
-      ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
-      ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+  IF (nbd > l1) THEN 
+    is = -ido
+    DO  j=2,ip
+      is = is+ido
+      DO  k=1,l1
+        idij = is
+        DO  i=3,ido,2
+          idij = idij+2
+          ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
+          ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
+  ELSE
+    is = -ido
+    DO  j=2,ip
+      is = is+ido
+      idij = is
+      DO  i=3,ido,2
+        idij = idij+2
+        DO  k=1,l1
+          ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
+          ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  ENDIF
 
-111 IF (nbd < l1) GO TO 115
+  IF (nbd < l1) THEN
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  i=3,ido,2
+        DO  k=1,l1
+          c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
+          c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
+          c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
+          c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  ELSE
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  k=1,l1
+        DO  i=3,ido,2
+          c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
+          c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
+          c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
+          c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  ENDIF
+ENDIF
+
 DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
-      c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
-      c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
-      c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
-    END DO
-  END DO
-END DO
-GO TO 121
-
-115 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    DO  k=1,l1
-      c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
-      c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
-      c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
-      c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
-    END DO
-  END DO
-END DO
-GO TO 121
-
-119 DO  ik=1,idl1
-  c2(ik,1) = ch2(ik,1)
-END DO
-
-121 DO  j=2,ipph
   jc = ipp2-j
   DO  k=1,l1
     c1(1,k,j) = ch(1,k,j)+ch(1,k,jc)
@@ -1978,21 +1971,21 @@ DO  j=2,ipph
   END DO
 END DO
 
-IF (ido < l1) GO TO 132
-DO  k=1,l1
+IF (ido < l1) THEN
   DO  i=1,ido
-    cc(i,1,k) = ch(i,k,1)
+    DO  k=1,l1
+      cc(i,1,k) = ch(i,k,1)
+    END DO
   END DO
-END DO
-GO TO 135
-
-132 DO  i=1,ido
+ELSE
   DO  k=1,l1
-    cc(i,1,k) = ch(i,k,1)
+    DO  i=1,ido
+      cc(i,1,k) = ch(i,k,1)
+    END DO
   END DO
-END DO
+ENDIF
 
-135 DO  j=2,ipph
+DO  j=2,ipph
   jc = ipp2-j
   j2 = j+j
   DO  k=1,l1
@@ -2002,37 +1995,39 @@ END DO
 END DO
 
 IF (ido == 1) RETURN
-IF (nbd < l1) GO TO 141
-DO  j=2,ipph
-  jc = ipp2-j
-  j2 = j+j
-  DO  k=1,l1
+
+IF (nbd < l1) THEN 
+  DO  j=2,ipph
+    jc = ipp2-j
+    j2 = j+j
     DO  i=3,ido,2
       ic = idp2-i
-      cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
-      cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
-      cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
-      cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      DO  k=1,l1
+        cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
+        cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
+        cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
+        cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      END DO
     END DO
   END DO
-END DO
-RETURN
-
-141 DO  j=2,ipph
-  jc = ipp2-j
-  j2 = j+j
-  DO  i=3,ido,2
-    ic = idp2-i
+  RETURN
+ELSE
+  DO  j=2,ipph
+    jc = ipp2-j
+    j2 = j+j
     DO  k=1,l1
-      cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
-      cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
-      cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
-      cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      DO  i=3,ido,2
+        ic = idp2-i
+        cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
+        cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
+        cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
+        cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      END DO
     END DO
   END DO
-END DO
+  RETURN
+ENDIF
 
-RETURN
 END SUBROUTINE dradfg
 
 INCLUDE "fftpack2.F90"
