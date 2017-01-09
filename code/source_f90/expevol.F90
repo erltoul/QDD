@@ -290,7 +290,7 @@ DO nbe=1,nstate
   CALL hpsi(qact(1,nbe),aloc(ilocbas),nbe,1)
   DO nc=1,nstate
     IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
-      chmatrix(nc,nbe) = wfovlp(psi(1,nc),qact(1,nbe))
+      chmatrix(nc,nbe) = wfovlp(psi(:,nc),qact(:,nbe))
     ELSE
       chmatrix(nc,nbe) = CMPLX(0D0,0D0,DP)
     END IF
@@ -323,7 +323,7 @@ DO nbe=1,nstate
           cacc(nc) = CMPLX(0D0,0D0,DP)
           DO na=1,nstate
             IF(ispin(nrel2abs(na)) == ispin(nrel2abs(nc))) THEN
-              cacc(nc) = cacc(nc) + chmatrix(nc,na)*wfovlp(psi(1,na),qwork)
+              cacc(nc) = cacc(nc) + chmatrix(nc,na)*wfovlp(psi(:,na),qwork)
 !              WRITE(*,*) ' NBE,NC,NA,ovlp:',nbe,nc,na,wfovlp(psi(1,na),qwork)
             END IF
           END DO
@@ -384,7 +384,7 @@ DO is=1,2
       DO nb=1,nstate
         IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
           nbeff = nb - (is-1)*ndims(1)
-          wfrotate(naeff,nbeff,is) = wfovlp(qold(1,na),qact(1,nb))
+          wfrotate(naeff,nbeff,is) = wfovlp(qold(:,na),qact(:,nb))
         END IF
       END DO
     END IF
@@ -524,7 +524,7 @@ IF(ifsicp == 8) THEN
   is=ispin(nrel2abs(nbe))
   DO na=1,nstate
     IF(ispin(nrel2abs(na)) == is)THEN
-      cf = wfovlp(psiut(1,na),qact)
+      cf = wfovlp(psiut(:,na),qact)
       DO i=1,nxyz
         q1(i)=q1(i)-qnewut(i,na)*cf
       END DO

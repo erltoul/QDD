@@ -1358,7 +1358,7 @@ LOGICAL,PARAMETER :: ttest=.false.
 
 REAL(DP) :: delmr_iter(maxadjust)
 REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
-
+LOGICAL::converged=.false.        ! will be true if the loop exits before reaching maxadjust
 
 
 IF (NE == 0) RETURN
@@ -1387,7 +1387,10 @@ delmr=1.0D0
 delmrold=delmr
 
 DO it=1,maxadjust
-  IF(SQRT(delmr) < delmrmax)GO TO 19
+  IF(SQRT(delmr) < delmrmax) THEN
+    converged=.true.
+    EXIT
+  END IF
   delmr=0D0
 !     compute forces of valence clouds
 !         call calcforce_dip(rho)
@@ -1411,8 +1414,7 @@ DO it=1,maxadjust
     posoy=ye(irar)
     posoz=ze(irar)
     
-    
-IF(ttest) WRITE(*,*) irar,xe(irar)-xc(irar),ye(irar)-yc(irar), &
+    IF(ttest) WRITE(*,*) irar,xe(irar)-xc(irar),ye(irar)-yc(irar), &
                      ze(irar)-zc(irar),fxe(irar),fye(irar),fze(irar)
     
     IF (imobe(irar) /= 0) THEN
@@ -1446,25 +1448,20 @@ IF(ttest) WRITE(*,*) irar,xe(irar)-xc(irar),ye(irar)-yc(irar), &
 !         delmr=delmr/ne
   delmr=delmr/icoun
   delmr_iter(it) = delmr
-IF(ttest)  write(6,*) ' it,delmr  = ',it,sqrt(delmr)
+  IF(ttest)  write(6,*) ' it,delmr  = ',it,sqrt(delmr)
   
 !         if (delmr.gt.delmrold) stop 'adjustdip not converging'
 !         if (delmr.gt.delmrold) goto 15
   
   delmrold=delmr
   
-  
-  
-  
 END DO
-IF(delmr.GT.delmrmax*10D0) THEN
+
+IF((delmr.GT.delmrmax*10D0).AND. .NOT. converged ) THEN
   WRITE(*,'(a)')  ' Iteration DELMR:'
   WRITE(*,'(i5,1pg13.5)')  (it,delmr_iter(it),it=1,maxadjust)
   STOP 'routine adjustdip did not converge'
 ENDIF
-19   CONTINUE
-
-
 
 
 IF(ifadiadip == 1) THEN
@@ -1593,7 +1590,7 @@ delmr=1.0D0
 delmrold=delmr
 
 DO it=1,200
-  IF(SQRT(delmr) < 2D-5)GO TO 19
+  IF(SQRT(delmr) < 2D-5) EXIT
   delmr=0D0
 !     compute forces of valence clouds
 !         call calcforce_dip(rho)
@@ -1617,8 +1614,6 @@ DO it=1,200
     posoy=ye(irar)
     posoz=ze(irar)
     
-    
-    
     IF (imobe(irar) /= 0) THEN
 !               xe(irar)=xc(irar)+fxe(irar)/cspr !(e2*C_dipmod)
 !               ye(irar)=yc(irar)+fye(irar)/cspr !idem
@@ -1631,11 +1626,9 @@ DO it=1,200
       
     END IF
     
-    
     IF(ipseudo == 1) THEN
       CALL updatesubgrids
     END IF
-    
     
   END DO
 !         delmr=delmr/ne
@@ -1646,11 +1639,7 @@ DO it=1,200
 !         if (delmr.gt.delmrold) stop 'adjustdip not converging'
   delmrold=delmr
   
-  
 END DO
-19   CONTINUE
-
-
 
 
 IF(ifadiadip == 1) THEN

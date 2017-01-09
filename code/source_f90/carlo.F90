@@ -132,7 +132,7 @@ DO jrun = 1, nrun
   ebold = 1D20
   hph2 = 1D0
   
-  DO loop1 = 1,nloop1
+  metropolis:DO loop1 = 1,nloop1
     
 !     reach convergence in Kohn-Sham loop
     
@@ -175,7 +175,7 @@ DO jrun = 1, nrun
     
     IF(delbin < errtot) THEN
       nyes = nyes + 1
-      IF(nyes == ncon) GO TO 999 !leave metropolis
+      IF(nyes == ncon) EXIT metropolis
     ELSE
       nyes = 0
     END IF
@@ -204,11 +204,10 @@ DO jrun = 1, nrun
     CALL flush(27)
     
     WRITE(6,'(A/)') '-->ROLLING THE DICE COMPLETED'
-  END DO
+  END DO metropolis
   
 !     !if you come here, energetic accuracy is finally achieved
   
-  999     CONTINUE
   WRITE(6,'(A)') ' NORMAL TERMINATION IN METROPOLIS'
 END DO
 CALL rsave(psir,0,outnam)
@@ -311,44 +310,44 @@ DO loop2 = 1,nloop2
     
 !     vary the coordinates of this ion:
     
-    5          CALL RANDOM_NUMBER(rand3)
-    deltax = 2D0*delps3*(rand3(1)-oh)
-    deltay = 2D0*delps3*(rand3(2)-oh)
-    deltaz = 2D0*delps3*(rand3(3)-oh)
-    delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
-    IF (delta2 > delps3*delps3) GO TO 5
-    
-    IF(mxforce == 1) deltax = 0D0
-    IF(myforce == 1) deltay = 0D0
-    IF(mzforce == 1) deltaz = 0D0
-    
-    xvar   = cx(ionvar) + deltax
-    yvar   = cy(ionvar) + deltay
-    zvar   = cz(ionvar) + deltaz
-    
-!     Ion within sensible grid area?
-    
-    radone = 3D0
-    facmo =  2D0
-    
-    xred2 = xvar+facmo*radone
-    yred2 = yvar+facmo*radone
-    zred2 = zvar+facmo*radone
-    xled2 = xvar-facmo*radone
-    yled2 = yvar-facmo*radone
-    zled2 = zvar-facmo*radone
-    
-    gxr = REAL(nx,DP)*dx
-    gyr = REAL(ny,DP)*dy
-    gzr = REAL(nz,DP)*dz
-    gxl = -gxr
-    gyl = -gyr
-    gzl = -gzr
-    
-    IF((gxr <= xred2).OR.(gxl >= xled2)) GO TO 5
-    IF((gyr <= yred2).OR.(gyl >= yled2)) GO TO 5
-    IF((gzr <= zred2).OR.(gzl >= zled2)) GO TO 5
-    
+    infinite:DO    ! Loop until the ion as been displaced in a valid location.
+      CALL RANDOM_NUMBER(rand3)
+      deltax = 2D0*delps3*(rand3(1)-oh)
+      deltay = 2D0*delps3*(rand3(2)-oh)
+      deltaz = 2D0*delps3*(rand3(3)-oh)
+      delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
+      IF (delta2 > delps3*delps3) CYCLE infinite
+      
+      IF(mxforce == 1) deltax = 0D0
+      IF(myforce == 1) deltay = 0D0
+      IF(mzforce == 1) deltaz = 0D0
+      
+      xvar   = cx(ionvar) + deltax
+      yvar   = cy(ionvar) + deltay
+      zvar   = cz(ionvar) + deltaz
+      
+  !     Ion within sensible grid area?
+      
+      radone = 3D0
+      facmo =  2D0
+      
+      xred2 = xvar+facmo*radone
+      yred2 = yvar+facmo*radone
+      zred2 = zvar+facmo*radone
+      xled2 = xvar-facmo*radone
+      yled2 = yvar-facmo*radone
+      zled2 = zvar-facmo*radone
+      
+      gxr = REAL(nx,DP)*dx
+      gyr = REAL(ny,DP)*dy
+      gzr = REAL(nz,DP)*dz
+      gxl = -gxr
+      gyl = -gyr
+      gzl = -gzr
+      IF(((gxr > xred2).AND.(gxl < xled2)) .AND. &
+        &((gyr > yred2).AND.(gyl < yled2)) .AND. &
+        &((gzr > zred2).AND.(gzl < zled2)))  EXIT infinite
+    END DO infinite
 !     calculate new one-ion-electron  energy of ion no. 'ionvar'
     
     CALL rhopsg(xvar,yvar,zvar,rhoion,ionvar)
@@ -441,12 +440,10 @@ DO loop2 = 1,nloop2
   ELSE
     nmin = 0
   END IF
-  IF (nmin == ncsim) GO TO 99
+  IF (nmin == ncsim) EXIT
   
   eold = eionic
 END DO                     !end of annealing
-
-99   CONTINUE
 
 !     history of dice loops:
 

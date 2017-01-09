@@ -558,8 +558,8 @@ IF(ifsicp == 8) THEN   !!! to calculate the total
       IF(ispin(na) == is)THEN
         DO nb=1,nstate
           IF(ispin(nb) == is)THEN
-            acc = ( wfovlp(psirut(1,na),qnewr(1,nb)) -  &
-                wfovlp(psirut(1,nb),qnewr(1,na)) )**2 + acc
+            acc = ( wfovlp(psirut(:,na),qnewr(:,nb)) -  &
+                wfovlp(psirut(:,nb),qnewr(:,na)) )**2 + acc
           END IF
         END DO
       END IF
@@ -953,9 +953,9 @@ DO iter=1,itmax2
       matdorth(vecs(:,:,is), kdim, ndims(is)), ABS(norm), ABS(ERR_c),actstep
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
-  IF(ABS(norm) < precis) GO TO 99
+  IF(ABS(norm) < precis) EXIT
 END DO !iter
-99   CONTINUE
+
 
 !WRITE(*,*) '  after: vecsr=',vecs(1:ni,1:ni,is)
 
@@ -1155,11 +1155,9 @@ DO iter=1,itmax2
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
 
-  IF(iter>0 .AND. ABS(norm) < actprecis) GO TO 99
-!  IF(iter>2 .AND. ABS(norm) < actprecis) GO TO 99
+  IF(iter>0 .AND. ABS(norm) < actprecis) EXIT
   
 END DO
-99   CONTINUE
 
 !CALL test_symmcond(is,vecsr(1,1,is),q0)
 
@@ -1447,6 +1445,7 @@ SUBROUTINE dalphabeta(is,dab,q0)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
+USE util, ONLY:wfovlp
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -1500,7 +1499,7 @@ DO nb=1,nstate
     DO na=1,nstate
       IF(ispin(nrel2abs(na)) == is)THEN
         naa = na - (is-1)*ndims(1)
-        utcond(naa,nbeff) = -wfovlp(qsym(1,na),uqsym(1,nb))
+        utcond(naa,nbeff) = -wfovlp(qsym(:,na),uqsym(:,nb))
       END IF !ispin
     END DO !na
   END IF
