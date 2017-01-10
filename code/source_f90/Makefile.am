@@ -352,7 +352,7 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 
 # 2stUT.o
 if USE_TWOSTSIC
-2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT) givens.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
 2stUT.$(OBJEXT): 2stUT.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
