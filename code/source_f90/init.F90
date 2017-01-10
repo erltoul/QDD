@@ -2531,10 +2531,9 @@ DO i=1,ksttot
       nabs2rel(i)=i-nstart_node(nod)
       nhome(i)=nod
       ispin_node(nabs2rel(i),nod) = ispin(i)
-      GO TO 999
+      EXIT
     END IF
   END DO
-  999    CONTINUE
 END DO
 DO i=1,nstate
   occup(i)=occu(nrel2abs(i))
@@ -2791,7 +2790,7 @@ DO iter=1,itback
   betabk = betabk+delbet
   precis = (alpha-alphel)**2+(beta-betael)**2+(partn-sqn)**2
   
-  IF((precis < endcon).AND.(ABS(partn-sqn) < endcon)) GO TO 199
+  IF((precis < endcon).AND.(ABS(partn-sqn) < endcon)) EXIT
   
   radius = radius * (partn/sqn)**onetrd
   argum  = radius / surjel
@@ -2807,11 +2806,11 @@ DO iter=1,itback
   
 END DO
 
-WRITE(7,'(a/a,g11.3)') ' ---> background deformation did not converge!',  &
-    '      residual error in"alpha"=',precis
-STOP ' no convergence in "jelbak"'
-
-199  CONTINUE
+IF(iter== itback+1 )THEN
+  WRITE(7,'(a/a,g11.3)') ' ---> background deformation did not converge!',  &
+      '      residual error in"alpha"=',precis
+  STOP ' no convergence in "jelbak"'
+END IF
 
 WRITE(7,'(a,i4,a,f12.7,a,2(/3(a,f12.7)),5(/2(a,f12.7)))')  &
     ' iteration nr.',iter,' precision=',precis,':',  &

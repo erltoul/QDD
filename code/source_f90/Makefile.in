@@ -952,7 +952,7 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # 2stUT.o
-@USE_TWOSTSIC_TRUE@2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+@USE_TWOSTSIC_TRUE@2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT) givens.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 @USE_TWOSTSIC_TRUE@	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 @USE_TWOSTSIC_FALSE@2stUT.$(OBJEXT): 2stUT.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 @USE_TWOSTSIC_FALSE@	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
