@@ -982,9 +982,8 @@ ELSE
     rpmin = -effch*(v_soft(r+rstep+rpmin,sigma_ar)  &
         -v_soft(r+rpmin-rstep,sigma_ar)) /(2D0*rstep*effc)
 !        write(6,'(1x,i4,2g14.5)') iter,rpmin,abs(rpold-rpmin)
-    IF(ABS(rpold-rpmin) < epsil) GO TO 19
+    IF(ABS(rpold-rpmin) < epsil) EXIT
   END DO
-  19      CONTINUE
   v_dipa  = effch*(v_soft(r+rpmin,sigma_ar)-v_soft(r,sigma_ar))  &
       +0.5D0*effc*rpmin*rpmin
   v_core  = vrep*e2*EXP(-rcor*r*r) -vdip*e2/(1D0+EXP((3.1D0/r)**8))/r**4  &

@@ -2848,11 +2848,12 @@ SAVE iset,gset
 
 DATA iset/0/
 IF (iset == 0) THEN
-  1       CONTINUE
-  v1=2D0*ran1(idum)-1D0
-  v2=2D0*ran1(idum)-1D0
-  rsq=v1**2+v2**2
-  IF (rsq >= 1D0 .OR. rsq == 0D0) GO TO 1
+  rsq=2D0  ! some value higher than 1.0 to start to enter the loop
+  DO WHILE(rsq >= 1D0 .OR. rsq == 0D0)
+    v1=2D0*ran1(idum)-1D0
+    v2=2D0*ran1(idum)-1D0
+    rsq=v1**2+v2**2
+  END DO
   fac=SQRT(-2D0*LOG(rsq)/rsq)
   gset=v1*fac
   gasdev=v2*fac
@@ -3183,14 +3184,6 @@ SUBROUTINE pair(e,gw,ph,nz,nmax,gp,eferm,delta,partnm,  &
 USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!     the include file 'params.inc' communicates the dimensioning of
-!     the fields 'e' and 'gw' with the parameter 'ksl2'. it allows
-!     furthermore to make the whole subroutine double precision by
-!     transfering a line 'implicit double precision (a-h,o-z)'.
-!     furthermore it carries the common block /constn/ from which
-!     the pseudo-constants one=1.0 and zero=0D0 are taken here.
-
-
 !     * * * * * * * * * *     pairing iteration      * * * * * * * * * *
 
 !     determines the Fermi-energy 'eferm' and the gap 'delta'
@@ -3266,6 +3259,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: e(kstate),gw(kstate),ph(kstate)
 REAL(DP) :: dparn(3),dgap(3),gr(2,2)
 REAL(DP) :: emax,emin
+LOGICAL :: converged= .false.   ! will be true when convergence is reached
 
 DATA gr,dparn,dgap/10*0D0/
 
@@ -3292,9 +3286,6 @@ DATA one,zero/1D0,0D0/
 
 !-----------------------------------------------------------------------
 
-!      set switch variables
-
-iwarng = 0
 IF(iab > 1) THEN
   
   WRITE(7,'(/a,i4,3(a,f9.4)/a,10(/1x,10f8.3))')  &
@@ -3326,10 +3317,9 @@ IF(eferm == zero) THEN
   DO it=1,nmax
     itsum  = it
     isum   = INT(ph(it)+.000001D0) +isum
-    IF(isum+isum-nz >= 0) GO TO 199
+    IF(isum+isum-nz >= 0) EXIT
   END DO
-  STOP ' not enough states to reach particle number'
-  199   CONTINUE
+  IF(it > nmax) STOP ' not enough states to reach particle number'
   eferm  = e(itsum)+deferm
   IF(iab >= 1) WRITE(7,'(1x,a,i5,(a,g11.4),a,i5)')  &
       'initialistion: isum=',isum,'  eferm=',eferm,'  nz=',nz
@@ -3425,15 +3415,16 @@ IF(ipair == 1) THEN
     IF(iab == 0) WRITE(7,'(a,i4,2(a,g11.3))')  &
         ' pairing iteration it=',it,'  :  delti=',delti, '  eferm=',eferm
     
-    IF(ABS(dgap(1)) < eps .AND. ABS(dparn(1)) < eps)   GO TO 299
+    IF(ABS(dgap(1)) < eps .AND. ABS(dparn(1)) < eps) THEN
+      converged=.true.
+      EXIT
+    ENDIF
   END DO
-  iwarng = 1
-  
-  299   CONTINUE
+
   delta  = delti
   
 ELSE
-  
+
 !-----------------------------------------------------------------------
   
 !      case of constant paring-gap, given by 'delta'.
@@ -3466,11 +3457,10 @@ ELSE
         parn1  = parnm(e,gw,ph,nmax,delta,eferm1,ipair)
         IF(iab >= 1) WRITE(7,'(a,i5,3(1pg12.4))')  &
             ' search brackets: it,parn1,eferm1=',it,parn1,eferm1
-        IF(parn1-nz < zero) GO TO 319
+        IF(parn1-nz < zero) EXIT
         eferm2 = eferm1
       END DO
-      STOP ' particle number not embraced in pair'
-      319   CONTINUE
+      IF(it>itmaxp) STOP ' particle number not embraced in pair'
     ELSE IF(parn1-nz < zero) THEN
       deferm = (emax-eferm)/itmaxp
       IF(iab >= 1) WRITE(7,'(a,3(1pg12.4))')  &
@@ -3480,59 +3470,62 @@ ELSE
         parn2  = parnm(e,gw,ph,nmax,delta,eferm2,ipair)
         IF(iab >= 1) WRITE(7,'(a,i5,3(1pg12.4))')  &
             ' search brackets: it,parn2,eferm2=',it,parn2,eferm2
-        IF(parn2-nz > zero) GO TO 329
+        IF(parn2-nz > zero) EXIT
         eferm1 = eferm2
       END DO
-      STOP ' particle number not embraced in pair'
-      329   CONTINUE
+      IF(it>itmaxp) STOP ' particle number not embraced in pair'
     ELSE
       IF(iab >= 1) WRITE(7,'(a)') ' solution immediately found '
-      GO TO 399            ! solution immediately found. jump to end
+      converged=.true.   ! jump to end
     END IF
-    IF(iab >= 1) WRITE(7,'(a)') ' brackets found '
-    
-!      now perform the secant search
-    
+
+
+    IF(.NOT. converged) THEN
+!   Perform the secant search
+      IF(iab >= 1) WRITE(7,'(a)') ' brackets found '
+     
+      DO it=1,itmaxp
+        eferm3 = eferm1 + (nz-parn1)*(eferm2-eferm1)/(parn2-parn1)
+        parn3  = parnm(e,gw,ph,nmax,delta,eferm3,ipair)
+        IF(iab >= 0) WRITE(7,'(a,i4,2(a,g11.3))')  &
+            ' secant iteration it=',it,'  :  eferm=',eferm3, '  dparn(1)=',parn3-nz
+        IF(ABS(parn3-nz) < eps) THEN
+          converged=.true.
+          EXIT
+        ELSE IF(parn3-nz > zero) THEN
+          eferm2 = eferm3
+          parn2  = parn3
+        ELSE
+          eferm1 = eferm3
+          parn1  = parn3
+        END IF
+      END DO
+    END IF
+  END IF
+  
+
+  IF(.NOT. converged) THEN
+!      the secant step did not succeed. use bisection
+    eferm1 = emin-4*delta
+    eferm2 = emax+4*delta
     DO it=1,itmaxp
-      eferm3 = eferm1 + (nz-parn1)*(eferm2-eferm1)/(parn2-parn1)
+      eferm3 = 0.5D0*(eferm2+eferm1)
       parn3  = parnm(e,gw,ph,nmax,delta,eferm3,ipair)
       IF(iab >= 0) WRITE(7,'(a,i4,2(a,g11.3))')  &
-          ' secant iteration it=',it,'  :  eferm=',eferm3, '  dparn(1)=',parn3-nz
+          ' bisection it=',it,'  :  eferm=',eferm3, '  dparn(1)=',parn3-nz
       IF(ABS(parn3-nz) < eps) THEN
-        GO TO 399
+        converged=.true.
+        EXIT
+      ELSE IF(parn3-nz < zero) THEN
+        eferm1 = eferm3
+        parn1  = parn3
       ELSE IF(parn3-nz > zero) THEN
         eferm2 = eferm3
         parn2  = parn3
-      ELSE
-        eferm1 = eferm3
-        parn1  = parn3
       END IF
     END DO
-    
   END IF
   
-!      the secant step did not succeed. use bisection
-  
-  eferm1 = emin-4*delta
-  eferm2 = emax+4*delta
-  DO it=1,itmaxp
-    eferm3 = 0.5D0*(eferm2+eferm1)
-    parn3  = parnm(e,gw,ph,nmax,delta,eferm3,ipair)
-    IF(iab >= 0) WRITE(7,'(a,i4,2(a,g11.3))')  &
-        ' bisection it=',it,'  :  eferm=',eferm3, '  dparn(1)=',parn3-nz
-    IF(ABS(parn3-nz) < eps) THEN
-      GO TO 399
-    ELSE IF(parn3-nz < zero) THEN
-      eferm1 = eferm3
-      parn1  = parn3
-    ELSE IF(parn3-nz > zero) THEN
-      eferm2 = eferm3
-      parn2  = parn3
-    END IF
-  END DO
-  iwarng = 1             ! still not converged. set a flag
-  
-  399  CONTINUE
   eferm = eferm3
   dparn(1) = parn3 - nz
   dgap(1)  = zero
@@ -3562,7 +3555,7 @@ END IF
 
 !     in case of incomplete convergence print a warning
 
-IF(iab >= -1 .AND. iwarng == 1) WRITE(7,'(2(a,g11.3),2(a,i3))')  &
+IF(iab >= -1 .AND. .NOT. converged) WRITE(7,'(2(a,g11.3),2(a,i3))')  &
     ' ---> no convergence in pair! err(gap-eq)=',dgap(1),  &
     '  err(part.nr)=',dparn(1),'  nz=',nz,'  nmzx=',nmax
 

@@ -816,7 +816,7 @@ REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
 ! EQUIVALENCE (rhosp,w1)
 LOGICAL,PARAMETER :: testprint=.false.
 INTEGER :: itmaxkli=200
-
+LOGICAL:: converged=.false.
 !--------------------------------------------------------------------
 
 IF(numspin.NE.2) STOP ' SIC-KLI requires full spin code'
@@ -1043,13 +1043,17 @@ DO itkli=1,itmaxkli
       sumup,sumdw,epsoro
 !old   &      sumup-sumslup,sumdw-sumsldw,epsoro
 !old        if(abs(sumup-sumslup)+abs(sumdw-sumsldw).lt.epsoro) goto 99
-  IF(sumup+sumdw < epsoro**2*2D0) GO TO 99
+  IF(sumup+sumdw < epsoro**2*2D0)THEN
+    converged=.true.
+    EXIT
+  END IF
   sumslup = sumup
   sumsldw = sumdw
 END DO
-WRITE(6,'(a,2(1pg12.4))')  &
-    ' KLI not converged: errors=',sumup-sumslup,sumdw-sumsldw
-99   CONTINUE
+
+IF(.NOT. converged) WRITE(6,'(a,2(1pg12.4))')  &
+      ' KLI not converged: errors=',sumup-sumslup,sumdw-sumsldw
+      
 WRITE(6,'(a,i5,4(1pg12.4))')  &
     ' KLI itkli,sums=',itkli,sumup,sumslup,sumdw,sumsldw
 

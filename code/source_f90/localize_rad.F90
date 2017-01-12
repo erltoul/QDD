@@ -825,7 +825,7 @@ DO iter=1,itmax
   END DO
   IF(iprint > 0 .AND. MOD(iter,iprint)==0) WRITE(6,'(i5,4(1pg12.4))')  &
       iter,SQRT(variance),SQRT(variance2),SQRT(radvary), radmax
-  IF(variance < precis) GO TO 99
+  IF(variance < precis) EXIT
   
 !       ortho-normalization
   
@@ -833,7 +833,6 @@ DO iter=1,itmax
   
 END DO
 
-99   CONTINUE
 IF(iprint >= 0) THEN
   WRITE(6,'(a,i4)') ' at iteration nr.',iter,  &
       ' results for spin IS=',is, '   state  x y z variance '
@@ -932,10 +931,9 @@ DO iter=1,itmax
 !       ortho-normalization
   
   CALL orthnorm(vecs,ndim,kdimin)
-  IF(variance < precis) GO TO 99
+  IF(variance < precis) EXIT
   
 END DO
-99   CONTINUE
 IF(mprint >= 0) WRITE(6,'(a,i5,1pg12.4)')  &
     'DIAG: iter,variance=',iter,SQRT(variance)
 
