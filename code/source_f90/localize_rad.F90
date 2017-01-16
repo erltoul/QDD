@@ -665,7 +665,7 @@ END SUBROUTINE spmomsmatrixo
 !-----locgradstep-----------------------------------------
 
 SUBROUTINE locgradstep(is,iprint)
-
+USE orthmat, ONLY:ovlpmatrix
 !      implicit none
 
 !     Nonlinear gradient iteration to optimally localized states:
@@ -706,8 +706,6 @@ REAL(DP) :: w(kdim)             ! workspace
 REAL(DP) :: varstate(kdim),averstate(kdim)
 REAL(DP) :: acc,actstep
 REAL(DP) :: xbar,ybar,zbar
-!EXTERNAL :: avermatrix,ovlpmatrix,vecovlp,vecnorm  ! function names ??
-!REAL(DP) :: avermatrix,ovlpmatrix,vecovlp,vecnorm  ! function names ??
 INTEGER :: i,j                ! eigenstates
 INTEGER :: na,nb              ! matrix indices
 INTEGER :: iter
@@ -777,12 +775,12 @@ DO iter=1,itmax
   
   DO i=1,ndim(is)
     DO j=1,ndim(is)
-      xlambda(i,j) = ovlpmatrix(rrmatr(1,1,is),vecsr(1,i,is),  &
-          vecsr(1,j,is),ndim(is),kdim) -0.5D0*(xaver(i)+xaver(j))*  &
-          ovlpmatrix(xmatr(1,1,is),vecsr(1,i,is), vecsr(1,j,is),ndim(is),kdim)  &
-          -0.5D0*(yaver(i)+yaver(j))* ovlpmatrix(ymatr(1,1,is),vecsr(1,i,is),  &
-          vecsr(1,j,is),ndim(is),kdim) -0.5D0*(zaver(i)+zaver(j))*  &
-          ovlpmatrix(zmatr(1,1,is),vecsr(1,i,is), vecsr(1,j,is),ndim(is),kdim)
+      xlambda(i,j) = ovlpmatrix(rrmatr(:,:,is),vecsr(:,i,is),  &
+          vecsr(:,j,is),ndim(is),kdim) -0.5D0*(xaver(i)+xaver(j))*  &
+          ovlpmatrix(xmatr(:,:,is),vecsr(:,i,is), vecsr(:,j,is),ndim(is),kdim)  &
+          -0.5D0*(yaver(i)+yaver(j))* ovlpmatrix(ymatr(:,:,is),vecsr(:,i,is),  &
+          vecsr(:,j,is),ndim(is),kdim) -0.5D0*(zaver(i)+zaver(j))*  &
+          ovlpmatrix(zmatr(:,:,is),vecsr(:,i,is), vecsr(:,j,is),ndim(is),kdim)
     END DO
   END DO
   IF(ttest) THEN
@@ -975,40 +973,6 @@ END DO
 RETURN
 END SUBROUTINE operate
 
-!-----ovlpmatrix-----------------------------------------
-
-REAL(DP) FUNCTION ovlpmatrix(a,vec1,vec2,ndim,kdimin)
-!USE params, ONLY: DP
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
-REAL(DP), INTENT(IN)                       :: vec1(kdimin)
-REAL(DP), INTENT(IN)                       :: vec2(kdimin)
-INTEGER, INTENT(IN)                      :: ndim
-INTEGER, INTENT(IN)                  :: kdimin
-
-!     Matrix element of matrix 'a'
-!     with respect to states 'vec1' and 'vec2'
-!     having actual length 'ndim' and dimension 'kdimin'.
-
-
-
-REAL(DP) :: ovlp
-INTEGER :: i,j
-
-!-------------------------------------------------------
-
-ovlp = 0.0D0
-DO i=1,ndim
-  DO j=1,ndim
-    ovlp = ovlp + vec1(j)*a(j,i)*vec2(i)
-  END DO
-END DO
-ovlpmatrix = ovlp
-
-RETURN
-END FUNCTION ovlpmatrix
 !-----avermatrix-----------------------------------------
 
 REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)

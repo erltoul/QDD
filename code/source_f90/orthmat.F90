@@ -20,6 +20,7 @@ MODULE orthmat
 USE params
 IMPLICIT NONE
 
+! Matrices and vectors overlaps,  Matrices orthonormalization 
 
 INTERFACE matdorth
   MODULE PROCEDURE matdorth_r, matdorth_c
@@ -44,6 +45,10 @@ END INTERFACE vecovlp
 INTERFACE vecnorm
   MODULE PROCEDURE vecnorm_r, vecnorm_c
 END INTERFACE vecnorm
+
+INTERFACE ovlpmatrix
+  MODULE PROCEDURE ovlpmatrix_r, ovlpmatrix_c
+END INTERFACE ovlpmatrix
 
 CONTAINS
 
@@ -328,5 +333,65 @@ vecnorm_c=SUM(ABS(vec(1:ndim)**2))
 
 RETURN
 END FUNCTION vecnorm_c
+
+
+!_________________________________________ovlpmatrix__________________________________________________
+!     Matrix element of matrix 'a'
+!     with respect to states 'vec1' and 'vec2'
+!     having actual length 'ndim' and dimension 'kdim'.
+!-------------------------------------------------------
+! REAL version
+!-------------------------------------------------------
+REAL(DP) FUNCTION ovlpmatrix_r(a,vec1,vec2,ndim,kdim)
+USE params, ONLY: DP
+
+implicit none
+
+INTEGER,INTENT(IN)    :: ndim
+INTEGER,INTENT(IN)    :: kdim
+REAL(DP),INTENT(IN)   :: a(kdim,kdim)
+REAL(DP),INTENT(IN)   :: vec1(kdim)
+REAL(DP),INTENT(IN)   :: vec2(kdim)
+REAL(DP) :: ovlp
+INTEGER :: i,j
+!-------------------------------------------------------
+
+ovlp = 0D0
+DO i=1,ndim
+  DO j=1,ndim
+    ovlp = ovlp + vec1(j)*a(j,i)*vec2(i)
+  END DO
+END DO
+ovlpmatrix_r = ovlp
+
+RETURN
+END FUNCTION ovlpmatrix_r
+!-------------------------------------------------------
+!COMPLEX version
+!-------------------------------------------------------
+COMPLEX(DP) FUNCTION ovlpmatrix_c(a,vec1,vec2,ndim,kdim)
+USE params, ONLY: DP
+
+implicit none
+
+INTEGER,INTENT(IN)      :: ndim
+INTEGER,INTENT(IN)      :: kdim
+COMPLEX(DP),INTENT(IN)  :: a(kdim,kdim)
+COMPLEX(DP),INTENT(IN)  :: vec1(kdim)
+COMPLEX(DP),INTENT(IN)  :: vec2(kdim)
+COMPLEX(DP) :: ovlp
+INTEGER :: i,j
+!-------------------------------------------------------
+
+ovlp = CMPLX(0D0,0D0,DP)
+DO i=1,ndim
+  DO j=1,ndim
+    ovlp = ovlp + CONJG(vec1(j))*a(j,i)*vec2(i)
+  END DO
+END DO
+ovlpmatrix_c = ovlp
+
+RETURN
+END FUNCTION ovlpmatrix_c
 
 END MODULE orthmat

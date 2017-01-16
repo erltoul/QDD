@@ -1582,60 +1582,6 @@ END FUNCTION avermatrixr
 END FUNCTION avermatrix
 #endif
 
-!-----ovlpmatrix-----------------------------------------
-
-#ifdef REALSWITCH
-REAL(DP) FUNCTION ovlpmatrixr(a,vec1,vec2,ndim,kdim)
-#else
-COMPLEX(DP) FUNCTION ovlpmatrix(a,vec1,vec2,ndim,kdim)
-#endif
-USE params, ONLY: DP
-
-!      implicit none
-
-!     Matrix element of matrix 'a'
-!     with respect to states 'vec1' and 'vec2'
-!     having actual length 'ndim' and dimension 'kdim'.
-
-INTEGER :: ndim,kdim
-INTEGER :: i,j
-#ifdef REALSWITCH
-REAL(DP),INTENT(IN) :: a(kdim,kdim),vec1(kdim),vec2(kdim)
-REAL(DP) :: ovlp
-#else
-COMPLEX(DP),INTENT(IN) :: a(kdim,kdim),vec1(kdim),vec2(kdim)
-COMPLEX(DP) :: ovlp
-
-#endif
-
-!-------------------------------------------------------
-
-#ifdef REALSWITCH
-ovlp = 0D0
-#else
-ovlp = CMPLX(0D0,0D0,DP)
-#endif
-DO i=1,ndim
-  DO j=1,ndim
-#ifdef REALSWITCH
-    ovlp = ovlp + vec1(j)*a(j,i)*vec2(i)
-#else
-    ovlp = ovlp + CONJG(vec1(j))*a(j,i)*vec2(i)
-#endif
-  END DO
-END DO
-#ifdef REALSWITCH
-ovlpmatrixr = ovlp
-#else
-ovlpmatrix = ovlp
-#endif
-
-RETURN
-#ifdef REALSWITCH
-END FUNCTION ovlpmatrixr
-#else
-END FUNCTION ovlpmatrix
-#endif
 
 
 !-----superpose_state--------------------------------------------------
