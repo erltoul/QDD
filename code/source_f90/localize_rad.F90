@@ -50,6 +50,12 @@ INTEGER,SAVE,PRIVATE :: ndim(2)
 !COMMON /radmatrixn/ndim
 
 
+INTERFACE superpose_state
+! automated choice between real, complex and complexsic versions of superpose_state
+  MODULE PROCEDURE superpose_state_r, superpose_state_c, superpose_state_rc
+END INTERFACE superpose_state
+
+
 CONTAINS
 !     ******************************
 
@@ -301,7 +307,7 @@ IF(tdiag .AND. iter > iterdiag .AND. ndim(1) > 0  &
     is = ispin(nbe)
     nb = nbe - (is-1)*ndim(1)
     noff = (is-1)*ndim(1)+1
-    CALL superpose_state(qnew(1,nbe),eigvec(1,nb,is), q0,is)
+    CALL superpose_state(qnew(:,nbe),eigvec(:,nb,is), q0,is)
     amoy(nbe) = eigval(nb,is)
     epotsp(nbe) = amoy(nbe)-ekinsp(nbe)
   END DO
@@ -390,7 +396,7 @@ DO nb=1,nstate
     is = ispin(nrel2abs(nb))
     ishift = (is-1)*nxyz ! store spin=2 in upper block
     nbeff = nb - (is-1)*ndim(1)
-    CALL superpose_state(qsic(1,nb),vecsr(1,nbeff,is),q0,is)
+    CALL superpose_state(qsic(:,nb),vecsr(:,nbeff,is),q0,is)
 #ifdef REALSWITCH
     CALL calc_sicspr(rhosp,usicsp,qsic(1,nb),nb)
 #else
@@ -491,46 +497,95 @@ RETURN
 END SUBROUTINE analyze_mom
 
 !-----superpose_state--------------------------------------------------
-
-SUBROUTINE superpose_state(wfsup,coeff,q0,is)
-
+!
 !     Superposition to new state:
 !       wfsup     new single-particle state
 !       coeff     superposition coefficients
 !       q0        set of s.p.states to be combined
 !       is        spin of states
-
-!USE params
+!----------------------------------------------------------------------
+! REAL version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_r(wfsup,coeff,q0,is)
+USE params
+USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!INCLUDE 'radmatrixr.inc'
+REAL(DP),INTENT(OUT)          :: wfsup(kdfull2)
+REAL(DP),INTENT(IN)           :: coeff(kstate)
+REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
 
+!---------------------------------------------------------------------
+wfsup(1:nxyz)=0.0_DP
 
-REAL(DP), INTENT(OUT)                        :: wfsup(kdfull2)
-REAL(DP), INTENT(IN)                         :: coeff(kstate)
-REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)                  :: is
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
+END DO
 
+RETURN
+END SUBROUTINE superpose_state_r
 
+!----------------------------------------------------------------------
+! COMPLEX version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_c(wfsup,coeff,q0,is)
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
+COMPLEX(DP),INTENT(IN)        :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
 
 
 !---------------------------------------------------------------------
 
-DO nas=1,ndim(is)
-  na = nas + (is-1)*ndim(1)
-  IF(nas == 1) THEN
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na)
-    END DO
-  ELSE
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na) + wfsup(i)
-    END DO
-  END IF
+wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
+
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
 END DO
 
 RETURN
-END SUBROUTINE superpose_state
+END SUBROUTINE superpose_state_c
+
+!----------------------------------------------------------------------
+! cmplxsic version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_rc(wfsup,coeff,q0,is)
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
+REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
+!---------------------------------------------------------------------
+
+wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
+
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE superpose_state_rc
+
+
 
 !-----spmomsmatrix----------------------------------------------spmoms
 
@@ -1066,7 +1121,7 @@ DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   ishift = (is-1)*nxyz ! store spin=2 in upper block
   nbeff = nb - (is-1)*ndim(1)
-  CALL superpose_state(qnew(1,nb),vecsr(1,nbeff,is),q0,is)
+  CALL superpose_state(qnew(:,nb),vecsr(:,nbeff,is),q0,is)
 END DO
 
 DO nb=1,nstate

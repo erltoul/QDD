@@ -17,10 +17,12 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE orthmat
+
+! Subroutines and functions for matrices and vectors overlaps, and matrices orthonormalization 
+! Most procedures exist in real AND complex version, depending on the type of their arguments
 USE params
 IMPLICIT NONE
 
-! Matrices and vectors overlaps,  Matrices orthonormalization 
 
 INTERFACE matdorth
   MODULE PROCEDURE matdorth_r, matdorth_c
@@ -235,9 +237,7 @@ REAL(DP) :: acc
 REAL(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 
 !-------------------------------------------------------
-acc2 = 1D0/SQRT(vecnorm(vecs(:,1),ndim))
-vecs(1:ndim,1) = vecs(1:ndim,1)*acc2
-DO i=2,ndim
+DO i=1,ndim
   DO j=1,i-1
     acc = vecovlp(vecs(:,j),vecs(:,i),ndim)
     vecs(1:ndim,i) = vecs(1:ndim,i)-acc*vecs(1:ndim,j)
@@ -261,9 +261,7 @@ COMPLEX(DP) :: acc
 COMPLEX(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 
 !-------------------------------------------------------
-acc2 = 1D0/SQRT(vecnorm(vecs(:,1),ndim))
-vecs(1:ndim,1) = vecs(1:ndim,1)*acc2
-DO i=2,ndim
+DO i=1,ndim
   DO j=1,i-1
     acc = vecovlp(vecs(:,j),vecs(:,i),ndim)
     vecs(1:ndim,i) = vecs(1:ndim,i)-acc*vecs(1:ndim,j)

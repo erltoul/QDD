@@ -28,10 +28,11 @@ USE orthmat
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTERFACE spmomsmatrix
-! This is to make automated choice between real and complex version of spmomsmatrix,
+! automated choice between real and complex versions of spmomsmatrix,
 ! with spmomsmatrix_r, spmomsmatrix_c both defined at first compilation of twostr.
   MODULE PROCEDURE spmomsmatrix_r, spmomsmatrix_c
 END INTERFACE spmomsmatrix
+
 
 LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
@@ -171,7 +172,7 @@ ALLOCATE(psirut(kdfull2,kstate))
 
 kdim=kstate
 ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
-ALLOCATE(vecsr(kdim,kdim,2))   ! searched eigenvectors
+ALLOCATE(vecsr(kstate,kstate,2))   ! searched eigenvectors
 
 !     initialize unitary matrix
 
@@ -275,7 +276,7 @@ NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
 kdim=kstate
 ALLOCATE(ExpDABold(kstate,kstate,2),wfrotate(kstate,kstate,2))
-ALLOCATE(vecs(kdim,kdim,2))    ! searched eigenvectors
+ALLOCATE(vecs(kstate,kstate,2))    ! searched eigenvectors
 
 ALLOCATE(qnewut(kdfull2,kstate))
 ALLOCATE(psiut(kdfull2,kstate))
@@ -616,9 +617,9 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
   
 ! Lagrange mult matrix diag (needs vect1,2 in each sp subs, instead bugs)
   IF(is == 1)THEN
-    CALL givens(a,root(1,is),vect1(1,1),ndims(is),ndims(is),ndims(is))
+    CALL givens(a,root(:,is),vect1(:,:),ndims(is),ndims(is),ndims(is))
   ELSE IF(is == 2)THEN
-    CALL givens(a,root(1,is),vect2(1,1),ndims(is),ndims(is),ndims(is))
+    CALL givens(a,root(:,is),vect2(:,:),ndims(is),ndims(is),ndims(is))
   END IF
   
   DO na=1,ndims(is)
@@ -635,9 +636,9 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
     IF(is == ispin(nrel2abs(nb)))THEN
       nbeff = nb - (is-1)*ndims(1)
       IF(is == 1)THEN
-        CALL superpose_stater(psir(1,nb),vect1(1,nbeff),psirut,is)
+        CALL superpose_state(psir(:,nb),vect1(1:kstate,nbeff),psirut,is)
       ELSE IF(is == 2)THEN
-        CALL superpose_stater(psir(1,nb),vect2(1,nbeff),psirut,is)
+        CALL superpose_state(psir(:,nb),vect2(1:kstate,nbeff),psirut,is)
       END IF
     END IF
   END DO
@@ -654,11 +655,7 @@ ifsicp=8
 WRITE(6,*) 'DIAGONAL STATES :'
 CALL spmomsmatrix(psir,1)  !!! to print the total variance
 WRITE(6,*) 'LOCALIZED STATES :'
-#if(cmplxsic)
 CALL spmomsmatrix(psirut,1)
-#else
-CALL spmomsmatrix(psirut,1)
-#endif
 
 RETURN
 END SUBROUTINE diag_lagr
@@ -715,6 +712,7 @@ SUBROUTINE calc_utwfc(q0,q0ut,iter1)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
+USE twostr, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'twost.inc'
 !INCLUDE 'radmatrix.inc'
@@ -739,7 +737,7 @@ END DO
 DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   nbeff = nb - (is-1)*ndims(1)
-  CALL superpose_state(q0ut(1,nb),vecs(1,nbeff,is),q0,is)
+  CALL superpose_state(q0ut(:,nb),vecs(:,nbeff,is),q0,is)
 END DO
 
 RETURN
@@ -763,6 +761,9 @@ SUBROUTINE calc_utwf(q0,q0ut,iter1)
 
 USE params
 USE kinetic
+#ifdef COMPLEXSWITCH
+USE twostr, ONLY: superpose_state
+#endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     basic arrays and workspace
@@ -804,13 +805,9 @@ DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   nbeff = nb - (is-1)*ndims(1)
 #ifdef REALSWITCH
-#if(cmplxsic)
-  CALL superpose_staterc(q0ut(1,nb),vecsr(1,nbeff,is),q0,is)
+  CALL superpose_state(q0ut(:,nb),vecsr(:,nbeff,is),q0,is)
 #else
-  CALL superpose_stater(q0ut(1,nb),vecsr(1,nbeff,is),q0,is)
-#endif
-#else
-  CALL superpose_state(q0ut(1,nb),vecs(1,nbeff,is),q0,is)
+  CALL superpose_state(q0ut(:,nb),vecs(:,nbeff,is),q0,is)
 #endif
 END DO
 
@@ -836,6 +833,7 @@ SUBROUTINE utgradstepc(is,iprint,q0,iter1)
 !#INCLUDE "all.inc"
 USE params
 USE kinetic
+
 IMPLICIT REAL(DP) (A-H,O-Z)
 !INCLUDE 'twost.inc'
 !INCLUDE 'radmatrix.inc'   ! defines also 'KDIM'
@@ -1279,7 +1277,7 @@ ener_2st(is)=0D0
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
-    CALL superpose_staterc(qsym(1,nb),vecsr(1,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vecsr(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
 !    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
@@ -1370,7 +1368,7 @@ DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
     
-    CALL superpose_stater(qsym(1,nb),vecsr(1,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vecsr(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
     CALL calc_sicspr(rhosp,usicsp,qsym(1,nb),nb)
@@ -1446,6 +1444,7 @@ SUBROUTINE dalphabeta(is,dab,q0)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
+USE twostr, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
@@ -1475,7 +1474,7 @@ DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
     
-    CALL superpose_state(qsym(1,nb),vecs(1,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vecs(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
 !    WRITE(*,*) 'DALPHAETA: nb,wfnorm=',nb,wfnorm(qsym(1,nb))
@@ -1580,80 +1579,6 @@ END SUBROUTINE dalphabeta
 END FUNCTION avermatrixr
 #else
 END FUNCTION avermatrix
-#endif
-
-
-
-!-----superpose_state--------------------------------------------------
-
-#ifdef REALSWITCH
-#if(cmplxsic)
-SUBROUTINE superpose_staterc(wfsup,coeff,q0,is)
-#else
-SUBROUTINE superpose_stater(wfsup,coeff,q0,is)
-#endif
-#else
-SUBROUTINE superpose_state(wfsup,coeff,q0,is)
-#endif
-
-!     Superposition to new state:
-!       wfsup     new single-particle state
-!       coeff     superposition coefficients
-!       q0        set of s.p.states to be combined
-!       is        spin of states
-
-USE params
-USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-#ifdef REALSWITCH
-!INCLUDE 'radmatrixr.inc'
-REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
-#if(cmplxsic)
-COMPLEX(DP),INTENT(OUT) :: wfsup(kdfull2)
-COMPLEX(DP),INTENT(IN) :: coeff(kstate)
-#else
-REAL(DP),INTENT(OUT) :: wfsup(kdfull2)
-REAL(DP),INTENT(IN) :: coeff(kstate)
-#endif
-#else
-!INCLUDE 'radmatrix.inc'
-COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
-COMPLEX(DP),INTENT(OUT) :: wfsup(kdfull2)
-COMPLEX(DP),INTENT(IN) :: coeff(kstate)
-#endif
-
-!---------------------------------------------------------------------
-
-!      write(*,*) ' SUPERPOSE: NDIMS=',ndims
-!      write(*,*) ' SUPERPOSE: COEFF=',(coeff(i),i=1,ndims(is))
-DO nas=1,ndims(is)
-  na = nas + (is-1)*ndims(1)
-!#ifdef COMPLEXSWITCH
-!        write(*,*) ' Q0 norm at nas=',nas,
-!     &     wfovlp(q0(1,na),q0(1,na))
-!#endif
-  IF(nas == 1) THEN
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na)
-    END DO
-  ELSE
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na) + wfsup(i)
-    END DO
-  END IF
-END DO
-
-RETURN
-#ifdef REALSWITCH
-#if(cmplxsic)
-END SUBROUTINE superpose_staterc
-#else
-END SUBROUTINE superpose_stater
-#endif
-#else
-END SUBROUTINE superpose_state
 #endif
 
 
