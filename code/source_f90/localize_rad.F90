@@ -55,6 +55,9 @@ INTERFACE superpose_state
   MODULE PROCEDURE superpose_state_r, superpose_state_c, superpose_state_rc
 END INTERFACE superpose_state
 
+INTERFACE avermatrix
+  MODULE PROCEDURE avermatrix_r avermatrix_c
+END INTERFACE avermatrix
 
 CONTAINS
 !     ******************************
@@ -765,17 +768,6 @@ INTEGER :: i,j                ! eigenstates
 INTEGER :: na,nb              ! matrix indices
 INTEGER :: iter
 
-!INTERFACE
-! REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
-! USE params, ONLY: DP
-! IMPLICIT NONE
-! INTEGER, INTENT(IN)                      :: ndim
-! INTEGER, INTENT(IN)                  :: kdimin
-! REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
-! REAL(DP), INTENT(IN)                       :: vec(kdimin)
-! END FUNCTION avermatrix
-!END INTERFACE
-
 !-------------------------------------------------------
 
 IF(ttest) WRITE(6,'(10(/3i4,6(1pg13.5)))') ((na,nb,is,  &
@@ -1029,27 +1021,22 @@ RETURN
 END SUBROUTINE operate
 
 !-----avermatrix-----------------------------------------
-
-REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
-!FUNCTION avermatrix(a,vec,ndim,kdimin)
+!
+!     Average of matrix 'a' taken with state 'vec' of
+!     actual length 'ndim', dimensioned with 'kdimin'.
+!-------------------------------------------------------
+! REAL version
+!-------------------------------------------------------
+REAL(DP) FUNCTION avermatrix_r(a,vec,ndim,kdimin)
 USE params, ONLY: DP
 IMPLICIT NONE
 
-!REAL(DP) :: avermatrix
 REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
 REAL(DP), INTENT(IN)                       :: vec(kdimin)
 INTEGER, INTENT(IN)                      :: ndim
 INTEGER, INTENT(IN)                  :: kdimin
-
-!     Average of matrix 'a' taken with state 'vec' of
-!     actual length 'ndim', dimensioned with 'kdimin'.
-
-
-
 REAL(DP) :: aver
 INTEGER :: i,j
-
-!-------------------------------------------------------
 
 aver = 0.0D0
 DO i=1,ndim
@@ -1057,31 +1044,36 @@ DO i=1,ndim
     aver = aver + vec(j)*a(j,i)*vec(i)
   END DO
 END DO
-avermatrix = aver
+avermatrix_r = aver
 
 RETURN
-END FUNCTION avermatrix
+END FUNCTION avermatrix_r
+!-------------------------------------------------------
+! COMPLEX version
+!-------------------------------------------------------
+REAL(DP) FUNCTION avermatrix_c(a,vec,ndim,kdimin)
+USE params, ONLY: DP
+IMPLICIT NONE
 
-!bufc-----bsqrt----------------------------------------------
-!bufc
-!buf      real*8 function bsqrt(x)
-!bufc
-!buf      implicit none
-!bufc
-!bufc     buffered square root
-!bufc
-!buf      real*8 x
-!bufc
-!bufc-------------------------------------------------------
-!bufc
-!buf      if(x.eq.0.0D0) then
-!buf        bsqrt = 0.0D0
-!buf      else
-!buf        bsqrt = sqrt(x)
-!buf      endif
-!bufc
-!buf      return
-!buf      end
+COMPLEX(DP), INTENT(IN)                       :: a(kdimin,kdimin)
+COMPLEX(DP), INTENT(IN)                       :: vec(kdimin)
+INTEGER, INTENT(IN)                      :: ndim
+INTEGER, INTENT(IN)                  :: kdimin
+
+COMPLEX(DP) :: aver
+INTEGER :: i,j
+
+aver = CMPLX(0D0,0D0,DP)
+DO i=1,ndim
+  DO j=1,ndim
+    aver = aver + CONJG(vec(j))*a(j,i)*vec(i)
+  END DO
+END DO
+avermatrix_c = aver
+
+RETURN
+END FUNCTION avermatrix_c
+
 !-----calc_locwf--------------------------------------------------
 
 SUBROUTINE calc_locwf(q0,qnew)

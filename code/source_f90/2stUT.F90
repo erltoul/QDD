@@ -1527,61 +1527,6 @@ RETURN
 END SUBROUTINE dalphabeta
 #endif
 
-  
-!-----avermatrix-----------------------------------------
-  
-#ifdef REALSWITCH
-  REAL(DP) FUNCTION avermatrixr(a,vec,ndim,kdim)
-#else
-  COMPLEX(DP) FUNCTION avermatrix(a,vec,ndim,kdim)
-#endif
-  USE params, ONLY: DP
-  
-!      implicit 
-  
-!     Average of matrix 'a' taken with state 'vec' of
-!     actual length 'ndim', dimensioned with 'kdim'.
-  
-  INTEGER,INTENT(IN) :: ndim,kdim
-  INTEGER :: i,j
-#ifdef REALSWITCH
-  REAL(DP),INTENT(IN) :: a(kdim,kdim),vec(kdim)
-  REAL(DP) :: aver
-#else
-  COMPLEX(DP),INTENT(IN) :: a(kdim,kdim),vec(kdim)
-  COMPLEX(DP) :: aver
-#endif
-  
-!-------------------------------------------------------
-  
-#ifdef REALSWITCH
-  aver = 0D0
-#else
-  aver = CMPLX(0D0,0D0,DP)
-#endif
-  DO i=1,ndim
-    DO j=1,ndim
-#ifdef REALSWITCH
-      aver = aver + vec(j)*a(j,i)*vec(i)
-#else
-      aver = aver + CONJG(vec(j))*a(j,i)*vec(i)
-#endif
-    END DO
-  END DO
-#ifdef REALSWITCH
-  avermatrixr = aver
-#else
-  avermatrix = aver
-#endif
-  
-  RETURN
-#ifdef REALSWITCH
-END FUNCTION avermatrixr
-#else
-END FUNCTION avermatrix
-#endif
-
-
 #ifdef REALSWITCH
 !-----spmomsmatrix----------------------------------------------
 
