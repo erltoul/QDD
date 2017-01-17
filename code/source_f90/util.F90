@@ -4338,7 +4338,6 @@ END SUBROUTINE testgradient
 
 
 COMPLEX(DP) FUNCTION determinant(a,n,np)
- 
 ! determinant complex matrix 'a'
 USE params, ONLY:DP
 IMPLICIT NONE
@@ -4347,34 +4346,36 @@ COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
 INTEGER, INTENT(IN)                :: n
 INTEGER, INTENT(IN)                :: np
 
-COMPLEX(DP)  :: d
+REAL(DP)     :: d
+COMPLEX(DP)  :: det
 INTEGER :: nst
 INTEGER :: indx(n)
+INTEGER :: ierror
 
-  CALL cludcmp(a,n,np,indx,d)
-
-  DO nst=1,n
-    d = d*a(nst,nst)
-  END DO
-
-  determinant = d
-
+  CALL cludcmp(a,n,np,indx,d,det,ierror)
+  determinant = det
 
 RETURN
-
 END FUNCTION determinant
 
 
-SUBROUTINE cludcmp(a,n,np,indx,d)
+SUBROUTINE cludcmp(a,n,np,indx,d,det,ierror)
  
-! LU decomposition for complex matrix 'a'
+!     Lower upper decomposition for a complex matrix:                                     
+!     a        matrix to be decomposed, at the end decomposed matrix                       
+!     n        actual dimension of matrix                                                  
+!     np       physical dimension of matrix                                               
+!     indx     array keeping the permutations from pivoting                               
+!     d        sign  of number of row interchanges                                        
+!     det      determinant of 'a'    
 USE params, ONLY:DP
 COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
 INTEGER, INTENT(IN)                 :: n
 INTEGER, INTENT(IN)                 :: np
 INTEGER, INTENT(OUT)                :: indx(n)
-COMPLEX(DP), INTENT(OUT)            :: d
-
+REAL(DP), INTENT(OUT)               :: d
+COMPLEX(DP), INTENT(OUT)            :: det
+INTEGER, INTENT(OUT)                :: ierror
 
 INTEGER, PARAMETER :: nmax=500
 DOUBLE PRECISION, PARAMETER :: tiny=1.0D-20
@@ -4382,15 +4383,21 @@ INTEGER :: i,imax,j,k
 COMPLEX(DP) :: csum,cdum
 REAL(DP) :: dum,aamax,vv(nmax)
 
+IF(np > nmax) STOP 'LUDCMP: too large matrix'
+ierror = 0
+
 d=1.d0
 DO  i=1,n
   aamax=0.d0
   DO  j=1,n
     IF (ABS(a(i,j)) > aamax) aamax=ABS(a(i,j))
   END DO
-  IF (aamax == 0.d0) THEN
-    WRITE(6,*) 'singular matrix in ludcmp. Press ENTER to continue.'
-    READ(*,*)
+  IF (aamax == CMPLX(0D0,0D0,DP)) THEN
+    STOP 'singular matrix in cludcmp. Press ENTER to continue.'
+!~     WRITE(6,*) 'singular matrix in cludcmp. Press ENTER to continue.'
+!~     READ(*,*)
+    STOP 'singular matrix in cludcmp. Press ENTER to continue.'
+    ierror=99
   ENDIF
   vv(i)=1.d0/aamax
 END DO
@@ -4425,7 +4432,7 @@ DO  j=1,n
     vv(imax)=vv(j)
   END IF
   indx(j)=imax
-  IF(a(j,j) == 0.d0)a(j,j)=tiny
+  IF(a(j,j) == CMPLX(0D0,0D0,DP)) a(j,j)=tiny
   IF(j /= n)THEN
     cdum=1.d0/a(j,j)
     DO  i=j+1,n
@@ -4433,6 +4440,12 @@ DO  j=1,n
     END DO
   END IF
 END DO
+
+!calculate determinant
+det=CMPLX(d,0D0,DP)
+DO i=1,n
+  det=det*a(i,i)
+ENDDO
 RETURN
 END SUBROUTINE cludcmp
 

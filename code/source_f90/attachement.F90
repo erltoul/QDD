@@ -274,7 +274,7 @@ DO iener=1,nmatch
 !  as a test, compute determinant of full overlap
 !
    submatr(1:nstate,1:nstate) = overlaps(1:nstate,1:nstate)
-   CALL cludcmp_d(submatr,nstate,indx,d,det,ierror)
+   CALL cludcmp(submatr,nstate,kstate,indx,d,det,ierror)
    IF(ierror == 99) det = CMPLX(0D0,0D0,DP)
    totalovlp=ABS(det)**2+totalovlp
 
@@ -308,7 +308,7 @@ DO iener=1,nmatch
                         END IF
                      END DO
                   END DO
-                  CALL cludcmp_d(submatr,nstate-2,index,d,det,ierror)
+                  CALL cludcmp(submatr,nstate-2,kstate,index,d,det,ierror)
                   IF(ierror == 99) det = CMPLX(0D0,0D0,DP)
                   
                   testovlp = det*(2*MOD(i1,2)-1)*(2*MOD(i2,2)-1) &
@@ -362,107 +362,3 @@ DEALLOCATE(ipoint,ipoi_act)
 
 RETURN
 END SUBROUTINE attach_prob
-
-!-----cludcmp_d----------------------------------------------                        
-
-
-SUBROUTINE cludcmp_d(a,n,indx,d,det,ierror)
-USE params
-
-!     Lower upper decomposition for a complex matrix:                                     
-!     a        matrix to be decomposed, at the end decomposed matrix                       
-!     n        actual dimension of matrix                                                  
-!!     np       physical dimension of matrix                                               
-!     indx     array keeping the permutations from pivoting                               
-!     d        sign  of number of row interchanges                                        
-!     det      determinant of 'a'                                                          
-
-
-COMPLEX(DP), INTENT(IN OUT)  :: a(kstate,kstate)
-INTEGER, INTENT(IN)          :: n
-INTEGER, INTENT(OUT)         :: indx(n)
-REAL(DP), INTENT(OUT)        :: d
-COMPLEX(DP), INTENT(OUT)     :: det
-INTEGER, INTENT(OUT)         :: ierror
-
-!      COMPLEX*8 a(np,np),sum,dum2,newd,det                                                
-COMPLEX(DP) :: sum,dum2,newd
-
-INTEGER, PARAMETER :: nmax=500
-DOUBLE PRECISION, PARAMETER :: tiny=1.0D-20
-INTEGER :: i,imax,j,k
-REAL(DP) :: aamax,dum,vv(nmax)
-!      write(6,*)'enter LU decomp'            
-
-!WRITE(*,*) 'kstate,n,a:',kstate,n,a(:,:)
-                                                
-IF(kstate > nmax) STOP 'LUDCMP: too large matrix'
-ierror = 0
-d=1D0
-DO i=1,n
-  aamax=0D0
-  DO j=1,n
-    IF (ABS(a(i,j)) > aamax) aamax=ABS(a(i,j))
-  END DO
-!  WRITE(*,*) 'aamax:',aamax
-  if (aamax.eq.0D0) stop 'singular matrix in ludcmp'
-  IF (aamax == 0D0) THEN
-    ierror = 99
-!    WRITE(6,*)'ierror=99'
-    RETURN
-  END IF
-  vv(i)=1D0/aamax
-END DO
-
-DO j=1,n
-  DO i=1,j-1
-    sum=a(i,j)
-    DO k=1,i-1
-      sum=sum-a(i,k)*a(k,j)
-    END DO
-    a(i,j)=sum
-  END DO
-  aamax=0D0
-  DO i=j,n
-    sum=a(i,j)
-    DO k=1,j-1
-      sum=sum-a(i,k)*a(k,j)
-    END DO
-    a(i,j)=sum
-    dum=vv(i)*ABS(sum)
-    IF (dum >= aamax) THEN
-      imax=i
-      aamax=dum
-    END IF
-  END DO
-  IF (j /= imax)THEN
-    DO k=1,n
-      dum2=a(imax,k)
-      a(imax,k)=a(j,k)
-      a(j,k)=dum2
-    END DO
-    d=-d
-    vv(imax)=vv(j)
-  END IF
-  indx(j)=imax
-  IF(a(j,j) == CMPLX(0D0,0D0,DP)) a(j,j)=tiny
-  IF(j /= n)THEN
-    dum2=1D0/a(j,j)
-    DO i=j+1,n
-      a(i,j)=a(i,j)*dum2
-    END DO
-  END IF
-END DO
-
-newd = CMPLX(d,0D0,DP)
-!      write(6,*) newd                                                                        
-DO i=1,n
-!        write(6,*)'i,a(i,i)',i,a(i,i)                                                        
-  newd = newd*a(i,i)
-END DO
-det = newd
-
-RETURN
-END SUBROUTINE cludcmp_d
-
-

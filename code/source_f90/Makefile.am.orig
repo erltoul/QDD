@@ -485,7 +485,11 @@ lattice.$(OBJEXT): lattice.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # attachement.o
+<<<<<<< HEAD
+attachement.$(OBJEXT): attachement.F90 util.$(OBJEXT) define.h params.$(OBJEXT)
+=======
 attachement.$(OBJEXT): attachement.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
+>>>>>>> dev-rc
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 #cuda.o
