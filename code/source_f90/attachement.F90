@@ -172,7 +172,7 @@ END SUBROUTINE init_psitarget
 
 SUBROUTINE attach_prob(totalprob,totalovlp,psi)
 USE params
-USE util, ONLY:wfovlp
+USE util, ONLY:wfovlp,cludcmp
 REAL(DP), INTENT(OUT)           :: totalprob,totalovlp
 COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 
