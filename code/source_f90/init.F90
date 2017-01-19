@@ -1704,7 +1704,7 @@ WRITE (6,*) 'Entering initions()'
   
   
   IF (ishiftcmtoorigin == 1) THEN
-    CALL getcm(1,0,0,0)
+    CALL getcm(1,0,0)  !  c.m. now on 'rvectmp(1:3)'
     rvectmp2(1)=rvectmp(1)
     rvectmp2(2)=rvectmp(2)
     rvectmp2(3)=rvectmp(3)

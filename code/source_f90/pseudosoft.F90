@@ -82,7 +82,6 @@ SUBROUTINE pseudo_external()
 
 !     In this routine we read the PsP from a file
 
-
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -91,8 +90,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
   CLOSE(48)
 
 RETURN
-END
-
+END SUBROUTINE pseudo_external
 !------pseudosoft----------------------------------------------
 
 SUBROUTINE pseudosoft()
