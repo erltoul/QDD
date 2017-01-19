@@ -1331,11 +1331,11 @@ SUBROUTINE getcm(iflag,iflagc,iflagk)
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-INTEGER,INTENT(IN)      ::iflag
-INTEGER,INTENT(IN)      ::iflagc
-INTEGER,INTENT(IN)      ::iflagk
+INTEGER,INTENT(IN)::iflag
+INTEGER,INTENT(IN)::iflagc
+INTEGER,INTENT(IN)::iflagk
 !    calculates the center of mass and stores it in the
-!     common vector rVecTmp(1-3)
+!     common vector rVecTmp(1:3)
 summ = 0D0
 sumx = 0D0
 sumy = 0D0
@@ -1415,9 +1415,7 @@ END DO
 !     or center of box (0)
 
 rvectmp = 0D0
-IF (iemomsrel == 1 .AND. nion2 > 0) THEN
-  CALL getcm(1,0,0)
-END IF
+IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
 
 ind=0
 DO iz=minz,maxz
@@ -1566,21 +1564,9 @@ END DO
 
 !     switch for calculating moments relative to center of mass (1)
 !     or center of box (0)
-
 rvectmp = 0D0
-IF (iemomsrel == 1 .AND. nion2 > 0) THEN
-  DO i=1,nion
-    IF (i/=nproj) THEN
-      summ = summ + amu(np(i))
-      sumx = sumx + amu(np(i))*cx(i)
-      sumy = sumy + amu(np(i))*cy(i)
-      sumz = sumz + amu(np(i))*cz(i)
-    END IF
-  END DO
-  rvectmp(1) = sumx/summ
-  rvectmp(2) = sumy/summ
-  rvectmp(3) = sumz/summ
-END IF
+IF(iemomsrel == 1 .AND. nion2 > 0) getcm(1,0,0)
+
 
 ind=0
 DO iz=minz,maxz

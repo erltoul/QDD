@@ -681,9 +681,8 @@ else
         WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
         WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
-#endif
 endif
-
+#endif
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
@@ -1701,7 +1700,7 @@ WRITE (6,*) 'Entering initions()'
   
   
   IF (ishiftcmtoorigin == 1) THEN
-    CALL getcm(1,0,0)
+    CALL getcm(1,0,0)  !  c.m. now on 'rvectmp(1:3)'
     rvectmp2(1)=rvectmp(1)
     rvectmp2(2)=rvectmp(2)
     rvectmp2(3)=rvectmp(3)
