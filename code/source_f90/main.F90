@@ -87,7 +87,7 @@ LOGICAL :: tmf
 
 CALL cpu_time(time_absinit)
 
-CALL init_parallele()
+CALL init_parallele() 
 
 #if(fftw_gpu)
 CALL cuda_gpu_init()
@@ -95,29 +95,29 @@ CALL cuda_gpu_init()
 
 
 
-CALL checkoptions()
+CALL checkoptions()       !check coherence of preprocessor option
 
 CALL initnamelists          ! read all input parameters
 
-CALL init_baseparams()
+CALL init_baseparams()    !init grid size, number of states ...
 
-CALL initisrtyp
+CALL initisrtyp         ! init short range interaction matrix
 
 CALL iperio                     ! initializing the 'periodic table'
 CALL changeperio   ! overwrites default periodic system if necessary
 
 CALL iparams()               ! check dynamic  parameters
 
-CALL init_grid()
+CALL init_grid()    ! init coulomb solver, kinetic energy, grid properties
 
-CALL init_fields()
+CALL init_fields()  ! allocate params arrays
 
 #if(lda_gpu)
-CALL cuda_lda_init()
+CALL cuda_lda_init() 
 #endif
 
 #if(twostsic)
-IF(numspin==2) CALL init_radmatrix()
+IF(numspin==2) CALL init_radmatrix()   ! initialize matrices of radial moments
 #endif
 
 ALLOCATE(psir(kdfull2,kstate))
@@ -136,9 +136,9 @@ IF(nion2 == 1) THEN
   CALL initions()              ! reading ionic positions and inits.
 ELSE IF(nion2 > 1) THEN
   WRITE(*,*) ' external background potential '
-  CALL pseudo_external()
+  CALL pseudo_external()      ! read pseudopotential from a file
 ELSE
-  CALL init_jellium()
+  CALL init_jellium()       ! initialize jellium background
 END IF
 if(dx.lt.0.0) then
         write(6,*) 'negative dx was given - reread from file dx and restart'

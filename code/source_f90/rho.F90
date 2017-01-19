@@ -101,8 +101,8 @@ DO nb=1,nstate
   END DO
 END DO
 
-!     reorder to total density in lower block (1-nxyz)
-!     and difference density in upper block (nxyz+1-2nxyz)
+!     reorder to total density in lower block (1:nxyz)
+!     and difference density in upper block (nxyz+1:2nxyz)
 
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)

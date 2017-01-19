@@ -2784,7 +2784,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      tfs=it*dt1*0.0484
 
-CALL getcm(1,0,0,0)                  !  c.m. now on 'rvectmp(1:3)'
+CALL getcm(1,0,0)                  !  c.m. now on 'rvectmp(1:3)'
 IF (jposcm > 0 .AND. MOD(it,jposcm) == 0) THEN
   CALL  safeopen(281,it,jposcm,'pposCM')
 !  OPEN(281,POSITION='append',FILE='pposCM.'//outnam)
