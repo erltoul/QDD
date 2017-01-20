@@ -79,11 +79,12 @@ POST_UNINSTALL = :
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in $(dist_doc_DATA) README TODO ar-lib \
-	compile config.guess config.sub depcomp install-sh missing
+	$(srcdir)/define.h.in $(dist_doc_DATA) README ar-lib compile \
+	config.guess config.sub depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/FL_CHECK_FFTW_LIBS.m4 \
 	$(top_srcdir)/m4/FL_CHECK_MKL_LIBS.m4 \
+	$(top_srcdir)/m4/FL_CHECK_MPIF_HEADER.m4 \
 	$(top_srcdir)/m4/FL_CHECK_OS.m4 \
 	$(top_srcdir)/m4/FL_LOCATE_CUDA.m4 \
 	$(top_srcdir)/m4/FL_READ_DEF.m4 \
@@ -93,7 +94,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = config.h
+CONFIG_HEADER = define.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_$(V))
@@ -161,7 +162,7 @@ am__recursive_targets = \
 AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
 	cscope distdir dist dist-all distcheck
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) \
-	$(LISP)config.h.in
+	$(LISP)define.h.in
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
 # *not* preserved.
@@ -232,7 +233,7 @@ AUTOHEADER = ${SHELL} /home/permanent/flabbe/Documents/TELEMAN/pw-teleman/missin
 AUTOMAKE = ${SHELL} /home/permanent/flabbe/Documents/TELEMAN/pw-teleman/missing automake-1.14
 AWK = gawk
 CC = icc
-CCDEPMODE = depmode=gcc3
+CCDEPMODE = depmode=none
 CFLAGS = -g -O2
 CPP = icc -E
 CPPFLAGS = 
@@ -240,16 +241,15 @@ CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
 DFFT = -Dnetlib_fft
-DIDRIS = 
 DMPI = -Dparano
 DOMP = 
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-EXEEXT = 
+EXEEXT = .seq
 FC = ifort
-FCFLAGS = -g
+FCFLAGS = 
 GREP = /bin/grep
 IDRIS = 
 INSTALL = /usr/bin/install -c
@@ -268,19 +268,19 @@ MAKEINFO = ${SHELL} /home/permanent/flabbe/Documents/TELEMAN/pw-teleman/missing 
 MKDIR_P = /bin/mkdir -p
 NVCC_PATH = 
 OBJEXT = o
-OPENMP_FCFLAGS = -fopenmp
+OPENMP_FCFLAGS = 
 PACKAGE = pw-teleman
 PACKAGE_BUGREPORT = francois.labbe@univ-lemans.fr
 PACKAGE_NAME = pw-teleman
-PACKAGE_STRING = pw-teleman 73
+PACKAGE_STRING = pw-teleman 122016
 PACKAGE_TARNAME = pw-teleman
 PACKAGE_URL = 
-PACKAGE_VERSION = 73
+PACKAGE_VERSION = 122016
 PATH_SEPARATOR = :
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = 
-VERSION = 73
+VERSION = 122016
 abs_builddir = /home/permanent/flabbe/Documents/TELEMAN/pw-teleman
 abs_srcdir = /home/permanent/flabbe/Documents/TELEMAN/pw-teleman
 abs_top_builddir = /home/permanent/flabbe/Documents/TELEMAN/pw-teleman
@@ -339,7 +339,8 @@ top_srcdir = .
 twostsic = 0
 SUBDIRS = code/source_f90
 dist_doc_DATA = README
-all: config.h
+EXTRA_DIST = samples doc bin presentation samples_py 
+all: define.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
@@ -378,20 +379,20 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
 
-config.h: stamp-h1
+define.h: stamp-h1
 	@test -f $@ || rm -f stamp-h1
 	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) stamp-h1
 
-stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+stamp-h1: $(srcdir)/define.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
-	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.h.in:  $(am__configure_deps) 
+	cd $(top_builddir) && $(SHELL) ./config.status define.h
+$(srcdir)/define.h.in:  $(am__configure_deps) 
 	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
 	rm -f stamp-h1
 	touch $@
 
 distclean-hdr:
-	-rm -f config.h stamp-h1
+	-rm -f define.h stamp-h1
 install-dist_docDATA: $(dist_doc_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
@@ -710,7 +711,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(DATA) config.h
+all-am: Makefile $(DATA) define.h
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(docdir)"; do \

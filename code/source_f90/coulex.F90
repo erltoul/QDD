@@ -209,12 +209,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 nx1=nx+1
 ny1=ny+1
 nz1=nz+1
-nxr=nx+nx
-nyr=ny+ny
-nzr=nz+nz
-nxi=nxr
-nyi=nyr
-nzi=nzr
+nxi=nx+nx
+nyi=ny+ny
+nzi=nz+nz
 nxy1=nxi*nyi
 nxyz=nxi*nyi*nzi
 nkxyz=nxi*nyi*nzi
@@ -283,11 +280,10 @@ DO i3=1,nzi
 !        write(*,*) ' i1,i2,i3,ii=',i1,i2,i3,ii
       IF(ak2>dx**2/10D0) THEN
         akv2(i1,i2,i3) =  factor/SQRT(ak2) 
-        rffta(i1,i2,i3) =  factor/SQRT(ak2) 
       ELSE
         akv2(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
-        rffta(i1,i2,i3) =  factor*2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
       END IF
+      rffta(i1,i2,i3) =  akv2(i1,i2,i3)
     END DO
   END DO
 END DO

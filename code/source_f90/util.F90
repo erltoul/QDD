@@ -1643,8 +1643,7 @@ END DO
 !     switch for calculating moments relative to center of mass (1)
 !     or center of box (0)
 rvectmp = 0D0
-IF(iemomsrel == 1 .AND. nion2 > 0) getcm(1,0,0)
-
+IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
 
 ind=0
 DO iz=minz,maxz
