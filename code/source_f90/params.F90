@@ -61,7 +61,7 @@ INTEGER,PARAMETER :: maxmps=180    ! max. nr. analyzing points for PES
 REAL(DP),PARAMETER :: e2=2.0D0
 REAL(DP),PARAMETER :: hbar=1.0D0
 REAL(DP),PARAMETER :: ame=0.5D0
-REAL(DP),PARAMETER :: h2m=hbar*hbar/2.0/ame  !  h2m =  hbar**2/2m
+REAL(DP),PARAMETER :: h2m=hbar*hbar/2.0D0/ame  !  h2m =  hbar**2/2m
 
 ! frequently used mathematical constants
 REAL(DP),PARAMETER :: zero=0.0D0
@@ -395,7 +395,7 @@ CONTAINS
 
 SUBROUTINE init_baseparams()
 
-nthr=numthr-1  
+nthr=numthr-1
 ! deduced grid parameters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
  nx2=kxbox;ny2=kybox;nz2=kzbox

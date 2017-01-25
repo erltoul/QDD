@@ -116,6 +116,9 @@ SUBROUTINE calc_proj(cxa,cya,cza,cxg,cyg,czg,ion)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+REAL(DP),INTENT(IN):: cxa, cya, cza, cxg, cyg, czg
+INTEGER,INTENT(IN) :: ion
+
 REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
 
 !---------------------------------------------------------
@@ -150,7 +153,8 @@ SUBROUTINE calpr2(cxact,cyact,czact,cxg,cyg,czg,ion)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!WRITE(*,*) ' CALPR2'
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
 
 r0=r0g(np(ion))
 r1=r1g(np(ion))
@@ -267,8 +271,11 @@ SUBROUTINE calpr3(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
+
 WRITE(*,*) ' in CALPR3'
 
 
@@ -390,9 +397,10 @@ SUBROUTINE calpr4(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
 
 
 r0=r0g(np(ion))
@@ -534,7 +542,6 @@ SUBROUTINE checkproj(ion)
 !     ********************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                     :: ion

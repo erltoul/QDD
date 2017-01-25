@@ -199,7 +199,7 @@ SUBROUTINE spmomsr(wfr,iunit)
 SUBROUTINE spmoms(wf,iunit)
 #endif
 
-!     spatial moments of single-particle densities from real  wf's:
+!     spatial moments of single-particle densities from wf's:
 !     input is
 !      wfr    = set of real single particle wavefunctions
 !      wf     = set of complex s.p. wavefunctions

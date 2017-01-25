@@ -20,7 +20,7 @@ MODULE kinetic
 #if(fftw_cpu|fftw_gpu)
 USE, intrinsic :: iso_c_binding
 #endif
-USE params, ONLY: DP,numthr
+USE params, ONLY: DP,numthr,PI
 #if(fftw_gpu)
 USE cuda_alloc
 #endif
@@ -34,7 +34,6 @@ SAVE
 
 INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
-REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
 
 INTEGER, PRIVATE :: kfft,kfft2,kdfull2

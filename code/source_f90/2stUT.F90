@@ -294,6 +294,16 @@ END IF
 
 RETURN
 END SUBROUTINE init_fsic
+!-----ExpDabvol_rotatewf_init----------------------------------
+SUBROUTINE expdabvol_rotate_init
+IMPLICIT NONE
+INTEGER::is
+  DO is=1,2   !MV initialise ExpDabOld                              
+     CALL MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
+     CALL MatUnite(wfrotate(:,:,is), kstate,ndims(is))
+  END DO
+END SUBROUTINE expdabvol_rotate_init
+
 !-----end_fsic------------------------------------------------
 
 SUBROUTINE end_fsic()
@@ -872,7 +882,6 @@ IF(tnearest)  vecs(1:ni,1:ni,is) = MATMUL(wfrotate(1:ni,1:ni,is),vecs(1:ni,1:ni,
 
 IF(texpo) THEN
   vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
-!  call MatUnite(ExpDabOld(1,1,is),kstate,ndims(is))
 END IF
 
 actstep = step     ! radmaxsym obsolete, set to 1D0

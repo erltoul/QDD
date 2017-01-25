@@ -182,7 +182,7 @@ SELECT CASE(inumber)
   CASE(0:999999999)
     WRITE(inttostring,'(i9)') inumber
   CASE DEFAULT
-    STOP 'ERROR in intToString'
+    STOP 'ERROR in intToString : input argument outside range 0 to 999999999'
 END SELECT
 
 RETURN

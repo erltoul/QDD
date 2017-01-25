@@ -71,6 +71,7 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 REAL(DP) :: totalprob,totalovlp
+LOGICAL:: imaginary_time= .true.
 !~ #if(raregas)
 !~ LOGICAL :: tmf
 !~ #endif
@@ -95,10 +96,12 @@ CALL cuda_gpu_init()
 CALL checkoptions()       !check coherence of preprocessor option
 
 CALL initnamelists          ! read all input parameters
-
+  
+IF(icooltyp == 3) CALL init_simann() ! initialize and read parameters for simulated annealing
+  
 CALL init_baseparams()    !init grid size, number of states ...
 
-CALL initisrtyp         ! init short range interaction matrix
+CALL check_isrtyp         ! check short range interaction matrix
 
 CALL iperio                     ! initializing the 'periodic table'
 CALL changeperio   ! overwrites default periodic system if necessary
@@ -211,12 +214,7 @@ IF(isitmax>0 .AND. ismax>0) THEN
    IF(nclust > 0 .AND. ifsicp >= 7) THEN
       CALL init_fsic()
    END IF
-   IF(ifsicp==8) THEN
-     do is=1,2         !MV initialise ExpDabOld                              
-       call MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
-       call MatUnite(wfrotate(:,:,is), kstate,ndims(is))
-     enddo
-   END IF
+   IF(ifsicp==8) CALL expdabvol_rotate_init
 #endif
    CALL restart2(psi,outnam,.true.)     ! read static wf's
 #if(twostsic)
@@ -235,7 +233,7 @@ IF(isitmax>0 .AND. ismax>0) THEN
    DO it=1,isitmax
      WRITE(*,*) ' afterburn. iteration=',it
      IF(ifexpevol == 1) THEN
-       CALL tstep_exp(psi,aloc,rho,it,psiw,.true.)
+       CALL tstep_exp(psi,aloc,rho,it,psiw,imaginary_time)
      ELSE
        STOP 'imaginary-time step requires exponential evolution'
 !       CALL tstep(psi,aloc,rho,it)
@@ -485,7 +483,7 @@ DO it=irest,itmax   ! time-loop
 !     propagation of the wfs
       WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
-        CALL tstep_exp(psi,aloc,rho,it,psiw,.false.)
+        CALL tstep_exp(psi,aloc,rho,it,psiw, .NOT. imaginary_time)
       ELSE
         CALL tstep(psi,aloc,rho,it)
       END IF

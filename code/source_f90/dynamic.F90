@@ -28,7 +28,6 @@ USE util, ONLY:phstate,stateoverl,dipole_qp
 USE twost
 USE orthmat
 #endif
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     initializes dynamical wavefunctions from static solution
@@ -40,12 +39,7 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
   itgradstep=0      !MV to have a number of iterarions in utgradstepc             
 #if(twostsic)
-  IF(ifsicp==8) THEN
-    do is=1,2         !MV initialise ExpDabOld                                  
-       call MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
-       call MatUnite(wfrotate(:,:,is), kstate,ndims(is))
-    enddo
-  END IF
+  IF(ifsicp==8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
 #endif
 
 
@@ -161,7 +155,6 @@ SUBROUTINE init_velocel(psi)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
@@ -211,7 +204,6 @@ SUBROUTINE init_projwf(psi)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
@@ -278,7 +270,6 @@ SUBROUTINE init_scattel(psi)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
@@ -659,7 +650,6 @@ END SUBROUTINE dyn_mfield
 ! !     resulting in new 'q0' on output
 ! 
 ! USE params
-! !USE kinetic
 ! IMPLICIT REAL(DP) (A-H,O-Z)
 ! 
 ! COMPLEX(DP), INTENT(OUT)                     :: q0(kdfull2)
@@ -685,7 +675,6 @@ SUBROUTINE boost(q0)        ! boost with given 'centfx,y,z'
 !     and 'centfz'.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -739,7 +728,6 @@ SUBROUTINE info(psi,rho,aloc,it)
 
 USE params
 USE util, ONLY:wfovlp,safeopen,project
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -1813,7 +1801,6 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 !              propagation within the non-local plaquettes.
 !
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(OUT)                     :: qact(kdfull2)
@@ -2350,7 +2337,6 @@ SUBROUTINE print_densdiff(rho,it)
 
 USE params
 USE util, ONLY:pm3dcut,printfield,inttostring
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -2496,7 +2482,6 @@ SUBROUTINE analyze_ions(it)
 
 USE params
 USE util, ONLY:gettemperature,getcm,safeopen,view3d
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !----------------------------------------------------------------
@@ -2953,7 +2938,6 @@ SUBROUTINE savings(psi,it)
 !     Check status and optionally save wavefunctions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #if(simpara||parayes)

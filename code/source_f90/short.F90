@@ -462,12 +462,12 @@ END SUBROUTINE getshortforce
 
 !------------------------------------------------------------
 
-SUBROUTINE initisrtyp
+SUBROUTINE check_isrtyp
 !------------------------------------------------------------
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-!     Initializes the short range interaction type matrix
+!     Checks consistency of the short range interaction type matrix
 !     isrtyp(i,j)
 
 !     i,j each range from 1..5, meaning:
@@ -486,17 +486,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     The matrix must be symmetric, of course.
 
-
-!$$$      open(156,status='old',file='for005sr')
-!$$$        do i=1,5
-!$$$         read(156,*) isrtyp(i,1),isrtyp(i,2),isrtyp(i,3),isrtyp(i,4),
-!$$$     &           isrtyp(i,5)
-!$$$        enddo
-!$$$      close(156)
-!     OBSOLETE by namelists!!
-
-
-!     check consistency
 #if(raregas)
 IF (isrtypall /= 0) THEN
   WRITE(6,*) 'Setting short range parameters...'
@@ -530,7 +519,7 @@ END DO
 #endif
 
 RETURN
-END SUBROUTINE initisrtyp
+END SUBROUTINE check_isrtyp
 !------------------------------------------------------------
 
 #if(raregas)
