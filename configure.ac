@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([pw-teleman], [122016], [francois.labbe@univ-lemans.fr])
+AC_INIT([pw-teleman], [012017], [francois.labbe@univ-lemans.fr])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
 # Remark : Unable to properly use Fortran options of Autotools, due to preprocessor flags in the code.
@@ -127,6 +127,16 @@ AC_ARG_WITH([debug],
   [with_debug=no])
 AC_MSG_NOTICE([Use Debug option at compile time: $with_debug])
 AM_CONDITIONAL([USE_DEBUG],[test "x$with_debug" = xyes])
+#=======================================================================
+#                 Deprecated optimization option
+#=======================================================================
+AC_ARG_WITH([xW],
+    [AS_HELP_STRING([--with-xW],[--with-xW : use deprecated optimization option -xW instead of -axSSE4.2 -msse4.2])
+    ],
+  [],
+  [with_xW=no])
+AC_MSG_NOTICE([Use deprecated optimization -xW at compile time: $with_xW])
+AM_CONDITIONAL([USE_XW],[test "x$with_xW" = xyes])
 #=======================================================================
 #                        Static compilation
 #=======================================================================

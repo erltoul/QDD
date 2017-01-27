@@ -53,10 +53,10 @@
 \item Uncompress and unpackage the file:
 
 \hspace*{1cm}
-{\tt gunzip pw-teleman\_122016.tar.gz}
+{\tt gunzip pw-teleman\_012017.tar.gz}
 
 \hspace*{1cm}
-{\tt tar -xvf pw-teleman\_122016.tar}
+{\tt tar -xvf pw-teleman\_012017.tar}
 
 A directory 'pw-teleman' will be created. Enter this directory:
 
@@ -190,7 +190,7 @@ Also, use variable CPPFLAGS in order to add nonstandard directory containing hea
 
 {\tt --with-wrappers=<path>} & Use this option to give the path to fftw3xf wrappers\\
                              & for mkl, if the wrappers are not located in \\
-                             & {\tt \$mklroot/interfaces/}. Wrappers allow MKL routines\\
+                             & {\tt \$MKLROOT/interfaces/}. Wrappers allow MKL routines\\
                              & to be called intead of FFTW3 routines\\
 \\
 {\tt --with-mklthreads} & together with option {\tt --with-fft=MKL}, uses MKL threads. \\
@@ -202,6 +202,9 @@ Also, use variable CPPFLAGS in order to add nonstandard directory containing hea
 & This makes a big executable.\\
 \\
 {\tt --with-debug} & Use compiler-specfic debug option during compilation. \\
+\\
+{\tt --with-xW} & Use deprecated optimization option {\tt -xW} instead \\
+          & of {\tt-axSSE4.2 -msse4.2}  \\
 \\
 \hline
 

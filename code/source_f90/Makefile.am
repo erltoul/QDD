@@ -44,12 +44,15 @@ OPT1  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -a
 OPT2  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -autodouble
 OPT3  =  -pg -fpp -warn all -warn nodeclarations -g                -align all -autodouble
 else
+if USE_XW
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT3  = -fpp -w       -g                 -align all
-#~ OPT1  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-#~ OPT2  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-#~ OPT3  =-fpp -w        -g                            -align all -autodouble
+else
+OPT1  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+OPT2  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+OPT3  =-fpp -w        -g                            -align all -autodouble
+endif
 endif
 endif
 
@@ -80,9 +83,15 @@ OPT1  =  -pg -fpp -g -CB -traceback -align all -autodouble
 OPT2  =  -pg -fpp -g -CB -traceback -align all -autodouble
 OPT3  =  -pg -fpp -g -CB -traceback -align all -autodouble
 else
+if USE_XW
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all
 OPT3  = -fpp -w       -g                 -align all
+else
+OPT1  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+OPT2  =-fpp -w -axsse4.2 -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
+OPT3  =-fpp -w        -g                            -align all -autodouble
+endif
 endif
 endif
 
@@ -445,7 +454,7 @@ loc_mfield.$(OBJEXT): loc_mfield.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 
 # givens.o 
 givens.$(OBJEXT): givens.F90 define.h params.$(OBJEXT)
-	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) -c -o $@ $<
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # parallele.o
 parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
