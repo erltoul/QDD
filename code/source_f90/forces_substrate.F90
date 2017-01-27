@@ -1615,7 +1615,7 @@ delmr=1.0D0
 delmrold=delmr
 
 DO it=1,200
-  IF(SQRT(delmr) < 2D-5)GO TO 19
+  IF(SQRT(delmr) < 2D-5) EXIT
   delmr=0D0
 !     compute forces of valence clouds
 !         call calcforce_dip(rho)
@@ -1670,7 +1670,6 @@ DO it=1,200
   
   
 END DO
-19   CONTINUE
 
 
 
