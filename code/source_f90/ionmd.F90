@@ -1297,8 +1297,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
 !           stop 'calculated a derivative of density after x-stimulation'
     END IF
   END IF
@@ -1309,8 +1309,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
 !           stop 'calculated a derivative of density after y-stimulation'
     END IF
   END IF
@@ -1321,8 +1321,8 @@ IF(tfs > 0D0) THEN
       DO i=1,nxyz
         drho(i)=rho(i)-rhos(i)
       END DO
-      CALL sdensi(rhos,outnam)
-      CALL sderiv(drho,outnam)
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
 !           stop 'calculated a derivative of density after z-stimulation'
     END IF
   END IF
@@ -1660,30 +1660,21 @@ END SUBROUTINE eltherm
 
 !     **************************
 
-SUBROUTINE sderiv(drho,outna)
-
+SUBROUTINE write_density(drho,filename)
+!  write density or derivative of density
+!
 !     **************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
-CHARACTER (LEN=7) ::  chaine
-CHARACTER (LEN=13),INTENT(IN OUT) :: outna
+CHARACTER (LEN=6), INTENT(IN) :: filename
 CHARACTER (LEN=4) :: ext
 
-j1=MOD(iquery4/10,10)
-j2=MOD(iquery4/100,10)
-j3=MOD(iquery4/1000,10)
-ext='.'//CHAR(j3+48)//CHAR(j2+48)//CHAR(j1+48)
+WRITE(ext,'(a,i3.3)') ".", iquery4/10    ! e.g:  iquery4 = 1234  --->  ext = ".123"
+                                         !       iquery4 = 568   --->  ext = ".056"
+OPEN(UNIT=60,STATUS='unknown',FORM='unformatted',FILE= filename//'1'//ext)
 
-n=1
-
-WRITE(chaine,'(a,i1)') 'sderiv',n
-
-OPEN(UNIT=60,STATUS='unknown',FORM='unformatted',FILE= chaine//ext)
-
-!  write derivative of density:
 
 DO i=1,nxyz
   WRITE(60) drho(i)
@@ -1692,43 +1683,7 @@ END DO
 CLOSE(UNIT=60,STATUS='keep')
 
 RETURN
-END SUBROUTINE sderiv
-
-!     **************************
-
-SUBROUTINE sdensi(drho,outna)
-
-!     **************************
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
-CHARACTER (LEN=7) ::  chaine
-CHARACTER (LEN=13),INTENT(IN OUT) :: outna
-CHARACTER (LEN=4) :: ext
-
-j1=MOD(iquery4/10,10)
-j2=MOD(iquery4/100,10)
-j3=MOD(iquery4/1000,10)
-ext='.'//CHAR(j3+48)//CHAR(j2+48)//CHAR(j1+48)
-
-n=1
-
-WRITE(chaine,'(a,i1)') 'sdensi',n
-
-OPEN(UNIT=60,STATUS='unknown',FORM='unformatted',FILE= chaine//ext)
-
-!  write derivative of density:
-
-DO i=1,nxyz
-  WRITE(60) drho(i)
-END DO
-
-CLOSE(UNIT=60,STATUS='keep')
-
-RETURN
-END SUBROUTINE sdensi
+END SUBROUTINE write_density
 
 
 #endif
