@@ -22,7 +22,7 @@ EXTRA_DIST =define.h\
 						functions.F90 loc_mfield.F90\
 						givens.F90 parallele.F90 expevol.F90\
 						pot_substrate.F90 forces_substrate.F90 md_substrate.F90\
-						short.F90 image.F90 lattice.F90 attachement.F90\
+						short.F90 image.F90 attachement.F90\
 						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
 
 # Compiler-dependent options
@@ -201,7 +201,7 @@ OBJCOMMON = $(OBJKINPARA) \
 						loc_mfield.$(OBJEXT) givens.$(OBJEXT)\
 						parallele.$(OBJEXT) expevol.$(OBJEXT) \
 						pot_substrate.$(OBJEXT) forces_substrate.$(OBJEXT) md_substrate.$(OBJEXT)\
-						short.$(OBJEXT) image.$(OBJEXT) lattice.$(OBJEXT) attachement.$(OBJEXT)\
+						short.$(OBJEXT) image.$(OBJEXT) attachement.$(OBJEXT)\
 						sicnew.$(OBJEXT) sicnewc.$(OBJEXT)\
 						init.$(OBJEXT) generlcgo.$(OBJEXT)\
 						2stUT.$(OBJEXT) orthmat.$(OBJEXT)
@@ -489,10 +489,6 @@ short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
-# lattice.o
-lattice.$(OBJEXT): lattice.F90 define.h params.$(OBJEXT)
-	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-
 # attachement.o
 attachement.$(OBJEXT): attachement.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
