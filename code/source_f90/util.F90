@@ -2162,29 +2162,6 @@ RETURN
 END FUNCTION rwfnorm
 
 
-!------------------------------------------------------------
-
-SUBROUTINE zerowf(qwf)
-!------------------------------------------------------------
-
-!     To set the wavefunction field 'cwf' all zero.
-
-USE params
-!USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-
-COMPLEX(DP), INTENT(OUT)                     :: qwf(kdfull2)
-
-qwf = 0D0
-!DO ii=1,kdfull2
-!  qwf(ii)=0D0
-!END DO
-
-RETURN
-END SUBROUTINE zerowf
-
 !--------------------------------------------------------------------
 
 !SUBROUTINE flush(iwunit)  !  flush
@@ -4349,7 +4326,7 @@ END SUBROUTINE testgradient
 
 
 COMPLEX(DP) FUNCTION determinant(a,n,np)
-! determinant complex matrix 'a'
+! Determinant of a complex matrix 'a'. This function is merely an interface for cludcmp.
 USE params, ONLY:DP
 IMPLICIT NONE
 
