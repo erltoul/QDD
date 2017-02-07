@@ -1370,126 +1370,116 @@ iskip=-1
 
 inew=1
 open(unit=19,status='scratch')
-50	continue
-if(icountt.gt.0) then
-!write(6,*) symb(icountt),ch(icountt),crloc(icountt),cc1(icountt)
-endif
-icountt=icountt+1
-ch(icountt)=0D0
-crloc(icountt)=0D0
-cc1(icountt)=0D0
-cc2(icountt)=0D0
-r0g(icountt)=0D0
-r1g(icountt)=0D0
-r2g(icountt)=0D0
-l=0
+!~ 50	continue
+icountt=0
+ch(0)=0D0
+crloc(0)=0D0
+cc1(0)=0D0
+cc2(0)=0D0
+r0g(0)=0D0
+r1g(0)=0D0
+r2g(0)=0D0
 
-!       we read a new line if not already done
-
-70	continue
-if(inew.eq.1) then 
-   read(96,'(a)',end=1000) a
-endif
-if(a(1:1).ne.' ') then
-
-!       we have a new element
-
-
-   if(inew.eq.1) then
-      inew=0
-      goto 50
-   endif
-   rewind 19
-   write(19,'(a)') a
-   rewind 19
-100  read(19,101) naml,nval,rloc,c1,c2,c3,c4
-101  format(a3,i2,5(f10.6))
-   if(naml(3:3).eq.'1') then 
-!     write(6,*) 'semi-core'
-!      write(6,103) naml(1:3),' ',nval,rloc,c1,c2,c3,c4
-      isave=icountt-1
+do ! Loop until end of file
+!we read a new line
+  read(96,'(a)',end=1000) a     ! exits loop at EOF
+  if(a(1:1).ne.' ') then
+!we have a new element
+    inew=0
+    icountt=icountt+1
+    
+    ch(icountt)=0D0
+    crloc(icountt)=0D0
+    cc1(icountt)=0D0
+    cc2(icountt)=0D0
+    r0g(icountt)=0D0
+    r1g(icountt)=0D0
+    r2g(icountt)=0D0
+    l=0
+    rewind 19
+    write(19,'(a)') a   ! use a temporary file to re-read the line
+    rewind 19
+    read(19,'(a3,i2,5(f10.6))') naml,nval,rloc,c1,c2,c3,c4
+    if(naml(3:3).eq.'1') then  ! new element is a semi-core
+!   write(6,*) 'semi-core'
+!   write(6,103) naml(1:3),' ',nval,rloc,c1,c2,c3,c4
+      isave=icountt-1 ! semi-core not counted as en element: remember previous element 
       icountt=99 
       iskip=99
 
 !we skip semicore pseudos excepted if asked 
 
-IF(ipsptyp == 4) THEN
-     icountt=isave
-     iskip=icountt
-ENDIF
-   else
+      IF(ipsptyp == 4) THEN ! Do not skip
+        ! previous element will be replaced by the new semi-core version. 
+        icountt=isave  
         iskip=icountt
+      ENDIF
+    else
+      iskip=icountt
       rewind 19
-      read(19,102) namc,nval,rloc,c1,c2,c3,c4
-102     format(a2,i2,5(f10.6))
-!      write(6,103) namc(1:2),' ',nval,rloc,c1,c2,c3,c4
-   endif
-   ch(icountt)=nval
-   crloc(icountt)=rloc
-   cc1(icountt)=c1
-   cc2(icountt)=c2
-103   format(2A,i2,5(f10.6))
+      read(19,'(a2,i2,5(f10.6))') namc,nval,rloc,c1,c2,c3,c4
+  !    write(6,103) namc(1:2),' ',nval,rloc,c1,c2,c3,c4
+    endif
+    ! stores properties of new element with index 'icountt'
+    ch(icountt)=nval
+    crloc(icountt)=rloc
+    cc1(icountt)=c1
+    cc2(icountt)=c2
+  !103   format(2A,i2,5(f10.6))
 
-!       we search for the element in the periodic table
+  !       we search for the element in the periodic table
 
-   nactual=0
-   do iel=1,86
+    nactual=0
+    do iel=1,86
       if(naml(1:2).eq.symb(iel)) then
-! write(6,*) naml(1:2),' found in periodic table, Z=',iel,icountt
-         nactual=iel
+  ! write(6,*) naml(1:2),' found in periodic table, Z=',iel,icountt
+        nactual=iel
       endif
-   enddo    
-   if(nval.eq.nactual) then
-!      write(6,*) 'all electron pseudopotential'
-   endif
-   if(nactual.eq.0) stop 'not found in periodic table'
-if(icountt.ne.99) then
-if(nactual.ne.icountt) then
-write(6,*)  'nactual',nactual,'icount',icountt
+    enddo    
+  !   if(nval.eq.nactual) then
+  !      write(6,*) 'all electron pseudopotential'
+  !  endif
+    if(nactual.eq.0) stop 'not found in periodic table'
+    if(icountt.ne.99) then ! it is not a semicore
+      if(nactual.ne.icountt) then  ! the element is not on it usual location in the periodic table
+        write(6,*)  'nactual',nactual,'icount',icountt
         stop 'lost in pseudop. coef table'
-endif
-endif
- else
-
-
+      endif
+    endif
+  else
 !       we have nonlocal coefficients in this line
-
-     rewind 19
-   write(19,'(a)') a(6:80)
-   rewind 19
-!  write(6,'(a)') a(6:80)
-110  read(19,111) crr,h11,h22,h33
-! write(6,112) 'nonlocal reread',crr,h11,h22,h33
-111 format(4(f10.6))
-112   format(A,4(f10.6))
-   if(iskip.ne.99) then
-         if(crr.eq.0D0) then
- !                l=l-1
-          endif
-           if(l.eq.0) then
-                r0g(icountt)=crr
-                h0_11g(icountt)=h11
-                h0_22g(icountt)=h22
-                h0_33g(icountt)=h33
-           endif
-           if(l.eq.1) then
-                r1g(icountt)=crr
-                h1_11g(icountt)=h11
-                h1_22g(icountt)=h22
-           endif
-           if(l.eq.2) then
-                r2g(icountt)=crr
-                h2_11g(icountt)=h11
-           endif
-      l=l+1
-endif
-endif
-
+    rewind 19
+    write(19,'(a)') a(6:80)
+    rewind 19
+    read(19,'(4(f10.6))') crr,h11,h22,h33
+! write(6,'(A,4(f10.6))') 'nonlocal reread',crr,h11,h22,h33
+    if(iskip.ne.99) then
+  !    if(crr.eq.0D0) then
+  !      l=l-1
+  !    endif
+      if(l.eq.0) then
+        r0g(icountt)=crr
+        h0_11g(icountt)=h11
+        h0_22g(icountt)=h22
+        h0_33g(icountt)=h33
+      endif
+      if(l.eq.1) then
+        r1g(icountt)=crr
+        h1_11g(icountt)=h11
+        h1_22g(icountt)=h22
+      endif
+      if(l.eq.2) then
+        r2g(icountt)=crr
+        h2_11g(icountt)=h11
+      endif
+      l=l+1  ! nonlocal coefficients line counter
+    endif
+  endif
 
 !       go back to read a new line
-inew=1
-if(icountt.eq.99) icountt=isave
-goto 70
+  if(icountt.eq.99) icountt=isave  ! if it was a skiped Semi-core, continue from the previous element
+end do !next line !
+
 1000 write(6,*) 'all parameters have been read in file goed.asci'
 
 close(unit=19)
