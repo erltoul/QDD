@@ -20,7 +20,7 @@ EXTRA_DIST =define.h\
 						rho.F90 nonloc.F90 schmid.F90 \
 						zeroforce.F90 functions.F90\
 						functions.F90 loc_mfield.F90\
-						givens.F90 parallele.F90 expevol.F90\
+						givens.F90 parallele.F90 multi_exp.F90 expevol.F90\
 						pot_substrate.F90 forces_substrate.F90 md_substrate.F90\
 						short.F90 image.F90 attachement.F90\
 						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
@@ -186,7 +186,7 @@ else
 OBJCOULSOLV =coulsolv.$(OBJEXT)
 endif
 ########################################################################
-# 		        	Program name and complation rules
+# 		        	Program name and compilation rules
 ########################################################################
 
 OBJKINPARA =  params.$(OBJEXT) kinetic.$(OBJEXT)
@@ -199,7 +199,7 @@ OBJCOMMON = $(OBJKINPARA) \
 						rho.$(OBJEXT) rhoc.$(OBJEXT) nonloc.$(OBJEXT) nonlocc.$(OBJEXT)\
 						schmid.$(OBJEXT) zeroforce.$(OBJEXT) functions.$(OBJEXT)\
 						loc_mfield.$(OBJEXT) givens.$(OBJEXT)\
-						parallele.$(OBJEXT) expevol.$(OBJEXT) \
+						parallele.$(OBJEXT) multi_exp.$(OBJEXT) expevol.$(OBJEXT) \
 						pot_substrate.$(OBJEXT) forces_substrate.$(OBJEXT) md_substrate.$(OBJEXT)\
 						short.$(OBJEXT) image.$(OBJEXT) attachement.$(OBJEXT)\
 						sicnew.$(OBJEXT) sicnewc.$(OBJEXT)\
@@ -459,6 +459,11 @@ givens.$(OBJEXT): givens.F90 define.h params.$(OBJEXT)
 # parallele.o
 parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) -c -o $@ $<
+
+# multi_exp.o
+multi_exp.$(OBJEXT): multi_exp.F90 define.h 2stUTc.$(OBJEXT) params.$(OBJEXT)
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+
 
 # expevol.o
 if USE_TWOSTSIC

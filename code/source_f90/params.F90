@@ -228,7 +228,7 @@ INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
 INTEGER :: isitmax=0         ! number of imaginary-time steps (afterburn)
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=1,ifexpevol=0
+INTEGER :: iffastpropag=1,ifexpevol=0,ifcnevol=0 ! expe=exponential, cn = Crank Nicolson multigrid
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
@@ -502,6 +502,16 @@ IF(ipsptyp /=0) THEN
   ALLOCATE(p1_2y(knl,0:ng),p1_2z(knl,0:ng) )
   ALLOCATE(p2_1(knl,0:ng),p2_xy(knl,0:ng),p2_xz(knl,0:ng) )
   ALLOCATE(p2_yz(knl,0:ng),p2_xy2(knl,0:ng),p2_z2(knl,0:ng))
+
+  ALLOCATE(ifinfine(0:ng),icountfine(knl,0:ng))
+  ALLOCATE(icountfinesp(knl*ng))
+  ALLOCATE(icountsp(knl*ng))
+  ALLOCATE(p0_1fine(knl,0:ng),p0_2fine(knl,0:ng),p1_1fine(knl,0:ng),p1_1xfine(knl,0:ng))
+  ALLOCATE(p1_1yfine(knl,0:ng),p1_1zfine(knl,0:ng) )
+  ALLOCATE(p0_3fine(knl,0:ng),p1_2fine(knl,0:ng),p1_2xfine(knl,0:ng) )
+  ALLOCATE(p1_2yfine(knl,0:ng),p1_2zfine(knl,0:ng) )
+  ALLOCATE(p2_1fine(knl,0:ng),p2_xyfine(knl,0:ng),p2_xzfine(knl,0:ng) )
+  ALLOCATE(p2_yzfine(knl,0:ng),p2_xy2fine(knl,0:ng),p2_z2fine(knl,0:ng))
   ALLOCATE(tnonloc(0:ng))
 END IF
 

@@ -28,7 +28,7 @@ SUBROUTINE init_parallele()
 USE params
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-#if(parayes||simpara)
+#if(parayes||simpara||paraworld)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
@@ -36,12 +36,19 @@ INTEGER :: is(mpi_status_size)
 !------------------------------------------------------------------
 
 myn=0
-#if(parayes||simpara)
+#if(parayes||simpara||paraworld)
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(icode)
 WRITE(*,*) ' before mpi_comm_size'
 CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 WRITE(*,*) nprocs,knode
+#if(paraworld)
+CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+level=nrank/2
+call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,icode)
+call mpi_comm_dup(mpi_comm_world,mpi_world_dup,icode)
+write(6,*) 'split done'
+#endif
 #if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs

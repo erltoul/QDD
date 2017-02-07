@@ -41,9 +41,18 @@ INTEGER,PARAMETER :: knl=18000       ! storage for PsP projectors
 LOGICAL :: tnonlocany                          ! flag to invoke non-local part
 LOGICAL,ALLOCATABLE :: tnonloc(:)              ! flag to invoke non-local part
 INTEGER,ALLOCATABLE :: ifin(:),icount(:,:),np(:)
+INTEGER,ALLOCATABLE :: ifinfine(:),icountfine(:,:)
+INTEGER,ALLOCATABLE :: icountfinesp(:),icountsp(:)
+
 REAL(DP),ALLOCATABLE :: p0_1(:,:),p0_2(:,:),p1_1(:,:),p1_1x(:,:)
 REAL(DP),ALLOCATABLE :: p1_1y(:,:),p1_1z(:,:) 
 REAL(DP),ALLOCATABLE :: p0_3(:,:),p1_2(:,:),p1_2x(:,:) 
 REAL(DP),ALLOCATABLE :: p1_2y(:,:),p1_2z(:,:) 
 REAL(DP),ALLOCATABLE :: p2_1(:,:),p2_xy(:,:),p2_xz(:,:) 
 REAL(DP),ALLOCATABLE :: p2_yz(:,:),p2_xy2(:,:),p2_z2(:,:)
+REAL(DP),ALLOCATABLE :: p0_1fine(:,:),p0_2fine(:,:),p1_1fine(:,:),p1_1xfine(:,:)
+REAL(DP),ALLOCATABLE :: p1_1yfine(:,:),p1_1zfine(:,:)
+REAL(DP),ALLOCATABLE :: p0_3fine(:,:),p1_2fine(:,:),p1_2xfine(:,:)
+REAL(DP),ALLOCATABLE :: p1_2yfine(:,:),p1_2zfine(:,:)
+REAL(DP),ALLOCATABLE :: p2_1fine(:,:),p2_xyfine(:,:),p2_xzfine(:,:)
+REAL(DP),ALLOCATABLE :: p2_yzfine(:,:),p2_xy2fine(:,:),p2_z2fine(:,:)

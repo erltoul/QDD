@@ -96,7 +96,7 @@ echo "lda_gpu:      $lda_gpu"
 echo "asynclaunch:  $asynclaunch"
 echo "#################################################################"
 # Check  coherence of header options
-# gridfft, findfft, numerov : only one can be enalble
+# gridfft, findfft, numerov : only one can be enabled
 AS_IF([test "x$gridfft" = x1], 
       [
       AS_IF([test "x$findiff" = x1 ], [AC_MSG_FAILURE([gridfft and findiff cannot be enabled simulatneously in define.h])])
@@ -159,17 +159,19 @@ AM_CONDITIONAL([USE_STATIC],[test "x$with_static" = xyes])
 #Choice of parallelism
 AC_ARG_WITH([para],
             [AS_HELP_STRING([--with-para],
-            [--with-para : Use MPI for FFT parallelism. Use --with-para=sim for simultaneous mono jobs. Only for some compilers.])],
+            [--with-para : Use MPI for FFT parallelism. Use --with-para=sim for simultaneous mono jobs.  --withpara=world for Crank Nicolson parallel run. Only for some compilers.])],
             [],
             [with_para=no])
 #check and flags
 AS_IF([test "x$with_para" != xno],
       [
       AS_IF([test  "x$with_para" != xyes],
-            [AS_IF([test  "x$with_para" != xsim],
-                  [AC_MSG_FAILURE([$with_para is not a valid parallelism option. Use --with-para or --with-para=sim if you want some parallelism.])]
-                  )
-            ])
+          [AS_IF([test  "x$with_para" != xworld],
+                  [AS_IF([test  "x$with_para" != xsim],
+                        [AC_MSG_FAILURE([$with_para is not a valid parallelism option. Use --with-para or --with-para=sim if you want some parallelism.])]
+                        )
+                ])
+          ])
       LD_MPI=
       AS_IF([test "x$FC" = xgfortran],
             [
@@ -203,7 +205,10 @@ AS_IF([test "x$with_para" = xno],
        EXEEXT=".par"],
       [test "x$with_para" = xsim],
       [DMPI="-Dparano -Dsimpara"
-       EXEEXT=".sim"]
+       EXEEXT=".sim"],
+      [test "x$with_para" = xworld],
+      [DMPI="-Dparano -Dparaworld"
+       EXEEXT=".world"]
       )
       
 AC_MSG_NOTICE([Using parallelism: $with_para])
@@ -389,7 +394,7 @@ AS_IF(
       ],
       #......................INVALID....................................
       [
-        AC_MSG_FAILURE([Unvalid FFT option. --with-fft=<choice> .  <choice> can can be : NETLIB, FFTW, MKL or CUFFT. If not set, default library is NETLIB. ])
+        AC_MSG_FAILURE([Invalid FFT option. --with-fft=<choice> .  <choice> can be : NETLIB, FFTW, MKL or CUFFT. If not set, default library is NETLIB. ])
       ]
       )
 LIBS=

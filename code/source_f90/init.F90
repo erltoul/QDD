@@ -52,7 +52,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     bcol1,bcol2,dbcol,ntheta,nphi,betacol,chgcol, scaleclust,  &
     scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
-    rotclustx,rotclusty,rotclustz,imob,  &
+    rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
     idebug,ishiftcmtoorigin,iaddcluster,  &
     iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
     ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
@@ -92,7 +92,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
-    jstboostinv,ifspemoms,iftransme,ifexpevol, &
+    jstboostinv,ifspemoms,iftransme,ifexpevol,ifcnevol, &
     tempion,idenspl,ekmat,nfix,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
@@ -203,7 +203,7 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,global,END=99999)
     WRITE(*,*) ' GLOBAL read'
     IF(dx*dy*dz == 0D0) STOP ' DX & DY & DZ must be given explicitely'
-    If(dx<0.0) then
+    If(dx<0D0) then
             write(6,*) 'negative DX'
             write(7,*) 'negative DX'
            OPEN(119, FILE='dx', STATUS='UNKNOWN')
@@ -212,7 +212,7 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
            OPEN(120, FILE='nx', STATUS='UNKNOWN')
            read (120,*) nnx2
            close(120)
-              If(dx2<0.0) then
+              If(dx2<0D0) then
                    write(6,*) 'negative DX in file DX'
                    write(6,*) 'DX,NX are computed then program restart'
                    write(7,*) 'negative DX in file DX'
@@ -933,7 +933,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-99:99),dr2(-99:99),totvalelec=0.0
+REAL(DP) :: dr1(-99:99),dr2(-99:99),totvalelec=0D0
 REAL(DP) :: prho1(-99:99),prho2(-99:99)
 character (len=3) ::  naml
 character (len=2)  ::  namc,symb(99)
@@ -1895,9 +1895,15 @@ dt12=dt1
 
 IF(ipsptyp == 1) THEN
   DO ion=1,nion
-    CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+    IF (iswitch_interpol==1) THEN
+      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+      CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+    ELSE
+      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+    ENDIF
   END DO
-END IF
+  IF (iswitch_interpol==1) CALL mergetabs
+ END IF
 
 
 !     background energy
@@ -3386,10 +3392,73 @@ USE coulsolv
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-
-
+#if(paraworld||parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
 
 !------------------------------------------------------------------
+#if(paraworld)
+CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
+CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+level=nrank
+IF(level>=1) THEN
+  DO ilevel=1,nprocs
+    dx=dx*2D0
+    dy=dy*2D0
+    dz=dz*2D0
+    kxbox=kxbox/2
+    kybox=kybox/2
+    kzbox=kzbox/2
+    WRITE(6,*) 'level',level,dx,kxbox
+    IF(ilevel==level) EXIT
+    !    write(outnam,*) level 
+  END DO
+
+  kdfull28=(kxbox/2)*(kybox/2)*(kzbox/2)
+
+ 
+
+  nx2=kxbox
+  ny2=kybox
+  nz2=kzbox
+  kdfull2=nx2*ny2*nz2
+
+  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
+  nx2=kxbox;ny2=kybox;nz2=kzbox;nx2fine=2*nx2-1;ny2fine=2*ny2-1
+  nxyz=nx2*ny2*nz2;nyf=nx2;nxyf=nx2*ny2;nxyfine=nx2fine*ny2fine
+  kdfull2=kxbox*kybox*kzbox
+  kdfull2fine=(2*kxbox-1)*(2*kybox-1)*(2*kzbox-1)
+  kdfull2fine=(2*kxbox)*(2*kybox)*(2*kzbox)
+  nx=nx2/2;ny=ny2/2;nz=nz2/2
+  nxfine=kxbox;nyfine=kybox;nzfine=kzbox
+#if(gridfft)
+! bounds of loops
+  minx=1;maxx=nx2
+  miny=1;maxy=ny2
+  minz=1;maxz=nz2
+! bounds of esc. el. ???
+  nbnx=2;nbxx=nx2-1
+  nbny=2;nbxy=ny2-1
+  nbnz=2;nbxz=nz2-1
+! mid-point for x,y,z-values
+  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
+#endif
+#if(findiff|numerov)
+! bounds of loops
+  minx=-nx;maxx=nx
+  miny=-ny;maxy=ny
+  minz=-nz;maxz=nz
+! bounds of esc. el.
+  nbnx=-nx+1;nbxx=nx-1
+  nbny=-ny+1;nbxy=ny-1
+  nbnz=-nz+1;nbxz=nz-1
+! offset for x,y,z-values   ???
+  nxsh=0;nysh=0;nzsh=0
+#endif
+
+END IF
+#endif
 
 ALLOCATE(xval(nx2),yval(ny2),zval(nz2))        !  grid coordinates
 ALLOCATE(xt2(nx2),yt2(ny2),zt2(nz2))           !  coordinates**2
@@ -3414,6 +3483,11 @@ END IF
 !tab      endif
 
 dvol=dx*dy*dz
+dxfine=dx/2D0
+dyfine=dy/2D0
+dzfine=dz/2D0
+dvolfine=dvol/8
+
 
 DO ix=1,nx2
   x1=(ix-nxsh)*dx
@@ -3785,7 +3859,7 @@ DO i=1,50
           t=a(ip,iq)/h
         ELSE
           theta=0.5D0*h/a(ip,iq)
-          t=1./(ABS(theta)+SQRT(1D0+theta**2))
+          t=1D0/(ABS(theta)+SQRT(1D0+theta**2))
           IF(theta < 0D0)t=-t
         END IF
         c=1./SQRT(1+t**2)

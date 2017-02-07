@@ -443,8 +443,8 @@ COMPLEX(DP),ALLOCATABLE :: qex(:)
 
 COMPLEX(DP) :: wfovlp
 !                                   workspaces
-COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
-
+COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:),q1fine(:),q2fine(:),qactfine(:)
+COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
 LOGICAL,PARAMETER :: ttest=.false.
@@ -489,8 +489,26 @@ STOP ' HPSI not yet appropriate for finite differences'
 !     action of potential and non-local PsP (optionally)
 
 IF(ipsptyp == 1) THEN
-  q1 = 0D0
-  CALL nonlocalc(qact,q1,0)
+  IF (iswitch_interpol==1) THEN
+    ALLOCATE(q1fine(kdfull2fine),q2fine(kdfull2fine),qactfine(kdfull2fine))
+    ALLOCATE(qarray (nx2,ny2,nz2),qarrayfine (2*nx2-1,2*ny2-1,2*nz2-1))
+
+
+    CALL from1Dto3Dc(qact,qarray,nx2,ny2,nz2)    !from coarse vector to coarse array
+    CALL interpol3Dc(qarray,qarrayfine)               !from coarse array to fine array
+    CALL from3Dto1Dc(qactfine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)        !from fine array to fine vector
+    !
+    CALL nonlocalcfine(qactfine,q1fine,0)
+
+    !
+    CALL from1Dto3Dc(q1fine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)     !from fine vector to fine array
+    CALL smoothing3Dc(qarrayfine,qarray)            !from fine array to coarse array
+    CALL from3Dto1Dc(q1,qarray,nx2,ny2,nz2) !from coarse array to coarse vector
+    !
+  ELSE
+    CALL nonlocalc(qact,q1,0)
+  END IF ! interpol
+
   IF(tpri) enonlo(nbe) = wfovlp(qact,q1)
   DO  i=1,nxyz
     q1(i)=q1(i)+qact(i)*aloc(i)

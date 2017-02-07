@@ -180,7 +180,7 @@ CALL timer(1)
 !       static
 !
 !       *******************************************
-
+!SIC: Self Interaction Correction
 !                                     initialize parameters for FSIC
 IF(nclust > 0 .AND. ifsicp >= 7) THEN
   CALL init_fsicr()
@@ -215,10 +215,10 @@ IF(isitmax>0 .AND. ismax>0) THEN
       CALL init_fsic()
    END IF
    IF(ifsicp==8) THEN
-     do is=1,2         !MV initialise ExpDabOld                              
-       call MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
-       call MatUnite(wfrotate(:,:,is), kstate,ndims(is))
-     enddo
+     DO is=1,2         !MV initialise ExpDabOld                              
+       CALL MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
+       CALL MatUnite(wfrotate(:,:,is), kstate,ndims(is))
+     ENDDO
    END IF
 #endif
    CALL restart2(psi,outnam,.true.)     ! read static wf's
@@ -229,12 +229,24 @@ IF(isitmax>0 .AND. ismax>0) THEN
    CALL calclocal(rho,aloc)                          !  ??
    IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
    IF(ipsptyp == 1) THEN
-     DO ion=1,nion
-       CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+    DO ion=1,nion
+      IF (iswitch_interpol==1) THEN
+        CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+      ELSE
+        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+      END IF
      END DO
+     IF(iswitch_interpol==1) CALL mergetabs
    END IF
    CALL info(psi,rho,aloc,-1)
    IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
+   
+   IF(ifcnevol == 1) THEN
+    WRITE(6,*) 'allocate space for CN propagation'
+    ALLOCATE(psiw(kdfull2,kstate))
+   ENDIF
+   
    DO it=1,isitmax
      WRITE(*,*) ' afterburn. iteration=',it
      IF(ifexpevol == 1) THEN
@@ -267,7 +279,10 @@ psi=CMPLX(0D0,0D0,DP)
 !     optionally initialize work arrays
 IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
 IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
-
+IF(ifcnevol == 1) THEN
+  WRITE(6,*) 'allocate space for CN propagation'
+  ALLOCATE(psiw(kdfull2,kstate))
+ENDIF
 
 !     initialize protocol files
 
@@ -331,8 +346,17 @@ IF(nclust > 0)THEN
     IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
     IF(ipsptyp == 1) THEN
       DO ion=1,nion
+#if(paraworld)
+#else
+        IF (iswitch_interpol==1) CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+#endif
+        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
         CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
       END DO
+#if(paraworld)
+#else
+      IF (iswitch_interpol==1) CALL mergetabs
+#endif
     END IF
 !      WRITE(*,*) 'ndims=',ndims,' , vecs after mean field 1:'
 !      DO n=1,ndims(1)
@@ -374,6 +398,9 @@ IF(nclust > 0)THEN
   
   
   time = irest*dt1*0.0484D0/(2D0*ame)
+#if(paraworld)
+  time = time+dt1*0.0484D0/(2D0*ame)
+#endif
 #if(!simpara)
   IF(myn == 0 .OR. knode == 1) THEN
 #endif
@@ -452,12 +479,17 @@ CALL stimer(1)
 !      DO n=1,ndims(2)
 !        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
 !      END DO
+time=0
+tfs=0
 DO it=irest,itmax   ! time-loop
 
   iterat = it      ! to communicate time step
   ijel=it
+#if(paraworld)
+  tfs=tfs+dt1*0.0484D0
+#else
   tfs=it*dt1*0.0484D0 !/(2.0*ame)
-  
+#endif
   CALL print_densdiff(rho,it)       ! right place here ???
   
 !         if(nclust.gt.0) call savings(psi,tarray,it)
@@ -490,7 +522,12 @@ DO it=irest,itmax   ! time-loop
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw,.false.)
       ELSE
-        CALL tstep(psi,aloc,rho,it)
+        IF(ifcnevol == 1) THEN
+          WRITE(*,*) 'Crank call '
+          CALL  CrankNicolson_exp(psi,aloc,rho,it,psiw)
+        ELSE
+          CALL tstep(psi,aloc,rho,it)
+        END IF
       END IF
 !      WRITE(*,*) ' MAIN: nabsorb=',nabsorb
       IF(nabsorb > 0) CALL  absbc(psi,rho,it)
@@ -523,7 +560,11 @@ DO it=irest,itmax   ! time-loop
         IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
         IF(ipsptyp == 1) THEN
           DO ion=1,nion
-            CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+            IF (iswitch_interpol==1) then
+              CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+            ELSE
+              CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+            ENDIF
           END DO
         END IF
       END IF
@@ -538,7 +579,11 @@ DO it=irest,itmax   ! time-loop
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
+#if(paraworld)
+!     tfs=tfs+dt1*0.0484D0
+#else
       tfs=it*dt1*0.0484D0
+#endif
       IF(nion2 > 0) CALL analyze_ions(it)
       IF(isurf > 0) CALL analyze_surf(it)
     END IF
@@ -800,3 +845,497 @@ DEALLOCATE(rhotmp)
 RETURN
 END SUBROUTINE loc_mfield_dummy
 #endif
+
+
+
+SUBROUTINE mergetabs
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+integer,allocatable :: ialltabfine(:)
+allocate(ialltabfine(kdfull2fine))
+ialltabfine=0
+
+do ion=1,nion
+nfin=ifinfine(ion)
+do i=1,nfin   
+        ialltabfine(icountfine(i,ion))=1
+enddo
+enddo
+
+
+ifinsp=0
+do i=1,kdfull2fine
+        if(ialltabfine(i).ne.0) then
+                ifinsp=ifinsp+1
+                if(ifinsp.gt.(ng*knl)) stop 'increase KNL'
+                icountfinesp(ifinsp)=i
+        endif
+enddo
+nfinfinesp=ifinsp
+!write(6,*) 'nfinfinesp',nfinfinesp
+
+ialltabfine=0
+do ion=1,nion
+nfin=ifin(ion)
+do i=1,nfin   
+        ialltabfine(icount(i,ion))=1
+enddo
+enddo
+
+
+ifinsp=0
+do i=1,kdfull2
+        if(ialltabfine(i).ne.0) then
+                ifinsp=ifinsp+1
+                if(ifinsp.gt.(ng*knl)) stop 'increase KNL'
+                icountsp(ifinsp)=i
+                ia=i/(nx2*ny2)
+                ja=(i-ia*nx2*ny2)/ny2
+                ka=i-ia*nx2*ny2-ja*ny2
+        endif
+enddo
+nfinsp=ifinsp
+
+deallocate(ialltabfine)
+return
+end
+
+
+
+
+!!!! ******************** CALCUL OF PROJECTORS ON FINE GRID ******************** !!!!
+
+SUBROUTINE calc_projFine(cxa,cya,cza,cxg,cyg,czg,ion)
+
+!     Computes the projectors for the non-local part of
+!     the Goedecker PsP for ion 'ion' at positions
+!     'cxa,'cya',cza'. The position 'cxg', 'cyg', 'czg'
+!     define the reference point for the center of the
+!     subgrid. These two vector are usually the same,
+!     but differ when computing forces.
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
+
+!---------------------------------------------------------
+
+write(6,*) 'nxfine,nx2fine,nxyfine'
+write(6,*) nxfine,nx2fine,nxyfine
+
+IF(h0_12g(np(ion)).gt.-1D10) THEN
+  h0_12=h0_12g(np(ion))
+ELSE
+  h0_12 = fac0_12*h0_22g(np(ion))
+ENDIF
+
+IF(ABS(h2_11g(np(ion))) + ABS(h1_22g(np(ion))) &
+   + ABS(h0_33g(np(ion))) > small) THEN
+  CALL calpr4Fine(cxa,cya,cza,cxg,cyg,czg,ion)
+ELSE IF(ABS(h1_11g(np(ion))) + ABS(h0_22g(np(ion))) + ABS(h0_12) > small) THEN
+  CALL calpr3Fine(cxa,cya,cza,cxg,cyg,czg,ion)
+ELSE IF(ABS(h0_11g(np(ion))) > small) THEN
+  CALL calpr2Fine(cxa,cya,cza,cxg,cyg,czg,ion)
+END IF
+
+! RETURN
+END SUBROUTINE calc_projFine
+
+!!     ****************************************
+SUBROUTINE calpr2Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
+
+!     ****************************************
+
+USE params
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+WRITE(*,*) ' calpr2Fine'
+dxfine=dx/2
+dyfine=dy/2
+dzfine=dz/2
+dvolfine=dxfine*dyfine*dzfine
+write(6,*) 'dxfine',dxfine
+
+r0=r0g(np(ion))
+r1=r1g(np(ion))
+radion=radiong(np(ion))
+!fine grid
+
+i1l = nint((cxg-radion)/dxfine)
+i2l = nint((cyg-radion)/dyfine)
+i3l = nint((czg-radion)/dzfine)
+icrsx = 2*nint(radion/dxfine)
+icrsy = 2*nint(radion/dyfine)
+icrsz = 2*nint(radion/dzfine)
+
+!  compute projectors on these auxiliary grid:
+ind=0
+knd=0
+DO i3=0,icrsz
+  z = (i3l+i3)*dzfine
+  zion = z-czact
+  DO i2=0,icrsy
+    y = (i2l+i2)*dyfine
+    yion = y-cyact
+    DO i1=0,icrsx
+      x = (i1l+i1)*dxfine
+      xion = x-cxact
+      rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
+      rr=rr
+      IF(rr <= radion) THEN
+        
+        ind = ind + 1
+        IF(ind > knl) STOP " CALCPR: subgrid exeeded. enhance KNL"
+        p0_1fine(ind,ion) = 0D0
+!        p1_1fine(ind,ion) = 0D0
+!        p1_1xfine(ind,ion) = 0D0
+!        p1_1yfine(ind,ion) = 0D0
+!        p1_1zfine(ind,ion) = 0D0
+        
+!      counter of gridpoint in one-dimensional density array:
+        
+        ii = ((i3l+i3+nzfine)-1)*nxyfine+((i2l+i2+nyfine)-1)*nx2fine+(i1l+i1+nxfine)
+        icountfine(ind,ion)=ii
+!        write(6,*) i3l,i3,nzfine,nxyfine
+!        write(6,*) i2l,i2,nyfine,nx2fine
+!        write(6,*) i1l,i1,nxfine
+!        write(6,*) ind,ion,ii
+
+        
+!        DO in=1,2
+        DO in=1,2
+          IF(in == 1) THEN
+!     projectors p0_1:
+            inn=in
+            il=0
+            rfac=r0
+            gamfac=0.5D0*SQRT(pi)
+!          ELSE IF(in == 2) THEN
+!!     projectors p1_1:
+!            il=1
+!            rfac=r1
+!            inn=1
+!            gamfac=1.5*0.5*SQRT(pi)
+          END IF
+          proj=SQRT(2D0)*rr**(il+2*(inn-1))*  &
+              EXP(-(rr*rr)/(2D0*rfac**2D0))/(rfac**(il+(4*inn-1)/2D0)*  &
+              SQRT(gamfac))
+          
+!    compose the product of the radial and the angular components:
+!    p_i -> p_i*Y_lm
+          IF(in == 1) p0_1fine(ind,ion) = proj
+!          IF(in == 2) THEN
+!            p1_1fine(ind,ion)  = proj
+!            p1_1xfine(ind,ion) = proj*xion/rr
+!            p1_1yfine(ind,ion) = proj*yion/rr
+!            p1_1zfine(ind,ion) = proj*zion/rr
+!                  write(6,'(2i5,4(1pg12.4))')
+!     &               ion, ind,rr,p1_1xfine(ind,ion),p1_1yfine(ind,ion),
+!     &               p1_1zfine(ind,ion)
+!          END IF
+        END DO
+      END IF
+      
+    END DO
+  END DO
+END DO
+
+!     end of counter-array:
+
+ifinfine(ion) = ind
+
+
+!     re-normalize projectors on grid
+
+
+sum1=0D0
+sum4=0D0
+DO i=1,ifinfine(ion)
+  sum1=sum1 + p0_1fine(i,ion)*p0_1fine(i,ion)
+!  sum4=sum4 + p1_1(i,ion)*p1_1(i,ion)
+END DO
+sum1=sum1*dvolfine/(4D0*pi)
+write(6,*) 'in calcpr2 sum1',sum1,ifinfine(ion)
+sum1 = 1D0/SQRT(sum1)
+!sum4=sum4*dvol/(4D0*pi)
+!sum4 = 1D0/SQRT(sum4)
+DO i=1,ifinfine(ion)
+  p0_1fine(i,ion)=p0_1fine(i,ion)*sum1
+!  write(6,*)i,ion, p0_1(i,ion)
+!  p1_1(i,ion)=p1_1(i,ion)*sum4
+!  p1_1x(i,ion)=p1_1x(i,ion)*sum4
+!  p1_1y(i,ion)=p1_1y(i,ion)*sum4
+!  p1_1z(i,ion)=p1_1z(i,ion)*sum4
+END DO
+
+RETURN
+END SUBROUTINE calpr2Fine
+
+!     ********************
+SUBROUTINE calpr3Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
+
+!     ****************************************
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+WRITE(*,*) ' in calpr3Fine'
+
+
+r0=r0g(np(ion))
+r1=r1g(np(ion))
+radion=radiong(np(ion))
+
+!  compute boundaries of auxiliary grid for each ion:
+i1l = nint((cxg-radion)/dxfine)
+i2l = nint((cyg-radion)/dyfine)
+i3l = nint((czg-radion)/dzfine)
+icrsx = 2*nint(radion/dxfine)
+icrsy = 2*nint(radion/dyfine)
+icrsz = 2*nint(radion/dzfine)
+
+!  compute projectors on these auxiliary grid:
+ind=0
+knd=0
+DO i3=0,icrsz
+  z = (i3l+i3)*dzfine
+  zion = z-czact
+  DO i2=0,icrsy
+    y = (i2l+i2)*dyfine
+    yion = y-cyact
+    DO i1=0,icrsx
+      x = (i1l+i1)*dxfine
+      xion = x-cxact
+      rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
+      IF(rr <= radion) THEN
+        
+        ind = ind + 1
+        p0_1fine(ind,ion) = 0D0
+        p0_2fine(ind,ion) = 0D0
+        p1_1fine(ind,ion) = 0D0
+        p1_1xfine(ind,ion) = 0D0
+        p1_1yfine(ind,ion) = 0D0
+        p1_1zfine(ind,ion) = 0D0
+        
+!      counter of gridpoint in one-dimensional density array:
+        
+        ii = ((i3l+i3+nzfine)-1)*nxyfine+((i2l+i2+nyfine)-1)*nx2fine+(i1l+i1+nxfine)
+        icountfine(ind,ion)=ii
+        
+        DO in=1,3
+          IF(in == 1 .OR. in == 2) THEN
+!     projectors p0_1,p0_2:
+            inn=in
+            il=0
+            rfac=r0
+            IF(in == 1) THEN
+              gamfac=0.5D0*SQRT(pi)
+            ELSE IF(in == 2) THEN
+              gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
+            END IF
+          ELSE IF(in == 3) THEN
+!     projectors p1_1,p1_2:
+            il=1
+            rfac=r1
+            inn=1
+            gamfac=1.5D0*0.5D0*SQRT(pi)
+          END IF
+          proj=SQRT(2D0)*rr**(il+2*(inn-1))*  &
+              EXP(-(rr*rr)/(2D0*rfac**2D0))/(rfac**(il+(4*inn-1)/2D0)*  &
+              SQRT(gamfac))
+          
+!    compose the product of the radial and the angular components:
+!    p_i -> p_i*Y_lm
+          IF(in == 1) p0_1fine(ind,ion) = proj
+          IF(in == 2) p0_2fine(ind,ion) = proj
+          IF(in == 3) THEN
+            p1_1fine(ind,ion)  = proj
+            p1_1xfine(ind,ion) = proj*xion/rr
+            p1_1yfine(ind,ion) = proj*yion/rr
+            p1_1zfine(ind,ion) = proj*zion/rr
+!                  write(6,'(2i5,4(1pg12.4))')
+!     &               ion, ind,rr,p1_1xfine(ind,ion),p1_1yfine(ind,ion),
+!     &               p1_1zfine(ind,ion)
+          END IF
+        END DO
+      END IF
+      
+    END DO
+  END DO
+END DO
+
+!     end of counter-array:
+
+! normalize  
+
+xnorm = 1D0/SQRT(dvolfine*SUM(p0_1(:,ion)**2)/(4D0*pi))
+p0_1(:,ion) = xnorm*p0_1(:,ion)
+!WRITE(6,'(a,1pg13.5)') ' norm of 1s projector:',xnorm**(-2)
+
+xnorm = 1D0/SQRT(dvolfine*SUM(p0_2(:,ion)**2)/(4D0*pi))
+p0_2(:,ion) = xnorm*p0_2(:,ion)
+!WRITE(6,'(a,1pg13.5)') ' norm of 2s projector:',xnorm**(-2)
+
+xnorm = 1D0/SQRT(dvolfine*SUM(p1_1(:,ion)**2)/(4D0*pi))
+p1_1(:,ion) = xnorm*p1_1(:,ion)
+p1_1x(:,ion) = xnorm*p1_1x(:,ion)
+p1_1y(:,ion) = xnorm*p1_1y(:,ion)
+p1_1z(:,ion) = xnorm*p1_1z(:,ion)
+!WRITE(6,'(a,1pg13.5)') ' norm of 1p projector:',xnorm**(-2)
+
+
+ifinfine(ion) = ind
+!         write(*,*) ' ion nr:',ion,' has ifinfine=',ind
+
+
+END SUBROUTINE calpr3Fine
+
+!     ********************
+SUBROUTINE calpr4Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
+
+!     ****************************************
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+dxfine=dx/2
+dyfine=dy/2
+dzfine=dz/2
+r0=r0g(np(ion))
+r1=r1g(np(ion))
+r2=r2g(np(ion))
+radion=3D0
+
+!  compute boundaries of auxiliary grid for each ion:
+i1l = nint((cxg-radion)/dxfine)
+i2l = nint((cyg-radion)/dyfine)
+i3l = nint((czg-radion)/dzfine)
+icrsx = 2*nint(radion/dxfine)
+icrsy = 2*nint(radion/dyfine)
+icrsz = 2*nint(radion/dzfine)
+
+!  compute projectors on these auxiliary grid:
+ind=0
+knd=0
+DO i3=0,icrsz
+  z = (i3l+i3)*dzfine
+  zion = z-czact
+  DO i2=0,icrsy
+    y = (i2l+i2)*dyfine
+    yion = y-cyact
+    DO i1=0,icrsx
+      x = (i1l+i1)*dxfine
+      xion = x-cxact
+      rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
+      IF(rr <= radion) THEN
+        
+        ind = ind + 1
+        p0_1fine(ind,ion)   = 0D0
+        p0_2fine(ind,ion)   = 0D0
+        p0_3fine(ind,ion)   = 0D0
+        p1_1fine(ind,ion)   = 0D0
+        p1_1xfine(ind,ion)  = 0D0
+        p1_1yfine(ind,ion)  = 0D0
+        p1_1zfine(ind,ion)  = 0D0
+        p1_2fine(ind,ion)   = 0D0
+        p1_2xfine(ind,ion)  = 0D0
+        p1_2yfine(ind,ion)  = 0D0
+        p1_2zfine(ind,ion)  = 0D0
+        p2_1fine(ind,ion)   = 0D0
+        p2_xyfine(ind,ion)  = 0D0
+        p2_xzfine(ind,ion)  = 0D0
+        p2_yzfine(ind,ion)  = 0D0
+        p2_xy2fine(ind,ion) = 0D0
+        p2_z2fine(ind,ion)  = 0D0
+        
+!      counter of gridpoint in one-dimensional density array:
+        
+        ii = ((i3l+i3+nzfine)-1)*nxyfine+((i2l+i2+nyfine)-1)*nx2fine+(i1l+i1+nxfine)
+        icountfine(ind,ion)=ii
+        
+        DO in=1,6
+          IF(in == 1 .OR. in == 2 .OR. in == 3) THEN
+!     projectors p0_1,p0_2,p0_3:
+            inn=in
+            il=0
+            rfac=r0
+            IF(in == 1) THEN
+              gamfac=0.5D0*SQRT(pi)
+            ELSE IF(in == 2) THEN
+              gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
+            ELSE IF(in == 3) THEN
+              gamfac=4.5D0*3.5D0*2.5D0*1.5D0*0.5D0*SQRT(pi)
+            END IF
+          ELSE IF(in == 4 .OR. in == 5) THEN
+!     projectors p1_1,p1_2:
+            il=1
+            rfac=r1
+            IF(in == 4) THEN
+              inn=1
+              gamfac=1.5D0*0.5D0*SQRT(pi)
+            ELSE IF(in == 5) THEN
+              inn=2
+              gamfac=3.5D0*2.5D0*1.5D0*0.5D0*SQRT(pi)
+            END IF
+          ELSE IF(in == 6) THEN
+!     projector p2_1:
+            il=2
+            inn=1
+            rfac=r2
+            gamfac=2.5D0*1.5D0*0.5D0*SQRT(pi)
+          END IF
+          proj=SQRT(2D0)*rr**(il+2*(inn-1))*  &
+              EXP(-(rr*rr)/(2D0*rfac**2D0))/(rfac**(il+(4*inn-1)/2D0)*  &
+              SQRT(gamfac))
+          
+!    compose the product of the radial and the angular components:
+!    p_i -> p_i*Y_lm
+          IF(in == 1) p0_1fine(ind,ion) = proj
+          IF(in == 2) p0_2fine(ind,ion) = proj
+          IF(in == 3) p0_3fine(ind,ion) = proj
+          IF(in == 4) THEN
+            p1_1fine(ind,ion)  = proj
+            p1_1xfine(ind,ion) = proj*xion/rr
+            p1_1yfine(ind,ion) = proj*yion/rr
+            p1_1zfine(ind,ion) = proj*zion/rr
+          END IF
+          IF(in == 5) THEN
+            p1_2fine(ind,ion)  = proj
+            p1_2xfine(ind,ion) = proj*xion/rr
+            p1_2yfine(ind,ion) = proj*yion/rr
+            p1_2zfine(ind,ion) = proj*zion/rr
+          END IF
+          IF(in == 6) THEN
+            p2_1fine(ind,ion)  = proj
+            p2_xyfine(ind,ion) = proj*xion*yion/(rr*rr)
+            p2_xzfine(ind,ion) = proj*xion*zion/(rr*rr)
+            p2_yzfine(ind,ion) = proj*yion*zion/(rr*rr)
+            p2_xy2fine(ind,ion)= proj*SQRT(3D0)*(xion*xion - yion*yion)/(rr*rr)
+            p2_z2fine(ind,ion) = proj*(2D0*zion*zion  &
+                - xion*xion-yion*yion)/(rr*rr)
+          END IF
+        END DO
+      END IF
+      
+    END DO
+  END DO
+END DO
+
+xnorm = 1D0/SQRT(dvol*SUM(p0_1fine(:,ion)**2)/(4D0*pi))
+p0_1fine(:,ion) = xnorm*p0_1fine(:,ion)
+!WRITE(6,'(a,1pg13.5)') ' norm of 1s projector:',xnorm**(-2)
+!CALL FLUSH(6)
+
+!     end of counter-array:
+
+ifinfine(ion) = ind
+RETURN
+END SUBROUTINE calpr4Fine
+
+!     ********************
+
+ 
