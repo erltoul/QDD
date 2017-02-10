@@ -26,7 +26,6 @@ SUBROUTINE init_parallele()
 !     The actual node 'myn' is communicated via common.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes||simpara||paraworld)
 INCLUDE 'mpif.h'
@@ -644,7 +643,6 @@ SUBROUTINE comm_ionconfig()
 !     Communicates ion configuration from node "0" to other nodes.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -729,7 +727,6 @@ SUBROUTINE comm_periodic()
 !     Communicates periodic table from node "0" to other nodes.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -805,7 +802,6 @@ SUBROUTINE comm_simann()
 !     Communicates parameters for simulated annealing  (??)
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -889,7 +885,6 @@ SUBROUTINE pi_allreduce(rin,rout,kdf,id,id1,id2,ic)
 !       *****************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 
@@ -914,7 +909,6 @@ SUBROUTINE pi_allgather(rin,mint,nt,rout,kdf)
 !       *****************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 
@@ -937,7 +931,6 @@ SUBROUTINE i_allreduce(rin,rout,kdf,id,id1,id2,ic)
 !       *****************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 
@@ -987,7 +980,6 @@ SUBROUTINE i_allgather(rin,mint,ntr,rout,kdf)
 !       *****************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 INCLUDE 'mpif.h'
 
@@ -1109,7 +1101,7 @@ SUBROUTINE prispe_parallele(iunit,it)
 !     unit 'iunit'
 
 USE params
-!USE kinetic
+USE util, ONLY:safeopen
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN) :: iunit

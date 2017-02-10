@@ -59,7 +59,7 @@ IF (ifreezekspot == 1 .AND. tfs > 0) RETURN
 IF(ifsicp == 1) THEN
   CALL calc_sicgamr(rho,aloc,q0)
 ELSE IF(ifsicp == 2) THEN
-  CALL calc_adsicr(rho,aloc,q0)
+  CALL calc_adsicr(rho,aloc)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slaterr(rho,aloc,q0)
 ELSE IF(ifsicp == 4) THEN
@@ -71,7 +71,7 @@ END IF
 IF(ifsicp == 1) THEN
   CALL calc_sicgam(rho,aloc,q0)
 ELSE IF(ifsicp == 2) THEN
-  CALL calc_adsic(rho,aloc,q0)
+  CALL calc_adsic(rho,aloc)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slater(rho,aloc,q0)
 ELSE IF(ifsicp == 4) THEN
@@ -221,7 +221,7 @@ IF(numspin==2) THEN
     rho1(ind)=  rho(ind)*rho(ind+nxyz)
   END DO
 #if(gridfft)
-  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
 !                 new computation of total Coul not needed - check
 !      call falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
 #endif
@@ -251,7 +251,7 @@ ELSE
 !     recalculate Coulomb part for jellium
 
 #if(gridfft)
-  IF(nion2 == 0) CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
+  IF(nion2 == 0) CALL falr(rho,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
   STOP ' SIC-GAM not yet ready for nospin and finite diff.'
@@ -278,9 +278,9 @@ END SUBROUTINE calc_sicgam
 !     ******************************
 
 #ifdef REALSWITCH
-SUBROUTINE calc_adsicr(rho,aloc,q0)
+SUBROUTINE calc_adsicr(rho,aloc)
 #else
-SUBROUTINE calc_adsic(rho,aloc,q0)
+SUBROUTINE calc_adsic(rho,aloc)
 #endif
 
 !     ******************************
@@ -303,11 +303,6 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-#ifdef REALSWITCH
-REAL(DP) :: q0(kdfull2,kstate)
-#else
-COMPLEX(DP) :: q0(kdfull2,kstate)
-#endif
 REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
@@ -539,11 +534,11 @@ IF(numspin==2) THEN
 #endif
 
 #if(gridfft)
-  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
   IF(idielec == 0 .AND. nion2 > 0) THEN
     coulsum = chpcoul
   ELSE
-    CALL falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
+    CALL falr(rho2,coulsum,kdfull2)
   END IF
 #endif
 #if(findiff|numerov)
@@ -607,7 +602,7 @@ ELSE
 
 #if(gridfft)
   IF(nion2 == 0) THEN
-    CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
+    CALL falr(rho(1:kdfull2),chpcoul,kdfull2)
   END IF
 #endif
 #if(findiff|numerov)
@@ -662,6 +657,7 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 
 
 USE params
+USE util, ONLY:prifld2
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -798,6 +794,7 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 
 
 USE params
+USE util, ONLY:prifld
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 PARAMETER (sgnkli=-1D0)
@@ -816,10 +813,9 @@ REAL(DP), INTENT(IN OUT) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp,rho1,rho2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
 REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
-! EQUIVALENCE (rhosp,w1)
 LOGICAL,PARAMETER :: testprint=.false.
 INTEGER :: itmaxkli=200
-
+LOGICAL:: converged=.false.
 !--------------------------------------------------------------------
 
 IF(numspin.NE.2) STOP ' SIC-KLI requires full spin code'
@@ -1046,13 +1042,17 @@ DO itkli=1,itmaxkli
       sumup,sumdw,epsoro
 !old   &      sumup-sumslup,sumdw-sumsldw,epsoro
 !old        if(abs(sumup-sumslup)+abs(sumdw-sumsldw).lt.epsoro) goto 99
-  IF(sumup+sumdw < epsoro**2*2D0) GO TO 99
+  IF(sumup+sumdw < epsoro**2*2D0)THEN
+    converged=.true.
+    EXIT
+  END IF
   sumslup = sumup
   sumsldw = sumdw
 END DO
-WRITE(6,'(a,2(1pg12.4))')  &
-    ' KLI not converged: errors=',sumup-sumslup,sumdw-sumsldw
-99   CONTINUE
+
+IF(.NOT. converged) WRITE(6,'(a,2(1pg12.4))')  &
+      ' KLI not converged: errors=',sumup-sumslup,sumdw-sumsldw
+      
 WRITE(6,'(a,i5,4(1pg12.4))')  &
     ' KLI itkli,sums=',itkli,sumup,sumslup,sumdw,sumsldw
 
@@ -1137,150 +1137,6 @@ RETURN
 END SUBROUTINE act_part_num
 #endif
 
-
-#ifdef COMPLEXSWITCH
-SUBROUTINE calc_sicspc(rhosp,usicsp,q0state,nb)
-
-!     ******************************
-
-!     computes SIC potential for state 'nb'.
-!     input is
-!       q0state   = wavefunction for s.p. state
-!       nb        = number of state
-!     output is
-!       usicsp   = the s.p. SIC potential
-!     output via common
-!       enrear,enerpw   = rearrangement energies for 'nb'
-!       encoulsp        = Coulomb energy for 'nb'
-
-!#INCLUDE "all.inc"
-USE params
-USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-COMPLEX(DP), INTENT(IN OUT) :: q0state(kdfull2)
-REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
-
-!     the usage of workspacss is tricky:
-!      'rhosp' from the calling list may be equivalenced with 'w1', but
-!      occupies temporarily two workspaces,. i.e. 'w2=couldif'.
-!      The upper block is obsolete after 'calc_lda' as is the whole
-!      'chpdftsp' after transfer to 'uscisp'. The free slots are then
-!      used for 'rho1' and 'couldif' in the Coulomb solver.
-
-REAL(DP),ALLOCATABLE :: chpdftsp(:)
-REAL(DP),ALLOCATABLE :: couldif(:)
-REAL(DP),ALLOCATABLE :: rho1(:)
-
-LOGICAL,PARAMETER :: testprint=.false.
-
-!--------------------------------------------------------------------
-
-IF(numspin<2) STOP ' CALC_SICSP requires fullspin code'
-
-! allocate workspace
-
-ALLOCATE(chpdftsp(2*kdfull2))
-ALLOCATE(couldif(kdfull2))
-ALLOCATE(rho1(kdfull2))
-
-enrearsave=enrear
-enerpwsave=enerpw
-enrear1=0D0
-enrear2=0D0
-enpw1  = 0D0
-enpw2  = 0D0
-encadd = 0D0
-!      write(*,*) ' CALC_SICSPC: nb,occup(nb)',nb,occup(nb)
-
-IF(occup(nb) > small) THEN
-  ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-  
-!         density for s.p. state
-  
-  DO ind=1,nxyz
-    rhosp(ind)  = REAL(CONJG(q0state(ind))*q0state(ind),DP)
-    rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
-    rho1(ind)        = rhosp(ind)
-  END DO
-  
-!       DFT for s.p. state
-
- 
-  CALL calc_lda(rhosp,chpdftsp)    !  --> enrear,enerpw
-
-  IF (ispin(nrel2abs(nb)) == 1) THEN
-    DO ind=1,nxyz
-      usicsp(ind) = chpdftsp(ind)
-    END DO
-  ELSE
-    DO ind=1,nxyz
-      idx = ind+nxyz
-      usicsp(idx) = chpdftsp(idx)
-    END DO
-  END IF
-  
-!         s.p. Coulomb and subtract from LDA
-  
-  DO ind=1,nxyz
-    rho1(ind) = rhosp(ind)
-  END DO
-#if(gridfft)
-  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
-#endif
-#if(findiff|numerov)
-CALL solv_fft(rho1(1),couldif,dx,dy,dz)
-#endif
-IF(testprint) THEN
-  WRITE(11,'(a)') '     ','     '
-  WRITE(11,'(a,i3)') '# NB=',nb
-  CALL prifld2(11,rhosp,' density')
-  CALL prifld2(11,couldif,' Coulomb')
-  CALL prifld2(11,chpdftsp,' P&W')
-END IF
-
-
-encsum = 0D0
-IF (ispin(nrel2abs(nb)) == 1) THEN
-  DO ind=1,nxyz
-    usicsp(ind) = usicsp(ind)+couldif(ind)
-    IF(directenergy) THEN
-      encsum=encsum+rhosp(ind)*couldif(ind)
-    END IF
-  END DO
-  encoulsp = encsum*dvol/2D0
-  IF(testprint) CALL prifld2(11,usicsp,' SIC pot')
-ELSE
-  DO ind=1,nxyz
-    idx = ind+nxyz
-    usicsp(idx) = usicsp(idx)+couldif(ind)
-    IF(directenergy) THEN
-      encsum=encsum+rhosp(ind)*couldif(ind)
-    END IF
-  END DO
-  encoulsp = encsum*dvol/2D0
-  IF(testprint) CALL prifld2(11,usicsp(nxyz+1),' SIC pot')
-END IF
-ELSE
-usicsp=0D0
-encoulsp = 0D0
-END IF
-
-!WRITE(*,*) ' SICSPC: encoulsp,enerpw=',encsum,enerpw
-
-DEALLOCATE(chpdftsp)
-DEALLOCATE(couldif)
-DEALLOCATE(rho1)
-
-RETURN
-END SUBROUTINE calc_sicspc
-#endif
-
-
-
 !     ******************************
 
 #ifdef REALSWITCH
@@ -1288,7 +1144,6 @@ SUBROUTINE calc_sicspr(rhosp,usicsp,q0state,nb)
 #else
 SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 #endif
-
 !     ******************************
 
 !     computes SIC potential for state 'nb'.
@@ -1302,6 +1157,7 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 !       encoulsp        = Coulomb energy for 'nb'
 
 USE params
+USE util, ONLY:prifld2
 USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
@@ -1318,16 +1174,11 @@ REAL(DP), INTENT(IN) :: q0state(kdfull2)
 #else
 COMPLEX(DP), INTENT(IN) :: q0state(kdfull2)
 #endif
-REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2),usicsp(2*kdfull2)
+REAL(DP), INTENT(IN OUT) :: rhosp(2*kdfull2)
+REAL(DP), INTENT(IN OUT) :: usicsp(2*kdfull2)
 
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: chpdftsp,couldif,rho1
-!DIMENSION chpdftsp(2*kdfull2)
-!DIMENSION couldif(kdfull2)
-!DIMENSION rho1(kdfull2)
-!EQUIVALENCE (couldif,w2)
-!EQUIVALENCE (chpdftsp,w3)
-!EQUIVALENCE (rho1,w4)
 
 LOGICAL :: testprint=.false.
 
@@ -1346,7 +1197,6 @@ enrear2=0D0
 enpw1  = 0D0
 enpw2  = 0D0
 encadd = 0D0
-!      write(*,*) ' CALC_SICSPR: nb,occup(nb)',nb,occup(nb)
 
 IF(occup(nb) > small) THEN
   ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
@@ -1384,7 +1234,7 @@ IF(occup(nb) > small) THEN
     rho1(ind) = rhosp(ind)
   END DO
 #if(gridfft)
-  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
+  CALL falr(rho1,couldif,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(rho1(1),couldif,dx,dy,dz)
@@ -1425,7 +1275,6 @@ END IF
 DEALLOCATE(chpdftsp)
 DEALLOCATE(couldif)
 DEALLOCATE(rho1)
-! WRITE(*,*) 'SICSP: encoulsp,enerpw=',encoulsp,enerpw
 
 
 RETURN
@@ -1458,7 +1307,6 @@ SUBROUTINE exchg(q0,qex,nbe)
 !            in case of complex wavefunctions
 
 USE params
-!USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -1475,7 +1323,6 @@ INTEGER,INTENT(IN)                              :: nbe
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acli
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhi
 COMPLEX(DP) :: rhoc
-COMPLEX(DP) :: wfovlp
 #endif
 
 !       workspaces
@@ -1504,8 +1351,6 @@ qex = 0D0
 
 dvol=dx*dy*dz
 #ifdef REALSWITCH
-!WRITE(6,'(a,10i5)') ' ispin:',ispin
-!WRITE(6,'(a,10f8.2)') ' occup:',occup
 DO nbe=1,nstate
 #endif
   DO nb2=1,nstate
@@ -1531,9 +1376,9 @@ DO nbe=1,nstate
 !         (warning : counet inserts the esquar factor)
       
 #if(gridfft)
-      CALL falr(rh,acl,nx2,ny2,nz2,kdfull2)
+      CALL falr(rh,acl,kdfull2)
 #ifdef COMPLEXSWITCH
-      CALL falr(rhi,acli,nx2,ny2,nz2,kdfull2)
+      CALL falr(rhi,acli,kdfull2)
 #endif
 #endif
 #if(findiff|numerov)

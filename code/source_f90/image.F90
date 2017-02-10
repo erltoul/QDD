@@ -24,14 +24,14 @@
 SUBROUTINE testimage(testpot,testrho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
 REAL(DP), INTENT(IN OUT)                     :: testpot(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: testrho(kdfull2)
-REAL(DP) :: rho(2*kdfull2),tphi(kdfull2)
+!REAL(DP) :: rho(2*kdfull2),tphi(kdfull2)
 
 EXTERNAL gauss
 
@@ -48,10 +48,6 @@ EXTERNAL gauss
 
 
 !      enddo
-
-
-
-
 
 
 
@@ -74,12 +70,6 @@ CALL printfield(913,testpot,'ptpotion')
 
 STOP
 
-
-
-
-
-
-
 RETURN
 END SUBROUTINE testimage
 !------------------------------------------------------------
@@ -95,7 +85,6 @@ SUBROUTINE addimage(rh,ihalfspace)
 !     ihalfspace=0: calculates image charges for potential x<xDielec
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -158,7 +147,6 @@ SUBROUTINE pseudosoft_dielec()
 !--------------------------------------------------------------
 
 USE params
-!USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -167,7 +155,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP),ALLOCATABLE :: potsave(:)
 REAL(DP),ALLOCATABLE :: potshort(:)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 
@@ -345,7 +332,7 @@ IF(ipseudo == 1)THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -429,7 +416,6 @@ SUBROUTINE pseudosoft2()
 
 !------------------------------------------------------------
 USE params
-!USE kineticx
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -438,7 +424,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP) :: potsave(kdfull2)
 REAL(DP) :: potshort(kdfull2)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 
@@ -680,7 +665,7 @@ IF(ipseudo == 1) THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -772,7 +757,6 @@ END SUBROUTINE pseudosoft2
 SUBROUTINE addgsmpot2(field,iswitch)
 !************************************************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !   add electrostatic potentials from GSM particles to potion(kdfull2)
 !     iswitch = 0 --> calculate potential of fixed ions
@@ -1168,7 +1152,6 @@ SUBROUTINE energ_dielec(rho)
 !     returns result via common.
 
 USE params
-!USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -1211,7 +1194,7 @@ DO ii=1,2*kdfull2
 END DO
 
 #if(gridfft)
-CALL falr(rho,chpcoulimage,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoulimage,kdfull2)
 #endif
 #if(findiff|numerov)
 CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
@@ -1232,7 +1215,7 @@ DO ii=1,2*kdfull2
 END DO
 
 #if(gridfft)
-CALL falr(rho,chpcoulimage,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoulimage,kdfull2)
 #endif
 #if(findiff|numerov)
 CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
@@ -1273,7 +1256,6 @@ SUBROUTINE energ_dielec(rho)
 !     returns result via common.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1293,12 +1275,11 @@ SUBROUTINE addimage(rh,ihalfspace)
 !     ihalfspace=0: calculates image charges for potential x<xDielec
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                     :: rh(kdfull2)
-INTEGER, INTENT(IN OUT)                  :: ihalfspace
+INTEGER, INTENT(IN)                      :: ihalfspace
 
 
 STOP ' code not compiled for image potential '

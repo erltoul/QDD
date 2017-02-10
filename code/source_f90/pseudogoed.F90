@@ -28,9 +28,6 @@ SUBROUTINE pseudogoed()
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-COMPLEX(DP) :: comp,sg
-COMPLEX(DP) :: ph0,php1,phm1
-
 !       real space part of the pseudopotentials taken in
 !       PRB 54(3)1703 (1996) by Goedecker et al.
 
@@ -119,6 +116,9 @@ SUBROUTINE calc_proj(cxa,cya,cza,cxg,cyg,czg,ion)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+REAL(DP),INTENT(IN):: cxa, cya, cza, cxg, cyg, czg
+INTEGER,INTENT(IN) :: ion
+
 REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
 
 !---------------------------------------------------------
@@ -153,7 +153,8 @@ SUBROUTINE calpr2(cxact,cyact,czact,cxg,cyg,czg,ion)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!WRITE(*,*) ' CALPR2'
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
 
 r0=r0g(np(ion))
 r1=r1g(np(ion))
@@ -270,8 +271,11 @@ SUBROUTINE calpr3(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
+
 WRITE(*,*) ' in CALPR3'
 
 
@@ -393,9 +397,10 @@ SUBROUTINE calpr4(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
+INTEGER,INTENT(IN)::ion
 
 
 r0=r0g(np(ion))
@@ -537,7 +542,6 @@ SUBROUTINE checkproj(ion)
 !     ********************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                     :: ion
@@ -567,7 +571,6 @@ END IF
 ! checks normalization of projectors
 
 IF(nrowact <= 2) THEN
-!      do ion=1,nion
   sum1=0D0
   sum4=0D0
   DO i=1,ifin(ion)
@@ -585,7 +588,6 @@ IF(nrowact <= 2) THEN
   END IF
 !      enddo
 ELSE IF(nrowact == 3) THEN
-!      do ion=1,nion
   sum1=0D0
   sum2=0D0
   sum4=0D0
@@ -606,9 +608,7 @@ ELSE IF(nrowact == 3) THEN
   WRITE(6,'(i2,3f12.7)') ion,sum1,sum2,sum4
   IF(erg1 >= plimit .OR. erg2 >= plimit .OR. erg4 >= plimit)  &
       STOP 'projectors are not normalized'
-!      enddo
 ELSE IF(nrowact == 4) THEN
-!        do ion=1,nion
   sum1=0D0
   sum2=0D0
   sum3=0D0
@@ -640,7 +640,6 @@ ELSE IF(nrowact == 4) THEN
       .OR. erg3 >= plimit .OR. erg4 >= plimit  &
       .OR. erg5 >= plimit .OR. erg6 >= plimit)  &
       STOP 'projectors are not normalized'
-!        enddo
 END IF
 RETURN
 END SUBROUTINE checkproj

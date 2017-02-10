@@ -23,7 +23,6 @@
 SUBROUTINE heatcluster(totemp)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     This routine heats up the cluster.
 !     The momenta of the cluster ions
@@ -47,7 +46,6 @@ SUBROUTINE reset_ions()
 !     Resets all ionic momento to zero, is used in cooling.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !-----------------------------------------------------------
@@ -90,7 +88,6 @@ FUNCTION enerkin_ions()
 !     Kinetic energy of ions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     calculate kinetic energy of ions
@@ -140,7 +137,6 @@ REAL(DP) FUNCTION energ_ions()
 !     Potential energy of ions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -405,7 +401,6 @@ SUBROUTINE itstep(rho,it,psi)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
@@ -608,7 +603,6 @@ SUBROUTINE leapfr(x,y,z,xprop,yprop,zprop,ddt,xm,n,ityp)
 !     ****************************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !INTEGER, PARAMETER :: mm=maxpar
@@ -956,7 +950,6 @@ SUBROUTINE lffirststep(rho,psi)
 
 !     *******************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -1255,16 +1248,14 @@ END SUBROUTINE conslw
 
 !     *******************
 
-SUBROUTINE stream(rho,psi)
+SUBROUTINE stream(rho)
 
 !     *******************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 
 REAL(DP), ALLOCATABLE :: rhos(:),drho(:)
@@ -1335,7 +1326,7 @@ RETURN
 END SUBROUTINE stream
 ! ---eltherm----------------------------------------------eltherm-------
 
-SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth,iask)
+SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth)
 
 !  computes electronic thermal energy via the expectation value of the
 !  the current operator to check electronic thermalization
@@ -1350,7 +1341,6 @@ REAL(DP), INTENT(OUT)                        :: expjx
 REAL(DP), INTENT(OUT)                        :: expjy
 REAL(DP), INTENT(OUT)                        :: expjz
 REAL(DP), INTENT(OUT)                        :: eeth
-INTEGER, INTENT(IN OUT)                  :: iask
 
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
@@ -1363,7 +1353,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
 COMPLEX(DP) :: test
 
-CHARACTER (LEN=6) :: ext
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)

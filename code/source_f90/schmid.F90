@@ -31,7 +31,6 @@ SUBROUTINE schmidt(q0)
 !     serial version of Schmidt orthogonalization
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
@@ -49,8 +48,6 @@ DO n=1,nstate
   eord(n)   = amoy(n)
   isort(n) = n
 END DO
-!      write(6,'(a,10(/5g12.4))')
-!     &  ' spe before:',(eord(n),n=1,nstate)
 IF(tord) THEN
   DO n=1,nstate
     emin   = 1D32
@@ -67,8 +64,6 @@ IF(tord) THEN
     eord(n)      = emin
     isort(n)     = isav
   END DO
-!        write(6,'(a,10(/5g12.4))')
-!     &    ' spe after:',(eord(n),n=1,nstate)
 END IF
 
 !     Schmidt ortho-normalisation
@@ -130,7 +125,6 @@ SUBROUTINE schmidt(q0)
 !     parallel version of Schmidt orthogonalization
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)         :: q0(kdfull2,kstate)
 
@@ -144,9 +138,6 @@ INTEGER :: isp3
 
 !     fields for some recursive algorithm, this is a dummy
 !     operation which serves to inhibit loop unrolling
-
-!old      integer ndumnode(-1:knodem)
-!old      integer ndumstate(0:kstate)
 
 LOGICAL :: tsync
 LOGICAL, PARAMETER :: ttest=.false.
@@ -176,9 +167,6 @@ DO nod2=0,myn-1
     END IF
     CALL mpi_recv(q3,kdfull2, mpi_double_precision,nod2,nbe2*2+1,  &
         mpi_comm_world,is,ic)
-!test        nods = nod2
-!test        call mpi_recv(isp3,1,mpi_integer,nod2,
-!test     &                nbe2*2+2,mpi_comm_world,is,ic)
     isp3 = ispin_node(nbe2,nod2)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: received myn,nbe2,nod2,tag=',  &
@@ -229,9 +217,6 @@ DO nbe1=1,nstate_node(myn)
     END IF
     CALL mpi_ssend(q0(1,nbe1),kdfull2,mpi_double_precision,  &
         nod2,nbe1*2+1,mpi_comm_world,ic)
-!test          nods = nod2
-!test          call mpi_send(ispin(nrel2abs(nbe1)),1,mpi_integer,
-!test     &                 nod2,nbe1*2+2,mpi_comm_world,ic)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: sent myn,nbe1,nod2,tag=',  &
           myn,nbe1,nod2,nbe1*2+1
@@ -257,7 +242,6 @@ IF(tsync) THEN
     CALL mpi_recv(iend,1,mpi_integer,knode-1,  &
         mpi_any_tag,mpi_comm_world,is,ic)
     IF(ttest) WRITE(*,*) ' terminator received myn,iend=',myn,iend
-!test        write(7,*) ' SCHMID: terminator received'
   END IF
 END IF
 
@@ -284,7 +268,6 @@ SUBROUTINE normalize(qact)
 !     normalizes real wavefunction on 'qact'
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -322,7 +305,6 @@ SUBROUTINE orthogonalize(qact,qorth)
 !     orthogonalizes real wavefunction 'qact' on  'qorth'
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: qact(kdfull2)
@@ -361,7 +343,6 @@ SUBROUTINE cschmidt(q0)
 !     serial version of Schmidt orthogonalization for complex wf's
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
@@ -380,8 +361,6 @@ DO n=1,nstate
   eord(n)   = amoy(n)
   isort(n) = n
 END DO
-!      write(6,'(a,10(/5g12.4))')
-!     &  ' spe before:',(eord(n),n=1,nstate)
 IF(tord) THEN
   DO n=1,nstate
     emin   = 1D32
@@ -398,8 +377,6 @@ IF(tord) THEN
     eord(n)      = emin
     isort(n)     = isav
   END DO
-!        write(6,'(a,10(/5g12.4))')
-!     &    ' spe after:',(eord(n),n=1,nstate)
 END IF
 
 !     Schmidt ortho-normalisation

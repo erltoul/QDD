@@ -126,7 +126,6 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: pseudorho,potsave,potshort
 !DIMENSION pseudorho(kdfull2)
 !DIMENSION potsave(kdfull2)
 !DIMENSION potshort(kdfull2)
-REAL(DP) :: ri(3)
 INTEGER :: conv3to1
 INTEGER :: getnearestgridpoint
 EXTERNAL v_soft
@@ -213,7 +212,7 @@ IF(ipseudo == 1)THEN
   
   
 #if(gridfft)
-  CALL falr(pseudorho,potion,nx2,ny2,nz2,kdfull2)
+  CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
@@ -318,7 +317,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(OUT)                        :: r
 REAL(DP), INTENT(IN)                         :: sigma
-!DATA pi/3.141592653589793/
 
 r = ABS(r)
 
@@ -339,8 +337,8 @@ END FUNCTION d2vsdr2
 
 !-----V_soft------------------------------------------------------------
 
-FUNCTION v_soft(r,sigma)
-USE params, ONLY: DP
+REAL(DP) FUNCTION v_soft(r,sigma)
+USE params, ONLY: DP,PI
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     soft Coulomb potential from Gaussian density,
@@ -348,48 +346,18 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !       r     =  distance at which potential is computed
 !       sigma =  width parameter of underlying Gaussian
 
-
 REAL(DP), INTENT(IN)                         :: r
 REAL(DP), INTENT(IN)                         :: sigma
-REAL(DP), PARAMETER :: pi=3.141592653589793D0
-
 !------------------------------------------------------------------------
 rabs = ABS(r)
-
-!                       the error function  (good for 10**-7 precision)
-
-z=rabs/sigma
-
-
-!     use Coulomb cut-off for V_soft
-!     relative error is smaller than 1e-20
-
-IF (z > 6D0) THEN
-  v_soft = 1D0/rabs
-  RETURN
-END IF
-
-IF(z <= 1D-1)THEN             ! use Taylor expansion for z < 0.1
-  v_soft=(2D0-2D0*z**2/3D0+z**4/5D0-z**6/21D0) /(SQRT(pi)*sigma)
-ELSE
-  t=1D0/(1D0+0.5D0*z)
-  erfcc=t*EXP(-z*z-1.26551223D0+t*(1.00002368D0+t*(.37409196D0+t*  &
-      (.09678418D0+t*(-.18628806D0+t*(.27886807D0+t*(-1.13520398D0+t*  &
-      (1.48851587D0+t*(-.82215223D0+t*.17087277D0)))))))))
-  IF (r < 0D0) erfcc=2D0-erfcc
-  f=1D0-erfcc
-  
-!     final composition
-  v_soft = f/rabs
-END IF
+v_soft = erf(rabs/sigma)/rabs
 
 RETURN
 END FUNCTION v_soft
 !-------------------------------------------------------------------------
 
-
-
-!old c
+!old        Archaic pre-f95 way to approach erf(z),  simple precision
+!old            Left here as a witness of oldest times. 
 !old c
 !old c       ******************************
 !old c
@@ -466,20 +434,17 @@ END FUNCTION v_ion_ion
 
 !------------------------------------------------------------
 
-FUNCTION dv_softdr(r,s)
+REAL(DP) FUNCTION dv_softdr(r,s)
 !------------------------------------------------------------
 ! returns the derivative of erf(r/s)/r by finite differences
 
-!      double precision r,s
-
-
 USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: r
-REAL(DP), INTENT(IN OUT)                     :: s
-DOUBLE PRECISION :: rder
-
+REAL(DP), INTENT(IN)                     :: r
+REAL(DP), INTENT(IN)                     :: s
+REAL(DP):: ftemp, rder
+REAL(DP)::v_soft
 rder = 1.0D-5
 
 !         ftemp = erf((r+rder)/s)/(r+rder)
@@ -494,20 +459,3 @@ dv_softdr = ftemp
 
 RETURN
 END FUNCTION dv_softdr
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
-FUNCTION v_coulomb(r)
-!------------------------------------------------------------
-USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-r = MAX(small,r)
-
-v_coulomb = 1/r
-
-RETURN
-END FUNCTION v_coulomb
-!------------------------------------------------------------

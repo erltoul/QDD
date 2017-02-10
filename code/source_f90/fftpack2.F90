@@ -82,21 +82,19 @@ INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 DATA tsqrt2 /2.82842712474619D0/
 
-IF (n-2 < 0) THEN
-  GO TO   101
-ELSE IF (n-2 == 0) THEN
-  GO TO   102
+IF (n < 2) THEN
+  x(1) = 4D0*x(1)
+  RETURN
+ELSE IF (n == 2) THEN
+  x1 = 4D0*(x(1)+x(2))
+  x(2) = tsqrt2*(x(1)-x(2))
+  x(1) = x1
+  RETURN
 ELSE
-  GO TO   103
+  CALL cosqb1 (n,x,wsave,wsave(n+1),ifac)
+  RETURN
 END IF
-101 x(1) = 4.*x(1)
-RETURN
-102 x1 = 4.*(x(1)+x(2))
-x(2) = tsqrt2*(x(1)-x(2))
-x(1) = x1
-RETURN
-103 CALL cosqb1 (n,x,wsave,wsave(n+1),ifac)
-RETURN
+
 END SUBROUTINE cosqb
 
 SUBROUTINE cosqb1 (n,x,w,xh,ifac)
@@ -155,9 +153,9 @@ DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
   ch(1,k,2) = cc(1,1,k)-cc(ido,2,k)
 END DO
-IF (ido-2 < 0) THEN
+IF (ido < 2) THEN
   GO TO   107
-ELSE IF (ido-2 == 0) THEN
+ELSE IF (ido == 2) THEN
   GO TO   105
 END IF
 102 idp2 = ido+2
@@ -255,9 +253,9 @@ DO  k=1,l1
   ch(1,k,3) = tr2-tr3
   ch(1,k,4) = tr1+tr4
 END DO
-IF (ido-2 < 0) THEN
+IF (ido < 2) THEN
   GO TO   107
-ELSE IF (ido-2 == 0) THEN
+ELSE IF (ido == 2) THEN
   GO TO   105
 END IF
 102 idp2 = ido+2
@@ -777,7 +775,7 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
-INTEGER, INTENT(OUT)                         :: ifac(10)
+INTEGER, INTENT(IN)                         :: ifac(10)
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -1458,9 +1456,9 @@ INTEGER, INTENT(IN)                      :: ifac(10)
 nm1 = n-1
 np1 = n+1
 ns2 = n/2
-IF (n-2 < 0) THEN
+IF (n < 2) THEN
   GO TO   106
-ELSE IF (n-2 == 0) THEN
+ELSE IF (n == 2) THEN
   GO TO   101
 ELSE
   GO TO   102
@@ -1807,9 +1805,9 @@ DO  i=1,n
   xh(i) = war(i)
   war(i) = x(i)
 END DO
-IF (n-2 < 0) THEN
+IF (n < 2) THEN
   GO TO   101
-ELSE IF (n-2 == 0) THEN
+ELSE IF (n == 2) THEN
   GO TO   102
 ELSE
   GO TO   103
@@ -1901,7 +1899,7 @@ nl = n
 nf = 0
 j = 0
 101 j = j+1
-IF (j-4 > 0) THEN
+IF (j > 4) THEN
   GO TO   103
 END IF
 102 ntry = ntryh(j)

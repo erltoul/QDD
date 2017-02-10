@@ -202,7 +202,7 @@ EXTERNAL                           :: funk
 REAL(DP), INTENT(IN)               :: x0
 REAL(DP), INTENT(IN)               :: y0
 REAL(DP), INTENT(IN)               :: z0
-REAL(DP), INTENT(IN OUT)           :: fact
+REAL(DP), INTENT(IN)               :: fact
 REAL(DP), INTENT(IN)               :: para1
 REAL(DP), INTENT(IN)               :: para2
 REAL(DP), INTENT(IN)               :: para3
@@ -251,7 +251,7 @@ EXTERNAL                       :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
-REAL(DP), INTENT(IN OUT)                     :: fact
+REAL(DP), INTENT(IN)                     :: fact
 INTEGER, INTENT(IN)                      :: nsgsize
 
 !EXTERNAL varelcore,vfermi,v_soft
@@ -322,8 +322,8 @@ EXTERNAL                     :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
-REAL(DP), INTENT(IN OUT)                     :: fact
-REAL(DP), INTENT(IN OUT)                     :: para
+REAL(DP), INTENT(IN)                     :: fact
+REAL(DP), INTENT(IN)                     :: para
 INTEGER, INTENT(IN)                      :: nsgsize
 
 !EXTERNAL varelcore,vfermi,v_soft          !,funkPower
@@ -394,7 +394,7 @@ EXTERNAL                  :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
-REAL(DP), INTENT(IN OUT)                     :: fact
+REAL(DP), INTENT(IN)                     :: fact
 REAL(DP), INTENT(IN)                     :: para1
 REAL(DP), INTENT(IN)                     :: para2
 REAL(DP), INTENT(IN)                     :: para3
@@ -690,7 +690,7 @@ EXTERNAL                         :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
-REAL(DP), INTENT(IN OUT)         :: param
+REAL(DP), INTENT(IN)         :: param
 
 EXTERNAL dgaussdr
 
@@ -761,12 +761,11 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
-INTEGER, INTENT(IN OUT)                  :: ipart
-REAL(DP), INTENT(IN OUT)                     :: xpos
-REAL(DP), INTENT(IN)                         :: ypos
-REAL(DP), INTENT(IN OUT)                     :: zpos
+INTEGER, INTENT(IN)                  :: ipart
+REAL(DP), INTENT(IN)                     :: xpos
+REAL(DP), INTENT(IN)                     :: ypos
+REAL(DP), INTENT(IN)                     :: zpos
 INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
 
 ! get the index of the grid point closest to the exact position
 !      write(6,*) ':',xpos,ypos,zpos
@@ -777,64 +776,6 @@ ind = getnearestgridpoint(xpos,ypos,zpos)
 !      write(6,*) '**',ind
 
 isubgcenter(ipart) = ind
-
-! THE REST OF THE ROUTINE IS OBSOLETE!!!!!!!!
-
-!c      write(6,*) ':',ind
-!c  convert single index to triple index:
-!               ind1 = ind
-
-!               rupper = real(ind1)/(2*nx*2*ny)
-!               if (rupper.eq.int(rupper)) then
-!                iupper = int(rupper)
-!               else
-!                iupper = int(rupper)+1
-!               endif
-
-
-!               indz = iupper
-
-!               ind1 = ind1 - (indz-1)*2*nx*2*ny
-
-!               rupper = real(ind1)/(2*nx)
-!               if (rupper.eq.int(rupper)) then
-!                iupper = int(rupper)
-!               else
-!                iupper = int(rupper)+1
-!               endif
-
-!               indy =  iupper
-!               indx = ind1 - (indy-1)*2*nx
-
-!               ix0 = indx
-!               iy0 = indy
-!               iz0 = indz
-
-
-!c               write(6,*) '*',xpos,ypos,zpos,ix0,iyo,iz0
-
-!c now make a box with center at r(ind)
-
-
-!c now make box around ir0
-
-!c     ind = 0
-
-!      do i=-nzsg+iz0,nzsg+iz0
-!         do j=-nysg+iy0,nysg+iy0
-!            do k=-nxsg+ix0,nxsg+ix0
-
-!               ind = ind + 1
-
-!               isubgrid(ipart,ind) = conv3To1(k,j,i)
-
-!            enddo
-!         enddo
-!      enddo
-
-
-
-
 
 
 END SUBROUTINE makesubgrid
@@ -924,8 +865,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(OUT)                        :: qfield(kdsub)
 INTEGER, INTENT(IN)                      :: indpart
 EXTERNAL             :: funktion
-INTEGER :: getnearestgridpoint
-
 
 
 CALL conv1to3(isubgcenter(indpar))
@@ -1347,7 +1286,7 @@ EXTERNAL                         :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
-REAL(DP), INTENT(IN OUT)                     :: param
+REAL(DP), INTENT(IN)                     :: param
 EXTERNAL v_soft
 EXTERNAL dv_softdr
 
@@ -1401,7 +1340,7 @@ EXTERNAL                         :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
-REAL(DP), INTENT(IN OUT)         :: param
+REAL(DP), INTENT(IN)         :: param
 
 EXTERNAL v_soft,gauss
 
@@ -1472,7 +1411,7 @@ EXTERNAL                          :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
-REAL(DP), INTENT(IN OUT)         :: param
+REAL(DP), INTENT(IN)         :: param
 
 EXTERNAL gauss
 

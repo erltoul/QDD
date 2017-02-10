@@ -164,10 +164,11 @@ IF(isurf /= 0)THEN
     r=ind*dx/1733D0
     IF(ABS(varelcore0(ind)) < varelcorelimit ) THEN
       nsg_arelcore = INT(r/MIN(dx,dy,dz))+1
-      GO TO 99
+      
+      EXIT
+      
     END IF
   END DO
-  99         CONTINUE
   WRITE(6,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
   WRITE(7,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
   

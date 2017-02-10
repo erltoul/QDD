@@ -29,7 +29,6 @@ SUBROUTINE nonlocalc(psi,aux,ionact)
 !     *****************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
@@ -40,7 +39,6 @@ REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
 DO i=1,kdfull2
   aux(i)=0D0
 END DO
-!test      write(*,*) ' in NONLOCALR'
 DO ion=1,nion
 !  npact = np(ion)
 !  IF(nrow(npact) <= 2) CALL effnl2r(psi,aux,ion)
@@ -103,16 +101,11 @@ COMPLEX(DP), INTENT(IN) :: psi(kdfull2)
 COMPLEX(DP) :: sumr01,sumr04,sumr05,sumr06
 COMPLEX(DP) :: f0_11,f1_1x,f1_1y,f1_1z
 
-!WRITE(*,*) ' EFFNL2C'
 #endif
 
 
 h0_11=h0_11g(np(ion))
 h1_11=h1_11g(np(ion))
-!test      write(*,*) ' EFFNL2R: h0_11,h1_11=',h0_11,h1_11
-
-
-!test      do ion=1,nion
 
 !  compute all the integrals over r'-dependent part of the
 !  wavefunction times the r'-dependent part of the pseudo:
@@ -167,7 +160,6 @@ ELSE
 !                            p1_1z(i,ion)*sumr06))
   END DO
 END IF
-!test      enddo
 
 
 RETURN
@@ -187,7 +179,6 @@ SUBROUTINE effnl3c(psi,aux,ion)
 !     **************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #ifdef REALSWITCH
@@ -209,11 +200,9 @@ IF(h0_12g(np(ion)).gt.-1D10) THEN
   h0_12=h0_12g(np(ion))
 ELSE
   h0_12 = -0.5D0*SQRT(3D0/5D0)*h0_22
-!  h0_12 = 0D0
 ENDIF
 h0_21 = h0_12
 
-!test      do ion=1,nion
 
 !  compute all the integrals over r'-dependent part of the
 !  wavefunction times the r'-dependent part of the pseudo:
@@ -246,7 +235,6 @@ END DO
 sumr04=sumr04*dvol
 sumr05=sumr05*dvol
 sumr06=sumr06*dvol
-!         write(*,*) ' sumr01..=',sumr01,sumr02,sumr04,sumr05,sumr06
 !  Now, the result of the r' integral is multiplied with the
 !  r-dependant part and summed up over all l-contributions as well
 !  as over all the ions:
@@ -275,9 +263,6 @@ ELSE
   END DO
 END IF
 
-!test      enddo
-!      write(*,*) ' AUX:'
-!      write(6,'(5(1pg12.4))') (aux(icount(i,ion)),ii=1,nfin)
 
 RETURN
 #ifdef REALSWITCH

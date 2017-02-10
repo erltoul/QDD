@@ -29,7 +29,7 @@ SUBROUTINE calclocal(rho,aloc)
 
 
 USE params
-!USE kinetic
+USE util, ONLY:laserp,projectp
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif

@@ -24,7 +24,6 @@
 REAL(DP) FUNCTION sigsig(s1,s2)
 !------------------------------------------------------------
 USE params, ONLY: DP
-!USE kinetic
 REAL(DP), INTENT(IN) :: s1,s2
 
 
@@ -41,16 +40,9 @@ END FUNCTION sigsig
 SUBROUTINE initsurface
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield,printfield2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-
-
-
-INTEGER :: iunfix(15)
-INTEGER :: imobcold(ngpar),imobeold(ngpar),imobkold(ngpar)
-
-REAL(DP) :: aaaa(3),bbbb(3),cccc(3),dddd(3)
 
 REAL(DP) :: hfield(kdfull2),hfield2(kdfull2)
 
@@ -969,7 +961,6 @@ END SUBROUTINE initsurface
 SUBROUTINE iperiogsm
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     the electrostatic properties for the GSM particles
 !     allow for different types of anions (and cations) at the same
@@ -1037,7 +1028,6 @@ END SUBROUTINE iperiogsm
 FUNCTION getdistance2(ii,jj)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     returns distances**2 of particles with indices ii and jj
@@ -1079,7 +1069,6 @@ END FUNCTION getdistance2
 FUNCTION getmixedwidth(ii,jj)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     returns mixed Gaussian widths between particles with indices ii and jj
@@ -1131,7 +1120,6 @@ END FUNCTION getmixedwidth
 SUBROUTINE getparas(ind)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 IF (ind <= nc) THEN
@@ -1168,7 +1156,6 @@ END SUBROUTINE getparas
 FUNCTION getcharge(ii)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 IF (ii <= nc) THEN
@@ -1188,7 +1175,6 @@ END FUNCTION getcharge
 SUBROUTINE addforce(i,forcx,forcy,forcz)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     adds force forcx,forcy,forcz to correct array depending
 !     on "long" index i
@@ -1217,7 +1203,6 @@ END SUBROUTINE addforce
 INTEGER FUNCTION iconvlongtoshort(ind1)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 IF (ind1 <= nc) THEN
@@ -1239,7 +1224,6 @@ END FUNCTION iconvlongtoshort
 INTEGER FUNCTION iconvshorttolong(ityp1,ind1)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     converts "short" index ind1 of given particle type ityp1
 !     to "long" index
@@ -1263,11 +1247,10 @@ END FUNCTION iconvshorttolong
 !#if(raregas)
 ! ------------------------------------------------------------
 
-SUBROUTINE propagate(rho)
+SUBROUTINE propagate
 ! ------------------------------------------------------------
 !  propagation using velocity Verlet step
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1503,7 +1486,6 @@ END SUBROUTINE printdipoles
 SUBROUTINE cool
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1544,7 +1526,6 @@ END SUBROUTINE cool
 SUBROUTINE calctemp
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     calculates thermal energies
@@ -1596,7 +1577,6 @@ END SUBROUTINE calctemp
 SUBROUTINE calcenergyg
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !#if(parallel)
@@ -1823,7 +1803,6 @@ END SUBROUTINE calcenergyg
 SUBROUTINE initimpulses(INDEX)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1872,14 +1851,11 @@ END SUBROUTINE initimpulses
 
 !------------------------------------------------------------
 
-SUBROUTINE disturblattice(maxdist)
+SUBROUTINE disturblattice
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-
-DOUBLE PRECISION, INTENT(IN OUT)         :: maxdist
 
 LOGICAL :: tterm
 DATA tterm/.true./
@@ -1940,7 +1916,6 @@ END SUBROUTINE disturblattice
 SUBROUTINE printoutparameters
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 WRITE(6,*) '*************************************************'
@@ -2023,10 +1998,9 @@ END SUBROUTINE printoutparameters
 
 !------------------------------------------------------------
 
-FUNCTION rgetmaxpol(iflag)
+REAL(DP) FUNCTION rgetmaxpol()
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 rgetmaxpol = -1D0
@@ -2047,7 +2021,6 @@ END FUNCTION rgetmaxpol
 SUBROUTINE rgetmaxforce(iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 rgetmaxx = -1D60
@@ -2075,13 +2048,10 @@ END SUBROUTINE rgetmaxforce
 
 !------------------------------------------------------------
 
-FUNCTION rgetmeanzpol(iflag)
+REAL(DP) FUNCTION rgetmeanzpol()
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-
-rgetmeanzpol = -1D6
 
 rr=0D0
 ic = 0
@@ -2094,7 +2064,7 @@ DO i=1,nc
   END IF
 END DO
 
-rr = rr/ic
+rr = rr/ic     ! Is it not possible that ic = 0 ??
 
 rgetmeanzpol=rr
 
@@ -2109,7 +2079,6 @@ END FUNCTION rgetmeanzpol
 SUBROUTINE pripolariz
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     prints information on polarization of substrate
 
@@ -2281,7 +2250,7 @@ SUBROUTINE init_surftemp()
 !     initializes temperature of substrate constituents (MgO)
 
 USE params
-!USE kinetic
+USE util, ONLY: givetemperature
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 CALL givetemperature(pxc,pyc,pzc, nc,surftemp,mion*1836D0*ame,1)
@@ -2300,7 +2269,7 @@ END SUBROUTINE init_surftemp
 SUBROUTINE printsurfpot(iunit)
 !------------------------------------------------------------
 USE params
-!USE kinetic
+USE util, ONLY:printfield2
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -2430,7 +2399,6 @@ END SUBROUTINE printsurfpot
 SUBROUTINE setzero(field,ilength)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

@@ -20,7 +20,7 @@ MODULE kinetic
 #if(fftw_cpu|fftw_gpu)
 USE, intrinsic :: iso_c_binding
 #endif
-USE params, ONLY: DP,numthr
+USE params, ONLY: DP,numthr,PI
 #if(fftw_gpu)
 USE cuda_alloc
 #endif
@@ -34,7 +34,6 @@ SAVE
 
 INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
-REAL(DP),PARAMETER,PRIVATE :: PI=3.141592653589793D0
 
 
 INTEGER, PRIVATE :: kfft,kfft2,kdfull2
@@ -47,7 +46,7 @@ REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:) !DB
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
-COMPLEX(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)
+REAl(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)   ! Complexes stored in real arrays for NETLIB FFT library
 REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
 INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
@@ -111,8 +110,9 @@ INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
 
 REAL(DP) :: dt1,h2m
+#if(paropenmp && !dynopenmp)
 INTEGER :: omp_get_num_threads
-
+#endif
 nx2=nx0;ny2=ny0;nz2=nz0
 kxmax=nx0;kymax=ny0;kzmax=nz0
 nx=nx2/2;ny=ny2/2;nz=nz2/2
@@ -131,7 +131,7 @@ ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akx(kdfull2),aky(kdfull2),akz(kdfull2)) !DB
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 ALLOCATE(akprop(kxmax,kymax,kzmax))
-ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
+ALLOCATE(fftax(2*kxmax),fftay(2*kymax),fftb(2*kzmax,kxmax)) !Takes 2 reals to store 1 complex
 ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
 ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
 ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
@@ -500,9 +500,13 @@ INTEGER(C_INT) :: typefft=4
 
 #if(netlib_fft)
 DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
+REAL(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:) ! Complexes stored in real arrays for NETLIB FFT library
+INTEGER :: ic,ir        ! Index for real and complex components when stored in ffttax, fftay...
+COMPLEX(DP) :: cmplxfac
 #endif
-COMPLEX(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:),fftta(:,:,:)
-
+#if(fftw_cpu)
+COMPLEX(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:)
+#endif
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 !  here version using 3D FFTW
@@ -559,38 +563,64 @@ END IF
 
 
 !       propagation in x-direction
-ALLOCATE(ffttax(nx2),ffttay(ny2),ffttaz(nz2),ffttb(nz2,nx2),fftta(nx2,ny2,nz2))
-
+#if(netlib_fft)
+ALLOCATE(ffttax(2*nx2),ffttay(2*ny2),ffttaz(2*nz2),ffttb(2*nz2,nx2))
+#endif
+#if(fftw_cpu)
+ALLOCATE(ffttax(nx2),ffttay(ny2),ffttaz(nz2),ffttb(nz2,nx2))
+#endif
 xfnorm = 1D0/nx2
 
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffttax(MOD(i1+nx,nx2)+1)=q1(ind) ! copy to workspace
-!      fftax(modx(i1))=q1(ind) ! copy to workspace
+      i1m=MOD(i1+nx,nx2)+1
+#if(netlib_fft)
+      ic= 2*i1m
+      ir= ic-1
+      ffttax(ir)=REAL(q1(ind),DP) ! copy to workspace
+      ffttax(ic)=AIMAG(q1(ind)) ! copy to workspace
+#endif
+#if(fftw_cpu)
+      ffttax(i1m)=q1(ind) ! copy to workspace
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic fft
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwx,ffttax,ffttax)
-!    CALL fftw_execute_dft(pforwx,fftax(1),fftax(1))
 #endif
     DO i1=1,nx2
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      cmplxfac = akpropx(i1)*CMPLX(ffttax(ir),ffttax(ic),DP)
+      ffttax(ir) = REAL(cmplxfac,DP) 
+      ffttax(ic) = AIMAG(cmplxfac)
+#endif
+#if(fftw_cpu)
       ffttax(i1) = akpropx(i1)*ffttax(i1)
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftb1 (nx2,ffttax,wrkx,wsavex,ifacx) ! basic back fft
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackx,ffttax,ffttax)
-!    CALL fftw_execute_dft(pbackx,fftax(1),fftax(1))
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= ffttax(MOD(i1+nx,nx2)+1)*xfnorm
-!      q2(ind)= fftax(modx(i1))*xfnorm
+      i1m=MOD(i1+nx,nx2)+1
+#if(netlib_fft)
+      ic= 2*i1m
+      ir= ic-1
+      q2(ind)= xfnorm* CMPLX(ffttax(ir),ffttax(ic),DP)
+#endif
+#if(fftw_cpu)
+      q2(ind)= xfnorm*ffttax(i1m)
+#endif
     END DO
   END DO
 END DO
@@ -602,30 +632,52 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      ffttay(MOD(i2+ny,ny2)+1) = q2(ind)
-!      fftay(mody(i2)) = q2(ind)
+      i2m=MOD(i2+ny,ny2)+1
+#if(netlib_fft)
+      ic=2*i2m
+      ir=ic-1
+      ffttay(ir) = REAL(q2(ind),DP)
+      ffttay(ic) = AIMAG(q2(ind))
+#endif
+#if(fftw_cpu)
+      ffttay(i2m) = q2(ind)
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftf1 (ny2,ffttay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwy,ffttay,ffttay)
-!    CALL fftw_execute_dft(pforwy,fftay(1),fftay(1))
 #endif
     DO i2=1,ny2
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      cmplxfac = akpropy(i2)*CMPLX(ffttay(ir), ffttay(ic),DP)
+      ffttay(ir) = REAL(cmplxfac,DP)
+      ffttay(ic) = AIMAG(cmplxfac)
+#endif
+#if(fftw_cpu)
       ffttay(i2) = akpropy(i2)*ffttay(i2)
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftb1 (ny2,ffttay,wrky,wsavey,ifacy)
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbacky,ffttay,ffttay)
-!    CALL fftw_execute_dft(pbacky,fftay(1),fftay(1))
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= ffttay(MOD(i2+ny,ny2)+1)*yfnorm
-!      q2(ind)= fftay(mody(i2))*yfnorm
+      i2m=MOD(i2+ny,ny2)+1
+#if(netlib_fft)
+      ic=2*i2m
+      ir=ic-1
+      q2(ind)= yfnorm*CMPLX(ffttay(ir),ffttay(ic),DP)
+#endif
+#if(fftw_cpu)
+      q2(ind)= yfnorm*ffttay(i2m)
+#endif
     END DO
   END DO
 END DO
@@ -637,23 +689,42 @@ DO i2=1,ny2
   DO i3=1,nz2
 !    i3m = modz(i3)
     i3m = MOD(i3+nz,nz2)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      ffttb(ir,i1) = REAL(q2(ind),DP)
+      ffttb(ic,i1) = AIMAG(q2(ind))
+#endif
+#if(fftw_cpu)
       ffttb(i3m,i1) = q2(ind)
+#endif
     END DO
   END DO
   DO i1=1,nx2
 #if(netlib_fft)
-    CALL dcftf1 (nz2,ffttb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftf1 (nz2,ffttb(:,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pforwz,ffttb(1,i1),ffttb(1,i1))
 #endif
     DO i3=1,nz2
+#if(netlib_fft)
+      ic=2*i3
+      ir=ic-1
+      cmplxfac= akpropz(i3)*CMPLX( ffttb(ir,i1), ffttb(ic,i1), DP)
+      ffttb(ir,i1) = REAL(cmplxfac,DP)
+      ffttb(ic,i1) = AIMAG(cmplxfac)
+#endif
+#if(fftw_cpu)
       ffttb(i3,i1) = akpropz(i3)*ffttb(i3,i1)
+#endif
     END DO
 #if(netlib_fft)
-    CALL dcftb1 (nz2,ffttb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftb1 (nz2,ffttb(:,i1),wrkz,wsavez,ifacz)
 #endif
 #if(fftw_cpu)
     CALL fftw_execute_dft(pbackz,ffttb(1,i1),ffttb(1,i1))
@@ -662,14 +733,23 @@ DO i2=1,ny2
   DO i3=1,nz2
 !    i3m = modz(i3)
     i3m = MOD(i3+nz,nz2)+1
+#if(netlib_fft)
+    ic=2*i3m
+    ir=ic-1
+#endif    
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q1(ind)=ffttb(i3m,i1)*zfnorm
+#if(netlib_fft)
+      q1(ind)=zfnorm*CMPLX(ffttb(ir,i1),ffttb(ic,i1),DP)
+#endif
+#if(fftw_cpu)
+      q1(ind)=zfnorm*ffttb(i3m,i1)
+#endif
     END DO
   END DO
 END DO
 
-DEALLOCATE(ffttax,ffttay,ffttaz,ffttb,fftta)
+DEALLOCATE(ffttax,ffttay,ffttaz,ffttb)
 
 !netlib/fftw switch
 #endif 
@@ -820,7 +900,15 @@ DO i3=1,nz2
 !                 forward transform along x
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      ic=2*modx(i1)
+      ir=ic-1
+      fftax(ir)=REAL(fin(ind),DP)  ! copy to workspace
+      fftax(ic)=AIMAG(fin(ind))  ! copy to workspace
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftax(modx(i1))=fin(ind)  ! copy to workspace
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
@@ -838,7 +926,15 @@ DO i3=1,nz2
       ELSE
         zkx=(i1-1)*dkx
       END IF
+#if(netlib_fft)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir) = -fftax(ic)*zkx    ! *eye*zkx
+      fftax(ic) =  fftax(ir)*zkx
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftax(i1) = fftax(i1)*eye*zkx
+#endif
     END DO
 !                 backward transform along x
 #if(netlib_fft)
@@ -852,7 +948,14 @@ DO i3=1,nz2
 #endif
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      ic=2*modx(i1)
+      ir=ic-1
+      gradfout(ind)= CMPLX(fftax(ir), fftax(ic),DP)/nx2
+#endif
+#if(fftw_cpu|fftw_gpu)
       gradfout(ind)= fftax(modx(i1))/nx2
+#endif
     END DO
   END DO
 END DO
@@ -891,7 +994,15 @@ DO i3=1,nz2
 !                 forward transform along y
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      ic=mody(i2)
+      ir=ic-1
+      fftay(ir) = REAL(fin(ind),DP)
+      fftay(ic) = AIMAG(fin(ind))
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftay(mody(i2)) = fin(ind)
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
@@ -909,7 +1020,15 @@ DO i3=1,nz2
       ELSE
         zky=(i2-1)*dky
       END IF
+#if(netlib_fft)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir) = -fftay(ic)*zky      ! *eye*zky
+      fftay(ic) =  fftay(ir)*zky
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftay(i2) = fftay(i2)*eye*zky
+#endif
     END DO
 !                 backward transform along y
 #if(netlib_fft)
@@ -923,7 +1042,14 @@ DO i3=1,nz2
 #endif
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
+#if(netlib_fft)
+      ic=2*mody(i2)
+      ir=ic-1
+      gradfout(ind)= CMPLX(fftay(ir), fftay(ic), DP)/ny2
+#endif
+#if(fftw_cpu|fftw_gpu)
       gradfout(ind)= fftay(mody(i2))/ny2
+#endif
     END DO
   END DO
 END DO
@@ -954,7 +1080,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 #if(netlib_fft)
-COMPLEX(DP), ALLOCATABLE :: fftaz(:)
+REAL(DP), ALLOCATABLE :: fftaz(:)
 #endif
 
 
@@ -962,7 +1088,7 @@ COMPLEX(DP), ALLOCATABLE :: fftaz(:)
 ! ************************************************************
 
 #if(netlib_fft)
-ALLOCATE(fftaz(nz2))
+ALLOCATE(fftaz(2*nz2))
 #endif
 
 dkz=pi/(dz*nz)
@@ -973,7 +1099,15 @@ DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       i3m = MOD(i3+nz,nz2)+1
 !      i3m = modz(i3)
+#if(netlib_fft)
+      ic=2*i3m
+      ir=ic-1
+      fftaz(ir) = REAL(fin(ind),DP)
+      fftaz(ic) = AIMAG(fin(ind))
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftaz(i3m) = fin(ind)
+#endif
     END DO
 #if(netlib_fft)
     CALL dcftf1 (nz2,fftaz,wrkz,wsavez,ifacz)
@@ -991,7 +1125,15 @@ DO i2=1,ny2
       ELSE
         zkz=(i3-1)*dkz
       END IF
+#if(netlib_fft)
+      ic=2*i3
+      ir=ic-1
+      fftaz(ir) = -fftaz(ic)*zkz   !  eye*zkz
+      fftaz(ic) =  fftaz(ir)*zkz
+#endif
+#if(fftw_cpu|fftw_gpu)
       fftaz(i3) = fftaz(i3)*eye*zkz
+#endif
     END DO
 !                 backward transform along z
 #if(netlib_fft)
@@ -1006,7 +1148,14 @@ DO i2=1,ny2
     DO i3=1,nz2                  ! copy back
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       i3m = MOD(i3+nz,nz2)+1
+#if(netlib_fft)
+      ic=2*i3m
+      ir=ic-1
+      gradfout(ind)= CMPLX(fftaz(ir),fftaz(ic),DP)/nz2
+#endif
+#if(fftw_gpu)
       gradfout(ind)= fftaz(i3m)/nz2
+#endif
 !      gradfout(ind)= fftaz(modz(i3))/nz2
     END DO
 !
@@ -1097,12 +1246,17 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(modx(i1))=q1(ind)  ! copy to workspace
+      ic=2*modx(i1)
+      ir=ic-1
+      fftax(ir)=REAL(q1(ind),DP)  ! copy to workspace
+      fftax(ic)=AIMAG(q1(ind))
     END DO
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(i1)        !  copy back in strange order
+      ic=2*i1
+      ir=ic-1
+      q2(ind)= CMPLX(fftax(ir),fftax(ic),DP)        !  copy back in strange order
     END DO
   END DO
 END DO
@@ -1113,12 +1267,17 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(mody(i2)) = q2(ind)
+      ic=2*mody(i2)
+      ir=ic-1
+      fftay(ir) = REAL(q2(ind),DP)
+      fftay(ic) = AIMAG(q2(ind))
     END DO
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(i2)
+      ic=2*i2
+      ir=ic-1
+      q2(ind)= CMPLX(fftay(ir),fftay(ic),DP)
     END DO
   END DO
 END DO
@@ -1146,18 +1305,23 @@ DO i2=1,ny2
   DO i3=1,nz2
 !    i3m = modz(i3)
     i3m = MOD(i3+nz,nz2)+1
+    ic=2*i3m
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(i3m,i1) = q2(ind)
+      fftb(ir,i1) = REAL(q2(ind),DP)
+      fftb(ic,i1) = AIMAG(q2(ind))
     END DO
   END DO
   DO i1=1,nx2
-    CALL dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
+    CALL dcftf1 (nz2,fftb(:,i1),wrkz,wsavez,ifacz)
   END DO
   DO i3=1,nz2
+    ic=2*i3
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(i3,i1)*tnorm
+      q2(ind)= tnorm*CMPLX(fftb(ir,i1),fftb(ic,i1),DP)
     END DO
   END DO
 END DO
@@ -1229,20 +1393,24 @@ facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
 
 DO i2=1,ny2
   DO i3=1,nz2
+    ic=2*i3
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(i3,i1) = q1(ind)*facnr
+      fftb(ir,i1) = facnr*REAL(q1(ind),DP)
+      fftb(ic,i1) = facnr*AIMAG(q1(ind))
     END DO
   END DO
   DO i1=1,nx2
-    CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
+    CALL dcftb1 (nz2,fftb(:,i1),wrkz,wsavez,ifacz)    ! basic fft
   END DO
   DO i3=1,nz2                  ! copy back
     i3m = MOD(i3+nz,nz2)+1
+    ic=2*i3m
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(i3m,i1)
-!      q2(ind)= fftb(modz(i3),i1)
+      q2(ind)= CMPLX(fftb(ir,i1), fftb(ic,i1),DP)
     END DO
   END DO
 END DO
@@ -1253,12 +1421,17 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(i2) = q2(ind)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir) = REAL(q2(ind),DP)
+      fftay(ic) = AIMAG(q2(ind))
     END DO
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(mody(i2))
+      ic=2*mody(i2)
+      ir=ic-1
+      q2(ind)= CMPLX(fftay(ir),fftay(ic),DP)
     END DO
   END DO
 END DO
@@ -1270,12 +1443,17 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(i1)=q2(ind)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir)=REAL(q2(ind),DP)
+      fftax(ic)=AIMAG(q2(ind))
     END DO
     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(modx(i1))
+      ic=2*modx(i1)
+      ir=ic-1
+      q2(ind)= CMPLX(fftax(ir),fftax(ic),DP)
     END DO
   END DO
 END DO
@@ -1379,12 +1557,17 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(modx(i1))=CMPLX(q1(ind),0D0,DP) ! copy to workspace
+      ic=2*modx(i1)
+      ir=ic-1
+      fftax(ir)=q1(ind) ! copy to workspace
+      fftax(ic)=0D0
     END DO
     CALL dcftf1 (nx2,fftax,wrkx,wsavex,ifacx)    ! basic fft
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftax(i1)        !  copy back in strange order
+      ic=2*i1
+      ir=ic-1
+      q2(ind)= CMPLX(fftax(ir),fftax(ic),DP)        !  copy back in strange order
     END DO
   END DO
 END DO
@@ -1395,12 +1578,17 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(mody(i2)) = q2(ind)
+      ic=2*mody(i2)
+      ir=ic-1
+      fftay(ir) = REAL(q2(ind),DP)
+      fftay(ic) = AIMAG(q2(ind))
     END DO
     CALL dcftf1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(i2)
+      ic=2*i2
+      ir=ic-1
+      q2(ind)= CMPLX(fftay(ir),fftay(ic),DP)
     END DO
   END DO
 END DO
@@ -1430,18 +1618,23 @@ END DO
 
 DO i2=1,ny2
   DO i3=1,nz2
+    ic=2*modz(i3)
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(modz(i3),i1) = q2(ind)
+      fftb(ir,i1) = REAL(q2(ind),Dp)
+      fftb(ic,i1) = AIMAG(q2(ind))
     END DO
   END DO
   DO i1=1,nx2
     CALL dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
   END DO
   DO i3=1,nz2
+    ic=2*i3
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(i3,i1)*tnorm
+      q2(ind)=tnorm*CMPLX(fftb(ir,i1),fftb(ic,i1),DP)
     END DO
   END DO
 END DO
@@ -1539,19 +1732,23 @@ ALLOCATE(q2(kdfull2))
 
 DO i2=1,ny2
   DO i3=1,nz2
+      ic=2*i3
+      ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftb(i3,i1) = q1(ind)*facnr
+      fftb(ir,i1) = facnr*REAL(q1(ind),DP)
+      fftb(ic,i1) = facnr*AIMAG(q1(ind))
     END DO
   END DO
   DO i1=1,nx2
-    CALL dcftb1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)    ! basic fft
+    CALL dcftb1 (nz2,fftb(:,i1),wrkz,wsavez,ifacz)    ! basic fft
   END DO
   DO i3=1,nz2                  ! copy back
-    i3m = modz(i3)
+    ic=2*modz(i3)
+    ir=ic-1
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftb(i3m,i1)
+      q2(ind)= CMPLX(fftb(ir,i1), fftb(ic,i1),DP)
     END DO
   END DO
 END DO
@@ -1562,12 +1759,17 @@ DO i3=1,nz2
   DO i1=1,nx2
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftay(i2) = q2(ind)
+      ic=2*i2
+      ir=ic-1
+      fftay(ir) = REAL(q2(ind),DP)
+      fftay(ic) = AIMAG(q2(ind))
     END DO
     CALL dcftb1 (ny2,fftay,wrky,wsavey,ifacy)
     DO i2=1,ny2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      q2(ind)= fftay(mody(i2))
+      ic=2*mody(i2)
+      ir=ic-1
+      q2(ind) = CMPLX(fftay(ir),fftay(ic),DP)
     END DO
   END DO
 END DO
@@ -1579,13 +1781,17 @@ DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      fftax(i1)=q2(ind)
+      ic=2*i1
+      ir=ic-1
+      fftax(ir)=REAL(q2(ind),DP)
+      fftax(ic)=AIMAG(q2(ind))
     END DO
     CALL dcftb1 (nx2,fftax,wrkx,wsavex,ifacx)
     DO i1=1,nx2
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
 !      q2(ind)= REAL(fftax(MOD(i1+nx,nx2)+1),DP)
-      q3(ind)= REAL(fftax(modx(i1)),DP)
+      ir=2*modx(i1)-1
+      q3(ind)= fftax(ir)
     END DO
   END DO
 END DO

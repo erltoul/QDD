@@ -27,10 +27,8 @@ MODULE localize_rad
 USE params
 USE kinetic
 USE orthmat
-!IMPLICIT REAL(DP) (A-H,O-Z)
+USE util, ONLY:wfovlp,project
 
-!SAVE
-!PUBLIC
 INTEGER,SAVE,PRIVATE :: kdim
 
 !     matrices of radial moments
@@ -44,10 +42,16 @@ REAL(DP),PRIVATE,ALLOCATABLE :: ymatr(:,:,:)   ! matrix of y
 REAL(DP),PRIVATE,ALLOCATABLE :: zmatr(:,:,:)   ! matrix of z
 REAL(DP),PRIVATE,ALLOCATABLE :: vecsr(:,:,:)    ! searched eigenvectors
 INTEGER,SAVE,PRIVATE :: ndim(2)
-!COMMON /radmatrix/ rrmatr,xxmatr,yymatr,zzmatr, xmatr,ymatr,zmatr,  &
-!    vecsr
-!COMMON /radmatrixn/ndim
 
+
+INTERFACE superpose_state
+! automated choice between real, complex and complexsic versions of superpose_state
+  MODULE PROCEDURE superpose_state_r, superpose_state_c, superpose_state_rc
+END INTERFACE superpose_state
+
+INTERFACE avermatrix
+  MODULE PROCEDURE avermatrix_r avermatrix_c
+END INTERFACE avermatrix
 
 CONTAINS
 !     ******************************
@@ -81,10 +85,7 @@ SUBROUTINE sstep_lsic(q0,akv,aloc,iter,qnew)
 
 !     - only serial version -
 
-!USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
-
-!INCLUDE 'radmatrixr.inc'
 
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
@@ -92,8 +93,6 @@ REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iter
 REAL(DP), INTENT(IN OUT)                         :: qnew(kdfull2,kstate)
-
-
 
 
 !       workspaces
@@ -146,7 +145,7 @@ DO nbe=1,nstate
   
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1)
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1)
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1)
     DO  i=1,nxyz
       q1(i)=q1(i)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -170,7 +169,7 @@ DO nbe=1,nstate
   
 !      optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -210,7 +209,7 @@ DO nbe=1,nstate
 !     &       ' nbe,spe,var=',nbe,sume,evarsp(nbe)
     CALL rfftback(q2,q1)
     CALL project(q1,q1,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(q1,q1))
+    evarsp2(nbe) =  SQRT(wfovlp(q1,q1))
   ELSE IF(tdiag .AND. fftnorm > 0D0) THEN
     sume = 0D0
     DO i=1,nxyz
@@ -234,7 +233,7 @@ DO nbe=1,nstate
     nb = nbe - (is-1)*ndim(1)
     DO na=1,ndim(is)
       nae = na + (is-1)*ndim(1)
-      h_matrix(na,nb,is) = rwfovlp(q0(1,nae),q1)
+      h_matrix(na,nb,is) = wfovlp(q0(:,nae),q1)
       IF(na == nb) h_matrix(na,nb,is) =  &
           h_matrix(na,nb,is) + amoy(nbe)
     END DO
@@ -300,7 +299,7 @@ IF(tdiag .AND. iter > iterdiag .AND. ndim(1) > 0  &
     is = ispin(nbe)
     nb = nbe - (is-1)*ndim(1)
     noff = (is-1)*ndim(1)+1
-    CALL superpose_state(qnew(1,nbe),eigvec(1,nb,is), q0,is)
+    CALL superpose_state(qnew(:,nbe),eigvec(:,nb,is), q0,is)
     amoy(nbe) = eigval(nb,is)
     epotsp(nbe) = amoy(nbe)-ekinsp(nbe)
   END DO
@@ -389,7 +388,7 @@ DO nb=1,nstate
     is = ispin(nrel2abs(nb))
     ishift = (is-1)*nxyz ! store spin=2 in upper block
     nbeff = nb - (is-1)*ndim(1)
-    CALL superpose_state(qsic(1,nb),vecsr(1,nbeff,is),q0,is)
+    CALL superpose_state(qsic(:,nb),vecsr(:,nbeff,is),q0,is)
 #ifdef REALSWITCH
     CALL calc_sicspr(rhosp,usicsp,qsic(1,nb),nb)
 #else
@@ -490,46 +489,95 @@ RETURN
 END SUBROUTINE analyze_mom
 
 !-----superpose_state--------------------------------------------------
-
-SUBROUTINE superpose_state(wfsup,coeff,q0,is)
-
+!
 !     Superposition to new state:
 !       wfsup     new single-particle state
 !       coeff     superposition coefficients
 !       q0        set of s.p.states to be combined
 !       is        spin of states
-
-!USE params
+!----------------------------------------------------------------------
+! REAL version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_r(wfsup,coeff,q0,is)
+USE params
+USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-!INCLUDE 'radmatrixr.inc'
+REAL(DP),INTENT(OUT)          :: wfsup(kdfull2)
+REAL(DP),INTENT(IN)           :: coeff(kstate)
+REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
 
+!---------------------------------------------------------------------
+wfsup(1:nxyz)=0.0_DP
 
-REAL(DP), INTENT(OUT)                        :: wfsup(kdfull2)
-REAL(DP), INTENT(IN)                         :: coeff(kstate)
-REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)                  :: is
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
+END DO
 
+RETURN
+END SUBROUTINE superpose_state_r
 
+!----------------------------------------------------------------------
+! COMPLEX version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_c(wfsup,coeff,q0,is)
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
+COMPLEX(DP),INTENT(IN)        :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
 
 
 !---------------------------------------------------------------------
 
-DO nas=1,ndim(is)
-  na = nas + (is-1)*ndim(1)
-  IF(nas == 1) THEN
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na)
-    END DO
-  ELSE
-    DO i=1,nxyz
-      wfsup(i) = coeff(nas)*q0(i,na) + wfsup(i)
-    END DO
-  END IF
+wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
+
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
 END DO
 
 RETURN
-END SUBROUTINE superpose_state
+END SUBROUTINE superpose_state_c
+
+!----------------------------------------------------------------------
+! cmplxsic version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_rc(wfsup,coeff,q0,is)
+
+USE params
+USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+
+COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
+COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
+REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN)       ::is
+!---------------------------------------------------------------------
+
+wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
+
+DO nas=1,ndims(is)
+  na = nas + (is-1)*ndims(1)
+  DO i=1,nxyz
+    wfsup(i) = wfsup(i) + coeff(nas)*q0(i,na) 
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE superpose_state_rc
+
+
 
 !-----spmomsmatrix----------------------------------------------spmoms
 
@@ -664,7 +712,7 @@ END SUBROUTINE spmomsmatrixo
 !-----locgradstep-----------------------------------------
 
 SUBROUTINE locgradstep(is,iprint)
-
+USE orthmat, ONLY:ovlpmatrix
 !      implicit none
 
 !     Nonlinear gradient iteration to optimally localized states:
@@ -705,22 +753,9 @@ REAL(DP) :: w(kdim)             ! workspace
 REAL(DP) :: varstate(kdim),averstate(kdim)
 REAL(DP) :: acc,actstep
 REAL(DP) :: xbar,ybar,zbar
-!EXTERNAL :: avermatrix,ovlpmatrix,vecovlp,vecnorm  ! function names ??
-!REAL(DP) :: avermatrix,ovlpmatrix,vecovlp,vecnorm  ! function names ??
 INTEGER :: i,j                ! eigenstates
 INTEGER :: na,nb              ! matrix indices
 INTEGER :: iter
-
-!INTERFACE
-! REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
-! USE params, ONLY: DP
-! IMPLICIT NONE
-! INTEGER, INTENT(IN)                      :: ndim
-! INTEGER, INTENT(IN)                  :: kdimin
-! REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
-! REAL(DP), INTENT(IN)                       :: vec(kdimin)
-! END FUNCTION avermatrix
-!END INTERFACE
 
 !-------------------------------------------------------
 
@@ -776,12 +811,12 @@ DO iter=1,itmax
   
   DO i=1,ndim(is)
     DO j=1,ndim(is)
-      xlambda(i,j) = ovlpmatrix(rrmatr(1,1,is),vecsr(1,i,is),  &
-          vecsr(1,j,is),ndim(is),kdim) -0.5D0*(xaver(i)+xaver(j))*  &
-          ovlpmatrix(xmatr(1,1,is),vecsr(1,i,is), vecsr(1,j,is),ndim(is),kdim)  &
-          -0.5D0*(yaver(i)+yaver(j))* ovlpmatrix(ymatr(1,1,is),vecsr(1,i,is),  &
-          vecsr(1,j,is),ndim(is),kdim) -0.5D0*(zaver(i)+zaver(j))*  &
-          ovlpmatrix(zmatr(1,1,is),vecsr(1,i,is), vecsr(1,j,is),ndim(is),kdim)
+      xlambda(i,j) = ovlpmatrix(rrmatr(:,:,is),vecsr(:,i,is),  &
+          vecsr(:,j,is),ndim(is),kdim) -0.5D0*(xaver(i)+xaver(j))*  &
+          ovlpmatrix(xmatr(:,:,is),vecsr(:,i,is), vecsr(:,j,is),ndim(is),kdim)  &
+          -0.5D0*(yaver(i)+yaver(j))* ovlpmatrix(ymatr(:,:,is),vecsr(:,i,is),  &
+          vecsr(:,j,is),ndim(is),kdim) -0.5D0*(zaver(i)+zaver(j))*  &
+          ovlpmatrix(zmatr(:,:,is),vecsr(:,i,is), vecsr(:,j,is),ndim(is),kdim)
     END DO
   END DO
   IF(ttest) THEN
@@ -824,7 +859,7 @@ DO iter=1,itmax
   END DO
   IF(iprint > 0 .AND. MOD(iter,iprint)==0) WRITE(6,'(i5,4(1pg12.4))')  &
       iter,SQRT(variance),SQRT(variance2),SQRT(radvary), radmax
-  IF(variance < precis) GO TO 99
+  IF(variance < precis) EXIT
   
 !       ortho-normalization
   
@@ -832,7 +867,6 @@ DO iter=1,itmax
   
 END DO
 
-99   CONTINUE
 IF(iprint >= 0) THEN
   WRITE(6,'(a,i4)') ' at iteration nr.',iter,  &
       ' results for spin IS=',is, '   state  x y z variance '
@@ -931,10 +965,9 @@ DO iter=1,itmax
 !       ortho-normalization
   
   CALL orthnorm(vecs,ndim,kdimin)
-  IF(variance < precis) GO TO 99
+  IF(variance < precis) EXIT
   
 END DO
-99   CONTINUE
 IF(mprint >= 0) WRITE(6,'(a,i5,1pg12.4)')  &
     'DIAG: iter,variance=',iter,SQRT(variance)
 
@@ -976,62 +1009,23 @@ END DO
 RETURN
 END SUBROUTINE operate
 
-!-----ovlpmatrix-----------------------------------------
-
-REAL(DP) FUNCTION ovlpmatrix(a,vec1,vec2,ndim,kdimin)
-!USE params, ONLY: DP
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
-REAL(DP), INTENT(IN)                       :: vec1(kdimin)
-REAL(DP), INTENT(IN)                       :: vec2(kdimin)
-INTEGER, INTENT(IN)                      :: ndim
-INTEGER, INTENT(IN)                  :: kdimin
-
-!     Matrix element of matrix 'a'
-!     with respect to states 'vec1' and 'vec2'
-!     having actual length 'ndim' and dimension 'kdimin'.
-
-
-
-REAL(DP) :: ovlp
-INTEGER :: i,j
-
-!-------------------------------------------------------
-
-ovlp = 0.0D0
-DO i=1,ndim
-  DO j=1,ndim
-    ovlp = ovlp + vec1(j)*a(j,i)*vec2(i)
-  END DO
-END DO
-ovlpmatrix = ovlp
-
-RETURN
-END FUNCTION ovlpmatrix
 !-----avermatrix-----------------------------------------
-
-REAL(DP) FUNCTION avermatrix(a,vec,ndim,kdimin)
-!FUNCTION avermatrix(a,vec,ndim,kdimin)
+!
+!     Average of matrix 'a' taken with state 'vec' of
+!     actual length 'ndim', dimensioned with 'kdimin'.
+!-------------------------------------------------------
+! REAL version
+!-------------------------------------------------------
+REAL(DP) FUNCTION avermatrix_r(a,vec,ndim,kdimin)
 USE params, ONLY: DP
 IMPLICIT NONE
 
-!REAL(DP) :: avermatrix
 REAL(DP), INTENT(IN)                       :: a(kdimin,kdimin)
 REAL(DP), INTENT(IN)                       :: vec(kdimin)
 INTEGER, INTENT(IN)                      :: ndim
 INTEGER, INTENT(IN)                  :: kdimin
-
-!     Average of matrix 'a' taken with state 'vec' of
-!     actual length 'ndim', dimensioned with 'kdimin'.
-
-
-
 REAL(DP) :: aver
 INTEGER :: i,j
-
-!-------------------------------------------------------
 
 aver = 0.0D0
 DO i=1,ndim
@@ -1039,31 +1033,36 @@ DO i=1,ndim
     aver = aver + vec(j)*a(j,i)*vec(i)
   END DO
 END DO
-avermatrix = aver
+avermatrix_r = aver
 
 RETURN
-END FUNCTION avermatrix
+END FUNCTION avermatrix_r
+!-------------------------------------------------------
+! COMPLEX version
+!-------------------------------------------------------
+REAL(DP) FUNCTION avermatrix_c(a,vec,ndim,kdimin)
+USE params, ONLY: DP
+IMPLICIT NONE
 
-!bufc-----bsqrt----------------------------------------------
-!bufc
-!buf      real*8 function bsqrt(x)
-!bufc
-!buf      implicit none
-!bufc
-!bufc     buffered square root
-!bufc
-!buf      real*8 x
-!bufc
-!bufc-------------------------------------------------------
-!bufc
-!buf      if(x.eq.0.0D0) then
-!buf        bsqrt = 0.0D0
-!buf      else
-!buf        bsqrt = sqrt(x)
-!buf      endif
-!bufc
-!buf      return
-!buf      end
+COMPLEX(DP), INTENT(IN)                       :: a(kdimin,kdimin)
+COMPLEX(DP), INTENT(IN)                       :: vec(kdimin)
+INTEGER, INTENT(IN)                      :: ndim
+INTEGER, INTENT(IN)                  :: kdimin
+
+COMPLEX(DP) :: aver
+INTEGER :: i,j
+
+aver = CMPLX(0D0,0D0,DP)
+DO i=1,ndim
+  DO j=1,ndim
+    aver = aver + CONJG(vec(j))*a(j,i)*vec(i)
+  END DO
+END DO
+avermatrix_c = aver
+
+RETURN
+END FUNCTION avermatrix_c
+
 !-----calc_locwf--------------------------------------------------
 
 SUBROUTINE calc_locwf(q0,qnew)
@@ -1103,7 +1102,7 @@ DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   ishift = (is-1)*nxyz ! store spin=2 in upper block
   nbeff = nb - (is-1)*ndim(1)
-  CALL superpose_state(qnew(1,nb),vecsr(1,nbeff,is),q0,is)
+  CALL superpose_state(qnew(:,nb),vecsr(:,nbeff,is),q0,is)
 END DO
 
 DO nb=1,nstate

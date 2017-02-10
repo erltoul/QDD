@@ -28,26 +28,31 @@
 
 !------------------------------------------------------------
 
-SUBROUTINE getshortforce(ityp1,ityp2,ind1,ind2,rho,iflag,iflag2)
+SUBROUTINE getshortforce(itypi,itypj,ii,jj,rho,iflag2)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     distributing short force routine
 !     ind1 and ind2 are of the short type!
 
 
-INTEGER, INTENT(IN OUT)                  :: ityp1
-INTEGER, INTENT(IN OUT)                  :: ityp2
-INTEGER, INTENT(IN OUT)                  :: ind1
-INTEGER, INTENT(IN OUT)                  :: ind2
+INTEGER, INTENT(IN)                  :: itypi
+INTEGER, INTENT(IN)                  :: itypj
+INTEGER, INTENT(IN)                      :: ii
+INTEGER, INTENT(IN)                      :: jj
 REAL(DP), INTENT(IN)                         :: rho(kdfull2*2)
-INTEGER, INTENT(IN OUT)                  :: iflag
 INTEGER, INTENT(IN)                      :: iflag2
+
+INTEGER                :: ityp1,ityp2
+INTEGER                :: ind1,ind2
 
 INTEGER :: getnearestgridpoint
 INTEGER :: conv3to1
 
+ityp1 = itypi  !Because the result of a function or a scalar expression cannot be intent(out)/intent(in out) arguments. 
+ityp2 = itypj
+ind1=ii   ! Because ii and jj can be do-variables, that should not be modified inside a DO-loop.
+ind2=jj
 
 rder = 1.0D-5
 
@@ -456,12 +461,11 @@ END SUBROUTINE getshortforce
 
 !------------------------------------------------------------
 
-SUBROUTINE initisrtyp
+SUBROUTINE check_isrtyp
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
-!     Initializes the short range interaction type matrix
+!     Checks consistency of the short range interaction type matrix
 !     isrtyp(i,j)
 
 !     i,j each range from 1..5, meaning:
@@ -480,17 +484,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     The matrix must be symmetric, of course.
 
-
-!$$$      open(156,status='old',file='for005sr')
-!$$$        do i=1,5
-!$$$         read(156,*) isrtyp(i,1),isrtyp(i,2),isrtyp(i,3),isrtyp(i,4),
-!$$$     &           isrtyp(i,5)
-!$$$        enddo
-!$$$      close(156)
-!     OBSOLETE by namelists!!
-
-
-!     check consistency
 #if(raregas)
 IF (isrtypall /= 0) THEN
   WRITE(6,*) 'Setting short range parameters...'
@@ -524,7 +517,7 @@ END DO
 #endif
 
 RETURN
-END SUBROUTINE initisrtyp
+END SUBROUTINE check_isrtyp
 !------------------------------------------------------------
 
 #if(raregas)
@@ -564,7 +557,6 @@ END SUBROUTINE getrelvec
 FUNCTION vararshort(r)
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     Ar-Ar potential
@@ -591,13 +583,12 @@ END FUNCTION vararshort
 FUNCTION vararlj(r)
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     Ar-Ar potential
 
 
-REAL(DP), INTENT(IN OUT)                     :: r
+REAL(DP), INTENT(IN)                     :: r
 DATA  epslj,sigmalj /  0.0007647D0,6.42503D0/
 
 
@@ -615,7 +606,6 @@ END FUNCTION vararlj
 FUNCTION vbornmayer(r,a,s,c)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -631,7 +621,6 @@ END FUNCTION vbornmayer
 FUNCTION fbornmayer(r,a,s,c)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 rder=1D-5
@@ -652,7 +641,6 @@ END FUNCTION fbornmayer
 FUNCTION fbornmayer46(r,a,s,c4,c6)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -670,7 +658,6 @@ END FUNCTION fbornmayer46
 FUNCTION fbornmayer2345678d(r,a,e,f,s,s2,c2,c3,c4,c5,c6,c7,c8, c9,c10,cd,d)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 rder=1D-5
@@ -719,7 +706,6 @@ END FUNCTION fbornmayer2345678d
 FUNCTION fbornmayermod(r,a,e,f,s,s2,cd,d)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 rder=1D-5
@@ -751,7 +737,6 @@ END FUNCTION fbornmayermod
 FUNCTION varnashort(r)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     Ar-Na potential
@@ -794,7 +779,6 @@ END FUNCTION varnashort
 SUBROUTINE getshortenergy(ityp1,ityp2,ind1,ind2)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 ! sort by particle type
@@ -968,7 +952,6 @@ END SUBROUTINE getshortenergy
 SUBROUTINE addshortrepulsivepot(field,iswitch)
 !************************************************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     gives each GSM particle its short range repulsive (Pauli)
 !     potential, i.e. short range interaction GSM-el
@@ -1109,7 +1092,6 @@ END SUBROUTINE addshortrepulsivepot
 SUBROUTINE addshortrepulsivepotonsubgrid(field,iswitch)
 !************************************************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     gives each GSM particle its short range repulsive (Pauli)
 !     potential, i.e. short range interaction GSM-el
@@ -1121,8 +1103,6 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
 
 
 EXTERNAL varelcore,vfermi,funkfermi,funkpower
@@ -1145,20 +1125,20 @@ IF (isrtyp(1,5) == 1) THEN ! MgO-case ! c-DFT
           xc(is),yc(is),zc(is),1D0, fermia2c,fermib2c,fermic2c,15)
       
       
-      IF (ccel6 /= 0) THEN
+      IF (ccel6 /= 0) THEN       ! Hazardous to compare a real to an integer...
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel6,6)
+            xc(is),yc(is),zc(is),ccel6,6D0,15)   
         
       ELSE IF (ccel8 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel8,8)
+            xc(is),yc(is),zc(is),ccel8,8D0,15)
         
       ELSE IF (ccel10 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xc(is),yc(is),zc(is),ccel10,10)
+            xc(is),yc(is),zc(is),ccel10,10D0,15)
         
       END IF
       
@@ -1180,7 +1160,6 @@ ELSE IF (isrtyp(1,5) == 2) THEN ! The Argon Case, c-DFT
     IF(imobc(is) == iswitch) THEN  ! choose only cores which are
 ! mobile or immobile
       
-!old          call addFuncToFieldOnSubgrid(field,vArElCore,xc(is),
       CALL addtabtofieldonsubgrid(field,varelcore0,xc(is),  &
           yc(is),zc(is),1D0,10)
       
@@ -1232,17 +1211,17 @@ IF (isrtyp(3,5) == 1) THEN ! The MgO Case, k-DFT
       IF (ckel6 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel6,6,15)
+            xk(is),yk(is),zk(is),ckel6,6D0,15)
         
       ELSE IF (ckel8 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel8,8,15)
+            xk(is),yk(is),zk(is),ckel8,8D0,15)
         
       ELSE IF (ckel10 /= 0) THEN
         
         CALL addfunctofieldonsubgrid1(field,funkpower,  &
-            xk(is),yk(is),zk(is),ckel10,10,15)
+            xk(is),yk(is),zk(is),ckel10,10D0,15)
         
       END IF
       
@@ -1282,7 +1261,6 @@ END SUBROUTINE addshortrepulsivepotonsubgrid
 SUBROUTINE setbornparas(ityp1,ityp2)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      write(6,*) ityp1,ityp2
@@ -1327,7 +1305,6 @@ END SUBROUTINE setbornparas
 FUNCTION funkpower(r,p)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 funkpower=erf(r/2D0)/(r**p)
@@ -1342,7 +1319,6 @@ END FUNCTION funkpower
 FUNCTION funkfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 funkfermi=a/(1D0+EXP(b*(r-c)))
@@ -1357,7 +1333,6 @@ END FUNCTION funkfermi
 FUNCTION funkderfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 funkderfermi=-a*b*EXP(b*(r-c))/(1D0+EXP(b*(r-c)))**2D0

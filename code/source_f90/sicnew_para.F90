@@ -1473,7 +1473,6 @@ COMPLEX(DP), INTENT(OUT)                        :: qex(kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acli
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhi
 COMPLEX(DP) :: rhoc
-COMPLEX(DP) :: wfovlp
 #endif
 
 !       workspaces

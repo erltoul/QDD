@@ -36,6 +36,7 @@ CHARACTER (LEN=80) :: title
 !     &           'for005.100','for005.101','for005.110'/
 
 INTEGER,PARAMETER :: kparall=11
+#if(simpara)
 CHARACTER (LEN=10) :: fname(0:kparall)
 !      data fname/'for005.001','for005.010','for005.011',
 !     &           'for005.100','for005.101','for005.110'/
@@ -43,7 +44,7 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'for005.100','for005.101','for005.110',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
-
+#endif
 NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
@@ -273,10 +274,6 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
   
   tdipolxyz = dpolx*dpolx+dpoly*dpoly+dpolz*dpolz .GT. 0D0
   
-!     initialize and read parameters for simulated annealing:
-  
-  IF(icooltyp == 3) CALL init_simann()
-  
 !      write(*,*) ' INIT: nion2=',nion2
   RETURN
   
@@ -299,8 +296,7 @@ NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
     dr1,dr2,prho1,prho2, r0g,r1g,r2g,radiong
 
 OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
-READ(5,perio,END=99999)
-99999 CONTINUE
+READ(5,perio)
 CLOSE(5)
 !test         write(iu,*) ' changeperio done. myn=',myn
 
@@ -320,14 +316,11 @@ SUBROUTINE iparams()
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-CHARACTER (LEN=80) :: title
 INTERFACE 
   SUBROUTINE calc_lda_gunnar(rho,chpdft)
   USE params, ONLY: DP,kdfull2
   REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
   REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!  REAL(DPA), INTENT(IN)                         :: rho(*)
-!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
   END SUBROUTINE calc_lda_gunnar
 END INTERFACE
 INTERFACE 
@@ -335,8 +328,6 @@ INTERFACE
   USE params, ONLY: DP,kdfull2
   REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
   REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!  REAL(DPA), INTENT(IN)                         :: rho(*)
-!  REAL(DPA), INTENT(OUT)                        :: chpdft(*)
   END SUBROUTINE calc_lda_pw92
 END INTERFACE
 
@@ -1344,31 +1335,30 @@ ELSE IF(ipsptyp == 2) THEN
 !        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
 ELSE IF((ipsptyp == 3).OR.(ipsptyp ==4)) THEN
 !Goedecker read from two files, with valence electrons only
-do iel=1,92
-        amu(iel)=0D0   ! masses as a function of atomic number
-enddo
+  do iel=1,92
+    amu(iel)=0D0   ! masses as a function of atomic number
+  enddo
 
 !       read atomic number and masses of the elements
 
-OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='periodic')
-do i=1,86
-   read(96,*) natom,symb(natom),amu(natom)
-enddo
-close(unit=96)
+  OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='periodic')
+  do i=1,86
+     read(96,*) natom,symb(natom),amu(natom)
+  enddo
+  close(unit=96)
 !write(6,*) 'periodic table read from file periodic'
 
 !       read pseudopotential parameters
 
-OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='goed.asci')
+  OPEN(UNIT=96,STATUS='OLD',FORM='FORMATTED',FILE='goed.asci')
 
 !       beginning of reading loop
 
-icountt=-1
-iskip=-1
+  icountt=-1
+  iskip=-1
 
 !       start of loop
 
-inew=1
 open(unit=19,status='scratch')
 !~ 50	continue
 icountt=0
@@ -1380,7 +1370,7 @@ r0g(0)=0D0
 r1g(0)=0D0
 r2g(0)=0D0
 
-do ! Loop until end of file
+do ! infinite loop
 !we read a new line
   read(96,'(a)',end=1000) a     ! exits loop at EOF
   if(a(1:1).ne.' ') then
@@ -1403,6 +1393,7 @@ do ! Loop until end of file
     if(naml(3:3).eq.'1') then  ! new element is a semi-core
 !   write(6,*) 'semi-core'
 !   write(6,103) naml(1:3),' ',nval,rloc,c1,c2,c3,c4
+!103   format(2A,i2,5(f10.6))
       isave=icountt-1 ! semi-core not counted as en element: remember previous element 
       icountt=99 
       iskip=99
@@ -1425,20 +1416,15 @@ do ! Loop until end of file
     crloc(icountt)=rloc
     cc1(icountt)=c1
     cc2(icountt)=c2
-  !103   format(2A,i2,5(f10.6))
-
   !       we search for the element in the periodic table
-
     nactual=0
     do iel=1,86
       if(naml(1:2).eq.symb(iel)) then
-  ! write(6,*) naml(1:2),' found in periodic table, Z=',iel,icountt
+!        write(6,*) naml(1:2),' found in periodic table, Z=',iel,icountt
         nactual=iel
       endif
     enddo    
-  !   if(nval.eq.nactual) then
-  !      write(6,*) 'all electron pseudopotential'
-  !  endif
+!    if(nval.eq.nactual) write(6,*) 'all electron pseudopotential'
     if(nactual.eq.0) stop 'not found in periodic table'
     if(icountt.ne.99) then ! it is not a semicore
       if(nactual.ne.icountt) then  ! the element is not on it usual location in the periodic table
@@ -1452,11 +1438,9 @@ do ! Loop until end of file
     write(19,'(a)') a(6:80)
     rewind 19
     read(19,'(4(f10.6))') crr,h11,h22,h33
-! write(6,'(A,4(f10.6))') 'nonlocal reread',crr,h11,h22,h33
+!    write(6,'(A,4(f10.6))') 'nonlocal reread',crr,h11,h22,h33
     if(iskip.ne.99) then
-  !    if(crr.eq.0D0) then
-  !      l=l-1
-  !    endif
+!    if(crr.eq.0D0) l=l-1
       if(l.eq.0) then
         r0g(icountt)=crr
         h0_11g(icountt)=h11
@@ -1483,11 +1467,7 @@ end do !next line !
 1000 write(6,*) 'all parameters have been read in file goed.asci'
 
 close(unit=19)
-
-
-
 ipsptyp =1
-  
 ELSE
   STOP ' IPERIO: this type PsP not yet implemented '
 END IF
@@ -1537,7 +1517,7 @@ SUBROUTINE initions()
 !     read ionic positions and initialize ion-related parameters
 
 USE params
-!USE kinetic
+USE util, ONLY:getcm,givetemperature,rotatevec3D
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: orderxyz
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
@@ -1885,15 +1865,11 @@ dt12=dt1
 
 IF(ipsptyp == 1) THEN
   DO ion=1,nion
-    IF (iswitch_interpol==1) THEN
-      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-      CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-    ELSE
-      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-    ENDIF
+    CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+    IF (iswitch_interpol==1) CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
   END DO
   IF (iswitch_interpol==1) CALL mergetabs
- END IF
+END IF
 
 
 !     background energy
@@ -2022,6 +1998,7 @@ SUBROUTINE initwf(psir)
 !     master routine to initialize the electronic wavefunctions
 
 USE params
+USE util, ONLY:shiftfield
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
@@ -2127,21 +2104,9 @@ END IF
 WRITE(7,*) ' SHIFTFIELD overridden'
 #else
 IF(ABS(shiftwfx)+ABS(shiftwfy)+ABS(shiftwfz) > 1D-20) THEN
-  ALLOCATE(rfieldaux(kdfull2*2))
   DO nbe=1,nstate
-  
-    DO ii=1,kdfull2
-      rfieldaux(ii)=psir(ii,nbe)
-    END DO
-  
-    CALL shiftfield(rfieldaux,shiftwfx,shiftwfy,shiftwfz)
-  
-    DO ii=1,kdfull2
-      psir(ii,nbe)=rfieldaux(ii)
-    END DO
-  
+    CALL shiftfield(psir(:,nbe),shiftwfx,shiftwfy,shiftwfz)
   END DO
-  DEALLOCATE(rfieldaux)
 END IF
 #endif
 
@@ -2167,7 +2132,7 @@ END SUBROUTINE initwf
 
 SUBROUTINE ininqb(nelect,deoccin,betain,gamin)
 USE params
-!USE kinetic
+USE util, ONLY:pair
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -2197,12 +2162,12 @@ REAL(DP), INTENT(IN)                     :: gamin
 !INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
 REAL(DP) :: efacto                ! factor to get energies from h.o.
-REAL(DP) :: efermi                ! estimate for fermi shell
+!~ REAL(DP) :: efermi                ! estimate for fermi shell
 REAL(DP) :: q20fac                ! sqrt(5/16pi)
 REAL(DP) :: cosfac,sinfac         ! weightes deduced from 'gamin'
 !     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
 REAL(DP) :: speact                ! actual s.p. energy in loop
-INTEGER :: noscmx                ! maximum oscillator number
+!~ INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
 
@@ -2529,10 +2494,9 @@ DO i=1,ksttot
       nabs2rel(i)=i-nstart_node(nod)
       nhome(i)=nod
       ispin_node(nabs2rel(i),nod) = ispin(i)
-      GO TO 999
+      EXIT
     END IF
   END DO
-  999    CONTINUE
 END DO
 DO i=1,nstate
   occup(i)=occu(nrel2abs(i))
@@ -2553,6 +2517,7 @@ END SUBROUTINE ininqb
 SUBROUTINE jelbak(partn,alphel,betael,hexel,sqr,iturn)
 
 USE params
+USE util, ONLY:rotatevec3D
 !USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -2788,7 +2753,7 @@ DO iter=1,itback
   betabk = betabk+delbet
   precis = (alpha-alphel)**2+(beta-betael)**2+(partn-sqn)**2
   
-  IF((precis < endcon).AND.(ABS(partn-sqn) < endcon)) GO TO 199
+  IF((precis < endcon).AND.(ABS(partn-sqn) < endcon)) EXIT
   
   radius = radius * (partn/sqn)**onetrd
   argum  = radius / surjel
@@ -2804,11 +2769,11 @@ DO iter=1,itback
   
 END DO
 
-WRITE(7,'(a/a,g11.3)') ' ---> background deformation did not converge!',  &
-    '      residual error in"alpha"=',precis
-STOP ' no convergence in "jelbak"'
-
-199  CONTINUE
+IF(iter== itback+1 )THEN
+  WRITE(7,'(a/a,g11.3)') ' ---> background deformation did not converge!',  &
+      '      residual error in"alpha"=',precis
+  STOP ' no convergence in "jelbak"'
+END IF
 
 WRITE(7,'(a,i4,a,f12.7,a,2(/3(a,f12.7)),5(/2(a,f12.7)))')  &
     ' iteration nr.',iter,' precision=',precis,':',  &
@@ -2848,7 +2813,7 @@ INTEGER :: is(mpi_status_size)
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
-REAL(DP), ALLOCATABLE :: phix(:)
+!~ REAL(DP), ALLOCATABLE :: phix(:)
 
 REAL(DP),PARAMETER :: third=1D0/3D0
 REAL(DP),PARAMETER :: sixth=1D0/6D0

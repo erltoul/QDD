@@ -41,17 +41,15 @@
 
 !-----absbc----------------------------------------------------------
 
-SUBROUTINE absbc(psi,rho,it)
+SUBROUTINE absbc(psi,rho)
 
 !     apply absorbing bounds, optionally accumulate absorbed density
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN OUT)                  :: it
+REAL(DP), INTENT(IN OUT)                         :: rho(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w3
 
@@ -146,7 +144,6 @@ SUBROUTINE init_abs_accum()
 !     Initializes accumulator for absorbed densities with zero.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !--------------------------------------------------------------------
@@ -171,7 +168,6 @@ SUBROUTINE init_absbc(rho)
 !     initializes geometry parameters for absorbing bounds
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -294,7 +290,7 @@ SUBROUTINE init_spherabso()
 !     Initializes mask function for spherical boundary conditions
 
 USE params
-!USE kinetic
+USE util, ONLY:prifld
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------
@@ -375,7 +371,6 @@ SUBROUTINE init_abso()
 !     Initializes mask for rectangular absorbing boundaries conditions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: xmask(nx2),ymask(ny2),zmask(nz2)
 
@@ -443,6 +438,7 @@ SUBROUTINE init_ellipsabso
 !     Initializes mask function for ellipsoidal boundary conditions
 
 USE params
+USE util, ONLY:printfield
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------
@@ -598,41 +594,18 @@ SUBROUTINE escmask(it)
 
 !     print collected information on escaping electrons
 
-
 USE params
-!USE kinetic
+USE util, ONLY: inttostring,printfield
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER, INTENT(IN)                      :: it
-CHARACTER (LEN=1) :: inttostring1
-CHARACTER (LEN=2) :: inttostring2
-CHARACTER (LEN=3) :: inttostring3
-
-CHARACTER (LEN=1) :: str1
-CHARACTER (LEN=2) :: str2
-CHARACTER (LEN=3) :: str3
-CHARACTER (LEN=4) :: str4
-CHARACTER (LEN=5) :: str5
-CHARACTER (LEN=6) :: str6
-CHARACTER (LEN=7) :: str7
-CHARACTER (LEN=8) :: str8
-CHARACTER (LEN=9) :: str9
-
 !--------------------------------------------------------------------
-
 
 IF (jescmaskorb /=0 .AND. MOD(it,jescmaskorb) == 0) THEN
   DO nbe=1,nstate
     nbeabs = nrel2abs(nbe)
-    IF (nbeabs < 10) THEN
-      str1=inttostring1(nbeabs)
-      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//str1//'.'//outnam)
-    ELSE IF (nbeabs < 100) THEN
-      str2=inttostring2(nbeabs)
-      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//str2//'.'//outnam)
-    ELSE IF (nbeabs < 1000) THEN
-      str3=inttostring3(nbeabs)
-      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//str3//'.'//outnam)
+    IF (nbeabs < 1000) THEN
+      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//trim(adjustl(inttostring(nbeabs)))//'.'//outnam)
     ELSE
       STOP 'ERROR: Too many states for jescmaskOrb'
     END IF
@@ -646,48 +619,11 @@ IF(myn == 0) THEN
     IF (itof == 0) THEN
       OPEN(589,STATUS='unknown',FILE='pescmask.'//outnam)
     ELSE
-      
-      it0=it
-      ndig=1
-      
-      DO i=1,10
-        IF (it0/10D0 >= 1.) THEN
-          ndig=ndig+1
-          it0=INT(it0/10)
-        END IF
-      END DO
-      
-      IF (ndig == 1) THEN
-        WRITE (str1, '(I1)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str1//'.'//outnam)
-      ELSE IF (ndig == 2) THEN
-        WRITE (str2, '(I2)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str2//'.'//outnam)
-      ELSE IF (ndig == 3) THEN
-        WRITE (str3,'(I3)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str3//'.'//outnam)
-      ELSE IF (ndig == 4) THEN
-        WRITE (str4, '(I4)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str4//'.'//outnam)
-      ELSE IF (ndig == 5) THEN
-        WRITE (str5, '(I5)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str5//'.'//outnam)
-      ELSE IF (ndig == 6) THEN
-        WRITE (str6, '(I6)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str6//'.'//outnam)
-      ELSE IF (ndig == 7) THEN
-        WRITE (str7, '(I7)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str7//'.'//outnam)
-      ELSE IF (ndig == 8) THEN
-        WRITE (str8, '(I8)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str8//'.'//outnam)
-      ELSE IF (ndig == 9) THEN
-        WRITE (str9, '(I9)') it
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//str9//'.'//outnam)
+      IF(it < 1000000000) THEN
+        OPEN(589,STATUS='unknown', FILE='pescmask.'//trim(adjustl(inttostring(it)))//'.'//outnam)
       ELSE
         STOP '::too many time steps::'
       END IF
-      
     END IF
     CALL printfield(589,rhoabso,'x')
     CLOSE(589)
@@ -695,7 +631,7 @@ IF(myn == 0) THEN
 
 
   IF (it == 0) THEN
-    OPEN(589,STATUS='unknown',FILE='pescmask.0.'//outnam)
+    OPEN(589,STATUS='unknown',FILE='pescmask.0.'//outnam)    ! Why do it again ?? 
     CALL printfield(589,rhoabso,'x')
     CLOSE(589)
   END IF
@@ -711,7 +647,6 @@ END SUBROUTINE escmask
 SUBROUTINE angabso
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -797,7 +732,7 @@ SUBROUTINE nescape(it,rho)
 !     Compute and print total number of escaped electrons
 
 USE params
-!USE kinetic
+USE util, ONLY:safeopen
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -830,7 +765,6 @@ END SUBROUTINE nescape
 SUBROUTINE evalmp(iunit,q0)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 

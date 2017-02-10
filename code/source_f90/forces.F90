@@ -25,7 +25,6 @@
 SUBROUTINE getforces(rho,psi,iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     calculates forces on all particles except DFT-electrons
 
@@ -51,7 +50,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: iflag
 
 
@@ -200,7 +199,6 @@ END SUBROUTINE getforces
 SUBROUTINE friction(ifl,iflc,ifle,iflk)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !     simple damping force for test equilibration
 
@@ -249,12 +247,11 @@ END SUBROUTINE friction
 SUBROUTINE getforcenana(rho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 
 
 !     Na(core)-Na(core) forces
@@ -289,8 +286,7 @@ DO ii=1,nion-1
     fy(jj) = fy(jj) + fory
     fz(jj) = fz(jj) + forz
     
-!            call getShortForce(4,4,ii,jj,rho,0,iflag,0)
-    CALL getshortforce(4,4,ii,jj,rho,iflag,0)
+    CALL getshortforce(4,4,ii,jj,rho,0)
     
     
   END DO
@@ -340,7 +336,6 @@ END SUBROUTINE getforcenana
 SUBROUTINE getforceelna(rho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -428,8 +423,7 @@ DO ii=1,nion
     
   END IF
   
-!            call getShortForce(4,5,ii,0,rho,0,iflag,0)
-  CALL getshortforce(4,5,ii,0,rho,iflag,0)
+  CALL getshortforce(4,5,ii,0,rho,0)
   
   
 END DO
@@ -438,7 +432,6 @@ RETURN
 END SUBROUTINE getforceelna
 !------------------------------------------------------------
 
-!#include"define.h"
 
 
 
@@ -449,7 +442,6 @@ SUBROUTINE calcf_goeloc(rho,it)
 !     ******************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
@@ -556,7 +548,6 @@ SUBROUTINE forceproject()
 ! forces of point charge projectile on ionic cores
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -598,7 +589,7 @@ SUBROUTINE laserf(rho)
 !       **********************
 
 USE params
-!USE kinetic
+USE util, ONLY:laserp
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 !ccccccccccc  add here to be sure !
@@ -725,7 +716,7 @@ SUBROUTINE calcf_goenonl(rho,it,psi)
 !     ********************************
 
 USE params
-!USE kinetic
+USE util, ONLY:realoverlap, realovsubgrid
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -735,7 +726,7 @@ REAL(DP) :: is(mpi_status_size)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN OUT)                  :: it
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
 COMPLEX(DP),ALLOCATABLE :: q1(:)
 REAL(DP),ALLOCATABLE :: rhoslp(:),rhoslm(:)
@@ -981,7 +972,6 @@ SUBROUTINE rhopsg(cxact,cyact,czact,rhopsp,is)
 !     **********************************************
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1080,7 +1070,6 @@ REAL(DP), INTENT(IN)             :: r
 ! K"ummel, Kronik, Perdew, PRL 93, 213002 (2004)
 
 
-!DOUBLE PRECISION ::
 REAL(DP), PARAMETER :: rc1=0.25D0
 REAL(DP), PARAMETER :: rc2=0.284D0
 REAL(DP), PARAMETER :: a=-1.9287D0*2D0

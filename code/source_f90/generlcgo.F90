@@ -77,14 +77,13 @@ END IF
 !nadd=0     !  ?? check the initialization
 IF(ndiff /= 0) THEN
   nadded = 0
-  DO ncy=1,ncycle
+  cycleloop:DO ncy=1,ncycle
     DO ion=nion,1,-1
       nmxst(ion) = nmxst(ion)-nadd
       nadded = nadded + nadd
-      IF(nadded == ndiff) GO TO 19
+      IF(nadded == ndiff) exit cycleloop
     END DO
-  END DO
-  19     CONTINUE
+  END DO cycleloop
 END IF
 WRITE(6,'(a,5i5)')  &
     ' ndiff,nmaxval,nstate,ncycle,nadd=',ndiff,nmaxval,nstate, ncycle,nadd
@@ -100,12 +99,12 @@ WRITE(6,*) '  ipolcheck:',(ipol(ion),ion=1,nion)
 
 numstate = 0
 numlocstate = 0 ! in case of parallelism
-DO ion=1,nion
+ionloop:DO ion=1,nion
   DO natlevel=1,nmxst(ion)
     IF(numstate == ksttot) then
            write(6,*) 'numstate = ksttot, increase kstate or nproc'
            write(7,*) 'numstate = ksttot, increase kstate or nproc'
-           GO TO 99
+           EXIT ionloop
     endif
     numstate = 1 + numstate
     ncount(nhome(numstate))=ncount(nhome(numstate))+1
@@ -131,7 +130,7 @@ DO ion=1,nion
        IF(numlocstate > nstate) then
            write(6,*) 'numlocstate > nstate, increase kstate or nproc'
            write(7,*) 'numlocstate > nstate, increase kstate or nproc'
-           goto 99
+           EXIT ionloop
        endif
 !                                                 select nodes
     nstx = nnodes(initord(1,ion),nactst(ion))
@@ -159,8 +158,7 @@ DO ion=1,nion
          SUM(psiom(:,numlocstate)**2)*dvol
     endif
   END DO
-END DO
-99   CONTINUE
+END DO ionloop
 
 DEALLOCATE(nactst)
 

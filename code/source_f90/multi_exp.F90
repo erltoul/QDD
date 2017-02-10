@@ -40,6 +40,7 @@ SUBROUTINE CrankNicolson_exp(q0,aloc,rho,it,qwork)
 !      qwork       = work space for s.p. wavefunctions
 
 USE params
+USE util
 #if(twostsic)
 USE twost, ONLY:tnearest
 #endif
@@ -157,7 +158,7 @@ do while (rnorm_err.gt.threshold1)
       ro= rnorm_err
       rnorm_err= 0.0
    do nb=1,1
-      rnorm_err=rnorm_err+wfnorm(errcn(1,nb))
+      rnorm_err=rnorm_err+wfnorm(errcn(:,nb))
    enddo
    write(6,*) 'err in crank step  1',rnorm_err,level,relax
    if(ro.lt.rnorm_err) then
@@ -221,7 +222,7 @@ do while (rnorm_err.gt.threshold)
       ro=rnorm_err
       rnorm_err= 0.0
    do nb=1,1
-      rnorm_err=rnorm_err+wfnorm(errcn(1,nb))
+      rnorm_err=rnorm_err+wfnorm(errcn(:,nb))
    enddo
    write(6,*) 'err in crank step 2',rnorm_err,level,relax
    if(ro.lt.rnorm_err) then

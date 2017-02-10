@@ -29,7 +29,7 @@ SUBROUTINE calclocal(rho,aloc)
 
 
 USE params
-!USE kinetic
+USE util, ONLY:laserp,projectp
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -38,7 +38,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,homoe,Vproj
+REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,Vproj
 
 IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
 
@@ -80,7 +80,7 @@ END IF
 
 
 #if(gridfft)
-IF (nion2 == 0) CALL falr(rhon,chpcoul,nx2,ny2,nz2,kdfull2)
+IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
 IF (nion2 == 0) CALL solv_fft(rhon,chpcoul,dx,dy,dz)
@@ -202,8 +202,9 @@ REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-#endif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
+#endif
+
 
 !     the Gunnarsson Lundqvist parameters
 
@@ -360,7 +361,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-REAL(DP), SAVE                               :: et
+!~ REAL(DP), SAVE                               :: et
 INTEGER :: mysize
 
 #if(parayes)

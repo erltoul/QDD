@@ -127,7 +127,7 @@ REAL(DP) :: eta=5D-15,theta=1D88
 !DATA  eta,theta/.1D-14,1.d88/
 !sing      data  eta,theta/5.0e-7,1.0e33/
 
-! ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 !     check size
 
@@ -151,19 +151,17 @@ rpow1 = rpower/2D0
 rand1 = rpower - 3D0
 
 n = nx
-nroot = IABS(nrootx)
-IF (nroot == 0) GO TO 1001
+nroot = ABS(nrootx)
+IF (nroot == 0) RETURN
+!     for n<1 or n=1 : no solution or trivial solution 
 IF (n-1 < 0) THEN
-  GO TO  1001
+  RETURN
 ELSE IF (n-1 == 0) THEN
-  GO TO  1003
-ELSE
-  GO TO   105
+  root(1) = a(1)
+  IF (nrootx > 0) vect(1,1) = 1D0
+  RETURN  
 END IF
-1003  root(1) = a(1)
-IF (nrootx > 0) vect(1,1) = 1D0
-GO TO 1001
-105   CONTINUE
+
 !     nsize    number of elements in the packed array
 nsize = (n*(n+1))/2
 nm1 = n-1
@@ -175,27 +173,30 @@ DO  i=1,nsize
   factor = MAX(factor,ABS(a(i)))
 END DO
 !     if (factor.ne.0D0) go to 72
-IF(ABS(factor) > 0D0) GO TO 72
+IF(ABS(factor) <= 0D0) THEN
 !     null matrix.  fix up roots and vectors, then exit.
-DO  i=1,nroot
-  IF (nrootx < 0) GO TO 78
-  DO  j=1,n
-    vect(j,i) = 0D0
+  DO  i=1,nroot
+    IF (nrootx >= 0) THEN
+      DO  j=1,n
+        vect(j,i) = 0D0
+      END DO
+      vect(i,i) = 1D0
+    END IF
+    root(i) = 0D0
   END DO
-  vect(i,i) = 1D0
-  78    root(i) = 0D0
-END DO
-GO TO 1001
+  RETURN
+END IF
 
-72    anorm = 0D0
+anorm = 0D0
 j = 1
 k = 1
-86    DO  i=1,nsize
-  IF (i /= j) GO TO 81
-  anorm = anorm + (a(i)/factor)**2/2D0
-  k = k+1
-  j = j+k
-  CYCLE
+DO  i=1,nsize
+  IF (i == j) THEN
+    anorm = anorm + (a(i)/factor)**2/2D0
+    k = k+1
+    j = j+k
+    CYCLE
+  END IF
   81    anorm = anorm + (a(i)/factor)**2
 END DO
 83    anorm = SQRT(anorm*2D0)*factor
@@ -208,86 +209,88 @@ alimit = 1D0
 !      tridiagonalization of symmetric matrix
 id = 0
 ia = 1
-IF (nm2 == 0) GO TO 201
-DO   j=1,nm2
+IF (nm2 /= 0) THEN
+  DO   j=1,nm2
 !      j       counts row  of a-matrix to be diagonalized
 !      ia      start of non-codiagonal elements in the row
 !      id      index of codiagonal element on row being codiagonalized.
-  ia = ia+j+2
-  id = id + j + 1
-  jp2 = j+2
+    ia = ia+j+2
+    id = id + j + 1
+    jp2 = j+2
 !      sum squares of non-codiagonal elements in row j
-  ii = ia
-  acc = 0D0
-  DO  i=jp2,n
-    acc = acc + a(ii)**2
-    ii = ii + i
-  END DO
-  temp = a(id)
-  IF (acc > small) GO TO 110
+    ii = ia
+    acc = 0D0
+    DO  i=jp2,n
+      acc = acc + a(ii)**2
+      ii = ii + i
+    END DO
+    temp = a(id)
+    IF (acc <= small) THEN
 !      no transformation necessary if all the non-codiagonal
 !      elements are tiny.
-  120    b(j,1) = temp
-  a(id) = 0D0
-  CYCLE
+      b(j,1) = temp
+      a(id) = 0D0
+      CYCLE
+    END IF
 !      now complete the sum of off-diagonal squares
-  110    acc = SQRT(acc + temp**2)
+    acc = SQRT(acc + temp**2)
 !      new codiagonal element
-  b(j,1) = -SIGN(acc,temp)
+    b(j,1) = -SIGN(acc,temp)
 !      first non-zero element of this w-vector
-  b(j+1,2) = SQRT((1D0 + ABS(temp)/acc)/2D0)
+    b(j+1,2) = SQRT((1D0 + ABS(temp)/acc)/2D0)
 !      form rest of the w-vector elements
-  temp = SIGN(0.5D0/(b(j+1,2)*acc),temp)
-  ii = ia
-  DO  i=jp2,n
-    b(i,2) = a(ii)*temp
-    ii = ii + i
-  END DO
+    temp = SIGN(0.5D0/(b(j+1,2)*acc),temp)
+    ii = ia
+    DO  i=jp2,n
+      b(i,2) = a(ii)*temp
+      ii = ii + i
+    END DO
 !      form p-vector and scalar.  p-vector = a-matrix*w-vector.
 !      scalar = w-vector*p-vector.
-  ak = 0D00
+    ak = 0D00
 !      ic      location of next diagonal element
-  ic = id + 1
-  j1 = j + 1
-  DO   i=j1,n
-    jj = ic
-    temp = 0D0
-    DO   ii=j1,n
+    ic = id + 1
+    j1 = j + 1
+    DO   i=j1,n
+      jj = ic
+      temp = 0D0
+      DO   ii=j1,n
 !      i       runs over the non-zero p-elements
 !      ii      runs over elements of w-vector
-      temp = temp + b(ii,2)*a(jj)
+        temp = temp + b(ii,2)*a(jj)
 !      change incrementing mode at the diagonal elements.
-      IF (ii < i) GO TO 210
-      140    jj = jj + ii
-      CYCLE
-      210    jj = jj + 1
-    END DO
+        IF (ii >= i) THEN
+          jj = jj + ii
+          CYCLE
+        END IF
+        jj = jj + 1
+      END DO
 !      build up the k-scalar (ak)
-    ak = ak + temp*b(i,2)
-    b(i,1) = temp
+      ak = ak + temp*b(i,2)
+      b(i,1) = temp
 !      move ic to top of next a-matrix 'row'
-    ic = ic + i
-  END DO
+      ic = ic + i
+    END DO
 !      form the q-ve+tor
-  DO   i=j1,n
-    b(i,1) = b(i,1) - ak*b(i,2)
-  END DO
+    DO   i=j1,n
+      b(i,1) = b(i,1) - ak*b(i,2)
+    END DO
 !      transform the rest of the a-matrix
 !      jj      start-1 of the rest of the a-matrix
-  jj = id
+    jj = id
 !      move w-vector into the old a-matrix locations to save space
 !      i       runs over the significant elements of the w-vector
-  DO   i=j1,n
-    a(jj) = b(i,2)
-    DO   ii=j1,i
-      jj = jj + 1
-      a(jj) = a(jj) - 2D0*(b(i,1)*b(ii,2) + b(i,2)*b(ii,1))
+    DO   i=j1,n
+      a(jj) = b(i,2)
+      DO   ii=j1,i
+        jj = jj + 1
+        a(jj) = a(jj) - 2D0*(b(i,1)*b(ii,2) + b(i,2)*b(ii,1))
+      END DO
+      jj = jj + j
     END DO
-    jj = jj + j
   END DO
-END DO
+END IF
 !      move last codiagonal element out into its proper place
-201    CONTINUE
 b(nm1,1) = a(nsize-1)
 a(nsize-1) = 0D0
 b(n,1)=0D0
@@ -316,41 +319,41 @@ DO  i=1,nroot
   END DO
   root(i) = rootx
 !     get improved trial root
-  500   trial = (rootl + root(i))*0.5D0
+  DO
+    trial = (rootl + root(i))*0.5D0
 !     if (trial.eq.rootl.or.trial.eq.root(i)) go to 330
-  IF(.NOT.ABS(trial-rootl) > 0D0 .OR. .NOT.ABS(trial-root(i)) > 0D0) CYCLE
+    IF(.NOT.ABS(trial-rootl) > 0D0 .OR. .NOT.ABS(trial-root(i)) > 0D0) EXIT
 !     form Sturm sequence ratios, using Ortega's algorithm (modified).
 !     nomtch is the number of roots less than the trial value.
-  350   CONTINUE
-  nomtch = n
-  j = 1
-  360   f0 = b(j,2) - trial
-  370   CONTINUE
-  IF (ABS(f0) < theta1) GO TO 380
-  IF (f0 >= 0D0) nomtch = nomtch - 1
-  j = j + 1
-  IF (j > n) GO TO 390
+    nomtch = n
+    j = 1
+    jloop:DO WHILE(j <= n) 
+      f0 = b(j,2) - trial
+      DO WHILE(ABS(f0) >= theta1)
+        IF (f0 >= 0D0) nomtch = nomtch - 1
+        j = j + 1
+        IF (j > n) EXIT jloop
 !     since matrix is normed to unity, magnitude of b(j,3) is less than
 !     one, so overflow is not possible at the division step, since
 !     f0 is greater than theta1.
 !     f0 = b(j,2) - trial - b(j-1,3)/f0
-  bb = b(j-1,3)/f0
+        bb = b(j-1,3)/f0
 !     if (f0.eq.0) bb=0D0
-  IF(.NOT.ABS(f0) > 0D0) bb=0D0
-  f0=b(j,2)-trial-bb
-  GO TO 370
-  380   j = j + 2
-  nomtch = nomtch - 1
-  IF (j <= n) GO TO 360
-  390   CONTINUE
+        IF(.NOT.ABS(f0) > 0D0) bb=0D0
+        f0=b(j,2)-trial-bb
+      END DO
+      j = j + 2
+      nomtch = nomtch - 1
+    END DO jloop
 !     fix new bounds on roots
-  IF (nomtch >= i) GO TO 540
-  rootl = trial
-  GO TO 500
-  540   root(i) = trial
-  nom = MIN0(nroot,nomtch)
-  root(nom) = trial
-  GO TO 500
+    IF (nomtch < i) THEN
+      rootl = trial
+    ELSE
+      root(i) = trial
+      nom = MIN0(nroot,nomtch)
+      root(nom) = trial
+    ENDIF
+  END DO
 END DO
 !     reverse the order of the eigenvalues, since custom dictates
 !     'largest first'.  this section may be removed if desired without
@@ -364,9 +367,12 @@ END DO
 
 !     trivec section.
 !     eigenvectors of codiagonal form
-807   CONTINUE
+
 !     quit now if no vectors were requested.
-IF (nrootx < 0) GO TO 1002
+IF (nrootx < 0) THEN
+  root(1:nroot)=anorm*root(1:nroot)
+  RETURN
+END IF
 !     initialize vector array.
 DO  i=1,n
   DO  j=1,nroot
@@ -376,128 +382,126 @@ END DO
 DO  i=1,nroot
   aroot = root(i)
 !     orthogonalize if roots are close.
-  IF (i == 1) GO TO 710
 !     the absolute value in the next test is to assure that the trivec
 !     section is independent of the order of the eigenvalues.
-  715   IF (ABS(root(i-1)-aroot) < toler) GO TO 720
-  710   ia = -1
-  720   ia = ia + 1
+  IF((i /= 1) .AND. (ABS(root(i-1)-aroot) < toler)) THEN
+    ia = ia+1
+  ELSE
+    ia=0
+  END IF
+ 
   elim1 = a(1) - aroot
   elim2 = b(1,1)
   jump = 1
   DO   j=1,nm1
     jump = jump+j+1
 !     get the correct pivot equation for this step.
-    IF (ABS(elim1) <= ABS(b(j,1))) GO TO 760
+    IF (ABS(elim1) > ABS(b(j,1))) THEN
 !     first (elim1) equation is the pivot this time.  case 1.
-    b(j,2) = elim1
-    b(j,3) = elim2
-    b(j,4) = 0D0
-    temp = b(j,1)/elim1
-    elim1 = a(jump) - aroot - temp*elim2
-    elim2 = b(j+1,1)
-    GO TO 755
+      b(j,2) = elim1
+      b(j,3) = elim2
+      b(j,4) = 0D0
+      temp = b(j,1)/elim1
+      elim1 = a(jump) - aroot - temp*elim2
+      elim2 = b(j+1,1)
+    ELSE
 !     second equation is the pivot this time.  case 2.
-    760   b(j,2) = b(j,1)
-    b(j,3) = a(jump) - aroot
-    b(j,4) = b(j+1,1)
-    temp = 1D0
-    IF (ABS(b(j,1)) > theta1) temp = elim1/b(j,1)
-    elim1 = elim2 - temp*b(j,3)
-    elim2 = -temp*b(j+1,1)
+      b(j,2) = b(j,1)
+      b(j,3) = a(jump) - aroot
+      b(j,4) = b(j+1,1)
+      temp = 1D0
+      IF (ABS(b(j,1)) > theta1) temp = elim1/b(j,1)
+      elim1 = elim2 - temp*b(j,3)
+      elim2 = -temp*b(j+1,1)
+    END IF
 !     save factor for the second iteration.
-    755   b(j,5) = temp
+    b(j,5) = temp
   END DO
   b(n,2) = elim1
   b(n,3) = 0D0
   b(n,4) = 0D0
   b(nm1,4) = 0D0
   iter = 1
-  IF (ia /= 0) GO TO 801
-!     back substitute to get this vector.
-  790   l = n + 1
-  DO  j=1,n
-    l = l - 1
-    786   CONTINUE
-    IF (l-nm1 < 0) THEN
-      GO TO   787
-    ELSE IF (l-nm1 == 0) THEN
-      GO TO   788
-    END IF
-    789   elim1=vect(l,i)
-    GO TO 785
-    788   elim1=vect(l,i)-vect(l+1,i)*b(l,3)
-    GO TO 785
-    787   elim1=vect(l,i)-vect(l+1,i)*b(l,3)-vect(l+2,i)*b(l,4)
-    785   CONTINUE
-!     if overflow is conceivable, scale the vector down.
-!     this approach is used to avoid machine-dependent and system-
-!     dependent calls to overflow routines.
-    IF (ABS(elim1) > delbig) GO TO 782
-    temp = b(l,2)
-    IF (ABS(b(l,2)) < delta) temp = delta
-    vect(l,i) = elim1/temp
-    CYCLE
-!     vector is too big.  scale it down.
-    782  DO  k=1,n
-      vect(k,i) = vect(k,i)/delbig
-    END DO
-    GO TO 786
-  END DO
-  SELECT CASE ( iter )
-    CASE (    1)
-      GO TO 820
-    CASE (    2)
-      GO TO 800
-  END SELECT
-!     second iteration.  (both iterations for repeated-root vectors).
-  820   iter = iter + 1
-  890   elim1 = vect(1,i)
-  DO  j=1,nm1
-!     if (b(j,2).eq.b(j,1)) go to 840
-    IF(.NOT.ABS(b(j,2)-b(j,1)) > 0D0) GO TO 840
-!     case one.
-    850   vect(j,i) = elim1
-    elim1 = vect(j+1,i) - elim1*b(j,5)
-    CYCLE
-!     case two.
-    840   vect(j,i) = vect(j+1,i)
-    elim1 = elim1 - vect(j+1,i)*temp
-  END DO
-  vect(n,i) = elim1
-  GO TO 790
+  IF (ia /= 0) THEN
 !     produce a random vector
-  801   CONTINUE
-  DO  j=1,n
+    DO  j=1,n
 !     generate pseudorandom numbers with uniform distribution in (-1,1).
 !     this random number scheme is of the form...
 !     rand1 = amod((2**12+3)*rand1,2**23)
 !     it has a period of 2**21 numbers.
-    rand1 = MOD(4099D0*rand1,rpower)
-    vect(j,i) = rand1/rpow1 - 1D0
-  END DO
-  GO TO 790
+      rand1 = MOD(4099D0*rand1,rpower)
+      vect(j,i) = rand1/rpow1 - 1D0
+    END DO
+  END IF
+!     back substitute to get this vector.
+  eternal:DO
+    l = n + 1
+    DO  j=1,n
+      l = l - 1
+      infinite:DO
+        IF (l < nm1) THEN
+          elim1=vect(l,i)-vect(l+1,i)*b(l,3)-vect(l+2,i)*b(l,4)
+        ELSE IF (l == nm1) THEN
+          elim1=vect(l,i)-vect(l+1,i)*b(l,3)
+        ELSE
+          elim1=vect(l,i)
+        END IF
+  !     if overflow is conceivable, scale the vector down.
+  !     this approach is used to avoid machine-dependent and system-
+  !     dependent calls to overflow routines.
+        IF (ABS(elim1) > delbig) THEN
+  !     vector is too big.  scale it down.
+          DO  k=1,n
+            vect(k,i) = vect(k,i)/delbig
+          END DO
+        ELSE
+          temp = b(l,2)
+          IF (ABS(b(l,2)) < delta) temp = delta
+          vect(l,i) = elim1/temp
+          EXIT infinite
+        END IF
+      END DO infinite
+    END DO
+    IF(iter==2) EXIT eternal
+  !     second iteration.  (both iterations for repeated-root vectors).
+    iter = iter + 1
+    elim1 = vect(1,i)
+    DO  j=1,nm1
+  !     if (b(j,2).eq.b(j,1)) go to 840
+      IF(ABS(b(j,2)-b(j,1)) > 0D0) THEN
+  !     case one.
+        vect(j,i) = elim1
+        elim1 = vect(j+1,i) - elim1*b(j,5)
+      ELSE
+  !     case two.
+        vect(j,i) = vect(j+1,i)
+        elim1 = elim1 - vect(j+1,i)*temp
+      ENDIF
+    END DO
+    vect(n,i) = elim1
+  END DO eternal
   
 !     orthogonalize this repeated-root vector to others with this root.
-  800   IF (ia == 0) GO TO 885
-  DO  j1=1,ia
-    k = i - j1
-    temp = 0D0
-    DO  j=1,n
-      temp = temp + vect(j,i)*vect(j,k)
+  IF (ia /= 0)THEN 
+    DO  j1=1,ia
+      k = i - j1
+      temp = 0D0
+      DO  j=1,n
+        temp = temp + vect(j,i)*vect(j,k)
+      END DO
+      DO  j=1,n
+        vect(j,i) = vect(j,i) - temp*vect(j,k)
+      END DO
     END DO
-    DO  j=1,n
-      vect(j,i) = vect(j,i) - temp*vect(j,k)
-    END DO
-  END DO
-  885   SELECT CASE ( iter )
-    CASE (    1)
-      GO TO 890
-    CASE (    2)
-      GO TO 900
-  END SELECT
+  END IF
+!~   SELECT CASE ( iter )       ! What is the point of this ? iter can only be 2 at this point. F.L.
+!~     CASE (    1)
+!~       GO TO 890
+!~     CASE (    2)
+!~       GO TO 900
+!~   END SELECT
 !     normalize the vector
-  900   elim1 = 0D0
+  elim1 = 0D0
   DO  j=1,n
     elim1 = MAX(ABS(vect(j,i)),elim1)
   END DO
@@ -516,7 +520,11 @@ END DO
 !      simvec section.
 !      rotate codiagonal vectors into vectors of original array
 !      loop over all the transformation vectors
-IF (nm2 == 0) GO TO 1002
+IF (nm2 == 0) THEN 
+  root = anorm*root
+  RETURN
+END IF
+
 jump = nsize - (n+1)
 im = nm1
 DO   i=1,nm2
@@ -541,10 +549,7 @@ DO   i=1,nm2
   jump = jump - im
   im = im - 1
 END DO
-1002   CONTINUE
 !      restore roots to their proper size.
-DO  i=1,nroot
-  root(i) = root(i)*anorm
-END DO
-1001   RETURN
+root = anorm*root
+RETURN
 END SUBROUTINE givens

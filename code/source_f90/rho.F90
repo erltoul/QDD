@@ -29,14 +29,13 @@ SUBROUTINE calcrho(rho,q0)
 !     density 'rho' for complex or real wavefunctions 'q0'
 
 USE params
-!USE kinetic
+USE util, ONLY:emoms, projmoms
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
-!DIMENSION rh(2*kdfull2)
 #endif
 
 #ifdef REALSWITCH
@@ -49,7 +48,6 @@ REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
 REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
 REAL(DP) :: rhodownarrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhodownarray(nx2,ny2,nz2)
 #if(parayes)
-!EQUIVALENCE(rh(1),w1(1))
 LOGICAL,PARAMETER :: ttestpara=.FALSE.
 #endif
 
@@ -143,7 +141,7 @@ IF(eproj/=0) CALL projmoms(rho,q0) ! moments for the projectile and the target, 
 
 #if(gridfft)
 IF(istream == 1)  THEN
-  CALL stream(rho,q0)
+  CALL stream(rho)
 END IF
 #endif
 
@@ -206,14 +204,13 @@ SUBROUTINE spmomsr(wfr,iunit)
 SUBROUTINE spmoms(wf,iunit)
 #endif
 
-!     spatial moments of single-particle densities from real  wf's:
+!     spatial moments of single-particle densities from wf's:
 !     input is
 !      wfr    = set of real single particle wavefunctions
 !      wf     = set of complex s.p. wavefunctions
 !      iunit  = unit number for output
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -228,7 +225,7 @@ COMPLEX(DP), INTENT(IN)                  :: wf(kdfull2,kstate)
 
 LOGICAL, PARAMETER :: ttest=.false.
 REAL(DP), ALLOCATABLE :: qeorb(:,:)
-INTEGER, INTENT(IN OUT)                  :: iunit
+INTEGER, INTENT(IN)                  :: iunit
 #if(parayes)
 INTEGER  :: iprisav(kstate,2)     ! printing communication
 #endif
@@ -408,7 +405,6 @@ DO ka=1,nz2
     DO ia=1,nx2
       i0=i0+1
       a(ia,ja,ka)=va(i0)
-  !            write(*,*) i0,ia,ja,ka
     END DO
   END DO
 END DO

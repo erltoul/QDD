@@ -26,13 +26,13 @@ SUBROUTINE zeroforce(aloc,rho)
 !     zero-force condition.
 
 USE params
+USE util, ONLY:wfovlp
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(gridfft)
 
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-!REAL(DP), INTENT(IN)                         :: akv(kdfull2)
+REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
 
 
@@ -81,7 +81,7 @@ DO is=1,numspin
     CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    denominator = rwfovlp(rho(1+ishift),potwork)
+    denominator = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
 !       x-derivative
 #if(netlib_fft|fftw_cpu)
@@ -112,7 +112,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    counter = rwfovlp(rho(1+ishift),potwork)
+    counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     xlambda = counter/denominator
     DO i=1,nxyz
       aloc(i+ishift) = aloc(i+ishift)-xlambda*potwork(i)
@@ -147,7 +147,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    counter = rwfovlp(rho(1+ishift),potwork)
+    counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     ylambda = counter/denominator
     DO i=1,nxyz
       aloc(i+ishift) = aloc(i+ishift)-ylambda*potwork(i)
@@ -184,7 +184,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    counter = rwfovlp(rho(1+ishift),potwork)
+    counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     zlambda = counter/denominator
     DO i=1,nxyz
       aloc(i+ishift) = aloc(i+ishift)-zlambda*potwork(i)
@@ -206,6 +206,7 @@ END SUBROUTINE zeroforce
 SUBROUTINE checkzeroforce(rho,aloc)
 !------------------------------------------------------------
 USE params
+USE util, ONLY:wfovlp
 USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
@@ -213,9 +214,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(gridfft)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-
-!REAL(DP) :: akv(kdfull2)
+REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 
 !       workspaces
 
@@ -268,7 +267,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    zforcex = rwfovlp(rho(1+ishift),potwork)
+    zforcex = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     
 !       y-derivative
@@ -302,7 +301,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    zforcey = rwfovlp(rho(1+ishift),potwork)
+    zforcey = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     
 !       z-derivative
@@ -336,7 +335,7 @@ DO is=1,numspin
     CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
     CALL rfftback(dervk,potwork,ffta,gpu_ffta)
 #endif
-    zforcez = rwfovlp(rho(1+ishift),potwork)
+    zforcez = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     
     

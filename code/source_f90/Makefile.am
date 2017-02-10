@@ -296,11 +296,11 @@ endif
 #~ endif
 
 # sicnew.o
-sicnew.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
+sicnew.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # sicnewc.o
-sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
+sicnewc.$(OBJEXT): sicnew.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # restart.o
@@ -317,7 +317,7 @@ restartc.$(OBJEXT): restart.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # init.o
-init.$(OBJEXT): init.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
+init.$(OBJEXT): init.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # generlcgo.o
@@ -325,32 +325,32 @@ generlcgo.$(OBJEXT): generlcgo.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # localize.o
-localize.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
+localize.$(OBJEXT): localize.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # localizer.o
-localizer.$(OBJEXT): localize.F90 define.h $(OBJKINPARA)
+localizer.$(OBJEXT): localize.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # localize_rad.o
-localize_rad.$(OBJEXT): localize_rad.F90 define.h orthmat.$(OBJEXT) $(OBJKINPARA)
+localize_rad.$(OBJEXT): localize_rad.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # static.o
 if USE_CUDA
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) 2stUT.$(OBJEXT) util.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA)
+static.$(OBJEXT): static.F90 define.h cuda_alloc.$(OBJEXT) util.$(OBJEXT)  pseudosoft.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 else
 if USE_TWOSTSIC
-static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h 2stUT.$(OBJEXT) util.$(OBJEXT) localize_rad.$(OBJEXT) pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
+static.$(OBJEXT): static.F90 define.h  pseudosoft.$(OBJEXT) util.$(OBJEXT) $(OBJKINPARA) $(OBJCOULSOLV)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 endif
@@ -361,27 +361,27 @@ orthmat.$(OBJEXT): orthmat.F90 define.h params.$(OBJEXT)
 
 # 2stUT.o
 if USE_TWOSTSIC
-2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT)  orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h localize_rad.$(OBJEXT) givens.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 else
-2stUT.$(OBJEXT): 2stUT.F90 define.h  orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUT.$(OBJEXT): 2stUT.F90 define.h util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 endif
 
 # 2stUTc.o 
-2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+2stUTc.$(OBJEXT): 2stUT.F90 define.h 2stUT.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DCOMPLEXSWITCH -c -o $@ $<
 
 # dynamic.o
 if USE_TWOSTSIC
-dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
+dynamic.$(OBJEXT): dynamic.F90 define.h  2stUTc.$(OBJEXT) 2stUT.$(OBJEXT) util.$(OBJEXT) orthmat.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
 dynamic.$(OBJEXT): dynamic.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 # lda.o
-lda.$(OBJEXT): lda.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
+lda.$(OBJEXT): lda.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # util.o
@@ -389,7 +389,7 @@ util.$(OBJEXT): util.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # abso_bc.o
-abso_bc.$(OBJEXT): abso_bc.F90 define.h params.$(OBJEXT)
+abso_bc.$(OBJEXT): abso_bc.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # pseudosoft.o
@@ -405,11 +405,11 @@ ionmd.$(OBJEXT): ionmd.F90 define.h $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # forces.o
-forces.$(OBJEXT): forces.F90 define.h params.$(OBJEXT)
+forces.$(OBJEXT): forces.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # carlo.o  #Beware, perhaps implicitly dependent to parallele.F90 ?
-carlo.$(OBJEXT): carlo.F90 define.h params.$(OBJEXT)
+carlo.$(OBJEXT): carlo.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # subgrids.o
@@ -417,11 +417,11 @@ subgrids.$(OBJEXT): subgrids.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # analyse.o
-analyse.$(OBJEXT): analyse.F90 define.h params.$(OBJEXT)
+analyse.$(OBJEXT): analyse.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # rho.o
-rho.$(OBJEXT): rho.F90 define.h $(OBJKINPARA)
+rho.$(OBJEXT): rho.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) $(IDRIS) -DREALSWITCH -c -o $@ $<
 
 # rhoc.o
@@ -441,7 +441,7 @@ schmid.$(OBJEXT): schmid.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # zeroforce.o
-zeroforce.$(OBJEXT): zeroforce.F90 define.h $(OBJKINPARA)
+zeroforce.$(OBJEXT): zeroforce.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # functions.o
@@ -457,7 +457,7 @@ givens.$(OBJEXT): givens.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # parallele.o
-parallele.$(OBJEXT): parallele.F90 define.h $(OBJKINPARA)
+parallele.$(OBJEXT): parallele.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS3) -c -o $@ $<
 
 # multi_exp.o
@@ -467,10 +467,10 @@ multi_exp.$(OBJEXT): multi_exp.F90 define.h 2stUTc.$(OBJEXT) params.$(OBJEXT)
 
 # expevol.o
 if USE_TWOSTSIC
-expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) $(OBJKINPARA)
+expevol.$(OBJEXT): expevol.F90 define.h 2stUTc.$(OBJEXT) util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 else
-expevol.$(OBJEXT): expevol.F90 define.h  $(OBJKINPARA)
+expevol.$(OBJEXT): expevol.F90 define.h  util.$(OBJEXT) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 
@@ -479,11 +479,11 @@ pot_substrate.$(OBJEXT): pot_substrate.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # forces_substrate.o
-forces_substrate.$(OBJEXT): forces_substrate.F90 define.h params.$(OBJEXT)
+forces_substrate.$(OBJEXT): forces_substrate.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # md_substrate.o
-md_substrate.$(OBJEXT): md_substrate.F90 define.h params.$(OBJEXT)
+md_substrate.$(OBJEXT): md_substrate.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # short.o
@@ -491,7 +491,7 @@ short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 # image.o
-image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) params.$(OBJEXT)
+image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 	
 # attachement.o

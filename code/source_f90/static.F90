@@ -25,7 +25,7 @@ SUBROUTINE statit(psir,rho,aloc)
 !     master routine for static iteration
 
 USE params
-! USE kinetic
+USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
 #if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY:falr
 #endif
@@ -42,18 +42,10 @@ REAL(DP) :: is(mpi_status_size)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
 
-!REAL(DP) ::  rhotmp(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
-CHARACTER (LEN=1) :: str1
-CHARACTER (LEN=2) :: str2
-CHARACTER (LEN=3) :: str3
-CHARACTER (LEN=1) :: inttostring1
-CHARACTER (LEN=2) :: inttostring2
-CHARACTER (LEN=2) :: inttostring3
 
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 
@@ -62,7 +54,7 @@ IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 ! test Coulomb
 CALL calcrhor(rho,psir)
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
-CALL falr(rho,chpcoul,nx2,ny2,nz2,kdfull2)
+CALL falr(rho,chpcoul,kdfull2)
 CALL prifld(chpcoul,'coulomb pot')
 
 !     Number of pre-iterations for static solution with IFSICP=6.
@@ -80,7 +72,7 @@ itersicp6=20
         CALL calcpseudo()                 ! initialize pseudo-potentials
         CALL static_mfield(rho,aloc,psir,qaux,0)
         CALL pricm(rho)
-        CALL infor(psir,rho,0)
+        CALL infor(rho,0)
     END IF
 
 
@@ -93,7 +85,7 @@ CALL static_mfield(rho,aloc,psir,qaux,0)
 CALL pricm(rho)
 IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
     rvectmp(1),rvectmp(2),rvectmp(3)
-CALL infor(psir,rho,0)
+CALL infor(rho,0)
 #if(twostsic)
 IF(ifsicp >= 7) CALL infor_sic(psir)
 #endif
@@ -177,7 +169,7 @@ DO iter1=1,ismax
   
   IF(MOD(iter1,istinf) == 0) THEN
 !test          call prifld(aloc,'KS-potential')
-    CALL infor(psir,rho,iter1)
+    CALL infor(rho,iter1)
 #if(twostsic)
     IF(ifsicp >= 7) CALL infor_sic(psir)
 #endif
@@ -187,21 +179,16 @@ DO iter1=1,ismax
       WRITE(7,'(a,f12.4,a,2(/5x,5f13.5))') 'binding energy=',binerg,  &
           ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
           qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
-
-IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
-!            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
-!            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
+      IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
     END IF
-    IF(sumvar2 < epsoro) GO TO 99
+    IF(sumvar2 < epsoro) EXIT
   END IF
   
   IF(isave>0 .AND. MOD(iter1,isave) == 0) CALL rsave(psir,iter1,outnam)
 
-CALL flush(6)
+  CALL flush(6)
 
 END DO                                      ! end iteration loop
-99   CONTINUE
-
 
 IF(myn == 0)THEN
   WRITE(7,*) ' static iteration terminated with ', iter1,' iterations'
@@ -242,7 +229,7 @@ END IF
 
 !     final protocol on file 'pstat.<name>''
 
-CALL pri_pstat(psir,iter1,rho)
+CALL pri_pstat(psir,rho)
 
 !     save real wavefunctions for further applications
 
@@ -262,18 +249,12 @@ END IF
 IF (iplotorbitals /= 0) THEN
   DO nbe=1,nstate
     nbeabs = nrel2abs(nbe)
-    IF(nbeabs < 10) THEN
-      str1=inttostring1(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str1//'.'//outnam)
-    ELSE IF (nbeabs < 100) THEN
-      str2=inttostring2(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str2//'.'//outnam)
-    ELSE IF(nbeabs < 1000) THEN
-      str3=inttostring3(nbeabs)
-      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//str3//'.'//outnam)
+    IF(nbeabs < 1000) THEN
+      OPEN(522,STATUS='unknown',FILE='pOrbitals.'//trim(adjustl(inttostring(nbeabs)))//'.'//outnam)
     ELSE
       STOP 'ERROR: Too many states for iplotorbitals'
     END IF
+    
     WRITE(522,'(a,i3)') '# state nr: ',nbeabs
     WRITE(522,'(a,f12.5)') '# occupation: ',occup(nbe)
     WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(nbe)
@@ -284,7 +265,6 @@ IF (iplotorbitals /= 0) THEN
   END DO
 END IF
 
-!       call calcrhor(rhor,psir)
 CALL calcrhor(rho,psir)
 
 
@@ -302,7 +282,7 @@ CALL rsave(psir,iter1,outnam)
 istat=1                        ! prepare for reading in time step
 IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
          write(*,*) ' CALL RSAVE  1. case'
-  CALL infor(psir,rho,-1)
+  CALL infor(rho,-1)
   
 #if(parayes)
   CALL mpi_finalize(icode)
@@ -405,7 +385,6 @@ SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
 !      aloc   = local mean-field potential
 
 USE params
-! USE kinetic
 #if(twostsic)
 USE twostr
 USE localize_rad
@@ -435,7 +414,7 @@ END IF
 
 CALL calclocal(rho,aloc)          ! LDA part of the potential
 
-!      call infor(psir,rho,0)
+!      call infor(rho,0)
 
 IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
@@ -473,8 +452,8 @@ SUBROUTINE sstep(q0,aloc,iter)
 !     This part for the serial version.
 
 USE params
+USE util, ONLY:wfovlp,project
 USE kinetic
-!USE localize_rad
 #if(twostsic)
 USE twostr
 USE localize_rad
@@ -482,17 +461,15 @@ USE localize_rad
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
-!REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iter
 
 
-REAL(DP) :: occold(kstate),ocwork(kstate)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
-!#if(hamdiag && parano)
+!#if(hamdiag && parano)     ! ?? what is hamdiag ? F.L.
 INTEGER :: ktridig  !=(kstate+kstate*kstate)/2
 REAL(DP),ALLOCATABLE :: hmatr(:,:)
 REAL(DP),ALLOCATABLE :: heigen(:)
@@ -505,11 +482,8 @@ LOGICAL, PARAMETER :: tprham=.false.
 #if(fftw_gpu)
 INTEGER(C_INT) :: size_data
 #endif
-COMPLEX(DP) :: csum
 
 
-
-!REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
 INTEGER :: nph
 LOGICAL :: tocc,tcpu
 #if(parano)
@@ -605,7 +579,7 @@ DO nbe=1,nstate
   
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1)
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1)
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1)
     DO  i=1,nxyz
       q1(i)=q1(i)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -622,17 +596,16 @@ DO nbe=1,nstate
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
-  espbef = rwfovlp(q0(1,nbe),q1)
+  espbef = wfovlp(q0(:,nbe),q1)
   IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
-  espaft = rwfovlp(q0(1,nbe),q1)
-!  WRITE(*,*) ' nbe,esps:',nbe,espbef,espaft,espaft-espbef
+  espaft = wfovlp(q0(:,nbe),q1)
 #endif
 !JM
   
   
 !       optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
   
   
 #if(gridfft)
@@ -640,12 +613,6 @@ ALLOCATE(psipr(kdfull2))
   
 !        action of the kinetic energy in momentum space
   CALL rftf(q0(1,nbe),psipr)
-!    ALLOCATE(w4(kdfull2))
-!    CALL rfftback(psipr,w4)
-!    WRITE(*,*) 'test RFTF: norms=',SUM(w4),SUM(q0(:,nbe))
-!    CALL prifld(q0(1,nbe),'wavefct. in ')
-!    CALL prifld(w4,'wavefct. out')
-!    DEALLOCATE(w4)
   
 !        FFT of V*psi
   CALL rftf(q1,q2)
@@ -668,8 +635,7 @@ ALLOCATE(psipr(kdfull2))
     CALL rfftback(psipr,w4)     !  ???
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4,w4))
-!    WRITE(*,*) ' nbe,var2=',nbe,evarsp2(nbe)
+    evarsp2(nbe) =  SQRT(wfovlp(w4,w4))
     DEALLOCATE(w4)
 #endif
     
@@ -687,7 +653,6 @@ ALLOCATE(psipr(kdfull2))
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
-!          write(6,*) ' norm,spe=',sum0,sume
 !          amoy(nbe)   = sume
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
 #if(parayes)
@@ -709,7 +674,7 @@ ALLOCATE(psipr(kdfull2))
       DO nbc=1,nbe
         IF(iactsp == ispin(nbc)) THEN
           ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1)
+          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
 #if(twostsic)  
@@ -721,7 +686,7 @@ ALLOCATE(psipr(kdfull2))
       END DO
 #if(twostsic)  
       DO nbc=nbe+1,nstate
-        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = rwfovlp(q0(1,nbc),q1)
+        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
       END DO
 #endif
     END IF
@@ -771,7 +736,7 @@ DO nbe=1,nstate
 
   IF(ipsptyp == 1) THEN
     CALL nonlocalr(q0(1,nbe),q1(1,nbe))
-    enonlo(nbe)= rwfovlp(q0(1,nbe),q1(1,nbe))
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1(:,nbe))
     DO  i=1,nxyz
       q1(i,nbe)=q1(i,nbe)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
@@ -795,7 +760,7 @@ DO nbe=1,nstate
   
 !       optionally compute Cexpectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = rwfovlp(q0(1,nbe),q1(1,nbe)) + amoy(nbe)
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1(:,nbe)) + amoy(nbe)
   
   
 #if(gridfft)
@@ -830,8 +795,8 @@ ENDDO !END LOOP OVER STATES
 
 
 DO nbe=1,nstate    
-    CALL project(w4(1,nbe),w4(1,nbe),ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(rwfovlp(w4(1,nbe),w4(1,nbe)))
+    CALL project(w4(:,nbe),w4(:,nbe),ispin(nbe),q0)
+    evarsp2(nbe) =  SQRT(wfovlp(w4(:,nbe),w4(:,nbe)))
 ENDDO
     DEALLOCATE(w4)
 #endif
@@ -875,7 +840,7 @@ ENDDO
       DO nbc=1,nbe
         IF(iactsp == ispin(nbc)) THEN
           ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = rwfovlp(q0(1,nbc),q1(1,nbe))
+          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1(:,nbe))
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
@@ -1085,38 +1050,29 @@ END SUBROUTINE sstep
 
 !-----infor--------------------------------------------------------
 
-SUBROUTINE infor(psi,rho,i)
+SUBROUTINE infor(rho,i)
 
 !     Computes observables (energies, radii, ...)
 !     and prints to standard output.
 
 USE params
+USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
 #if(twostsic)
 USE localize_rad
 #endif
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(INOUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: i
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
-
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psipr(kdfull2)
-!COMPLEX(DP) :: psi2(kdfull2)
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
-!EQUIVALENCE (psi2(1),w1(1))
-!EQUIVALENCE (psipr(1),w3(1))
-REAL(DP) :: en(kstate)
 
-ALLOCATE(psipr(kdfull2))
-ALLOCATE(psi2(kdfull2))
+REAL(DP) :: en(kstate)
 
 
 !   compute h*psi
@@ -1280,8 +1236,6 @@ IF(myn == 0) THEN
 END IF
 #endif
 
-DEALLOCATE(psipr)
-DEALLOCATE(psi2)
 
 IF(myn == 0) WRITE(6,'(a,f8.4,a,f7.2,a,3f9.3)')  &
     'In info: t=',tfs,' moments: monop.=',qe(1), ' dip.: ',qe(2),qe(3),qe(4)
@@ -1292,12 +1246,12 @@ IF (idebug == 1) THEN
   WRITE(6,*) 'Printing KS potential...'
   
   WRITE(6,*) 'Printing electron density...'
-  CALL  printfieldx(2000+i,rho,0,0)
-  CALL  printfieldz(2100+i,rho,0,0)
+  CALL  printfieldx(2000+i,rho,0D0,0D0)
+  CALL  printfieldz(2100+i,rho,0D0,0D0)
   
   WRITE(6,*) 'Printing ion potential...'
-  CALL  printfieldx(3000+i,potion,0,0)
-  CALL  printfieldz(3100+i,potion,0,0)
+  CALL  printfieldx(3000+i,potion,0D0,0D0)
+  CALL  printfieldz(3100+i,potion,0D0,0D0)
   
 END IF
 
@@ -1335,13 +1289,13 @@ END SUBROUTINE infor
 
 !-----pri_pstat----------------------------------------------------
 
-SUBROUTINE pri_pstat(psi,i,rho)
+SUBROUTINE pri_pstat(psi,rho)
 
 !     print short protocol on file 'pstat.*'
 
 
 USE params
-! USE kinetic
+USE util, ONLY:omega_mieplasmon
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -1351,16 +1305,8 @@ USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phii
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN OUT)              :: i
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psipr(kdfull2)
-!COMPLEX(DP) :: psi2(kdfull2)
-!EQUIVALENCE (psi2(1),w1(1))
-!EQUIVALENCE (psipr(1),w3(1))
-REAL(DP) :: en(kstate)
 LOGICAL,PARAMETER :: mumpri=.false.
 
 #if(parayes)
@@ -1369,10 +1315,6 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 omegam = omega_mieplasmon(rho)
-
-ALLOCATE(psipr(kdfull2))
-ALLOCATE(psi2(kdfull2))
-
 
 !      eshell=0.0
 !      esh1=0.0
@@ -1480,9 +1422,6 @@ IF(myn == 0) THEN
   CLOSE(42)
 END IF
 
-DEALLOCATE(psipr)
-DEALLOCATE(psi2)
-
 RETURN
 END SUBROUTINE pri_pstat
 
@@ -1560,7 +1499,7 @@ SUBROUTINE reocc()
 !     readjust occupations numbers to actual s.p. energies
 
 USE params
-!USE kinetic
+USE util, ONLY:pair
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
@@ -1610,6 +1549,7 @@ END SUBROUTINE reocc
 
 SUBROUTINE printone(rho,aloc)
 USE params
+USE util, ONLY:prifld
   REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
   REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
@@ -1645,6 +1585,7 @@ END SUBROUTINE printtwo
 
 SUBROUTINE printthree(rho,aloc)
 USE params
+USE util, ONLY:prifld
   REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
   REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
@@ -1671,6 +1612,7 @@ END SUBROUTINE print_densdiffc
 
 SUBROUTINE print_orb(psir)
 USE params
+USE util, ONLY: printfield
 
   REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
