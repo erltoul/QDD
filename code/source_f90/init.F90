@@ -476,7 +476,6 @@ SUBROUTINE ocoption(iu)
 !     output of compiled and of read-in options
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !----------------------------------------------------------------
@@ -709,7 +708,6 @@ SUBROUTINE init_output()
 !     write headers of output files
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 CHARACTER (LEN=3) :: num
 
@@ -920,7 +918,6 @@ SUBROUTINE iperio
 !      and parameters for the pseudo-potentials
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
@@ -1953,7 +1950,6 @@ SUBROUTINE init_jellium()
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------------
@@ -1999,7 +1995,6 @@ SUBROUTINE initwf(psir)
 
 USE params
 USE util, ONLY:shiftfield
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -2518,7 +2513,6 @@ SUBROUTINE jelbak(partn,alphel,betael,hexel,sqr,iturn)
 
 USE params
 USE util, ONLY:rotatevec3D
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     computes the jellium background such that the radius is
@@ -2802,7 +2796,6 @@ SUBROUTINE initho(psir)
 !     initializes harmonic oscillator wavefunctions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 #if(parayes)
@@ -2925,7 +2918,6 @@ SUBROUTINE clust(in,b,z,x,val,n1)
 !     where h(x) is the Hermite polynomial as explained in Rottmann, p.1
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -2996,7 +2988,6 @@ SUBROUTINE rotxyz(xin,yin,zin,xout,yout,zout,anglex,angley,anglez)
 !     (xout,yout,zout) the result.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !----------------------------------------------------------------------
@@ -3038,7 +3029,6 @@ SUBROUTINE spinsep(psir)
 !     different directions
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -3077,7 +3067,6 @@ SUBROUTINE fixion
 !     the input file must have already the positions of the bulk
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 INTEGER :: icy(nion),icz(nion)
@@ -3261,7 +3250,6 @@ SUBROUTINE checkoptions()
 !     to check consistency of compile-time options
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------------
@@ -3305,7 +3293,6 @@ SUBROUTINE init_homfield()
 !     adds it to the background field 'potFixedIon'.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------------
@@ -3500,7 +3487,6 @@ SUBROUTINE ithion
 !       we assign 0.5*kb*t per degree of freedom
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !---------------------------------------------------------------------
@@ -3568,7 +3554,6 @@ SUBROUTINE transf
 !     transform ions to the main axis of inertia
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP) :: trafo(3,3),cenmas(3),tiner(3,3),dminer(3)

@@ -184,12 +184,10 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 !           call 'nterm=1'.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: nbe
 INTEGER, INTENT(IN)                      :: norder
 COMPLEX(DP), INTENT(IN)                  :: dtact
@@ -198,7 +196,6 @@ COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
 
 COMPLEX(DP) :: dti,cfac
 INTEGER :: ilocbas
-!test      complex wfovlp,energexp
 
 !----------------------------------------------------------------------
 
@@ -228,7 +225,6 @@ DO nterm=1,norder
     qact(i) = qact(i) + cfac*qwork(i)
   END DO
 END DO
-!      write(*,*) 'leave EXP_EVOL'
 
 RETURN
 END SUBROUTINE exp_evol

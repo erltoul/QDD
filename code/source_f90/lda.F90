@@ -193,7 +193,6 @@ SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)

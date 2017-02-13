@@ -1431,7 +1431,6 @@ END SUBROUTINE propagate
 SUBROUTINE printpos
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 t = dte * itindex
@@ -1458,7 +1457,6 @@ END SUBROUTINE printpos
 SUBROUTINE printdipoles(ishift)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     print shell displacements
@@ -1590,7 +1588,6 @@ ekinkat = 0D0
 eshort = 0D0
 
 !      write(6,*) n,ne,nk
-!   kinetic energies
 
 t = dte * itindex
 

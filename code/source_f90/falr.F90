@@ -24,11 +24,8 @@ USE FFTW
 USE, intrinsic :: iso_c_binding
 #endif
 USE params, ONLY: DP,PI
-!USE kinetic, ONLY:
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-
-!PRIVATE
 PUBLIC
 INTEGER,PRIVATE :: kxmax,kymax,kzmax,ksmax
 INTEGER,PRIVATE :: kdfull,kdred,kddoub
@@ -70,10 +67,6 @@ REAL(DP),PRIVATE,ALLOCATABLE :: qlcows(:)
 REAL(DP),PRIVATE,ALLOCATABLE,TARGET :: rokall(:,:),pcoall(:,:)
 REAL(DP),PRIVATE :: ax2(0:4),bdiv(0:4),radpow
 INTEGER,PRIVATE :: lpow
-
-!fix! COMPLEX(DP),PRIVATE :: fftax(kdim),fftay(kdim),fftb(kdim,kdim)
-!COMMON /fftcom/fftax(kxbox),fftay(kybox),fftb(kzbox,kxbox)
-
 
 
 CONTAINS
@@ -150,11 +143,7 @@ END SUBROUTINE init_coul
 
 SUBROUTINE falr(rhoinp,chpfalr,kdf)
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
-
-
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdf)
 REAL(DP), INTENT(IN OUT)                     :: chpfalr(kdf)
@@ -180,9 +169,7 @@ END SUBROUTINE falr
 !-----rhofld------------------------------------------------------------
 
 SUBROUTINE rhofld(rhoinp,kdf)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 
 REAL(DP), INTENT(IN)                         :: rhoinp(kdf)
@@ -201,13 +188,11 @@ END SUBROUTINE rhofld
 
 SUBROUTINE result(chpfalr,kdf)
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: chpfalr(kdf)
 INTEGER, INTENT(IN)                  :: kdf
 INTEGER:: nmax
-!#include"falr.inc"
 
 !       inclusion of e2
 
@@ -222,9 +207,7 @@ END SUBROUTINE result
 
 SUBROUTINE coufou2
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)
 INTEGER ::  iprho(3)
 
@@ -242,7 +225,6 @@ ALLOCATE(rhokr(kdred),rhoki(kdred))
 CALL mulmws(rho,q00,q10,q11r,q11i,q20,q21r,q21i,  &
     q22r,q22i,q30,q31r,q31i,q32r,q32i,q33r,q33i,  &
     q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,tprint)
-!k      write(7,'(a,4g12.4)') ' q00,q10,q20,q30=',q00,q10,q20,q30
 
 ! effective moments 'rq...' in ordering as fields 'rkoall', 'pcoall'
 IF(ABS(qlcows(1)) > 0D0) THEN
@@ -429,7 +411,6 @@ END DO
 CALL mulmws(rho,x00,x10,x11r,x11i,x20,x21r,x21i,  &
     x22r,x22i,x30,x31r,x31i,x32r,x32i,x33r,x33i,  &
     x40,x41r,x41i,x42r,x42i,x43r,x43i,x44r,x44i, xr2,tprint)
-!k      write(6,'(a,4g12.4)') ' x00,x10,x20,x30=',x00,x10,x20,x30
 
 !     Fourier transformation of the density
 CALL fourf(rho,rhokr,rhoki,iprho)
@@ -523,12 +504,8 @@ END SUBROUTINE coufou2
 
 REAL(DP) FUNCTION fx1(x)
 
-!USE params, ONLY: DP,zero
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
-
-!REAL(DP) :: res
 REAL(DP),INTENT(IN)                         :: x
 REAL(DP),PARAMETER :: eighty=80.0D0
 
@@ -600,9 +577,7 @@ SUBROUTINE coucor
 !     25   44i            - - +
 
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 LOGICAL,PARAMETER :: mumpri=.false.
 LOGICAL,PARAMETER :: refmom=.true.
@@ -1046,11 +1021,7 @@ SUBROUTINE tstbnd(rhotst)
 
 !     tests boundary values of 'rhotst'
 
-
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
-
 
 
 REAL(DP), INTENT(IN)                         :: rhotst(kdfull)
@@ -1106,10 +1077,7 @@ SUBROUTINE mulmws(rhomul,q00,q10,q11r,q11i,q20,q21r,q21i,  &
 !     input : rhomul   (spatial array of density)
 !             mumpri   (print option)
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
-
 
 REAL(DP), INTENT(IN)                         :: rhomul(kdfull)
 REAL(DP), INTENT(OUT)                        :: q00
@@ -1290,9 +1258,7 @@ SUBROUTINE expand(rhoin,rhoout,ipx,ipy,ipz)
 !       ipx,y,z = parities in x,y,z
 
 
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 
 REAL(DP), INTENT(IN)                         :: rhoin(kdcorf)
@@ -1363,10 +1329,8 @@ END SUBROUTINE expand
 !----qgaus-------------------------------------------------------------
 
 !     numerical recipes routine qgaus (20 point)
-
-!SUBROUTINE qgaus(func,a,b,ss)
+! gauss quadrature
 SUBROUTINE qgaus_fx1(a,b,ss)
-!USE params, ONLY: DP
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !REAL(DP) :: func
@@ -1404,14 +1368,11 @@ ss = xr*ss
 
 RETURN
 END SUBROUTINE qgaus_fx1
-!END SUBROUTINE qgaus
 
 !-----fftinp------------------------------------------------------------
 
 SUBROUTINE fftinp
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 !     does some of the work normally done by input in jel3d.f
 !     for details on the grid also see readme.fcs, chapter 4.
@@ -1559,9 +1520,7 @@ END SUBROUTINE fftinp
 !-----fourf-------------------------------------------------------fourf
 
 SUBROUTINE fourf(psx,pskr,pski,ipar)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 
 REAL(DP), INTENT(IN OUT)                         :: psx(kdfull)
@@ -1686,9 +1645,7 @@ END SUBROUTINE fourf
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(psx,pskr,pski,ipar)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 
 REAL(DP), INTENT(OUT)                        :: psx(kdfull)
@@ -1739,9 +1696,7 @@ END SUBROUTINE fourb
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdfull)
 REAL(DP), INTENT(OUT)                        :: psxi(kdfull)
@@ -1855,9 +1810,7 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
@@ -1982,9 +1935,7 @@ END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
 SUBROUTINE fftz(psxr,psxi)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
@@ -2060,9 +2011,7 @@ END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
 SUBROUTINE ffbz(psxr,psxi)
-!USE params, ONLY: kxbox,kybox,kzbox,DP
 IMPLICIT REAL(DP) (A-H,O-Z)
-!#include"falr.inc"
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)

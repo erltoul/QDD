@@ -526,7 +526,6 @@ END SUBROUTINE check_isrtyp
 SUBROUTINE getrelvec(ind1,ind2,r)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 CALL getparas(ind1)

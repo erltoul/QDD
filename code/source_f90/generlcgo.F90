@@ -24,7 +24,6 @@ SUBROUTINE genermowf(psiom,nmxst)
 
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 #if(parayes)
 INCLUDE 'mpif.h'

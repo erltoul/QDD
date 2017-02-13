@@ -1432,16 +1432,11 @@ END SUBROUTINE pri_pstat
 SUBROUTINE transel(psir)
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: psir(kdfull2,kstate)
 REAL(DP) ::  te(kstate,kstate,3)
-
-!      nx=nx2/2
-!      ny=ny2/2
-!      nz=nz2/2
 
 OPEN(34,STATUS='unknown',FILE='mte-xyz')
 

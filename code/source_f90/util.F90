@@ -356,7 +356,6 @@ FUNCTION realovsubgrid(q1,q2,ion)
 !     the non-local PsP.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -470,7 +469,6 @@ END SUBROUTINE gettemperature
 ! SUBROUTINE checkformessages
 ! !------------------------------------------------------------
 ! USE params
-! !USE kinetic
 ! IMPLICIT REAL(DP) (A-H,O-Z)
 ! 
 ! ! check if message file exists
@@ -495,7 +493,6 @@ END SUBROUTINE gettemperature
 ! SUBROUTINE getmessages
 ! !------------------------------------------------------------
 ! USE params
-! !USE kinetic
 ! IMPLICIT REAL(DP) (A-H,O-Z)
 ! 
 ! CHARACTER (LEN=80) :: title
@@ -711,7 +708,6 @@ END SUBROUTINE pricm
 SUBROUTINE pricm_state(psir)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     calculates center of density for states in wavefunctions 'psir'
@@ -1509,7 +1505,6 @@ END SUBROUTINE emoms
 !-----------------------------------------------------------------------
 SUBROUTINE r_projmoms(rho,psi)
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
 #if(parayes)

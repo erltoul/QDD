@@ -434,7 +434,6 @@ SUBROUTINE localize(rho,psi)
 !  dummy
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -453,7 +452,6 @@ SUBROUTINE localizer(rho,psi)
 !  dummy
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)

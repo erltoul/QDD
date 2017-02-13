@@ -63,9 +63,6 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-!INTEGER :: getnearestgridpoint
-!INTEGER :: conv3to1
-
 REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 
 REAL(DP),ALLOCATABLE :: psir(:,:)
@@ -765,7 +762,6 @@ END PROGRAM tdlda_m
 !~ !      aloc   = local mean field
 
 !~ USE params
-!~ !USE kinetic
 !~ #if(netlib_fft|fftw_cpu)
 !~ USE coulsolv
 !~ #endif

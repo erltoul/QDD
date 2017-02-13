@@ -24,7 +24,6 @@
 SUBROUTINE getforceelgsm(iflag,rho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -135,7 +134,6 @@ END SUBROUTINE getforceelgsm
 SUBROUTINE getforcenagsm(iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -241,7 +239,6 @@ END SUBROUTINE getforcenagsm
 SUBROUTINE getforcegsmgsm(iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -871,7 +868,6 @@ END SUBROUTINE getforcegsmgsm
 SUBROUTINE getvdwforce(rho)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 ! THIS ONLY WORKS FOR THE ARGON CASE!!!
 
@@ -981,7 +977,6 @@ END SUBROUTINE getvdwforce
 SUBROUTINE getforcegsmgsm1(iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 
@@ -1081,7 +1076,6 @@ END SUBROUTINE getforcegsmgsm1
 SUBROUTINE getforces_clust2cores(rho,iflag)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !      GSM means
@@ -1170,7 +1164,6 @@ END SUBROUTINE getforces_clust2cores
 SUBROUTINE shiftpos(ityp,ico,ds)
 !------------------------------------------------------------
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 IF (ityp == 1) THEN
@@ -1245,7 +1238,6 @@ SUBROUTINE madelung
 !     calculates force on particle due to electrostatic
 !     external Madelung potential (or pseudoparticles)
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 EXTERNAL v_soft,gauss

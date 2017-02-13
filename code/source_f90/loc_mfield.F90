@@ -30,7 +30,6 @@ SUBROUTINE coul_mfield(rho)
 !      Coulomb field via 'chpcoul' in common
 
 USE params
-!USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -152,7 +151,6 @@ SUBROUTINE valence_step(rho,dt,tdyn)
 !     only called in dynamics.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -211,7 +209,6 @@ SUBROUTINE ldapsp_mfield(rho,aloc)
 !      aloc   = local mean field
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)

@@ -32,7 +32,6 @@ SUBROUTINE pseudosoft_substrate(pseudorho,potsave)
 !--------------------------------------------------------------
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      dimension rho(2*kdfull2)
 
@@ -117,7 +116,6 @@ END SUBROUTINE pseudosoft_substrate
 SUBROUTINE getvdwpot
 !************************************************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP) :: ri(3)
@@ -162,7 +160,6 @@ END SUBROUTINE getvdwpot
 SUBROUTINE addgsmpot(field,iswitch)
 !************************************************************
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !   add electrostatic potentials from GSM particles to potion(kdfull2)
 !     iswitch = 0 --> calculate potential of fixed ions
@@ -861,7 +858,6 @@ FUNCTION v_ar_el(r)
 !     fitted dipole response subtracted.
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 !      data e2/2.0/
 
@@ -926,7 +922,6 @@ END FUNCTION v_ar_el
 FUNCTION v_ar_el_dyn(r)
 
 USE params
-!USE kinetic
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     computes the reduced effective Ar-electron potential.
