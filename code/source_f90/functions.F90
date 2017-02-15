@@ -23,6 +23,7 @@
 REAL(DP) FUNCTION gauss(r,s)
 !------------------------------------------------------------
 USE params, ONLY:DP
+IMPLICIT NONE
 REAL(DP),INTENT(IN) :: r
 REAL(DP),INTENT(IN) :: s
 REAL(DP)::rs
@@ -54,9 +55,12 @@ REAL(DP) FUNCTION dgaussdr(r,s)
 !------------------------------------------------------------
 !     derivation of a Gaussian
 USE params, ONLY: DP
+IMPLICIT NONE
+
 REAL(DP),INTENT(IN)  :: r
 REAL(DP),INTENT(IN)  :: s
 REAL(DP)::ra
+
 ra = r/s
 dgaussdr = - 2D0*ra*EXP(-(ra*ra))/s
 RETURN
@@ -71,8 +75,15 @@ END FUNCTION dgaussdr
 SUBROUTINE initfunctions
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-!~ INTEGER::
+!~ IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+REAL(DP)  ::  add0,add1,add1t
+REAL(DP)  ::  coreheight, coreradius,corewidth
+REAL(DP)  ::  r
+REAL(DP)  ::  sigvdw, vdwh
+INTEGER :: ind
+
+REAL(DP),EXTERNAL ::  v_soft, dvsdr
 
 WRITE(6,*) 'INITIALISING TABULATED FUNCTIONS...'
 
@@ -100,7 +111,6 @@ END IF
 
 IF(isurf /= 0)THEN
   IF (ivdw == 0 .OR. ivdw == 1) THEN
-    
     DO ind=1,kfermi
       r=ind*dx/1733D0
       varelcore0(ind) = -e2*coreheight/(1D0+EXP(corewidth*(r-coreradius)))
@@ -108,10 +118,7 @@ IF(isurf /= 0)THEN
           e2*coreheight*corewidth*EXP(corewidth*(r-coreradius))/  &
           (1D0+EXP(corewidth*(r-coreradius)))**2
     END DO
-    
   ELSE IF (ivdw == 2) THEN
-    
-    
 !    WRITE(7,*) 'vArElCore0:'
     DO ind=1,kfermi
       r=ind*dx/1733D0
@@ -132,25 +139,18 @@ IF(isurf /= 0)THEN
       varelcore0(ind)=varelcore0(ind) + add0
       varelcore1(ind)=varelcore1(ind) + add1
 !      WRITE(7,'(2(1pg13.5))') r,varelcore0(ind)
-      
     END DO
-    
-    
   END IF
-  
 !                                determine cutoff for V_elArcore
   DO ind=1,kfermi
     r=ind*dx/1733D0
     IF(ABS(varelcore0(ind)) < varelcorelimit ) THEN
       nsg_arelcore = INT(r/MIN(dx,dy,dz))+1
-      
       EXIT
-      
     END IF
   END DO
   WRITE(6,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
   WRITE(7,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
-  
 END IF
 
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -220,8 +220,6 @@ END DO
 !tab     &      -V_soft(r,sigmak*SQ2)/r
 !tab
 !tab         enddo
-
-
 
 
 RETURN
@@ -332,11 +330,16 @@ END SUBROUTINE initfunctions
 
 
 !------------------------------------------------------------
-
-FUNCTION varelcore(r)
+!
+REAL(DP) FUNCTION varelcore(r)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN)::r
+REAL(DP)::  deltar
+REAL(DP):: rn,drn
+INTEGER:: ir
 !     linear interpolation of Fermi function
 
 !      deltar = dx/1733*kxbox
@@ -355,10 +358,15 @@ END FUNCTION varelcore
 
 !------------------------------------------------------------
 
-FUNCTION vfermi(r)
+REAL(DP) FUNCTION vfermi(r)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN)::r
+REAL(DP)::  deltar
+REAL(DP):: rn,drn
+INTEGER:: ir
 !     linear interpolation of general Fermi function
 
 deltar = dx/1733D0
