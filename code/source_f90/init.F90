@@ -664,19 +664,19 @@ END IF
 
 
 WRITE(iu,'(a,3i6)') ' kxbox,kybox,kzbox=',kxbox,kybox,kzbox
-if(nclust<=0) then
+IF(nclust<=0) then
 #if(raregas)
-        WRITE(iu,'(a,4i6)') ' charge,nion,nrare,nstate=',nclust,nion,nrare,nstate
+  WRITE(iu,'(a,4i6)') ' charge,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
-       WRITE(iu,'(a,3i6)') ' charge,nion,nstate=',nclust,nion,kstate
+  WRITE(iu,'(a,3i6)') ' charge,nion,nstate=',nclust,nion,kstate
 #endif
-else
+ELSE
 #if(raregas)
-        WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
+  WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
-        WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
-endif
+  WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
+ENDIF
 WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
     ispidi,iforce,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
