@@ -248,11 +248,9 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 #if(parano)
 myn=0
 #endif
-nn=myn+1
-n=nn-1
 ntranche=nxyz/knode
-mini = (n)*ntranche+1
-maxi =( nn)*ntranche
+mini = (myn)*ntranche+1
+maxi =(myn+1)*ntranche
 
 DO ii=mini,maxi
   rp     = rho(ii)+1D-20

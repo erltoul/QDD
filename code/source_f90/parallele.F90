@@ -57,10 +57,8 @@ knode = 1
 nprocs= 1
 #endif
 WRITE(*,*) ' before mpi_comm_rank'
-CALL  mpi_comm_rank(mpi_comm_world,n,icode)
-nn=n                           ! ?
-nb=n+1                           ! ?
-myn=n
+CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+nb=myn
 #else             
 knode = 1         
 nprocs= 1         
@@ -649,8 +647,7 @@ INTEGER :: is(mpi_status_size)
 
 !------------------------------------------------------------------
 
-n = myn
-IF(n == 0 .AND. knode /= 1)THEN
+IF(myn == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
     CALL mpi_send(cx(1),nion,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -679,7 +676,7 @@ IF(n == 0 .AND. knode /= 1)THEN
     END IF
   END DO
   
-ELSE IF(n /= 0 .AND. knode /= 1)THEN
+ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
   CALL mpi_recv(cx(1),nion,mpi_double_precision,0,  &
       mpi_any_tag,mpi_comm_world,is,ic)
@@ -733,8 +730,7 @@ INTEGER :: is(mpi_status_size)
 
 !------------------------------------------------------------------
 
-n = myn
-IF(n == 0 .AND. knode /= 1)THEN
+IF(myn == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
     CALL mpi_send(ch,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -761,7 +757,7 @@ IF(n == 0 .AND. knode /= 1)THEN
     CALL mpi_send(radiong,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
   END DO
   
-ELSE IF(n /= 0 .AND. knode /= 1)THEN
+ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
   CALL mpi_recv(ch,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
   CALL mpi_recv(amu,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
@@ -993,7 +989,7 @@ INTEGER :: is(mpi_status_size)
 
 
 CALL  mpi_comm_rank(mpi_comm_world,n,icode)
-nn=n+1
+
 l=LOG(kstate*1D0)/LOG(2D0)-1
 nax=ntr
 nin=mint

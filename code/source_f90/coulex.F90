@@ -78,10 +78,13 @@ CONTAINS
 
 SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
 
+REAL(DP),INTENT(IN)::dx0,dy0,dz0
+INTEGER,INTENT(IN)::nx0,ny0,nz0
 !-----------------------------------------------------------------------
 
 LOGICAL,PARAMETER :: tcoultest=.false.
 REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
+
 
 !     read grid parameters from file or simply initialize them
 !     note that the Coulomb solver doubles the grid internally
