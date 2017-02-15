@@ -127,21 +127,21 @@ IF(myn == 0) CALL ocoption(7)   ! output compiled options
 IF(myn == 0) CALL ocoption(8)   ! output compiled options
 
 CALL init_output()              ! headers for basic output files
+
+! Choice of ionic background :
 WRITE(*,*) ' nion2=',nion2
-IF(nion2 == 1) THEN
-  WRITE(*,*) ' ions switch'
-  CALL initions()              ! reading ionic positions and inits.
-ELSE IF(nion2 > 1) THEN
-  WRITE(*,*) ' external background potential '
-  CALL pseudo_external()      ! read pseudopotential from a file
-ELSE
-  CALL init_jellium()       ! initialize jellium background
-END IF
-if(dx.lt.0.0) then
-        write(6,*) 'negative dx was given - reread from file dx and restart'
-        write(7,*) 'negative dx was given - reread from file dx and restart'
-        stop 7
-endif
+SELECT CASE(nion2)
+  CASE(0)
+    CALL init_jellium()       ! initialize jellium background
+  CASE(1)
+    WRITE(*,*) ' ions switch'
+    CALL initions()              ! reading ionic positions and inits.
+  CASE(2)
+    WRITE(*,*) ' external background potential '
+    CALL pseudo_external()      ! read pseudopotential from a file
+  CASE DEFAULT
+    STOP  'nion2 has incorrect value. nion2 must be 0, 1 or 2' 
+END SELECT
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
 
@@ -208,10 +208,8 @@ IF(isitmax>0 .AND. ismax>0) THEN
    CALL flush(6)
    ALLOCATE(psi(kdfull2,kstate))
 #if(twostsic)
-   IF(nclust > 0 .AND. ifsicp >= 7) THEN
-      CALL init_fsic()
-   END IF
-   IF(ifsicp==8) CALL expdabvol_rotate_init
+   IF(ifsicp >= 7 .AND. nclust > 0 )  CALL init_fsic()
+   IF(ifsicp == 8) CALL expdabvol_rotate_init
 #endif
    CALL restart2(psi,outnam,.true.)     ! read static wf's
 #if(twostsic)

@@ -204,33 +204,33 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,global,END=99999)
     WRITE(*,*) ' GLOBAL read'
     IF(dx*dy*dz == 0D0) STOP ' DX & DY & DZ must be given explicitely'
-    If(dx<0D0) then
-            write(6,*) 'negative DX'
-            write(7,*) 'negative DX'
-           OPEN(119, FILE='dx', STATUS='UNKNOWN')
-           read (119,*) dx2
-           close(119)
-           OPEN(120, FILE='nx', STATUS='UNKNOWN')
-           read (120,*) nnx2
-           close(120)
-              If(dx2<0D0) then
-                   write(6,*) 'negative DX in file DX'
-                   write(6,*) 'DX,NX are computed then program restart'
-                   write(7,*) 'negative DX in file DX'
-                   write(7,*) 'DX,NX are computed then program restart'
-              else
-                      dx=dx2
-                      dy=dx2
-                      dz=dx2
-                      kxbox=nnx2
-                      kybox=nnx2
-                      kzbox=nnx2
-                   write(6,*) 'DXDYDZ changed to',DX,'from file DX'
-                   write(7,*) 'DXDYDZ changed to',DX,'from file DX'
-                   write(6,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
-                   write(7,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
-              endif
-    endif
+    IF(dx<0D0) THEN
+      WRITE(6,*) 'negative DX'
+      WRITE(7,*) 'negative DX'
+      OPEN(119, FILE='dx', STATUS='UNKNOWN')
+      READ (119,*) dx2
+      CLOSE(119)
+      OPEN(120, FILE='nx', STATUS='UNKNOWN')
+      READ(120,*) nnx2
+      CLOSE(120)
+      IF(dx2<0D0) THEN
+        WRITE(6,*) 'negative DX in file DX'
+        WRITE(6,*) 'DX,NX are computed then program restart'
+        WRITE(7,*) 'negative DX in file DX'
+        WRITE(7,*) 'DX,NX are computed then program restart'
+      ELSE
+        dx=dx2
+        dy=dx2
+        dz=dx2
+        kxbox=nnx2
+        kybox=nnx2
+        kzbox=nnx2
+        WRITE(6,*) 'DXDYDZ changed to',DX,'from file DX'
+        WRITE(7,*) 'DXDYDZ changed to',DX,'from file DX'
+        WRITE(6,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
+        WRITE(7,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
+      ENDIF
+    ENDIF
             
     IF(nproj_states>0)THEN
       ALLOCATE(proj_states(nproj_states))
@@ -245,9 +245,9 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
 
     IF(jdip<0) STOP "you must specify JDIP in namelist DYNAMIC"
     IF(jesc<0) STOP "you must specify JESC in namelist DYNAMIC"
-    if(nclust<=0) then ! total charge of the cluster is read
-           write(*,*) 'zero or negative nclust : global charge of',nclust
-    endif
+    IF(nclust<=0) THEN ! total charge of the cluster is read
+      WRITE(*,*) 'zero or negative nclust : global charge of',nclust
+    ENDIF
 
 
 #if(simpara)
@@ -3337,25 +3337,28 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 #if(paraworld||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-#endif
 
+#endif
+#if(paraworld)
+INTEGER::coeff,level
+#endif
 !------------------------------------------------------------------
 #if(paraworld)
+
 CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
 level=nrank
+
 IF(level>=1) THEN
-  DO ilevel=1,nprocs
-    dx=dx*2D0
-    dy=dy*2D0
-    dz=dz*2D0
-    kxbox=kxbox/2
-    kybox=kybox/2
-    kzbox=kzbox/2
-    WRITE(6,*) 'level',level,dx,kxbox
-    IF(ilevel==level) EXIT
-    !    write(outnam,*) level 
-  END DO
+  coeff = 2**level
+  dx=dx*coeff
+  dy=dy*coeff
+  dz=dz*coeff
+  kxbox=kxbox/coeff
+  kybox=kybox/coeff
+  kzbox=kzbox/coeff
+  WRITE(6,*) 'level',level,dx,kxbox
+!    write(outnam,*) level 
 
   kdfull28=(kxbox/2)*(kybox/2)*(kzbox/2)
 

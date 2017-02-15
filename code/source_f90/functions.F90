@@ -23,7 +23,7 @@
 FUNCTION gauss(r,s)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+REAL(DP)::r,s,gauss
 !     tabulated version of the Gauss function; it is
 !     correct up to second order
 !      double precision r,s
