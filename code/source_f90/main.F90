@@ -45,7 +45,7 @@ USE twost
 USE localize_rad
 USE orthmat
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     non symmetrical dynamic fields
 
@@ -67,8 +67,17 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
-REAL(DP) :: totalprob,totalovlp
-LOGICAL:: imaginary_time= .true.
+
+INTEGER :: i, ion, it
+REAL(DP):: dt
+REAL(DP):: totalprob,totalovlp
+REAL(DP):: time_absfin
+LOGICAL :: imaginary_time= .true.
+
+
+REAL(DP), EXTERNAL:: energ_ions   ! declared in ion_md
+REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
+
 !~ #if(raregas)
 !~ LOGICAL :: tmf
 !~ #endif

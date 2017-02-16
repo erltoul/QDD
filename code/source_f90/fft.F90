@@ -24,7 +24,7 @@ USE params, ONLY: DP,numthr,PI
 #if(fftw_gpu)
 USE cuda_alloc
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 SAVE
 !     arrays for kinetic energy and electronic propagation
@@ -103,13 +103,32 @@ USE FFTW
 #if(parayes)
 USE params, only : myn,numthr,nthr
 INCLUDE 'mpif.h'
+
 REAL(DP) :: is(mpi_status_size)
+
 #endif
+
+REAL(DP),INTENT(IN):: dx0, dy0, dz0
+INTEGER,INTENT(IN):: nx0, ny0, nz0
+REAL(DP),INTENT(IN):: dt1, h2m
+
+INTEGER:: nx, nx2, ny, ny2, nz, nz2
+INTEGER:: i1, i2, i3
+REAL(DP):: dkx, dky, dkz
+REAL(DP):: zkx, zky, zkz
+
 #if(fftw_cpu|fftw_gpu)
 INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0,nini=0 ! flag for initialization
 #endif
 
-REAL(DP) :: dt1,h2m
+#if(netlib_fft|fftw_cpu)
+INTEGER:: ind 
+#endif
+
+#if(fftw_cpu)
+INTEGER :: i, nacthr
+#endif
+
 #if(paropenmp && !dynopenmp)
 INTEGER :: omp_get_num_threads
 #endif
@@ -488,7 +507,7 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
@@ -499,14 +518,21 @@ INTEGER(C_INT) :: typefft=4
 #endif
 
 #if(netlib_fft)
-DATA  nxini,nyini,nzini/0,0,0/ ! flag for initialization
+INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0 ! flag for initialization
 REAL(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:) ! Complexes stored in real arrays for NETLIB FFT library
+INTEGER:: i1, i2, i3, i1m, i2m, i3m, ind 
 INTEGER :: ic,ir        ! Index for real and complex components when stored in ffttax, fftay...
 COMPLEX(DP) :: cmplxfac
+
 #endif
 #if(fftw_cpu)
 COMPLEX(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:)
 #endif
+#if(fftw_cpu || fftw_gpu)
+REAL(DP)::facnr
+#endif
+REAL(DP):: tnorm, xfnorm, yfnorm, zfnorm
+
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 !  here version using 3D FFTW
@@ -789,7 +815,7 @@ SUBROUTINE  gradient(fin,gradfout,idirec)
 !
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
@@ -887,11 +913,15 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
-
+INTEGER:: i1, i2, i3, ind 
+#if(netlib_fft)
+INTEGER:: ic, ir
+#endif
+REAL(DP):: dkx, zkx
 ! ************************************************************
 
 dkx=pi/(dx*nx)
@@ -981,11 +1011,15 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
-
+#if(netlib_fft)
+INTEGER:: ic, ir
+#endif
+INTEGER:: i1, i2, i3, ind 
+REAL(DP):: dky,zky
 ! ************************************************************
 
 dky=pi/(dy*ny)
@@ -1075,14 +1109,18 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
 #if(netlib_fft)
+INTEGER:: ic, ir
+#endif
+#if(netlib_fft)
 REAL(DP), ALLOCATABLE :: fftaz(:)
 #endif
-
+INTEGER:: i1, i2, i3, i3m, ind 
+REAL(DP):: dkz,zkz
 
 
 ! ************************************************************
@@ -1187,15 +1225,20 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+#if(netlib_fft)
+INTEGER:: i1, i2, i3, i3m, ind 
+INTEGER:: ic, ir
+#endif
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
 INTEGER :: typefft=1
 #endif
+REAL(DP):: tnorm
 !INTEGER, PARAMETER :: kfft=2*kxmax
 !INTEGER, PARAMETER :: kfft2=kfft*2+1
 !COMPLEX(DP) :: fftax,fftay,fftb
@@ -1363,15 +1406,20 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+#if(netlib_fft)
+INTEGER:: i1, i2, i3, i3m, ind 
+INTEGER:: ic, ir
+#endif
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
 INTEGER                                      :: typefft=1
 #endif
+REAL(DP):: facnr
 !INTEGER, PARAMETER :: kfft=2*kxmax
 !INTEGER, PARAMETER :: kfft2=kfft*2+1
 !COMPLEX(DP) :: fftax,fftay,fftb
@@ -1498,7 +1546,7 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
@@ -1512,12 +1560,15 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 
 #if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
+INTEGER:: i1, i2, i3, ind 
+INTEGER:: ic, ir
 #endif
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
 INTEGER :: typefft=2
 #endif
+REAL(DP):: tnorm
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
@@ -1677,7 +1728,7 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
 !REAL(DP), INTENT(OUT)                        :: q2(kdfull2)
@@ -1692,12 +1743,15 @@ REAL(DP), INTENT(OUT)                        :: q3(kdfull2)
 
 #if(netlib_fft)
 COMPLEX(DP),ALLOCATABLE :: q2(:)
+INTEGER :: i1, i2, i3, ind
+INTEGER :: ir, ic
 #endif
 #if(fftw_gpu)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2)
 INTEGER :: typefft=2
 #endif
+REAL(DP):: facnr
 
 !      data  nxini,nyini,nzini/0,0,0/  ! flag for initialization
 ! nxyf=nx2*ny2
@@ -1829,9 +1883,15 @@ SUBROUTINE copy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(DP), INTENT(IN)                      :: vec1d(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: vec3d(nbx2,nby2,nbz2)
+
+INTEGER:: i1, i2, i3, ind
 
 ind=0
 DO i3=1,nbz2
@@ -1855,10 +1915,15 @@ SUBROUTINE copyr1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 REAL(DP), INTENT(IN)                      :: vec1d(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2)
-      
+INTEGER:: i1, i2, i3, ind
+
 ind=0 
 DO i3=1,nbz2
   DO i2=1,nby2
@@ -1881,9 +1946,14 @@ SUBROUTINE secopy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(DP), INTENT(IN)                      :: vec1d(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: vec3d(nbx2,nby2,nbz2)
+INTEGER:: i1, i2, i3, ind
 
 DO i3=1,nbz2
   DO i2=1,nby2
@@ -1904,10 +1974,15 @@ SUBROUTINE copyr1dtor3d(vec1d,vec3d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 REAL(DP), INTENT(IN)                      :: vec1d(kdfull2)
 REAL(C_DOUBLE), INTENT(OUT)               :: vec3d(nbx2,nby2,nbz2)
-       
+INTEGER:: i1, i2, i3, ind
+
 ind=0
 DO i3=1,nbz2
   DO i2=1,nby2
@@ -1934,9 +2009,17 @@ SUBROUTINE copy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+#if(fftw_cpu)
+REAL(DP),INTENT(IN)                          ::coef
+#endif
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: vec3d(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+INTEGER:: i1, i2, i3, ind
 
 DO i3=1,nbz2
   DO i2=1,nby2
@@ -1964,9 +2047,17 @@ SUBROUTINE copyr3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+#if(fftw_cpu)
+REAL(DP),INTENT(IN)                          ::coef
+#endif
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: vec3d(nbx2,nby2,nbz2)
 REAL(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+INTEGER:: i1, i2, i3, ind
 
 ind=0
 DO i3=1,nbz2
@@ -1999,9 +2090,17 @@ SUBROUTINE secopy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
+#if(fftw_cpu)
+REAL(DP),INTENT(IN)                          ::coef
+#endif
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: vec3d(nbx2,nby2,nbz2)
 COMPLEX(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+INTEGER:: i1, i2, i3, ind
 
 ind=0 
 DO i3=1,nbz2
@@ -2030,6 +2129,7 @@ SUBROUTINE fft_end()
 ! ******************************
 #if(fftw_cpu)
 USE FFTW
+IMPLICIT NONE
 
 CALL fftw_destroy_plan(pforw(0))
 CALL fftw_destroy_plan(pback(0))
@@ -2048,6 +2148,7 @@ DEALLOCATE(fftax,fftay,fftaz,fftb,ffta)
 #endif
 
 #if(fftw_gpu)
+IMPLICIT NONE
 res = cudaFreeHost(c_p_fftax)
 res = cudaFreeHost(c_p_fftay)
 res = cudaFreeHost(c_p_fftaz)
@@ -2079,6 +2180,7 @@ SUBROUTINE my_cuda_allocate()
 ! ******************************
 
 USE params
+IMPLICIT NONE
 
 res = cudaMallocHost(c_p_fftax,nx2*sizeof(size_cmplx))
 CALL c_f_pointer(c_p_fftax,fftax,[nx2])
@@ -2138,13 +2240,13 @@ SUBROUTINE  rftf2(q1,fft,gpu_fft)
 
 USE, intrinsic :: iso_c_binding
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                         :: q1(kdfull2,kstate)
-COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2*kstate)
-COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2*kstate)
-INTEGER                                      :: size_data
-
+REAL(DP), INTENT(IN)        :: q1(kdfull2,kstate)
+COMPLEX(C_DOUBLE_COMPLEX)   :: fft(nx2,ny2,nz2*kstate)
+COMPLEX(C_DOUBLE_COMPLEX)   :: gpu_fft(kdfull2*kstate)
+INTEGER                     :: size_data
+REAL(DP)                    ::tnorm
 size_data=nstate*kdfull2
 
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
@@ -2168,12 +2270,13 @@ SUBROUTINE  rfftback2(q3,fft,gpu_fft)
 
 USE, intrinsic :: iso_c_binding
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: q3(kdfull2,kstate)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: fft(nx2,ny2,nz2*kstate)
 COMPLEX(C_DOUBLE_COMPLEX)                    :: gpu_fft(kdfull2*kstate)
 INTEGER                                      :: size_data
+REAL(DP)                                     :: facnr
 
 size_data=nstate*kdfull2
 
@@ -2198,9 +2301,14 @@ SUBROUTINE copyr1dto3d2(vec1d,vec3d,nbx2,nby2,nbz2)
 
 USE, intrinsic :: iso_c_binding
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 REAL(DP), INTENT(IN)                      :: vec1d(kdfull2,kstate)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2*kstate)
+INTEGER::  i1, i2, i3, nbe, ind, indy, indz, indnbe
 
 DO nbe=1,nstate
   indnbe=(nbe-1)*nbz2
@@ -2227,9 +2335,14 @@ SUBROUTINE copyr3dto1d2(vec3d,vec1d,nbx2,nby2,nbz2)
 
 USE, intrinsic :: iso_c_binding
 USE params
+IMPLICIT NONE
 
+INTEGER,INTENT(IN)                           :: nbx2
+INTEGER,INTENT(IN)                           :: nby2
+INTEGER,INTENT(IN)                           :: nbz2
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: vec3d(nbx2,nby2,nbz2*kstate)
 REAL(DP), INTENT(OUT)                     :: vec1d(kdfull2,kstate)
+INTEGER::  i1, i2, i3, nbe, ind, indy, indz, indnbe
 
 DO nbe=1,nstate
   indnbe=(nbe-1)*nbz2
