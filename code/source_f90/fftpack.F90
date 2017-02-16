@@ -83,17 +83,19 @@ END SUBROUTINE dummypack
 
 
 SUBROUTINE dcfti1 (n,wa,ifac)
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,tPI
+IMPLICIT NONE
+
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wa(kdim)
 INTEGER, INTENT(OUT)                     :: ifac(kdim)
-REAL(DP) :: arg, argh, argld, fi, tpi
+REAL(DP) :: arg, argh, argld, fi
+INTEGER :: i, i1, ib, ido, idot, ii, ip, ipm
+INTEGER :: j, k1, l1, l2, ld, nf, nl, nq, nr, ntry
 INTEGER :: ntryh(4)
 DATA ntryh(1), ntryh(2), ntryh(3), ntryh(4) /3, 4, 2, 5/
-DATA tpi   /  6.28318530717958647692528676655900577D0/
 
 nl = n
 nf = 0
@@ -106,7 +108,6 @@ DO WHILE(nl /= 1)
   IF (nr /= 0) THEN
     j = j+1
     IF (j <= 4) THEN
-    write(6,*) "j=",j
       ntry = ntryh(j)
     ELSE
       ntry = ntry + 2
@@ -131,7 +132,7 @@ ENDDO
 ifac(1) = n
 ifac(2) = nf
 
-argh = tpi/(n)
+argh = tpi/REAL(n,DP)
 i = 2
 l1 = 1
 DO  k1=1,nf
@@ -170,7 +171,7 @@ END SUBROUTINE dcfti1
 
 SUBROUTINE dcftf1 (n,c,ch,wa,ifac)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -180,6 +181,8 @@ REAL(DP), INTENT(IN OUT)                     :: ch(kdim)
 REAL(DP), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
+INTEGER ::  idl1, ido, idot, ip, iw, ix2, ix3, ix4
+INTEGER ::  k1, l1, l2, na, nac, nf
 nf = ifac(2)
 na = 0
 l1 = 1
@@ -191,7 +194,6 @@ DO  k1=1,nf
   idot = ido+ido
   idl1 = idot*l1
   SELECT CASE(ip)
-  
     CASE(4)
       ix2 = iw+idot
       ix3 = ix2+idot
@@ -201,7 +203,6 @@ DO  k1=1,nf
         CALL dpssf4 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
       ENDIF
       na = 1-na
-      
     CASE(2)
       IF (na /= 0)THEN
         CALL dpssf2 (idot,l1,ch,c,wa(iw))
@@ -209,7 +210,6 @@ DO  k1=1,nf
         CALL dpssf2 (idot,l1,c,ch,wa(iw))
       ENDIF
       na = 1-na
-
     CASE(3)
       ix2 = iw+idot
       IF (na /= 0) THEN
@@ -218,7 +218,6 @@ DO  k1=1,nf
         CALL dpssf3 (idot,l1,c,ch,wa(iw),wa(ix2))
       ENDIF
       na = 1-na
-
     CASE(5)
       ix2 = iw+idot
       ix3 = ix2+idot
@@ -229,7 +228,6 @@ DO  k1=1,nf
         CALL dpssf5 (idot,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
       ENDIF
       na = 1-na
-
     CASE DEFAULT
       IF (na /= 0) THEN
         CALL dpssf (nac,idot,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
@@ -251,7 +249,7 @@ END SUBROUTINE dcftf1
 
 SUBROUTINE dcftb1 (n,c,ch,wa,ifac)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -261,7 +259,8 @@ REAL(DP), INTENT(IN OUT)                     :: ch(kdim)
 REAL(DP), INTENT(IN OUT)                     :: wa(kdim)
 INTEGER, INTENT(IN)                      :: ifac(kdim)
 
-
+INTEGER :: idl1, ido, idot, ip, iw, ix2, ix3, ix4
+INTEGER :: k1, l1, l2, na, nac, nf
 
 nf = ifac(2)
 na = 0
@@ -332,7 +331,7 @@ END SUBROUTINE dcftb1
 
 SUBROUTINE dpssb (nac,ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -347,7 +346,10 @@ REAL(DP), INTENT(OUT)                        :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(kdim)
+
 REAL(DP) :: wai, war
+INTEGER :: i, idij, idj, idl, idlj, idot, idp, ik, inc, ipp2, ipph
+INTEGER :: j, jc, k, l, lc, nt
 
 idot = ido/2
 nt = ip*idl1
@@ -521,7 +523,7 @@ END SUBROUTINE dpssb2
 
 SUBROUTINE dpssb3 (ido,l1,cc,ch,wa1,wa2)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -532,6 +534,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+INTEGER :: i,k
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -580,7 +583,7 @@ END SUBROUTINE dpssb3
 
 SUBROUTINE dpssb4 (ido,l1,cc,ch,wa1,wa2,wa3)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -592,6 +595,8 @@ REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
+
+INTEGER :: i,k
 
 IF (ido /= 2) THEN
   DO  k=1,l1
@@ -646,7 +651,7 @@ END SUBROUTINE dpssb4
 
 SUBROUTINE dpssb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -661,6 +666,7 @@ REAL(DP), INTENT(IN)                         :: wa4(kdim)
 REAL(DP) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
     di2, di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3,  &
     ti4, ti5, tr11, tr12, tr2, tr3, tr4, tr5
+INTEGER ::i,k
 DATA tr11  /  0.30901699437494742410229341718281906D0/
 DATA ti11  /  0.95105651629515357211643933337938214D0/
 DATA tr12  / -0.80901699437494742410229341718281906D0/
@@ -746,7 +752,7 @@ END SUBROUTINE dpssb5
 
 SUBROUTINE dpssf (nac,ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -762,6 +768,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(kdim)
 REAL(DP) :: wai, war
+
+INTEGER ::  i, idij, idj, idl, idlj, idot, idp, ik, inc, ipp2, ipph
+INTEGER :: j, jc, k, l, lc, nt
 
 idot = ido/2
 nt = ip*idl1
@@ -890,7 +899,7 @@ END SUBROUTINE dpssf
 
 SUBROUTINE dpssf2 (ido,l1,cc,ch,wa1)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -900,7 +909,7 @@ REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP) :: ti2, tr2
-
+INTEGER ::  i, k
 IF (ido > 2) THEN
   DO  k=1,l1
     DO  i=2,ido,2
@@ -926,7 +935,7 @@ END SUBROUTINE dpssf2
 
 SUBROUTINE dpssf3 (ido,l1,cc,ch,wa1,wa2)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -937,6 +946,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+INTEGER ::  i, k
 DATA taur / -0.5D0 /
 DATA taui  / -0.86602540378443864676372317075293618D0/
 
@@ -983,7 +993,7 @@ END SUBROUTINE dpssf3
 
 SUBROUTINE dpssf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -995,7 +1005,7 @@ REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
-
+INTEGER ::  i, k
 IF (ido /= 2) THEN
   DO  k=1,l1
     DO  i=2,ido,2
@@ -1049,7 +1059,7 @@ END SUBROUTINE dpssf4
 
 SUBROUTINE dpssf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1064,6 +1074,7 @@ REAL(DP), INTENT(IN)                         :: wa4(kdim)
 REAL(DP) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
     di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3, ti4,  &
     ti5, tr11, tr12, tr2, tr3, tr4, tr5
+INTEGER ::  i, k
 DATA tr11  /  0.30901699437494742410229341718281906D0/
 DATA ti11  / -0.95105651629515357211643933337938214D0/
 DATA tr12  / -0.80901699437494742410229341718281906D0/
@@ -1144,8 +1155,7 @@ END SUBROUTINE dpssf5
 
 SUBROUTINE dradb2 (ido,l1,cc,ch,wa1)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
@@ -1154,7 +1164,7 @@ REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP) :: ti2, tr2
-
+INTEGER ::  i,ic, idp2, k
 DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
   ch(1,k,2) = cc(1,1,k)-cc(ido,2,k)
@@ -1188,7 +1198,7 @@ END SUBROUTINE dradb2
 
 SUBROUTINE dradb3 (ido,l1,cc,ch,wa1,wa2)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1199,6 +1209,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP) :: ci2, ci3, cr2, cr3, di2, di3, dr2, dr3, taui, taur, ti2, tr2
+INTEGER ::  i, ic, idp2, k 
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -1240,7 +1251,7 @@ END SUBROUTINE dradb3
 
 SUBROUTINE dradb4 (ido,l1,cc,ch,wa1,wa2,wa3)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1253,6 +1264,7 @@ REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, sqrt2, ti1, ti2, ti3, ti4,  &
     tr1, tr2, tr3, tr4
+INTEGER ::  i, ic, idp2, k
 DATA sqrt2 /  1.41421356237309504880168872420970D0 /
 
 DO  k=1,l1
@@ -1317,7 +1329,7 @@ END SUBROUTINE dradb4
 
 SUBROUTINE dradb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1332,6 +1344,7 @@ REAL(DP), INTENT(IN)                         :: wa4(kdim)
 REAL(DP) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5,  &
     di2, di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3,  &
     ti4, ti5, tr11, tr12, tr2, tr3, tr4, tr5
+INTEGER ::  i, ic, idp2, k
 DATA tr11  /  0.30901699437494742410229341718281906D0/
 DATA ti11  /  0.95105651629515357211643933337938214D0/
 DATA tr12  / -0.80901699437494742410229341718281906D0/
@@ -1399,8 +1412,8 @@ RETURN
 END SUBROUTINE dradb5
 
 SUBROUTINE dradbg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,tPI
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1414,10 +1427,10 @@ REAL(DP), INTENT(OUT)                        :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(kdim)
-REAL(DP) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
-DATA tpi   /  6.28318530717958647692528676655900577D0/
+REAL(DP) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp
+INTEGER :: i, ic, idij, idp2, ik, ipp2, ipph, is
+INTEGER ::  j, j2, jc, k, l, lc, nbd
 
-!OLD      ARG = TPI/DFLOAT(IP)
 arg = tpi/(ip)
 dcp = COS(arg)
 dsp = SIN(arg)
@@ -1590,8 +1603,7 @@ END SUBROUTINE dradbg
 
 SUBROUTINE dradf2 (ido,l1,cc,ch,wa1)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 INTEGER, PARAMETER :: kdim=512
 
 INTEGER, INTENT(IN)                      :: ido
@@ -1600,6 +1612,7 @@ REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
 REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP) :: ti2, tr2
+INTEGER ::  i, ic, idp2, k
 
 DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
@@ -1635,7 +1648,7 @@ END SUBROUTINE dradf2
 
 SUBROUTINE dradf3 (ido,l1,cc,ch,wa1,wa2)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1646,6 +1659,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
 REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP) :: ci2, cr2, di2, di3, dr2, dr3, taui, taur, ti2, ti3, tr2, tr3
+INTEGER ::  i, ic, idp2, k
 DATA taur / -0.5D0 /
 DATA taui  /  0.86602540378443864676372317075293618D0/
 
@@ -1685,7 +1699,7 @@ END SUBROUTINE dradf3
 
 SUBROUTINE dradf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1698,6 +1712,7 @@ REAL(DP), INTENT(IN)                         :: wa2(kdim)
 REAL(DP), INTENT(IN)                         :: wa3(kdim)
 REAL(DP) :: ci2, ci3, ci4, cr2, cr3, cr4, hsqt2, ti1, ti2, ti3,  &
     ti4, tr1, tr2, tr3, tr4
+INTEGER ::  i, ic, idp2, k
 DATA hsqt2 /   .70710678118654752440084436210485D0 /
 
 DO  k=1,l1
@@ -1757,7 +1772,7 @@ END SUBROUTINE dradf4
 
 SUBROUTINE dradf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1772,6 +1787,8 @@ REAL(DP), INTENT(IN)                         :: wa4(kdim)
 REAL(DP) :: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5, di2,  &
     di3, di4, di5, dr2, dr3, dr4, dr5, ti11, ti12, ti2, ti3, ti4,  &
     ti5, tr11, tr12, tr2, tr3, tr4, tr5
+INTEGER :: i, ic, idp2, k
+
 DATA tr11  /  0.30901699437494742410229341718281906D0/
 DATA ti11  /  0.95105651629515357211643933337938214D0/
 DATA tr12  / -0.80901699437494742410229341718281906D0/
@@ -1835,8 +1852,8 @@ RETURN
 END SUBROUTINE dradf5
 
 SUBROUTINE dradfg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,tPI
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -1850,10 +1867,10 @@ REAL(DP), INTENT(IN OUT)                     :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(kdim)
-REAL(DP) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp, tpi
-DATA tpi   /  6.28318530717958647692528676655900577D0/
+REAL(DP) :: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp
+INTEGER ::  i, ic, idij, idp2, ik, ipp2, ipph, is
+INTEGER :: j, j2, jc, k, l, lc, nbd
 
-!OLD      ARG = TPI/DFLOAT(IP)
 arg = tpi/(ip)
 dcp = COS(arg)
 dsp = SIN(arg)

@@ -72,15 +72,15 @@ SUBROUTINE cosqb (n,x,wsave,ifac)
 !
 !  WSAVE and IFAC contain initialization calculations which must not
 !          be destroyed between calls of COSQB or COSQF.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,tsqrt2
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: x(n)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
-DATA tsqrt2 /2.82842712474619D0/
+REAL(DP)::x1
 
 IF (n < 2) THEN
   x(1) = 4D0*x(1)
@@ -103,13 +103,15 @@ SUBROUTINE cosqb1 (n,x,w,xh,ifac)
 !  representation in terms of a cosine series with odd wave numbers.
 !  The transform is defined below at output parameter X.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
 INTEGER, INTENT(OUT)                         :: ifac(10)
+
+INTEGER ::  i, k ,kc, modn, np2, ns2, xim1
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -141,7 +143,7 @@ SUBROUTINE radb2 (ido,l1,cc,ch,wa1)
 !  Calculate the fast Fourier transform of subvectors of
 !  length two.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -149,40 +151,47 @@ REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 
+INTEGER :: i, ic, idp2, k  
+REAL(DP)  :: ti2, tr2
+
+
 DO  k=1,l1
   ch(1,k,1) = cc(1,1,k)+cc(ido,2,k)
   ch(1,k,2) = cc(1,1,k)-cc(ido,2,k)
 END DO
+
 IF (ido < 2) THEN
-  GO TO   107
-ELSE IF (ido == 2) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    ch(i-1,k,1) = cc(i-1,1,k)+cc(ic-1,2,k)
-    tr2 = cc(i-1,1,k)-cc(ic-1,2,k)
-    ch(i,k,1) = cc(i,1,k)-cc(ic,2,k)
-    ti2 = cc(i,1,k)+cc(ic,2,k)
-    ch(i-1,k,2) = wa1(i-2)*tr2-wa1(i-1)*ti2
-    ch(i,k,2) = wa1(i-2)*ti2+wa1(i-1)*tr2
+  RETURN
+ELSE IF (ido > 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      ch(i-1,k,1) = cc(i-1,1,k)+cc(ic-1,2,k)
+      tr2 = cc(i-1,1,k)-cc(ic-1,2,k)
+      ch(i,k,1) = cc(i,1,k)-cc(ic,2,k)
+      ti2 = cc(i,1,k)+cc(ic,2,k)
+      ch(i-1,k,2) = wa1(i-2)*tr2-wa1(i-1)*ti2
+      ch(i,k,2) = wa1(i-2)*ti2+wa1(i-1)*tr2
+    END DO
   END DO
-END DO
-IF (MOD(ido,2) == 1) RETURN
-105 DO  k=1,l1
+  IF (MOD(ido,2) == 1) RETURN 
+END IF
+
+DO  k=1,l1
   ch(ido,k,1) = cc(ido,1,k)+cc(ido,1,k)
   ch(ido,k,2) = -(cc(1,2,k)+cc(1,2,k))
 END DO
-107 RETURN
+
+
+RETURN
 END SUBROUTINE radb2
 
 SUBROUTINE radb3 (ido,l1,cc,ch,wa1,wa2)
 !  Calculate the fast Fourier transform of subvectors of
 !  length three.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -191,7 +200,12 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
-DATA taur,taui /-.5D0,.866025403784439D0/
+INTEGER:: i, ic, idp2, k 
+REAL(DP)::  ci2, ci3, cr2, cr3
+REAL(DP)::  di2, di3, dr2, dr3
+REAl(DP):: taui, taur, ti2, tr2
+
+DATA taur, taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
   tr2 = cc(ido,2,k)+cc(ido,2,k)
@@ -201,6 +215,7 @@ DO  k=1,l1
   ch(1,k,2) = cr2-ci3
   ch(1,k,3) = cr2+ci3
 END DO
+
 IF (ido == 1) RETURN
 idp2 = ido+2
 DO  k=1,l1
@@ -230,8 +245,8 @@ END SUBROUTINE radb3
 SUBROUTINE radb4 (ido,l1,cc,ch,wa1,wa2,wa3)
 !  Calculate the fast Fourier transform of subvectors of
 !  length four.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP, sq2
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -241,7 +256,9 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 
-DATA sqrt2 /1.414213562373095D0/
+INTEGER:: i, ic, idp2, k
+REAL(DP):: ci2, ci3, ci4, cr2, cr3, cr4
+REAL(DP):: ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4
 
 DO  k=1,l1
   tr1 = cc(1,1,k)-cc(ido,4,k)
@@ -254,58 +271,57 @@ DO  k=1,l1
   ch(1,k,4) = tr1+tr4
 END DO
 IF (ido < 2) THEN
-  GO TO   107
-ELSE IF (ido == 2) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    ti1 = cc(i,1,k)+cc(ic,4,k)
-    ti2 = cc(i,1,k)-cc(ic,4,k)
-    ti3 = cc(i,3,k)-cc(ic,2,k)
-    tr4 = cc(i,3,k)+cc(ic,2,k)
-    tr1 = cc(i-1,1,k)-cc(ic-1,4,k)
-    tr2 = cc(i-1,1,k)+cc(ic-1,4,k)
-    ti4 = cc(i-1,3,k)-cc(ic-1,2,k)
-    tr3 = cc(i-1,3,k)+cc(ic-1,2,k)
-    ch(i-1,k,1) = tr2+tr3
-    cr3 = tr2-tr3
-    ch(i,k,1) = ti2+ti3
-    ci3 = ti2-ti3
-    cr2 = tr1-tr4
-    cr4 = tr1+tr4
-    ci2 = ti1+ti4
-    ci4 = ti1-ti4
-    ch(i-1,k,2) = wa1(i-2)*cr2-wa1(i-1)*ci2
-    ch(i,k,2) = wa1(i-2)*ci2+wa1(i-1)*cr2
-    ch(i-1,k,3) = wa2(i-2)*cr3-wa2(i-1)*ci3
-    ch(i,k,3) = wa2(i-2)*ci3+wa2(i-1)*cr3
-    ch(i-1,k,4) = wa3(i-2)*cr4-wa3(i-1)*ci4
-    ch(i,k,4) = wa3(i-2)*ci4+wa3(i-1)*cr4
+  RETURN
+ELSE IF (ido > 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      ti1 = cc(i,1,k)+cc(ic,4,k)
+      ti2 = cc(i,1,k)-cc(ic,4,k)
+      ti3 = cc(i,3,k)-cc(ic,2,k)
+      tr4 = cc(i,3,k)+cc(ic,2,k)
+      tr1 = cc(i-1,1,k)-cc(ic-1,4,k)
+      tr2 = cc(i-1,1,k)+cc(ic-1,4,k)
+      ti4 = cc(i-1,3,k)-cc(ic-1,2,k)
+      tr3 = cc(i-1,3,k)+cc(ic-1,2,k)
+      ch(i-1,k,1) = tr2+tr3
+      cr3 = tr2-tr3
+      ch(i,k,1) = ti2+ti3
+      ci3 = ti2-ti3
+      cr2 = tr1-tr4
+      cr4 = tr1+tr4
+      ci2 = ti1+ti4
+      ci4 = ti1-ti4
+      ch(i-1,k,2) = wa1(i-2)*cr2-wa1(i-1)*ci2
+      ch(i,k,2) = wa1(i-2)*ci2+wa1(i-1)*cr2
+      ch(i-1,k,3) = wa2(i-2)*cr3-wa2(i-1)*ci3
+      ch(i,k,3) = wa2(i-2)*ci3+wa2(i-1)*cr3
+      ch(i-1,k,4) = wa3(i-2)*cr4-wa3(i-1)*ci4
+      ch(i,k,4) = wa3(i-2)*ci4+wa3(i-1)*cr4
+    END DO
   END DO
-END DO
-IF (MOD(ido,2) == 1) RETURN
-105 CONTINUE
+  IF (MOD(ido,2) == 1) RETURN
+END IF
+
 DO  k=1,l1
   ti1 = cc(1,2,k)+cc(1,4,k)
   ti2 = cc(1,4,k)-cc(1,2,k)
   tr1 = cc(ido,1,k)-cc(ido,3,k)
   tr2 = cc(ido,1,k)+cc(ido,3,k)
   ch(ido,k,1) = tr2+tr2
-  ch(ido,k,2) = sqrt2*(tr1-ti1)
+  ch(ido,k,2) = sq2*(tr1-ti1)
   ch(ido,k,3) = ti2+ti2
-  ch(ido,k,4) = -sqrt2*(tr1+ti1)
+  ch(ido,k,4) = -sq2*(tr1+ti1)
 END DO
-107 RETURN
+RETURN
 END SUBROUTINE radb4
 
 SUBROUTINE radb5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 !  Calculate the fast Fourier transform of subvectors of
 !  length five.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -315,6 +331,13 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
+
+INTEGER:: i, ic, idp2, k
+REAL(DP):: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5
+REAL(DP):: di2, di3, di4, di5, dr2, dr3, dr4, dr5
+REAL(DP):: ti1, ti2, ti3, ti4, ti5, tr1, tr2, tr3, tr4, tr5
+REAL(DP):: tr11, ti11, tr12, ti12
+
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
     -.809016994374947D0,.587785252292473D0/
@@ -381,8 +404,8 @@ END SUBROUTINE radb5
 SUBROUTINE radbg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 !  Calculate the fast Fourier transform of subvectors of
 !  arbitrary length.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP, tPI
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
@@ -395,7 +418,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959D0/
+INTEGER:: i, ic, idij, idp2, ik, ipp2, ipph, is
+INTEGER:: j, j2, jc, k, l, lc, nbd
+REAL(DP):: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, ds2, dsp
 
 arg = tpi/REAL(ip,DP)
 dcp = COS(arg)
@@ -404,19 +429,21 @@ idp2 = ido+2
 nbd = (ido-1)/2
 ipp2 = ip+2
 ipph = (ip+1)/2
-IF (ido < l1) GO TO 103
-DO  k=1,l1
+IF (ido < l1) THEN
   DO  i=1,ido
-    ch(i,k,1) = cc(i,1,k)
+    DO  k=1,l1
+      ch(i,k,1) = cc(i,1,k)
+    END DO
   END DO
-END DO
-GO TO 106
-103 DO  i=1,ido
+ELSE
   DO  k=1,l1
-    ch(i,k,1) = cc(i,1,k)
+    DO  i=1,ido
+      ch(i,k,1) = cc(i,1,k)
+    END DO
   END DO
-END DO
-106 DO  j=2,ipph
+ENDIF
+
+DO  j=2,ipph
   jc = ipp2-j
   j2 = j+j
   DO  k=1,l1
@@ -424,34 +451,36 @@ END DO
     ch(1,k,jc) = cc(1,j2-1,k)+cc(1,j2-1,k)
   END DO
 END DO
-IF (ido == 1) GO TO 116
-IF (nbd < l1) GO TO 112
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      ic = idp2-i
-      ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
-      ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
-      ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
-      ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+IF (ido /= 1) THEN 
+  IF (nbd < l1) THEN
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  i=3,ido,2
+        ic = idp2-i
+        DO  k=1,l1
+          ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
+          ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
+          ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
+          ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-GO TO 116
-112 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    ic = idp2-i
-    DO  k=1,l1
-      ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
-      ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
-      ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
-      ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+  ELSE
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  k=1,l1
+        DO  i=3,ido,2
+          ic = idp2-i
+          ch(i-1,k,j) = cc(i-1,2*j-1,k)+cc(ic-1,2*j-2,k)
+          ch(i-1,k,jc) = cc(i-1,2*j-1,k)-cc(ic-1,2*j-2,k)
+          ch(i,k,j) = cc(i,2*j-1,k)-cc(ic,2*j-2,k)
+          ch(i,k,jc) = cc(i,2*j-1,k)+cc(ic,2*j-2,k)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-116 ar1 = 1D0
+  ENDIF
+END IF
+ar1 = 1D0
 ai1 = 0D0
 DO  l=2,ipph
   lc = ipp2-l
@@ -489,33 +518,36 @@ DO  j=2,ipph
     ch(1,k,jc) = c1(1,k,j)+c1(1,k,jc)
   END DO
 END DO
-IF (ido == 1) GO TO 132
-IF (nbd < l1) GO TO 128
-DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
-      ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
-      ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
-      ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+IF (ido /= 1)  THEN
+  IF (nbd < l1)THEN
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  i=3,ido,2
+        DO  k=1,l1
+          ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
+          ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
+          ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
+          ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-GO TO 132
-128 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    DO  k=1,l1
-      ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
-      ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
-      ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
-      ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+  ELSE
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  k=1,l1
+        DO  i=3,ido,2
+          ch(i-1,k,j) = c1(i-1,k,j)-c1(i,k,jc)
+          ch(i-1,k,jc) = c1(i-1,k,j)+c1(i,k,jc)
+          ch(i,k,j) = c1(i,k,j)+c1(i-1,k,jc)
+          ch(i,k,jc) = c1(i,k,j)-c1(i-1,k,jc)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-132 CONTINUE
+  END IF
+ENDIF
+
 IF (ido == 1) RETURN
+
 DO  ik=1,idl1
   c2(ik,1) = ch2(ik,1)
 END DO
@@ -524,33 +556,35 @@ DO  j=2,ip
     c1(1,k,j) = ch(1,k,j)
   END DO
 END DO
-IF (nbd > l1) GO TO 139
-is = -ido
-DO  j=2,ip
-  is = is+ido
-  idij = is
-  DO  i=3,ido,2
-    idij = idij+2
+IF (nbd > l1) THEN 
+  is = -ido
+  DO  j=2,ip
+    is = is+ido
     DO  k=1,l1
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      idij = is
+      DO  i=3,ido,2
+        idij = idij+2
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
-GO TO 143
-139 is = -ido
-DO  j=2,ip
-  is = is+ido
-  DO  k=1,l1
+ELSE
+  is = -ido
+  DO  j=2,ip
+    is = is+ido
     idij = is
     DO  i=3,ido,2
       idij = idij+2
-      c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
-      c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      DO  k=1,l1
+        c1(i-1,k,j) = wa(idij-1)*ch(i-1,k,j)-wa(idij)*ch(i,k,j)
+        c1(i,k,j) = wa(idij-1)*ch(i,k,j)+wa(idij)*ch(i-1,k,j)
+      END DO
     END DO
   END DO
-END DO
-143 RETURN
+ENDIF
+
+RETURN
 END SUBROUTINE radbg
 
 SUBROUTINE rfftb (n,r,wsave,ifac)
@@ -610,7 +644,7 @@ SUBROUTINE rfftb (n,r,wsave,ifac)
 !   WSAVE and IFAC contain results which must not be destroyed between
 !          calls of RFFTB or RFFTF.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: r(n)
@@ -625,13 +659,16 @@ END SUBROUTINE rfftb
 SUBROUTINE rfftb1 (n,c,ch,wa,ifac)
 
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !See rfftb1 above
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(n)
 REAL(DP), INTENT(IN OUT)                     :: ch(1)
 REAL(DP), INTENT(IN OUT)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
+
+INTEGER:: i, idl1, ido, ip, iw, ix2, ix3, ix4
+INTEGER:: k1, l1, l2, na, nf
 
 nf = ifac(2)
 na = 0
@@ -642,46 +679,58 @@ DO  k1=1,nf
   l2 = ip*l1
   ido = n/l2
   idl1 = ido*l1
-  IF (ip /= 4) GO TO 103
-  ix2 = iw+ido
-  ix3 = ix2+ido
-  IF (na /= 0) GO TO 101
-  CALL radb4 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
-  GO TO 102
-  101    CALL radb4 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
-  102    na = 1-na
-  GO TO 115
-  103    IF (ip /= 2) GO TO 106
-  IF (na /= 0) GO TO 104
-  CALL radb2 (ido,l1,c,ch,wa(iw))
-  GO TO 105
-  104    CALL radb2 (ido,l1,ch,c,wa(iw))
-  105    na = 1-na
-  GO TO 115
-  106    IF (ip /= 3) GO TO 109
-  ix2 = iw+ido
-  IF (na /= 0) GO TO 107
-  CALL radb3 (ido,l1,c,ch,wa(iw),wa(ix2))
-  GO TO 108
-  107    CALL radb3 (ido,l1,ch,c,wa(iw),wa(ix2))
-  108    na = 1-na
-  GO TO 115
-  109    IF (ip /= 5) GO TO 112
-  ix2 = iw+ido
-  ix3 = ix2+ido
-  ix4 = ix3+ido
-  IF (na /= 0) GO TO 110
-  CALL radb5 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  GO TO 111
-  110    CALL radb5 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  111    na = 1-na
-  GO TO 115
-  112    IF (na /= 0) GO TO 113
-  CALL radbg (ido,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
-  GO TO 114
-  113    CALL radbg (ido,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
-  114    IF (ido == 1) na = 1-na
-  115    l1 = l2
+  !-------
+  SELECT CASE(ip)
+  !-------
+    CASE(4)
+      ix2 = iw+ido
+      ix3 = ix2+ido
+      IF (na /= 0) THEN
+        CALL radb4 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
+      ELSE
+        CALL radb4 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
+      ENDIF
+      na = 1-na
+  !-------
+    CASE(2)
+      IF (na /= 0) THEN
+        CALL radb2 (ido,l1,ch,c,wa(iw))
+      ELSE
+        CALL radb2 (ido,l1,c,ch,wa(iw))
+      ENDIF
+      na = 1-na
+  !-------
+    CASE(3)
+      ix2 = iw+ido
+      IF (na /= 0) THEN 
+        CALL radb3 (ido,l1,ch,c,wa(iw),wa(ix2))
+      ELSE
+        CALL radb3 (ido,l1,c,ch,wa(iw),wa(ix2))
+      END IF
+      na = 1-na
+  !-------
+    CASE(5)
+      ix2 = iw+ido
+      ix3 = ix2+ido
+      ix4 = ix3+ido
+      IF (na /= 0) THEN
+        CALL radb5 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ELSE
+        CALL radb5 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      END IF
+      na = 1-na
+  !-------
+    CASE DEFAULT
+      IF (na /= 0) THEN 
+        CALL radbg (ido,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
+      ELSE
+        CALL radbg (ido,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
+      ENDIF
+      IF (ido == 1) na = 1-na
+  !-------
+  END SELECT
+  !-------
+  l1 = l2
   iw = iw+(ip-1)*ido
 END DO
 IF (na == 0) RETURN
@@ -738,28 +787,24 @@ SUBROUTINE cosqf (n,x,wsave,ifac)
 !
 !  WSAVE and IFAC contain initialization calculations which must not
 !          be destroyed between calls of COSQF or COSQB.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,sq2
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
-DATA sqrt2 /1.4142135623731D0/
+REAL(DP):: tsqx
 
-IF (n-2 < 0) THEN
-  GO TO   102
-ELSE IF (n-2 == 0) THEN
-  GO TO   101
-ELSE
-  GO TO   103
+IF (n == 2) THEN
+  tsqx = sq2*x(2)
+  x(2) = x(1)-tsqx
+  x(1) = x(1)+tsqx
+ELSE IF (n > 2) THEN
+  CALL cosqf1 (n,x,wsave,wsave(n+1),ifac)
 END IF
-101 tsqx = sqrt2*x(2)
-x(2) = x(1)-tsqx
-x(1) = x(1)+tsqx
-102 RETURN
-103 CALL cosqf1 (n,x,wsave,wsave(n+1),ifac)
+
 RETURN
 END SUBROUTINE cosqf
 
@@ -769,13 +814,16 @@ SUBROUTINE cosqf1 (n,x,w,xh,ifac)
 !  series representation with only odd wave numbers.  The transform
 !  is defined below at Output Parameter X
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
 REAL(DP), INTENT(IN)                         :: w(1)
 REAL(DP), INTENT(OUT)                        :: xh(1)
 INTEGER, INTENT(IN)                         :: ifac(10)
+
+INTEGER:: i, k, kc, modn, np2, ns2
+REAL(DP):: xim1
 
 ns2 = (n+1)/2
 np2 = n+2
@@ -805,7 +853,7 @@ SUBROUTINE radf2 (ido,l1,cc,ch,wa1)
 !  Calculate the fast Fourier transform of subvectors of
 !  length two.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -813,40 +861,43 @@ REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
 REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 
+INTEGER:: i, ic, idp2, k
+REAL(DP):: ti2, tr2
+
 DO  k=1,l1
   ch(1,1,k) = cc(1,k,1)+cc(1,k,2)
   ch(ido,2,k) = cc(1,k,1)-cc(1,k,2)
 END DO
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    tr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
-    ti2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
-    ch(i,1,k) = cc(i,k,1)+ti2
-    ch(ic,2,k) = ti2-cc(i,k,1)
-    ch(i-1,1,k) = cc(i-1,k,1)+tr2
-    ch(ic-1,2,k) = cc(i-1,k,1)-tr2
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido >= 2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      tr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
+      ti2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
+      ch(i,1,k) = cc(i,k,1)+ti2
+      ch(ic,2,k) = ti2-cc(i,k,1)
+      ch(i-1,1,k) = cc(i-1,k,1)+tr2
+      ch(ic-1,2,k) = cc(i-1,k,1)-tr2
+    END DO
   END DO
-END DO
-IF (MOD(ido,2) == 1) RETURN
-105 DO  k=1,l1
+  IF (MOD(ido,2) == 1) RETURN
+END IF
+
+DO  k=1,l1
   ch(1,2,k) = -cc(ido,k,2)
   ch(ido,1,k) = cc(ido,k,1)
 END DO
-107 RETURN
+RETURN
 END SUBROUTINE radf2
 
 SUBROUTINE radf3 (ido,l1,cc,ch,wa1,wa2)
 !  Calculate the fast Fourier transform of subvectors of
 !  length three.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -855,6 +906,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 
+REAL(DP) :: ci2, cr2, di2, di3, dr2, dr3
+REAL(DP) :: taur, taui, ti2, ti3, tr2, tr3
+INTEGER:: i, ic, idp2, k
 DATA taur,taui /-.5D0,.866025403784439D0/
 
 DO  k=1,l1
@@ -893,7 +947,7 @@ SUBROUTINE radf4 (ido,l1,cc,ch,wa1,wa2,wa3)
 !  Calculate the fast Fourier transform of subvectors of
 !  length four.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -902,6 +956,12 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,4,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
+
+INTEGER:: i, ic, idp2, k
+REAL(DP):: ci2, ci3, ci4, cr2, cr3, cr4
+REAL(DP):: hsqt2
+REAL(DP):: ti1, ti2, ti3, ti4
+REAL(DP):: tr1, tr2, tr3, tr4
 
 DATA hsqt2 /.7071067811865475D0/
 
@@ -913,41 +973,41 @@ DO  k=1,l1
   ch(ido,2,k) = cc(1,k,1)-cc(1,k,3)
   ch(1,3,k) = cc(1,k,4)-cc(1,k,2)
 END DO
-IF (ido-2 < 0) THEN
-  GO TO   107
-ELSE IF (ido-2 == 0) THEN
-  GO TO   105
-END IF
-102 idp2 = ido+2
-DO  k=1,l1
-  DO  i=3,ido,2
-    ic = idp2-i
-    cr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
-    ci2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
-    cr3 = wa2(i-2)*cc(i-1,k,3)+wa2(i-1)*cc(i,k,3)
-    ci3 = wa2(i-2)*cc(i,k,3)-wa2(i-1)*cc(i-1,k,3)
-    cr4 = wa3(i-2)*cc(i-1,k,4)+wa3(i-1)*cc(i,k,4)
-    ci4 = wa3(i-2)*cc(i,k,4)-wa3(i-1)*cc(i-1,k,4)
-    tr1 = cr2+cr4
-    tr4 = cr4-cr2
-    ti1 = ci2+ci4
-    ti4 = ci2-ci4
-    ti2 = cc(i,k,1)+ci3
-    ti3 = cc(i,k,1)-ci3
-    tr2 = cc(i-1,k,1)+cr3
-    tr3 = cc(i-1,k,1)-cr3
-    ch(i-1,1,k) = tr1+tr2
-    ch(ic-1,4,k) = tr2-tr1
-    ch(i,1,k) = ti1+ti2
-    ch(ic,4,k) = ti1-ti2
-    ch(i-1,3,k) = ti4+tr3
-    ch(ic-1,2,k) = tr3-ti4
-    ch(i,3,k) = tr4+ti3
-    ch(ic,2,k) = tr4-ti3
+
+IF (ido < 2) THEN
+  RETURN
+ELSE IF (ido >2) THEN
+  idp2 = ido+2
+  DO  k=1,l1
+    DO  i=3,ido,2
+      ic = idp2-i
+      cr2 = wa1(i-2)*cc(i-1,k,2)+wa1(i-1)*cc(i,k,2)
+      ci2 = wa1(i-2)*cc(i,k,2)-wa1(i-1)*cc(i-1,k,2)
+      cr3 = wa2(i-2)*cc(i-1,k,3)+wa2(i-1)*cc(i,k,3)
+      ci3 = wa2(i-2)*cc(i,k,3)-wa2(i-1)*cc(i-1,k,3)
+      cr4 = wa3(i-2)*cc(i-1,k,4)+wa3(i-1)*cc(i,k,4)
+      ci4 = wa3(i-2)*cc(i,k,4)-wa3(i-1)*cc(i-1,k,4)
+      tr1 = cr2+cr4
+      tr4 = cr4-cr2
+      ti1 = ci2+ci4
+      ti4 = ci2-ci4
+      ti2 = cc(i,k,1)+ci3
+      ti3 = cc(i,k,1)-ci3
+      tr2 = cc(i-1,k,1)+cr3
+      tr3 = cc(i-1,k,1)-cr3
+      ch(i-1,1,k) = tr1+tr2
+      ch(ic-1,4,k) = tr2-tr1
+      ch(i,1,k) = ti1+ti2
+      ch(ic,4,k) = ti1-ti2
+      ch(i-1,3,k) = ti4+tr3
+      ch(ic-1,2,k) = tr3-ti4
+      ch(i,3,k) = tr4+ti3
+      ch(ic,2,k) = tr4-ti3
+    END DO
   END DO
-END DO
-IF (MOD(ido,2) == 1) RETURN
-105 CONTINUE
+  IF (MOD(ido,2) == 1) RETURN
+END IF
+
 DO  k=1,l1
   ti1 = -hsqt2*(cc(ido,k,2)+cc(ido,k,4))
   tr1 = hsqt2*(cc(ido,k,2)-cc(ido,k,4))
@@ -956,14 +1016,14 @@ DO  k=1,l1
   ch(1,2,k) = ti1-cc(ido,k,3)
   ch(1,4,k) = ti1+cc(ido,k,3)
 END DO
-107 RETURN
+RETURN
 END SUBROUTINE radf4
 
 SUBROUTINE radf5 (ido,l1,cc,ch,wa1,wa2,wa3,wa4)
 !  Calculate the fast Fourier transform of subvectors of
 !  length five.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
@@ -973,6 +1033,12 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
+
+INTEGER:: i, ic, idp2, k
+REAL(DP):: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5
+REAL(DP):: di2, di3, di4, di5, dr2, dr3, dr4, dr5
+REAL(DP):: ti11, ti12, ti2, ti3, ti4, ti5
+REAL(DP):: tr11, tr12, tr2, tr3, tr4, tr5
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
     -.809016994374947D0,.587785252292473D0/
@@ -1035,8 +1101,8 @@ END SUBROUTINE radf5
 SUBROUTINE radfg (ido,ip,l1,idl1,cc,c1,c2,ch,ch2,wa)
 !  Calculate the fast Fourier transform of subvectors of
 !  arbitrary length.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,tPI
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: ip
@@ -1049,7 +1115,9 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(1)
 
-DATA tpi/6.28318530717959D0/
+INTEGER:: i, ic, idij, idp2, ik, ipp2, ipph, is
+INTEGER:: j, j2, jc, k, l, lc, nbd
+REAL(DP):: ai1, ai2, ar1, ar1h, ar2, ar2h, arg, dc2, dcp, dsp, ds2
 
 arg = tpi/REAL(ip,DP)
 dcp = COS(arg)
@@ -1058,70 +1126,75 @@ ipph = (ip+1)/2
 ipp2 = ip+2
 idp2 = ido+2
 nbd = (ido-1)/2
-IF (ido == 1) GO TO 119
-DO  ik=1,idl1
-  ch2(ik,1) = c2(ik,1)
-END DO
-DO  j=2,ip
-  DO  k=1,l1
-    ch(1,k,j) = c1(1,k,j)
+IF (ido == 1) THEN
+  DO  ik=1,idl1
+    c2(ik,1) = ch2(ik,1)
   END DO
-END DO
-IF (nbd > l1) GO TO 107
-is = -ido
-DO  j=2,ip
-  is = is+ido
-  idij = is
-  DO  i=3,ido,2
-    idij = idij+2
+ELSE
+  DO  ik=1,idl1
+    ch2(ik,1) = c2(ik,1)
+  END DO
+  DO  j=2,ip
     DO  k=1,l1
-      ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
-      ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+      ch(1,k,j) = c1(1,k,j)
     END DO
   END DO
-END DO
-GO TO 111
-107 is = -ido
-DO  j=2,ip
-  is = is+ido
-  DO  k=1,l1
-    idij = is
-    DO  i=3,ido,2
-      idij = idij+2
-      ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
-      ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+  IF (nbd > l1) THEN 
+    is = -ido
+    DO  j=2,ip
+      is = is+ido
+      DO  k=1,l1
+        idij = is
+        DO  i=3,ido,2
+          idij = idij+2
+          ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
+          ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+        END DO
+      END DO
     END DO
-  END DO
-END DO
-111 IF (nbd < l1) GO TO 115
+  ELSE 
+    is = -ido
+    DO  j=2,ip
+      is = is+ido
+      idij = is
+      DO  i=3,ido,2
+        idij = idij+2
+        DO  k=1,l1
+          ch(i-1,k,j) = wa(idij-1)*c1(i-1,k,j)+wa(idij)*c1(i,k,j)
+          ch(i,k,j) = wa(idij-1)*c1(i,k,j)-wa(idij)*c1(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  END IF
+  
+  IF (nbd < l1) THEN 
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  i=3,ido,2
+        DO  k=1,l1
+          c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
+          c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
+          c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
+          c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  ELSE
+    DO  j=2,ipph
+      jc = ipp2-j
+      DO  k=1,l1
+        DO  i=3,ido,2
+          c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
+          c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
+          c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
+          c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
+        END DO
+      END DO
+    END DO
+  END IF
+END IF
+
 DO  j=2,ipph
-  jc = ipp2-j
-  DO  k=1,l1
-    DO  i=3,ido,2
-      c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
-      c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
-      c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
-      c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
-    END DO
-  END DO
-END DO
-GO TO 121
-115 DO  j=2,ipph
-  jc = ipp2-j
-  DO  i=3,ido,2
-    DO  k=1,l1
-      c1(i-1,k,j) = ch(i-1,k,j)+ch(i-1,k,jc)
-      c1(i-1,k,jc) = ch(i,k,j)-ch(i,k,jc)
-      c1(i,k,j) = ch(i,k,j)+ch(i,k,jc)
-      c1(i,k,jc) = ch(i-1,k,jc)-ch(i-1,k,j)
-    END DO
-  END DO
-END DO
-GO TO 121
-119 DO  ik=1,idl1
-  c2(ik,1) = ch2(ik,1)
-END DO
-121 DO  j=2,ipph
   jc = ipp2-j
   DO  k=1,l1
     c1(1,k,j) = ch(1,k,j)+ch(1,k,jc)
@@ -1155,25 +1228,28 @@ DO  l=2,ipph
     END DO
   END DO
 END DO
+
 DO  j=2,ipph
   DO  ik=1,idl1
     ch2(ik,1) = ch2(ik,1)+c2(ik,j)
   END DO
 END DO
 
-IF (ido < l1) GO TO 132
-DO  k=1,l1
+IF (ido < l1) THEN 
   DO  i=1,ido
-    cc(i,1,k) = ch(i,k,1)
+    DO  k=1,l1
+      cc(i,1,k) = ch(i,k,1)
+    END DO
   END DO
-END DO
-GO TO 135
-132 DO  i=1,ido
+ELSE
   DO  k=1,l1
-    cc(i,1,k) = ch(i,k,1)
+    DO  i=1,ido
+      cc(i,1,k) = ch(i,k,1)
+    END DO
   END DO
-END DO
-135 DO  j=2,ipph
+END IF
+
+DO  j=2,ipph
   jc = ipp2-j
   j2 = j+j
   DO  k=1,l1
@@ -1181,50 +1257,55 @@ END DO
     cc(1,j2-1,k) = ch(1,k,jc)
   END DO
 END DO
+
 IF (ido == 1) RETURN
-IF (nbd < l1) GO TO 141
-DO  j=2,ipph
-  jc = ipp2-j
-  j2 = j+j
-  DO  k=1,l1
+
+IF (nbd < l1) THEN
+  DO  j=2,ipph
+    jc = ipp2-j
+    j2 = j+j
     DO  i=3,ido,2
       ic = idp2-i
-      cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
-      cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
-      cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
-      cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      DO  k=1,l1
+        cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
+        cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
+        cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
+        cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      END DO
     END DO
   END DO
-END DO
-RETURN
-141 DO  j=2,ipph
-  jc = ipp2-j
-  j2 = j+j
-  DO  i=3,ido,2
-    ic = idp2-i
+ELSE
+  DO  j=2,ipph
+    jc = ipp2-j
+    j2 = j+j
     DO  k=1,l1
-      cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
-      cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
-      cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
-      cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      DO  i=3,ido,2
+        ic = idp2-i
+        cc(i-1,j2-1,k) = ch(i-1,k,j)+ch(i-1,k,jc)
+        cc(ic-1,j2-2,k) = ch(i-1,k,j)-ch(i-1,k,jc)
+        cc(i,j2-1,k) = ch(i,k,j)+ch(i,k,jc)
+        cc(ic,j2-2,k) = ch(i,k,jc)-ch(i,k,j)
+      END DO
     END DO
   END DO
-END DO
+END IF
+
 RETURN
+
 END SUBROUTINE radfg
 
 SUBROUTINE rfftf (n,r,wsave,ifac)
 ! Calls for rfftf1 if n is not 1
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: r(1)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
 INTEGER, INTENT(IN)                      ::ifac(10)
 
-IF (n == 1) RETURN
-CALL rfftf1 (n,r,wsave,wsave(n+1), ifac)
+IF (n /= 1) CALL rfftf1 (n,r,wsave,wsave(n+1), ifac)
+
 RETURN
 END SUBROUTINE rfftf
 
@@ -1289,13 +1370,16 @@ SUBROUTINE rfftf1 (n,c,ch,wa,ifac)
 !           not be destroyed between calls of subroutine RFFTF1 or
 !           RFFTB1.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: c(n)
 REAL(DP), INTENT(IN OUT)                 :: ch(1)
 REAL(DP), INTENT(IN)                     :: wa(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
+
+INTEGER:: i, idl1, ido, ip, iw, ix2, ix3, ix4
+INTEGER:: k1, kh, l1, l2, na, nf
 
 nf = ifac(2)
 na = 1
@@ -1309,44 +1393,56 @@ DO  k1=1,nf
   idl1 = ido*l1
   iw = iw-(ip-1)*ido
   na = 1-na
-  IF (ip /= 4) GO TO 102
-  ix2 = iw+ido
-  ix3 = ix2+ido
-  IF (na /= 0) GO TO 101
-  CALL radf4 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
-  GO TO 110
-  101    CALL radf4 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
-  GO TO 110
-  102    IF (ip /= 2) GO TO 104
-  IF (na /= 0) GO TO 103
-  CALL radf2 (ido,l1,c,ch,wa(iw))
-  GO TO 110
-  103    CALL radf2 (ido,l1,ch,c,wa(iw))
-  GO TO 110
-  104    IF (ip /= 3) GO TO 106
-  ix2 = iw+ido
-  IF (na /= 0) GO TO 105
-  CALL radf3 (ido,l1,c,ch,wa(iw),wa(ix2))
-  GO TO 110
-  105    CALL radf3 (ido,l1,ch,c,wa(iw),wa(ix2))
-  GO TO 110
-  106    IF (ip /= 5) GO TO 108
-  ix2 = iw+ido
-  ix3 = ix2+ido
-  ix4 = ix3+ido
-  IF (na /= 0) GO TO 107
-  CALL radf5 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  GO TO 110
-  107    CALL radf5 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
-  GO TO 110
-  108    IF (ido == 1) na = 1-na
-  IF (na /= 0) GO TO 109
-  CALL radfg (ido,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
-  na = 1
-  GO TO 110
-  109    CALL radfg (ido,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
-  na = 0
-  110    l2 = l1
+  !-------
+  SELECT CASE(ip)
+  !-------
+    CASE(4)
+      ix2 = iw+ido
+      ix3 = ix2+ido
+      IF (na /= 0) THEN
+        CALL radf4 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3))
+      ELSE
+        CALL radf4 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3))
+      END IF
+  !-------
+    CASE(2)
+      IF (na /= 0) THEN
+        CALL radf2 (ido,l1,ch,c,wa(iw))
+      ELSE
+        CALL radf2 (ido,l1,c,ch,wa(iw))
+      END IF
+  !-------   
+    CASE(3)
+      ix2 = iw+ido
+      IF (na /= 0) THEN 
+        CALL radf3 (ido,l1,ch,c,wa(iw),wa(ix2))
+      ELSE 
+        CALL radf3 (ido,l1,c,ch,wa(iw),wa(ix2))
+      END IF
+  !-------
+    CASE(5)
+      ix2 = iw+ido
+      ix3 = ix2+ido
+      ix4 = ix3+ido
+      IF (na /= 0) THEN 
+        CALL radf5 (ido,l1,ch,c,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      ELSE 
+        CALL radf5 (ido,l1,c,ch,wa(iw),wa(ix2),wa(ix3),wa(ix4))
+      END IF
+  !-------
+    CASE DEFAULT
+      IF (ido == 1) na = 1-na
+      IF (na /= 0) THEN 
+        CALL radfg (ido,ip,l1,idl1,ch,ch,ch,c,c,wa(iw))
+        na = 0
+      ELSE
+        CALL radfg (ido,ip,l1,idl1,c,c,c,ch,ch,wa(iw))
+        na = 1
+      END IF
+  !-------
+    END SELECT
+  !-------
+  l2 = l1
 END DO
 IF (na == 1) RETURN
 DO  i=1,n
@@ -1377,11 +1473,14 @@ SUBROUTINE cosqi (n,wsave,ifac)
 !  IFAC    an integer work array which must be dimensioned at least 15.
 !          Condtions applying on WSAVE also apply on IFAC. 
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: wsave(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
+
+INTEGER:: k
+REAL(DP):: dt, fk, pih
 
 DATA pih /1.57079632679491D0/
 
@@ -1397,7 +1496,7 @@ END SUBROUTINE cosqi
 
 SUBROUTINE cost (n,x,wsave,ifac)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !  Subroutine COST computes the discrete Fourier cosine transform
 !  of an even sequence X(I).  The transform is defined below at output
@@ -1453,51 +1552,58 @@ REAL(DP), INTENT(IN OUT)                 :: x(n)
 REAL(DP), INTENT(IN OUT)                 :: wsave(1)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
+INTEGER::i, k, kc, modn, nm1, np1, ns2
+REAL(DP):: c1, t1, t2, tx2, x1h, x1p3, xi, xim2
+
 nm1 = n-1
 np1 = n+1
 ns2 = n/2
-IF (n < 2) THEN
-  GO TO   106
-ELSE IF (n == 2) THEN
-  GO TO   101
-ELSE
-  GO TO   102
-END IF
-101 x1h = x(1)+x(2)
-x(2) = x(1)-x(2)
-x(1) = x1h
+!-------
+SELECT CASE(n)
+!-------
+  CASE(:1)
+    STOP 'in cost : vector of size n too small for Fourier transform'
+!-------
+  CASE(2)
+    x1h = x(1)+x(2)
+    x(2) = x(1)-x(2)
+    x(1) = x1h
+!-------
+  CASE(3)
+    x1p3 = x(1)+x(3)
+    tx2 = x(2)+x(2)
+    x(2) = x(1)-x(3)
+    x(1) = x1p3+tx2
+    x(3) = x1p3-tx2
+!-------
+  CASE DEFAULT
+    c1 = x(1)-x(n)
+    x(1) = x(1)+x(n)
+    DO  k=2,ns2
+      kc = np1-k
+      t1 = x(k)+x(kc)
+      t2 = x(k)-x(kc)
+      c1 = c1+wsave(kc)*t2
+      t2 = wsave(k)*t2
+      x(k) = t1-t2
+      x(kc) = t1+t2
+    END DO
+    modn = MOD(n,2)
+    IF (modn /= 0) x(ns2+1) = x(ns2+1)+x(ns2+1)
+    CALL rfftf (nm1,x,wsave(n+1),ifac)
+    xim2 = x(2)
+    x(2) = c1
+    DO  i=4,n,2
+      xi = x(i)
+      x(i) = x(i-2)-x(i-1)
+      x(i-1) = xim2
+      xim2 = xi
+    END DO
+    IF (modn /= 0) x(n) = xim2
+!-------
+END SELECT
+!-------
 RETURN
-102 IF (n > 3) GO TO 103
-x1p3 = x(1)+x(3)
-tx2 = x(2)+x(2)
-x(2) = x(1)-x(3)
-x(1) = x1p3+tx2
-x(3) = x1p3-tx2
-RETURN
-103 c1 = x(1)-x(n)
-x(1) = x(1)+x(n)
-DO  k=2,ns2
-  kc = np1-k
-  t1 = x(k)+x(kc)
-  t2 = x(k)-x(kc)
-  c1 = c1+wsave(kc)*t2
-  t2 = wsave(k)*t2
-  x(k) = t1-t2
-  x(kc) = t1+t2
-END DO
-modn = MOD(n,2)
-IF (modn /= 0) x(ns2+1) = x(ns2+1)+x(ns2+1)
-CALL rfftf (nm1,x,wsave(n+1),ifac)
-xim2 = x(2)
-x(2) = c1
-DO  i=4,n,2
-  xi = x(i)
-  x(i) = x(i-2)-x(i-1)
-  x(i-1) = xim2
-  xim2 = xi
-END DO
-IF (modn /= 0) x(n) = xim2
-106 RETURN
 END SUBROUTINE cost
 
 
@@ -1527,14 +1633,15 @@ SUBROUTINE costi (n,wsave,ifac)
 !          Different IFAC arrays are required for different values
 !          of N.  The contents of IFAC must not be changed between
 !          calls of COST.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP, PI
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: wsave(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 
-DATA pi /3.14159265358979D0/
+INTEGER:: k, kc, nm1, np1, ns2
+REAL(DP):: dt, fk
 
 IF (n <= 3) RETURN
 nm1 = n-1
@@ -1555,7 +1662,7 @@ END SUBROUTINE costi
 SUBROUTINE rffti (n,wsave,ifac)
 ! Calls rffti1 if n is not 1 
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: wsave(1)
@@ -1615,28 +1722,34 @@ SUBROUTINE sinqb (n,x,wsave,ifac)
 !          be destroyed between calls of SINQB or SINQF.
 !
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: x(n)
 REAL(DP), INTENT(IN OUT)                 :: wsave(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
-IF (n > 1) GO TO 101
-x(1) = 4D0*x(1)
+INTEGER:: k, kc, ns2
+REAL(DP):: xhold
+
+IF (n > 1) THEN 
+  ns2 = n/2
+  DO  k=2,n,2
+    x(k) = -x(k)
+  END DO
+  CALL cosqb (n,x,wsave,ifac)
+  DO  k=1,ns2
+    kc = n-k
+    xhold = x(k)
+    x(k) = x(kc+1)
+    x(kc+1) = xhold
+  END DO
+ELSE
+  x(1) = 4D0*x(1)
+END IF
+
 RETURN
-101 ns2 = n/2
-DO  k=2,n,2
-  x(k) = -x(k)
-END DO
-CALL cosqb (n,x,wsave,ifac)
-DO  k=1,ns2
-  kc = n-k
-  xhold = x(k)
-  x(k) = x(kc+1)
-  x(kc+1) = xhold
-END DO
-RETURN
+
 END SUBROUTINE sinqb
 
 SUBROUTINE sinqf (n,x,wsave,ifac)
@@ -1689,12 +1802,15 @@ SUBROUTINE sinqf (n,x,wsave,ifac)
 !  WSAVE and IFAC   contains initialization calculations which must not
 !          be destroyed between calls of SINQF or SINQB.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: x(n)
 REAL(DP), INTENT(IN OUT)                 :: wsave(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
+
+INTEGER:: k, kc, ns2
+REAL(DP):: xhold
 
 IF (n == 1) RETURN
 ns2 = n/2
@@ -1715,7 +1831,7 @@ SUBROUTINE sinqi (n,wsave,ifac)
 ! Initialize work arrays for SINQF and SINQB  
 ! Same as COSQI
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN OUT)                  :: n
 REAL(DP), INTENT(IN OUT)                 :: wsave(1)
@@ -1772,12 +1888,14 @@ SUBROUTINE sint (n,x,wsave,ifac)
 !  WSAVE and IFAC contain initialization calculations which must not be
 !          destroyed between calls of SINT.
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: x(n)
 REAL(DP), INTENT(IN OUT)                 :: wsave(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
+
+INTEGER:: iw1, iw2, iw3, np1
 
 np1 = n+1
 iw1 = n/2+1
@@ -1790,7 +1908,7 @@ END SUBROUTINE sint
 SUBROUTINE sint1(n,war,was,xh,x,ifac)
 ! See sint
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: war(1)
@@ -1799,66 +1917,67 @@ REAL(DP), INTENT(OUT)                    :: xh(10)
 REAL(DP), INTENT(IN OUT)                 :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
+INTEGER:: i, k, kc, modn, np1, ns2
+REAL(DP):: sqrt3, t1, t2, xhold
+
 DATA sqrt3 /1.73205080756888D0/
 
 DO  i=1,n
   xh(i) = war(i)
   war(i) = x(i)
 END DO
+
 IF (n < 2) THEN
-  GO TO   101
+  xh(1) = xh(1)+xh(1)
 ELSE IF (n == 2) THEN
-  GO TO   102
+  xhold = sqrt3*(xh(1)+xh(2))
+  xh(2) = sqrt3*(xh(1)-xh(2))
+  xh(1) = xhold
 ELSE
-  GO TO   103
+  np1 = n+1
+  ns2 = n/2
+  x(1) = 0D0
+  DO  k=1,ns2
+    kc = np1-k
+    t1 = xh(k)-xh(kc)
+    t2 = was(k)*(xh(k)+xh(kc))
+    x(k+1) = t1+t2
+    x(kc+1) = t2-t1
+  END DO
+  modn = MOD(n,2)
+  IF (modn /= 0) x(ns2+2) = 4.*xh(ns2+1)
+  CALL rfftf1 (np1,x,xh,war,ifac)
+  xh(1) = .5D0*x(1)
+  DO  i=3,n,2
+    xh(i-1) = -x(i)
+    xh(i) = xh(i-2)+x(i-1)
+  END DO
+  IF (modn == 0) xh(n) = -x(n+1)
 END IF
-101 xh(1) = xh(1)+xh(1)
-GO TO 106
-102 xhold = sqrt3*(xh(1)+xh(2))
-xh(2) = sqrt3*(xh(1)-xh(2))
-xh(1) = xhold
-GO TO 106
-103 np1 = n+1
-ns2 = n/2
-x(1) = 0D0
-DO  k=1,ns2
-  kc = np1-k
-  t1 = xh(k)-xh(kc)
-  t2 = was(k)*(xh(k)+xh(kc))
-  x(k+1) = t1+t2
-  x(kc+1) = t2-t1
-END DO
-modn = MOD(n,2)
-IF (modn /= 0) x(ns2+2) = 4.*xh(ns2+1)
-CALL rfftf1 (np1,x,xh,war,ifac)
-xh(1) = .5D0*x(1)
-DO  i=3,n,2
-  xh(i-1) = -x(i)
-  xh(i) = xh(i-2)+x(i-1)
-END DO
-IF (modn /= 0) GO TO 106
-xh(n) = -x(n+1)
-106 DO  i=1,n
+
+DO  i=1,n
   x(i) = war(i)
   war(i) = xh(i)
 END DO
+
 RETURN
 END SUBROUTINE sint1
 
 SUBROUTINE sinti (n,wsave,ifac)
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP,PI
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: wsave(1)
 INTEGER,INTENT(OUT)                      :: ifac(10)
 
-DATA pi /3.14159265358979D0/
+INTEGER:: k, np1, ns2
+REAL(DP):: dt
 
 IF (n <= 1) RETURN
 ns2 = n/2
 np1 = n+1
-dt = pi/REAL(np1,DP)
+dt = PI/REAL(np1,DP)
 DO  k=1,ns2
   wsave(k) = 2D0*SIN(k*dt)
 END DO
@@ -1886,46 +2005,54 @@ SUBROUTINE rffti1 (n,wa,ifac)
 !   as N remains unchanged.  Different WA and IFAC arrays are required
 !   for different values of N.  The contents of WA and IFAC must not be
 !   changed between calls of RFFTF1 or RFFTB1.
-USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY:DP, tPI
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: wa(1)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 INTEGER :: ntryh(4)
+
+INTEGER:: i, ib, ido, ii, ip, ipm, is
+INTEGER:: j, k1, l1, l2, ld, nf, nfm1, nl, nq, nr, ntry
+
+REAL(DP):: arg, argh, argld, fi
+
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/
 
 nl = n
 nf = 0
-j = 0
-101 j = j+1
-IF (j > 4) THEN
-  GO TO   103
-END IF
-102 ntry = ntryh(j)
-GO TO 104
-103 ntry = ntry+2
-104 nq = nl/ntry
-nr = nl-ntry*nq
-IF (nr == 0) THEN
-  GO TO   105
-ELSE
-  GO TO   101
-END IF
-105 nf = nf+1
-ifac(nf+2) = ntry
-nl = nq
-IF (ntry /= 2) GO TO 107
-IF (nf == 1) GO TO 107
-DO  i=2,nf
-  ib = nf-i+2
-  ifac(ib+2) = ifac(ib+1)
-END DO
-ifac(3) = 2
-107 IF (nl /= 1) GO TO 104
+j = 1
+ntry = ntryh(1)
+
+DO WHILE (nl /= 1) 
+  nq = nl/ntry
+  nr = nl-ntry*nq
+  IF (nr /= 0) THEN
+    j = j+1
+    IF (j <= 4) THEN
+      ntry = ntryh(j)
+    ELSE
+      ntry = ntry+2
+    END IF
+    CYCLE
+  END IF
+
+  nf = nf+1
+  ifac(nf+2) = ntry
+  nl = nq
+  IF (ntry == 2 .AND. nf/=1 ) THEN
+    DO  i=2,nf
+      ib = nf-i+2
+      ifac(ib+2) = ifac(ib+1)
+    END DO
+    ifac(3) = 2
+  END IF
+ENDDO
+
+
 ifac(1) = n
 ifac(2) = nf
-tpi = 6.28318530717959D0
 argh = tpi/REAL(n,DP)
 is = 0
 nfm1 = nf-1
@@ -1941,7 +2068,7 @@ DO  k1=1,nfm1
     ld = ld+l1
     i = is
     argld = REAL(ld,DP)*argh
-    fi = 0.
+    fi = 0D0
     DO  ii=3,ido,2
       i = i+2
       fi = fi+1D0
