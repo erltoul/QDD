@@ -386,6 +386,8 @@ INTEGER :: num_gpus !total number of gpus on the node
 INTEGER :: mygpu !number of the actual gpu used by the node
 #endif
 
+INTEGER::NE
+
 !                          these includes should be shifted to own modules
 #if(raregas)
 #include "surf.F90"

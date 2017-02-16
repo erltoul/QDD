@@ -119,7 +119,7 @@ REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
 REAL(DP) :: xdielec=0D0
-INTEGER :: NE=0,nc=0,nk=0
+INTEGER :: nc=0,nk=0
 INTEGER :: nlayers,nside,iararlj, ipog
 INTEGER :: iforcecl2co=0
 
