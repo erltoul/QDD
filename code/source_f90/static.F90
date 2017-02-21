@@ -1100,7 +1100,9 @@ DO nb=1,nstate
   sumvar2   = sumvar2 + occup(nb)*evarsp2(nb)**2
   enonlc   = enonlc + enonlo(nb)*occup(nb)
 !  WRITE(*,*) ' check: nbe,bvar2=',nbe,evarsp2(nb)
-        if(nc+nk+ne.gt.0) ecorr=energ_ions()
+#if(raregas)
+  IF(nc+nk+ne.gt.0) ecorr=energ_ions()
+#endif
 END DO
 
 ecorr=energ_ions()

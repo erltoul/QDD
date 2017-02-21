@@ -153,7 +153,6 @@ CALL i_scatter(jelf)
 CALL i_scatter(jstinf)
 CALL i_scatter(impactb)
 CALL i_scatter(izforcecorr)
-CALL i_scatter(iclassicmd)
 CALL i_scatter(ntref)
 CALL i_scatter(iangabso)
 CALL i_scatter(ipes)
@@ -305,10 +304,11 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(nclust,1,mpi_integer,nod,2,mpi_comm_world,ic)
     
     CALL mpi_send(nion,1,mpi_integer,nod,2,mpi_comm_world,ic)
+#if(raregas)    
     CALL mpi_send(nc,1,mpi_integer,nod,2,mpi_comm_world,ic)
     CALL mpi_send(NE,1,mpi_integer,nod,2,mpi_comm_world,ic)
     CALL mpi_send(nk,1,mpi_integer,nod,2,mpi_comm_world,ic)
-    
+#endif    
     CALL mpi_send(scaleclust,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
     CALL mpi_send(charge,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -340,15 +340,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dpolx,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpoly,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpolz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(bcol1,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(bcol2,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(dbcol,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(ntheta,1,mpi_integer,nod,2,mpi_comm_world,ic)
-    CALL mpi_send(nphi,1,mpi_integer,nod,2,mpi_comm_world,ic)
-    CALL mpi_send(betacol,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(chgcol,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
-    CALL mpi_send(ipotstatic,1,mpi_integer,nod,2, mpi_comm_world,ic)
     CALL mpi_send(surftemp,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmac,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmav,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -374,17 +366,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(shiftz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
     CALL mpi_send(iaxis,1,mpi_integer,nod,2, mpi_comm_world,ic)
-    
-    CALL mpi_send(distlayers,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(disttolerance,1,mpi_double_precision,nod,2,  &
-        mpi_comm_world,ic)
-    
-    CALL mpi_send(nunflayc,1,mpi_integer,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(nunflaye,1,mpi_integer,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(nunflayk,1,mpi_integer,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(runfrowc,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(runfrowe,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    CALL mpi_send(runfrowk,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
   END DO
   
@@ -556,20 +537,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(dpolz,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
-  CALL mpi_recv(bcol1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(bcol2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(dbcol,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(ntheta,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(nphi,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(betacol,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(chgcol,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
   
-  CALL mpi_recv(ipotstatic,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(surftemp,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(sigmac,1,mpi_double_precision,0,mpi_any_tag,  &
@@ -609,21 +577,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   
   CALL mpi_recv(iaxis,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  
-  CALL mpi_recv(distlayers,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(disttolerance,1,mpi_double_precision,0,  &
-      mpi_any_tag,mpi_comm_world,is,ic)
-  
-  CALL mpi_recv(nunflayc,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(nunflaye,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(nunflayk,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(runfrowc,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(runfrowe,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(runfrowk,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
   
 END IF
 

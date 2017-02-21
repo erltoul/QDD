@@ -140,10 +140,11 @@ INTEGER,ALLOCATABLE :: nrel2abs_other(:,:)      !  pointer to wfs
 INTEGER,ALLOCATABLE :: nhome(:)                 !  home node of wf
 
 
-#if(parayes)
+#if(parayes||simpara)
 INTEGER,ALLOCATABLE ::  nstate_node(:)   ! number of active states in a node
 INTEGER,ALLOCATABLE ::  nstart_node(:)   ! offset address for counting in a node
 INTEGER,ALLOCATABLE ::  ispin_node(:,:)
+INTEGER :: icode, mpi_ierror  ! why 2 variables ? 
 #endif
 
 
@@ -249,8 +250,6 @@ REAL(DP) :: tempion=0D0,dt1=0D0
 REAL(DP) :: centfx=0D0,centfy=0D0,centfz=0D0
 REAL(DP) :: shiftinix=0D0,shiftiniy=0D0,shiftiniz=0D0
 
-REAL(DP) :: bcol1=0D0,bcol23=0D0,dbcol=0.1D0,betacol=0.99D0,chgcol=0D0
-INTEGER :: ntheta=0,nphi=0
 #if(parayes)
 INTEGER :: ifhamdiag=0
 #endif
@@ -385,9 +384,6 @@ INTEGER,ALLOCATABLE :: lengnod(:),displ(:)
 INTEGER :: num_gpus !total number of gpus on the node
 INTEGER :: mygpu !number of the actual gpu used by the node
 #endif
-
-INTEGER::NE
-
 !                          these includes should be shifted to own modules
 #if(raregas)
 #include "surf.F90"
@@ -550,7 +546,6 @@ END SUBROUTINE init_fields
 #if(raregas)
 
 SUBROUTINE init_raregas()
-iprifixed=0
 ipotfixed=0
 ifmdshort=1
 ifadiadip=0
@@ -561,14 +556,6 @@ chgk0=2D0
 
 iararlj=1
 scaledist=1D0
-distlayers=4D0
-disttolerance=0.5D0
-nunflayc=20
-nunflaye=20
-nunflayk=20
-runfrowc=20D0
-runfrowe=20D0
-runfrowk=20D0
 fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitly
 fermib=1D0
 fermic=1D0

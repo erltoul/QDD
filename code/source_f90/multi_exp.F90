@@ -74,7 +74,7 @@ ALLOCATE(qactfine(kdfull2fine))
 ALLOCATE(qarray (nx2,ny2,nz2),qarrayfine (2*nx2,2*ny2,2*nz2))
 #endif
 
-  cdtact = CMPLX(dt1/2.0,0D0)
+  cdtact = CMPLX(dt1/2D0,0D0)
 
 !----------------------------------------------------------------------
 
@@ -127,10 +127,10 @@ x=q0
 !END DO
 
 !error
-rnorm_err=1.0
-relax=0.25
-threshold1=1e-1
-threshold=1e-7
+rnorm_err=1D0
+relax=0.25D0
+threshold1=1D-1
+threshold=1D-7
 iter_CN=0
 
 
@@ -142,11 +142,11 @@ CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 CALL  mpi_comm_rank(mpi_comm_world,level,icode)
 kdfull28=(kxbox/2)*(kybox/2)*(kzbox/2)
 
-        if(level.ne.0) then
-   do nb=1,nstate
-call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_World,is,ic)
-enddo
-call mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_World,is,ic)
+if(level.ne.0) then
+  do nb=1,nstate
+    call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_World,is,ic)
+  enddo
+  call mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_World,is,ic)
 endif
 
 
@@ -154,27 +154,27 @@ endif
 #endif
 ! begin of self consistent Crank Nicolson relaxation loop 
 do while (rnorm_err.gt.threshold1) 
-      errcn= q0-y
-      ro= rnorm_err
-      rnorm_err= 0.0
+    errcn= q0-y
+    ro= rnorm_err
+    rnorm_err= 0D0
    do nb=1,1
       rnorm_err=rnorm_err+wfnorm(errcn(:,nb))
    enddo
    write(6,*) 'err in crank step  1',rnorm_err,level,relax
    if(ro.lt.rnorm_err) then
-               relax=relax*0.7
+               relax=relax*0.7D0
    else
-               relax=relax*1.2
+               relax=relax*1.2D0
    endif
    x=x-relax*errcn
    q0=x
    iter_CN=iter_CN+1
    if (iter_CN.gt.25)then
      write(*,*) ' warning Crank-Nicolson 1',iter_CN
-     rnorm_err=0
+     rnorm_err=0D0
      else
    if (iter_CN.lt.1)then
-     rnorm_err=1.0
+     rnorm_err=1D0
      else
    if(mod(iter_CN,30).eq.0) CALL dyn_mfield(rho,aloc,x,dt1)
 
@@ -220,15 +220,15 @@ endif
 do while (rnorm_err.gt.threshold) 
       errcn= q0-y
       ro=rnorm_err
-      rnorm_err= 0.0
+      rnorm_err= 0D0
    do nb=1,1
       rnorm_err=rnorm_err+wfnorm(errcn(:,nb))
    enddo
    write(6,*) 'err in crank step 2',rnorm_err,level,relax
    if(ro.lt.rnorm_err) then
-               relax=relax*0.7
+               relax=relax*0.7D0
    else
-               relax=relax*1.2
+               relax=relax*1.2D0
    endif
    x=x-relax*errcn
    q0=x
@@ -239,9 +239,9 @@ do while (rnorm_err.gt.threshold)
      rnorm_err=0
       
      if(level.eq.0) then
-     dt1=dt1*1.00
+     dt1=dt1*1D0
      write(6,*) 'reduce dt to',dt1
-     cdtact = CMPLX(dt1/2.0,0D0)
+     cdtact = CMPLX(dt1/2D0,0D0)
      endif
      else
    if (iter_CN.lt.1)then
@@ -257,9 +257,9 @@ do while (rnorm_err.gt.threshold)
 end Do
    if (iter_CN.lt.150*(level+1))then
      if(level.eq.0) then
-     dt1=dt1*1.00
+     dt1=dt1*1D0
      write(6,*) 'increase dt to',dt1
-     cdtact = CMPLX(dt1/2.0,0D0)
+     cdtact = CMPLX(dt1/2D0,0D0)
      endif
      endif
 

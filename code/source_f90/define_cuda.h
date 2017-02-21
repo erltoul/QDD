@@ -24,7 +24,7 @@
 //  
 // switch to extended model with polarizable raregas
 //
-#define raregas 0
+#define raregas 1
 //
 // switch to old version of 'kinprop' with interlaced 1D FFT
 //#define oldkinprop 0

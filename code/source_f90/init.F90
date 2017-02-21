@@ -28,7 +28,7 @@ SUBROUTINE initnamelists
 !------------------------------------------------------------
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 CHARACTER (LEN=80) :: title
 !      character*10 fname(0:3)
@@ -36,6 +36,8 @@ CHARACTER (LEN=80) :: title
 !     &           'for005.100','for005.101','for005.110'/
 
 INTEGER,PARAMETER :: kparall=11
+INTEGER:: iu, nnx2
+REAL(DP)::dx2
 #if(simpara)
 CHARACTER (LEN=10) :: fname(0:kparall)
 !      data fname/'for005.001','for005.010','for005.011',
@@ -45,19 +47,33 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
 #endif
+#if(raregas)
 NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
     epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
-    bcol1,bcol2,dbcol,ntheta,nphi,betacol,chgcol, scaleclust,  &
-    scaleclustx,scaleclusty,scaleclustz, &
+    scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
     idebug,ishiftcmtoorigin,iaddcluster,  &
     iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
     ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
     nproj_states
+#else
+NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
+    temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
+    init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
+    radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
+    epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
+    scaleclust,scaleclustx,scaleclusty,scaleclustz, &
+    shiftclustx,shiftclusty,shiftclustz,  &
+    rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
+    idebug,ishiftcmtoorigin,iaddcluster,  &
+    iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
+    ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
+    nproj_states
+#endif
 
 
 !*************************************************************
@@ -100,7 +116,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     projinix,projiniy,projiniz, &
     e1x,e1y,e1z,e2x,e2y,e2z,phi,  &
     phase2,omega2,e0_2,tstart2,tpeak2, &
-    izforcecorr, iclassicmd, dinmargin,  &
+    izforcecorr, dinmargin,  &
     ntref,iangabso,ipes,nangtheta,nangphi,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
     ifreezekspot,powabso,ispherabso,ifixcmion,  &
@@ -117,14 +133,13 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     phangle,phphase,nhstate,npstate, &
     jstateoverlap
 
-
+#if(raregas)
 NAMELIST /surface/  &
-    ipotstatic,iprifixed,surftemp,ipotfixed,ifmdshort,ifadiadip,  &
-    sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0,ifreezedipoles,  &
+    surftemp,ipotfixed,ifmdshort,ifadiadip,  &
+    sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0, &
     cspr,mion,me,mkat,isrtyp,isrtypall,  &
-    shiftx,shifty,shiftz,scaledist,scaledistx,scaledisty,  &
-    scaledistz,iprintonlyifmob, iaxis,distlayers,disttolerance,  &
-    nunflayc,nunflaye,nunflayk, runfrowc,runfrowe,runfrowk,  &
+    shiftx,shifty,shiftz,scaledist, &
+    iprintonlyifmob, iaxis,  &
     fermia,fermib,fermic, fermiac,fermibc,fermicc,  &
     fermiae,fermibe,fermice, fermiak,fermibk,fermick,  &
     fermia2c,fermib2c,fermic2c, fermia2e,fermib2e,fermic2e,  &
@@ -133,12 +148,12 @@ NAMELIST /surface/  &
     sigcv,bcv,ccv, sigck,bck,cck,  &
     sigcc,bcc,ccc, sigcn,bcn,ccn,  &
     sigkn,bkn,ckn, sigkn2,bkn2,  &
-    ccn2,ccn3,ccn4,ccn4,ccn5,ccn6,ccn7,ccn8,ccnd,dcn,  &
+    ccn2,ccn3,ccn4,ccn5,ccn6,ccn7,ccn8,ccnd,dcn,  &
     ccn9,ccn10,ccncu2,ccncu3,ccncu4,ccncu5,ccncu6,ccncu7,  &
     ccncu8,ccncu9,ccncu10,ccncud,  &
     ccncul2,ccncul3,ccncul4,ccncul5,ccncul6,ccncul7,  &
     ccncul8,ccncul9,ccncul10,ccnculd,  &
-    ckn2,ckn3,ckn4,ckn4,ckn5,ckn6,ckn7,ckn8,cknd,dkn,  &
+    ckn2,ckn3,ckn4,ckn5,ckn6,ckn7,ckn8,cknd,dkn,  &
     ckn9,ckn10,ckncu2,ckncu3,ckncu4,ckncu5,ckncu6,ckncu7,  &
     ckncu8,ckncu9,ckncu10,ckncud,  &
     ckncul2,ckncul3,ckncul4,ckncul5,ckncul6,ckncul7,  &
@@ -151,8 +166,7 @@ NAMELIST /surface/  &
     fixcbelowx,fixebelowx,fixkbelowx, unfixcrad,unfixerad,unfixkrad,  &
     iusecell,iuselast,ibh,cbh,iforcecl2co, &
     enerinfty,epsdi,idielec,xdielec,iararlj
-
-
+#endif
 
 
 WRITE(6,*) 'Reading for005.// ...'
@@ -238,9 +252,10 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     END IF
     READ(5,dynamic,END=99999)
     WRITE(*,*) ' DYNAMIC read'
+#if(raregas)    
     READ(5,surface,END=99999)
     WRITE(*,*) ' SURFACE read'
-    
+#endif
     99999    CLOSE(5)
 
     IF(jdip<0) STOP "you must specify JDIP in namelist DYNAMIC"
@@ -288,7 +303,7 @@ SUBROUTINE changeperio
 !     Reads pseudo potential parameters from namelist
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !      namelist /perio/ ch(-99:99),amu(-99:99),
 NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
@@ -314,7 +329,7 @@ SUBROUTINE iparams()
 !     check consistency of input parameters, do some initializations
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTERFACE 
   SUBROUTINE calc_lda_gunnar(rho,chpdft)
@@ -331,6 +346,10 @@ INTERFACE
   END SUBROUTINE calc_lda_pw92
 END INTERFACE
 
+#if(raregas)
+INTEGER :: i,j
+#endif
+INTEGER :: n
 !--------------------------------------------------------------
 
 
@@ -338,8 +357,9 @@ n = myn
 
 
 !     some initializations
-
+#if(raregas)
 NE = nc
+#endif
 trequest=trequest*60D0
 phi=phi*pi/180D0              ! convert input 'phi' from degree
 
@@ -476,8 +496,8 @@ SUBROUTINE ocoption(iu)
 !     output of compiled and of read-in options
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
+INTEGER :: iu
 !----------------------------------------------------------------
 
 IF(iu == 8) OPEN(8,STATUS='unknown',FORM='formatted',  &
@@ -686,12 +706,14 @@ WRITE(iu,'(a/a,i3,5f8.3/a,7f8.3)') ' laser:',  &
     ' itft,tnode,deltat,tpeak,omega,e0=', itft,tnode,deltat,tpeak,omega,e0,  &
     ' e1x,e1y,e1z,e2x,e2y,e2z,phi=', e1x,e1y,e1z,e2x,e2y,e2z,phi
 
+#if(raregas)
 IF (isurf /= 0) THEN
   WRITE(iu,*) '*************************************************'
   WRITE(iu,*) 'SURFACE/MATRIX PRESENT:'
   WRITE(iu,'(a,i4,a,i4)') 'GSM particles: ',nc,'  cations: ',nk
   WRITE(iu,*) '*************************************************'
 END IF
+#endif
 
 
 WRITE(iu,*) 'CODE VERSION: ', IVERSION
@@ -708,7 +730,9 @@ SUBROUTINE init_output()
 !     write headers of output files
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER :: i,j,maxnum
+REAL(DP) :: ascal
 CHARACTER (LEN=3) :: num
 
 !------------------------------------------------------------------
@@ -758,20 +782,18 @@ WRITE(6,'(a,3i5,i8,g12.4)') ' INIT: nx,ny,nz,nxyz,dvol=',  &
 
 !       output static parameters (traditional sodium case)
 
-if(nclust>0) then
-        WRITE(7,'(5x,a,i2,a,i2/a/)')  &
-        '# electr.: ',nclust,'# ions: ',nion,'=========='
-else
-       WRITE(7,'(5x,a,i2,a,i2/a/)')  &
-      '# charge.: ',nclust,'# ions: ',nion,'=========='
-             nstate=nion+nclust
-       if(ipsptyp<1) then
-       if(ipseudo<1) then
-                   nclust=nstate
-                   nspdw=nstate/2
-       endif
-       endif
-endif
+IF(nclust>0) THEN
+  WRITE(7,'(5x,a,i2,a,i2/a/)')  &
+  '# electr.: ',nclust,'# ions: ',nion,'=========='
+ELSE
+  WRITE(7,'(5x,a,i2,a,i2/a/)')  &
+  '# charge.: ',nclust,'# ions: ',nion,'=========='
+       nstate=nion+nclust
+  IF(ipsptyp<1  .AND. ipseudo<1) THEN
+    nclust=nstate
+    nspdw=nstate/2
+  ENDIF
+ENDIF
 WRITE(7,'(a,i3)') 'number of alkali wave-fkts nstate = ',nstate
 
 WRITE(7,'(a,f4.2)') 'initialisation : osfac=',osfac
@@ -918,11 +940,13 @@ SUBROUTINE iperio
 !      and parameters for the pseudo-potentials
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
 !      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
-REAL(DP) :: dr1(-99:99),dr2(-99:99),totvalelec=0D0
-REAL(DP) :: prho1(-99:99),prho2(-99:99)
+INTEGER :: i,iel,natom,icountt,inew,iskip
+INTEGER :: l,nactual,nval
+REAL(DP) :: amfac,c1,c2,c3,c4,crr,h11,h22,h33,rloc
+REAL(DP) :: scpx,scpy,scpz
 character (len=3) ::  naml
 character (len=2)  ::  namc,symb(99)
 character(len=80) ::  a
@@ -1515,19 +1539,23 @@ SUBROUTINE initions()
 
 USE params
 USE util, ONLY:getcm,givetemperature,rotatevec3D
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 CHARACTER (LEN=3) :: orderxyz
+REAL(DP) :: dd, distmax, xcm, ycm, zcm, ctmpx, ctmpy, ctmpz
+REAL(DP) :: optis, dgrid, sumion, v0, rnorm, tempv, xm
+REAL(DP) :: vxn02,vyn02,vzn02
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
-integer ::  igrid(7)
+INTEGER :: i,ii,inx,inxg,ion,iunit,n,nxopti
+
+INTEGER ::  igrid(7)
 data igrid /32,48,64,72,96,128,160/
 
+REAL(DP),EXTERNAL :: energ_ions
 
 IF(nion2 == 0) THEN
   ecorr = 0D0
   RETURN       ! this is the case of jellium
 END IF
-
-n = myn
 
 WRITE (6,*) 'Entering initions()'
 
@@ -1631,11 +1659,13 @@ WRITE (6,*) 'Entering initions()'
     xcm = 0D0
     ycm = 0D0
     zcm = 0D0
+#if(raregas)    
     DO i=1,nc
       xcm = xcm + cx(i)
       ycm = ycm + cy(i)
       zcm = zcm + cz(i)
     END DO
+#endif
     xcm = xcm/nion
     ycm = ycm/nion
     zcm = zcm/nion
@@ -1948,10 +1978,12 @@ SUBROUTINE init_jellium()
 
 !     initialize jellium background
 
-
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ind
+REAL(DP):: a20fac,a22fac,gamarg,xclust
+REAL(DP):: srms,sum1
 !------------------------------------------------------------------
 
 IF(nion2 /= 0) RETURN              ! case of detailed ions
@@ -1995,19 +2027,18 @@ SUBROUTINE initwf(psir)
 
 USE params
 USE util, ONLY:shiftfield
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+INTEGER ::i,nr,nbe,nbr
+REAL(DP)::en
 REAL(DP), ALLOCATABLE :: rfieldaux(:)
 
 !----------------------------------------------------------------------
-
-
-n=myn
 
 !      h2m=hbar*hbar/2.0/ame
 IF(myn == 0)THEN
@@ -2036,13 +2067,8 @@ WRITE(*,*) 'after ininqb'
 !     initialize H.O. wavefunctions
 
 IF(init_lcao /= 1) THEN
-#if(parano)
     CALL initho(psir)
-#endif
-#if(parayes)
     CALL initho(psir)
-#endif
-  
   
 !       remove symmetry restrictions
   
@@ -2128,7 +2154,7 @@ END SUBROUTINE initwf
 SUBROUTINE ininqb(nelect,deoccin,betain,gamin)
 USE params
 USE util, ONLY:pair
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -2165,11 +2191,20 @@ REAL(DP) :: speact                ! actual s.p. energy in loop
 !~ INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
+INTEGER :: nomxup, nomxdw, nmaxdiff, mspindw
+INTEGER :: i,isav,j,k
+
+#if(parayes)
+INTEGER :: nstpernode, nstaccum, nod, nodeplus
+#endif
 
 REAL(DP),ALLOCATABLE :: ph(:)             ! degeneracy of wavefunction, for
 REAL(DP) :: occu(ksttot)
+REAL(DP) :: ecutdw, ecutup, efrmup, efrmdw,nelup,neldw
+REAL(DP) :: gp,partnm,epstmp,sav
 LOGICAL :: tocc
 DATA tocc/.false./
+
 REAL(DP),PARAMETER :: third=1D0/3D0
 
 !-----------------------------------------------------------------------
@@ -2513,7 +2548,7 @@ SUBROUTINE jelbak(partn,alphel,betael,hexel,sqr,iturn)
 
 USE params
 USE util, ONLY:rotatevec3D
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     computes the jellium background such that the radius is
 !     given by 'radjel'*part.numb.**1/3, the surface by
@@ -2536,10 +2571,21 @@ REAL(DP), INTENT(IN OUT)                     :: betael
 REAL(DP), INTENT(IN)                         :: hexel
 REAL(DP), INTENT(OUT)                        :: sqr
 INTEGER, INTENT(IN)                      :: iturn
-DATA astep/0.6D0/
 
+INTEGER :: i1,i2,i3,ii,iter
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),vecalp(3)
-
+REAL(DP) :: anglex,angley,anglez,alpha,beta,thetax,thetay,thetaz,theta0
+REAL(DP) :: alphael,beta2j,gamma2j,gammaj
+REAL(DP) :: onetrd,d4pi,alpfac,q20fac,q22fac,q40fac
+REAL(DP) :: alphbk,betabk,hexabk,bet2EF
+REAL(DP) :: deralp,derbet,delalp,delbet
+REAL(DP) :: y2eff,y20,y22,y40,y20fac,y20obs,y22fac,y22obs,q40obs,q20red,q40red
+REAL(DP) :: radius,argum,rho0,rhoc,precis,volel
+REAL(DP) :: dpm,qoct,sqhe,sqt,sqq,sqn
+REAL(DP) :: astep
+REAL(DP) :: r,reff,rh,rr
+REAL(DP) :: x,y,z,xac,yac,zac,xact,yact,zact,xx,yy,zz
+DATA astep/0.6D0/
 !----------------------------------------------------------------------
 
 !     evaluate cases according to 'irotat'
@@ -2796,7 +2842,7 @@ SUBROUTINE initho(psir)
 !     initializes harmonic oscillator wavefunctions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -2807,6 +2853,9 @@ INTEGER :: is(mpi_status_size)
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
 !~ REAL(DP), ALLOCATABLE :: phix(:)
+INTEGER :: i,ii,inx,iny,inz,ix,iy,iz,nb
+REAL(DP) :: an,bk1,bxx,bxy,bxz,hom,homx,homy,homz
+REAL(DP) :: vx,vy,vz
 
 REAL(DP),PARAMETER :: third=1D0/3D0
 REAL(DP),PARAMETER :: sixth=1D0/6D0
@@ -2918,7 +2967,7 @@ SUBROUTINE clust(in,b,z,x,val,n1)
 !     where h(x) is the Hermite polynomial as explained in Rottmann, p.1
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN OUT)                  :: in
@@ -2928,7 +2977,8 @@ REAL(DP), INTENT(IN)                     :: x(*)
 REAL(DP), INTENT(OUT)                        :: val(*)
 INTEGER, INTENT(IN)                      :: n1
 
-
+INTEGER :: i,j
+REAL(DP) :: argum, coef, fak, tau, v
 !-----------------------------------------------------------------------
 
 fak = 1
@@ -2988,8 +3038,20 @@ SUBROUTINE rotxyz(xin,yin,zin,xout,yout,zout,anglex,angley,anglez)
 !     (xout,yout,zout) the result.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP),INTENT(IN) :: xin
+REAL(DP),INTENT(IN) :: yin
+REAL(DP),INTENT(IN) :: zin
+REAL(DP),INTENT(OUT) :: xout
+REAL(DP),INTENT(OUT) :: yout
+REAL(DP),INTENT(OUT) :: zout
+REAL(DP),INTENT(IN) ::anglex
+REAL(DP),INTENT(IN) ::angley
+REAL(DP),INTENT(IN) ::anglez
+
+REAL(DP) :: x1,y1,z1,x2,y2,z2
+REAL(DP) :: cphi,sphi
 !----------------------------------------------------------------------
 
 !     rotation about x-axis, intermediate result on x1,y1,z1
@@ -3029,11 +3091,13 @@ SUBROUTINE spinsep(psir)
 !     different directions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
 
+INTEGER :: ii,ix,iy,iz,nb
+REAL(DP) :: sgeps,x1,y1,z1
 
 !----------------------------------------------------------------------
 
@@ -3067,8 +3131,9 @@ SUBROUTINE fixion
 !     the input file must have already the positions of the bulk
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ind, ind1, ind2, ion
 INTEGER :: icy(nion),icz(nion)
 INTEGER :: nfixedyu(nion),nfixedyd(nion)
 INTEGER :: nfixedzu(nion),nfixedzd(nion)
@@ -3250,7 +3315,7 @@ SUBROUTINE checkoptions()
 !     to check consistency of compile-time options
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !------------------------------------------------------------------
 
@@ -3293,8 +3358,10 @@ SUBROUTINE init_homfield()
 !     adds it to the background field 'potFixedIon'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ind,ix,iy,iz
+REAL(DP) :: sc,vhom,x1,y1,z1
 !------------------------------------------------------------------
 
 sc=ehomx**2+ehomy**2+ehomz**2
@@ -3332,20 +3399,22 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #if(paraworld||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: nrank, nxfine, nyfine, nzfine, nx2fine, ny2fine, nxyfine
 #endif
 #if(paraworld)
 INTEGER::coeff,level
 #endif
+INTEGER :: ix, iy, iz
+REAL(DP) :: dxfine, dyfine, dzfine, dvolfine
+REAL(DP) :: x1,y1,z1
 !------------------------------------------------------------------
 #if(paraworld)
 
-CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
 level=nrank
 
@@ -3360,11 +3429,7 @@ IF(level>=1) THEN
   WRITE(6,*) 'level',level,dx,kxbox
 !    write(outnam,*) level 
 
-  kdfull28=(kxbox/2)*(kybox/2)*(kzbox/2)
-
- 
-
-  nx2=kxbox
+    nx2=kxbox
   ny2=kybox
   nz2=kzbox
   kdfull2=nx2*ny2*nz2
@@ -3490,8 +3555,10 @@ SUBROUTINE ithion
 !       we assign 0.5*kb*t per degree of freedom
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ion
+REAL(DP) :: bk, ek, ekin, pmoy, pn, vmoy, xm
 !---------------------------------------------------------------------
 
 
@@ -3557,8 +3624,11 @@ SUBROUTINE transf
 !     transform ions to the main axis of inertia
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: i, i1, i2, iax, idummy, ion, ion1, ion2, icoo, iswap
+INTEGER :: j, k
+REAL(DP) :: aviner, delmx, delx, dely, dist3, gamu, zpos
 REAL(DP) :: trafo(3,3),cenmas(3),tiner(3,3),dminer(3)
 REAL(DP) :: pos(ng,3),help(3)
 CHARACTER (LEN=3) :: ext
@@ -3750,6 +3820,7 @@ END SUBROUTINE transf
 
 SUBROUTINE jacobi(a,n,np,d,v,nrot)
 USE params, ONLY: DP
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: a(np,np)
 INTEGER, INTENT(IN)                      :: n

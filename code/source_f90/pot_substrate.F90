@@ -996,18 +996,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !------------------------------------------------------------------------
 
-#if(raregas)
 IF(nptype == -18) THEN
   v_ion_el = chg1(-18)*e2*v_soft(rr,sgm1(-18)*sq2)
 ELSE IF(nptype < 18) THEN
-#endif
   v_ion_el = chg1(nptype)*e2*v_soft(rr,sgm1(nptype)*sq2)  &
       +chg2(nptype)*e2*v_soft(rr,sgm2(nptype)*sq2)
-#if(raregas)
 ELSE
   v_ion_el = v_ar_el_core(rr)+chg1(18)*e2*v_soft(rr,sgm1(18)*sq2)
 END IF
-#endif
 
 RETURN
 END FUNCTION v_ion_el

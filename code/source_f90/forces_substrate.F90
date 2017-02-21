@@ -1156,8 +1156,6 @@ END IF  ! if ivdw.eq.2 vdw is done implicitly by vArElCore
 RETURN
 END SUBROUTINE getforces_clust2cores
 !------------------------------------------------------------
-#if(raregas)
-!------------------------------------------------------------
 
 !------------------------------------------------------------
 
@@ -1330,8 +1328,6 @@ END IF
 
 END SUBROUTINE madelung
 !------------------------------------------------------------
-#endif
-!--------------------------------------------------------------------------
 
 SUBROUTINE adjustdip(rho)
 !     computes the force on the GSM-dipoles and adjusts their dipole moments

@@ -3533,8 +3533,7 @@ REAL(DP), INTENT(IN) :: rho(kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhops
 
-DATA prho1 /-0.46073D0/
-DATA prho2 / 0.13287D0/
+REAL(DP),PARAMETER:: prho1_data=-0.46073D0, prho2_data=0.13287D0
 
 !EQUIVALENCE (rhops,w1)
 ! w1 => rhops
@@ -3581,8 +3580,8 @@ IF(ipsptyp == 0) THEN
             i=i+1
             rx=x1-cx(ii)
             r2=rx*rx+ry*ry+rz*rz
-            psrho1=prho1*EXP(-r2/(2.0D0*sgm1(11)*sgm1(11)))
-            psrho2=prho2*EXP(-r2/(2.0D0*sgm2(11)*sgm2(11)))
+            psrho1=prho1_data*EXP(-r2/(2.0D0*sgm1(11)*sgm1(11)))
+            psrho2=prho2_data*EXP(-r2/(2.0D0*sgm2(11)*sgm2(11)))
             rhops(i)=rhops(i)+psrho1+psrho2
           END DO
         END DO

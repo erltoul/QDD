@@ -45,7 +45,7 @@ INTEGER :: imobc(ngpar),imobe(ngpar),imobk(ngpar)
 INTEGER :: itypc(ngpar),itype(ngpar),itypk(ngpar)
 INTEGER :: ippointer1(3*ngpar),ippointer2(3*ngpar)
 INTEGER :: ipointer(3*ngpar),ipointerfix(3*ngpar), ipointermob(3*ngpar)
-INTEGER :: isrtyp(5,5)=0,isrtypall=0,ifreezedipoles=0
+INTEGER :: isrtyp(5,5)=0,isrtypall=0
 INTEGER :: ndfull2,nmob,nmobc,nmobe,nmobk,ionthefly
 INTEGER :: iposevry,ienevry,iobsevry,ithermevry,ifile
 INTEGER :: icool, icoolevry, icoolsteps, itindex
@@ -93,10 +93,8 @@ REAL(DP),ALLOCATABLE :: potvdw(:),frho(:,:)
 
 
 
-#if(raregas)
 REAL(DP),ALLOCATABLE :: potstat(:),potesfixed(:)
 REAL(DP),ALLOCATABLE :: potesmob(:), phim(:),phimv(:),phimd(:)
-#endif
 
 REAL(DP) :: forx,fory,forz
 REAL(DP) :: sigkv,sigvv,sigkk,sigcc,sigck,sigcv, bkv,bvv,bkk,bcc,bck,bcv
@@ -119,14 +117,14 @@ REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
 REAL(DP) :: xdielec=0D0
-INTEGER :: nc=0,nk=0
+INTEGER :: nc=0,nk=0,ne=0
 INTEGER :: nlayers,nside,iararlj, ipog
 INTEGER :: iforcecl2co=0
 
 
 
 
-REAL(DP) :: surftemp=0D0, scaledist=1D0,scaledistx,scaledisty,scaledistz
+REAL(DP) :: surftemp=0D0, scaledist=1D0
 REAL(DP) :: chgc0,chge0,chgk0
 REAL(DP) :: unfixcrad=-1D0,unfixerad=-1D0,unfixkrad=-1D0
 REAL(DP) :: unfixclateralrad=-1D0,unfixelateralrad=-1D0,unfixklateralrad=-1D0
@@ -136,7 +134,7 @@ REAL(DP) :: fixcbelow=-1D6,fixebelow=-1D6,fixkbelow=-1D6
 REAL(DP) :: fixcbelowy=-1D6,fixebelowy=-1D6,fixkbelowy=-1D6 
 REAL(DP) :: fixcbelowx=-1D6,fixebelowx=-1D6,fixkbelowx=-1D6
 REAL(DP) :: r1x,r1y,r1z,r2ax,r2ay,r2az,r2bx,r2by,r2bz
-INTEGER :: ipotstatic=0,iprifixed,ipotfixed,isystem=2,jsavesurf=10000000
+INTEGER :: ipotfixed,isystem=2,jsavesurf=10000000
 INTEGER :: iaxis=0, ilayerc(ngpar),ilayere(ngpar),ilayerk(ngpar)
 INTEGER :: nlay, nmovc,nmove,nmovk,nimovc,nimove,nimovk
 INTEGER :: ncr1,ncr2a,ncr2b,ner1,ner2a,ner2b,nkr1,nkr2a,nkr2b
@@ -150,19 +148,12 @@ INTEGER :: ifmdshort,ifadiadip
 REAL(DP) :: epots,ecoul,ekinion,ekinkat,ekinel,eshort,energyg
 REAL(DP) :: ekincsurf,ekinesurf,ekinksurf,ekinsurf, ttemp,ttempc,ttempe,ttempk
 
-REAL(DP) :: distlayers,disttolerance
-REAL(DP) :: runfrowc,runfrowe,runfrowk
-INTEGER :: nunflayc,nunflaye,nunflayk
-
-#if(raregas)
 !
 !     interpolation tables for radial potentials
 !     --->  eats up too much space !
 !     ==> check need and find more efficient ways
 REAL(DP) :: varelcore0(kfermi),varelcore1(kfermi)
 REAL(DP) :: vfermi0(kfermi),vfermi1(kfermi)
-#endif
-
 
 
 

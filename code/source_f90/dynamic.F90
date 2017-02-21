@@ -607,6 +607,7 @@ REAL(DP), INTENT(IN)                         :: dt
 CALL calcrho(rho,psi)
 CALL coul_mfield(rho)
 !      if (isurf.ne.0 .and. nc+ne+nk.gt.0)
+#if(raregas)
 IF (isurf /= 0 .AND. NE > 0) THEN
   IF(dt == 0D0) THEN
     CALL valence_step(rho,dt,.false.)
@@ -614,6 +615,7 @@ IF (isurf /= 0 .AND. NE > 0) THEN
     CALL valence_step(rho,dt,.true.)
   END IF
 END IF
+#endif
 CALL calclocal(rho,aloc)          ! LDA part of the potential
 IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
   CALL calc_sic(rho,aloc,psi)
@@ -2193,6 +2195,7 @@ IF(irest <= 0) THEN                    !  write file headers
           
         END IF
         IF(isurf /= 0) THEN
+#if(raregas)
           IF(nc+NE+nk > 0)THEN
 ! Forces on Argon cores
             OPEN(28,STATUS='unknown',FORM='formatted',  &
@@ -2226,7 +2229,9 @@ IF(irest <= 0) THEN                    !  write file headers
               
             END IF
           END IF
+#endif
         END IF
+
       END IF
       IF(jener > 0) THEN
         
@@ -2236,14 +2241,14 @@ IF(irest <= 0) THEN                    !  write file headers
           WRITE(34,'(a)') ' & '
           CLOSE(34)
         END IF
-        
+#if(raregas)        
         IF(nc+NE+nk > 0)THEN
 ! Energies of the matrix
           OPEN(35,STATUS='unknown',FORM='formatted', FILE='penermat.'//outnam)
           WRITE(35,'(a)') ' & '
           CLOSE(35)
         END IF
-        
+#endif
       END IF
     END IF
     

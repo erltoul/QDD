@@ -68,7 +68,10 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 
-INTEGER :: i, ion, it
+INTEGER :: ion, it
+#if(raregas)
+INTEGER :: i
+#endif
 REAL(DP):: dt
 REAL(DP):: totalprob,totalovlp
 REAL(DP):: time_absfin
@@ -539,9 +542,12 @@ DO it=irest,itmax   ! time-loop
         CALL rhointxz(rho,it)
         CALL rhointyz(rho,it)
       END IF
+#if(raregas)
     ELSE
       IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt,.true.)
+#endif
     END IF
+    
     IF(ionmdtyp==1 .OR. (ionmdtyp==2 .AND. MOD(it,modionstep)==0)) THEN
       
 !            ionic propagation

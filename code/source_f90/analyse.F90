@@ -521,7 +521,7 @@ END SUBROUTINE evalprops
 
 !------------------------------------------------------------
 
-SUBROUTINE accumprops(icode)
+SUBROUTINE accumprops(code)
 !------------------------------------------------------------
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
@@ -531,10 +531,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-INTEGER, INTENT(IN)                      :: icode
+INTEGER, INTENT(IN) :: code
 
 
-IF (icode == 0) THEN ! (re-)set accum. variables to zero
+IF (code == 0) THEN ! (re-)set accum. variables to zero
   skinenergy = 0D0
   sskinenergy = 0D0
   skinenergyc = 0D0
@@ -543,7 +543,7 @@ IF (icode == 0) THEN ! (re-)set accum. variables to zero
   sskinenergye = 0D0
   skinenergyk = 0D0
   sskinenergyk = 0D0
-ELSE IF (icode == 1) THEN ! accumulate variables
+ELSE IF (code == 1) THEN ! accumulate variables
   skinenergy =  skinenergy + kinenergy
   sskinenergy = sskinenergy + kinenergy*kinenergy
   skinenergyc =  skinenergyc + kinenergyc
@@ -552,7 +552,7 @@ ELSE IF (icode == 1) THEN ! accumulate variables
   sskinenergye = sskinenergye + kinenergye*kinenergye
   skinenergyk =  skinenergyk + kinenergyk
   sskinenergyk = sskinenergyk + kinenergyk*kinenergyk
-ELSE IF (icode == 2) THEN ! evaluate averages and variances
+ELSE IF (code == 2) THEN ! evaluate averages and variances
   skinenergy = skinenergy / istepavg
   sskinenergy = SQRT(sskinenergy / istepavg-skinenergy)
   skinenergyc = skinenergyc / istepavg

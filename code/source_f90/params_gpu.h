@@ -201,8 +201,6 @@ extern double params_mp_tempion_,params_mp_dt1_;
 extern double params_mp_centfx_,params_mp_centfy_,params_mp_centfz_;
 extern double params_mp_shiftinix_,params_mp_shiftiniy_,params_mp_shiftiniz_;
 
-extern double params_mp_bcol1_,params_mp_bcol23_,params_mp_dbcol_,params_mp_betacol_,params_mp_chgcol_;
-extern int params_mp_ntheta_,params_mp_nphi_;
 #if(parayes)
 extern int params_mp_ifhamdiag_;
 #endif

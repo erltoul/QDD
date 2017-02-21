@@ -83,7 +83,7 @@ END SUBROUTINE reset_ions
 
 !-----energkin_ions--------------------------------------------
 
-FUNCTION enerkin_ions()
+REAL(DP) FUNCTION enerkin_ions()
 
 !     Kinetic energy of ions
 
