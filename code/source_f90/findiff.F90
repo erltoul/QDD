@@ -18,13 +18,14 @@
 
 MODULE kinetic
 USE params
+IMPLICIT NONE
 
 CONTAINS
 !-----rkin3D_3r------------------------------------------------------------
 
 SUBROUTINE rkin3d(psi,dxpsi)
 
-!USE params
+
 !      include 'pot3D.inc'
 
 !     computes kinetic energy (- Laplacian) 3 point finite differences

@@ -49,7 +49,7 @@ USE twostr, ONLY: vecsr,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
 #endif
 !#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 #ifdef REALSWITCH
@@ -65,7 +65,9 @@ LOGICAL, INTENT(IN)                       :: tstatin
 
 CHARACTER (LEN=13), INTENT(IN)            :: outna
 
-REAL(DP), ALLOCATABLE                     :: psiauxr(:)
+INTEGER ::  iact, nstate_test, mynact, n, nb, nbe
+REAL(DP) :: dummy
+REAL(DP), ALLOCATABLE :: psiauxr(:)
 LOGICAL :: trealin
 LOGICAL,PARAMETER :: ttest = .TRUE.
 
@@ -76,7 +78,7 @@ LOGICAL :: topenf
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: i, nba, nod, nstnod, occupact
 #ifdef REALSWITCH
 REAL(DP),ALLOCATABLE :: psiaux(:)
 #else
@@ -146,11 +148,11 @@ IF(mynact==0) THEN
 END IF
 #if(parayes)
 IF(knode>1) THEN
-  CALL mpi_bcast(iact,1,mpi_integer,0,mpi_comm_world,ic)
-!  CALL mpi_bcast(nstate,1,mpi_integer,0,mpi_comm_world,ic)
-  CALL mpi_bcast(nclust,1,mpi_integer,0,mpi_comm_world,ic)
-  CALL mpi_bcast(nion,1,mpi_integer,0,mpi_comm_world,ic)
-  CALL mpi_bcast(nspdw,1,mpi_integer,0,mpi_comm_world,ic)
+  CALL mpi_bcast(iact,1,mpi_integer,0,mpi_comm_world,icode)
+!  CALL mpi_bcast(nstate,1,mpi_integer,0,mpi_comm_world,icode)
+  CALL mpi_bcast(nclust,1,mpi_integer,0,mpi_comm_world,icode)
+  CALL mpi_bcast(nion,1,mpi_integer,0,mpi_comm_world,icode)
+  CALL mpi_bcast(nspdw,1,mpi_integer,0,mpi_comm_world,icode)
 END IF
 #endif
 
@@ -188,7 +190,7 @@ IF(nclust > 0)THEN
 END IF
 #endif
 #if(parayes)
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+CALL mpi_barrier (mpi_comm_world, icode)
 
 IF(nclust > 0)THEN
   DO nb=1,nstate_all
@@ -217,7 +219,7 @@ IF(nclust > 0)THEN
 
 
 
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+  CALL mpi_barrier (mpi_comm_world, icode)
 
 
   DO nod=0,knode-1
@@ -331,19 +333,19 @@ END IF
 #if(parayes)
 IF(knode > 1) THEN
   IF(nclust > 0) THEN
-    CALL mpi_bcast(qe(1:kmom),kmom,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(se(1:3),3,mpi_double_precision,0,mpi_comm_world,ic)
+    CALL mpi_bcast(qe(1:kmom),kmom,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(se(1:3),3,mpi_double_precision,0,mpi_comm_world,icode)
   END IF
   IF (nabsorb > 0) &
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
-                   mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(foft2old,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(fpulseinteg1,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,ic)
-    CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,ic)
+                   mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(foft2old,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(fpulseinteg1,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,icode)
 END IF
 
 #ifdef COMPLEXSWITCH
@@ -445,7 +447,7 @@ USE twostr, ONLY: vecsr,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
 #endif
 !#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
@@ -458,6 +460,10 @@ REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
 
 INTEGER, INTENT(IN)                     :: isa
 CHARACTER (LEN=13), INTENT(IN)       :: outna
+INTEGER :: iact, mynact, nstate_test, nb
+#ifdef COMPLEXSWITCH
+INTEGER :: nbe
+#endif
 LOGICAL,PARAMETER :: ttest = .TRUE.
 LOGICAL :: trealin
 
@@ -465,7 +471,7 @@ LOGICAL :: trealin
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: i, nba, nod, nstnod
 #ifdef REALSWITCH
 REAL(DP),ALLOCATABLE :: psiaux(:)
 #else
@@ -490,7 +496,7 @@ DO nod=0,knode-1
   END DO
 END DO
 
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+CALL mpi_barrier (mpi_comm_world, icode)
 
 #endif
 
@@ -553,7 +559,7 @@ END IF
 #endif
 #if(parayes)
 
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+CALL mpi_barrier (mpi_comm_world, icode)
 
 IF(nclust > 0)THEN
   DO nb=1,nstate_all
@@ -572,7 +578,7 @@ IF(nclust > 0)THEN
     END IF
   END DO
   
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+  CALL mpi_barrier (mpi_comm_world, icode)
 
   WRITE(*,*) ' before send ekins: myn=',myn
   DO nod=0,knode-1
@@ -736,7 +742,9 @@ SUBROUTINE restherm()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER :: iact,ion
+
 OPEN(UNIT=20,STATUS='unknown',FORM='unformatted',FILE='therm')
 !     nxyz=nx2*ny2*nz2
 READ(20) iact
@@ -763,16 +771,14 @@ SUBROUTINE addcluster(psi,outna)
 
 !     **************************
 
-
-
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 
-
+INTEGER :: i,iact,idum,ii,ion,k,nb,nclustt,niont,nspdwt,nstatet
 OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)
 
 
@@ -883,7 +889,7 @@ SUBROUTINE send_and_receive(instring,outstring,length,in_node,dest_node)
 !     Both strings are double precision and have length 'length'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -901,12 +907,12 @@ END IF
 
 IF(myn == dest_node) &
    CALL mpi_recv(outstring,length,mpi_double_precision,in_node, &
-                 mpi_any_tag, mpi_comm_world,is,ic)
+                 mpi_any_tag, mpi_comm_world,is,icode)
 
 
 IF(myn == in_node)  &
    CALL mpi_send(instring,length,mpi_double_precision,dest_node,1,  &
-        mpi_comm_world,ic)
+        mpi_comm_world,icode)
 
 
 RETURN 
@@ -923,7 +929,7 @@ SUBROUTINE csend_and_receive(instring,outstring,length,in_node,dest_node)
 !     Both strings are double complex and have length 'length'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -943,12 +949,12 @@ write(6,*) "in", size(instring)," out ",  size(outstring)
 
 IF(myn == dest_node) &
    CALL mpi_recv(outstring,length,mpi_double_complex,in_node, &
-                 mpi_any_tag, mpi_comm_world,is,ic)
+                 mpi_any_tag, mpi_comm_world,is,icode)
 
 
 IF(myn == in_node)  &
    CALL mpi_send(instring,length,mpi_double_complex,dest_node,1,  &
-        mpi_comm_world,ic)
+        mpi_comm_world,icode)
 
 
 RETURN 

@@ -81,8 +81,9 @@ SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
 REAL(DP),INTENT(IN)::dx0,dy0,dz0
 INTEGER,INTENT(IN)::nx0,ny0,nz0
 !-----------------------------------------------------------------------
-
+INTEGER :: ii,i1,i2,i3, kdum
 LOGICAL,PARAMETER :: tcoultest=.false.
+REAL(DP) :: charge
 REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 
@@ -201,7 +202,7 @@ END SUBROUTINE init_coul
 !-----fftinp------------------------------------------------------------
 
 SUBROUTINE fftinp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     initializes work tables for FFT
 
@@ -210,6 +211,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !-----------------------------------------------------------------------
 
+INTEGER ::  ii, i1, i2, i3, ind, ikzero
+REAL(DP) :: ak2, xx1, xx2, xy1, xy2, xz1, xz2
+#if(coudoub3D && fftw_cpu)
+REAL(DP) :: factor
+#endif
 !     initialize grid in coordinate space
 
 nx1=nx+1
@@ -359,7 +365,7 @@ END SUBROUTINE fftinp
 !-------------------------------------------------------------------
 
 SUBROUTINE falr(rhoinp,chpfalr,kdum)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! Coulomb solver using FFTW
 
@@ -368,6 +374,8 @@ REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
 INTEGER, INTENT(IN)                  :: kdum
 
+INTEGER :: i0, i1, i2, i3
+REAL(DP) ::factor
 !WRITE(*,*) ' running new Coulomb'
 
 ! map density to 2**3 larger grid, immediately on FFTW3 work space
@@ -412,7 +420,7 @@ END SUBROUTINE falr
 
 SUBROUTINE falr(rhoinp,chpfalr,kdum)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
@@ -453,7 +461,7 @@ END SUBROUTINE falr
 !-----rhofld------------------------------------------------------------
 
 SUBROUTINE rhofld(rhoinp,rhokr,rhoki)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     copy density on complex array of double extension in x,y,z
 
@@ -462,6 +470,7 @@ REAL(DP), INTENT(IN)                         :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                        :: rhokr(kdred)
 REAL(DP), INTENT(OUT)                        :: rhoki(kdred)
 
+INTEGER :: i0, i1, i2, i3, ii
 
 rhokr=0D0
 rhoki=0D0
@@ -486,13 +495,13 @@ END SUBROUTINE rhofld
 
 SUBROUTINE result(chpfalr,rhokr,rhoki)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: chpfalr(kdfull)
 REAL(DP), INTENT(IN)                         :: rhokr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
 
-
+INTEGER :: i0, i1, i2, i3, ii
 
 !     copy Coulomb field back to standard grid
 
@@ -518,15 +527,16 @@ END SUBROUTINE result
 
 SUBROUTINE coufou2(rhokr,rhoki)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rhokr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
 
-
 LOGICAL,PARAMETER :: tprint=.false.
 LOGICAL,PARAMETER :: rqplot=.false.
 
+INTEGER :: ik
+REAL(DP) :: save2
 !------------------------------------------------------------------------------
 
 !     Fourier transformation of the density
@@ -536,7 +546,7 @@ CALL fourf(rhokr,rhoki)
 !     calculation of the Coulomb field (writing on the density field)
 
 DO ik=1,kdred
-  SAVE2     = akv2r(ik)*rhokr(ik)+akv2i(ik)*rhoki(ik)
+  save2     = akv2r(ik)*rhokr(ik)+akv2i(ik)*rhoki(ik)
   rhoki(ik) = akv2r(ik)*rhoki(ik)+akv2i(ik)*rhokr(ik)
   rhokr(ik) = SAVE2
 END DO
@@ -559,10 +569,14 @@ SUBROUTINE fourf(pskr,pski)
 #if(fftw_cpu)
 USE FFTW
 #endif
+
 #if(parayes)
-USE params, only : myn
+USE params, ONLY : myn, mpi_ierror
+#else
+USE params, ONLY : myn
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
@@ -575,7 +589,8 @@ REAL(DP), INTENT(OUT)                        :: pski(kdred)
 !     Fourier forward transformation
 !     I/O: pskr   real part of the wave-function
 !          pski   imaginary part of the wave-function
-
+INTEGER :: i1, nzzh, nyyh
+REAL(DP) ::  tnorm, time_fin
 INTEGER,SAVE :: mxini=0,myini=0,mzini=0
 !DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
 LOGICAL,SAVE :: tinifft=.false.
@@ -783,12 +798,13 @@ END SUBROUTINE fourf
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(pskr,pski)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 
-
+INTEGER :: i,nzzh,nyyh
+REAL(DP) :: tnorm
 !     Fourier backward transformation
 !     I/O:  pskr   real part of the wave-function
 !           pski   imaginary part of the wave-function
@@ -819,7 +835,8 @@ SUBROUTINE fftx(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER :: i0, i1, i2, i3, i30, ii, nx11
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                        :: psxi(kdred)
@@ -902,8 +919,6 @@ DO i3=1,nzi
     ii=i0
     DO i1=nx11,nxi
       ii=ii+1
-      ic=2*i1
-      ir=ic-1
       fftax(i1) = CMPLX(psxr(ii),0D0,DP)
     END DO
 !        execution of the Fourier-transformation
@@ -937,10 +952,12 @@ SUBROUTINE ffty(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)      :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)      :: psxi(kdred)
+
+INTEGER :: i0, i1, i2, i3, i30, ii, ny11
 #if(netlib_fft)
 INTEGER::ir,ic     ! Index for real and complex components when stored in fftay
 #endif
@@ -1057,13 +1074,14 @@ SUBROUTINE fftz(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
 INTEGER :: nxyf 
 INTEGER :: nyf  
 INTEGER :: nzh  
+INTEGER :: i1, i2, i3, i3m, ind
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
@@ -1134,13 +1152,14 @@ SUBROUTINE ffbz(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
 INTEGER :: nxyf 
 INTEGER :: nyf  
-INTEGER :: nzh  
+INTEGER :: nzh
+INTEGER :: i1, i2, i3, i3m, ind
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
@@ -1207,10 +1226,12 @@ SUBROUTINE ffby(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
+
+INTEGER :: i0, i1, i2, i3, i30, ii, ny11
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
 #endif
@@ -1324,10 +1345,11 @@ SUBROUTINE ffbx(psxr,psxi)
 #if(fftw_cpu)
 USE FFTW
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
+INTEGER ::  i0, i1, i2, i3, i30, icconj, ii, nx11
 #if(netlib_fft)
 INTEGER::ir,ic,irconj,iconj  ! Index for real and complex components when stored in fftay
 #endif

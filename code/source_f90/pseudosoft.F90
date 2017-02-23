@@ -25,10 +25,12 @@ SUBROUTINE calcpseudo()
 !     ***********************
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !      dimension rho(2*kdfull2)
 !REAL(DP) :: fieldtmp(kdfull2)
-
+#if(raregas)
+INTEGER :: ind
+#endif
 
 IF(nion2 == 2) THEN
   call  pseudo_external()
@@ -83,7 +85,7 @@ SUBROUTINE pseudo_external()
 !     In this routine we read the PsP from a file
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
   OPEN(48,FORM='unformatted',FILE='potion.dat')
   READ(48) potion
@@ -115,24 +117,19 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY: falr
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !    size of subgrid in units of mesh size
-!INTEGER,SAVE :: nxsgp=7,nysgp=7,nzsgp=7
-!INTEGER,PARAMETER :: nsubgridpsp=7
 
-!      dimension rho(2*kdfull2)
+INTEGER :: ind, ist, ix, iy, iz
+REAL(DP) :: cfac1, cfac2, exfac1, exfac2, rr, rx, ry, rz
+
 REAL(DP),DIMENSION(:),ALLOCATABLE :: pseudorho,potsave,potshort
-!DIMENSION pseudorho(kdfull2)
-!DIMENSION potsave(kdfull2)
-!DIMENSION potshort(kdfull2)
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
-EXTERNAL v_soft
 
-!EQUIVALENCE (pseudorho,w1)
-!EQUIVALENCE (potsave,w2)
-!EQUIVALENCE (potshort,w3)
+INTEGER,EXTERNAL :: isoutofbox
+INTEGER,EXTERNAL :: conv3to1
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: v_soft
 
 !--------------------------------------------------------------
 
@@ -271,25 +268,23 @@ DEALLOCATE(potshort)
 RETURN
 END SUBROUTINE pseudosoft
 
-!GB
-
-
-!GB
 
 !     ***********************
 
-FUNCTION dvsdr(r,sigma)
+REAL(DP) FUNCTION dvsdr(r,sigma)
 
 !     ***********************
 
 !     derivation of V_soft
 USE params, ONLY: DP,pi
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
-REAL(DP), INTENT(OUT)                        :: r
-REAL(DP), INTENT(IN)                         :: sigma
-!DATA pi/3.141592653589793/
+REAL(DP), INTENT(IN OUT)  :: r
+REAL(DP), INTENT(IN)   :: sigma
+
+REAL(DP), EXTERNAL :: v_soft
+REAL(DP):: fac
 
 r = ABS(r)
 
@@ -305,19 +300,20 @@ END FUNCTION dvsdr
 
 !     ***********************
 
-FUNCTION d2vsdr2(r,sigma)
+REAL(DP) FUNCTION d2vsdr2(r,sigma)
 USE params, ONLY: DP,pi
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     ***********************
 
 !     second derivation of V_soft
 
-
-
-REAL(DP), INTENT(OUT)                        :: r
+REAL(DP), INTENT(IN OUT)                        :: r
 REAL(DP), INTENT(IN)                         :: sigma
 
+REAl(DP) :: fac
+REAl(DP), EXTERNAL :: dvsdr
+REAl(DP), EXTERNAL :: v_soft
 r = ABS(r)
 
 fac = -2D0/(SQRT(pi)*sigma)
@@ -327,7 +323,7 @@ d2vsdr2 = fac*EXP(-r*r/(sigma*sigma))*(r**(-2D0)+2*sigma**(-2D0))  &
 
 RETURN
 END FUNCTION d2vsdr2
-!GB
+
 
 
 
@@ -339,7 +335,7 @@ END FUNCTION d2vsdr2
 
 REAL(DP) FUNCTION v_soft(r,sigma)
 USE params, ONLY: DP,PI
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     soft Coulomb potential from Gaussian density,
 !     uses error function from Chebyshev approximation.
@@ -348,6 +344,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: r
 REAL(DP), INTENT(IN)                         :: sigma
+
+REAl(DP) :: rabs
 !------------------------------------------------------------------------
 rabs = ABS(r)
 v_soft = erf(rabs/sigma)/rabs
@@ -379,19 +377,28 @@ END FUNCTION v_soft
 !-----V_ion_ion------------------------------------------------------------
 
 
-FUNCTION v_ion_ion(dist,n1,n2)
+REAL(DP) FUNCTION v_ion_ion(dist,n1,n2)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     effective ion-ion potential
-!       r      =  distance at which potential is computed
+!       dist   =  distance at which potential is computed
 !       n1     =  index of the first ion (1<=n1<=nion)
 !       n2     =  index of the second ion (1<=n2<=nion)
 !       (see array np(*) in 'init.F')
 
+REAL(DP),INTENT(IN) :: dist
+INTEGER,INTENT(IN)  :: n1
+INTEGER,INTENT(IN)  :: n2
 
+INTEGER :: npmin, npmax
+#if(raregas)
+REAL(DP),EXTERNAL:: v_soft
+REAL(DP),EXTERNAL:: v_ar_ar
+REAL(DP),EXTERNAL:: v_ar_na
+#endif
 !------------------------------------------------------------------------
 
 npmin = MIN(np(n1),np(n2))
@@ -443,8 +450,9 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: r
 REAL(DP), INTENT(IN)                     :: s
+
 REAL(DP):: ftemp, rder
-REAL(DP)::v_soft
+REAL(DP),EXTERNAL::v_soft
 rder = 1.0D-5
 
 !         ftemp = erf((r+rder)/s)/(r+rder)

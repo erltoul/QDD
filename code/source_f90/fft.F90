@@ -101,7 +101,7 @@ SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 USE FFTW
 #endif
 #if(parayes)
-USE params, only : myn,numthr,nthr
+USE params, only : myn,numthr,nthr,mpi_ierror
 INCLUDE 'mpif.h'
 
 REAL(DP) :: is(mpi_status_size)

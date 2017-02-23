@@ -1861,7 +1861,6 @@ SUBROUTINE init_dynprotocol(rho,aloc,psi)
 !     initializes file for protocol of dynamics
 
 USE params
-USE util, ONLY:dmaximum
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -2288,7 +2287,7 @@ ELSE
       
       IF (myn == 0) THEN
         OPEN(308,POSITION='append',FILE='energies.res')
-        dist = ABS(cz(1) - dmaximum(zc,nc))
+        dist = ABS(cz(1) - maxval(zc(1:nc)) )
         WRITE(308,'(1f20.10,2e25.14)') dist, energy-enerinfty,energy
         CLOSE(308)
       END IF

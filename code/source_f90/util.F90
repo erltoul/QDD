@@ -43,7 +43,7 @@ CONTAINS
 SUBROUTINE shiftfield(q0,shix,shiy,shiz)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! shifts array by shix,shiy,shiz along grid
 !     shix,shiy,shiz should be positive
@@ -53,7 +53,9 @@ REAL(DP), INTENT(IN)                         :: shix
 REAL(DP), INTENT(IN)                         :: shiy
 REAL(DP), INTENT(IN)                         :: shiz
 REAL(DP),ALLOCATABLE ::  q1(:)
-INTEGER :: conv3to1
+
+INTEGER :: ind, ind1, ix, iy, iz , ix1, iy1, iz1, nshift
+INTEGER, EXTERNAL :: conv3to1
 
 ALLOCATE(q1(kdfull2))
 
@@ -175,6 +177,7 @@ END SUBROUTINE shiftfield
 !------------------------------------------------------------
 CHARACTER*9 FUNCTION inttostring(inumber)
 !------------------------------------------------------------
+IMPLICIT NONE
 INTEGER, INTENT(IN)                      :: inumber
 
 SELECT CASE(inumber)
@@ -192,7 +195,7 @@ END FUNCTION inttostring
 SUBROUTINE pm3dcut(iunit,iax1,iax2,value,field)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                      :: iunit
@@ -201,6 +204,7 @@ INTEGER, INTENT(IN)                      :: iax2
 REAL(DP), INTENT(IN)                         :: value
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 
+INTEGER :: ind, ix, iy, iz, x1, y1, z1
 
 IF (iax1 == 1 .AND. iax2 == 2) THEN ! xy-plane
   
@@ -294,7 +298,7 @@ COMPLEX(DP) FUNCTION orbitaloverlap(q1,q2)
 !------------------------------------------------------------
 USE params
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     returns \int\d^3r q_1^* q_2
 
@@ -302,6 +306,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
 
+INTEGER :: ind
+REAL(DP) :: sumr, sumi
 COMPLEX(DP) :: csum
 !WRITE(6,*) 'Entering orbitalOverlap'
 
@@ -323,18 +329,18 @@ END FUNCTION orbitaloverlap
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-FUNCTION realoverlap(q1,q2)
+REAL(DP) FUNCTION realoverlap(q1,q2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     returns \int\d^3r q_1^* q_2
-
-
 
 COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
 
+INTEGER :: ind
+REAL(DP) :: sumr
 
 sumr=0D0
 
@@ -349,21 +355,21 @@ END FUNCTION realoverlap
 !------------------------------------------------------------
 
 !-------------------------------------------------------------
-FUNCTION realovsubgrid(q1,q2,ion)
+REAL(DP) FUNCTION realovsubgrid(q1,q2,ion)
 
 !     Real part of overlap between wavefunctions 'q1' and 'q2'
 !     accumulated on the subgrid of ion 'ion' defined by
 !     the non-local PsP.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
 INTEGER, INTENT(IN)                  :: ion
 
-
+INTEGER :: i, ii
+REAL(DP) :: sumr
 !-------------------------------------------------------------
 
 
@@ -383,7 +389,15 @@ END FUNCTION realovsubgrid
 SUBROUTINE gettemperature(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER,INTENT(IN) :: iflag
+
+INTEGER ::  i
+REAL(DP) :: ek, ekcm, pcmx, pcmy, pcmz, rkt, rm, rmcm, tt
+#if(raregas)
+REAL(DP) :: rmc, rmk
+#endif
 
 IF (iflag == 4) THEN
   
@@ -620,11 +634,12 @@ END SUBROUTINE gettemperature
 SUBROUTINE densbelow(field)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN) :: field(kdfull2)
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: acc, x1, y1, z1
 REAL(DP),DIMENSION(:),ALLOCATABLE :: vs(:)
 
 ALLOCATE(vs(maxz+1))
@@ -656,12 +671,15 @@ END SUBROUTINE densbelow
 SUBROUTINE pricm(rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     calculates center of density rho
-!     returns result on rVecTmp(1..3) via common
+!     returns result on rVecTmp(1:3) via module params
 
 REAL(DP), INTENT(IN)                         :: rho(kdfull2)
+
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: acc, xcm, ycm, zcm, x1, y1, z1
 
 !------------------------------------------------------------
 
@@ -708,15 +726,15 @@ END SUBROUTINE pricm
 SUBROUTINE pricm_state(psir)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     calculates center of density for states in wavefunctions 'psir'
 !     and prints results on standard output
 
-
-
 REAL(DP), INTENT(IN)                         :: psir(kdfull2,kstate)
 
+INTEGER :: i1, i2, i3, ind, nbr
+REAL(DP) :: xx, yy, zz
 
 !------------------------------------------------------------
 
@@ -753,8 +771,13 @@ SUBROUTINE rotatevec(x,y,z,iax,alpha)
 ! rotation of vector '(x,y,z)' about axis 'iax' with angle 'alpha'
 ! returning the result on vector 'rvectmp' via module 'params'..
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP), INTENT(IN)::x
+REAL(DP), INTENT(IN)::y
+REAL(DP), INTENT(IN)::z
+INTEGER,INTENT(IN)::iax
+REAL(DP),INTENT(in)::alpha
 
 
 IF (iax == 1) THEN ! rotate along x-axis
@@ -787,8 +810,11 @@ SUBROUTINE rotatevec3D(vecin,vecout,vecalpha)
 ! Angle to be given in radian.
 !
 USE params, ONLY: DP
-REAL(DP), DIMENSION(3), INTENT(IN) :: vecin,vecalpha
-REAL(DP), DIMENSION(3), INTENT(OUT) :: vecout
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) :: vecin(3)
+REAL(DP), INTENT(IN) :: vecalpha(3)
+REAL(DP), INTENT(OUT) :: vecout(3)
 
 REAL(DP) :: absalpha,sa,c,c2a2
 
@@ -827,7 +853,7 @@ END SUBROUTINE rotatevec3D
 SUBROUTINE swaparr(arr1,arr2,n)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     swaps arrays arr1 and arr2
 
@@ -836,8 +862,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: arr1(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: arr2(kdfull2)
 INTEGER, INTENT(IN)                      :: n
-REAL(DP),ALLOCATABLE ::  arrt(:)
 
+INTEGER :: i
+REAL(DP),ALLOCATABLE ::  arrt(:)
 
 ALLOCATE(arrt(kdfull2))
 DO i=1,n
@@ -856,16 +883,15 @@ END SUBROUTINE swaparr
 SUBROUTINE cparr(arr1,arr2,n)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     copies array arr1 to arr2
-
-
 
 REAL(DP), INTENT(IN)                         :: arr1(kdfull2)
 REAL(DP), INTENT(OUT)                        :: arr2(kdfull2)
 INTEGER, INTENT(IN)                      :: n
 
+INTEGER :: i
 
 DO i=1,n
   arr2(i)=arr1(i)
@@ -882,7 +908,15 @@ END SUBROUTINE cparr
 SUBROUTINE makexbsfile(ionlymob,iwithsh)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER,INTENT(IN) :: ionlymob
+INTEGER,INTENT(IN) :: iwithsh
+
+#if(raregas)
+INTEGER :: i
+REAL(DP) :: xx, yy, zz
+#endif
 
 OPEN(789,STATUS='unknown',FILE='xbs.Na_MgO')
 
@@ -937,10 +971,13 @@ END SUBROUTINE makexbsfile
 SUBROUTINE checkstability(rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(kdfull2*2)
+
+INTEGER :: i
+REAL(DP) :: dmaxfxc,dmaxfyc,dmaxfzc,dmaxfxe,dmaxfye,dmaxfze,dmaxfxk,dmaxfyk,dmaxfzk,dmaxfxn,dmaxfyn,dmaxfzn
 
 COMPLEX(DP) :: psidummy(1)             !! bugfix for force
 
@@ -1011,37 +1048,23 @@ END SUBROUTINE checkstability
 
 !------------------------------------------------------------
 
-FUNCTION dmaximum(field,nindex)
-!------------------------------------------------------------
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-
-REAL(DP), INTENT(IN)                         :: field(kdfull2)
-INTEGER, INTENT(IN)                      :: nindex
-
-
-vini = field(1)
-
-DO i=2,nindex
-  IF (field(i) > vini) vini=field(i)
-END DO
-
-dmaximum = vini
-
-RETURN
-END FUNCTION dmaximum
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
 SUBROUTINE checkespot(x,y,iunit)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER,INTENT(IN) ::iunit
+REAL(DP),INTENT(IN) ::x
+REAL(DP),INTENT(IN) ::y
 
 #if(raregas)
+
+INTEGER :: i,iz
+REAL(DP) :: potex, z
+REAL(DP) :: rr, xr, yr, zr
+REAL(DP),EXTERNAL :: v_soft
+
+
 DO iz=1,1000
   z=-10D0*0.1D0
   
@@ -1077,7 +1100,7 @@ END SUBROUTINE checkespot
 SUBROUTINE printfieldx(iunit,field,y,z)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                          :: iunit
@@ -1085,8 +1108,9 @@ REAL(DP), INTENT(IN)                         :: field(kdfull2)
 REAL(DP), INTENT(IN)                         :: y
 REAL(DP), INTENT(IN)                         :: z
 
-
-INTEGER :: getnearestgridpoint
+INTEGER :: ind, ix
+REAL(DP) :: x 
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 DO ix=minx,maxx
   x = (ix-nxsh)*dx
@@ -1097,8 +1121,6 @@ DO ix=minx,maxx
   
 END DO
 
-
-
 RETURN
 END SUBROUTINE printfieldx
 !------------------------------------------------------------
@@ -1108,7 +1130,7 @@ END SUBROUTINE printfieldx
 SUBROUTINE printfieldy(iunit,field,x,z)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                          :: iunit
@@ -1116,8 +1138,9 @@ REAL(DP), INTENT(IN)                         :: field(kdfull2)
 REAL(DP), INTENT(IN)                         :: x
 REAL(DP), INTENT(IN)                         :: z
 
-
-INTEGER :: getnearestgridpoint
+INTEGER :: ind, iy
+REAL(DP) :: y 
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 DO iy=miny,maxy
   y = (iy-nysh)*dy
@@ -1138,7 +1161,7 @@ END SUBROUTINE printfieldy
 SUBROUTINE printfieldz(iunit,field,x,y)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                          :: iunit
@@ -1147,7 +1170,9 @@ REAL(DP), INTENT(IN)                         :: x
 REAL(DP), INTENT(IN)                         :: y
 
 
-INTEGER :: getnearestgridpoint
+INTEGER :: ind, iz
+REAL(DP) :: z 
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 DO iz=minz,maxz
   z = (iz-nzsh)*dz
@@ -1170,7 +1195,7 @@ END SUBROUTINE printfieldz
 SUBROUTINE printfield(iunit,field,comment)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                      :: iunit
@@ -1179,7 +1204,8 @@ CHARACTER (LEN=*), INTENT(IN)            :: comment
 
 
 LOGICAL :: topenunit
-
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: x1, y1, z1
 
 INQUIRE(iunit,OPENED=topenunit)
 IF(.NOT.topenunit) THEN
@@ -1211,15 +1237,14 @@ END SUBROUTINE printfield
 SUBROUTINE printfield2(iunit,field1,field2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                  :: iunit
 REAL(DP), INTENT(IN)                     :: field1(kdfull2)
 REAL(DP), INTENT(IN)                     :: field2(kdfull2)
 
-
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: ft1, ft2, x1, y1, z1
 
 ind=0
 DO iz=1,maxz
@@ -1252,11 +1277,11 @@ END SUBROUTINE printfield2
 SUBROUTINE printforces(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: iflag
 
+INTEGER :: i
 
 IF (iterat > 0) THEN
   
@@ -1293,12 +1318,16 @@ END SUBROUTINE printforces
 SUBROUTINE getcm(iflag,iflagc,iflagk)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INTEGER,INTENT(IN)::iflag
 INTEGER,INTENT(IN)::iflagc
 INTEGER,INTENT(IN)::iflagk
 !    calculates the center of mass and stores it in the
 !     common vector rVecTmp(1:3)
+
+INTEGER :: i
+REAL(DP) :: summ, sumx, sumy, sumz
+
 summ = 0D0
 sumx = 0D0
 sumy = 0D0
@@ -1348,12 +1377,15 @@ END SUBROUTINE getcm
 
 SUBROUTINE emoms(rho)
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
-
+INTEGER :: ind, ix, iy, iz, k
+REAL(DP) :: updens, dodens
+REAL(DP) :: sux, sdx, suy, sdy, suz, sdz, s, s1, s2
+REAL(DP) :: x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4
 !----------------------------------------------------------------------
 
 sux=0D0
@@ -1505,15 +1537,25 @@ END SUBROUTINE emoms
 !-----------------------------------------------------------------------
 SUBROUTINE r_projmoms(rho,psi)
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) :: rho(2*kdfull2)
 REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+#endif
+
+INTEGER :: ind, ix, iy, iz, k
+REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
+
+#if(parano)
+INTEGER :: ik, ikk
+#else
+INTEGER :: kk,nbe,nbee
 REAL(DP) :: sprojec
 #endif
-REAL(DP), INTENT(IN)                :: rho(2*kdfull2)
-REAL(DP)                            :: summ,sumx,sumy,sumz
 !----------------------------------------------------------------------
 nrmom=35
 IF(nrmom > kmom) STOP ' too many moments in projmoms'
@@ -1562,7 +1604,7 @@ DO iz=minz,maxz
         END DO
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
         CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-                mpi_sum,mpi_comm_world,ic)
+                mpi_sum,mpi_comm_world,mpi_ierror)
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
 #endif
         starget=rho(ind)-sproj
@@ -1601,14 +1643,24 @@ END SUBROUTINE r_projmoms
 SUBROUTINE c_projmoms(rho,psi)
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
+
+REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+#endif
+
+INTEGER :: ind, ix, iy, iz, k
+REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
+
+#if(parano)
+INTEGER :: ik, ikk
+#else
+INTEGER :: kk
 REAL(DP) :: sprojec
 #endif
-REAL(DP), INTENT(IN)                :: rho(2*kdfull2)
-REAL(DP)                            :: summ,sumx,sumy,sumz
 !----------------------------------------------------------------------
 nrmom=35
 IF(nrmom > kmom) STOP ' too many moments in projmoms'
@@ -1763,14 +1815,16 @@ SUBROUTINE laserp(vlaser,rho)
 ! saved in 'foft1/2old'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: vlaser(kdfull2)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
-LOGICAL,PARAMETER :: TTESTPRINT=.FALSE.
-
-
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: ascal,acc1,acc2, ppower
+REAL(DP) :: foft,foft1,foft2
+REAL(DP) :: tstart,tend,tmax,tpulse2,tvend,snorm,scal1,scal2
+REAL(DP) :: ex, ey, ez, x1, y1, z1
 IF (ABS(e0) <= 1D-20) THEN
   ind = 0
   DO  iz=minz,maxz
@@ -1898,10 +1952,10 @@ acc1 = acc1*dvol
 acc2 = acc2*dvol
 elaser = elaser + (acc1-acc1old)*(foft1+foft1old)*0.5D0 & 
                 + (acc2-acc2old)*(foft2+foft2old)*0.5D0 
-
-IF(TTESTPRINT) WRITE(*,*) ' laser:',acc1,acc1old,foft1,foft1old, &
-                  (acc1-acc1old)*(foft1+foft1old)*0.5D0 & 
-                + (acc2-acc2old)*(foft2+foft2old)*0.5D0,elaser
+!!test:
+! WRITE(*,*) ' laser:',acc1,acc1old,foft1,foft1old, &
+!                   (acc1-acc1old)*(foft1+foft1old)*0.5D0 & 
+!                 + (acc2-acc2old)*(foft2+foft2old)*0.5D0,elaser
 acc1old = acc1
 acc2old = acc2
 foft1old = foft1
@@ -1932,10 +1986,12 @@ SUBROUTINE projectp(Vproj)
 ! valence electrons
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                             :: Vproj(kdfull2)
+REAL(DP), INTENT(OUT) :: Vproj(kdfull2)
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: x1, y1, z1
 !-----------------------------------------------------------------
 
     
@@ -1976,9 +2032,11 @@ REAL(DP) FUNCTION c_wfnorm(psi)
 !       COMPLEX psi version
 !     *************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
 
+INTEGER :: ii
+REAL(DP) :: acc
 acc = 0D0
 DO ii=1,nxyz
   acc   = REAL(psi(ii),DP)*REAL(psi(ii),DP) +AIMAG(psi(ii))*AIMAG(psi(ii)) + acc
@@ -1993,8 +2051,11 @@ REAL(DP) FUNCTION r_wfnorm(psi1)
 !         REAL psi version
 !     *************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP), INTENT(IN)                         :: psi1(kdfull2)
+
+INTEGER :: ii 
+REAL(DP):: acc
 
 acc = 0D0
 DO ii=1,nxyz
@@ -2006,14 +2067,17 @@ END FUNCTION r_wfnorm
 
 !     **************************
 
-FUNCTION wfnorm_r(psi1,psi2)
+REAL(DP) FUNCTION wfnorm_r(psi1,psi2)
 
 !     *************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 COMPLEX(DP), INTENT(IN OUT)                  :: psi1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
+
+INTEGER :: ii
+REAL(DP) :: acc
 
 acc = 0D0
 DO ii=1,nxyz
@@ -2024,7 +2088,7 @@ RETURN
 END FUNCTION wfnorm_r
 !     **************************
 
-FUNCTION wfnorm_i(psi1,psi2)
+REAL(DP) FUNCTION wfnorm_i(psi1,psi2)
 
 !     *************************
 USE params
@@ -2032,6 +2096,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 
+INTEGER :: ii 
+REAL(DP) :: acc
 acc = 0D0
 DO ii=1,nxyz
   acc = -REAL(psi1(ii),DP)*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii),DP) + acc
@@ -2048,9 +2114,12 @@ COMPLEX(DP) FUNCTION c_wfovlp(psi1,psi2)
 !      Overlap   <psi1|psi2>
 !         COMPLEX version
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 COMPLEX(DP), INTENT(IN)      :: psi1(kdfull2)
 COMPLEX(DP), INTENT(IN)      :: psi2(kdfull2)
+
+INTEGER :: ii
 COMPLEX(DP) :: csum
 
 csum = 0D0
@@ -2069,12 +2138,13 @@ REAL(DP) FUNCTION r_wfovlp(psi1,psi2)
 !      Overlap   <psi1|psi2>
 !         REAL version
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: psi1(kdfull2)
 REAL(DP), INTENT(IN)                     :: psi2(kdfull2)
 
+INTEGER :: ii
+REAL(DP) :: acc
 
 acc = 0D0
 DO ii=1,nxyz
@@ -2112,11 +2182,13 @@ SUBROUTINE rhointxy(rho,itime)
 !      at present a print modulus of 10 is hardwired.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
 INTEGER, INTENT(IN)         :: itime
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP) ::acc
 REAL(DP) :: rhoint(minz:maxz)
 LOGICAL :: tfirst=.true.
 !DATA tfirst/.true./
@@ -2163,13 +2235,19 @@ SUBROUTINE rhointyz(rho,itime)
 !      at present a print modulus of 10 is hardwired.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
 INTEGER, INTENT(IN)         :: itime
 
-REAL(DP) :: rhoint(minx:maxx)
+
+
 LOGICAL :: tfirst
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: acc
+REAL(DP) :: rhoint(minx:maxx)
+
+
 DATA tfirst/.true./
 !      data modrho/10/
 
@@ -2212,13 +2290,16 @@ SUBROUTINE rhointxz(rho,itime)
 !      at present a print modulus of 10 is hardwired.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
-INTEGER, INTENT(IN)         :: itime
+REAL(DP), INTENT(IN) :: rho(2*kdfull2)
+INTEGER, INTENT(IN)  :: itime
 
-REAL(DP) :: rhoint(miny:maxy)
 LOGICAL :: tfirst
+INTEGER :: ind, ix, iy, iz
+REAl(DP) :: acc
+REAL(DP) :: rhoint(miny:maxy)
+
 DATA tfirst/.true./
 !      data modrho/10/
 
@@ -2256,12 +2337,14 @@ SUBROUTINE prifld(field,comment)
 !       *************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 CHARACTER (LEN=*), INTENT(IN)   :: comment
 
 LOGICAL :: tnopri
+INTEGER :: ind, jx, jy, jz
+
 DATA tnopri/.false./
 
 !c       print field along x-axis
@@ -2287,12 +2370,13 @@ SUBROUTINE prifldz(field,comment)
 !       *************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 CHARACTER (LEN=*), INTENT(IN)   :: comment
 
 LOGICAL :: tnopri
+INTEGER :: ind, jx, jy, jz
 DATA tnopri/.false./
 
 !c       print field along z-axis
@@ -2322,13 +2406,14 @@ SUBROUTINE prifld2(iunit,field,comment)
 !       *************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)              :: iunit
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 CHARACTER (LEN=*), INTENT(IN)   :: comment
 
 LOGICAL :: tnopri
+INTEGER :: ind, jx, jy, jz
 DATA tnopri/.false./
 
 !c       print field along x-axis
@@ -2359,10 +2444,12 @@ SUBROUTINE mtv_fld(field,i)
 !       *************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)              :: i
 REAL(DP), INTENT(IN)             :: field(kdfull2)
+
+INTEGER :: ind, jx, jy, jz, num
 
 
 !     print 2d-field
@@ -2410,7 +2497,7 @@ SUBROUTINE fmtv_fld(psi,field,i)
 !     ****************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 CHARACTER (LEN=6) :: ext
 CHARACTER (LEN=8) :: ext1
 
@@ -2418,6 +2505,8 @@ REAL(DP), INTENT(IN)        :: field(kdfull2)
 COMPLEX(DP), INTENT(IN)     :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)         :: i
 
+INTEGER :: ind, ishift, j, jx, jy, jz, k, nb
+REAL(DP) :: rhoz, xmin1, ymin1, zmin1, xmax1, ymax1, zmax1
 REAL(DP), ALLOCATABLE :: rho(:)
 
 ALLOCATE(rho(2*kdfull2))
@@ -2430,12 +2519,7 @@ zmin1=-nz*dz
 xmax1=nx*dx
 ymax1=ny*dy
 zmax1=nz*dz
-j1=MOD(i,10)
-j2=MOD(i/10,10)
-j3=MOD(i/100,10)
-j4=MOD(i/1000,10)
-j5=MOD(i/10000,10)
-ext='.'//CHAR(j5+48)//CHAR(j4+48)//CHAR(j3+48) //CHAR(j2+48)//CHAR(j1+48)
+WRITE(ext,'(a,i5.5)') '.',i
 
 IF(i3dz == 1) THEN
   OPEN(70,FILE='zdensdyn'//ext//'.'//outnam,STATUS='unknown')
@@ -2511,8 +2595,7 @@ IF(i3dstate == 1) THEN
     DO ind=1,nxyz
       rho(ind+ishift)= occup(nb)*(CONJG(psi(ind,nb)))*psi(ind,nb)
     END DO
-    ext1='.'//CHAR(nb+48)//'.'//CHAR(j5+48)//CHAR(j4+48)  &
-        //CHAR(j3+48)//CHAR(j2+48)//CHAR(j1+48)
+    WRITE(ext1,'(a1,i1,a1,i5.5)') '.',nb,'.',i
     OPEN(71,FILE='zdenspsi'//ext1//'.'//outnam,STATUS='unknown')
     WRITE(71,'(a)') '$ data=contour'
     WRITE(71,'(a,i2,a,f7.3,a,f5.2)') '% nx = ',nx2,  &
@@ -2591,28 +2674,25 @@ SUBROUTINE mtv_3dfld(rho,iframe)
 
 USE params
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: iframe
 REAL(DP),INTENT(IN) :: rho(2*kdfull2)
 
 CHARACTER (LEN=5) :: ext
-REAL(DP) :: sumr
+INTEGER :: ind, ix, iy, iz
+!REAL(DP) :: sumr
 
 
-sumr=0
-j1=MOD(iframe,10)
-j2=MOD(iframe/10,10)
-j3=MOD(iframe/100,10)
-j4=MOD(iframe/1000,10)
-ext='.'//CHAR(j4+48)//CHAR(j3+48)//CHAR(j2+48)//CHAR(j1+48)
+!sumr=0
+WRITE(ext,'(a,i4.4)') '.',iframe
 !       OPEN(unit=80,STATUS='UNKNOWN',FILE='xdens'//ext//'.'//outnam)
 !       OPEN(unit=81,STATUS='UNKNOWN',FILE='ydens'//ext//'.'//outnam)
 OPEN(UNIT=82,STATUS='UNKNOWN',FILE='dens'//ext//'.'//outnam)
 !       OPEN(unit=83,STATUS='UNKNOWN',FILE='xydens'//ext//'.'//outnam)
 ind=0
 DO iz=minz,maxz
-  sumr=0
+!  sumr=0
   DO iy=miny,maxy
     DO ix=minx,maxx
       ind=ind+1
@@ -2652,12 +2732,14 @@ SUBROUTINE orthogwfr(wfr,isp,q0)
 !     Occupation numbers must be 0 or 1, i.e. 'temp=0.0' required.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)         :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)     :: wfr(kdfull2)
 INTEGER, INTENT(IN)          :: isp
 
+INTEGER :: i,nbe
+REAL(DP) :: overlap
 !*********************************************************
 
 !     orthogonalization
@@ -2685,6 +2767,8 @@ END SUBROUTINE orthogwfr
 REAL(DP) FUNCTION ran1(idum)
 !------------------------------------------------------------
 USE params, ONLY: DP
+IMPLICIT NONE
+
 INTEGER, INTENT(IN OUT)::idum
 INTEGER :: ia,im,iq,ir,ntab,ndiv
 REAL(DP) :: am,eps,rnmx
@@ -2702,6 +2786,7 @@ PARAMETER (ia=16807,im=2147483647,am=1D0/im,iq=127773,ir=2836,  &
 INTEGER :: j,k,iv(ntab),iy
 SAVE iv,iy
 DATA iv /ntab*0/,iy /0/
+
 IF (idum <= 0 .OR. iy == 0) THEN
   idum=MAX(-idum,1)
   DO j=ntab+8,1,-1
@@ -2729,6 +2814,7 @@ END FUNCTION ran1
 REAL(DP) FUNCTION gasdev(idum)
 !------------------------------------------------------------
 USE params, ONLY: DP
+IMPLICIT NONE
 
 INTEGER,INTENT(IN OUT) :: idum
 
@@ -2759,30 +2845,39 @@ END FUNCTION gasdev
 
 
 !------------------------------------------------------------
-SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temper,masse, ipflag)
+SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperature,masse, ipflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP) :: pxt(*),pyt(*),pzt(*)
-REAL(DP) :: masse
+REAL(DP),INTENT(OUT) :: pxt(:)
+REAL(DP),INTENT(OUT) :: pyt(:)
+REAL(DP),INTENT(OUT) :: pzt(:)
+INTEGER,INTENT(IN) :: nteil
+REAL(DP),INTENT(IN) :: temperature
+REAL(DP),INTENT(IN)  :: masse
+INTEGER,INTENT(IN) :: ipflag
 
 !     temper given in Kelvin, convert to kT in Ryd now
 
+INTEGER :: i,irand,ntmob
+REAL(DP) :: ekhaben,eksoll,fac,sumx,sumy,sumz,sc,temper
+
 WRITE(6,*) 'ENTERING GIVETEMPERATURE'
 
-temper=temper*6.507D-6
+temper=temperature*6.507D-6
 
 fac=SQRT(temper/masse)
 
 sumx=0D0
 sumy=0D0
 sumz=0D0
-minusvier=-4
+irand=-4
+
 DO i=1,nteil
-  pxt(i)=gasdev(minusvier)*fac
-  pyt(i)=gasdev(minusvier)*fac
-  pzt(i)=gasdev(minusvier)*fac
+  pxt(i)=gasdev(irand)*fac
+  pyt(i)=gasdev(irand)*fac
+  pzt(i)=gasdev(irand)*fac
   sumx = sumx + pxt(i)
   sumy = sumy + pyt(i)
   sumz = sumz + pzt(i)
@@ -2838,7 +2933,7 @@ DO i=1,nteil
   END IF
 END DO
 
-ekhaben = ekhaben /2./masse
+ekhaben = ekhaben /2D0/masse
 
 !      write(6,*) 'ekhaben: ',ekhaben
 
@@ -2879,7 +2974,7 @@ END SUBROUTINE givetemperature
 SUBROUTINE safeopen(iunit,iact,icond,filename)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)           :: iunit,iact,icond
@@ -2903,7 +2998,9 @@ END SUBROUTINE safeopen
 
 !     ******************************
 SUBROUTINE cleanfile(iunit)
+IMPLICIT NONE
 
+INTEGER,INTENT(IN) :: iunit
 LOGICAL :: topen
 
 INQUIRE(iunit,OPENED=topen)
@@ -2920,25 +3017,23 @@ END SUBROUTINE cleanfile
 SUBROUTINE r_project(qin,qout,ispact,q0)
 
 !     ******************************
-
-
 !     projects all occupied states 'q0' out of 'qin'.
-
 !      q0     = set of s.p. wavefunctions (real)
 !      qin    = wavefunction from which 'q0' are to be removed (real)
 !      qout   = resulting wavefunction
 !      ispact = spin of 'qin'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE 
 
 REAL(DP), INTENT(IN)   :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN)   :: qin(kdfull2)
 REAL(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
 
+INTEGER :: i, nbe
+REAL(DP) :: ovl
 !*********************************************************
-
 
 DO  i=1,nxyz
   qout(i)=qin(i)
@@ -2964,22 +3059,21 @@ END SUBROUTINE r_project
 SUBROUTINE c_project(qin,qout,ispact,q0)
 
 !     ******************************
-
-
 !     projects all occupied states 'q0' out of 'qin'.
-
 !      q0     = set of s.p. wavefunctions (complex)
 !      qin    = wavefunction from which 'q0' are to be removed (complex)
 !      qout   = resulting wavefunction
 !      ispact = spin of 'qin'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)   :: q0(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
 COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
+
+INTEGER :: i, nbe
 COMPLEX(DP) :: ovl
 
 !*********************************************************
@@ -3003,16 +3097,13 @@ END SUBROUTINE c_project
 SUBROUTINE r_project(qin,qout,ispact,q0)
 
 !     ******************************
-
-
 !     projects all occupied states 'q0' out of 'qin'.
-
 !      q0     = set of s.p. wavefunctions (real)
 !      qin   = wavefunction from which 'q0' are to be removed (real)
 !      ispact = spin of 'qin'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)   :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN)   :: qin(kdfull2)
@@ -3030,22 +3121,20 @@ END SUBROUTINE r_project
 SUBROUTINE c_project(qin,qout,ispact,q0)                                   ! cPW
 
 !     ******************************
-
-
 !     projects all occupied states 'q0' out of 'qin'.
-
 !      q0     = set of s.p. wavefunctions (real)
 !      qin    = wavefunction from which 'q0' are to be removed (real)
 !      qout   = resulting wavefunction
 !      ispact = spin of 'qin'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)   :: q0(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
 COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
+
 COMPLEX(DP) :: ovl
 
 !*********************************************************
@@ -3063,8 +3152,8 @@ END SUBROUTINE c_project
 
 SUBROUTINE pair(e,gw,ph,nz,nmax,gp,eferm,delta,partnm,  &
     iter,ipair,eps,iab,kstate)
-USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY: DP,one,zero
+IMPLICIT NONE
 
 !     * * * * * * * * * *     pairing iteration      * * * * * * * * * *
 
@@ -3084,10 +3173,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     according force 'gp'.
 
 !     input via list:
-!      e       = array(1..nmax) of single particle energies.
-!      gw      = array(1..nmax) of occupation probabilities,
+!      e       = array(1:nmax) of single particle energies.
+!      gw      = array(1:nmax) of occupation probabilities,
 !                input is used as initial guess for the iteration.
-!      ph      = array(1..nmax) of the multiplicities of the single
+!      ph      = array(1:nmax) of the multiplicities of the single
 !                particle levels.
 !      nz      = desired particle number
 !      nmax    = maximum number of single particle states
@@ -3126,22 +3215,43 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !      sum     = particle number, from adding 'gw' with degeneracy 'ph'.
 
 !     some auxiliary fields are:
-!      ph      = array(1..46) of the multiplicities of the single
+!      ph      = array(1:46) of the multiplicities of the single
 !                particle levels. array is ordered according to
 !                the harmonic oscillator scheme, with rising shell
 !                number and lowering angular momentum within each shell.
-!      dparn   = array(1..3) of variation in the particle number as
+!      dparn   = array(1:3) of variation in the particle number as
 !                consequence of 'deferm' and 'ddelta'.
-!      dgap    = array(1..3) of variation in the gap equation as
+!      dgap    = array(1:3) of variation in the gap equation as
 !                consequence of 'deferm' and 'ddelta'.
 !      gr      = double array of variation of particle number and of
 !                gap equation, used for construction of the tangential
 !                step
 
-REAL(DP) :: e(kstate),gw(kstate),ph(kstate)
-REAL(DP) :: dparn(3),dgap(3),gr(2,2)
-REAL(DP) :: emax,emin
+REAL(DP),INTENT(IN) :: e(kstate)
+REAL(DP),INTENT(IN OUT) :: gw(kstate)
+REAL(DP),INTENT(IN OUT) :: ph(kstate)
+INTEGER,INTENT(IN) :: nz
+INTEGER,INTENT(IN) :: nmax
+REAL(DP),INTENT(IN OUT) :: gp
+REAL(DP),INTENT(IN OUT) :: eferm
+REAL(DP),INTENT(IN OUT) :: delta
+REAL(DP),INTENT(IN OUT) :: partnm
+INTEGER,INTENT(IN) :: iter
+INTEGER,INTENT(IN) :: ipair
+REAL(DP),INTENT(IN) ::eps
+INTEGER,INTENT(IN) :: iab
+INTEGER,INTENT(IN) :: kstate
+    
 LOGICAL :: converged= .false.   ! will be true when convergence is reached
+INTEGER :: i, isum, it, itmaxp, itsum, k, ka
+REAL(DP):: dampin, deferm, ddelta, delti, delact, delold, del2
+REAL(DP):: elam, equasi, efold, efstep, parnum, gapeq, gphalf, grsav
+REAL(DP):: emax, emin
+REAl(Dp):: eferm1, eferm2, eferm3, parn1, parn2, parn3
+REAL(DP):: efmax, dlmax, det, detmin, defmin, ddlmin, dlstep
+REAL(DP):: xmaxlw,x10lw
+REAL(DP):: dparn(3), dgap(3),gr(2,2)
+
 
 DATA gr,dparn,dgap/10*0D0/
 
@@ -3164,7 +3274,6 @@ DATA efmax,dlmax,detmin,defmin,ddlmin/3D0,.6D0,.1D-3,.1D-3,.1D-3/
 !clust      data efmax,dlmax,detmin,defmin,ddlmin/0.03,.6,.1e-3,.1e-3,.1
 
 DATA xmaxlw,x10lw/1.0D-30,1.0D-10/
-DATA one,zero/1D0,0D0/
 
 !-----------------------------------------------------------------------
 
@@ -3465,7 +3574,7 @@ RETURN
 END SUBROUTINE pair
 !-----parnm------------ part of the Hartree-Fock package ---------------
 
-FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
+REAL(DP) FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 
 !     the include file 'params.inc' communicates the precision
 !     transfering a line 'implicit double precision (a-h,o-z)' or not.
@@ -3484,9 +3593,18 @@ FUNCTION parnm(e,gw,ph,nmax,delta,elam,ipair)
 !       ipair  = switch to pairing (0) or temperature (4).
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-REAL(DP) :: e(ksttot),gw(ksttot),ph(ksttot)
-!      data zero,one/0.0,1.0/
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN) :: e(ksttot)
+REAL(DP),INTENT(OUT) :: gw(ksttot)
+REAL(DP),INTENT(IN) :: ph(ksttot)
+INTEGER,INTENT(IN) :: nmax
+REAL(DP),INTENT(IN) :: delta
+REAL(DP),INTENT(IN) :: elam
+INTEGER,INTENT(IN) :: ipair
+
+INTEGER :: i
+REAL(DP) :: acc, equasi
 
 !----------------------------------------------------------------------
 
@@ -3527,16 +3645,19 @@ REAL(DP) FUNCTION omega_mieplasmon(rho)
 !     (? seems to be correct only for Na with soft local PsP ?)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN) :: rho(kdfull2)
+
+
+INTEGER :: i,ii, ix, iy, iz
+REAL(DP) :: psrho1, psrho2, acc, omegam
+REAL(DP) :: rx, ry, rz, r2, x1, y1, z1
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhops
 
 REAL(DP),PARAMETER:: prho1_data=-0.46073D0, prho2_data=0.13287D0
 
-!EQUIVALENCE (rhops,w1)
-! w1 => rhops
 
 
 !------------------------------------------------------------
@@ -3621,9 +3742,9 @@ SUBROUTINE view3d()
 !     Prepares file for viewing ionic structure with 'xbs'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 CHARACTER (LEN=3) :: ext
-
+INTEGER :: ion
 !-----------------------------------------------------------------
 
 ext=outnam
@@ -3665,10 +3786,11 @@ SUBROUTINE timer(iaction)
 !     The relative time is taken between step 2 and 1.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: iaction
 
+INTEGER :: i 
 REAL(DP),ALLOCATABLE,SAVE :: cputimenew(:),cputimeold(:)
 
 LOGICAL,SAVE :: tfirst=.true.
@@ -3711,7 +3833,7 @@ SUBROUTINE stimer(iaction)
 !     The relative time is taken between step 2 and 1.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: iaction
 
@@ -3743,20 +3865,23 @@ SUBROUTINE probab(psitmp)
 ! Calculates the charge state probabilities
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 COMPLEX(DP), INTENT(IN)                :: psitmp(kdfull2,kstate)
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+INTEGER :: ic, k, n, nact, nb, nod2
 REAL(DP)                               :: prob(ksttot+1),pold(ksttot+1)
 REAL(DP)                               :: rtmpuse(nstate)
 REAL(DP)                               :: rtmpuse_all(ksttot)
 #else
+INTEGER :: k
 REAL(DP)                               :: prob(nstate+1),pold(nstate+1)
 REAL(DP)                               :: rtmpuse(nstate)
 #endif
 
+INTEGER :: i,it
 COMPLEX(DP)                            :: cscal
 !-----------------------------------------------------------------
 
@@ -3770,7 +3895,7 @@ ENDDO
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 IF(myn/=0) THEN
   prob(ksttot+1)=0D0
-  CALL mpi_send(rtmpuse,nstate,mpi_double_precision,0,myn,mpi_comm_world,ic)
+  CALL mpi_send(rtmpuse,nstate,mpi_double_precision,0,myn,mpi_comm_world,mpi_ierror)
   DO n=1,nstate
     nact = nrel2abs_other(n,0) 
 !    rtmpuse_all(nact) = rtmuse(n)
@@ -3854,11 +3979,11 @@ SUBROUTINE phstate(psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
 
-REAL(DP) :: phangpi
+REAL(DP) :: phangpi, ca, sa, cb, sb
 
   IF(npstate > nstate) STOP ' PHSTATE: particle state out of range'
   IF(nhstate > nstate) STOP ' PHSTATE: hole state out of range'
@@ -3897,7 +4022,7 @@ SUBROUTINE phoverl(psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
 LOGICAL,SAVE :: tfirst=.true.
@@ -3938,10 +4063,12 @@ SUBROUTINE stateoverl(psi1,psi2)
 !  All states should have occupation 1.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)   :: psi1(kdfull2,kstate),psi2(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: psi1(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: psi2(kdfull2,kstate)
 
+INTEGER :: nbe,nb2
 COMPLEX(DP), ALLOCATABLE :: spoverlaps(:,:)
 
 LOGICAL,SAVE :: tfirst=.true.
@@ -3961,13 +4088,15 @@ END IF
 
 ALLOCATE(spoverlaps(nstate,nstate))
 
-DO nbe=1,nstate; DO nb2=1,nstate
-  IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nb2))) THEN
-    spoverlaps(nb2,nbe) = SUM(CONJG(psi1(:,nbe))*psi2(:,nb2))*dvol
-  ELSE
-    spoverlaps(nb2,nbe) = 0D0
-  END IF
-END DO; END DO
+DO nbe=1,nstate
+  DO nb2=1,nstate
+    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nb2))) THEN
+      spoverlaps(nb2,nbe) = SUM(CONJG(psi1(:,nbe))*psi2(:,nb2))*dvol
+    ELSE
+      spoverlaps(nb2,nbe) = 0D0
+    END IF
+  END DO
+END DO
 
 
 WRITE(382,'(f10.4,2(1pg13.5))') time,determinant(spoverlaps,nstate,nstate)
@@ -3996,7 +4125,7 @@ SUBROUTINE shiftsmall(q0,shix,shiy,shiz)
 !------------------------------------------------------------
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! Shifts complex wavefunction array 'q0' by 'shix', 'shiy', 'shiz' in
 ! x-, y-, and z-direction.
@@ -4008,6 +4137,8 @@ REAL(DP), INTENT(IN)                         :: shix
 REAL(DP), INTENT(IN)                         :: shiy
 REAL(DP), INTENT(IN)                         :: shiz
 
+INTEGER :: ind
+REAL(DP) :: dkx, dky, dkz
 COMPLEX(DP),ALLOCATABLE ::  q1(:)
 
 #if(gridfft)
@@ -4089,14 +4220,15 @@ SUBROUTINE dipole_qp(q0,shix,shiy,shiz,bostx,bosty,bostz)
 !------------------------------------------------------------
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! Initialization of a dipole deformation in space and momentum.
 ! Shifts complex wavefunction array 'q0' by 'shix', 'shiy', 'shiz' in
 ! x-, y-, and z-direction and boosts it by 'bostx', 'bosty' and 'bostz'.
 
 
-
+INTEGER :: ind, ix, iy, iz, nb
+REAL(DP) :: arg, x1, y1, z1
 COMPLEX(DP), INTENT(IN OUT)   :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN)          :: shix,shiy,shiz,bostx,bosty,bostz
 
@@ -4115,7 +4247,6 @@ DO nb=1,nstate
 !   shift
 
   CALL  shiftsmall(q0(1,nb),shix,shiy,shiz)
-
 
 !   boost
 
@@ -4162,7 +4293,7 @@ SUBROUTINE testgradient(wfin)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                      :: wfin(kdfull2)
 
@@ -4241,6 +4372,8 @@ SUBROUTINE cludcmp(a,n,np,indx,d,det,ierror)
 !     d        sign  of number of row interchanges                                        
 !     det      determinant of 'a'    
 USE params, ONLY:DP
+IMPLICIT NONE
+
 COMPLEX(DP), INTENT(IN OUT)         :: a(np,np)
 INTEGER, INTENT(IN)                 :: n
 INTEGER, INTENT(IN)                 :: np

@@ -74,12 +74,13 @@ CONTAINS
 
 !-------------------------------------------------------------------
 SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     this is an example for how to use the falr Coulomb solver
 !     read readme.fcs first!
 
 !-----------------------------------------------------------------------
-
+INTEGER,INTENT(IN) :: nx0, ny0, nz0
+REAL(DP),INTENT(IN):: dx0, dy0, dz0
 ! compute array parameters
 kxmax=nx0;kymax=ny0;kzmax=nz0
 ksmax=kxmax
@@ -143,7 +144,7 @@ END SUBROUTINE init_coul
 
 SUBROUTINE falr(rhoinp,chpfalr,kdf)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdf)
 REAL(DP), INTENT(IN OUT)                     :: chpfalr(kdf)
@@ -169,11 +170,10 @@ END SUBROUTINE falr
 !-----rhofld------------------------------------------------------------
 
 SUBROUTINE rhofld(rhoinp,kdf)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
-REAL(DP), INTENT(IN)                         :: rhoinp(kdf)
-INTEGER, INTENT(IN)                  :: kdf
+REAL(DP), INTENT(IN)  :: rhoinp(kdf)
+INTEGER, INTENT(IN)   :: kdf
 
 rho(1:nxyz)=rhoinp(1:nxyz)
 
@@ -190,8 +190,8 @@ SUBROUTINE result(chpfalr,kdf)
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: chpfalr(kdf)
-INTEGER, INTENT(IN)                  :: kdf
+REAL(DP), INTENT(OUT) :: chpfalr(kdf)
+INTEGER, INTENT(IN)   :: kdf
 INTEGER:: nmax
 
 !       inclusion of e2
@@ -207,10 +207,17 @@ END SUBROUTINE result
 
 SUBROUTINE coufou2
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER ::  i, i1, i2, i3, icase, ik, ikzero, j
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)
 INTEGER ::  iprho(3)
-
+REAL(DP):: q00,q10,q11r,q11i,q20,q21r,q21i,  &
+    q22r,q22i,q30,q31r,q31i,q32r,q32i,q33r,q33i,  &
+    q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2
+REAL(DP)::x00,x10,x11r,x11i,x20,x21r,x21i,  &
+    x22r,x22i,x30,x31r,x31i,x32r,x32i,x33r,x33i,  &
+    x40,x41r,x41i,x42r,x42i,x43r,x43i,x44r,x44i, xr2
+REAL(DP) :: ftpi, potcor
 LOGICAL,PARAMETER :: tprint=.false.
 LOGICAL,PARAMETER :: rqplot=.false.
 
@@ -504,11 +511,11 @@ END SUBROUTINE coufou2
 
 REAL(DP) FUNCTION fx1(x)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN)                         :: x
 REAL(DP),PARAMETER :: eighty=80.0D0
-
+REAL(DP) :: expa, x2
 !------------------------------------------------------------------------------
 
 x2 = x*x
@@ -577,7 +584,7 @@ SUBROUTINE coucor
 !     25   44i            - - +
 
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 LOGICAL,PARAMETER :: mumpri=.false.
 LOGICAL,PARAMETER :: refmom=.true.
@@ -590,7 +597,14 @@ LOGICAL,PARAMETER :: refmom=.true.
 !  REAL(DP),INTENT(in) :: x
 !  END FUNCTION fx1
 !END INTERFACE
-
+INTEGER :: i, i1, i2, i3, l
+REAL(DP) :: one,two,oh, xmax, ymax, zmax, xyzmin, xyzmax
+REAL(DP) :: agen, binup, rad0, fzrm, qg, qgint, qr2,rad,gfc
+REAL(DP) :: pfy00, pfy10, pfy11, pfy20, pfy21, pfy22, pfy30, pfy31, pfy32, pfy33, pfy40, pfy41, pfy42, pfy43, pfy44
+REAL(DP) :: y00,y10,y11r,y11i,y20,y21r,y21i,y22r,y22i,y30,y31r,y31i,y32r,y32i,y33r,y33i,y40,y41r,y41i,y42r,y42i,y43r,y43i,y44r,y44i
+REAL(DP) :: q00,q10,q11r,q11i,q20,q21r,q21i,q22r,q22i,q30,q31r,q31i,q32r,q32i,q33r,q33i,q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i
+REAl(DP) :: t1,t2
+REAL(DP) :: x,y,z,rr,xx,yy,zz
 DATA one,two,oh/1D0,2D0,0.5D0/
 !DATA    mumpri/.false./
 !DATA    refmom/.true./
@@ -1021,11 +1035,11 @@ SUBROUTINE tstbnd(rhotst)
 
 !     tests boundary values of 'rhotst'
 
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rhotst(kdfull)
-
+INTEGER :: i1,i2,i3,ii,numb
+REAL(DP):: bndmax, bndmin, rhp
 
 !------------------------------------------------------------------------------
 
@@ -1077,7 +1091,7 @@ SUBROUTINE mulmws(rhomul,q00,q10,q11r,q11i,q20,q21r,q21i,  &
 !     input : rhomul   (spatial array of density)
 !             mumpri   (print option)
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rhomul(kdfull)
 REAL(DP), INTENT(OUT)                        :: q00
@@ -1108,14 +1122,12 @@ REAL(DP), INTENT(OUT)                        :: q44i
 REAL(DP), INTENT(OUT)                        :: qr2
 LOGICAL, INTENT(IN)                      :: mumpri
 
-
-
+INTEGER :: i1,i2,i3,ii
+REAL(DP) ::rhp,rr,x,y,z,xx,yy,zz
 
 !------------------------------------------------------------------------------
 
-IF(mumpri) THEN
-  WRITE(7,'(a)') ' begin mulmws'
-END IF
+IF(mumpri) WRITE(7,'(a)') ' begin mulmws'
 
 !     preoccupation
 
@@ -1258,7 +1270,7 @@ SUBROUTINE expand(rhoin,rhoout,ipx,ipy,ipz)
 !       ipx,y,z = parities in x,y,z
 
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: rhoin(kdcorf)
@@ -1267,7 +1279,7 @@ INTEGER, INTENT(IN)                      :: ipx
 INTEGER, INTENT(IN)                      :: ipy
 INTEGER, INTENT(IN)                      :: ipz
 
-
+INTEGER :: i,i1,i2,i3,ii,j
 
 !------------------------------------------------------------------------------
 
@@ -1331,14 +1343,15 @@ END SUBROUTINE expand
 !     numerical recipes routine qgaus (20 point)
 ! gauss quadrature
 SUBROUTINE qgaus_fx1(a,b,ss)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-!REAL(DP) :: func
 REAL(DP), INTENT(IN)                     :: a
 REAL(DP), INTENT(IN)                     :: b
 REAL(DP), INTENT(OUT)                        :: ss
 REAL(DP) :: x(10),w(10)
 
+INTEGER :: j
+REAL(DP) :: xm, xr
 !EXTERNAL func
 !INTERFACE
 !  REAL(DP) FUNCTION func(x)
@@ -1361,7 +1374,7 @@ xr = 0.5D0*(b-a)
 ss = 0.0D0
 DO j=1,10
   dx = xr*x(j)
-ss = ss+w(j) * (fx1(xm+dx) + fx1(xm-dx))
+  ss = ss+w(j) * (fx1(xm+dx) + fx1(xm-dx))
 !s = ss+w(j) * (func(xm+dx) + func(xm-dx))
 END DO
 ss = xr*ss
@@ -1372,7 +1385,7 @@ END SUBROUTINE qgaus_fx1
 !-----fftinp------------------------------------------------------------
 
 SUBROUTINE fftinp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     does some of the work normally done by input in jel3d.f
 !     for details on the grid also see readme.fcs, chapter 4.
@@ -1382,7 +1395,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !-----------------------------------------------------------------------
 
-!pi = 3.141592653589793D0
+INTEGER :: i0, i1, i2, i3, ii, ix, iy, iz
+REAL(DP) :: ak2, sqak2
+REAl(DP) :: xx1, xy1, xz1, xx2, xy2, xz2
 !h2m = 1D0                  ! Rydberg units
 !zero = 0D0
 
@@ -1520,16 +1535,18 @@ END SUBROUTINE fftinp
 !-----fourf-------------------------------------------------------fourf
 
 SUBROUTINE fourf(psx,pskr,pski,ipar)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                         :: psx(kdfull)
 REAL(DP), INTENT(OUT)                        :: pskr(kdred)
 REAL(DP), INTENT(OUT)                        :: pski(kdred)
 INTEGER, INTENT(IN)                      :: ipar(3)
+
+INTEGER ::  i1, i
 REAL(DP) ::  a(kdfull)
-
-
+REAL(DP) :: mxini,myini,mzini
+REAL(DP) :: nzzh, nyyh, sqh, tnorm, xp, yp, zp
 
 !     Fourier forward transformation
 !     input:  psx    input wave-function
@@ -1645,13 +1662,16 @@ END SUBROUTINE fourf
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(psx,pskr,pski,ipar)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(OUT)                        :: psx(kdfull)
 REAL(DP), INTENT(IN)                         :: pskr(kdred)
 REAL(DP), INTENT(IN)                         :: pski(kdred)
 INTEGER, INTENT(IN)                      :: ipar(3)
+
+INTEGER :: i,i1
+REAL(DP) :: nzzh, nyyh, sq2, tnorm, xp, yp, zp
 REAL(DP) ::  a(kdfull)
 
 
@@ -1696,13 +1716,14 @@ END SUBROUTINE fourb
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdfull)
 REAL(DP), INTENT(OUT)                        :: psxi(kdfull)
 #if(netlib_fft)
 INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
 #endif
+INTEGER :: i0, i1, i2, i3, i30, ii, nx11
 
 !     performs the Fourier-transformation in x-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
@@ -1810,13 +1831,14 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
 #endif
+INTEGER :: i0,i1,i2,i3,i30,ii,ny11
 !     performs the Fourier-transformation in y-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
 !     is overwritten by the Fourier-transformed wave-function
@@ -1935,7 +1957,7 @@ END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
 SUBROUTINE fftz(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
@@ -1945,6 +1967,7 @@ INTEGER :: nzh
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
+INTEGER :: i1,i2,i3,i3m, ind
 !     performs the Fourier-transformation in z-direction
 !     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
 !     is overwritten by the Fourier-transformed wave-function
@@ -1996,8 +2019,6 @@ DO i2=1,kffty
   END DO
   DO i3=1,kfftz
     i3m   = MOD(i3+nzh,kfftz)+1
-    ic=2*i3m
-    ir=ic-1
     DO i1=1,kfftx
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       psxr(ind)= REAL(fftb(i3m,i1),DP)
@@ -2011,7 +2032,7 @@ END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
 SUBROUTINE ffbz(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
@@ -2021,7 +2042,7 @@ INTEGER :: nzh
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
-
+INTEGER :: i1,i2,i3,i3m,ind
 !----------------------------------------------------------------------
 
 nxyf = kfftx*kffty
@@ -2082,14 +2103,14 @@ END SUBROUTINE ffbz
 !-----ffby-------------------------------------------------------------
 
 SUBROUTINE ffby(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
 #endif
-
+INTEGER :: i0, i1, i2, i3, i30, ii, ny11
 
 !----------------------------------------------------------------------
 
@@ -2195,13 +2216,14 @@ END SUBROUTINE ffby
 !-----ffbx-------------------------------------------------------------
 
 SUBROUTINE ffbx(psxr,psxi)
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
 #if(netlib_fft)
 INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
 #endif
+INTEGER :: i0, i1, i2, i3, i30, ii, nx11
 !----------------------------------------------------------------------
 
 nx11=nx1+1

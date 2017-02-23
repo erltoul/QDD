@@ -112,7 +112,7 @@ REAL(DP) :: ckncul7,ckncul8,ckncul9,ckncul10,cknculd, srenergy
 REAL(DP) :: ccel6,ccel8,ccel10, ckel6,ckel8,ckel10
 REAL(DP) :: sigmac=1.01116D0,sigmav=1.01116D0,sigmak=1D0,sigmacc,sigmacv
 REAL(DP) :: sigmack, sigmavv,sigmakk,sigmakv,epsdi=1D0,zsurf
-REAL(DP) :: chgcore,chgval,chgkat,delx,dely,delz
+REAL(DP) :: chgcore,chgval,chgkat
 REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
