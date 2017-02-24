@@ -28,16 +28,16 @@ USE util, ONLY:phstate,stateoverl,dipole_qp
 USE twost
 USE orthmat
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     initializes dynamical wavefunctions from static solution
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-
+INTEGER :: ifreset
+REAL(DP) ::acc, palph, pbeta, phexe, sqtest, xion
 !----------------------------------------------------
 
-  itgradstep=0      !MV to have a number of iterarions in utgradstepc             
 #if(twostsic)
   IF(ifsicp==8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
 #endif
@@ -72,7 +72,7 @@ IF (iscatterelectron /= 0) CALL init_scattel(psi)
 ! (run first static, save on 'rsave.<name>', check occupation numbers,
 !  start dynamics with 'istat=1', reset occupation numbers here).
 ! (present example for Na-8 with 12  states):
-ifreset = 00
+ifreset = 0
 IF(ifreset==1) THEN
   occup(1) = 1D0
   occup(2) = 1D0

@@ -33,12 +33,14 @@ USE coulsolv, ONLY:falr
 USE twostr
 USE localize_rad
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
-
+#if(twostsic)
+INTEGER :: is
+#endif
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
@@ -46,7 +48,12 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
-
+INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
+#if(twostsic)
+INTEGER :: ii, jj
+#endif
+REAL(DP) :: time_init
+REAL(DP) :: xcm, ycm, zcm
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 
 IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
@@ -66,14 +73,14 @@ WRITE(*,*) ' in STATIT'
 itersicp6=20
 
 
-    IF(istat == 1) THEN
+IF(istat == 1) THEN
 !        CALL sstep(psir,akv,aloc,0)    ! also for GSlat, DSIC
-        CALL resume(psir,outnam)
-        CALL calcpseudo()                 ! initialize pseudo-potentials
-        CALL static_mfield(rho,aloc,psir,qaux,0)
-        CALL pricm(rho)
-        CALL infor(rho,0)
-    END IF
+  CALL resume(psir,outnam)
+  CALL calcpseudo()                 ! initialize pseudo-potentials
+  CALL static_mfield(rho,aloc,psir,qaux,0)
+  CALL pricm(rho)
+  CALL infor(rho,0)
+END IF
 
 
 !     initial computation of mean field, protocol prints, headers
@@ -389,15 +396,13 @@ USE params
 USE twostr
 USE localize_rad
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
 INTEGER, INTENT(IN)                  :: iter1
-
-
 
 
 !----------------------------------------------------------------
@@ -458,7 +463,7 @@ USE kinetic
 USE twostr
 USE localize_rad
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
@@ -469,8 +474,17 @@ INTEGER, INTENT(IN)                      :: iter
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
+#if(parano)
+INTEGER :: iactsp, ii, nbc, nbcs,  nbes
+#endif
 !#if(hamdiag && parano)     ! ?? what is hamdiag ? F.L.
+LOGICAL :: tocc,tcpu
+INTEGER :: i, ishift
 INTEGER :: ktridig  !=(kstate+kstate*kstate)/2
+INTEGER :: nbe, nph
+INTEGER :: ncount_init, ncount_rate, ncount_max, ncount_step, ncount_orth, ncount_syst, ncount_fin
+REAL(DP)::time_init, time_step, time_orth, time_cpu, time_fin
+REAL(DP) :: sum0,sumk,sume,sum2
 REAL(DP),ALLOCATABLE :: hmatr(:,:)
 REAL(DP),ALLOCATABLE :: heigen(:)
 REAL(DP),ALLOCATABLE :: vect(:,:)
@@ -479,13 +493,15 @@ INTEGER,ALLOCATABLE :: npoi(:,:)
 INTEGER :: ntridig(2),nstsp(2)
 LOGICAL, PARAMETER :: tprham=.false.
 !#endif
+#if(twostsic)
+REAL(DP):: espbef, espaft
+#if(parano)
+INTEGER :: ni
+#endif
+#endif
 #if(fftw_gpu)
 INTEGER(C_INT) :: size_data
 #endif
-
-
-INTEGER :: nph
-LOGICAL :: tocc,tcpu
 #if(parano)
 DATA tocc,tcpu/.false.,.true./
 #endif
@@ -501,12 +517,12 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
 REAL(DP),ALLOCATABLE :: qex(:,:)
 #if(gridfft)
 #if(netlib_fft|fftw_cpu)
+REAL(DP)::vol
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
 #endif
 #if(fftw_gpu)
 REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
-REAL(DP) :: sum0,sumk,sume,sum2
 #endif
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
@@ -1060,20 +1076,30 @@ USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
 #if(twostsic)
 USE localize_rad
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(INOUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: i
+
+INTEGER :: ind, nb
+REAL(DP) :: eshell, enonlc, ensav, ekin, ehilf
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+INTEGER :: nbe, nbee
+REAL(DP):: espnbp, eshellp, esh1p, enonlcp, sumvarp, sumvar2p
+#endif
+#if(raregas)
+INTEGER :: ico, ion
+REAL(DP) :: elnum
 #endif
 
 REAL(DP) :: en(kstate)
 
+REAL(DP),EXTERNAL :: energ_ions
 
 !   compute h*psi
 
@@ -1127,17 +1153,17 @@ END DO
 CALL mpi_comm_rank(mpi_comm_world,myn,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(espnb,espnbp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(eshell,eshellp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(esh1,esh1p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(enonlc,enonlcp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(sumvar,sumvarp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(sumvar2,sumvar2p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 espnb=espnbp
 esh1=esh1p
@@ -1195,7 +1221,9 @@ CALL energ_dielec(rho)
 energy = espnb/2D0+esh1/2D0+enrear+ecback+ecorr+enonlc/2D0 -ecrhoimage
 IF(directenergy) &
      energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
+#if(raregas)
 IF(ivdw == 1) energy = energy + evdw
+#endif
 binerg = energy
 #if(parayes)
 IF(myn == 0) THEN
@@ -1210,11 +1238,15 @@ IF(myn == 0) THEN
   WRITE(6,*)  'rearge. energy  =',enrear
   WRITE(6,*)  'nonlocal energy =',enonlc
   IF(idielec == 1) WRITE(6,*) 'dielect.Coul.e. =',ecrhoimage
+#if(raregas)
   IF(ivdw == 1) WRITE(6,*)  'vdw energy      =',evdw
+#endif
   WRITE(6,*)  'binding energy  =',energy
+#if(raregas)
   IF (isurf /= 0) THEN
     WRITE(6,*)  'adsorption energy = ', energy-enerinfty
   END IF
+#endif
   IF(directenergy) THEN
     WRITE(6,*)  'binding energy2 =',energ2
     WRITE(6,*)  'potential energ =',enerpw
@@ -1304,18 +1336,24 @@ USE coulsolv
 #if(twostsic)
 USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
 
 LOGICAL,PARAMETER :: mumpri=.false.
-
+REAL(DP) :: enonlc, omegam, rms
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
-
+#if(parano)
+INTEGER :: nb
+#endif
+#if(coufou)
+REAL(DP) :: p00,p10,p11r,p11i,p20,p21r,p21i,p22r,p22i,p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
+    p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2
+#endif
 omegam = omega_mieplasmon(rho)
 
 !      eshell=0.0
@@ -1340,15 +1378,19 @@ IF(myn == 0) THEN
 #else
     WRITE(42,'(a)') ' real SIC'
 #endif
+#if(twostsic)
     WRITE(42,'(a)') &
       'symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep'
     WRITE(42,'(i4,7(1pg12.4),l7)') symutbegin,step,precis,precisfact, &
                dampopt,steplow,steplim,phiini,toptsicstep
+#endif
   ELSE
     WRITE(42,'(a,i3)') 'final protocol of static for IFSICP=',ifsicp
   END IF
+#if(raregas)
   IF(idielec /= 0) WRITE(42,'(a,i3,a,f10.5)')  &
       'iDielec=',idielec,'   ,xDielec=',xdielec
+#endif
 #if(parayes)
 END IF
 #endif
@@ -1393,7 +1435,7 @@ IF(myn == 0) THEN
   END IF
   WRITE(42,'(a,1pg12.4)') 'total variance  =',sumvar
   WRITE(42,'(a,4f11.5)') 'sp pot, sp kin, rearr, nonlocal=',  &
-      espnb-esh1,esh1,enrear,enonlc
+      espnb-esh1,esh1,enrear,enonlc  ! enonlc never affected a value ?  F.L 02/2017
   IF(idielec == 1) THEN
     WRITE(42,'(a,5f11.5)') 'e_coul: i-i , e-i , e-e , e-eimage, total=',  &
         ecorr,2D0*ecback,ecrho-ecback-ecrhoimage,2D0*ecrhoimage,  &
@@ -1434,10 +1476,13 @@ END SUBROUTINE pri_pstat
 SUBROUTINE transel(psir)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN)                         :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN) :: psir(kdfull2,kstate)
+
+INTEGER :: i, ind, ix, iy, iz, nb1, nb2
+REAL(DP) :: x1, y1, z1
 REAL(DP) ::  te(kstate,kstate,3)
 
 OPEN(34,STATUS='unknown',FILE='mte-xyz')
@@ -1497,10 +1542,14 @@ SUBROUTINE reocc()
 
 USE params
 USE util, ONLY:pair
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: is,nbe
+INTEGER :: nelecs(2)
+REAL(DP) :: epstmp, occo, partnm, gp
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-INTEGER :: nelecs(2)
+
 
 !--------------------------------------------------------------------
 
@@ -1547,50 +1596,58 @@ END SUBROUTINE reocc
 SUBROUTINE printone(rho,aloc)
 USE params
 USE util, ONLY:prifld
-  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-  REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+IMPLICIT  NONE
 
-  CALL prifld(rho,'density    ')
-  CALL prifld(aloc,'potential   ')
-  IF(nion2 /= 0) CALL prifld(potion,'potential_io')
-  WRITE(7,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
-  WRITE(6,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
-  WRITE(7,*)
-  
-  WRITE(6,'(a)')'+++ start of static iteration +++'
-  WRITE(7,'(a)')'+++ start of static iteration +++'
-  
-  IF(dpolx*dpolx+dpoly*dpoly*dpolz*dpolz > 0D0) WRITE(7,'(a,3f8.4)')  &
-      ' static dipole potential: dpolx,dpoly,dpolz=', dpolx,dpoly,dpolz
-  WRITE(7,*)
-  WRITE(6,*) 'ismax=',ismax
+REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+
+CALL prifld(rho,'density    ')
+CALL prifld(aloc,'potential   ')
+IF(nion2 /= 0) CALL prifld(potion,'potential_io')
+WRITE(7,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
+WRITE(6,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
+WRITE(7,*)
+
+WRITE(6,'(a)')'+++ start of static iteration +++'
+WRITE(7,'(a)')'+++ start of static iteration +++'
+
+IF(dpolx*dpolx+dpoly*dpoly*dpolz*dpolz > 0D0) WRITE(7,'(a,3f8.4)')  &
+    ' static dipole potential: dpolx,dpoly,dpolz=', dpolx,dpoly,dpolz
+WRITE(7,*)
+WRITE(6,*) 'ismax=',ismax
 
 END SUBROUTINE printone
 
+
 SUBROUTINE printtwo()
 USE params
-   WRITE(7,'(a,i5)') 'iter= ',int_pass
-   WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
-          ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
-          qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
+IMPLICIT NONE
 
-  IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
+WRITE(7,'(a,i5)') 'iter= ',int_pass
+WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
+      ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
+      qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
+
+IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
 !            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
 !            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
 
 END SUBROUTINE printtwo
 
+
 SUBROUTINE printthree(rho,aloc)
 USE params
 USE util, ONLY:prifld
-  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-  REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+IMPLICIT NONE
 
-  WRITE(7,*) ' static iteration terminated with ', int_pass,' iterations'
-  
-  CALL prifld(rho,'density    ')
-  CALL prifld(aloc,'potential   ')
-  CALL prifld(chpcoul,'Coul-potent.')
+REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+
+WRITE(7,*) ' static iteration terminated with ', int_pass,' iterations'
+
+CALL prifld(rho,'density    ')
+CALL prifld(aloc,'potential   ')
+CALL prifld(chpcoul,'Coul-potent.')
 
 END SUBROUTINE printthree
 
@@ -1610,18 +1667,19 @@ END SUBROUTINE print_densdiffc
 SUBROUTINE print_orb(psir)
 USE params
 USE util, ONLY: printfield
+IMPLICIT NONE
 
-  REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
-  OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
-  DO i=1,nstate
-    WRITE(522,'(a,i3)') '# state nr: ',i
-    WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
-    WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
-    CALL printfield(522,psir(1,i),'tp.psir')
-    WRITE(522,*)  ! separate blocks for gnuplot
-    WRITE(522,*)  !
-  END DO
+OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
+DO i=1,nstate
+  WRITE(522,'(a,i3)') '# state nr: ',i
+  WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
+  WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
+  CALL printfield(522,psir(1,i),'tp.psir')
+  WRITE(522,*)  ! separate blocks for gnuplot
+  WRITE(522,*)  !
+END DO
   CLOSE(522)
 
 END SUBROUTINE print_orb
@@ -1629,40 +1687,41 @@ END SUBROUTINE print_orb
 #if(raregas)
 SUBROUTINE print_surf(rho)
 USE params
+IMPLICIT NONE
 
-  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 
-  IF (iuselast == -1) THEN
-    IF (myn == 0) THEN
-      OPEN(308,STATUS='unknown',FILE='for005surf.init')
-      WRITE(308,*) nc,nk
-      DO i=1,nc
-        WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
-            ze(i),imobc(i),imobe(i)
-      END DO
-      DO i=1,nk
-        WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
-      END DO
-      CLOSE(308)
-    END IF
-    STOP
-  ELSE IF (iuselast == -2) THEN
-    WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
-    CALL adjustdip(rho)
-    IF (myn == 0) THEN
-      OPEN(308,STATUS='unknown',FILE='for005surf.init')
-      WRITE(308,*) nc,nk
-      DO i=1,nc
-        WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
-            ze(i),imobc(i),imobe(i)
-      END DO
-      DO i=1,nk
-        WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
-      END DO
-      CLOSE(308)
-    END IF
-    STOP
+IF (iuselast == -1) THEN
+  IF (myn == 0) THEN
+    OPEN(308,STATUS='unknown',FILE='for005surf.init')
+    WRITE(308,*) nc,nk
+    DO i=1,nc
+      WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
+          ze(i),imobc(i),imobe(i)
+    END DO
+    DO i=1,nk
+      WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
+    END DO
+    CLOSE(308)
   END IF
+  STOP
+ELSE IF (iuselast == -2) THEN
+  WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
+  CALL adjustdip(rho)
+  IF (myn == 0) THEN
+    OPEN(308,STATUS='unknown',FILE='for005surf.init')
+    WRITE(308,*) nc,nk
+    DO i=1,nc
+      WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
+          ze(i),imobc(i),imobe(i)
+    END DO
+    DO i=1,nk
+      WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
+    END DO
+    CLOSE(308)
+  END IF
+  STOP
+END IF
 
 END SUBROUTINE print_surf
 #endif

@@ -583,6 +583,7 @@ SUBROUTINE diag_lagr(psir)
 
 USE params
 USE kinetic
+USE localize_rad, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP) :: psir(kdfull2,kstate)
@@ -705,7 +706,7 @@ SUBROUTINE calc_utwfc(q0,q0ut,iter1)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE twostr, ONLY:superpose_state
+USE localize_rad, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
@@ -751,9 +752,8 @@ SUBROUTINE calc_utwf(q0,q0ut,iter1)
 
 USE params
 USE kinetic
-#ifdef COMPLEXSWITCH
-USE twostr, ONLY: superpose_state
-#endif
+USE localize_rad, ONLY: superpose_state
+
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     basic arrays and workspace
@@ -819,7 +819,7 @@ SUBROUTINE utgradstepc(is,iprint,q0,iter1)
 
 USE params
 USE kinetic
-
+USE twostr, ONLY: dalphabeta
 IMPLICIT REAL(DP) (A-H,O-Z)
 COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: xlambda(kdim,kdim)
@@ -871,7 +871,7 @@ END IF
 
 enold_2st=0D0
 DO iter=1,itmax2
-  CALL dalphabeta(is, dab, q0)     !actual symmetry condition on 'dab'
+  CALL dalphabeta(is, dab, vecs, q0)     !actual symmetry condition on 'dab'
   IF(toptsicstep) THEN
     IF(iter.LE.3) THEN
       enstore(iter)=ener_2st(is)
@@ -1038,7 +1038,7 @@ WRITE(6,'(a,i4,1pg13.5)') &
 enold_2st=0D0
 DO iter=1,itmax2
 
-  CALL dalphabeta(is, dab,q0) !new DAB
+  CALL dalphabeta(is, dab, vecsr, q0) !new DAB
   IF(iter==1) THEN
     WRITE(353,*) ' dab before: is=',is
     DO i=1,ni
@@ -1179,7 +1179,7 @@ ALLOCATE(vecsav(kdim,kdim),dabstep(kdim,kdim),dab(kdim,kdim),expdab(kdim,kdim))
 
 ni = ndims(is)
 vecsav(1:ni,1:ni) = vecsr(1:ni,1:ni,is)
-CALL dalphabeta(is, dab,q0)
+CALL dalphabeta(is, dab, vecsr, q0)
 norm=SQRT(SUM(dab(1:ni,1:ni)**2))
 enold_2st=ener_2st(is)
 
@@ -1193,7 +1193,7 @@ DO i=0,numteststep
   dabstep(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
   CALL matexp(dabstep,expdab,kdim,ni)
   vecsr(1:ni,1:ni,is) = MATMUL(vecsav(1:ni,1:ni),expdab(1:ni,1:ni))
-  CALL dalphabeta(is, dabstep, q0)
+  CALL dalphabeta(is, dabstep, vecsr, q0)
   WRITE(353,'(f8.3,6(1pg13.5))')   &
     actstep,ener_2st(is),ener_2st(is)-enold_2st, &
     actstep*norm**2/(ener_2st(is)-enold_2st),actstep*norm**2
@@ -1209,15 +1209,18 @@ END SUBROUTINE test_symmcond
 #endif
 
 #ifdef REALSWITCH
-SUBROUTINE dalphabeta_rc(is,dab,q0)
+SUBROUTINE dalphabeta_rc(is,dab,vec,q0)
 
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
+USE localize_rad, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+
+COMPLEX(DP),INTENT(OUT) :: dab(kdim, kdim) !  DAB
+COMPLEX(DP),INTENT(IN) :: vec(kstate,kstate,2)
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
-COMPLEX(DP),INTENT(IN OUT) :: dab(kdim, kdim) !  DAB
 
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -1240,7 +1243,7 @@ ener_2st(is)=0D0
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
-    CALL superpose_state(qsym(:,nb),vecsr(:,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vec(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
 !    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
@@ -1264,7 +1267,7 @@ DO nb=1,nstate
     DO na=1,nstate
       IF(ispin(nrel2abs(na)) == is)THEN
         naa = na - (is-1)*ndims(1)
-        utcond(naa,nbeff) = -wfovlp(qsym(1,na),uqsym(1,nb))
+        utcond(naa,nbeff) = -wfovlp(qsym(:,na),uqsym(:,nb))
       END IF !ispin
     END DO !na
   END IF
@@ -1292,19 +1295,21 @@ DEALLOCATE(uqsym,symcond)
 RETURN
 END SUBROUTINE dalphabeta_rc
 
-#else  
-
 !-----------DAlphaBetar------------------- !MV!!! symmetry condition in antihermitian matrix
 
-SUBROUTINE dalphabeta_r(is,dab,q0)
+SUBROUTINE dalphabeta_r(is,dab,vec,q0)
 
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
+USE localize_rad, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+
 REAL(DP),INTENT(OUT) :: dab(kdim, kdim)
+REAL(DP),INTENT(IN) :: vec(kstate,kstate,2)
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+
 INTEGER,INTENT(IN) :: is
 
 LOGICAL,PARAMETER :: ttest=.false.
@@ -1328,7 +1333,7 @@ DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
     
-    CALL superpose_state(qsym(:,nb),vecsr(:,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vec(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
     CALL calc_sicspr(rhosp,usicsp,qsym(1,nb),nb)
@@ -1393,16 +1398,18 @@ END SUBROUTINE dalphabeta_r
 
 !-----------DAlphaBeta------------------- !MV!!! symmetry condition in antihermitian matrix
 
-SUBROUTINE dalphabeta_c(is,dab,q0)
+SUBROUTINE dalphabeta_c(is,dab,vec,q0)
 
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE twostr, ONLY:superpose_state
+USE localize_rad, ONLY:superpose_state
 IMPLICIT REAL(DP) (A-H,O-Z)
 
+
+COMPLEX(DP),INTENT(OUT) :: dab(kdim, kdim) !  DAB
+COMPLEX(DP),INTENT(IN) :: vec(kstate,kstate,2)
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
-COMPLEX(DP),INTENT(IN OUT) :: dab(kdim, kdim) !  DAB
 
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -1426,7 +1433,7 @@ DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
     
-    CALL superpose_state(qsym(:,nb),vecs(:,nbeff,is),q0,is)
+    CALL superpose_state(qsym(:,nb),vec(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
 !    WRITE(*,*) 'DALPHAETA: nb,wfnorm=',nb,wfnorm(qsym(1,nb))
@@ -1477,9 +1484,7 @@ DEALLOCATE(uqsym,symcond)
 
 RETURN
 END SUBROUTINE dalphabeta_c
-#endif
 
-#ifdef REALSWITCH
 !-----spmomsmatrix----------------------------------------------
 
 !     Matrix of spatial moments between single-particle states

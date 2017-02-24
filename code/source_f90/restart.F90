@@ -467,6 +467,9 @@ INTEGER :: nbe
 LOGICAL,PARAMETER :: ttest = .TRUE.
 LOGICAL :: trealin
 
+#if(twostsic)
+INTEGER :: n
+#endif
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -474,9 +477,11 @@ INTEGER :: is(mpi_status_size)
 INTEGER :: i, nba, nod, nstnod
 #ifdef REALSWITCH
 REAL(DP),ALLOCATABLE :: psiaux(:)
+
 #else
 COMPLEX(DP),ALLOCATABLE :: psiaux(:)
 #endif
+
 
 REAL(DP) :: occupact(1)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: amoya,epotspa,ekinspa

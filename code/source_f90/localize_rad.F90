@@ -46,11 +46,11 @@ INTEGER,SAVE,PRIVATE :: ndim(2)
 
 INTERFACE superpose_state
 ! automated choice between real, complex and complexsic versions of superpose_state
-  MODULE PROCEDURE superpose_state_r, superpose_state_c, superpose_state_rc
+  MODULE PROCEDURE superpose_state_r, superpose_state_c, superpose_state_rc!, superpose_state_rc_dummy
 END INTERFACE superpose_state
 
 INTERFACE avermatrix
-  MODULE PROCEDURE avermatrix_r avermatrix_c
+  MODULE PROCEDURE avermatrix_r, avermatrix_c
 END INTERFACE avermatrix
 
 CONTAINS
@@ -577,8 +577,6 @@ END DO
 RETURN
 END SUBROUTINE superpose_state_rc
 
-
-
 !-----spmomsmatrix----------------------------------------------spmoms
 
 SUBROUTINE spmomsmatrixo(wfr)
@@ -786,10 +784,10 @@ DO iter=1,itmax
   radvary = 0.0D0
   radmax = 0.0D0
   DO i=1,ndim(is)
-    xaver(i) = avermatrix(xmatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
-    yaver(i) = avermatrix(ymatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
-    zaver(i) = avermatrix(zmatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
-    raver(i) = avermatrix(rrmatr(1,1,is),vecsr(1,i,is), ndim(is),kdim)
+    xaver(i) = avermatrix(xmatr(:,:,is),vecsr(:,i,is), ndim(is),kdim)
+    yaver(i) = avermatrix(ymatr(:,:,is),vecsr(:,i,is), ndim(is),kdim)
+    zaver(i) = avermatrix(zmatr(:,:,is),vecsr(:,i,is), ndim(is),kdim)
+    raver(i) = avermatrix(rrmatr(:,:,is),vecsr(:,i,is), ndim(is),kdim)
     rvary(i) = raver(i)**2-xaver(i)**2-yaver(i)**2 -zaver(i)**2
     radvary = radvary + rvary(i)
     radmax = MAX(radmax,raver(i))

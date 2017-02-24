@@ -305,13 +305,15 @@ SUBROUTINE changeperio
 USE params
 IMPLICIT NONE
 
+INTEGER :: info
 !      namelist /perio/ ch(-99:99),amu(-99:99),
 NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
     h0_11g,h0_12g,h0_22g,h0_33g, h1_11g,h1_22g,h2_11g,  &
     dr1,dr2,prho1,prho2, r0g,r1g,r2g,radiong
 
 OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
-READ(5,perio)
+READ(5,perio, IOSTAT=info)
+IF(IS_IOSTAT_END(info)) WRITE(6,*) 'End of file reached while reading for perio'
 CLOSE(5)
 !test         write(iu,*) ' changeperio done. myn=',myn
 

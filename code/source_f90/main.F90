@@ -113,6 +113,7 @@ CALL init_baseparams()    !init grid size, number of states ...
 CALL check_isrtyp         ! check short range interaction matrix
 
 CALL iperio                     ! initializing the 'periodic table'
+
 CALL changeperio   ! overwrites default periodic system if necessary
 
 CALL iparams()               ! check dynamic  parameters

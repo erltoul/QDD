@@ -21,6 +21,8 @@
 
 MODULE util
 
+IMPLICIT NONE
+
 INTERFACE projmoms
   MODULE PROCEDURE r_projmoms, c_projmoms
 END INTERFACE projmoms
@@ -1658,7 +1660,7 @@ REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p
 #if(parano)
 INTEGER :: ik, ikk
 #else
-INTEGER :: kk
+INTEGER :: kk, nbe, nbee
 REAL(DP) :: sprojec
 #endif
 !----------------------------------------------------------------------
@@ -1708,7 +1710,7 @@ DO iz=minz,maxz
         END DO
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
         CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-          mpi_sum,mpi_comm_world,ic)
+          mpi_sum,mpi_comm_world,icode)
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
 #endif
         starget=rho(ind)-sproj
