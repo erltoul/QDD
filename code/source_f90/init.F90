@@ -351,12 +351,7 @@ END INTERFACE
 #if(raregas)
 INTEGER :: i,j
 #endif
-INTEGER :: n
 !--------------------------------------------------------------
-
-
-n = myn
-
 
 !     some initializations
 #if(raregas)
@@ -1628,17 +1623,17 @@ WRITE (6,*) 'Entering initions()'
   END DO
   CLOSE(UNIT=9)
   
-  write(6,*) 'total number of valence electrons',totvalec
-    if(nclust<=0) then
-         nstate=totvalec+nclust
-         nclust=nstate
-         nspdw=nclust/2
-         write(6,*) 'nstate set to',nstate
-         write(6,*) 'kstate*knode is',kstate*knode
-        write(6,*) 'nclust set to',nclust
-         write(6,*) 'nspdw set to',nspdw
-           if(nstate>kstate*knode) stop 'kstate too small - increase' 
-    endif
+  WRITE(6,*) 'total number of valence electrons',totvalec
+  IF(nclust<=0) THEN
+    nstate=totvalec+nclust
+    nclust=nstate
+    nspdw=nclust/2
+    WRITE(6,*) 'nstate set to',nstate
+    WRITE(6,*) 'kstate*knode is',kstate*knode
+    WRITE(6,*) 'nclust set to',nclust
+    WRITE(6,*) 'nspdw set to',nspdw
+    IF(nstate>kstate*knode) STOP 'kstate too small - increase' 
+  END IF
 
   
   
@@ -1661,17 +1656,14 @@ WRITE (6,*) 'Entering initions()'
     xcm = 0D0
     ycm = 0D0
     zcm = 0D0
-#if(raregas)    
-    DO i=1,nc
+    DO i=1,nion
       xcm = xcm + cx(i)
       ycm = ycm + cy(i)
       zcm = zcm + cz(i)
     END DO
-#endif
     xcm = xcm/nion
     ycm = ycm/nion
     zcm = zcm/nion
-    
     DO i=1,nion
       cx(i) = (cx(i)-xcm)*scaleclustx + xcm
       cy(i) = (cy(i)-ycm)*scaleclusty + ycm
