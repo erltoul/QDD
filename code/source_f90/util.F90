@@ -987,7 +987,7 @@ COMPLEX(DP) :: psidummy(1)             !! bugfix for force
 IF(ipsptyp == 1) STOP  ' CHECKSTABILITY must not be used with Goedecker PsP' 
 
 
-CALL getforces(rho,psidummy,0)
+CALL getforces(rho,psidummy,-1,0)
 
 dmaxfxc=0D0
 dmaxfyc=0D0

@@ -377,7 +377,7 @@ IF(nclust > 0)THEN
   
 !       initialization of mean field
   
-  CALL dyn_mfield(rho,aloc,psi,0D0)
+  CALL dyn_mfield(rho,aloc,psi,0D0,0)
   
 !      WRITE(*,*) 'ndims=',ndims,' , vecs after mean field 1:'
 !      DO n=1,ndims(1)

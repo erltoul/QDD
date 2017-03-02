@@ -136,12 +136,13 @@ END SUBROUTINE coul_mfield
 
 !-----valence_step---------------------------------------------
 
-SUBROUTINE valence_step(rho,dt,tdyn)
+SUBROUTINE valence_step(rho,dt,it,tdyn)
 
 !     Propagates the substrates valence electron cloud.
 !     Input:
 !      rho    = electron density
 !      dt     = stepsize (in case of dynamics)
+!      it     = current iteration
 !      tdyn   = switch to dynamic case
 !     Output:
 !      valence positions via common
@@ -155,8 +156,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: dt
+INTEGER,INTENT(IN)                       :: it
 LOGICAL, INTENT(IN)                      :: tdyn
-
 
 
 COMPLEX(DP) :: psidummy(1)
@@ -168,19 +169,17 @@ LOGICAL,PARAMETER :: tspinprint=.true.
 #if(raregas)
 IF (isurf /= 0 .AND. nc+NE+nk > 0) THEN    ! check condition ??
   
-!test         call adjustdip(rho)   !???
-  
   IF(ifadiadip ==1) THEN 
 !            instantaneous adjustment of substrate dipoles
-    CALL adjustdip(rho)
+    CALL adjustdip(rho,it)
   ELSE
 !            dynamic propagation of substrate dipoles
     IF(tdyn) THEN
       IF(ipsptyp == 1) STOP ' VSTEP must not be used with Goedecker PsP'  ! ???
-      IF(ionmdtyp==1) CALL vstep(rho,psidummy,dt)
-      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,dt)
+      IF(ionmdtyp==1) CALL vstep(rho,psidummy,it,dt)
+      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,it,dt)
     ELSE
-      CALL adjustdip(rho)
+      CALL adjustdip(rho,it)
     END IF
   END IF
   

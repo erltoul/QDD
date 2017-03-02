@@ -1100,7 +1100,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iflag
 
 
-!      write(6,*) 'Entering getforces'
+!      write(6,*) 'Entering getforces_clust2cores'
 
 
 
@@ -1329,7 +1329,7 @@ END IF
 END SUBROUTINE madelung
 !------------------------------------------------------------
 
-SUBROUTINE adjustdip(rho)
+SUBROUTINE adjustdip(rho,it)
 !     computes the force on the GSM-dipoles and adjusts their dipole moments
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
@@ -1337,7 +1337,8 @@ USE params
 USE util, ONLY:prifld
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)        :: rho(2*kdfull2)
+INTEGER,INTENT(IN)              :: it
 
 COMPLEX(DP) :: psidummy(1)
 REAL(DP),PARAMETER :: delmrmax=2D-6
@@ -1383,7 +1384,7 @@ DO it=1,maxadjust
 !     compute forces of valence clouds
 !         call calcforce_dip(rho)
   
-  CALL getforces(rho,psidummy,2)
+  CALL getforces(rho,psidummy,it,2)
   icoun = 0
   rmaxpol = rgetmaxpol()
   rrrr = rgetmeanzpol()
@@ -1504,7 +1505,7 @@ DO iit=1,200
    
   CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt1/2D0,xm,NE,2)
   
-  CALL getforces(rho,psidummy,0)
+  CALL getforces(rho,psidummy,it,0)
   
   
   icoun =0
@@ -1557,14 +1558,15 @@ END SUBROUTINE adjustdip
 
 !--------------------------------------------------------------------------
 
-SUBROUTINE adjustdipz(rho)
+SUBROUTINE adjustdipz(rho,it)
 !     computes the force on the GSM-dipoles and adjusts their dipole moments
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)    ::  rho(2*kdfull2)
+INTEGER,INTENT(IN)          ::  it
 
 COMPLEX(DP) :: psidummy(1)
 
@@ -1583,7 +1585,7 @@ DO it=1,200
 !         call calcforce_dip(rho)
   
   WRITE(6,*) 'Entering getforces'
-  CALL getforces(rho,psidummy,2)
+  CALL getforces(rho,psidummy,it,2)
   
   icoun = 0
   

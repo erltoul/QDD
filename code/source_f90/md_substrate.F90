@@ -1121,6 +1121,8 @@ SUBROUTINE getparas(ind)
 !------------------------------------------------------------
 USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
+! stores position of substrate particule number "ind" in common vector rvectmp(1:3)
+
 
 IF (ind <= nc) THEN
   chgtmp = chgc(ind)

@@ -874,9 +874,6 @@ IF (isrtyp(ityp1,ityp2) == 1) THEN ! MgO-case
             cknd*(erf(rr/ckncud)/rr)**dkn*EXP(-rr/cknculd)
       END IF ! if ityp1.eq.1
       
-      srenergy=srenergy+sumion
-      
-      
     ELSE ! Na-Na
 ! no short range interaction in this case
     END IF

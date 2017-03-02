@@ -133,8 +133,9 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     phangle,phphase,nhstate,npstate, &
     jstateoverlap
 
-#if(raregas)
+
 NAMELIST /surface/  &
+#if(raregas)
     surftemp,ipotfixed,ifmdshort,ifadiadip,  &
     sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0, &
     cspr,mion,me,mkat,isrtyp,isrtypall,  &
@@ -166,6 +167,8 @@ NAMELIST /surface/  &
     fixcbelowx,fixebelowx,fixkbelowx, unfixcrad,unfixerad,unfixkrad,  &
     iusecell,iuselast,ibh,cbh,iforcecl2co, &
     enerinfty,epsdi,idielec,xdielec,iararlj
+#else
+    epsdi,idielec,xdielec
 #endif
 
 

@@ -46,16 +46,16 @@ SUBROUTINE absbc(psi,rho)
 !     apply absorbing bounds, optionally accumulate absorbed density
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT)                     :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                         :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN OUT)    :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)       :: rho(2*kdfull2)
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w3
 
 
 LOGICAL :: firstcall=.true.
-
+INTEGER :: ind, nbe
 !------------------------------------------------------------
 
 ! WRITE(*,*) ' ABSBC first line'
@@ -144,8 +144,9 @@ SUBROUTINE init_abs_accum()
 !     Initializes accumulator for absorbed densities with zero.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ind
 !--------------------------------------------------------------------
 
 IF(nabsorb <= 0) RETURN
@@ -168,12 +169,15 @@ SUBROUTINE init_absbc(rho)
 !     initializes geometry parameters for absorbing bounds
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
-INTEGER :: getnearestgridpoint
+INTEGER :: i, ind, iphi, itheta, ix, iy, iz, jj
+REAL(DP) :: pp, rmin, tt, x1, y1, z1, xn, yn, zn 
+
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 IF (iangabso == 1) THEN ! origin is at center of density
   
@@ -291,7 +295,12 @@ SUBROUTINE init_spherabso()
 
 USE params
 USE util, ONLY:prifld
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i, ind, ix, iy, iz
+REAL(DP) :: cosact, dist, dist2, dmin1, dmin2, dmin12, dmin22
+REAl(DP) :: rx, ry, rz, x1, y1, z1
+
 
 !------------------------------------------------------------
 
@@ -371,7 +380,10 @@ SUBROUTINE init_abso()
 !     Initializes mask for rectangular absorbing boundaries conditions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: ind, ix, iy, iz
+
 REAL(DP) :: xmask(nx2),ymask(ny2),zmask(nz2)
 
 LOGICAL,PARAMETER :: wflag=.true.
@@ -439,8 +451,12 @@ SUBROUTINE init_ellipsabso
 
 USE params
 USE util, ONLY:printfield
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: i, ind, ix, iy, iz
+REAl(DP) :: cosact, ellips1, ellips2, fac
+REAl(DP)  :: dmin1x, dmin1y, dmin1z, dmin2, dmin2x, dmin2y, dmin2z
+REAl(DP)  :: rx, ry, rz, x1, y1, z1
 !------------------------------------------------------------
 
 WRITE(6,*) 'x,y,zango', xango,yango,zango
@@ -522,9 +538,10 @@ END SUBROUTINE init_ellipsabso
 SUBROUTINE initmeasurepoints
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-INTEGER :: getnearestgridpoint
+IMPLICIT NONE
+INTEGER :: ik, ith, iph, impsact, impsx, impsy, impsz
+REAL(DP):: dmin2,p,r,t,x,y,z
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 dmin2 = 1D10
 
@@ -596,8 +613,9 @@ SUBROUTINE escmask(it)
 
 USE params
 USE util, ONLY: inttostring,printfield
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: nbe, nbeabs
 INTEGER, INTENT(IN)                      :: it
 !--------------------------------------------------------------------
 
@@ -647,9 +665,10 @@ END SUBROUTINE escmask
 SUBROUTINE angabso
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: ind, iphi, itheta, ix, iy, iz, jj
+REAL(DP) :: dia2, dist2, tau, pp, tt, x, y, z, x1, y1, z1, xn, yn, zn
 
 REAL(DP) :: absocone(maxnang)
 
@@ -733,13 +752,14 @@ SUBROUTINE nescape(it,rho)
 
 USE params
 USE util, ONLY:safeopen
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                      :: it
 REAL(DP), INTENT(IN)                         :: rho(kdfull2)
 
 
+REAL(DP) :: absosum, tinfs
 !------------------------------------------------------------
 
 
@@ -765,20 +785,24 @@ END SUBROUTINE nescape
 SUBROUTINE evalmp(iunit,q0)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN) :: iunit
 COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 
-REAL(DP) :: rp(2*maxmps)
-!REAL(DP) :: cp(10000)
-COMPLEX(DP) :: q0phase
+
 LOGICAL :: topenf
+INTEGER :: i, ii, j, nbe
+REAL(Dp) :: scal1, scal2, x1, y1, z1
+REAL(DP) :: rp(2*maxmps)
+COMPLEX(DP) :: q0phase
+
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 LOGICAL,PARAMETER :: ttestpar=.FALSE.
+INTEGER :: mynact, nba
 #endif
 
 IF(myn==0) THEN
@@ -837,14 +861,14 @@ DO nba=1,nstate_all
       rp(j)=AIMAG(q0phase)
     END DO
     IF(myn /= 0) THEN
-      CALL mpi_send(rp,2*nmps,mpi_double_precision,0,nba,mpi_comm_world,ic)
+      CALL mpi_send(rp,2*nmps,mpi_double_precision,0,nba,mpi_comm_world,icode)
       IF(ttestpar) WRITE(*,*) ' sent: nba,node=',nba,myn
     END IF
   END IF
   IF(myn == 0) THEN
     IF(mynact /= 0) THEN
        CALL mpi_recv(rp,2*nmps,mpi_double_precision,mynact,nba,  &
-                     mpi_comm_world,is,ic)
+                     mpi_comm_world,is,icode)
        IF(ttestpar) WRITE(*,*) ' received: nba,from node=',nba,mynact
     END IF
     WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500

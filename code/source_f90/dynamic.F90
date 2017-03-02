@@ -155,12 +155,13 @@ SUBROUTINE init_velocel(psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
 
+INTEGER :: ind, ix, iy, iz, nbe
 COMPLEX(DP) :: cfac
-
+REAL(DP) :: arg, rnorm, v0, x1, y1, z1
 !------------------------------------------------------------------
 
 v0 = SQRT(2D0*ekin0pp/(amu(np(nion))*1836.0D0*ame))
@@ -204,10 +205,12 @@ SUBROUTINE init_projwf(psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
 
+INTEGER :: ind, ix, iy, iz, kk, nbe, nbee
+REAL(DP) :: arg, rnorm, v0, x1, y1, z1
 COMPLEX(DP) :: cfac
 
 
@@ -270,10 +273,13 @@ SUBROUTINE init_scattel(psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
 
+
+INTEGER :: i, ind, ix, iy, iz
+REAL(DP) :: arg, fac, fr, pnorm, rr, x1, y1, z1
 !------------------------------------------------------------------
 
 pnorm = scatterelectronvxn**2+scatterelectronvyn**2+ scatterelectronvzn**2
@@ -354,20 +360,22 @@ USE kinetic
 #if(twostsic)
 USE twost, ONLY:tnearest
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-!COMPLEX(DP), INTENT(IN OUT)                  :: ak(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
+
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
 #if(twostsic)
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: qwork
 #endif
 
 LOGICAL :: tenerg
-
+INTEGER :: ind, ishift, ithr, itsub,  nb, nlocact, nup
+INTEGER :: ncount_init, ncount_rate, ncount_max, ncount_syst, ncount_fin
+REAL(DP) :: ri, dt, pr, time_init, time_fin, time_cpu
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -578,7 +586,7 @@ END SUBROUTINE tstep
 
 !-----dyn_mfield---------------------------------------------------
 
-SUBROUTINE dyn_mfield(rho,aloc,psi,dt)
+SUBROUTINE dyn_mfield(rho,aloc,psi,dt,it)
 
 !     The Coulomb part of the mean field.
 
@@ -587,6 +595,7 @@ SUBROUTINE dyn_mfield(rho,aloc,psi,dt)
 !      psi    = complex wavefunctions
 !      dt     = actual time step
 !               dt=0D0 forces adiabatic computation of substrate dipoles
+!      it     = current iteration
 !     Output:
 !      aloc   = local mean-field potential
 
@@ -594,13 +603,14 @@ USE params
 #if(twostsic)
 USE twost
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN)                         :: dt
+INTEGER, INTENT(IN)                          :: it
 
 !----------------------------------------------------------------
 
@@ -610,9 +620,9 @@ CALL coul_mfield(rho)
 #if(raregas)
 IF (isurf /= 0 .AND. NE > 0) THEN
   IF(dt == 0D0) THEN
-    CALL valence_step(rho,dt,.false.)
+    CALL valence_step(rho,dt,it,.false.)
   ELSE
-    CALL valence_step(rho,dt,.true.)
+    CALL valence_step(rho,dt,it,.true.)
   END IF
 END IF
 #endif
@@ -650,9 +660,11 @@ SUBROUTINE boost(q0)        ! boost with given 'centfx,y,z'
 !     and 'centfz'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: ind, ix, iy, iz, nbe
+REAl(DP) :: aspin, actsx, actsy,  actsz
+REAL(DP) :: x1, y1, z1
 COMPLEX(DP), INTENT(OUT)                     :: q0(kdfull2,kstate)
 !, INTENT(IN OUT)                         :: ! boost wi
 !REAL(DP), INTENT(IN OUT)                     :: y
@@ -692,7 +704,7 @@ END DO
 
 RETURN
 END SUBROUTINE boost
-
+  
 
 !-----info ------------------------------------------------------------
 
@@ -703,10 +715,12 @@ SUBROUTINE info(psi,rho,aloc,it)
 
 USE params
 USE util, ONLY:wfovlp,safeopen,project
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+REAL(DP) :: enonlcp, esh1p, eshellp
 #endif
 
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
@@ -715,6 +729,9 @@ REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: it
 
+INTEGER :: ico, ind, ion, ishift, iss, nb, nbe
+REAL(DP) :: ekin, ehilf, eshell, enonlc
+REAL(DP) :: ek, tinfs, xm
 REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
 REAL(DP) ::  en(kstate)
 COMPLEX(DP),ALLOCATABLE :: qtmp(:)
@@ -726,6 +743,7 @@ LOGICAL :: topenf
 LOGICAL,PARAMETER :: ttest=.FALSE.
 LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 
+REAL(DP),EXTERNAL :: energ_ions
 !------------------------------------------------------------------
 
 
@@ -857,11 +875,11 @@ CALL  prispe_parallele(6,it)
 IF(ttest) WRITE(*,*) ' INFO: before allreduce. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(eshell,eshellp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(esh1,esh1p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(enonlc,enonlcp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 !DO iss=2,1,-1
 !   CALL mpi_allreduce(estar(iss),estarp(iss),1,mpi_double_precision,  &
 !        mpi_sum,mpi_comm_world,ic)
@@ -934,9 +952,11 @@ eshell=eshell/2.0D0  !(=t+v/2)
 ecorr = energ_ions()
 
 ekion=0D0        ! kinetic energy of Na cores
+#if(raregas)
 ekinion=0D0      ! kinetic energy of GSM cores
 ekinel=0D0       ! kinetic energy of GSM shells
 ekinkat=0D0      ! kinetic energy of cations
+#endif
 IF(ionmdtyp > 0) THEN
   DO ion=1,nion
     ek=cpx(ion)*cpx(ion)+cpy(ion)*cpy(ion)+cpz(ion)*cpz(ion)
@@ -970,9 +990,16 @@ END IF
 !     final composition and print
 
 energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
+#if(raregas)
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
 etot = energy + ekion + ekinion + ekinel + ekinkat
+#else
+etot = energy + ekion
+#endif
+
+
+
 energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
 WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, &
   eshell+enrear+ecback+ecorr,ecback+ecorr
@@ -983,9 +1010,11 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &                eshell*2.-esh1,     &
      &                enrear,             &
      &                ekion,              &
+#if(raregas)
      &                ekinion,            &
      &                ekinel,             &
      &                ekinkat,            &
+#endif
      &                ecorr,              &
      &        enii,                       &
      &        enig,                       &
@@ -1022,14 +1051,17 @@ IF(myn == 0) THEN
   WRITE(6,*) 'laser energy     = ',elaser
   WRITE(6,*) 'internal exc. energy per spin    = ',estar(1),estar(2)
   IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
+#if(raregas)  
   IF(ivdw == 1) WRITE(6,*) 'vdw energy       = ',evdw
+#endif
   WRITE(6,*) 'binding energy   = ',energy
   WRITE(2743,*) 'binding energy   = ',energy
   WRITE(6,*) 'total energy     = ',etot
+#if(raregas)
   IF (isurf /= 0) THEN
     WRITE(6,*) 'adsorb.energy = ',etot-enerinfty
   END IF
-  
+#endif
   
   IF(jinfo > 0 .AND. MOD(it,jinfo) == 0) THEN
     INQUIRE(17,OPENED=topenf)
@@ -1067,13 +1099,21 @@ SUBROUTINE calc_ekin(psin,ekinout)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 
 COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
 !REAL(DP), INTENT(IN)                         :: akv(kdfull2)
 REAL(DP), INTENT(OUT)                        :: ekinout
 
-
+REAL(DP) :: sum0
+#if(gridfft)
+REAl(DP) :: sumk, sum0ex
+#if(netlib_fft|fftw_cpu)
+INTEGER :: ii
+REAL(DP) :: vol
+#endif
+#endif
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
 !COMPLEX(DP) :: psi2(kdfull2)
 !EQUIVALENCE(psi2(1),w1(1))
@@ -1144,16 +1184,18 @@ USE util, ONLY:wfovlp
 USE twost
 USE twostr, ONLY: ndims
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
 REAL(DP), INTENT(IN)                         :: alocact(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: enonlocout
 INTEGER, INTENT(IN)                          :: nb
 
-
+INTEGER :: i
+REAl(DP) :: sumnon
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
 #if(twostsic)
+INTEGER :: is, na, nbe, nae
 COMPLEX(DP) :: cf
 #endif
 LOGICAL,PARAMETER :: ttest=.false.
@@ -1406,7 +1448,9 @@ SUBROUTINE mrote
 
 USE params
 USE util, ONLY:rotatevec3D
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: ion
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
 
 !------------------------------------------------------------------
@@ -1583,11 +1627,13 @@ SUBROUTINE instit (psi)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
-!COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:)
+INTEGER :: i, ind, ix, iy, iz, nb, o
+REAL(DP) :: ajpx, ajpy, ajpz, dkx, dky, dkz, x1, y1, z1
+REAL(DP) :: test
 COMPLEX(DP), ALLOCATABLE :: q2(:)
 COMPLEX(DP), ALLOCATABLE :: jtx(:),jty(:),jtz(:)
 COMPLEX(DP) :: jalpha
@@ -1776,7 +1822,7 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 !              propagation within the non-local plaquettes.
 !
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(OUT)                     :: qact(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                      :: q1(kdfull2)
@@ -1787,7 +1833,8 @@ INTEGER, INTENT(IN)                      :: nb
 INTEGER, INTENT(IN)                      :: norder
 
 
-
+INTEGER :: i, ind
+REAL(DP) :: ri2, rfac , sumadd
 COMPLEX(DP) :: rii,cfac
 
 
@@ -1861,7 +1908,7 @@ SUBROUTINE init_dynprotocol(rho,aloc,psi)
 !     initializes file for protocol of dynamics
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
@@ -1869,7 +1916,13 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 
 LOGICAL :: topenf
-
+INTEGER :: i
+#if(raregas)
+REAL(DP) :: dist
+#endif
+REAl(DP),EXTERNAL :: getxval
+REAl(DP),EXTERNAL :: getyval
+REAl(DP),EXTERNAL :: getzval
 !---------------------------------------------------------------------
 
 
@@ -2015,6 +2068,7 @@ IF(irest <= 0) THEN                    !  write file headers
     OPEN(163,STATUS='unknown',FORM='formatted', FILE='penergies.'//outnam)
     WRITE(163,*) 'col 1: time (fs), col 2:  total sp en.'
     WRITE(163,*) 'col 3: rearr. en, col 4:  kin. en. Na ions'
+#if(raregas)    
     WRITE(163,*) 'col 5: kin. cores,col 6:  kin. en. shells'
     WRITE(163,*) 'col 7: kin. cations,col 8:  pot. energy of ions'
     WRITE(163,*) 'col 9: ion-ion pot., col 10: ion-surf pot'
@@ -2026,7 +2080,19 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(163,*) 'col 19: energy absorbed from laser [Ry]'
     WRITE(163,*) 'col 20/21: internal exc. energy (spin up/down)'
     WRITE(163,*) 'col 24/25: direct energy, kinetic energy'
+#else
+    WRITE(163,*) 'col 5:  pot. energy of ions'
+    WRITE(163,*) 'col 6: ion-ion pot., col 7: ion-surf pot'
+    WRITE(163,*) 'col 8: intra-surf. pot'
+    WRITE(163,*) 'col 9: el-ion energy,col 10:  external en.'
+    WRITE(163,*) 'col 11: Hartree en.,col 12:  nonloc. en'
+    WRITE(163,*) 'col 13: sim.ann. en.,col 14:  binding en.'
+    WRITE(163,*) 'col 15: total en. [Ry]'
+    WRITE(163,*) 'col 16: energy absorbed from laser [Ry]'
+    WRITE(163,*) 'col 17/18: internal exc. energy (spin up/down)'
+    WRITE(163,*) 'col 21/22: direct energy, kinetic energy'
     CLOSE(163)
+#endif
   END IF
   
   IF(jesc /= 0) THEN
@@ -2079,8 +2145,8 @@ IF(irest <= 0) THEN                    !  write file headers
       OPEN(323,STATUS='unknown',FILE='pcharges.'//outnam)
       WRITE(323,'(a,2i6)') '# Column 1 : time [fs]'
       WRITE(323,'(a,2i6)') '# Column 2 : total nr of electrons in box'
-      DO ii=1,INT(nzsh*dz/drcharges)
-        WRITE(323,'(a,i6,f8.3)') 'Column ',ii+2,ii*drcharges
+      DO i=1,INT(nzsh*dz/drcharges)
+        WRITE(323,'(a,i6,f8.3)') 'Column ',i+2,i*drcharges
       END DO
       CLOSE(323)
     END IF
@@ -2166,13 +2232,14 @@ IF(irest <= 0) THEN                    !  write file headers
               FILE='ptempsurf.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
+#if(raregas)          
 !                                   Velocities of Argon clouds (if available)
           IF(ifadiadip /= 1) THEN
             OPEN(27,STATUS='unknown',FORM='formatted', FILE='pveldip.'//outnam)
             WRITE(27,'(a)') ' & '
             CLOSE(27)
           END IF
-
+#endif
         END IF
       END IF
       
@@ -2294,7 +2361,7 @@ ELSE
     END IF
 #endif
     
-    CALL getforces(rho,psi,0)
+    CALL getforces(rho,psi,-1,0)
     
   END IF
 END IF
@@ -2313,12 +2380,13 @@ SUBROUTINE print_densdiff(rho,it)
 
 USE params
 USE util, ONLY:pm3dcut,printfield,inttostring
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w1
 
+INTEGER :: i
 !---------------------------------------------------------------------
 IF (jplotdensitydiff /= 0 .AND. MOD(it,jplotdensitydiff) == 0) THEN
   
@@ -2414,8 +2482,9 @@ SUBROUTINE open_protok_el(it)
 
 USE params
 USE util, ONLY:safeopen
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER,INTENT(IN) :: it
 !----------------------------------------------------------------
 
 
@@ -2458,7 +2527,16 @@ SUBROUTINE analyze_ions(it)
 
 USE params
 USE util, ONLY:gettemperature,getcm,safeopen,view3d
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER,INTENT(IN)::it
+INTEGER :: ion
+REAL(DP) :: amfac, ekx, eky, ekz, r2ion, r2iona, sumx, sumy, sumz
+#if(raregas)
+INTEGER :: i
+REAL(DP) :: dist2, sumnc
+REAL(DP), EXTERNAL :: getdistance2
+#endif
 
 !----------------------------------------------------------------
 
@@ -2569,9 +2647,18 @@ SUBROUTINE analyze_surf(it)
 USE params
 USE util, ONLY: gettemperature,safeopen
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER, INTENT(IN) :: it
 
 REAL(DP) :: rho(2*kdfull2)
+#if(raregas)
+INTEGER :: i, ii, ion, nimobc, nimobk
+REAL(DP) :: sumcx, sumcy, sumcz, sumkx, sumky, sumkz
+REAL(DP) :: ekx, eky, ekz, ekcx, ekcy, ekcz, ekvx, ekvy, ekvz
+REAL(DP) :: amfac1, amfac2
+#endif
+
 !----------------------------------------------------------------
 
 !      tfs=it*dt1*0.0484
@@ -2732,20 +2819,17 @@ SUBROUTINE analyze_elect(psi,rho,aloc,it)
 
 USE params
 USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 COMPLEX(DP), INTENT(IN)                      :: psi(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                     :: akv(kdfull2)
 INTEGER, INTENT(IN)                          :: it
 
 
 LOGICAL,PARAMETER :: ttest=.FALSE.
-
-!REAL(DP) :: rtmp(kstate,kstate)
-!COMPLEX(DP) :: cscal
+INTEGER :: nbe
 
 !----------------------------------------------------------------
 
@@ -2914,7 +2998,7 @@ SUBROUTINE savings(psi,it)
 !     Check status and optionally save wavefunctions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #if(simpara||parayes)
 INCLUDE 'mpif.h'
@@ -2924,6 +3008,7 @@ INTEGER :: is(mpi_status_size)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: it
 
+REAL(DP) :: time_act, time_elapse
 !----------------------------------------------------------------
 
 
@@ -2981,17 +3066,20 @@ END SUBROUTINE savings
 #if(raregas)
 !-----vstep--------------------------------------------------------
 
-SUBROUTINE vstep(rho,psi,dt)
+SUBROUTINE vstep(rho,psi,it,dt)
 
 !     propagation of rare gas valence clouds by leapfrog method
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
+INTEGER, INTENT(IN)              :: it
 REAL(DP), INTENT(IN)             :: dt
 
+
+INTEGER :: i
 REAL(DP),ALLOCATABLE :: xm(:)
 
 
@@ -3027,7 +3115,7 @@ END IF
 
 !     then propagation of momenta
 
-CALL getforces(rho,psi,0) ! forces on valences with new positions
+CALL getforces(rho,psi,it,0) ! forces on valences with new positions
 
 xm = 1D0
 CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,xm,ne,2)
@@ -3037,19 +3125,20 @@ RETURN
 END SUBROUTINE vstep
 !-----vstep--------------------------------------------------------
 
-SUBROUTINE vstepv(rho,psi,dt)
+SUBROUTINE vstepv(rho,psi,it,dt)
 
 !     propagation of rare gas valence clouds by velocity Verlet
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
+INTEGER,INTENT(IN)               :: it
 REAL(DP), INTENT(IN)         :: dt
 
+INTEGER :: i
 REAL(DP),ALLOCATABLE :: xm(:)
-
 
 !------------------------------------------------------------------
 
@@ -3082,7 +3171,7 @@ END IF
 
 ! forces on valences with new positions
 
-CALL getforces(rho,psi,0) 
+CALL getforces(rho,psi,it,0) 
 
 !     then propagation of momenta
 

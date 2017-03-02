@@ -49,9 +49,11 @@ LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
+
 #if(twostsic)
 INTEGER :: ii, jj
 #endif
+
 REAL(DP) :: time_init
 REAL(DP) :: xcm, ycm, zcm
 REAL(DP),ALLOCATABLE :: qaux(:,:)
@@ -339,7 +341,7 @@ IF (isurf /= 0) THEN
     STOP
   ELSE IF (iuselast == -2) THEN
     WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
-    CALL adjustdip(rho)
+    CALL adjustdip(rho,0)
     IF (myn == 0) THEN
       OPEN(308,STATUS='unknown',FILE='for005surf.init')
       WRITE(308,*) nc,nk
@@ -412,7 +414,7 @@ CALL coul_mfield(rho)
 #if(raregas)
 IF (NE > 0) THEN
 !   WRITE(*,*) ' ADJUSTDIP from STATIC mfield'
-  CALL adjustdip(rho)
+  CALL adjustdip(rho,-1)
   CALL calcpseudo()                 ! update pseudo-potentials   ??
 END IF
 #endif
@@ -1350,10 +1352,10 @@ INTEGER :: is(mpi_status_size)
 #if(parano)
 INTEGER :: nb
 #endif
-#if(coufou)
+!~ #if(coufou)
 REAL(DP) :: p00,p10,p11r,p11i,p20,p21r,p21i,p22r,p22i,p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
     p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2
-#endif
+!~ #endif
 omegam = omega_mieplasmon(rho)
 
 !      eshell=0.0
@@ -1707,7 +1709,7 @@ IF (iuselast == -1) THEN
   STOP
 ELSE IF (iuselast == -2) THEN
   WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
-  CALL adjustdip(rho)
+  CALL adjustdip(rho,-1)
   IF (myn == 0) THEN
     OPEN(308,STATUS='unknown',FILE='for005surf.init')
     WRITE(308,*) nc,nk

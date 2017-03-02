@@ -23,7 +23,8 @@
 SUBROUTINE heatcluster(totemp)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+REAL(DP),INTENT(IN):: totemp
 !     This routine heats up the cluster.
 !     The momenta of the cluster ions
 !     are reset to values such that the kinetic energy
@@ -46,7 +47,9 @@ SUBROUTINE reset_ions()
 !     Resets all ionic momento to zero, is used in cooling.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: ion
 
 !-----------------------------------------------------------
 
@@ -88,7 +91,10 @@ REAL(DP) FUNCTION enerkin_ions()
 !     Kinetic energy of ions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: ion
+REAL(DP) :: ek, sumekinion
 
 !     calculate kinetic energy of ions
 
@@ -137,17 +143,29 @@ REAL(DP) FUNCTION energ_ions()
 !     Potential energy of ions
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: ion, ion1, ion2
+REAL(DP):: dist, dist2, sumion
 INTEGER,EXTERNAL :: iptyp
+REAL(DP),EXTERNAL :: v_ion_ion
+
+#if(raregas)
+INTEGER :: ii, ii2, ion11, jj, jj2
+REAL(DP) :: ccc1, ccc2, sss, sss1, sss2, xtmp, ytmp, ztmp
+INTEGER,EXTERNAL :: iconvlongtoshort
+REAL(DP),EXTERNAL :: sigsig
+REAL(DP),EXTERNAL :: v_soft
+REAL(DP),EXTERnAL :: getcharge
+REAL(DP),EXTERnAL :: getdistance2
+REAL(DP),EXTERnAL :: getmixedwidth
+#endif
 
 IF(nion2 == 2) THEN
   energ_ions = 0D0
   RETURN
 END IF
 
-srenergy=0.0D0
 sumion = 0.0D0
 enii=0.0D0
 enig=0.0D0
@@ -204,7 +222,7 @@ IF(idielec /= 0) THEN
   ELSE IF(ipsptyp >= 1) THEN
     IF(nion2 /= 0) THEN
       DO ion1=1,nion
-        DO ion2=1,nion1
+        DO ion2=1,nion
           dist2 = (cx(ion1)+cx(ion2)-2D0*xdielec)**2 +(cy(ion1)-cy(ion2))**2  &
               +(cz(ion1)-cz(ion2))**2
           dist = SQRT(dist2)
@@ -401,7 +419,7 @@ SUBROUTINE itstep(rho,it,psi)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
@@ -410,6 +428,11 @@ REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
 REAL(DP),ALLOCATABLE :: tfac(:)     ! array acceleration factors
 
 LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
+INTEGER :: i
+REAL(DP) :: dtaccel, xcmion, ycmion, zcmion
+#if(raregas)
+REAL(DP) :: pxcmion, pycmion, pzcmion
+#endif
 !INTEGER, PARAMETER :: mm=ng
 !REAL(DP) :: px(ng),py(ng),pz(ng)
 
@@ -510,7 +533,7 @@ IF (nion > 0 .AND.imob /= 0) THEN
 END IF
 
 
-!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho)
+!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho,it)
 
 ! for pure rare gas cluster in uniform translation,
 ! the cloud must be adjust before computation of forces
@@ -529,7 +552,7 @@ END IF
 
 !     compute forces on rare gas cores with new positions
 !WRITE(*,*) ' before GETFORCES, time=',time
-CALL getforces(rho,psi,0)
+CALL getforces(rho,psi,it,0)
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
     ALLOCATE(tfac(1:nion))
@@ -603,7 +626,7 @@ SUBROUTINE leapfr(x,y,z,xprop,yprop,zprop,ddt,xm,n,ityp)
 !     ****************************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !INTEGER, PARAMETER :: mm=maxpar
 INTEGER, INTENT(IN)                      :: n
@@ -617,7 +640,7 @@ REAL(DP), INTENT(IN)                     :: ddt
 REAL(DP), INTENT(IN)                     ::  xm(1:n)   
 INTEGER, INTENT(IN)                      :: ityp
 
-
+INTEGER :: i
 
 !   computes a leap frog step for n particles of masses xm
 !   propagation of positions and momenta are separate
@@ -627,11 +650,9 @@ INTEGER, INTENT(IN)                      :: ityp
 
 #if(raregas)
 DO i = 1,n
-  
   IF ((ityp == 4) .OR. (ityp == 1 .AND. imobc(i) == 1) .OR.  &
         (ityp == 2 .AND. imobe(i) == 1) .OR.  &
         (ityp == 3 .AND. imobk(i) == 1)) THEN
-    
     x(i) = x(i) + ddt * xprop(i) / xm(i)
     y(i) = y(i) + ddt * yprop(i) / xm(i)
     z(i) = z(i) + ddt * zprop(i) / xm(i)
@@ -661,7 +682,7 @@ SUBROUTINE itstepv(rho,it,psi)
 !  by velocity Verlet
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
@@ -671,7 +692,11 @@ REAL(DP),ALLOCATABLE :: xm(:)          ! array for particle masses
 REAL(DP),ALLOCATABLE :: tfac(:)        ! acceleration factors
 LOGICAL,PARAMETER :: tsmooth = .true.  ! switch to smooth termination of acceleration
 
-
+REAL(DP):: dtaccel, xcmion, ycmion, zcmion
+#if(raregas)
+INTEGER :: i
+REAl(DP) :: pxcmion, pycmion, pzcmion
+#endif
 ! what time is it ?
 tfs = it*dt1*0.0484D0/(2D0*ame)
 WRITE(*,*) 'enter ITSTEPV: tfs,cpx,cpy,cpz=',tfs,cpx(nion),cpy(nion),cpz(nion)
@@ -760,7 +785,7 @@ IF (nion > 0 .AND.imob /= 0) THEN
 END IF
 
 
-!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho)
+!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho,it)
 
 ! for pure rare gas cluster in uniform translation,
 ! the cloud must be adjust before computation of forces
@@ -775,7 +800,7 @@ END IF
 
 
 !     compute forces on rare gas cores with new positions
-CALL getforces(rho,psi,0)
+CALL getforces(rho,psi,it,0)
 !WRITE(*,*) ' ITSTEPV: after GETFORCES'
   IF(tfs < taccel-1D-6) THEN
 !    WRITE(*,*) 'FZ:',fz(1:nion)
@@ -849,7 +874,7 @@ SUBROUTINE velverlet1(x,y,z,px,py,pz,fox,foy,foz,ddt,xm,n,ityp)
 !  forces
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)        :: n
 REAL(DP), INTENT(IN OUT)   :: x(n),y(n),z(n)
@@ -859,6 +884,8 @@ REAL(DP), INTENT(IN)       :: ddt
 REAL(DP), INTENT(IN)       :: xm(1:n)
 INTEGER, INTENT(IN)        :: ityp
 
+INTEGER :: i
+REAL(DP) :: ddth
 
 ddth = 0.5D0*ddt
 #if(raregas)
@@ -906,7 +933,7 @@ SUBROUTINE velverlet2(px,py,pz,fox,foy,foz,ddt,n,ityp)
 !  ityp          = type of ions/atoms
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)        :: n
 REAL(DP), INTENT(IN OUT)   :: px(n),py(n),pz(n)
@@ -914,6 +941,8 @@ REAL(DP), INTENT(IN)       :: fox(n),foy(n),foz(n)
 REAL(DP), INTENT(IN)       :: ddt
 INTEGER, INTENT(IN)        :: ityp
 
+INTEGER :: i
+REAL(DP) :: ddth
 
 ddth = 0.5D0*ddt
 
@@ -950,12 +979,18 @@ SUBROUTINE lffirststep(rho,psi)
 
 !     *******************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
 REAL(DP),ALLOCATABLE :: xm(:)
+
+REAL(DP),EXTERNAL :: enerkin_ions
+
+#if(raregas)
+  
+#endif
 
 tfs = 0D0
 
@@ -967,7 +1002,7 @@ END IF
 
 
 !GB      if(nc+ne+nk.gt.0 .and. isurf.ne.0)then
-CALL getforces(rho,psi,0)
+CALL getforces(rho,psi,-1,0)
 !GB      endif
 
 #if(raregas)
@@ -1023,8 +1058,8 @@ END SUBROUTINE lffirststep
 !     ******************************
 
 SUBROUTINE spheric(r,x,y,z,n)
-USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+USE params, ONLY: DP, Pi
+IMPLICIT NONE
 
 !     ******************************
 
@@ -1035,6 +1070,8 @@ REAL(DP), INTENT(OUT)                        :: y(mm)
 REAL(DP), INTENT(OUT)                        :: z(mm)
 INTEGER, INTENT(IN)                      :: n
 
+INTEGER :: i, ia, ic, im, jran
+REAL(DP) :: cth, sth, cosp, sinp, phi, rr,  xx 
 
 IF(n > mm) THEN
   WRITE(6,*)'warning !! number of particles exceeds array s size'
@@ -1046,7 +1083,6 @@ END IF
 !   a sphere of radius r. results are x(i), y(i),z(i)
 
 DATA im,ia,ic/259200,7141,54773/
-DATA pi/3.1415927D0/
 jran = 12345
 
 WRITE(6,*)r,n
@@ -1058,7 +1094,7 @@ DO i = 1,n
   sth = SQRT ( 1D0 - cth * cth )
   jran = MOD(jran*ia + ic,im)
   xx = REAL(jran,DP) / REAL(im,DP)
-  phi = 2D0 * pi * xx
+  phi = 2D0 * Pi * xx
   cosp = COS (phi)
   sinp = SIN (phi)
   x(i) = rr * sth * cosp
@@ -1072,7 +1108,7 @@ END SUBROUTINE spheric
 
 SUBROUTINE conslw(x,y,z,px,py,pz,n)
 USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     ************************************
 
@@ -1085,7 +1121,12 @@ REAL(DP), INTENT(IN OUT)                     :: px(n)
 REAL(DP), INTENT(IN OUT)                     :: py(n)
 REAL(DP), INTENT(IN OUT)                     :: pz(n)
 
-
+INTEGER :: i, npart
+REAL(DP) :: rlx, rly , rlz, reno
+REAL(DP) :: rixx, riyy, rizz, rixy, rixz, riyz
+REAL(DP) :: rkx, rky , rkz, rx, ry, rz, rx2, ry2, rz2 
+REAL(DP) :: rlxcm, rlycm, rlzcm , xcm, ycm, zcm, xkcm, ykcm, zkcm, xxkcm, yykcm, zzkcm,  xxcm, yycm, zzcm
+REAL(DP) :: det, wx, wy, wz
 !    renormalization of c.o.m, of momentum and of angular momentum
 
 xcm = 0D0
@@ -1253,11 +1294,12 @@ SUBROUTINE stream(rho)
 !     *******************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
-
+INTEGER :: i
+REAL(DP) :: query2, query3, query4
 REAL(DP), ALLOCATABLE :: rhos(:),drho(:)
 
 ALLOCATE(rhos(kdfull2),drho(kdfull2))
@@ -1333,7 +1375,7 @@ SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN)                      :: psi(kdfull2,kstate)
@@ -1342,28 +1384,27 @@ REAL(DP), INTENT(OUT)                        :: expjy
 REAL(DP), INTENT(OUT)                        :: expjz
 REAL(DP), INTENT(OUT)                        :: eeth
 
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
-REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
-!REAL(DP),DIMENSION(:),ALLOCATABLE :: akkx,akky,akkz
-!DIMENSION akkx(kdfull2),akky(kdfull2),akkz(kdfull2)
-!EQUIVALENCE (akkx(1),w1(1))
-!EQUIVALENCE (akky(1),w2(1))
-!EQUIVALENCE (akkz(1),w3(1))
-
+INTEGER :: i, ind, n, nb
+REAL(DP) :: ajalpha, rhoalpha
+REAL(DP) :: dkx, dky, dkz, ex, ey, ez, q1, tel
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
 COMPLEX(DP) :: test
+
+REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
+COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
+
+
+
+
+
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 REAL(DP), ALLOCATABLE :: aj(:)
 ALLOCATE(aj(kdfull2))
-!EQUIVALENCE (aj(1),q2(1))
 #endif
 
-!ALLOCATE(akkx(kdfull2))
-!ALLOCATE(akky(kdfull2))
-!ALLOCATE(akkz(kdfull2))
 ALLOCATE(p(kdfull2),q2(kdfull2))
 ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
 
@@ -1511,21 +1552,21 @@ DO ind=1,kdfull2
   aj(ind)=ajtx(ind)
 END DO
 CALL pi_allreduce(aj,ajtx,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,ic)
+    mpi_comm_world,icode)
 DO ind=1,kdfull2
   aj(ind)=ajty(ind)
 END DO
 CALL pi_allreduce(aj,ajty,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,ic)
+    mpi_comm_world,icode)
 DO ind=1,kdfull2
   aj(ind)=ajtz(ind)
 END DO
 CALL pi_allreduce(aj,ajtz,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,ic)
+    mpi_comm_world,icode)
 
-CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,ic)
-CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,ic)
-CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,ic)
+CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
+CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
+CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
 expjx=ex
 expjy=ey
 expjz=ez
@@ -1629,7 +1670,7 @@ END DO                     !loop over states
 eeth=tel*dvol*0.5D0*hbar*hbar/2D0/ame !atomic units (h/2m)**2
 #if(parayes)
 tel=eeth
-CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,ic)
+CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
 #endif
 
 WRITE(6,'(a,f12.5)') ' electronic thermal energy: ',eeth
@@ -1654,11 +1695,12 @@ SUBROUTINE write_density(drho,filename)
 !
 !     **************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
 CHARACTER (LEN=6), INTENT(IN) :: filename
 CHARACTER (LEN=4) :: ext
+INTEGER :: i
 
 WRITE(ext,'(a,i3.3)') ".", iquery4/10    ! e.g:  iquery4 = 1234  --->  ext = ".123"
                                          !       iquery4 = 568   --->  ext = ".056"

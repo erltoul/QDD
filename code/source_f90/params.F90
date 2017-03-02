@@ -325,6 +325,8 @@ INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
 INTEGER :: nrare=0,nfix=0                    !  Nr. of raregas atoms
 INTEGER,ALLOCATABLE :: nfixed(:)                    !  Nr. of fixed ions
 INTEGER :: idielec=0                     !  switch to dielectricum
+REAL(DP) :: xdielec=0D0                  !  x below which dielectric zone is activated
+REAL(DP) :: epsdi=1D0                    ! dielectric constant in the dielectric zone
 LOGICAL,ALLOCATABLE :: tblock(:)
 REAL(DP),ALLOCATABLE :: cx(:),cy(:),cz(:) ,cpx(:),cpy(:),cpz(:) 
 REAL(DP),ALLOCATABLE :: dcx(:),dcy(:),dcz(:) ,dcpx(:),dcpy(:),dcpz(:) 

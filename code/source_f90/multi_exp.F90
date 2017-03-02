@@ -109,7 +109,7 @@ END DO
 
 y=q0
 
-CALL dyn_mfield(rho,aloc,y,dt1)
+CALL dyn_mfield(rho,aloc,y,dt1,it)
 
 
 DO nb=1,nstate
@@ -119,7 +119,7 @@ END DO
 
 !      second half time step to estimate x and H(t+dt)
 !estimate mean field of full time step
-!CALL dyn_mfield(rho,aloc,qwork,dt1)
+!CALL dyn_mfield(rho,aloc,qwork,dt1,it)
 x=q0
 !     One negative half time step to initialize  Ax
 !DO nb=1,nstate
@@ -129,8 +129,8 @@ x=q0
 !error
 rnorm_err=1D0
 relax=0.25D0
-threshold1=1D-1
-threshold=1D-7
+threshold1=1D-2
+threshold=1D-9
 iter_CN=0
 
 
@@ -176,7 +176,7 @@ do while (rnorm_err.gt.threshold1)
    if (iter_CN.lt.1)then
      rnorm_err=1D0
      else
-   if(mod(iter_CN,30).eq.0) CALL dyn_mfield(rho,aloc,x,dt1)
+   if(mod(iter_CN,30).eq.0) CALL dyn_mfield(rho,aloc,x,dt1,it)
 
 !     One negative half time step to compute Ax
    do nb=1,nstate
@@ -233,7 +233,7 @@ do while (rnorm_err.gt.threshold)
    x=x-relax*errcn
    q0=x
    iter_CN=iter_CN+1
-   if(mod(iter_CN,30).eq.0) CALL dyn_mfield(rho,aloc,x,dt1)
+   if(mod(iter_CN,30).eq.0) CALL dyn_mfield(rho,aloc,x,dt1,it)
    if (iter_CN.gt.150*(level+1))then
      write(*,*) ' warning Crank-Nicolson0',iter_CN
      rnorm_err=0
@@ -245,7 +245,7 @@ do while (rnorm_err.gt.threshold)
      endif
      else
    if (iter_CN.lt.1)then
-     rnorm_err=1.0
+     rnorm_err=1D0
      else
 
 !     One negative half time step to compute Ax

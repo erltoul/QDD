@@ -25,7 +25,7 @@ INTEGER,PARAMETER :: kfermi=64*17330  ! length of interpolation table
 
 
 !  surface part:
-INTEGER,PARAMETER :: ngpar = 3000
+INTEGER,PARAMETER :: ngpar = 3000 ! max number of surface particules
 INTEGER :: maxpar 
 INTEGER,PARAMETER :: maxnlayers=3
 INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
@@ -51,8 +51,9 @@ INTEGER :: iposevry,ienevry,iobsevry,ithermevry,ifile
 INTEGER :: icool, icoolevry, icoolsteps, itindex
 
 
-REAL(DP) :: xc(ngpar),yc(ngpar),zc(ngpar)
-REAL(DP) :: xe(ngpar),ye(ngpar),ze(ngpar), xk(ngpar),yk(ngpar),zk(ngpar)
+REAL(DP) :: xc(ngpar),yc(ngpar),zc(ngpar)   ! Position of fixed cores / gsm particles     
+REAL(DP) :: xe(ngpar),ye(ngpar),ze(ngpar)   ! Position of fixed shells
+REAL(DP) :: xk(ngpar),yk(ngpar),zk(ngpar)   ! Position of fixed cations 
 REAL(DP) :: xcinit(ngpar),ycinit(ngpar),zcinit(ngpar)
 REAL(DP) :: xeinit(ngpar),yeinit(ngpar),zeinit(ngpar)
 REAL(DP) :: xkinit(ngpar),ykinit(ngpar),zkinit(ngpar)
@@ -108,16 +109,17 @@ REAL(DP) :: ckncu7,ckncu8,ckncu9,ckncu10,ckncud
 REAL(DP) :: ccncul2,ccncul3,ccncul4,ccncul5,ccncul6
 REAL(DP) :: ccncul7,ccncul8,ccncul9,ccncul10,ccnculd
 REAL(DP) :: ckncul2,ckncul3,ckncul4,ckncul5,ckncul6
-REAL(DP) :: ckncul7,ckncul8,ckncul9,ckncul10,cknculd, srenergy
+REAL(DP) :: ckncul7,ckncul8,ckncul9,ckncul10,cknculd
 REAL(DP) :: ccel6,ccel8,ccel10, ckel6,ckel8,ckel10
 REAL(DP) :: sigmac=1.01116D0,sigmav=1.01116D0,sigmak=1D0,sigmacc,sigmacv
-REAL(DP) :: sigmack, sigmavv,sigmakk,sigmakv,epsdi=1D0,zsurf
+REAL(DP) :: sigmack, sigmavv,sigmakk,sigmakv,zsurf
 REAL(DP) :: chgcore,chgval,chgkat
 REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
 REAL(DP) :: mkat=1D1,mion=39.95D0    
-REAL(DP) :: xdielec=0D0
-INTEGER :: nc=0,nk=0,ne=0
+INTEGER :: nc=0   ! Number of fixed cores in substrate (O cores in MgO(001) ?)
+INTEGER :: nk=0   ! Number of fixed cations in substrate (Mg cations in MGO(001) ?)
+INTEGER :: ne=0   ! Number of fixed shells in substrate 
 INTEGER :: nlayers,nside,iararlj, ipog
 INTEGER :: iforcecl2co=0
 

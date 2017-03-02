@@ -26,7 +26,13 @@ SUBROUTINE pseudogoed()
 !     ***********************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: ind, is, ix, iy, iz
+REAL(DP) :: c1, c2, rloc, zion
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1 
+REAL(DP), EXTERNAL :: vgian
+REAL(DP), EXTERNAL :: v_ion_el_lgoed
 
 !       real space part of the pseudopotentials taken in
 !       PRB 54(3)1703 (1996) by Goedecker et al.
@@ -86,11 +92,20 @@ END SUBROUTINE pseudogoed
 
 !     ***********************
 
-FUNCTION v_ion_el_lgoed(rr,rloc,c1,c2,zion)
+REAL(DP) FUNCTION v_ion_el_lgoed(rr,rloc,c1,c2,zion)
 
 !     ***********************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+REAL(DP),INTENT(IN):: rr
+REAL(DP),INTENT(IN):: rloc
+REAL(DP),INTENT(IN):: c1
+REAL(DP),INTENT(IN):: c2
+REAL(DP),INTENT(IN):: zion
+
+REAL(DP) :: f1, f3
+REAL(DP), EXTERNAL :: v_soft
+
 IF(rr <= 7.0D0*rloc) THEN
   f1=-zion*v_soft(rr,sq2*rloc)
   f3= (c1+c2*((rr/rloc)**2D0))* EXP(-0.5D0*((rr/rloc)**2))
@@ -114,11 +129,12 @@ SUBROUTINE calc_proj(cxa,cya,cza,cxg,cyg,czg,ion)
 !     but differ when computing forces.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN):: cxa, cya, cza, cxg, cyg, czg
 INTEGER,INTENT(IN) :: ion
 
+REAL(DP) :: h0_12
 REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
 
 !---------------------------------------------------------
@@ -151,10 +167,15 @@ SUBROUTINE calpr2(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
+
+INTEGER :: i, icrsx, icrsy, icrsz, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l
+INTEGER :: knd
+REAL(DP) :: r0, r1, radion, rr, x, y, z, xion, yion, zion
+REAL(DP) :: gamfac, proj, rfac, sum1
 
 r0=r0g(np(ion))
 r1=r1g(np(ion))
@@ -243,7 +264,7 @@ ifin(ion) = ind
 
 
 sum1=0D0
-sum4=0D0
+! sum4=0D0
 DO i=1,ifin(ion)
   sum1=sum1 + p0_1(i,ion)*p0_1(i,ion)
 !  sum4=sum4 + p1_1(i,ion)*p1_1(i,ion)
@@ -271,11 +292,13 @@ SUBROUTINE calpr3(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
 
+INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn, knd
+REAL(DP) :: gamfac, proj, r0, r1, radion, rfac, rr, xnorm,  xion, yion, zion, x, y, z
 WRITE(*,*) ' in CALPR3'
 
 
@@ -397,11 +420,13 @@ SUBROUTINE calpr4(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
 
+INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn, knd
+REAL(DP) :: gamfac, proj, r0, r1, r2, radion, rfac, rr,  xion, yion, zion, x, y, z
 
 r0=r0g(np(ion))
 r1=r1g(np(ion))
@@ -542,10 +567,14 @@ SUBROUTINE checkproj(ion)
 !     ********************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                     :: ion
 
+INTEGER :: i, nrowact
+REAL(DP) :: h0_12, fac0_12, h0_11, h1_11, h0_22
+REAl(DP) :: erg1, erg2, erg3, erg4, erg5, erg6
+REAl(DP) :: sum1, sum2, sum3, sum4, sum5, sum6
 REAL(DP), PARAMETER :: plimit=0.04D0
 
 ! determine case 'nrowact'

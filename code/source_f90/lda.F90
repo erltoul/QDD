@@ -33,11 +33,13 @@ USE util, ONLY:laserp,projectp
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 
+INTEGER :: ind, jx, jy, jz 
+REAL(DP) :: add, addx, addy, addz
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,Vproj
 
 IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
@@ -118,17 +120,16 @@ END IF
 
 DO ind=1,nxyz
   IF(nion2 /= 0) THEN
-    AINT=chpcoul(ind)-potion(ind)
-!            aint=-potion(ind)
-  ELSE IF(nion2 == 0) THEN
-    AINT=chpcoul(ind)
+    add=chpcoul(ind)-potion(ind)
+  ELSE
+    add=chpcoul(ind)
   END IF
   IF(tfs > 0D0) THEN
-     AINT = AINT + vlaser(ind) + Vproj(ind)
+     add = temp + vlaser(ind) + Vproj(ind)
   END IF
 
-  aloc(ind)=chpdft(ind)+AINT
-  aloc(ind+nxyz)=chpdft(ind+nxyz)+AINT
+  aloc(ind)=chpdft(ind)+add
+  aloc(ind+nxyz)=chpdft(ind+nxyz)+add
 
 #if(raregas)  
   IF (nc > 0 .AND. ivdw == 1) THEN
@@ -193,7 +194,7 @@ SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
 
@@ -201,10 +202,16 @@ REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+INTEGER :: i 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
 #endif
 
-
+INTEGER :: ii, mini, maxi, ntranche
+REAL(DP) :: e, e1, e2fac, ebase, ec, ec1, enrea1, excf, excp, expot, exfpot , exx, exx1 
+REAl(DP) :: fofxi, fpofxi, rlogf, rlogp, rp, rspf, rspif, rspinv, rspip, rspf2, rspp, rspp2
+REAl(Dp) :: ubase, upotf, upotp
+REAL(DP) :: xi, xip, xip3, xim, xim3
+REAL(DP),PARAMETER ::  trd4pi = 3D0/(4D0*pi), onetrd = (1D0/3D0)
 !     the Gunnarsson Lundqvist parameters
 
 !      data small/1.0e-20/
@@ -217,6 +224,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: p1,p2
 !#endif
 REAL(DP) :: cppar=0.0666D0,rppar=11.400D0,expar=0.916D0
 REAL(DP) :: cfpar=0.0406D0,rfpar=15.900D0,exfpar=1.154D0
+
 
 !     check workspace
 
@@ -233,8 +241,7 @@ IF(idenfunc==3) THEN
 END IF
 
 !        nxyz=nx2*ny2*nz2
-trd4pi = 3D0/(4D0*3.141592653589793D0)
-onetrd = (1D0/3D0)
+
 enrear = 0D0
 expot  = 4D0*expar/3D0
 exfpot = 4D0*exfpar/3D0
@@ -299,10 +306,10 @@ e1=ec1                  ! this is the full functional
 !k    the v_xc for spinup/ is in the lower/upper block of chpdft
 
 #if(parayes)
-CALL pi_allgather(chpdft,mini,ntranche,p1,kdfull)
-CALL pi_allgather(chpdft(nxyz+1),mini,ntranche,p2,kdfull)
-CALL pi_allreduce(ec,e,1,mpi_double_precision, mpi_sum,mpi_comm_world,ic)
-CALL pi_allreduce(ec1,e1,1,mpi_double_precision, mpi_sum,mpi_comm_world,ic)
+CALL pi_allgather(chpdft,mini,ntranche,p1,kdfull2)
+CALL pi_allgather(chpdft(nxyz+1),mini,ntranche,p2,kdfull2)
+CALL pi_allreduce(ec,e,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
+CALL pi_allreduce(ec1,e1,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
 DO i=1,nxyz
   chpdft(i)=p1(i)
 !mb if number of down spin electrons is 0, then print 0
@@ -354,7 +361,7 @@ SUBROUTINE calc_lda_pw92(rho,chpdft)
 !               the mean-field part is o.k.!!!!!
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
@@ -364,10 +371,18 @@ INTEGER :: mysize
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,chpdftnod1,rhonod2,chpdftnod2
 INTEGER :: nod
-#endif
+REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,chpdftnod1,rhonod2,chpdftnod2
+REAL(DP) :: e, ep
 
+#endif
+INTEGER :: ii
+REAL(DP) :: ec, rp, xi
+REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3, da4
+REAL(DP) :: b0, b1, b2, b3, b4, db0, db1, db2, db3, db4
+REAl(DP) :: t, t1, t2, t3, t4, t5, t6, t7, t8, t10, t11, t12, t13, t15, t17, &
+          & t22, t23, t24, t25, t26, t28, t29, t34, t35, t36, t37, t42, t44, t48, &
+          & t53, t58, t63, t64, t65, t68, t70, t71, t72, t77, t82,  t83, t88, t93, t98, t102, t109, t135
 !        parameter (pi=3.141592654)
 
 ! Pade' approximant to Perdew-Wang 92 density functional

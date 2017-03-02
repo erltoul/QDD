@@ -22,10 +22,10 @@
 
 !------------------------------------------------------------
 
-SUBROUTINE getforces(rho,psi,iflag)
+SUBROUTINE getforces(rho,psi,it,iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     calculates forces on all particles except DFT-electrons
 
 !      GSM means
@@ -49,12 +49,14 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+INTEGER, INTENT(IN)                      :: it
 INTEGER, INTENT(IN)                      :: iflag
 
+INTEGER :: i
 
-     write(6,*) 'Entering getforces: ipsptyp=',ipsptyp
+WRITE(6,*) 'Entering getforces: ipsptyp=',ipsptyp
 
 
 !     In case of Goedecker PsP, switch to the corresponding routine
@@ -65,14 +67,14 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
   CALL calcf_goenonl(rho,it,psi)
   CALL laserf(rho)
   CALL forceproject()
-         OPEN(772,FILE='forces.'//outnam)
-         do i=1,nion
-         write(772,*) fx(i)
-         write(772,*) fy(i)
-         write(772,*) fz(i)
-         enddo
-         CALL flush(772)
-         CLOSE(772)
+  OPEN(772,FILE='forces.'//outnam)
+  DO i=1,nion
+    WRITE(772,*) fx(i)
+    WRITE(772,*) fy(i)
+    WRITE(772,*) fz(i)
+  ENDDO
+  CALL flush(772)
+  CLOSE(772)
 
 
 
@@ -80,14 +82,14 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
 ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   CALL calcf_goeloc(rho,it)
   CALL forceproject()
-         OPEN(772,FILE='forces.'//outnam)
-         do i=1,nion
-         write(772,*) fx(i)
-         write(772,*) fy(i)
-         write(772,*) fz(i)
-         enddo
-         CALL flush(772)
-         CLOSE(772)
+  OPEN(772,FILE='forces.'//outnam)
+  DO i=1,nion
+    WRITE(772,*) fx(i)
+    WRITE(772,*) fy(i)
+    WRITE(772,*) fz(i)
+  ENDDO
+  CALL FLUSH(772)
+  CLOSE(772)
   RETURN
 END IF
 
@@ -162,18 +164,20 @@ IF (isurf /= 0) THEN
   
 END IF
 #endif
-         OPEN(772,FILE='forces.'//outnam)
-         do i=1,nion
-         write(772,*) fx(i)
-         write(772,*) fy(i)
-         write(772,*) fz(i)
-         enddo
+OPEN(772,FILE='forces.'//outnam)
+DO i=1,nion
+  WRITE(772,*) fx(i)
+  WRITE(772,*) fy(i)
+  WRITE(772,*) fz(i)
+ENDDO
+#if(raregas)         
          do i=1,nk
 !           write(*,*) 'k: ',fxk(i),fyk(i),fzk(i)
 !        write(772,'(a),(6e17.7)') 'cv: ',fxk(i),fyk(i),fzk(i)
 !        write(6,*) 'cv: ',fxk(i),fyk(i),fzk(i)
 !        write(7,*) 'cv: ',fxk(i),fyk(i),fzk(i)
-         enddo
+!~          enddo
+#endif         
          CALL flush(772)
          CLOSE(772)
 
@@ -445,7 +449,7 @@ USE params
 IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN OUT)                  :: it
+INTEGER, INTENT(IN)                  :: it
 
 !REAL(DP) :: force(kdfull2)
 CHARACTER (LEN=1) :: ext
@@ -514,8 +518,8 @@ DO ion=1,nion
     END IF
   END DO
   
-  IF(jforce /= 0 .AND. MOD(it,jforce) == 0) THEN
-    ext=CHAR(ion+48)
+  IF(jforce /= 0 .AND. MOD(it,jforce) == 0 .AND. it >= 0) THEN
+    WRITE(ext,'(i1)') ion 
     OPEN(24,POSITION='append',FILE='pforce.'//ext//'.'//outnam)
     WRITE(24,'(4f13.5)') tfs,fx(ion),fy(ion),fz(ion)
   END IF
@@ -528,15 +532,15 @@ CALL laserf(rho)
 
 !     protocol
 
-IF(jforce /= 0 .AND. MOD(it,jforce) == 0) THEN
+IF(jforce /= 0 .AND. MOD(it,jforce) == 0 .AND. it >= 0) THEN
   DO ion=1,nion
-    ext=CHAR(ion+48)
+    WRITE(ext,'(i1)') ion 
     OPEN(25,POSITION='append',FILE='plforce.'//ext//'.'//outnam)
     WRITE(25,'(4f13.5)') tfs,flx(ion),fly(ion),flz(ion)
   END DO
 END IF
 
-19    RETURN
+RETURN
 END SUBROUTINE calcf_goeloc
 
 !ccccccc    wzp added the force from projectile  cccccccccccccccc
@@ -725,7 +729,7 @@ REAL(DP) :: is(mpi_status_size)
 
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN OUT)                  :: it
+INTEGER, INTENT(IN)                  :: it
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
 COMPLEX(DP),ALLOCATABLE :: q1(:)
@@ -880,8 +884,8 @@ DO ion = 1,nion
   
 !       optional prints
   
-  IF(jforce /= 0 .AND. MOD(it,jforce) == 0) THEN
-    ext=CHAR(ion+48)
+  IF(jforce /= 0 .AND. MOD(it,jforce) == 0 .AND. it >= 0) THEN
+    WRITE(ext,'(i1)') ion 
 !            write(*,*) ' open 25: ion,ext=',ion,ext
     OPEN(25,POSITION='append',FILE='pfrcel.'//ext//'.'//outnam)
     WRITE(25,'(10f13.5)')  tfs,fx(ion),fy(ion),fz(ion),  &
@@ -950,8 +954,8 @@ DO ion=1,nion
     END IF
   END DO
   
-  IF(jforce /= 0 .AND. MOD(it,jforce) == 0) THEN
-    ext=CHAR(ion+48)
+  IF(jforce /= 0 .AND. MOD(it,jforce) == 0 .AND. it >=0) THEN
+    WRITE(ext,'(i1)') ion 
     OPEN(24,POSITION='append',FILE='pforce.'//ext//'.'//outnam)
     WRITE(24,'(4f13.5)') tfs,fx(ion),fy(ion),fz(ion)
     CLOSE(24)

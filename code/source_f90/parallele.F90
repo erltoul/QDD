@@ -894,9 +894,9 @@ INTEGER, INTENT(IN OUT)                  :: ic
 
 INTEGER :: is(mpi_status_size)
 
-CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
+CALL  mpi_comm_size(mpi_comm_world,nprocs,ic)
 IF(nprocs /= kstate) STOP
-CALL  mpi_comm_rank(mpi_comm_world,n,icode)
+CALL  mpi_comm_rank(mpi_comm_world,n,ic)
 l=LOG(kstate*1D0)/LOG(2D0)-1
 DO it=0,l
   j=(n/(2D0**REAL(it,DP)))
@@ -906,11 +906,11 @@ DO it=0,l
     nt=n-2D0**REAL(it,DP)
   END IF
   IF(MOD(j,2) == 0) THEN
-    CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,icode)
-    CALL mpi_recv(rout,mx,mpi_double_precision, nt,0,mpi_comm_world,is,icode)
+    CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,ic)
+    CALL mpi_recv(rout,mx,mpi_double_precision, nt,0,mpi_comm_world,is,ic)
   ELSE
-    CALL mpi_recv(rout,mx,mpi_double_precision, nt,0,mpi_comm_world,is,icode)
-    CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,icode)
+    CALL mpi_recv(rout,mx,mpi_double_precision, nt,0,mpi_comm_world,is,ic)
+    CALL mpi_send(rin,mx,mpi_double_precision, nt,0,mpi_comm_world,ic)
   END IF
   DO i=1,mx
     rin(i)=rin(i)+rout(i)

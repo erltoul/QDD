@@ -104,7 +104,7 @@ IF(.NOT.timagtime) THEN
 #endif
 
 !     compute mean field at half time step
-  CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0)
+  CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0,it)
 
 END IF
 
@@ -125,8 +125,8 @@ IF(tnorotate .OR. ifsicp .NE. 8) THEN
   END DO
 ELSE
 #if(twostsic)
-  qwork = q0
-  CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
+qwork = q0
+CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
 #endif
 END IF
 
@@ -160,7 +160,7 @@ IF (ntref > 0 .AND. it > ntref) nabsorb = 0
 
 !     compute mean field at new time
 
-CALL dyn_mfield(rho,aloc,q0,dt1)
+CALL dyn_mfield(rho,aloc,q0,dt1,it)
 
 RETURN
 END SUBROUTINE tstep_exp
