@@ -24,7 +24,7 @@ SUBROUTINE genermowf(psiom,nmxst)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -34,6 +34,9 @@ INTEGER :: is(mpi_status_size)
 REAL(DP), INTENT(OUT)                        :: psiom(kdfull2,kstate)
 INTEGER, INTENT(OUT) :: nmxst(1:ng)       ! maximum nr. for each atom
 
+INTEGER :: i, ind, ion, ix, iy, iz
+INTEGER :: nadd, nadded, natlevel,  nbr, ncy, ncycle, ndiff, nmaxval, nstx, nsty, nstz, numstate, numlocstate
+REAL(DP) :: x1, y1, z1 
 INTEGER,ALLOCATABLE :: nactst(:)       ! keep track of actual atomic state
 INTEGER,ALLOCATABLE :: ncount(:)       ! keep track of actual atomic state
 INTEGER :: nnodes(1:3,1:10)

@@ -82,11 +82,17 @@ INTEGER :: kxbox=0,kybox=0,kzbox=0
 ! deduced grid parameters
 INTEGER :: kxmax,kymax,kzmax
 INTEGER :: nx2,ny2,nz2
+!~ #if(paraworld)
+INTEGER :: nx2fine,ny2fine,nxyfine
+!~ #endif
 !INTEGER,PARAMETER :: nxyzf=nx2*ny2*nz2                 !?
 INTEGER :: nxyz,nyf,nxyf
 INTEGER :: kdfull2,kdfull2fine
 !INTEGER,PARAMETER :: kfbox=kdfull2                    ! ??
 INTEGER :: nx,ny,nz
+!~ #if(paraworld)
+INTEGER :: nxfine, nyfine, nzfine
+!~ #endif
 !INTEGER,PARAMETER :: nx1=nx+1,ny1=ny+1,nz1=nz+1,nzi=nz1,nzr=nz+nz  !?
 !INTEGER,PARAMETER :: nxy1=nx1*ny1    !?
 !INTEGER,PARAMETER :: ksmax=nx+1,kdfull=(nx+1)*(ny+1)*(nz+1)    !?
@@ -140,7 +146,7 @@ INTEGER,ALLOCATABLE :: nrel2abs_other(:,:)      !  pointer to wfs
 INTEGER,ALLOCATABLE :: nhome(:)                 !  home node of wf
 
 
-#if(parayes||simpara)
+#if(parayes||simpara||paraworld)
 INTEGER,ALLOCATABLE ::  nstate_node(:)   ! number of active states in a node
 INTEGER,ALLOCATABLE ::  nstart_node(:)   ! offset address for counting in a node
 INTEGER,ALLOCATABLE ::  ispin_node(:,:)

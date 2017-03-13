@@ -173,7 +173,6 @@ REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
 
 INTEGER :: i, icrsx, icrsy, icrsz, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l
-INTEGER :: knd
 REAL(DP) :: r0, r1, radion, rr, x, y, z, xion, yion, zion
 REAL(DP) :: gamfac, proj, rfac, sum1
 
@@ -190,7 +189,6 @@ icrsz = 2*nint(radion/dz)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dz
   zion = z-czact
@@ -297,7 +295,7 @@ IMPLICIT NONE
 REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
 
-INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn, knd
+INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn
 REAL(DP) :: gamfac, proj, r0, r1, radion, rfac, rr, xnorm,  xion, yion, zion, x, y, z
 WRITE(*,*) ' in CALPR3'
 
@@ -318,7 +316,6 @@ icrsz = 2*nint(radion/dz)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dz
   zion = z-czact
@@ -425,7 +422,7 @@ IMPLICIT NONE
 REAL(DP),INTENT(IN):: cxact, cyact, czact, cxg, cyg, czg
 INTEGER,INTENT(IN)::ion
 
-INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn, knd
+INTEGER :: i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz, ii, il, in, ind, inn
 REAL(DP) :: gamfac, proj, r0, r1, r2, radion, rfac, rr,  xion, yion, zion, x, y, z
 
 r0=r0g(np(ion))
@@ -444,7 +441,6 @@ icrsz = 2*nint(radion/dz)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dz
   zion = z-czact

@@ -1644,7 +1644,7 @@ END SUBROUTINE r_projmoms
 !-----------------------------------------------------------------------
 SUBROUTINE c_projmoms(rho,psi)
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
@@ -2094,7 +2094,7 @@ REAL(DP) FUNCTION wfnorm_i(psi1,psi2)
 
 !     *************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 COMPLEX(DP), INTENT(IN OUT)                  :: psi1(kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
 

@@ -44,14 +44,17 @@ USE util
 #if(twostsic)
 USE twost, ONLY:tnearest
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(INout)                  :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                :: akv(kdfull2)
 REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2,kstate)
+
+INTEGER :: iter_CN,nb
+REAL(DP) :: ro, rnorm_err, relax, threshold1, threshold
+
 
 COMPLEX(DP) :: q1(kdfull2)
 COMPLEX(DP) :: cdtact
@@ -68,6 +71,7 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 #if(paraworld)
+INTEGER :: kdfull28,level, nprocs, nrank
 COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
 COMPLEX(DP),ALLOCATABLE :: qactfine(:)
 ALLOCATE(qactfine(kdfull2fine))
@@ -144,9 +148,9 @@ kdfull28=(kxbox/2)*(kybox/2)*(kzbox/2)
 
 if(level.ne.0) then
   do nb=1,nstate
-    call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_World,is,ic)
+    call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_World,is,icode)
   enddo
-  call mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_World,is,ic)
+  call mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_World,is,icode)
 endif
 
 
@@ -160,7 +164,9 @@ do while (rnorm_err.gt.threshold1)
    do nb=1,1
       rnorm_err=rnorm_err+wfnorm(errcn(:,nb))
    enddo
+#if(paraworld)
    write(6,*) 'err in crank step  1',rnorm_err,level,relax
+#endif
    if(ro.lt.rnorm_err) then
                relax=relax*0.7D0
    else
@@ -200,8 +206,8 @@ call smoothing3Dc(qarrayfine,qarray)
 !from fine array to coarse array
 call from3Dto1Dc(q1,qarray,nx2/2,ny2/2,nz2/2)
 !from coarse array to coarse !vector
-call mpi_send(q1,kdfull28,mpi_double_complex,level+1,1,mpi_comm_World,ic)
-call mpi_send(dt1,1,mpi_double_precision,level+1,3,mpi_comm_World,ic)
+call mpi_send(q1,kdfull28,mpi_double_complex,level+1,1,mpi_comm_World,icode)
+call mpi_send(dt1,1,mpi_double_precision,level+1,3,mpi_comm_World,icode)
 enddo
 endif
 
@@ -212,7 +218,7 @@ endif
 
 if(level.ne.nprocs-1) then
 do nb=1,nstate
-call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level+1,2,mpi_comm_World,is,ic)
+call mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level+1,2,mpi_comm_World,is,icode)
 enddo
 endif
 
@@ -271,7 +277,7 @@ call from1Dto3Dc(q0(1,nb),qarray,nx2,ny2,nz2)    !from coarse vector to coarse a
 call interpol3Dc(qarray,qarrayfine)               !from coarse array to fine array
 call from3Dto1Dc(qactfine,qarrayfine,2*nx2,2*ny2,2*nz2)
 !from coarse array to coarse !vector
-call mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,2,mpi_comm_World,ic)
+call mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,2,mpi_comm_World,icode)
 enddo
 endif
 

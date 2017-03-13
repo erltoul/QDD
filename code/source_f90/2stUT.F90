@@ -25,7 +25,7 @@ USE params
 USE kinetic
 USE localize_rad
 USE orthmat
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTERFACE spmomsmatrix
@@ -77,7 +77,7 @@ USE params
 USE kinetic
 USE twostr, ONLY:step,precis,symutbegin,precisfact,itut,vecsr,tconv,ener_2st,toptsicstep,steplim,dampopt
 USE orthmat
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP),ALLOCATABLE :: qnewut(:,:)
 COMPLEX(DP),ALLOCATABLE :: psiut(:,:)
@@ -114,8 +114,12 @@ SUBROUTINE init_fsicr()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: i, j, is, na
+#if(cmplxsic)
+INTEGER :: ifcmplxin, ni, nim, nip
+#endif
 COMPLEX(DP) :: ccr,csi
 
 !INCLUDE "twost.inc"
@@ -244,7 +248,7 @@ SUBROUTINE end_fsicr()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !   frees workspace for static SIC
 
@@ -268,7 +272,7 @@ SUBROUTINE init_fsic()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
@@ -314,7 +318,7 @@ SUBROUTINE end_fsic()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
 
@@ -346,7 +350,7 @@ SUBROUTINE calc_fullsic(q0,qsic)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #ifdef REALSWITCH
 #if(cmplxsic)
@@ -361,6 +365,8 @@ COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: qsic(kdfull2,kstate)
 #endif
 
+INTEGER :: ind, idx, ishift,  nb
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
 !       workspaces
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
@@ -450,8 +456,9 @@ SUBROUTINE init_vecs()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE 
 
+INTEGER :: i, ii, j, jj
 !----------------------------------------------------------------
 
 WRITE(6,*) 'vecsr initvecs'!MV
@@ -492,7 +499,7 @@ SUBROUTINE static_sicfield(rho,aloc,psir,iter1)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP) :: rho(2*kdfull2)
 REAL(DP) :: aloc(2*kdfull2)
 REAL(DP) :: psir(kdfull2,kstate)
@@ -533,10 +540,14 @@ SUBROUTINE infor_sic(psir)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
+
+INTEGER :: is, na, nb
 #if(cmplxsic)
 COMPLEX(DP) :: acc
+#else
+REAL(DP) :: acc
 #endif
 
 !----------------------------------------------------------------
@@ -584,13 +595,14 @@ SUBROUTINE diag_lagr(psir)
 USE params
 USE kinetic
 USE localize_rad, ONLY:superpose_state
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP) :: psir(kdfull2,kstate)
+REAL(DP),INTENT(IN OUT) :: psir(kdfull2,kstate)
 
 !     vect1,2 must be declared in each spin subspace for correct
 !     diagonalization of SIC with multipliers
 
+INTEGER :: i, j, is, na, nb, nbeff
 REAL(DP) :: a(nstate*(nstate+1)/2),root(kdim,2),  &
             vect1(nstate-nspdw,nstate-nspdw),vect2(nspdw,nspdw)
 
@@ -667,9 +679,11 @@ SUBROUTINE subtr_sicpot(q1,nbe)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP), INTENT(IN OUT) :: q1(kdfull2)
+INTEGER, INTENT(IN) :: nbe
 
+INTEGER :: is, na, nb, nae
 !----------------------------------------------------------------
 
 IF(ifsicp /= 8) RETURN
@@ -707,10 +721,13 @@ USE params
 USE kinetic
 USE util, ONLY:wfovlp
 USE localize_rad, ONLY:superpose_state
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
 COMPLEX(DP), INTENT(IN OUT) :: q0ut(kdfull2,kstate)
+INTEGER,INTENT(IN) :: iter1
+
+INTEGER :: is, nb, nbeff
 
 !------------------------------------------------------------------
 
@@ -754,8 +771,9 @@ USE params
 USE kinetic
 USE localize_rad, ONLY: superpose_state
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: is, nb, nbeff
 !     basic arrays and workspace
 
 #ifdef REALSWITCH
@@ -810,18 +828,26 @@ END SUBROUTINE calc_utwf
 #ifdef COMPLEXSWITCH
 SUBROUTINE utgradstepc(is,iprint,q0,iter1)
 
-!c     Nonlinear gradient iteration to optimally localized states:
-!c      'vecs'    system of eigen-vectors to be determined
-!c      'is'      isospin
-!c      'iprint'  print level: <0 --> no print at all
-!c                             0  --> only final result
-!c                             >0 --> print modulus
+!     Nonlinear gradient iteration to optimally localized states:
+!      'vecs'    system of eigen-vectors to be determined
+!      'is'      isospin
+!      'iprint'  print level: <0 --> no print at all
+!                             0  --> only final result
+!                             >0 --> print modulus
 
 USE params
 USE kinetic
 USE twostr, ONLY: dalphabeta
-IMPLICIT REAL(DP) (A-H,O-Z)
-COMPLEX(DP) :: q0(kdfull2,kstate)
+IMPLICIT NONE
+
+
+INTEGER,INTENT(IN) :: is
+INTEGER,INTENT(IN) :: iprint
+COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
+INTEGER,INTENT(IN) :: iter1
+
+INTEGER :: iter
+REAL(DP) :: e1der, e2der, e1old, enold_2st, ERR_c,  stepnew, steplow
 COMPLEX(DP) :: xlambda(kdim,kdim)
 COMPLEX(DP) :: acc
 COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)           !MV! workspace
@@ -834,7 +860,7 @@ REAL(DP) :: norm                         ! variance of step, erreur du produit
 REAL(DP) :: actstep
 REAL(DP) :: enstore(3),stepstore(3)      ! storage for optimized step
 
-INTEGER,INTENT(IN) :: is,iprint,iter1
+
 !-------------------------------------------------------
 
 itmax2=symutbegin 
@@ -953,7 +979,7 @@ SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 #if(cmplxsic)
@@ -965,10 +991,10 @@ REAL(DP) :: dabsto(kdim,kdim)
 #endif
 INTEGER,INTENT(IN) :: is,iprint,iter1
 
-INTEGER :: itmax2,ni
+INTEGER :: i, iter, itmax2, jj,  ni
 LOGICAL,PARAMETER :: ttest=.false.
 
-REAL(DP) :: norm,ERR_r,enorm
+REAL(DP) :: e1der, e1old, e2der, ERR_r, enorm, norm
 
 !REAL(DP) :: variance,variance2  ! variance of step  ??
 !REAL(DP) :: radmax              ! max. squared radius
@@ -1154,10 +1180,9 @@ END SUBROUTINE utgradstepr
 #if(!cmplxsic)
 SUBROUTINE test_symmcond(is,vecact,q0)
 
-!#INCLUDE "all.inc"
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP),INTENT(IN) :: vecact(kdim, kdim)
@@ -1215,16 +1240,16 @@ USE params
 USE kinetic
 USE util, ONLY:wfovlp
 USE localize_rad, ONLY:superpose_state
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER, INTENT(IN) :: is
 COMPLEX(DP),INTENT(OUT) :: dab(kdim, kdim) !  DAB
 COMPLEX(DP),INTENT(IN) :: vec(kstate,kstate,2)
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 
 LOGICAL,PARAMETER :: ttest=.false.
 
-
+INTEGER :: ind, ishift, na, naa, nb, nbeff
 REAL(DP) :: save1,save2,acc2
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
@@ -1303,17 +1328,15 @@ USE params
 USE kinetic
 USE util, ONLY:wfovlp
 USE localize_rad, ONLY:superpose_state
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER,INTENT(IN) :: is
 REAL(DP),INTENT(OUT) :: dab(kdim, kdim)
 REAL(DP),INTENT(IN) :: vec(kstate,kstate,2)
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
 
-INTEGER,INTENT(IN) :: is
-
 LOGICAL,PARAMETER :: ttest=.false.
-
+INTEGER :: ind, ishift, na, naa, nb, nbeff
 REAL(DP) :: save1,save2,acc2
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
@@ -1404,16 +1427,15 @@ USE params
 USE kinetic
 USE util, ONLY:wfovlp
 USE localize_rad, ONLY:superpose_state
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER, INTENT(IN) :: is
 COMPLEX(DP),INTENT(OUT) :: dab(kdim, kdim) !  DAB
 COMPLEX(DP),INTENT(IN) :: vec(kstate,kstate,2)
 COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
 
 LOGICAL,PARAMETER :: ttest=.false.
-
-
+INTEGER :: ind, ishift, na, naa, nb, nbeff
 REAL(DP) :: save1,save2,acc2
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
@@ -1498,18 +1520,22 @@ END SUBROUTINE dalphabeta_c
 SUBROUTINE spmomsmatrix_r(wfr,PRINT)
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
+REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
+
 INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
 
-REAL(DP) :: var
+
 LOGICAL :: tfirst
+INTEGER :: ind, is, ix, iy, iz, ma, mb, na, nac, nb, noff 
+REAL(DP) :: var, x1, y1, z1, x2, y2, z2
+
 DATA tfirst/.true./
 
 REAL(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
-REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 REAL(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
 REAL(DP),ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
 REAL(DP),ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
@@ -1684,16 +1710,18 @@ SUBROUTINE spmomsmatrix_c(wfr,PRINT)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
 INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
 
-REAL(DP) :: var
 LOGICAL :: tfirst
+INTEGER :: ind, is, ix, iy, iz, ma, mb, na, nac, nb, noff 
+REAL(DP) :: var, x1, y1, z1, x2, y2, z2
+
 DATA tfirst/.true./
-!INCLUDE 'radmatrix.inc'
+
 COMPLEX(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 COMPLEX(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2

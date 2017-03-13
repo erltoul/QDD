@@ -23,7 +23,8 @@ SUBROUTINE init_simann()
 
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 INTEGER :: ifall
 
     ionsin    = 3
@@ -98,13 +99,15 @@ SUBROUTINE simann(psir,rho,aloc)
 
 USE params
 USE util, ONLY:fmtv_fld, view3d
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
-
+INTEGER :: ion, jrun
+REAL(DP) :: cptem0, delbin, delps0, ebold, hph2
+REAL(DP),EXTERNAL :: energ_ions
 !     save starting values of sim. annealing for further use:
 
 delps0 = delpos
@@ -216,7 +219,7 @@ SUBROUTINE minpos(rho,psimc)
 !     *************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(kdfull2)
 REAL(DP), INTENT(IN)                         :: psimc(kdfull2,kstate)
@@ -224,6 +227,12 @@ REAL(DP), INTENT(IN)                         :: psimc(kdfull2,kstate)
 REAL(DP),ALLOCATABLE ::  q1(:)
 REAL(DP),ALLOCATABLE :: rhoion(:)
 
+INTEGER :: i, ii, ion, ionvar, iknowl, j, loop2, loop3
+INTEGER :: nb, nbut, nmin, nup, ndown
+REAL(DP) :: delps3, dii, dist, diffen, difii, diftot, deltax, deltay, deltaz, delta2
+REAL(DP) :: eold, eionic, facmo, oh, radone, sumnl, teml3 
+REAL(DP) :: gxr, gyr, gzr, gxl, gyl, gzl
+REAL(DP) :: xred2, yred2, zred2, xled2, yled2, zled2, xion, yion, zion, xvar, yvar, zvar
 REAL(DP) :: rand0, rand3(3)
 
 LOGICAL :: ans
@@ -461,7 +470,7 @@ SUBROUTINE move(ionvar,xvar,yvar,zvar,diffen,dii)
 !     *************************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Computes energy-difference 'diffen' resulting from
 !     moving 'ion' to (xvar,yvar,zvar).
@@ -471,6 +480,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 !     calculate new ion-ion-energy of ion no. 'ionvar' with
 !     all the other ions
+
+INTEGER :: ion, ionvar
+REAL(DP) :: dieloc, dienl, diffen, dii, dist, eiivar, eionold, etold, etvar, xvar, yvar, zvar
 
 eiivar = 0D0
 DO ion = 1,nion
@@ -508,7 +520,7 @@ END SUBROUTINE move
 
 REAL(DP) FUNCTION ran0(idum)
 USE params, ONLY: DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     *******************
 
@@ -544,7 +556,7 @@ SUBROUTINE metrop(diffen,t,iknowi,ans)
 !     **************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
@@ -552,7 +564,8 @@ REAL(DP), INTENT(IN)                         :: diffen
 REAL(DP), INTENT(IN)                         :: t
 INTEGER, INTENT(IN)                      :: iknowi
 LOGICAL, INTENT(OUT)                     :: ans
-REAL(DP) :: rand0
+
+REAL(DP) :: bolfac, expon, rand0
 
 
 IF (t > 0D0) THEN
@@ -601,8 +614,11 @@ SUBROUTINE cenmass()
 !     ********************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: icoo, ion
+
+REAL(DP) :: gamu
 REAL(DP) :: cenmas(3)
 REAL(DP) :: pos(ng,3)
 

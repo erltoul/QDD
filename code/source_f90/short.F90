@@ -31,7 +31,7 @@
 SUBROUTINE getshortforce(itypi,itypj,ii,jj,rho,iflag2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     distributing short force routine
 !     ind1 and ind2 are of the short type!
 
@@ -43,12 +43,17 @@ INTEGER, INTENT(IN)                      :: jj
 REAL(DP), INTENT(IN)                         :: rho(kdfull2*2)
 INTEGER, INTENT(IN)                      :: iflag2
 
-INTEGER                :: ityp1,ityp2
-INTEGER                :: ind1,ind2
+INTEGER :: ityp1,ityp2
+INTEGER :: ind,ind1,ind2
+INTEGER :: itmp, itmp1, itmp2
+INTEGER :: ix, iy, iz
+INTEGER :: nsgsize
+REAL(DP) :: chpddr, dist, dist2
+REAL(DP) :: radfor, rder, signum, sumx, sumy, sumz
+REAL(DP) :: r2, rr, xr, yr, zr, x1, y1, z1
 
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
-
+INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint, iconvshorttolong
+REAL(DP), EXTERNAL :: fbornmayer, fbornmayermod, getdistance2, vararlj, varnashort, varelcore, v_ar_ar
 ityp1 = itypi  !Because the result of a function or a scalar expression cannot be intent(out)/intent(in out) arguments. 
 ityp2 = itypj
 ind1=ii   ! Because ii and jj can be do-variables, that should not be modified inside a DO-loop.
@@ -464,7 +469,7 @@ END SUBROUTINE getshortforce
 SUBROUTINE check_isrtyp
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     Checks consistency of the short range interaction type matrix
 !     isrtyp(i,j)
 
@@ -485,6 +490,8 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !     The matrix must be symmetric, of course.
 
 #if(raregas)
+INTEGER :: i,j
+
 IF (isrtypall /= 0) THEN
   WRITE(6,*) 'Setting short range parameters...'
   DO i=1,5
@@ -526,7 +533,14 @@ END SUBROUTINE check_isrtyp
 SUBROUTINE getrelvec(ind1,ind2,r)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+! Calculates the direction vector between part ind1 and ind2, divided by length r. 
+! output direction stored in rVecTmp
+INTEGER, INTENT(IN) :: ind1
+INTEGER, INTENT(IN) :: ind2
+REAL(DP), INTENT(IN) :: r
+
+REAL(DP) :: x1, y1, z1
 
 CALL getparas(ind1)
 x1 = rvectmp(1)
@@ -535,16 +549,9 @@ z1 = rvectmp(3)
 
 CALL getparas(ind2)
 
-IF (r > 0) THEN
-  rvectmp(1) = (x1 - rvectmp(1))/r
-  rvectmp(2) = (y1 - rvectmp(2))/r
-  rvectmp(3) = (z1 - rvectmp(3))/r
-ELSE
-  r = MAX(SQRT(getdistance2(ind1,ind2)),small)
-  rvectmp(1) = (x1 - rvectmp(1))/r
-  rvectmp(2) = (y1 - rvectmp(2))/r
-  rvectmp(3) = (z1 - rvectmp(3))/r
-END IF
+rvectmp(1) = (x1 - rvectmp(1))/r
+rvectmp(2) = (y1 - rvectmp(2))/r
+rvectmp(3) = (z1 - rvectmp(3))/r
 
 RETURN
 END SUBROUTINE getrelvec
@@ -553,15 +560,17 @@ END SUBROUTINE getrelvec
 !-----VArArShort------------------------------------------------
 !     only short range part of Ar-Ar interaction
 
-FUNCTION vararshort(r)
+REAL(DP) FUNCTION vararshort(r)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Ar-Ar potential
 
+REAL(DP), INTENT(IN) :: r
 
-REAL(DP), INTENT(IN OUT)                     :: r
+REAL(DP) :: core, rabs
+REAL(DP) :: alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar
 DATA  alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar  &
     /  1.7301D0, 1.7966D0,55.465D0,3672.9D0,794.21D0/
 
@@ -579,15 +588,17 @@ END FUNCTION vararshort
 !-----VArArLJ------------------------------------------------
 !     only short range part of Ar-Ar interaction
 
-FUNCTION vararlj(r)
+REAL(DP) FUNCTION vararlj(r)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Ar-Ar potential
 
 
 REAL(DP), INTENT(IN)                     :: r
+REAL(DP) :: rabs
+REAL(DP) :: epslj, sigmalj
 DATA  epslj,sigmalj /  0.0007647D0,6.42503D0/
 
 
@@ -602,11 +613,15 @@ END FUNCTION vararlj
 
 !------------------------------------------------------------
 
-FUNCTION vbornmayer(r,a,s,c)
+REAL(DP) FUNCTION vbornmayer(r,a,s,c)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: s
+REAL(DP), INTENT(IN) :: c
 
 vbornmayer = a*EXP(-r/s) - c/r**6
 
@@ -617,10 +632,18 @@ END FUNCTION vbornmayer
 
 !------------------------------------------------------------
 
-FUNCTION fbornmayer(r,a,s,c)
+REAL(DP) FUNCTION fbornmayer(r,a,s,c)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: s
+REAL(DP), INTENT(IN) :: c
+
+REAL(DP):: rder
+
 
 rder=1D-5
 
@@ -637,12 +660,16 @@ END FUNCTION fbornmayer
 
 !------------------------------------------------------------
 
-FUNCTION fbornmayer46(r,a,s,c4,c6)
+REAL(DP) FUNCTION fbornmayer46(r,a,s,c4,c6)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: s
+REAL(DP), INTENT(IN) :: c4
+REAL(DP), INTENT(IN) :: c6
 
 fbornmayer46 = -a/s*EXP(-r/s) +4*c4/r**5 + 6*c6/r**7
 
@@ -654,19 +681,38 @@ END FUNCTION fbornmayer46
 
 !------------------------------------------------------------
 
-FUNCTION fbornmayer2345678d(r,a,e,f,s,s2,c2,c3,c4,c5,c6,c7,c8, c9,c10,cd,d)
+REAL(DP) FUNCTION fbornmayer2345678d(r,a,e,f,s,s2,c2,c3,c4,c5,c6,c7,c8, c9,c10,cd,d)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: e
+REAL(DP), INTENT(IN) :: f
+REAL(DP), INTENT(IN) :: s
+REAL(DP), INTENT(IN) :: s2
+REAL(DP), INTENT(IN) :: c2
+REAL(DP), INTENT(IN) :: c3
+REAL(DP), INTENT(IN) :: c4
+REAL(DP), INTENT(IN) :: c5
+REAL(DP), INTENT(IN) :: c6
+REAL(DP), INTENT(IN) :: c7
+REAL(DP), INTENT(IN) :: c8
+REAL(DP), INTENT(IN) :: c9
+REAL(DP), INTENT(IN) :: c10
+REAL(DP), INTENT(IN) :: cd
+REAL(DP), INTENT(IN) :: d
+
+REAL(DP) :: acc, rder, rrp, rrm, sum2
 rder=1D-5
 
 acc=0D0
 
 sum2= -a/s*EXP((r-f)/s)/(e+EXP((r-f)/s))**2
 
-rrp=rr+rder
-rrm=rr-rder
+rrp=r+rder
+rrm=r-rder
 
 IF (c2 /= 0D0) acc=acc+c2*((erf(rrp/s2)/rrp)**2 -(erf(rrm/s2)/rrm)**2)
 IF (c3 /= 0D0) acc=acc+c3*((erf(rrp/s2)/rrp)**3 -(erf(rrm/s2)/rrm)**3)
@@ -680,7 +726,7 @@ IF (c10 /= 0D0) acc=acc+c10*((erf(rrp/s2)/rrp)**10 -(erf(rrm/s2)/rrm)**10)
 IF (cd /= 0D0) acc=acc+cd*((erf(rrp/s2)/rrp)**d -(erf(rrm/s2)/rrm)**d)
 
 
-acc = acc/2./rder
+acc = acc/2D0/rder
 
 !$$$      if (C2.ne.0.0) acc=acc+2*C2/r**3
 !$$$      if (C3.ne.0.0) acc=acc+3*C3/r**4
@@ -702,11 +748,21 @@ END FUNCTION fbornmayer2345678d
 
 !------------------------------------------------------------
 
-FUNCTION fbornmayermod(r,a,e,f,s,s2,cd,d)
+REAL(DP)  FUNCTION fbornmayermod(r,a,e,f,s,s2,cd,d)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: e
+REAL(DP), INTENT(IN) :: f
+REAL(DP), INTENT(IN) :: s
+REAL(DP), INTENT(IN) :: s2
+REAL(DP), INTENT(IN) :: cd
+REAL(DP), INTENT(IN) :: d
+
+REAL(DP) :: acc, rder, rrm, rrp, sum2
 rder=1D-5
 
 
@@ -726,17 +782,16 @@ acc = acc/2D0/rder
 
 fbornmayermod = acc+sum2
 
-
 RETURN
 END FUNCTION fbornmayermod
 !------------------------------------------------------------
 
 !------------------------------------------------------------
 
-FUNCTION varnashort(r)
+REAL(DP) FUNCTION varnashort(r)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Ar-Na potential
 
@@ -759,6 +814,9 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: r
+
+REAL(DP) :: a1, a2, a3, b1, b2
+
 DATA a1/334.85D0/
 DATA a2/52.5D0/
 DATA a3/1383.0D0/
@@ -778,8 +836,18 @@ END FUNCTION varnashort
 SUBROUTINE getshortenergy(ityp1,ityp2,ind1,ind2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER, INTENT(INOUT) :: ityp1
+INTEGER, INTENT(INOUT) :: ityp2
+INTEGER, INTENT(INOUT) :: ind1
+INTEGER, INTENT(INOUT) :: ind2
+
+INTEGER :: itmp, itmp1, itmp2
+REAL(DP) :: dist, dist2, rr, signum, sumion
+
+INTEGER, EXTERNAL :: iconvshorttolong
+REAL(DP), EXTERNAL :: getdistance2, vbornmayer, vararshort, varnashort, vararlj
 ! sort by particle type
 IF (ityp1 > ityp2) THEN
   itmp = ityp1
@@ -791,7 +859,6 @@ IF (ityp1 > ityp2) THEN
   signum = -1D0
 !            stop 'warning: signum is -1'
 END IF
-
 
 sumion=0D0
 
@@ -948,7 +1015,7 @@ END SUBROUTINE getshortenergy
 SUBROUTINE addshortrepulsivepot(field,iswitch)
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     gives each GSM particle its short range repulsive (Pauli)
 !     potential, i.e. short range interaction GSM-el
 !     right now only the argon case is implemented
@@ -957,8 +1024,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
 
+INTEGER :: is
+REAL(DP) :: delinv
 
-EXTERNAL varelcore,vfermi,funkfermi
+REAL(DP), EXTERNAL :: varelcore,vfermi,funkfermi
 
 delinv = 1733D0/dx
 
@@ -1088,7 +1157,7 @@ END SUBROUTINE addshortrepulsivepot
 SUBROUTINE addshortrepulsivepotonsubgrid(field,iswitch)
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     gives each GSM particle its short range repulsive (Pauli)
 !     potential, i.e. short range interaction GSM-el
 !     right now only the argon case is implemented
@@ -1100,8 +1169,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
 
+INTEGER :: is
+REAL(DP) :: delinv
 
-EXTERNAL varelcore,vfermi,funkfermi,funkpower
+REAL(DP), EXTERNAL :: varelcore,vfermi,funkfermi,funkpower
 
 
 
@@ -1257,9 +1328,10 @@ END SUBROUTINE addshortrepulsivepotonsubgrid
 SUBROUTINE setbornparas(ityp1,ityp2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-!      write(6,*) ityp1,ityp2
+INTEGER, INTENT(IN) :: ityp1
+INTEGER, INTENT(IN) :: ityp2
 
 IF (ityp1 == 1) THEN ! 1:c
   IF (ityp2 == 1) THEN   ! 2:c
@@ -1298,10 +1370,13 @@ END SUBROUTINE setbornparas
 
 !------------------------------------------------------------
 
-FUNCTION funkpower(r,p)
+REAl(DP) FUNCTION funkpower(r,p)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) ::r
+REAL(DP), INTENT(IN) ::p
 
 funkpower=erf(r/2D0)/(r**p)
 
@@ -1312,10 +1387,15 @@ END FUNCTION funkpower
 
 !------------------------------------------------------------
 
-FUNCTION funkfermi(r,a,b,c)
+REAl(DP) FUNCTION funkfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: b
+REAL(DP), INTENT(IN) :: c
 
 funkfermi=a/(1D0+EXP(b*(r-c)))
 
@@ -1326,10 +1406,15 @@ END FUNCTION funkfermi
 
 !------------------------------------------------------------
 
-FUNCTION funkderfermi(r,a,b,c)
+REAL(DP) FUNCTION funkderfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN) :: r
+REAL(DP), INTENT(IN) :: a
+REAL(DP), INTENT(IN) :: b
+REAL(DP), INTENT(IN) :: c
 
 funkderfermi=-a*b*EXP(b*(r-c))/(1D0+EXP(b*(r-c)))**2D0
 

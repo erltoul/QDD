@@ -3401,7 +3401,7 @@ IMPLICIT NONE
 #if(paraworld||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-INTEGER :: nrank, nxfine, nyfine, nzfine, nx2fine, ny2fine, nxyfine
+INTEGER :: nrank
 #endif
 #if(paraworld)
 INTEGER::coeff,level

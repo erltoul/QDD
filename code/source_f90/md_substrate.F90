@@ -24,6 +24,7 @@
 REAL(DP) FUNCTION sigsig(s1,s2)
 !------------------------------------------------------------
 USE params, ONLY: DP
+IMPLICIT NONE
 REAL(DP), INTENT(IN) :: s1,s2
 
 
@@ -41,11 +42,16 @@ SUBROUTINE initsurface
 !------------------------------------------------------------
 USE params
 USE util, ONLY:printfield,printfield2
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: i, icheckflag, ico1, ico2, ii, ind, ion, ix, iy, iz
+INTEGER :: icountc, icounte, icountk, iefixed, icfixed, ikfixed
+INTEGER :: jj, jx, jy, jz, ntrans1, ntrans2
+REAl(DP) :: ala, be, dum, cf, cqq, rc, rr, rarmass, sigsig, z0, z1, zmin
+REAL(DP) :: xcm, ycm, zcm
 REAL(DP) :: hfield(kdfull2),hfield2(kdfull2)
 
+INTEGER, EXTERNAL :: isoutofbox
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -53,6 +59,7 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 #else
 myn=0
 #endif
+
 
 NE=nc
 
@@ -915,9 +922,6 @@ IF (ifredmas == 1) THEN
   mion=mion/23*0.5D0
   mkat=mkat/23*0.5D0
   me=me/23*0.5D0
-  spcx=0D0
-  spcy=0D0
-  spcz=0D0
 END IF
 
 
@@ -961,12 +965,12 @@ END SUBROUTINE initsurface
 SUBROUTINE iperiogsm
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     the electrostatic properties for the GSM particles
 !     allow for different types of anions (and cations) at the same
 !     time, but so far it makes no sense, because in that case
 !     we would need more parameters for the short range interaction
-
+INTEGER :: ii
 
 DO ii=1,nc
   IF (itypc(ii) == 1) THEN ! MgO case
@@ -1011,9 +1015,6 @@ IF (ifredmas == 1) THEN
   mion=mion/23*0.5D0
   mkat=mkat/23*0.5D0
   me=me/23*0.5D0
-  spcx=0D0
-  spcy=0D0
-  spcz=0D0
 END IF
 
 
@@ -1025,14 +1026,16 @@ END SUBROUTINE iperiogsm
 
 !------------------------------------------------------------
 
-FUNCTION getdistance2(ii,jj)
+REAL(DP) FUNCTION getdistance2(ii,jj)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     returns distances**2 of particles with indices ii and jj
 !     where ii,jj is from 1 to nc+ne+nk
-
+INTEGER,INTENT(IN) :: ii
+INTEGER,INTENT(IN) :: jj
+INTEGER:: dis2
 
 IF (ii <= nc) THEN ! ii is core
   IF (jj <= nc) THEN ! jj is core
@@ -1066,17 +1069,18 @@ END FUNCTION getdistance2
 
 !------------------------------------------------------------
 
-FUNCTION getmixedwidth(ii,jj)
+REAL(DP) FUNCTION getmixedwidth(ii,jj)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 !     returns mixed Gaussian widths between particles with indices ii and jj
 !     where ii,jj are "long" indices from 1 to nc+ne+nk
 !          some of the sigsig functions can be replaced by simple
 !          multiplication with SQ2 !!!
 !          actually all sigsigs can be avoided by replacing by
 !          stored variables
+INTEGER :: ii, jj
+REAL(DP) :: sigsig, sss
 
 IF (ii <= nc) THEN ! ii is core
   IF (jj <= nc) THEN ! jj is core
@@ -1120,9 +1124,9 @@ END FUNCTION getmixedwidth
 SUBROUTINE getparas(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 ! stores position of substrate particule number "ind" in common vector rvectmp(1:3)
-
+INTEGER,INTENT(IN) :: ind
 
 IF (ind <= nc) THEN
   chgtmp = chgc(ind)
@@ -1155,11 +1159,11 @@ END SUBROUTINE getparas
 
 !------------------------------------------------------------
 
-FUNCTION getcharge(ii)
+REAL(DP) FUNCTION getcharge(ii)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
+INTEGER ::ii
 IF (ii <= nc) THEN
   getcharge = chgc(ii)
 ELSE IF (ii <= nc+NE) THEN
@@ -1177,10 +1181,11 @@ END FUNCTION getcharge
 SUBROUTINE addforce(i,forcx,forcy,forcz)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     adds force forcx,forcy,forcz to correct array depending
 !     on "long" index i
-
+INTEGER :: i
+REAL(DP) :: forcx, forcy, forcz
 IF (i <= nc) THEN
   fxc(i) = fxc(i)+forcx
   fyc(i) = fyc(i)+forcy
@@ -1205,7 +1210,10 @@ END SUBROUTINE addforce
 INTEGER FUNCTION iconvlongtoshort(ind1)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER,INTENT(IN) :: ind1
+
+INTEGER :: ireturn
 
 IF (ind1 <= nc) THEN
   ireturn = ind1
@@ -1226,9 +1234,13 @@ END FUNCTION iconvlongtoshort
 INTEGER FUNCTION iconvshorttolong(ityp1,ind1)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     converts "short" index ind1 of given particle type ityp1
 !     to "long" index
+INTEGER, INTENT(IN) ::  ityp1
+INTEGER, INTENT(IN) ::  ind1
+
+INTEGER :: ireturn
 
 IF (ityp1 == 1) THEN
   ireturn = ind1
@@ -1246,23 +1258,18 @@ RETURN
 END FUNCTION iconvshorttolong
 !------------------------------------------------------------
 
-!#if(raregas)
 ! ------------------------------------------------------------
 
 SUBROUTINE propagate
 ! ------------------------------------------------------------
-!  propagation using velocity Verlet step
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
+IMPLICIT NONE
+!  propagation using velocity Verlet step
+INTEGER :: i, npar
+REAL(DP) :: eth, ek, resc
 !   at first propagate locations with old force
-
-
 !        do ii = 1,nmovc
-
 !         i = ixyzcm(ii)
-
 !     rescale impulses if cooling to given temperature
 IF (icool == 1 .AND. itindex <= icoolsteps .AND.  &
       MOD(itindex,icoolevry) == 0) THEN
@@ -1433,23 +1440,22 @@ END SUBROUTINE propagate
 SUBROUTINE printpos
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i
+REAL(DP) :: t
 
 t = dte * itindex
 
 DO i=1,nc
-  
   WRITE (121,'(1f10.3,6e17.5)') t,xe(i),ye(i),ze(i),pxe(i), pye(i),pze(i)
   WRITE (124,'(1f10.3,3e17.5)') t,fxcold(i),fycold(i),fzcold(i)
   WRITE (122,'(1f10.3,6e17.5)') t,xc(i),yc(i),zc(i),pxc(i), pyc(i),pzc(i)
-  
 END DO
 
 DO i =1,nk
-  
   WRITE (125,'(1f10.3,6e17.5)') t,xk(i),yk(i),zk(i),pxk(i), pyk(i),pzk(i)
 END DO
-
 
 END SUBROUTINE printpos
 !------------------------------------------------------------
@@ -1459,10 +1465,11 @@ END SUBROUTINE printpos
 SUBROUTINE printdipoles(ishift)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 !     print shell displacements
-
+INTEGER, INTENT(IN) :: ishift
+INTEGER :: i
+REAL(DP) :: r, t, xi, yi, zi
 t = dte * itindex
 
 DO i=1,NE
@@ -1486,7 +1493,9 @@ END SUBROUTINE printdipoles
 SUBROUTINE cool
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i
 
 
 DO i=1,nc
@@ -1526,9 +1535,10 @@ END SUBROUTINE cool
 SUBROUTINE calctemp
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 !     calculates thermal energies
+INTEGER :: i
+REAL(DP) :: sumc, sume, sumk, t, tempc, tempe, tempk, temper
 
 sumc = 0D0
 sume = 0D0
@@ -1577,11 +1587,11 @@ END SUBROUTINE calctemp
 SUBROUTINE calcenergyg
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-!#if(parallel)
-!      include 'mpif.h'
-!#endif
+INTEGER :: i, j, n
+REAL(DP) :: r, t, ek, epotel, epotion, esh
+
 ekinion = 0D0
 epotion = 0D0
 ekinel = 0D0
@@ -1802,12 +1812,10 @@ END SUBROUTINE calcenergyg
 SUBROUTINE initimpulses(INDEX)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: INDEX
-
+INTEGER :: i
 
 IF (INDEX == 0) THEN
   
@@ -1838,6 +1846,7 @@ IF (INDEX == 0) THEN
   
 ELSE IF (INDEX > 0) THEN
   
+  ! nothing ??  F.L.
   
 ELSE
   STOP 'Could not set initial impulses'
@@ -1848,74 +1857,77 @@ END IF
 END SUBROUTINE initimpulses
 !------------------------------------------------------------
 
-!------------------------------------------------------------
+!~ !------------------------------------------------------------
 
-SUBROUTINE disturblattice
-!------------------------------------------------------------
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+!~ SUBROUTINE disturblattice  
+!~ !------------------------------------------------------------
+!~ USE params
+!~ IMPLICIT NONE
 
 
-LOGICAL :: tterm
-DATA tterm/.true./
+!~ LOGICAL :: tterm
+!~ INTEGER :: i
+!~ DATA tterm/.true./
 
-IF(tterm) RETURN
+!~ IF(tterm) RETURN
 
-DO i=1,nc
-!         dist = (drand(0)-0.5D0)*maxDist
-  xc(i) = xc(i) + dist
-  xcold(i) = xcold(i) + dist
+!~ DO i=1,nc
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   xc(i) = xc(i) + dist
+!~   xcold(i) = xcold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  yc(i) = yc(i) + dist
-  ycold(i) = ycold(i) + dist
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   yc(i) = yc(i) + dist
+!~   ycold(i) = ycold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  zc(i) = zc(i) + dist
-  zcold(i) = zcold(i) + dist
-END DO
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   zc(i) = zc(i) + dist
+!~   zcold(i) = zcold(i) + dist
+!~ END DO
 
 
-DO i=1,NE
-!         dist = (drand(0)-0.5D0)*maxDist
-  xe(i) = xe(i) + dist
-  xeold(i) = xeold(i) + dist
+!~ DO i=1,NE
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   xe(i) = xe(i) + dist
+!~   xeold(i) = xeold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  ye(i) = ye(i) + dist
-  yeold(i) = yeold(i) + dist
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   ye(i) = ye(i) + dist
+!~   yeold(i) = yeold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  ze(i) = ze(i) + dist
-  zeold(i) = zeold(i) + dist
-END DO
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   ze(i) = ze(i) + dist
+!~   zeold(i) = zeold(i) + dist
+!~ END DO
 
 
-DO i=1,nk
-!         dist = (drand(0)-0.5D0)*maxDist
-  xk(i) = xk(i) + dist
-  xkold(i) = xkold(i) + dist
+!~ DO i=1,nk
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   xk(i) = xk(i) + dist
+!~   xkold(i) = xkold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  yk(i) = yk(i) + dist
-  ykold(i) = ykold(i) + dist
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   yk(i) = yk(i) + dist
+!~   ykold(i) = ykold(i) + dist
   
-!         dist = (drand(0)-0.5D0)*maxDist
-  zk(i) = zk(i) + dist
-  zkold(i) = zkold(i) + dist
-END DO
+!~ !         dist = (drand(0)-0.5D0)*maxDist
+!~   zk(i) = zk(i) + dist
+!~   zkold(i) = zkold(i) + dist
+!~ END DO
 
-RETURN
+!~ RETURN
 
-END SUBROUTINE disturblattice
-!------------------------------------------------------------
+!~ END SUBROUTINE disturblattice
+!~ !------------------------------------------------------------
 
 !------------------------------------------------------------
 
 SUBROUTINE printoutparameters
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i
 
 WRITE(6,*) '*************************************************'
 
@@ -1990,18 +2002,17 @@ WRITE(6,*) '*'
 WRITE(6,*) '*'
 
 
-
 END SUBROUTINE printoutparameters
 !------------------------------------------------------------
-
 
 !------------------------------------------------------------
 
 REAL(DP) FUNCTION rgetmaxpol()
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
+INTEGER :: i
+REAL(DP) :: rr
 rgetmaxpol = -1D0
 
 DO i=1,nc
@@ -2020,7 +2031,12 @@ END FUNCTION rgetmaxpol
 SUBROUTINE rgetmaxforce(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER, INTENT(IN) :: iflag
+
+INTEGER :: i
+REAL(DP) :: rgetmaxx, rgetmaxy, rgetmaxz
 
 rgetmaxx = -1D60
 rgetmaxy = -1D60
@@ -2050,7 +2066,10 @@ END SUBROUTINE rgetmaxforce
 REAL(DP) FUNCTION rgetmeanzpol()
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i, ic
+REAL(DP) :: rr
 
 rr=0D0
 ic = 0
@@ -2063,7 +2082,7 @@ DO i=1,nc
   END IF
 END DO
 
-rr = rr/ic     ! Is it not possible that ic = 0 ??
+rr = rr/ic     ! Is it possible that ic = 0 ??
 
 rgetmeanzpol=rr
 
@@ -2078,9 +2097,13 @@ END FUNCTION rgetmeanzpol
 SUBROUTINE pripolariz
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     prints information on polarization of substrate
 
+INTEGER :: i, icou, icurlay, ii, iter1
+REAL(DP) :: dmspolx, dmspoly, dmspolz 
+REAL(DP) :: polav, polmin, polmax, polstddev, polz
+REAL(DP) :: r, rr, rrr, rrre
 REAL(DP) :: polavl(maxnlayers)
 REAL(DP) :: polstddevl(maxnlayers)
 REAL(DP) :: polminl(maxnlayers)
@@ -2250,7 +2273,9 @@ SUBROUTINE init_surftemp()
 
 USE params
 USE util, ONLY: givetemperature
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i
 
 CALL givetemperature(pxc,pyc,pzc, nc,surftemp,mion*1836D0*ame,1)
 DO i=1,NE
@@ -2269,13 +2294,15 @@ SUBROUTINE printsurfpot(iunit)
 !------------------------------------------------------------
 USE params
 USE util, ONLY:printfield2
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 INTEGER, INTENT(IN)                  :: iunit
+
+INTEGER :: i, ii, ind, indmin, indmax, ipoints
+REAL(DP) :: acc, du, pneg, pt, ptmin, ptmax, rmaxd, u, zhigh, zlow
 REAL(DP) :: field1(kdfull2),field2(kdfull2)
 REAL(DP) :: uhisto(501)
-
+REAL(DP), EXTERNAL :: getxval, getyval, getzval
 rmaxd=15D0
 ! define interior:
 
@@ -2398,14 +2425,12 @@ END SUBROUTINE printsurfpot
 SUBROUTINE setzero(field,ilength)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-
+IMPLICIT NONE
 
 REAL, INTENT(OUT)                        :: field(kdfull2*2)
 INTEGER, INTENT(IN)                      :: ilength
 
-
+INTEGER :: ind
 
 DO ind = 1,ilength
   field(ind) = 0D0

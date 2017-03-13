@@ -487,7 +487,7 @@ END SUBROUTINE dpssb
 
 SUBROUTINE dpssb2 (ido,l1,cc,ch,wa1)
 USE params, ONLY:DP
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, PARAMETER :: kdim=512
 
@@ -496,7 +496,9 @@ INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
 REAL(DP), INTENT(IN)                         :: wa1(kdim)
+INTEGER :: i,k
 REAL(DP) :: ti2, tr2
+
 
 IF (ido > 2) THEN
   DO  k=1,l1

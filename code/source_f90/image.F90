@@ -25,7 +25,7 @@ SUBROUTINE testimage(testpot,testrho)
 !------------------------------------------------------------
 USE params
 USE util, ONLY:printfield
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
@@ -33,7 +33,7 @@ REAL(DP), INTENT(IN OUT)                     :: testpot(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: testrho(kdfull2)
 !REAL(DP) :: rho(2*kdfull2),tphi(kdfull2)
 
-EXTERNAL gauss
+! REAL(DP), EXTERNAL :: gauss
 
 
 
@@ -85,13 +85,14 @@ SUBROUTINE addimage(rh,ihalfspace)
 !     ihalfspace=0: calculates image charges for potential x<xDielec
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(OUT)                        :: rh(kdfull2)
 INTEGER, INTENT(IN)                      :: ihalfspace
 
-INTEGER :: conv3to1
+INTEGER :: ind, ii, k
+INTEGER,EXTERNAL :: conv3to1
 
 
 
@@ -150,19 +151,16 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER :: ind,  ist, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 !      dimension rho(2*kdfull2)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP),ALLOCATABLE :: potsave(:)
 REAL(DP),ALLOCATABLE :: potshort(:)
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
 
-EXTERNAL v_soft
-
-!EQUIVALENCE (pseudorho,w1)
-!EQUIVALENCE (potsave,w2)
-!EQUIVALENCE (potshort,w3)
+INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint, isoutofbox
+REAL(DP), EXTERNAL :: v_soft
 
 !------------------------------------------------------------------
 
@@ -419,15 +417,20 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i, ind, is, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 !      dimension rho(2*kdfull2)
 REAL(DP),ALLOCATABLE :: pseudorho(:)
 REAL(DP) :: potsave(kdfull2)
 REAL(DP) :: potshort(kdfull2)
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
 
-EXTERNAL v_soft
+
+INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint, isoutofbox
+REAL(DP), EXTERNAL :: v_soft
+
+
 ALLOCATE(pseudorho(kdfull2))
 !DO ind=1,kdfull2
   potion=0D0
@@ -757,7 +760,7 @@ END SUBROUTINE pseudosoft2
 SUBROUTINE addgsmpot2(field,iswitch)
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !   add electrostatic potentials from GSM particles to potion(kdfull2)
 !     iswitch = 0 --> calculate potential of fixed ions
 !               1 --> calculate potential of mobile ions
@@ -767,7 +770,10 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(OUT)                        :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
 
+INTEGER :: ind, is, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, sigc, sigk, sigv, x1, y1, z1
 
+REAL(DP), EXTERNAL :: v_soft
 !      if (nclust.eq.0) return
 
 IF(idielec == 0) THEN
@@ -809,9 +815,7 @@ IF(idielec == 0) THEN
   END DO
   
   DO is=1,NE
-    
-    
-    
+        
     IF (imobe(is) == iswitch) THEN
       
       sigv = sigmav
@@ -1155,11 +1159,11 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 
-
+INTEGER :: ii, ind
 REAL(DP), ALLOCATABLE :: rhotmp(:)
 REAL(DP), ALLOCATABLE :: chpcoulimage(:)
 !EQUIVALENCE(w1,chpcoulimage)
@@ -1256,7 +1260,7 @@ SUBROUTINE energ_dielec(rho)
 !     returns result via common.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
@@ -1275,7 +1279,7 @@ SUBROUTINE addimage(rh,ihalfspace)
 !     ihalfspace=0: calculates image charges for potential x<xDielec
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                     :: rh(kdfull2)
@@ -1290,6 +1294,7 @@ END SUBROUTINE addimage
 !-----pseudosoft_dielec-----------------------------------------
 
 SUBROUTINE pseudosoft_dielec()
+IMPLICIT NONE
 STOP ' code not compiled for dielectric layer'
 
 RETURN
@@ -1297,6 +1302,7 @@ END SUBROUTINE pseudosoft_dielec
 !------------------------------------------------------------
 
 SUBROUTINE pseudosoft2()
+IMPLICIT NONE
 STOP ' code not compiled for dielectric layer'
 
 RETURN

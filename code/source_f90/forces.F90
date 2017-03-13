@@ -55,6 +55,9 @@ INTEGER, INTENT(IN)                      :: it
 INTEGER, INTENT(IN)                      :: iflag
 
 INTEGER :: i
+#if(raregas)
+INTEGER :: ii
+#endif
 
 WRITE(6,*) 'Entering getforces: ipsptyp=',ipsptyp
 
@@ -110,8 +113,6 @@ IF (iflag == 0) THEN
 #endif
 END IF
 
-!test      write(*,*) ' before FXE'
-
 #if(raregas)
 DO ii=1,NE
   fxe(ii)=0.0D0
@@ -127,8 +128,6 @@ IF (iflag == 0) THEN
   IF (nclust > 0) CALL getforceelna(rho)
   
   CALL getforcenana(rho)
-!test         write(*,*) ' NaNa'
-
   
 END IF
 
@@ -138,20 +137,14 @@ END IF
 #if(raregas)
 IF (isurf /= 0) THEN
   
-!test      write(*,*) ' before GSM'
-  
   IF (iswforce == 0) THEN
     CALL getforcegsmgsm(iflag)
   ELSE
     CALL getforcegsmgsm1(iflag)
   END IF
-!test      write(*,*) ' before 2.GSM'
-  
   
   CALL getforcenagsm(iflag)
-!test      write(*,*) ' before 3.GSM'
   
-!test           call prifld(rho,'density getF')
   IF (nclust > 0) CALL getforceelgsm(iflag,rho)
   
   
@@ -170,14 +163,14 @@ DO i=1,nion
   WRITE(772,*) fy(i)
   WRITE(772,*) fz(i)
 ENDDO
-#if(raregas)         
-         do i=1,nk
+!#if(raregas)         
+! DO i=1,nk
 !           write(*,*) 'k: ',fxk(i),fyk(i),fzk(i)
 !        write(772,'(a),(6e17.7)') 'cv: ',fxk(i),fyk(i),fzk(i)
 !        write(6,*) 'cv: ',fxk(i),fyk(i),fzk(i)
 !        write(7,*) 'cv: ',fxk(i),fyk(i),fzk(i)
-!~          enddo
-#endif         
+!ENDDO
+!#endif         
          CALL flush(772)
          CLOSE(772)
 
@@ -198,52 +191,58 @@ END SUBROUTINE getforces
 
 
 
-!------------------------------------------------------------
+!~ !------------------------------------------------------------
 
-SUBROUTINE friction(ifl,iflc,ifle,iflk)
-!------------------------------------------------------------
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-!     simple damping force for test equilibration
+!~ SUBROUTINE friction(ifl,iflc,ifle,iflk)
+!~ !------------------------------------------------------------
+!~ USE params
+!~ IMPLICIT NONE
 
-IF (itindex <= icoolsteps .AND. icool == 2) THEN
+!~ INTEGER,INTENT(IN) :: ifl
+!~ INTEGER,INTENT(IN) :: iflc
+!~ INTEGER,INTENT(IN) :: ifle
+!~ INTEGER,INTENT(IN) :: iflk
+
+!~ !     simple damping force for test equilibration
+
+!~ IF (itindex <= icoolsteps .AND. icool == 2) THEN
   
-  IF (ifl /= 0) THEN
-    DO i=1,nion
-      fx(i)=fx(i)-0.003D0*cpx(i)
-      fy(i)=fy(i)-0.003D0*cpy(i)
-      fz(i)=fz(i)-0.003D0*cpz(i)
-    END DO
-  END IF
-#if(raregas)
-  IF (iflc /= 0) THEN
-    DO i=1,nc
-      fxc(i)=fxc(i)-0.003D0*pxc(i)
-      fyc(i)=fyc(i)-0.003D0*pyc(i)
-      fzc(i)=fzc(i)-0.003D0*pzc(i)
-    END DO
-  END IF
-  IF (ifle /= 0) THEN
-    DO i=1,NE
-      fxe(i)=fxe(i)-0.003D0*pxe(i)
-      fye(i)=fye(i)-0.003D0*pye(i)
-      fze(i)=fze(i)-0.003D0*pze(i)
-    END DO
-  END IF
-  IF (iflk /= 0) THEN
-    DO i=1,nk
-      fxk(i)=fxk(i)-0.003D0*pxk(i)
-      fyk(i)=fyk(i)-0.003D0*pyk(i)
-      fzk(i)=fzk(i)-0.003D0*pzk(i)
-    END DO
-  END IF
-#endif
+!~   IF (ifl /= 0) THEN
+!~     DO i=1,nion
+!~       fx(i)=fx(i)-0.003D0*cpx(i)
+!~       fy(i)=fy(i)-0.003D0*cpy(i)
+!~       fz(i)=fz(i)-0.003D0*cpz(i)
+!~     END DO
+!~   END IF
+!~ #if(raregas)
+!~   IF (iflc /= 0) THEN
+!~     DO i=1,nc
+!~       fxc(i)=fxc(i)-0.003D0*pxc(i)
+!~       fyc(i)=fyc(i)-0.003D0*pyc(i)
+!~       fzc(i)=fzc(i)-0.003D0*pzc(i)
+!~     END DO
+!~   END IF
+!~   IF (ifle /= 0) THEN
+!~     DO i=1,NE
+!~       fxe(i)=fxe(i)-0.003D0*pxe(i)
+!~       fye(i)=fye(i)-0.003D0*pye(i)
+!~       fze(i)=fze(i)-0.003D0*pze(i)
+!~     END DO
+!~   END IF
+!~   IF (iflk /= 0) THEN
+!~     DO i=1,nk
+!~       fxk(i)=fxk(i)-0.003D0*pxk(i)
+!~       fyk(i)=fyk(i)-0.003D0*pyk(i)
+!~       fzk(i)=fzk(i)-0.003D0*pzk(i)
+!~     END DO
+!~   END IF
+!~ #endif
   
-END IF
+!~ END IF
 
-RETURN
-END SUBROUTINE friction
-!------------------------------------------------------------
+!~ RETURN
+!~ END SUBROUTINE friction
+!~ !------------------------------------------------------------
 
 
 !------------------------------------------------------------
@@ -251,11 +250,14 @@ END SUBROUTINE friction
 SUBROUTINE getforcenana(rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
+
+INTEGER :: ii, ix, iy, iz, jj
+REAL(DP) :: dist, dist2, radfor, forcex, forcey, forcez
+REAL(DP) :: xi, yi, zi, xr, yr, zr
 
 
 !     Na(core)-Na(core) forces
@@ -278,17 +280,17 @@ DO ii=1,nion-1
     
     radfor = -e2*ch(np(ii))*ch(np(jj))/dist2
     
-    forx = radfor*xr/dist
-    fory = radfor*yr/dist
-    forz = radfor*zr/dist
+    forcex = radfor*xr/dist
+    forcey = radfor*yr/dist
+    forcez = radfor*zr/dist
     
-    fx(ii) = fx(ii) - forx
-    fy(ii) = fy(ii) - fory
-    fz(ii) = fz(ii) - forz
+    fx(ii) = fx(ii) - forcex
+    fy(ii) = fy(ii) - forcey
+    fz(ii) = fz(ii) - forcez
     
-    fx(jj) = fx(jj) + forx
-    fy(jj) = fy(jj) + fory
-    fz(jj) = fz(jj) + forz
+    fx(jj) = fx(jj) + forcex
+    fy(jj) = fy(jj) + forcey
+    fz(jj) = fz(jj) + forcez
     
     CALL getshortforce(4,4,ii,jj,rho,0)
     
@@ -317,13 +319,13 @@ IF(idielec /= 0) THEN
       
       radfor = (epsdi-1D0)/(epsdi+1D0)*e2*ch(np(ii))* ch(np(jj))/dist2
       
-      forx = radfor*xr/dist
-      fory = radfor*yr/dist
-      forz = radfor*zr/dist
+      forcex = radfor*xr/dist
+      forcey = radfor*yr/dist
+      forcez = radfor*zr/dist
       
-      fx(ii) = fx(ii) - forx
-      fy(ii) = fy(ii) - fory
-      fz(ii) = fz(ii) - forz
+      fx(ii) = fx(ii) - forcex
+      fy(ii) = fy(ii) - forcey
+      fz(ii) = fz(ii) - forcez
       
     END DO
     
@@ -340,14 +342,18 @@ END SUBROUTINE getforcenana
 SUBROUTINE getforceelna(rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+
+
+INTEGER :: ii, ind
+REAL(DP) :: prefac
 REAL(DP),ALLOCATABLE ::  rhotmp(:)
 
 EXTERNAL v_soft,gauss
-EXTERNAL dvsdr,dgaussdr
+EXTERNAL dgaussdr
 
 
 DO ii=1,nion
@@ -446,13 +452,18 @@ SUBROUTINE calcf_goeloc(rho,it)
 !     ******************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                  :: it
 
-!REAL(DP) :: force(kdfull2)
 CHARACTER (LEN=1) :: ext
+INTEGER :: ind, ion, ion1, is, ix, iy, iz
+REAL(DP) :: c1, c2, chpddr, dist2, dist3, pch
+REAL(DP) :: r2, rder, rdn, rloc, rion, zion
+REAL(DP) :: rr, rr3,  rx, ry, rz, x1, y1, z1
+
+REAL(DP),EXTERNAL :: v_ion_el_lgoed
 
 DATA rder/1D-1/                    ! for finite difference
 
@@ -552,8 +563,10 @@ SUBROUTINE forceproject()
 ! forces of point charge projectile on ionic cores
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ion
+REAL(DP) :: dist2, dist3, pch
 
 IF (ABS(projcharge) <= 1.0D-5) RETURN
 
@@ -591,11 +604,18 @@ END SUBROUTINE forceproject
 SUBROUTINE laserf(rho)
 
 !       **********************
-
 USE params
 USE util, ONLY:laserp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+
+INTEGER :: ind
+REAL(DP) :: ascal, foft
+REAL(DP) :: tstart, tend, tvend, tmax, try
+REAL(DP) :: snorm, sx, sy, sz
+
+
 !ccccccccccc  add here to be sure !
 IF (ABS(e0) <= 1D-7) THEN
   RETURN
@@ -662,7 +682,7 @@ IF(itft == 4) THEN
   END IF
 END IF
 
-IF(itft <= 0.OR.itft >= 5) THEN
+IF(itft <= 0 .OR. itft >= 5) THEN
   STOP ' this pulse profile not yet implemented'
 END IF
 power=e0*e0*foft*foft
@@ -721,17 +741,21 @@ SUBROUTINE calcf_goenonl(rho,it,psi)
 
 USE params
 USE util, ONLY:realoverlap, realovsubgrid
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
 #if(parayes)
 INCLUDE 'mpif.h'
-REAL(DP) :: is(mpi_status_size)
 #endif
-
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                  :: it
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
+
+INTEGER :: i, ion, ion1, nb
+REAL(DP) :: dist2, dist3, forceloc, forcenonl, pch
+REAL(DP) :: sumfor,sumfulp, sumfulm,  sumslp, sumslm
+REAL(DP) :: xshift, yshift, zshift, xion, yion, zion , xshinv, yshinv, zshinv
 COMPLEX(DP),ALLOCATABLE :: q1(:)
 REAL(DP),ALLOCATABLE :: rhoslp(:),rhoslm(:)
 REAL(DP),ALLOCATABLE :: fxnl(:),fynl(:),fznl(:)
@@ -913,15 +937,15 @@ END DO
   ALLOCATE(ftemp(nion))
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fxnl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,ic)
+                     mpi_sum,mpi_comm_world,icode)
   fx(1:nion) = fx(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fynl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,ic)
+                     mpi_sum,mpi_comm_world,icode)
   fy(1:nion) = fy(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fznl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,ic)
+                     mpi_sum,mpi_comm_world,icode)
   fz(1:nion) = fz(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   IF(ttestpara) WRITE(*,*) ' FX,FY,FZ: after allreduce'
@@ -976,7 +1000,7 @@ SUBROUTINE rhopsg(cxact,cyact,czact,rhopsp,is)
 !     **********************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
@@ -986,6 +1010,12 @@ REAL(DP), INTENT(IN)                         :: czact
 REAL(DP), INTENT(OUT)                        :: rhopsp(kdfull2)
 INTEGER, INTENT(IN)                          :: is
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: c1, c2, f1, f2, pt1, pt2, rloc, zion
+REAL(DP) :: r1, rr, rx, ry, rz, x1, y1, z1
+
+REAL(DP),EXTERNAL :: v_ion_el_lgoed
+REAL(DP),EXTERNAL :: v_soft
 
 DO ind=1,nxyz
   rhopsp(ind)=0D0

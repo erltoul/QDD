@@ -30,7 +30,7 @@ SUBROUTINE calcrho(rho,q0)
 
 USE params
 USE util, ONLY:emoms, projmoms
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -43,6 +43,8 @@ REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 #endif
+INTEGER :: ind, ishift, nb
+REAL(DP) :: rhodif, rhotot
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
 REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
 REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
@@ -113,7 +115,7 @@ END DO
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !         mx=2*nxyz
 CALL mpi_allreduce(rh,rho,2*nxyz,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !         mx=2*nxyz
 IF(ttestpara) WRITE(*,*) ' RHO: after allreduce'
@@ -162,11 +164,12 @@ SUBROUTINE calc_current(current,q0)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT) :: current(kdfull2,3)
 
+INTEGER :: nb
 COMPLEX(DP), ALLOCATABLE :: dq0(:)
 
 #if(parayes)
@@ -211,10 +214,11 @@ SUBROUTINE spmoms(wf,iunit)
 !      iunit  = unit number for output
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+INTEGER :: nact, nod, nod2
 #endif
 
 #ifdef REALSWITCH
@@ -222,10 +226,13 @@ REAL(DP), INTENT(IN)                     :: wfr(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN)                  :: wf(kdfull2,kstate)
 #endif
+INTEGER, INTENT(IN)                  :: iunit
 
 LOGICAL, PARAMETER :: ttest=.false.
+INTEGER :: ind, ix, iy, iz, j, k, nbe
+REAL(DP) :: r2el, s,  xcmel, ycmel, zcmel, x1, y1, z1, x2, y2, z2
 REAL(DP), ALLOCATABLE :: qeorb(:,:)
-INTEGER, INTENT(IN)                  :: iunit
+
 #if(parayes)
 INTEGER  :: iprisav(kstate,2)     ! printing communication
 #endif
@@ -324,16 +331,16 @@ END DO
 IF(myn /= 0) THEN
   nod = myn
   CALL mpi_send(qeorb,11*kstate,mpi_double_precision,  &
-      0,nod,mpi_comm_world,ic)
-  CALL mpi_send(iprisav,2*kstate,mpi_integer, 0,nod,mpi_comm_world,ic)
+      0,nod,mpi_comm_world,icode)
+  CALL mpi_send(iprisav,2*kstate,mpi_integer, 0,nod,mpi_comm_world,icode)
   IF(ttest) WRITE(*,*) ' SPMOMS: sent at node:',myn
 ELSE
   DO nod2=0,knode-1
     IF(nod2 > 0) THEN
       CALL mpi_recv(qeorb,11*kstate,mpi_double_precision,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,ic)
+          nod2,mpi_any_tag,mpi_comm_world,is,icode)
       CALL mpi_recv(iprisav,2*kstate,mpi_integer,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,ic)
+          nod2,mpi_any_tag,mpi_comm_world,is,icode)
       IF(ttest) WRITE(*,*)' SPMOMS: recv from  node=',nod2
     END IF
     DO nbe=1,nstate_node(nod2)
@@ -425,7 +432,9 @@ SUBROUTINE from3Dto1Dc(va,a,xva,yva,zva)
 USE params
 IMPLICIT NONE
 
-INTEGER :: xva,yva,zva,ia,ja,ka,i0
+INTEGER,INTENT (IN) :: xva
+INTEGER,INTENT (IN) :: yva
+INTEGER,INTENT (IN) :: zva
 #ifdef REALSWITCH
 REAL(DP),INTENT (OUT) :: va(xva*yva*zva)
 REAL(DP),INTENT (IN) :: a(xva,yva,zva)
@@ -433,6 +442,8 @@ REAL(DP),INTENT (IN) :: a(xva,yva,zva)
 COMPLEX(DP),INTENT (OUT) :: va(xva*yva*zva)
 COMPLEX(DP),INTENT (IN) :: a(xva,yva,zva)
 #endif 
+
+INTEGER :: i0,ia,ja,ka
 
 i0=0
 DO ka=1,zva

@@ -32,10 +32,9 @@ SUBROUTINE calc_sic(rho,aloc,q0)
 
 !     switchboard for the various brands of SIC
 
-
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)!
+IMPLICIT NONE
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
 #else
@@ -110,7 +109,7 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP),PARAMETER :: sgnkli=-1D0
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -124,6 +123,9 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
 #endif
 REAL(DP), INTENT(IN OUT) :: aloc(*),rho(*)
 
+INTEGER :: ind, idx, ishift, nb, npartup, npartdw, npartto
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
+REAL(DP) :: couldw, coulup, fac, facdw, facup
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
 LOGICAL,PARAMETER :: testprint=.false.
@@ -294,7 +296,7 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),PARAMETER :: sgnkli=-1D0
 
@@ -311,8 +313,9 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd,chpdftspu,chpdftspd
 !EQUIVALENCE (rhosp,w1)
 !EQUIVALENCE (chpdftsp,w3)
 !EQUIVALENCE (rho2,rhosp)
-INTEGER :: size
-
+INTEGER :: ind, idx, npartdw, npartup, npartto, size
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
+REAL(DP) :: couldw, coulup, fac, facdw, facup, facdwh, facuph, factotal
 #if(parayes)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,rhonod2,rhotp
 REAL(DP),DIMENSION(:),ALLOCATABLE :: tp1,tp2
@@ -659,7 +662,7 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 USE params
 USE util, ONLY:prifld2
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),PARAMETER :: sgnkli=-1D0
 #if(parayes)
@@ -676,6 +679,9 @@ REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: usicsp,rhosp
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd
 LOGICAL :: testprint
+INTEGER :: ind, idx, ishift, nb, npartdw, npartup, npartto
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd, reldw, relup
+
 DATA testprint/.false./
 
 !-------------------------------------------------------------------
@@ -796,8 +802,9 @@ SUBROUTINE calc_sickli(rho,aloc,q0)
 USE params
 USE util, ONLY:prifld
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
-PARAMETER (sgnkli=-1D0)
+IMPLICIT NONE
+REAL(DP),PARAMETER :: sgnkli=-1D0
+
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -816,6 +823,11 @@ REAL(DP),ALLOCATABLE :: rhokli(:,:),uslater(:),ukli(:)
 LOGICAL,PARAMETER :: testprint=.false.
 INTEGER :: itmaxkli=200
 LOGICAL:: converged=.false.
+
+INTEGER :: ind, idx, ishift, itkli, nb, nfdw, nfup, npartup, npartdw, npartto
+REAL(DP) :: addn, addo, correct, efermup, efermdw
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd, reldw, relup
+REAL(DP) :: acc, avuslatdw, avuslatup, sumsldw, sumslup, sumdw, sumup
 !--------------------------------------------------------------------
 
 IF(numspin.NE.2) STOP ' SIC-KLI requires full spin code'
@@ -1089,15 +1101,20 @@ SUBROUTINE act_part_num(npartup,npartdw,npartto)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+REAL(DP) :: partdwp, partupp
 #endif
 
-REAL(DP) :: partup,partdw
-INTEGER :: npartup,npartdw,npartto
 
+INTEGER,INTENT(OUT) :: npartup
+INTEGER,INTENT(OUT) :: npartdw
+INTEGER,INTENT(OUT) :: npartto
+
+INTEGER :: nb
+REAL(DP) :: partup,partdw
 
 !     compute number of states
 
@@ -1114,9 +1131,9 @@ END DO
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(partup,partupp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(partdw,partdwp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,ic)
+    mpi_sum,mpi_comm_world,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 partup = partupp
 partdw = partdwp
@@ -1162,7 +1179,7 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -1181,7 +1198,8 @@ REAL(DP), INTENT(IN OUT) :: usicsp(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: chpdftsp,couldif,rho1
 
 LOGICAL :: testprint=.false.
-
+INTEGER :: ind, idx, ishift, nb
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd, encsum
 !--------------------------------------------------------------------
 
 IF(numspin.NE.2) STOP ' CALC_SICSP requires fullspin code'
@@ -1310,7 +1328,7 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
@@ -1331,7 +1349,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acl
 
 LOGICAL,PARAMETER :: ttest=.false.
-
+INTEGER :: i,ind,nb2
+REAL(DP) :: sump
 
 IF(ifsicp /= 5) STOP ' in EXCHANGE: wrong option IFSICP'
 

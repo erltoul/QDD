@@ -36,7 +36,6 @@ USE localize_rad
 IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
-REAL(DP) :: is(mpi_status_size)
 #endif
 #if(twostsic)
 INTEGER :: is
@@ -217,7 +216,7 @@ END IF
 
 IF(iflocaliz == 1) THEN                                 
 #if(!parayes)
-  CALL localizer(rho,psir)          
+  CALL localizer(rho,psir,0)          
 #else
   STOP ' LOCALIZER (switch IFLOCALIZ) should not be invoked in parallele code'   ! cPW
 #endif

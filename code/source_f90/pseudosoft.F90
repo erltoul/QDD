@@ -280,17 +280,17 @@ USE params, ONLY: DP,pi
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN OUT)  :: r
+REAL(DP), INTENT(IN)  :: r
 REAL(DP), INTENT(IN)   :: sigma
 
 REAL(DP), EXTERNAL :: v_soft
-REAL(DP):: fac
+REAL(DP):: fac, rabs
 
-r = ABS(r)
+rabs = ABS(r)
 
-fac = 2D0/(SQRT(pi)*sigma*r)
+fac = 2D0/(SQRT(pi)*sigma*rabs)
 
-dvsdr = fac*EXP(-r*r/(sigma*sigma))-v_soft(r,sigma)/r
+dvsdr = fac*EXP(-rabs*rabs/(sigma*sigma))-v_soft(rabs,sigma)/rabs
 
 RETURN
 END FUNCTION dvsdr

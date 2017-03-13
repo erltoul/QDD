@@ -24,7 +24,7 @@ USE FFTW
 USE, intrinsic :: iso_c_binding
 #endif
 USE params, ONLY: DP,PI
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 PUBLIC
 INTEGER,PRIVATE :: kxmax,kymax,kzmax,ksmax

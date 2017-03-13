@@ -71,9 +71,9 @@
 SUBROUTINE initsubgrids
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: i
 !     give every particle a subgrid which surrounds it
 DO i=1,nc
   CALL makesubgrid(i,xc(i),yc(i),zc(i))
@@ -96,18 +96,20 @@ END SUBROUTINE initsubgrids
 SUBROUTINE addfunctofield(field,funk,x0,y0,z0,fact)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
 !     version with zero parameters in funk
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-EXTERNAL                         :: funk
+REAL, EXTERNAL                         :: funk
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
 
+INTEGER :: ind, ix, iy, iz, max 
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 !EXTERNAL varelcore, vfermi,v_soft
 
 ind = 0
@@ -144,20 +146,21 @@ END SUBROUTINE addfunctofield
 SUBROUTINE addfunctofield1(field,funk,x0,y0,z0,fact,para)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
 !     version with 1 parameter in funk
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-EXTERNAL                           :: funk
+REAL(DP), EXTERNAL                           :: funk
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
 REAL(DP), INTENT(IN)                     :: para
 
-!EXTERNAL varelcore, vfermi,v_soft
+INTEGER :: ind, ix, iy, iz
+REAL(DP) ::rr, rx, ry, rz, x1, y1, z1 
 
 ind = 0
 
@@ -192,13 +195,13 @@ END SUBROUTINE addfunctofield1
 SUBROUTINE addfunctofield3(field,funk,x0,y0,z0,fact,para1,para2, para3)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
-!     version with 1 parameter in funk
+!     version with 3 parameter in funk
 
 
 REAL(DP), INTENT(IN OUT)           :: field(kdfull2)
-EXTERNAL                           :: funk
+REAL(DP), EXTERNAL                 :: funk
 REAL(DP), INTENT(IN)               :: x0
 REAL(DP), INTENT(IN)               :: y0
 REAL(DP), INTENT(IN)               :: z0
@@ -207,7 +210,8 @@ REAL(DP), INTENT(IN)               :: para1
 REAL(DP), INTENT(IN)               :: para2
 REAL(DP), INTENT(IN)               :: para3
 
-
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 ind = 0
 
 DO iz=minz,maxz
@@ -242,21 +246,23 @@ END SUBROUTINE addfunctofield3
 SUBROUTINE addfunctofieldonsubgrid(field,funkt,x0,y0,z0,fact, nsgsize)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     same as above routine but with subgrids
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-EXTERNAL                       :: funkt
+REAL(DP), EXTERNAL                       :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                     :: fact
 INTEGER, INTENT(IN)                      :: nsgsize
 
-!EXTERNAL varelcore,vfermi,v_soft
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
+
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 ind = getnearestgridpoint(x0,y0,z0)
@@ -313,12 +319,12 @@ END SUBROUTINE addfunctofieldonsubgrid
 SUBROUTINE addfunctofieldonsubgrid1(field,funkt,x0,y0,z0,fact, para,nsgsize)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     same as above routine but with subgrids
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-EXTERNAL                     :: funkt
+REAL(DP),EXTERNAL                        :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
@@ -326,9 +332,11 @@ REAL(DP), INTENT(IN)                     :: fact
 REAL(DP), INTENT(IN)                     :: para
 INTEGER, INTENT(IN)                      :: nsgsize
 
-!EXTERNAL varelcore,vfermi,v_soft          !,funkPower
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
+
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 ind = getnearestgridpoint(x0,y0,z0)
@@ -385,12 +393,12 @@ SUBROUTINE addfunctofieldonsubgrid3(field,funkt,x0,y0,z0,fact,  &
     para1,para2,para3,nsgsize)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     same as above routine but with subgrids
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-EXTERNAL                  :: funkt
+REAL(DP),EXTERNAL                  :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
@@ -400,9 +408,12 @@ REAL(DP), INTENT(IN)                     :: para2
 REAL(DP), INTENT(IN)                     :: para3
 INTEGER, INTENT(IN)                      :: nsgsize
 
-!      external funkFermi
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
+
+
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 ind = getnearestgridpoint(x0,y0,z0)
@@ -459,7 +470,7 @@ END SUBROUTINE addfunctofieldonsubgrid3
 SUBROUTINE addtabtofield(field,table,x0,y0,z0,fact)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     Adds function f(sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2))
 !     to field(x,y,z).
 !     The function is interpolated from tabulated values
@@ -473,7 +484,9 @@ REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
 
-
+INTEGER :: ind, ir, ix, iy, iz
+REAL(DP) :: deltar, deltarinv, rcon, rrel
+REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
 
 deltar = dx/1733D0
 
@@ -519,19 +532,21 @@ END SUBROUTINE addtabtofield
 SUBROUTINE addtabtofieldonsubgrid(field,table,x0,y0,z0, fact,nsgsize)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     same as above routine but with subgrids
 
 
-REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP), INTENT(IN)                     :: table(kfermi)
+REAL(DP), INTENT(IN OUT)                         :: field(kdfull2)
+REAL(DP), INTENT(IN)                         :: table(kfermi)
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
 INTEGER, INTENT(IN)                      :: nsgsize
 
-
+INTEGER :: ind, ir, ix, iy, iz
+REAL(DP) :: deltar, deltarinv, rcon, rrel
+REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
 
 INTEGER :: getnearestgridpoint
 INTEGER :: conv3to1
@@ -603,7 +618,7 @@ END SUBROUTINE addtabtofieldonsubgrid
 SUBROUTINE dintfieldfunc(field,func,xx,yy,zz,param)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     folds function around xx,yy,zz
 
@@ -615,14 +630,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-REAL(DP), INTENT(IN OUT)                         :: field(kdfull2)
-EXTERNAL                         :: func
+REAL(DP), INTENT(IN)                         :: field(kdfull2)
+REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
 
-EXTERNAL dvsdr,dgaussdr
+
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: sumx, sumy, sumz, radial, rr, rx, ry, rz, x1, y1, z1
+!~ EXTERNAL dvsdr,dgaussdr
 
 
 
@@ -673,7 +691,7 @@ END SUBROUTINE dintfieldfunc
 SUBROUTINE dintfieldfunconsubgrid(field,func,xx,yy,zz,param)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     folds function around xx,yy,zz using a subgrid only
 
@@ -685,17 +703,18 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 
-REAL(DP), INTENT(IN OUT)                         :: field(kdfull2)
-EXTERNAL                         :: func
+REAL(DP), INTENT(IN)                         :: field(kdfull2)
+REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
 
-EXTERNAL dgaussdr
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: sumx, sumy, sumz, radial, rr, rx, ry, rz, x1, y1, z1
 
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 ind = getnearestgridpoint(xx,yy,zz)
@@ -758,24 +777,19 @@ END SUBROUTINE dintfieldfunconsubgrid
 SUBROUTINE makesubgrid(ipart,xpos,ypos,zpos)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                  :: ipart
 REAL(DP), INTENT(IN)                     :: xpos
 REAL(DP), INTENT(IN)                     :: ypos
 REAL(DP), INTENT(IN)                     :: zpos
-INTEGER :: getnearestgridpoint
+
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 ! get the index of the grid point closest to the exact position
-!      write(6,*) ':',xpos,ypos,zpos
 
-
-ind = getnearestgridpoint(xpos,ypos,zpos)
-
-!      write(6,*) '**',ind
-
-isubgcenter(ipart) = ind
+isubgcenter(ipart) = getnearestgridpoint(xpos,ypos,zpos)
 
 
 END SUBROUTINE makesubgrid
@@ -786,12 +800,13 @@ END SUBROUTINE makesubgrid
 SUBROUTINE updatesubgrids
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! if a particle has moved so far that we have to move the
 ! subgrid as well, then do so!
 #if(raregas)
-INTEGER :: getnearestgridpoint
+INTEGER :: i, ind
+INTEGER,EXTERNAL :: getnearestgridpoint
 
 
 DO i=1,nc
@@ -858,16 +873,19 @@ END SUBROUTINE updatesubgrids
 SUBROUTINE putfunctosubgrid(qfield,indpart,funktion)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
 REAL(DP), INTENT(OUT)                        :: qfield(kdsub)
 INTEGER, INTENT(IN)                      :: indpart
-EXTERNAL             :: funktion
+REAL(DP), EXTERNAL                       :: funktion
+
+INTEGER :: ind, ix, iy, iz, ix0, iy0, iz0
+REAL(DP) :: r, ss, x1, y1, z1, x0, y0, z0
 
 
-CALL conv1to3(isubgcenter(indpar))
+CALL conv1to3(isubgcenter(indpart))
 
 iz0 = iindtmp(3)
 iy0 = iindtmp(2)
@@ -885,23 +903,23 @@ DO iz=iz0-nzsg,iz0+nzsg
       ind = ind + 1
       
       IF (indpart <= nc) THEN
-        xo = xc(indpart)
-        yo = yc(indpart)
-        zo = zc(indpart)
+        x0 = xc(indpart)
+        y0 = yc(indpart)
+        z0 = zc(indpart)
         ss = sigmac
       ELSE IF (indpart <= nc+NE) THEN
-        xo = xe(indpart)
-        yo = ye(indpart)
-        zo = ze(indpart)
+        x0 = xe(indpart)
+        y0 = ye(indpart)
+        z0 = ze(indpart)
         ss = sigmav
       ELSE
-        xo = xk(indpart)
-        yo = yk(indpart)
-        zo = zk(indpart)
+        x0 = xk(indpart)
+        y0 = yk(indpart)
+        z0 = zk(indpart)
         ss = sigmak
       END IF
       
-      r = (x1-xo)*(x1-xo)+(y1-yo)*(y1-yo)+(z1-zo)*(z1-zo)
+      r = (x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+(z1-z0)*(z1-z0)
       r = SQRT(r)
       
       qfield(ind) = funktion(r,ss)
@@ -919,17 +937,18 @@ END SUBROUTINE putfunctosubgrid
 SUBROUTINE putgausstosubgrid(isgcenter,subgfield,x0,y0,z0,s)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-INTEGER, INTENT(IN OUT)                  :: isgcenter
-REAL(DP), INTENT(OUT)                        :: subgfield(kdsub)
-REAL(DP), INTENT(IN OUT)         :: x0
-REAL(DP), INTENT(IN OUT)         :: y0
-REAL(DP), INTENT(IN OUT)         :: z0
-REAL(DP), INTENT(IN OUT)         :: s
+INTEGER, INTENT(IN)              :: isgcenter
+REAL(DP), INTENT(OUT)            :: subgfield(kdsub)
+REAL(DP), INTENT(IN)             :: x0
+REAL(DP), INTENT(IN)             :: y0
+REAL(DP), INTENT(IN)             :: z0
+REAL(DP), INTENT(IN)             :: s
 
 
-
+INTEGER :: ind, ix, iy, iz, ix0, iy0, iz0
+REAL(DP) :: r2, x1, y1, z1
 
 CALL conv1to3(isgcenter)
 
@@ -966,15 +985,13 @@ END SUBROUTINE putgausstosubgrid
 SUBROUTINE addsubgrids(field1,field2,signum)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: field1(kdsub)
+REAL(DP), INTENT(IN OUT)                        :: field1(kdsub)
 REAL(DP), INTENT(IN)                         :: field2(kdsub)
 REAL(DP), INTENT(IN)             :: signum
 
-
-
-
+INTEGER :: ii
 
 DO ii=1,kdsub
   field1(ii) = field1(ii) + signum*field2(ii)
@@ -989,8 +1006,9 @@ END SUBROUTINE addsubgrids
 INTEGER FUNCTION conv3to1(k,j,i)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER, INTENT(IN):: i, j, k
 
 conv3to1=(i-1)*2*nx*2*ny+(j-1)*2*nx+k
 
@@ -1004,12 +1022,15 @@ END FUNCTION conv3to1
 INTEGER FUNCTION getnearestgridpoint(xpos, ypos,zpos)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP),INTENT(IN)              :: xpos 
 REAL(DP),INTENT(IN)              :: ypos
 REAL(DP),INTENT(IN)              :: zpos
 !------------------------------------------------------------
 !  getNearestGridPoint
+
+INTEGER :: ind, ix0, iy0, iz0
+REAL(DP) :: x0, y0, z0
 
 !     THE NINT FUNCTION TURNED OUT TO BE EXPENSIVE!!
 !      ix0 = nint(xpos/dx) + nx
@@ -1049,7 +1070,7 @@ ind =(iz0-1)*2*nx*2*ny+(iy0-1)*2*nx+ix0
 
 getnearestgridpoint = ind
 
-IF (ind > kdfull2 .OR. ind <= 0) STOP 'invalid grid point'
+IF (ind > kdfull2 .OR. ind <= 0) STOP 'invalid grid point in getnearestgridpoint'
 
 RETURN
 END FUNCTION getnearestgridpoint
@@ -1058,10 +1079,17 @@ END FUNCTION getnearestgridpoint
 INTEGER FUNCTION getnearestgridpoint2(xpos, ypos,zpos)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !------------------------------------------------------------
 !  getNearestGridPoint
+
+REAL(DP),INTENT(IN)              :: xpos 
+REAL(DP),INTENT(IN)              :: ypos
+REAL(DP),INTENT(IN)              :: zpos
+
+INTEGER :: ind, ix0, iy0, iz0
+REAL(DP) :: x0, y0, z0
 
 !     THE NINT FUNCTION TURNED OUT TO BE EXPENSIVE!!
 !      ix0 = nint(xpos/dx) + nx
@@ -1093,7 +1121,7 @@ ind =(iz0-1)*nx2*ny2+(iy0-1)*nx2+ix0
 
 getnearestgridpoint2 = ind
 
-IF (ind > kdfull2 .OR. ind <= 0) STOP 'invalid grid point'
+IF (ind > kdfull2 .OR. ind <= 0) STOP 'invalid grid point in getnearestgridpoint2'
 
 RETURN
 END FUNCTION getnearestgridpoint2
@@ -1104,11 +1132,18 @@ END FUNCTION getnearestgridpoint2
 SUBROUTINE conv1to3(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     single index to triple index:
+
+INTEGER,INTENT(IN) :: ind
+
+INTEGER :: ind1, indx, indy, indz, iupper
+REAL(DP) :: rupper
+
 ind1 = ind
 
 rupper = REAL(ind1,DP)/(2*nx*2*ny)
+
 IF (rupper == INT(rupper)) THEN
   iupper = INT(rupper)
 ELSE
@@ -1144,10 +1179,11 @@ END SUBROUTINE conv1to3
 
 !------------------------------------------------------------
 
-FUNCTION getxval(ind)
+REAL(DP) FUNCTION getxval(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ind
 
 CALL conv1to3(ind)
 
@@ -1158,10 +1194,11 @@ END FUNCTION getxval
 
 !------------------------------------------------------------
 
-FUNCTION getyval(ind)
+REAL(DP) FUNCTION getyval(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ind
 
 CALL conv1to3(ind)
 
@@ -1172,10 +1209,11 @@ END FUNCTION getyval
 
 !------------------------------------------------------------
 
-FUNCTION getzval(ind)
+REAL(DP) FUNCTION getzval(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ind
 
 CALL conv1to3(ind)
 
@@ -1190,7 +1228,7 @@ END FUNCTION getzval
 SUBROUTINE updatearpos(iions,iels,ikats)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! ONLY FOR THE ARGON AND TRADITIONAL SODIUM CASE!!
 
@@ -1201,6 +1239,9 @@ INTEGER, INTENT(IN)                      :: iels
 INTEGER, INTENT(IN)                      :: ikats
 
 #if(raregas)
+
+INTEGER :: i
+
 IF (iions /= 0) THEN
   DO i=1,nc
     xc(i) = cx(i)
@@ -1234,15 +1275,17 @@ END SUBROUTINE updatearpos
 SUBROUTINE renormsg(field,isgc,fromv,tov)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
-REAL(DP), INTENT(OUT)                        :: field(kdfull2)
+REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: isgc
 REAL(DP), INTENT(IN)                         :: fromv
 REAL(DP), INTENT(IN)                         :: tov
 
-INTEGER :: conv3to1
+INTEGER :: ind, ix, iy, iz
+
+INTEGER,EXTERNAL :: conv3to1
 
 ind = isgc
 
@@ -1266,10 +1309,10 @@ END SUBROUTINE renormsg
 
 !------------------------------------------------------------
 
-FUNCTION foldfunc(field,func,xx,yy,zz,param)
+REAL(DP) FUNCTION foldfunc(field,func,xx,yy,zz,param)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     folds function around xx,yy,zz
 
@@ -1282,13 +1325,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-EXTERNAL                         :: func
+REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)                     :: param
-EXTERNAL v_soft
-EXTERNAL dv_softdr
+
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: acc, rr, rx, ry, rz, x1, y1, z1
+REAL(DP), EXTERNAL :: v_soft
+REAL(DP), EXTERNAL :: dv_softdr
+
 
 ind = 0
 acc = 0D0
@@ -1323,7 +1370,7 @@ END FUNCTION foldfunc
 SUBROUTINE foldgradfunc(field,func,xx,yy,zz,param)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     folds function around xx,yy,zz
 
@@ -1336,13 +1383,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-EXTERNAL                         :: func
+REAL(DP), EXTERNAL                         :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
 
-EXTERNAL v_soft,gauss
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rder, sumx, sumy, sumz
+REAL(DP):: radial, rr, rx, ry, rz, x1, y1, z1
+
+REAL(DP), EXTERNAL :: v_soft,gauss
 
 
 
@@ -1394,7 +1445,7 @@ END SUBROUTINE foldgradfunc
 SUBROUTINE foldgradfunconsubgrid(field,func,xx,yy,zz,param)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     folds function around xx,yy,zz using a subgrid only
 
@@ -1407,17 +1458,17 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-EXTERNAL                          :: func
+REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
 
-EXTERNAL gauss
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
-
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: radial, rr, rder, rx, ry, rz, sumx, sumy, sumz, x1, y1, z1
 
 ind = getnearestgridpoint(xx,yy,zz)
 
@@ -1477,16 +1528,18 @@ END SUBROUTINE foldgradfunconsubgrid
 
 !------------------------------------------------------------
 
-FUNCTION dintprod(field1,field2)
+REAL(DP) FUNCTION dintprod(field1,field2)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: field1(kdfull2)
 REAL(DP), INTENT(IN)                         :: field2(kdfull2)
 
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP):: acc
 
 ind = 0
 acc = 0.0D0
@@ -1508,10 +1561,10 @@ END FUNCTION dintprod
 
 !------------------------------------------------------------
 
-FUNCTION dintprodsubgrid(field1,field2,xx,yy,zz)
+REAL(DP) FUNCTION dintprodsubgrid(field1,field2,xx,yy,zz)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     calculates the integral of the product of two scalar
 !     fields not over the whole box, but only over a subgrid
@@ -1520,12 +1573,15 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 REAL(DP), INTENT(IN)                         :: field1(kdfull2)
 REAL(DP), INTENT(IN)                         :: field2(kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: xx
+REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
-REAL(DP), INTENT(IN OUT)                     :: zz
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+REAL(DP), INTENT(IN)                         :: zz
 
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: acc
+
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 
@@ -1556,10 +1612,10 @@ END FUNCTION dintprodsubgrid
 
 !------------------------------------------------------------
 
-FUNCTION dintfieldtimesgauss(field,xx,yy,zz,sigm,ccharg)
+REAL(DP) FUNCTION dintfieldtimesgauss(field,xx,yy,zz,sigm,ccharg)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     calculates the integral:
 
@@ -1583,8 +1639,13 @@ REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)                         :: sigm
 REAL(DP), INTENT(IN)                         :: ccharg
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
+
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: a, acc, sigm2 
+REAL(DP) :: r2, rx, ry, rz, x1, y1, z1
+
+INTEGER,EXTERNAL :: getnearestgridpoint
+INTEGER,EXTERNAL :: conv3to1
 
 
 
@@ -1663,7 +1724,7 @@ END FUNCTION dintfieldtimesgauss
 INTEGER FUNCTION iptyp(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     yields the particle type of particle with "long" index ind
 
 
@@ -1672,6 +1733,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !                  1 ---> anion core
 !                  2 ---> anion valence shell
 !                  3 ---> cation
+INTEGER, INTENT(IN) :: ind
 
 
 IF (ind <= nc) THEN
@@ -1691,9 +1753,10 @@ END FUNCTION iptyp
 INTEGER FUNCTION ismobile(ind)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-!     ind is index of long type !!
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ind
 
+INTEGER :: ireturn
 ireturn = 1
 
 IF (ind <= nc) THEN
@@ -1716,7 +1779,8 @@ END FUNCTION ismobile
 SUBROUTINE getpositionold(ii)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ii
 
 IF (ii <= nc) THEN
   rvectmp(1)=xcold(ii)
@@ -1742,7 +1806,7 @@ END SUBROUTINE getpositionold
 INTEGER FUNCTION isoutofbox(x,y,z)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     return values:
 !        0 --> particle is inside of the box
@@ -1751,6 +1815,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 !              pseudodensity formalism
 !        2 --> particle is far out of the box
 
+REAL(DP),INTENT(IN) :: x,y,z
 
 IF (z < (1-nzsh)*dz+dinmargin .OR. z > (nzsh*dz-dinmargin)  &
     .OR. y < (1-nysh)*dy+dinmargin .OR. y > (nysh*dy-dinmargin)  &

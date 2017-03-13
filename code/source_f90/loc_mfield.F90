@@ -33,9 +33,13 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+
+#if(raregas)
+INTEGER :: ii
+#endif
 
 REAL(DP), ALLOCATABLE :: rhotmp(:)
 
@@ -152,7 +156,7 @@ SUBROUTINE valence_step(rho,dt,it,tdyn)
 !     only called in dynamics.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: dt
@@ -208,7 +212,7 @@ SUBROUTINE ldapsp_mfield(rho,aloc)
 !      aloc   = local mean field
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)

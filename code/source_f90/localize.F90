@@ -22,9 +22,9 @@
 ! ---localize-----------------------------------------------------------
 
 #ifdef REALSWITCH
-SUBROUTINE localizer(rho,psi)
+SUBROUTINE localizer(rho,psi,it)
 #else
-SUBROUTINE localize(rho,psi)
+SUBROUTINE localize(rho,psi,it)
 #endif
 
 !  computes localization criterion of Becke et al
@@ -33,7 +33,7 @@ SUBROUTINE localize(rho,psi)
 USE params
 USE util, ONLY:safeopen
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 #ifdef REALSWITCH
@@ -43,8 +43,14 @@ REAL(DP) :: p(kdfull2)
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 COMPLEX(DP) :: p(kdfull2)
 #endif
+INTEGER,INTENT(IN)                        :: it
+
+INTEGER :: i, idirection, ind, indadd, is, ix, iy, iz, midx, midy, midz, nb
+REAL(DP) :: dkx, dky, dkz, ocfac, rp, sign, sumfac, sumpart, tf_fac, x1, y1, z1
 COMPLEX(DP) :: q2(kdfull2)
 #if(netlib_fft|fftw_cpu)
+INTEGER :: i1, i2, i3
+REAL(DP) :: zkx, zky, zkz
 REAL(DP),DIMENSION(:),ALLOCATABLE :: akk
 #endif
 REAL(DP) :: average_localization(2)
@@ -429,16 +435,16 @@ END SUBROUTINE localize
 #else
 !----localize-----------------------------------------------------------
 
-SUBROUTINE localize(rho,psi)
+SUBROUTINE localize(rho,psi,it)
 
 !  dummy
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-
+INTEGER, INTENT(IN) :: it
 
 !-----------------------------------------------------------------------
 
@@ -447,16 +453,16 @@ RETURN
 END SUBROUTINE localize
 !----localizer-----------------------------------------------------------
 
-SUBROUTINE localizer(rho,psi)
+SUBROUTINE localizer(rho,psi,it)
 
 !  dummy
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-
+INTEGER, INTENT(IN) :: it
 
 !-----------------------------------------------------------------------
 

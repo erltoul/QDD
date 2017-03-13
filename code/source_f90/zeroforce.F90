@@ -28,14 +28,14 @@ SUBROUTINE zeroforce(aloc,rho)
 USE params
 USE util, ONLY:wfovlp
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(gridfft)
 
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
-
-
+INTEGER :: i, is, ishift
+REAL(DP) :: denominator, counter, xlambda, ylambda, zlambda
 !       workspaces
 
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
@@ -208,10 +208,13 @@ SUBROUTINE checkzeroforce(rho,aloc)
 USE params
 USE util, ONLY:wfovlp
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 #if(gridfft)
+
+INTEGER :: is, ishift
+REAL(DP) :: zforcex, zforcey, zforcez
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
@@ -362,9 +365,9 @@ SUBROUTINE getgradfield(fieldfrom,fieldto,ishift,icoor)
 !------------------------------------------------------------
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-
+INTEGER :: ii
 #if(gridfft)
 
 

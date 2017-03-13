@@ -1273,7 +1273,7 @@ SUBROUTINE calc_estar(psin,iss,excit,excitETF)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -1287,10 +1287,14 @@ REAL(DP),DIMENSION(:),ALLOCATABLE            :: arho,gradrho
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE         :: gradrhok
 #if(parayes)
 REAL(DP),DIMENSION(:),ALLOCATABLE            :: arhop
+REAL(DP) :: ekintotp
 #endif
 REAL(DP) :: factgrad
 
+
 LOGICAL,PARAMETER :: extendedTF=.TRUE.
+INTEGER :: i, j, nb
+REAL(DP) :: anorm, ekintot
 REAL(DP),PARAMETER :: rholimit=1D-10
 
 !------------------------------------------------------------
@@ -1322,9 +1326,9 @@ END DO
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(arho,arhop,kdfull2,mpi_double_precision,  &
-                   mpi_sum,mpi_comm_world,ic)
+                   mpi_sum,mpi_comm_world,icode)
 CALL mpi_allreduce(ekintot,ekintotp,1,mpi_double_precision,  &
-                   mpi_sum,mpi_comm_world,ic)
+                   mpi_sum,mpi_comm_world,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 #endif
 
@@ -1631,7 +1635,7 @@ IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 
-INTEGER :: i, ind, ix, iy, iz, nb, o
+INTEGER :: i, ind, ix, iy, iz, nb, occ
 REAL(DP) :: ajpx, ajpy, ajpz, dkx, dky, dkz, x1, y1, z1
 REAL(DP) :: test
 COMPLEX(DP), ALLOCATABLE :: q2(:)
@@ -1692,7 +1696,7 @@ END DO
 
 
 DO nb=1,nstate
-  o=occup(nb)
+  occ=occup(nb)
   
 #if(netlib_fft|fftw_cpu)
   CALL fftf(psi(1,nb),q2)
@@ -1716,7 +1720,7 @@ DO nb=1,nstate
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     
     jalpha=test
-    jtx(ind)=jtx(ind)-o*jalpha
+    jtx(ind)=jtx(ind)-occ*jalpha
   END DO
 
 #if(netlib_fft|fftw_cpu)
@@ -1738,7 +1742,7 @@ DO nb=1,nstate
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
-    jty(ind)=jty(ind)-o*jalpha
+    jty(ind)=jty(ind)-occ*jalpha
   END DO
   
 #if(netlib_fft|fftw_cpu)
@@ -1761,7 +1765,7 @@ DO nb=1,nstate
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
-    jtz(ind)=jtz(ind)-o*jalpha
+    jtz(ind)=jtz(ind)-occ*jalpha
   END DO
   
 END DO
@@ -2865,7 +2869,7 @@ END IF
 
 IF(jelf > 0 .AND. MOD(it,jelf) == 0) THEN
 #if(!parayes) 
-  CALL localize(rho,psi)
+  CALL localize(rho,psi,it)
 #else
   STOP ' LOCALIZE (switch JELF) should not be invoked in parallele code'
 #endif

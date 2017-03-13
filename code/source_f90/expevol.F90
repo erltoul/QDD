@@ -39,7 +39,7 @@ USE params
 #if(twostsic)
 USE twost, ONLY:tnearest
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)              :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
@@ -49,6 +49,7 @@ INTEGER, INTENT(IN)                      :: it
 COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2,kstate)
 LOGICAL, INTENT(IN)                      :: timagtime
 
+INTEGER :: nb, nterms
 COMPLEX(DP) :: q1(kdfull2)
 COMPLEX(DP) :: cdtact
 
@@ -118,7 +119,7 @@ ELSE
 END IF
 
 nterms = 4
-itpri = MOD(it,ipasinf) + 1
+! itpri = MOD(it,ipasinf) + 1    ?? FL
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
     CALL exp_evol(q0(1,nb),aloc,nb,nterms,cdtact,q1)
@@ -184,7 +185,7 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 !           call 'nterm=1'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
@@ -195,7 +196,7 @@ COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
 
 
 COMPLEX(DP) :: dti,cfac
-INTEGER :: ilocbas
+INTEGER :: i, ilocbas, isig, nterm
 
 !----------------------------------------------------------------------
 
@@ -251,7 +252,7 @@ SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
 
 USE params
 USE util, ONLY:wfovlp
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
@@ -263,8 +264,8 @@ COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
 
 COMPLEX(DP) :: dti,cfac,cacc(kstate)
-INTEGER :: ilocbas
-INTEGER :: nbe
+INTEGER :: i, ilocbas 
+INTEGER :: na, nbe, nc, nterm
 !test      complex wfovlp,energexp
 
 !----------------------------------------------------------------------
@@ -274,11 +275,11 @@ INTEGER :: nbe
 ALLOCATE(chmatrix(kstate,kstate))
 
 dti = dtact*CMPLX(0D0,1D0,DP)
-IF(ABS(IMAG(dtact))>1D-10) THEN
-  isig = -1
-ELSE
-  isig = 1
-END IF
+!~ IF(ABS(IMAG(dtact))>1D-10) THEN
+!~   isig = -1
+!~ ELSE
+!~   isig = 1
+!~ END IF
 
 ! compute H-matrix, store h*psi wavefunctions
 DO nbe=1,nstate
@@ -428,7 +429,7 @@ USE kinetic
 #if(twostsic)
 USE twost
 #endif
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
@@ -445,6 +446,7 @@ COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
 LOGICAL,PARAMETER :: ttest=.false.
+INTEGER :: i, is, na
 #if(twostsic)
 COMPLEX(DP) :: cf
 #endif
@@ -487,25 +489,25 @@ STOP ' HPSI not yet appropriate for finite differences'
 !     action of potential and non-local PsP (optionally)
 
 IF(ipsptyp == 1) THEN
-  IF (iswitch_interpol==1) THEN
-    ALLOCATE(q1fine(kdfull2fine),q2fine(kdfull2fine),qactfine(kdfull2fine))
-    ALLOCATE(qarray (nx2,ny2,nz2),qarrayfine (2*nx2-1,2*ny2-1,2*nz2-1))
+!~   IF (iswitch_interpol==1) THEN
+!~     ALLOCATE(q1fine(kdfull2fine),q2fine(kdfull2fine),qactfine(kdfull2fine))
+!~     ALLOCATE(qarray (nx2,ny2,nz2),qarrayfine (2*nx2-1,2*ny2-1,2*nz2-1))
 
 
-    CALL from1Dto3Dc(qact,qarray,nx2,ny2,nz2)    !from coarse vector to coarse array
-    CALL interpol3Dc(qarray,qarrayfine)               !from coarse array to fine array
-    CALL from3Dto1Dc(qactfine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)        !from fine array to fine vector
-    !
-    CALL nonlocalcfine(qactfine,q1fine,0)
+!~     CALL from1Dto3Dc(qact,qarray,nx2,ny2,nz2)    !from coarse vector to coarse array
+!~     CALL interpol3Dc(qarray,qarrayfine)               !from coarse array to fine array
+!~     CALL from3Dto1Dc(qactfine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)        !from fine array to fine vector
+!~     !
+!~     CALL nonlocalcfine(qactfine,q1fine,0)
 
-    !
-    CALL from1Dto3Dc(q1fine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)     !from fine vector to fine array
-    CALL smoothing3Dc(qarrayfine,qarray)            !from fine array to coarse array
-    CALL from3Dto1Dc(q1,qarray,nx2,ny2,nz2) !from coarse array to coarse vector
-    !
-  ELSE
+!~     !
+!~     CALL from1Dto3Dc(q1fine,qarrayfine,2*nx2-1,2*ny2-1,2*nz2-1)     !from fine vector to fine array
+!~     CALL smoothing3Dc(qarrayfine,qarray)            !from fine array to coarse array
+!~     CALL from3Dto1Dc(q1,qarray,nx2,ny2,nz2) !from coarse array to coarse vector
+!~     !
+!~   ELSE
     CALL nonlocalc(qact,q1,0)
-  END IF ! interpol
+!~   END IF ! interpol
 
   IF(tpri) enonlo(nbe) = wfovlp(qact,q1)
   DO  i=1,nxyz
@@ -519,7 +521,7 @@ END IF
 
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
-  IF(tpri) epotbefore = wfovlp(qact,q1)
+!~   IF(tpri) epotbefore = wfovlp(qact,q1)
   CALL exchg(qact,qex,nbe)
   q1 = q1 + qex
 !  IF(tpri) THEN
@@ -598,7 +600,7 @@ SUBROUTINE hpsi_boostinv(qact,aloc,current,rho,nbe)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
@@ -606,7 +608,7 @@ COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: current(kdfull2,3)
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
-INTEGER, INTENT(IN OUT)                  :: nbe
+INTEGER, INTENT(IN)                  :: nbe
 
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)

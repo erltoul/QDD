@@ -57,7 +57,7 @@ CONTAINS
 !     ******************************
 
 SUBROUTINE init_radmatrix()
-
+IMPLICIT NONE
   kdim=kstate
   ALLOCATE(rrmatr(kdim,kdim,2))
   ALLOCATE(xxmatr(kdim,kdim,2))
@@ -85,7 +85,7 @@ SUBROUTINE sstep_lsic(q0,akv,aloc,iter,qnew)
 
 !     - only serial version -
 
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
@@ -94,7 +94,9 @@ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iter
 REAL(DP), INTENT(IN OUT)                         :: qnew(kdfull2,kstate)
 
-
+INTEGER :: i, is, ishift, istdiag, na, nae, nb, nbe, noff
+REAL(DP) :: adamP, cf, FFTnorm, sum0, sume, sumk, sum2, vol
+REAL(DP) :: time_init, time_fin, time_cpu
 !       workspaces
 
 #if(gridfft)
@@ -331,27 +333,20 @@ SUBROUTINE calc_locsic(q0,qsic)
 !       input is set of wavefunctions on 'q0'
 !       output are SIC s.p. wavefunctions on 'qsic'
 
-!USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-!INCLUDE 'radmatrixr.inc'
-
+USE params, ONLY:DP
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT)                        :: qsic(kdfull2,kstate)
 
-
-
+INTEGER :: idx, ind, is, ishift, nb, nbeff
+REAL(DP) :: enrear1, enrear2, enrearsave, enerpwsave, enpw1, enpw2, encadd
 
 !       workspaces
 
 REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
 !COMMON /sicwork/ rhospu(2*kdfull2),rhospd(2*kdfull2),  &
 !    chpdftspu(2*kdfull2),chpdftspd(2*kdfull2)
-!EQUIVALENCE (rhospu,rhosp),(rhospd,usicsp)
-
-!REAL(DP),ALLOCATABLE :: wfloc(:)
-!EQUIVALENCE (wfloc,w1(1))
 
 LOGICAL,PARAMETER :: ttest=.false.
 
@@ -441,7 +436,7 @@ SUBROUTINE analyze_mom(rhoin,uin,urmoms,tprint)
 !     The accumulated moments are returned on 'urmoms'.
 
 !USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: rhoin(kdfull2)
@@ -449,7 +444,8 @@ REAL(DP), INTENT(IN)                         :: uin(kdfull2)
 REAL(DP), INTENT(OUT)                        :: urmoms(0:3)
 LOGICAL, INTENT(IN)                      :: tprint
 
-
+INTEGER :: i, ind, ix, iy, iz 
+REAL(DP) :: x1, y1, z1
 REAL(DP), ALLOCATABLE :: urho(:)
 
 
@@ -501,13 +497,14 @@ END SUBROUTINE analyze_mom
 SUBROUTINE superpose_state_r(wfsup,coeff,q0,is)
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),INTENT(OUT)          :: wfsup(kdfull2)
 REAL(DP),INTENT(IN)           :: coeff(kstate)
 REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
 INTEGER,INTENT(IN)       ::is
 
+INTEGER :: i, na, nas
 !---------------------------------------------------------------------
 wfsup(1:nxyz)=0.0_DP
 
@@ -528,14 +525,14 @@ SUBROUTINE superpose_state_c(wfsup,coeff,q0,is)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
 COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
 COMPLEX(DP),INTENT(IN)        :: q0(kdfull2,kstate)
 INTEGER,INTENT(IN)       ::is
 
-
+INTEGER :: i, na, nas
 !---------------------------------------------------------------------
 
 wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
@@ -557,12 +554,14 @@ SUBROUTINE superpose_state_rc(wfsup,coeff,q0,is)
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP),INTENT(OUT)       :: wfsup(kdfull2)
 COMPLEX(DP),INTENT(IN)        :: coeff(kstate)
 REAL(DP),INTENT(IN)           :: q0(kdfull2,kstate)
 INTEGER,INTENT(IN)       ::is
+
+INTEGER :: i, na, nas
 !---------------------------------------------------------------------
 
 wfsup(1:nxyz)=(0.0_DP, 0.0_DP)
@@ -588,9 +587,7 @@ SUBROUTINE spmomsmatrixo(wfr)
 !     use in localization transformation.
 
 !USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-!INCLUDE 'radmatrixr.inc'
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: wfr(kdfull2,kstate)
@@ -600,6 +597,9 @@ INTEGER, PARAMETER :: iunit=0
 
 LOGICAL,SAVE :: tfirst=.true.
 
+INTEGER :: i, ind, is,  ix, iy, iz, ma, mb, na, nb, noff
+REAL(DP) :: s, wfmom, xmom, ymom, zmom, xxmom, yymom, zzmom
+REAL(DP) :: x1, x2, y1, y2, z1, z2
 !----------------------------------------------------------------------
 
 OPEN(iunit,POSITION='append', FILE='pstatmomsmatrix.'//outnam)
@@ -710,9 +710,9 @@ END SUBROUTINE spmomsmatrixo
 !-----locgradstep-----------------------------------------
 
 SUBROUTINE locgradstep(is,iprint)
+USE params
 USE orthmat, ONLY:ovlpmatrix
-!      implicit none
-
+IMPLICIT NONE
 !     Nonlinear gradient iteration to optimally localized states:
 !      'vecs'    system of eigen-vectors to be determined
 !      'is'      isospin
@@ -721,11 +721,6 @@ USE orthmat, ONLY:ovlpmatrix
 !                             >0 --> print modulus
 !     The matrices and dimension are communicated via
 !     common /radmatrixr/.
-
-!USE params, ONLY: DP,kstate   ! ksttot ??
-IMPLICIT REAL(DP) (A-H,O-Z)
-!INCLUDE 'com.inc'
-!INCLUDE 'radmatrixr.inc'   ! defines also 'KDIM'
 
 
 INTEGER, INTENT(IN)                      :: is
@@ -886,8 +881,6 @@ END SUBROUTINE locgradstep
 !-----vecgradstep-----------------------------------------
 
 SUBROUTINE vecgradstep(a,vecs,ndim,kdimin,averstate)
-!USE params, ONLY: DP
-
 
 IMPLICIT NONE
 
@@ -975,7 +968,7 @@ END SUBROUTINE vecgradstep
 !-----operate-----------------------------------------
 
 SUBROUTINE operate(a,vecin,vecout,ndim,kdimin)
-!USE params, ONLY: DP
+
 IMPLICIT NONE
 
 
@@ -1070,17 +1063,14 @@ SUBROUTINE calc_locwf(q0,qnew)
 !       output are localized wavefunctions on 'q0'
 !       the array 'qnew' is used as workspace
 
-!USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-
-!INCLUDE 'radmatrixr.inc'
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(OUT)                        :: q0(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                         :: qnew(kdfull2,kstate)
 
 LOGICAL,PARAMETER :: ttest=.false.
-
+INTEGER :: ind, is, ishift, nb, nbeff
 !------------------------------------------------------------------
 
 !     Compute matrix of radial moments and determine

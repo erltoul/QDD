@@ -23,7 +23,7 @@ USE FFTW
 USE kinetic, ONLY: FFTW_planflag
 #endif
 USE params, ONLY: DP,numthr,e2
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 SAVE
 INTEGER,PRIVATE :: kxmax,kymax,kzmax, ksmax

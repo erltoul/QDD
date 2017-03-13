@@ -24,10 +24,12 @@ SUBROUTINE calcchargdist(field)
 !------------------------------------------------------------
 USE params
 USE util, ONLY:getcm
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: field(kdfull2)
 
+INTEGER :: ii, ind, ix, iy, iz, n
+REAL(DP) :: chtotal, r, rr, x1, y1, z1
 REAL(DP) :: chfld(100)
 
 
@@ -82,13 +84,16 @@ END SUBROUTINE calcchargdist
 SUBROUTINE evaluate(rho,aloc,psi)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 
+INTEGER :: i
+REAL(DP) :: dummy, enpol, enpol0
+REAL(DP), EXTERNAL :: energ_ions
 
 WRITE(6,*) 'Doing some postrun evaluation only...'
 
@@ -106,9 +111,15 @@ WRITE(6,*) 'Reading restart File'
 nion=0
 !     call energ_ions() ??? BF
 dummy=energ_ions()
-enerinfty=engg
+
 OPEN(834,STATUS='unknown',FILE='penerinfty')
+#if(raregas)
+enerinfty=engg
 WRITE(834,*) enerinfty
+#else
+WRITE(834,*) engg
+#endif
+
 CLOSE(834)
 
 enpol0=0D0
@@ -138,9 +149,10 @@ DO i=1,nc
   enpol=enpol+(xc(i)-xe(i))**2+(yc(i)-ye(i))**2+ (zc(i)-ze(i))**2
 END DO
 enpol=0.5D0*cspr*enpol
-#endif
-
 WRITE(6,'(a,3f17.8)') 'enii,enig,engg',enii,enig ,engg-enerinfty
+#else
+WRITE(6,'(a,3f17.8)') 'enii,enig,engg',enii,enig ,engg
+#endif
 WRITE(6,'(a,2f17.8)') 'enpol0,enpol',enpol0,enpol
 
 WRITE(6,*) 'Postrun evaluation done.'
@@ -176,15 +188,17 @@ END SUBROUTINE evaluate
 SUBROUTINE getsurfprops
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 ! calculate kinetic energy of surface ions
+#if(raregas)
+INTEGER :: i
 
 ekincsurf=0D0
 ekinesurf=0D0
 ekinksurf=0D0
 ekinsurf=0D0
-#if(raregas)
+
 DO i=1,nc
   ekincsurf=ekincsurf+(pxc(i)*pxc(i)+pyc(i)*pyc(i)+pzc(i)*pzc(i))/  &
       2D0/mion/1836D0/ame
@@ -207,13 +221,15 @@ END SUBROUTINE getsurfprops
 
 !------------------------------------------------------------
 
-SUBROUTINE getclustergeometry()
+SUBROUTINE getclustergeometry
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     calculates characteristic observables for describing
 !     the geometry of the cluster ions
 
+INTEGER :: i, ico, ion, j
+REAL(DP) :: dist, rr, sumx, sumy, sumz
 REAL(DP) :: cw(ng,3)
 
 ! get center of mass first
@@ -294,12 +310,14 @@ END SUBROUTINE getclustergeometry
 SUBROUTINE getelectrongeometry(q0,nbe)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 COMPLEX(DP), INTENT(IN)                      :: q0(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: nbe
 
+INTEGER :: i, ind, ix, iy, iz, j, k, ncount
+REAL(DP) :: rr, sum,  x1, y1, z1
 REAL(DP) :: xic(3)
 REAL(DP),ALLOCATABLE :: q1(:)
 
@@ -434,10 +452,18 @@ END SUBROUTINE getelectrongeometry
 SUBROUTINE evalprops
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !     evaluates properties at a given iteration, such like
 !     kinetic energy of ions, cores, clouds and cations
 !     as well as coupling energies etc.
+
+INTEGER :: i
+REAL(DP) :: kinenergy
+#if(raregas)
+REAL(DP) :: kinenergyc, kinenergye, kinenergyk
+#endif
+REAL(DP) :: vsum, vvsum, vsumc, vvsumc, vsume, vvsume, vsumk, vvsumk
+REAL(DP) :: vx, vy, vz, xm
 
 vsum = 0D0
 vvsum = 0D0
@@ -467,9 +493,9 @@ END DO
 
 kinenergy = 0.5D0* vvsum/xm
 
+#if(raregas)
 xm = mion ! is that correct??? check with ionmd.F
 
-#if(raregas)
 DO i=1,nc
   
 ! reset velocities by half a time step because of
@@ -519,55 +545,53 @@ END SUBROUTINE evalprops
 !------------------------------------------------------------
 
 
-!------------------------------------------------------------
+!~ !------------------------------------------------------------
 
-SUBROUTINE accumprops(code)
-!------------------------------------------------------------
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-!     accumulates properties for averaging over successive
-!     iterations
-
-
+!~ SUBROUTINE accumprops(code)
+!~ !------------------------------------------------------------
+!~ USE params
+!~ IMPLICIT NONE
+!~ !     accumulates properties for averaging over successive
+!~ !     iterations
 
 
-INTEGER, INTENT(IN) :: code
+!~ INTEGER, INTENT(IN) :: code
 
+!~ SELECT CASE(code)
+!~   CASE(0) ! (re-)set accum. variables to zero
+!~   skinenergy = 0D0
+!~   sskinenergy = 0D0
+!~   skinenergyc = 0D0
+!~   sskinenergyc = 0D0
+!~   skinenergye = 0D0
+!~   sskinenergye = 0D0
+!~   skinenergyk = 0D0
+!~   sskinenergyk = 0D0
+!~   CASE(1) ! accumulate variables
+!~   skinenergy =  skinenergy + kinenergy
+!~   sskinenergy = sskinenergy + kinenergy*kinenergy
+!~   skinenergyc =  skinenergyc + kinenergyc
+!~   sskinenergyc = sskinenergyc + kinenergyc*kinenergyc
+!~   skinenergye =  skinenergye + kinenergye
+!~   sskinenergye = sskinenergye + kinenergye*kinenergye
+!~   skinenergyk =  skinenergyk + kinenergyk
+!~   sskinenergyk = sskinenergyk + kinenergyk*kinenergyk
+!~   CASE(2) ! evaluate averages and variances
+!~   skinenergy = skinenergy / istepavg
+!~   sskinenergy = SQRT(sskinenergy / istepavg-skinenergy)
+!~   skinenergyc = skinenergyc / istepavg
+!~   sskinenergyc = SQRT(sskinenergyc / istepavg-skinenergyc)
+!~   skinenergye = skinenergye / istepavg
+!~   sskinenergye = SQRT(sskinenergye / istepavg-skinenergye)
+!~   skinenergyk = skinenergyk / istepavg
+!~   sskinenergyk = SQRT(sskinenergyk / istepavg-skinenergyk)
+!~ ! now the ss... variables are the standard deviations
+!~   CASE DEFAULT
+!~   STOP 'Error in AccumProps: wrong argument'
+!~ END SELECT
 
-IF (code == 0) THEN ! (re-)set accum. variables to zero
-  skinenergy = 0D0
-  sskinenergy = 0D0
-  skinenergyc = 0D0
-  sskinenergyc = 0D0
-  skinenergye = 0D0
-  sskinenergye = 0D0
-  skinenergyk = 0D0
-  sskinenergyk = 0D0
-ELSE IF (code == 1) THEN ! accumulate variables
-  skinenergy =  skinenergy + kinenergy
-  sskinenergy = sskinenergy + kinenergy*kinenergy
-  skinenergyc =  skinenergyc + kinenergyc
-  sskinenergyc = sskinenergyc + kinenergyc*kinenergyc
-  skinenergye =  skinenergye + kinenergye
-  sskinenergye = sskinenergye + kinenergye*kinenergye
-  skinenergyk =  skinenergyk + kinenergyk
-  sskinenergyk = sskinenergyk + kinenergyk*kinenergyk
-ELSE IF (code == 2) THEN ! evaluate averages and variances
-  skinenergy = skinenergy / istepavg
-  sskinenergy = SQRT(sskinenergy / istepavg-skinenergy)
-  skinenergyc = skinenergyc / istepavg
-  sskinenergyc = SQRT(sskinenergyc / istepavg-skinenergyc)
-  skinenergye = skinenergye / istepavg
-  sskinenergye = SQRT(sskinenergye / istepavg-skinenergye)
-  skinenergyk = skinenergyk / istepavg
-  sskinenergyk = SQRT(sskinenergyk / istepavg-skinenergyk)
-! now the ss... variables are the standard deviations
-ELSE
-  STOP 'Error in AccumProps: wrong argument'
-END IF
-
-RETURN
-END SUBROUTINE accumprops
-!------------------------------------------------------------
+!~ RETURN
+!~ END SUBROUTINE accumprops
+!~ !------------------------------------------------------------
 
 

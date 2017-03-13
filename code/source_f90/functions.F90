@@ -75,7 +75,6 @@ END FUNCTION dgaussdr
 SUBROUTINE initfunctions
 !------------------------------------------------------------
 USE params
-!~ IMPLICIT REAL(DP) (A-H,O-Z)
 IMPLICIT NONE
 REAL(DP)  ::  add0,add1,add1t
 REAL(DP)  ::  coreheight, coreradius,corewidth

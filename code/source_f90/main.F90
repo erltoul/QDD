@@ -854,7 +854,9 @@ END PROGRAM tdlda_m
 SUBROUTINE mergetabs
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+INTEGER :: i, ia, ion, ifinsp, ja, ka, nfin, nfinsp, nfinfinesp
 INTEGER,ALLOCATABLE :: ialltabfine(:)
 
 ALLOCATE(ialltabfine(kdfull2fine))
@@ -921,10 +923,19 @@ SUBROUTINE calc_projFine(cxa,cya,cza,cxg,cyg,czg,ion)
 !     but differ when computing forces.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP),PARAMETER :: fac0_12=-0.387298334621D0 ! -0.5D0*SQRT(3D0/5D0)
 
+REAL(DP),INTENT(IN) :: cxa
+REAL(DP),INTENT(IN) :: cya
+REAL(DP),INTENT(IN) :: cza
+REAL(DP),INTENT(IN) :: cxg
+REAL(DP),INTENT(IN) :: cyg
+REAL(DP),INTENT(IN) :: czg
+INTEGER, INTENT(IN) :: ion
+
+REAL(DP) :: h0_12
 !---------------------------------------------------------
 
 write(6,*) 'nxfine,nx2fine,nxyfine'
@@ -936,8 +947,7 @@ ELSE
   h0_12 = fac0_12*h0_22g(np(ion))
 ENDIF
 
-IF(ABS(h2_11g(np(ion))) + ABS(h1_22g(np(ion))) &
-   + ABS(h0_33g(np(ion))) > small) THEN
+IF(ABS(h2_11g(np(ion))) + ABS(h1_22g(np(ion)))+ ABS(h0_33g(np(ion))) > small) THEN
   CALL calpr4Fine(cxa,cya,cza,cxg,cyg,czg,ion)
 ELSE IF(ABS(h1_11g(np(ion))) + ABS(h0_22g(np(ion))) + ABS(h0_12) > small) THEN
   CALL calpr3Fine(cxa,cya,cza,cxg,cyg,czg,ion)
@@ -953,7 +963,20 @@ SUBROUTINE calpr2Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN) :: cxact
+REAL(DP),INTENT(IN) :: cyact
+REAL(DP),INTENT(IN) :: czact
+REAL(DP),INTENT(IN) :: cxg
+REAL(DP),INTENT(IN) :: cyg
+REAL(DP),INTENT(IN) :: czg
+INTEGER, INTENT(IN) :: ion
+
+INTEGER :: i, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
+REAL(DP) :: r0, r1, radion, rfac, rr, x, y, z, xion, yion, zion
+REAL(DP) :: gamfac, proj, sum1, sum4
 
 WRITE(*,*) ' calpr2Fine'
 dxfine=dx/2
@@ -976,7 +999,6 @@ icrsz = 2*nint(radion/dzfine)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dzfine
   zion = z-czact
@@ -1083,7 +1105,20 @@ SUBROUTINE calpr3Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN) :: cxact
+REAL(DP),INTENT(IN) :: cyact
+REAL(DP),INTENT(IN) :: czact
+REAL(DP),INTENT(IN) :: cxg
+REAL(DP),INTENT(IN) :: cyg
+REAL(DP),INTENT(IN) :: czg
+INTEGER, INTENT(IN) :: ion
+
+INTEGER :: i, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
+REAL(DP) :: r0, r1, radion, rfac, rr, x, y, z, xion, yion, zion
+REAL(DP) :: gamfac, proj, xnorm
 
 WRITE(*,*) ' in calpr3Fine'
 
@@ -1102,7 +1137,6 @@ icrsz = 2*nint(radion/dzfine)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dzfine
   zion = z-czact
@@ -1202,7 +1236,20 @@ SUBROUTINE calpr4Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 !     ****************************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN) :: cxact
+REAL(DP),INTENT(IN) :: cyact
+REAL(DP),INTENT(IN) :: czact
+REAL(DP),INTENT(IN) :: cxg
+REAL(DP),INTENT(IN) :: cyg
+REAL(DP),INTENT(IN) :: czg
+INTEGER, INTENT(IN) :: ion
+
+INTEGER :: i, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
+REAL(DP) :: r0, r1, r2, radion, rfac, rr, x, y, z, xion, yion, zion
+REAL(DP) :: gamfac, proj, xnorm
 
 dxfine=dx/2
 dyfine=dy/2
@@ -1222,7 +1269,6 @@ icrsz = 2*nint(radion/dzfine)
 
 !  compute projectors on these auxiliary grid:
 ind=0
-knd=0
 DO i3=0,icrsz
   z = (i3l+i3)*dzfine
   zion = z-czact

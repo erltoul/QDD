@@ -26,11 +26,16 @@ SUBROUTINE init_parallele()
 !     The actual node 'myn' is communicated via common.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 #if(parayes||simpara||paraworld)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+INTEGER :: nb
+#if(paraworld)
+INTEGER :: level,mpi_world_dup, new_comm, nrank
 #endif
+#endif
+INTEGER :: nprocs
 
 !------------------------------------------------------------------
 
@@ -99,12 +104,14 @@ SUBROUTINE comm_inputparams()
 
 USE params
 USE kinetic
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: ii, ic, nod
+#if(raregas)
+INTEGER :: i, j
+#endif
 !------------------------------------------------------------------
-
 
 
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
@@ -151,7 +158,7 @@ CALL i_scatter(jangabso)
 CALL i_scatter(jgeomel)
 CALL i_scatter(jelf)
 CALL i_scatter(jstinf)
-CALL i_scatter(impactb)
+!~ CALL i_scatter(impactb)
 CALL i_scatter(izforcecorr)
 CALL i_scatter(ntref)
 CALL i_scatter(iangabso)
@@ -181,9 +188,9 @@ CALL i_scatter(iscatterelectron)
 CALL pi_scatter(drcharges)
 CALL pi_scatter(tempion)
 CALL pi_scatter(projcharge)
-CALL pi_scatter(projvelo)
-CALL pi_scatter(projini)
-CALL pi_scatter(pimpactb)
+!~ CALL pi_scatter(projvelo)
+!~ CALL pi_scatter(projini)
+!~ CALL pi_scatter(pimpactb)
 CALL pi_scatter(dinmargin)
 CALL pi_scatter(delomega)
 CALL pi_scatter(angthetal)
@@ -280,7 +287,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(myforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(mzforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
-    CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+!~     CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(idenspl,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(ekmat,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(nfix,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -326,7 +333,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dy,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
-
+#if(raregas)
     CALL mpi_send(radjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(surjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(bbeta,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -353,20 +360,18 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(me,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(mkat,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
-#if(raregas)
     DO i=1,5
       DO j=1,5
         CALL mpi_send(isrtyp(i,j),1,mpi_integer,nod,2, mpi_comm_world,ic)
       END DO
     END DO
-#endif
-    
+
     CALL mpi_send(shiftx,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(shifty,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(shiftz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
     CALL mpi_send(iaxis,1,mpi_integer,nod,2, mpi_comm_world,ic)
-    
+#endif
   END DO
   
 ELSE IF(myn /= 0 .AND. knode /= 1)THEN
@@ -455,8 +460,8 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(mzforce,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   
-  CALL mpi_recv(tempion2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+!~   CALL mpi_recv(tempion2,1,mpi_double_precision,0,mpi_any_tag,  &
+!~       mpi_comm_world,is,ic)
   CALL mpi_recv(idenspl,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(ekmat,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
@@ -491,10 +496,11 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(nclust,1,mpi_integer,0,2,mpi_comm_world,is,ic)
   
   CALL mpi_recv(nion,1,mpi_integer,0,2,mpi_comm_world,is,ic)
+#if(raregas)
   CALL mpi_recv(nc,1,mpi_integer,0,2,mpi_comm_world,is,ic)
   CALL mpi_recv(NE,1,mpi_integer,0,2,mpi_comm_world,is,ic)
   CALL mpi_recv(nk,1,mpi_integer,0,2,mpi_comm_world,is,ic)
-  
+#endif
   CALL mpi_recv(scaleclust,1,mpi_double_precision,0,2, mpi_comm_world,is,ic)
   
   CALL mpi_recv(charge,1,mpi_double_precision,0,2, mpi_comm_world,is,ic)
@@ -537,7 +543,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(dpolz,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
-  
+#if(raregas)
   CALL mpi_recv(surftemp,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(sigmac,1,mpi_double_precision,0,mpi_any_tag,  &
@@ -560,14 +566,12 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(mkat,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   
-#if(raregas)
   DO i=1,5
     DO j=1,5
       CALL mpi_recv(isrtyp(i,j),1,mpi_integer,0,mpi_any_tag,  &
           mpi_comm_world,is,ic)
     END DO
   END DO
-#endif
   
   CALL mpi_recv(shiftx,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
@@ -577,7 +581,7 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   
   CALL mpi_recv(iaxis,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  
+#endif  
 END IF
 
 RETURN
@@ -594,10 +598,10 @@ SUBROUTINE comm_ionconfig()
 !     Communicates ion configuration from node "0" to other nodes.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: ic, ion, nod
 !------------------------------------------------------------------
 
 IF(myn == 0 .AND. knode /= 1)THEN
@@ -677,63 +681,63 @@ SUBROUTINE comm_periodic()
 !     Communicates periodic table from node "0" to other nodes.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: nod
 !------------------------------------------------------------------
 
 IF(myn == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
-    CALL mpi_send(ch,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(amu,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(cc1,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(cc2,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(crloc,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(crs,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(chs,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(chg1,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(chg2,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(sgm1,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(sgm2,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(r0g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(r1g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(r2g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h0_11g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h0_22g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h0_33g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h1_11g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h1_22g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h2_11g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(h0_12g,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(radiong,185,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(ch,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(amu,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(cc1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(cc2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(crloc,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(crs,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(chs,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(chg1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(chg2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(sgm1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(sgm2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(r0g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(r1g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(r2g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h0_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h0_22g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h0_33g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h1_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h1_22g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h2_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(h0_12g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(radiong,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
   END DO
   
 ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
-  CALL mpi_recv(ch,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(amu,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(cc1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(cc2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(crloc,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(crs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(chs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(chg1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(chg2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(sgm1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(sgm2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(r0g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(r1g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(r2g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h0_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h0_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h0_33g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h1_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h1_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h2_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(h0_12g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(radiong,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,ic)
+  CALL mpi_recv(ch,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(amu,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(cc1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(cc2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(crloc,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(crs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(chs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(chg1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(chg2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(sgm1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(sgm2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(r0g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(r1g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(r2g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h0_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h0_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h0_33g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h1_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h1_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h2_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(h0_12g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(radiong,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
   
 END IF
 
@@ -751,10 +755,10 @@ SUBROUTINE comm_simann()
 !     Communicates parameters for simulated annealing  (??)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: n, nod
 !------------------------------------------------------------------
 
 n = myn
@@ -762,62 +766,62 @@ n = myn
 IF(n == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
-    CALL mpi_send(ionsin,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(iknow,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(facann,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nrun,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nloop1,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nloop2,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(cptemp,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(ncsim,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(errtot,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(ncon,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(ionsin,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(iknow,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(facann,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(nrun,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(nloop1,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(nloop2,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(cptemp,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(ncsim,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(errtot,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(ncon,1,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,icode)
   END DO
   
 ELSE IF(n /= 0 .AND. knode /= 1)THEN
   
-  CALL mpi_recv(ionsin,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(iknow,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(ionsin,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+  CALL mpi_recv(iknow,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
   CALL mpi_recv(facann,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(nrun,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(nloop1,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(nloop2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
+  CALL mpi_recv(nrun,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+  CALL mpi_recv(nloop1,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+  CALL mpi_recv(nloop2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
   CALL mpi_recv(cptemp,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(delpos,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(ERR,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(errks0,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(trfac2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(prfac2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(errsim,1,1,mpi_double_precision,0,  &
-      mpi_any_tag,mpi_comm_world,is,ic)
-  CALL mpi_recv(ncsim,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+      mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(ncsim,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
   CALL mpi_recv(errtot,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(ncon,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
+  CALL mpi_recv(ncon,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
   CALL mpi_recv(erfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(trfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
   CALL mpi_recv(prfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+      mpi_comm_world,is,icode)
+  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
 END IF
 
 RETURN
@@ -834,7 +838,7 @@ SUBROUTINE pi_allreduce(rin,rout,kdf,id,id1,id2,ic)
 !       *****************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 
 
@@ -858,7 +862,7 @@ SUBROUTINE pi_allgather(rin,mint,nt,rout,kdf)
 !       *****************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 
 
@@ -869,7 +873,7 @@ REAL, INTENT(IN OUT)                     :: rout(kdf)
 INTEGER, INTENT(IN OUT)                  :: kdf
 
 CALL mpi_allgather(rin(mint),nt,mpi_double_precision,  &
-    rout,nt,mpi_double_precision,mpi_comm_world,ic)
+    rout,nt,mpi_double_precision,mpi_comm_world,icode)
 RETURN
 END SUBROUTINE pi_allgather
 
@@ -880,7 +884,7 @@ SUBROUTINE i_allreduce(rin,rout,kdf,id,id1,id2,ic)
 !       *****************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 
 
@@ -893,7 +897,7 @@ INTEGER, INTENT(IN OUT)                  :: id2
 INTEGER, INTENT(IN OUT)                  :: ic
 
 INTEGER :: is(mpi_status_size)
-
+INTEGER :: i, it, j, l, mx, n, nprocs, nt
 CALL  mpi_comm_size(mpi_comm_world,nprocs,ic)
 IF(nprocs /= kstate) STOP
 CALL  mpi_comm_rank(mpi_comm_world,n,ic)
@@ -929,7 +933,7 @@ SUBROUTINE i_allgather(rin,mint,ntr,rout,kdf)
 !       *****************************
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 
 REAL, INTENT(IN)                         :: rin(kdf)
@@ -939,7 +943,7 @@ REAL, INTENT(OUT)                        :: rout(kdf)
 INTEGER, INTENT(IN OUT)                  :: kdf
 INTEGER :: is(mpi_status_size)
 
-
+INTEGER :: i, it, j, l, maxr, minr, n,  nax, nin, nt
 
 CALL  mpi_comm_rank(mpi_comm_world,n,icode)
 
@@ -991,12 +995,13 @@ SUBROUTINE pi_scatter(buf)
 !       *****************************
 
 USE params
-!IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
-
 REAL,INTENT(IN OUT) :: buf
+
+INTEGER :: ic, nod
 
 IF(myn == 0 .AND. knode /= 1)THEN
   DO nod=1,knode-1
@@ -1016,12 +1021,13 @@ SUBROUTINE i_scatter(buf)
 !       *****************************
 
 USE params
-!IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
-
 INTEGER,INTENT(IN OUT) :: buf
+
+INTEGER :: ic, nod
 
 IF(myn == 0 .AND. knode /= 1)THEN
   DO nod=1,knode-1
@@ -1051,11 +1057,13 @@ SUBROUTINE prispe_parallele(iunit,it)
 
 USE params
 USE util, ONLY:safeopen
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: iunit
 
 INCLUDE 'mpif.h'
+
+INTEGER :: i, ic, it, k, n, nact, nb, nod, nod2
 INTEGER :: is(mpi_status_size)
 REAL(DP) :: prisav(kstate,5)
 REAL(DP) :: prisav_all(ksttot,5)
@@ -1144,11 +1152,11 @@ SUBROUTINE init_boxpara()
 !     and pi_gatherv.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
-INTEGER :: ntranche,rest,nprocs
+INTEGER :: i, ntranche,rest,nprocs
 !------------------------------------------------------------------
 
 CALL mpi_comm_rank(mpi_comm_world,myn,icode)
@@ -1185,14 +1193,17 @@ SUBROUTINE pi_scatterv(sendbuf,N,recvbuf,sizenod,ic)
 !     process 'recvbuf', which size is stored in the array 'lengnod'.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
 INTEGER, INTENT(IN OUT)          :: ic
-INTEGER, INTENT(IN)              :: sizenod,N
+INTEGER, INTENT(IN)              :: sizenod
+INTEGER, INTENT(IN)              :: N
 REAL(DP), INTENT(IN OUT)         :: sendbuf(N)
 REAL(DP), INTENT(IN OUT)         :: recvbuf(sizenod)
+
+
 
 IF (N /= sum(lengnod)) &
      STOP 'wrong size for sender array in pi_scatterv'
@@ -1216,12 +1227,13 @@ SUBROUTINE pi_allgatherv(sendbuf,sizenod,recvbuf,N,ic)
 !     processes.
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
 INTEGER, INTENT(IN OUT)          :: ic
-INTEGER, INTENT(IN)              :: sizenod,N
+INTEGER, INTENT(IN)              :: sizenod
+INTEGER, INTENT(IN)              :: N
 REAL(DP), INTENT(IN OUT)         :: sendbuf(nxyz)
 REAL(DP), INTENT(IN OUT)         :: recvbuf(N)
 

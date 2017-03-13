@@ -31,10 +31,13 @@ SUBROUTINE schmidt(q0)
 !     serial version of Schmidt orthogonalization
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 
+
+INTEGER :: i, imin, isav, n, nbe, nbes, ncc, ncs
+REAL(DP) :: cs, emin
 REAL(DP) :: eord(kstate)
 INTEGER :: isort(kstate)
 
@@ -125,7 +128,7 @@ SUBROUTINE schmidt(q0)
 !     parallel version of Schmidt orthogonalization
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 REAL(DP), INTENT(IN OUT)         :: q0(kdfull2,kstate)
 
 
@@ -134,7 +137,7 @@ INTEGER :: is(mpi_status_size)
 
 
 REAL(DP), ALLOCATABLE :: q3(:)         ! workspace for foreign w.f.
-INTEGER :: isp3
+INTEGER :: iend, isp3, nbe1, nbe2, nod1, nod2 
 
 !     fields for some recursive algorithm, this is a dummy
 !     operation which serves to inhibit loop unrolling
@@ -166,7 +169,7 @@ DO nod2=0,myn-1
       CALL flush()
     END IF
     CALL mpi_recv(q3,kdfull2, mpi_double_precision,nod2,nbe2*2+1,  &
-        mpi_comm_world,is,ic)
+        mpi_comm_world,is,icode)
     isp3 = ispin_node(nbe2,nod2)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: received myn,nbe2,nod2,tag=',  &
@@ -216,7 +219,7 @@ DO nbe1=1,nstate_node(myn)
       CALL flush()
     END IF
     CALL mpi_ssend(q0(1,nbe1),kdfull2,mpi_double_precision,  &
-        nod2,nbe1*2+1,mpi_comm_world,ic)
+        nod2,nbe1*2+1,mpi_comm_world,icode)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: sent myn,nbe1,nod2,tag=',  &
           myn,nbe1,nod2,nbe1*2+1
@@ -235,12 +238,12 @@ IF(tsync) THEN
   IF(myn == knode-1) THEN
     iend = 1
     DO nod2=0,knode-2
-      CALL mpi_bsend(iend,1,mpi_integer, nod2,1,mpi_comm_world,ic)
+      CALL mpi_bsend(iend,1,mpi_integer, nod2,1,mpi_comm_world,icode)
       IF(ttest) WRITE(*,*) ' terminator sent myn=',myn
     END DO
   ELSE
     CALL mpi_recv(iend,1,mpi_integer,knode-1,  &
-        mpi_any_tag,mpi_comm_world,is,ic)
+        mpi_any_tag,mpi_comm_world,is,icode)
     IF(ttest) WRITE(*,*) ' terminator received myn,iend=',myn,iend
   END IF
 END IF
@@ -268,11 +271,13 @@ SUBROUTINE normalize(qact)
 !     normalizes real wavefunction on 'qact'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: qact(kdfull2)
 
+INTEGER :: i
+REAL(DP) :: cs
 
 !*********************************************************
 
@@ -305,12 +310,13 @@ SUBROUTINE orthogonalize(qact,qorth)
 !     orthogonalizes real wavefunction 'qact' on  'qorth'
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: qact(kdfull2)
 REAL(DP), INTENT(IN)                         :: qorth(kdfull2)
 
-
+INTEGER :: i
+REAL(DP) :: cs
 
 !*********************************************************
 
@@ -343,12 +349,15 @@ SUBROUTINE cschmidt(q0)
 !     serial version of Schmidt orthogonalization for complex wf's
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
 
 REAL(DP) :: eord(kstate)
 INTEGER :: isort(kstate)
+
+INTEGER :: i, imin, isav, n, nbe, nbes, ncc, ncs
+REAL(DP) :: emin
 COMPLEX(DP) :: cs
 
 LOGICAL, PARAMETER :: tord=.false.

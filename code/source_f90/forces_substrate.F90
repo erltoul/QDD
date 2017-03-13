@@ -24,14 +24,18 @@
 SUBROUTINE getforceelgsm(iflag,rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 INTEGER, INTENT(IN)                      :: iflag
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+
+INTEGER :: ibegin, iend,  ii, ii2, ind
+REAL(DP) :: prefc
 REAL(DP) ::  rhotmp(2*kdfull2)
 
-EXTERNAL v_soft,gauss,dvsdr,dgaussdr
+INTEGER, EXTERNAL :: iconvlongtoshort, iptyp, isoutofbox
+REAL(DP), EXTERNAL :: v_soft,gauss,dgaussdr
 
 !     first Coulomb force from cluster-el density
 !     using pseudo-densities if desired
@@ -46,37 +50,25 @@ IF (nclust > 0) THEN
     iend = nc+NE+nk
   END IF
   
-  
   DO ii=ibegin,iend
     
-    
     CALL getparas(ii)
-
     IF (ipseudo == 0) THEN
-      
       IF (imobtmp /= 0) THEN
-        
         IF(idielec == 1) THEN
-          
           DO ind=1,2*kdfull2
             rhotmp(ind)=rho(ind)
           END DO
-          
           CALL addimage(rho,1)
-          
         END IF
-        
         CALL foldgradfunc(rho,v_soft,rvectmp(1),rvectmp(2),  &
             rvectmp(3),sq2*sigtmp)
 !                  call dIntFieldFunc(rho,dVsdr,rVecTmp(1),rVecTmp(2),
 !     &                           rVecTmp(3),SQ2*sigTmp)
-        
         IF(idielec == 1) THEN
-          
           DO ind=1,2*kdfull2
             rho(ind)=rhotmp(ind)
           END DO
-          
         END IF
         
         CALL addforce(ii,rvectmp(1)*e2*chgtmp,  &
@@ -86,17 +78,12 @@ IF (nclust > 0) THEN
 ! and we actually need electronic charge density
 ! which is negative...so its minus sign cancels
 ! with the minus sign from - nabla V
-        
+
       END IF
-      
-      
     ELSE ! ipseudo = 1
       
-      
       IF (imobtmp /= 0) THEN
-        
         IF (isoutofbox(rvectmp(1),rvectmp(2),rvectmp(3))  == 2) CYCLE
-        
         
         CALL foldgradfunconsubgrid(chpcoul,gauss,rvectmp(1),  &
             rvectmp(2),rvectmp(3),sigtmp*sq2)
@@ -107,10 +94,7 @@ IF (nclust > 0) THEN
 ! no factor e2, because it is already in the
 ! field chpcoul()
         CALL addforce(ii,prefc*rvectmp(1),prefc*rvectmp(2), prefc*rvectmp(3))
-        
       END IF
-      
-      
     END IF
     
     ii2 = iconvlongtoshort(ii)
@@ -134,12 +118,18 @@ END SUBROUTINE getforceelgsm
 SUBROUTINE getforcenagsm(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
 INTEGER, INTENT(IN)                      :: iflag
+
+INTEGER :: ibegin, iend, ii, ii2, jj
+REAL(DP) :: dist, radfor, smix1, smix2, sigsig, xr, yr, zr
 REAL(DP) :: dummy(kdfull2*2)
+
+INTEGER, EXTERNAL :: iconvlongtoshort, iptyp, isoutofbox
+REAL(DP), EXTERNAL :: dv_softdr
 
 IF (iflag /= 0) THEN ! only force on valences
   ibegin = nc+1
@@ -239,14 +229,20 @@ END SUBROUTINE getforcenagsm
 SUBROUTINE getforcegsmgsm(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
 INTEGER, INTENT(IN)                      :: iflag
+
+INTEGER :: ii, ii2, jj, jj2
+REAL(DP) :: cml, chi, dist, dist2, radfor, si, smix, sigsig, xi, xr, yi, yr, zi, zr
 REAL(DP) :: dummy(2*kdfull2)
 
-cml = 0.541382D0
+INTEGER, EXTERNAL :: iconvlongtoshort, ismobile, iptyp
+REAL(DP), EXTERNAL :: dv_softdr
+
+cml = 0.541382_DP
 
 IF (ibh == 0) THEN
   
@@ -868,17 +864,20 @@ END SUBROUTINE getforcegsmgsm
 SUBROUTINE getvdwforce(rho)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 ! THIS ONLY WORKS FOR THE ARGON CASE!!!
 
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
+INTEGER :: i, ico, ii, ind, isign, ix, iy, iz
+REAL(DP) :: chpvdw, ds, r2, rr, x1, y1, z1
 !      dimension frhop(ngpar,3),frhom(ngpar,3)
 REAL(DP) :: ri(3)
 REAL(DP) :: xcsave(ngpar),ycsave(ngpar),zcsave(ngpar)
 REAL(DP) :: f(ngpar,3)
 
+REAL(DP), EXTERNAL :: v_vdw
 
 DO i=1,nc
   xcsave(i) = xc(i)
@@ -963,29 +962,23 @@ RETURN
 END SUBROUTINE getvdwforce
 !------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
 !------------------------------------------------------------
 
 SUBROUTINE getforcegsmgsm1(iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 
 INTEGER, INTENT(IN)                      :: iflag
+
+INTEGER :: ii, ii2, imi, iw, jj, jj2, jw
+REAL(DP) :: dist, dist2, chi, radfor, si, sigsig, smix, xi, yi, zi, xr, yr, zr
 REAL(DP) :: dummy(2*kdfull2)
 
-
-
+INTEGER,EXTERNAL ::  iconvlongtoshort, iptyp
+REAL(DP), EXTERNAL :: dv_softdr
 
 DO ii=1,nc+NE+nk      ! mobile and fixed
   
@@ -1060,11 +1053,9 @@ DO ii=1,nc+NE+nk      ! mobile and fixed
     
     CALL getshortforce(iptyp(iw),iptyp(jw),ii2,jj2,dummy,0)
     
-    
   END DO
   
 END DO
-
 
 
 RETURN
@@ -1076,7 +1067,7 @@ END SUBROUTINE getforcegsmgsm1
 SUBROUTINE getforces_clust2cores(rho,iflag)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !      GSM means
 !     a particle described by the Gaussian Shell Model, i.e.
@@ -1099,11 +1090,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: iflag
 
-
-!      write(6,*) 'Entering getforces_clust2cores'
-
-
-
+INTEGER :: ii, idielecsave, ipseudosave
 
 IF (iflag == 0) THEN
   DO ii=1,nion
@@ -1162,68 +1149,97 @@ END SUBROUTINE getforces_clust2cores
 SUBROUTINE shiftpos(ityp,ico,ds)
 !------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-IF (ityp == 1) THEN
-  IF (ico == 1) THEN
-    DO i=1,nc
-      xc(i) = xc(i) + ds
-    END DO
-  ELSE IF (ico == 2) THEN
-    DO i=1,nc
-      yc(i) = yc(i) + ds
-    END DO
-  ELSE
-    DO i=1,nc
-      zc(i) = zc(i) + ds
-    END DO
-  END IF
-ELSE IF(ityp == 2) THEN
-  IF (ico == 1) THEN
-    DO i=1,NE
-      xe(i) = xe(i) + ds
-    END DO
-  ELSE IF (ico == 2) THEN
-    DO i=1,NE
-      ye(i) = ye(i) + ds
-    END DO
-  ELSE
-    DO i=1,NE
-      ze(i) = ze(i) + ds
-    END DO
-  END IF
-ELSE IF(ityp == 3) THEN
-  IF (ico == 1) THEN
-    DO i=1,nk
-      xk(i) = xk(i) + ds
-    END DO
-  ELSE IF (ico == 2) THEN
-    DO i=1,nk
-      yk(i) = yk(i) + ds
-    END DO
-  ELSE
-    DO i=1,nk
-      zk(i) = zk(i) + ds
-    END DO
-  END IF
-ELSE IF(ityp == 4) THEN
-  IF (ico == 1) THEN
-    DO i=1,nion
-      cx(i) = cx(i) + ds
-    END DO
-  ELSE IF (ico == 2) THEN
-    DO i=1,nion
-      cy(i) = cy(i) + ds
-    END DO
-  ELSE
-    DO i=1,nion
-      cz(i) = cz(i) + ds
-    END DO
-  END IF
-ELSE
-  STOP 'Error in shiftPos'
-END IF
+INTEGER, INTENT(IN) :: ityp  ! select : cores / cation / shells /ions clusters
+                             !             1       2       3       4
+INTEGER, INTENT(IN) :: ico   ! select coordinate : x / y / z
+                             !                     1   2   3
+REAL(DP), INTENT(IN) :: ds
+                              
+INTEGER :: i
 
+SELECT CASE(ityp)
+!--------
+  CASE(1) 
+!  Cores
+    SELECT CASE(ico)
+      CASE(1) ! x
+        DO i=1,nc
+          xc(i) = xc(i) + ds
+        END DO  
+      CASE(2) ! y
+        DO i=1,nc
+          yc(i) = yc(i) + ds
+        END DO
+      CASE(3) ! z
+        DO i=1,nc
+          zc(i) = zc(i) + ds
+        END DO
+      CASE DEFAULT
+        STOP 'Error in shiftPos'
+    END SELECT
+!--------
+  CASE(2)
+! Cations
+    SELECT CASE(ico)
+      CASE(1) ! x
+        DO i=1,NE
+          xe(i) = xe(i) + ds
+        END DO
+      CASE(2) ! y
+        DO i=1,NE
+          ye(i) = ye(i) + ds
+        END DO
+      CASE(3) !z
+        DO i=1,NE
+          ze(i) = ze(i) + ds
+        END DO
+      CASE DEFAULT
+        STOP 'Error in shiftPos'
+    END SELECT
+!--------
+  CASE(3)
+! Shells
+    SELECT CASE(ico)
+      CASE(1) ! x
+        DO i=1,nk
+          xk(i) = xk(i) + ds
+        END DO
+      CASE(2) ! y
+        DO i=1,nk
+          yk(i) = yk(i) + ds
+        END DO
+      CASE(3) !z
+        DO i=1,nk
+          zk(i) = zk(i) + ds
+        END DO
+      CASE DEFAULT
+        STOP 'Error in shiftPos'
+    END SELECT
+!--------
+  CASE(4)
+! Ions clusters
+    SELECT CASE(ico)
+      CASE(1) ! x
+        DO i=1,nion
+          cx(i) = cx(i) + ds
+        END DO
+      CASE(2) ! y
+        DO i=1,nion
+          cy(i) = cy(i) + ds
+        END DO
+      CASE(3) ! z
+        DO i=1,nion
+          cz(i) = cz(i) + ds
+        END DO
+      CASE DEFAULT
+        STOP 'Error in shiftPos'
+    END SELECT
+!--------
+  CASE DEFAULT
+    STOP 'Error in shiftPos'
+END SELECT
 
 RETURN
 END SUBROUTINE shiftpos
@@ -1236,9 +1252,12 @@ SUBROUTINE madelung
 !     calculates force on particle due to electrostatic
 !     external Madelung potential (or pseudoparticles)
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-EXTERNAL v_soft,gauss
+INTEGER :: i
+REAL(DP) :: prefac, xi, yi, zi
+
+REAL(DP), EXTERNAL :: v_soft, gauss
 
 
 !      write(6,*) 'before: ', fx(1),fy(1),fz(1)
@@ -1335,7 +1354,7 @@ SUBROUTINE adjustdip(rho,it)
 !----------------------------------------------------------------------------
 USE params
 USE util, ONLY:prifld
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)        :: rho(2*kdfull2)
 INTEGER,INTENT(IN)              :: it
@@ -1345,10 +1364,15 @@ REAL(DP),PARAMETER :: delmrmax=2D-6
 INTEGER,PARAMETER :: maxadjust=200
 LOGICAL,PARAMETER :: ttest=.false.
 
+INTEGER :: i, icoun, iit, irar, iter
+REAL(DP) :: delmr, delmrold,  delt
+REAL(DP) ::  dmspox, dmspoy, dmspoz, dmsfx, dmsfy, dmsfz, dmsfxold, dmsfyold , dmsfzold 
+REAL(DP) ::  posox,  posoy, posoz, rmaxpol, rrrr
 REAL(DP) :: delmr_iter(maxadjust)
 REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
 LOGICAL::converged=.false.        ! will be true if the loop exits before reaching maxadjust
 
+REAL(DP), EXTERNAL :: rgetmaxpol, rgetmeanzpol
 
 IF (NE == 0) RETURN
 
@@ -1375,7 +1399,7 @@ END DO
 delmr=1.0D0
 delmrold=delmr
 
-DO it=1,maxadjust
+DO iter=1,maxadjust
   IF(SQRT(delmr) < delmrmax) THEN
     converged=.true.
     EXIT
@@ -1436,8 +1460,8 @@ DO it=1,maxadjust
   END DO
 !         delmr=delmr/ne
   delmr=delmr/icoun
-  delmr_iter(it) = delmr
-  IF(ttest)  write(6,*) ' it,delmr  = ',it,sqrt(delmr)
+  delmr_iter(iter) = delmr
+  IF(ttest)  write(6,*) ' it,delmr  = ',iter,sqrt(delmr)
   
 !         if (delmr.gt.delmrold) stop 'adjustdip not converging'
 !         if (delmr.gt.delmrold) goto 15
@@ -1448,7 +1472,7 @@ END DO
 
 IF((delmr.GT.delmrmax*10D0).AND. .NOT. converged ) THEN
   WRITE(*,'(a)')  ' Iteration DELMR:'
-  WRITE(*,'(i5,1pg13.5)')  (it,delmr_iter(it),it=1,maxadjust)
+  WRITE(*,'(i5,1pg13.5)')  (iter,delmr_iter(iter),iter=1,maxadjust)
   STOP 'routine adjustdip did not converge'
 ENDIF
 
@@ -1563,13 +1587,17 @@ SUBROUTINE adjustdipz(rho,it)
 !     in static iteration (with jdip=1 in dynamic case)
 !----------------------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)    ::  rho(2*kdfull2)
 INTEGER,INTENT(IN)          ::  it
 
+INTEGER :: iter, icoun, irar
+REAL(DP) :: delmr, delmrold
+REAL(DP) ::rmaxpol, rrrr, posox, posoy, posoz
 COMPLEX(DP) :: psidummy(1)
 
+REAL(DP) , EXTERNAL :: rgetmaxpol, rgetmeanzpol
 WRITE(6,*) 'Entering adjustdipz'
 
 
@@ -1578,7 +1606,7 @@ WRITE(6,*) 'Entering adjustdipz'
 delmr=1.0D0
 delmrold=delmr
 
-DO it=1,200
+DO iter=1,200
   IF(SQRT(delmr) < 2D-5) EXIT
   delmr=0D0
 !     compute forces of valence clouds

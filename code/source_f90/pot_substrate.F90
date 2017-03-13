@@ -32,7 +32,7 @@ SUBROUTINE pseudosoft_substrate(pseudorho,potsave)
 !--------------------------------------------------------------
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !      dimension rho(2*kdfull2)
 
 REAL(DP), INTENT(IN OUT)                     :: pseudorho(kdfull2)
@@ -41,8 +41,9 @@ REAL(DP), INTENT(IN OUT)                     :: potsave(kdfull2)
 
 !      dimension potshort(kdfull2)
 !      dimension ri(3)
-
-EXTERNAL v_soft
+INTEGER :: i
+INTEGER, EXTERNAL :: isoutofbox
+REAL(DP), EXTERNAL :: v_soft
 
 !------------------------------------------------------------------
 
@@ -116,9 +117,13 @@ END SUBROUTINE pseudosoft_substrate
 SUBROUTINE getvdwpot
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+INTEGER :: ind, is, ix, iy, iz
+REAL(DP) :: rr, x1, y1, z1
 REAL(DP) :: ri(3)
+
+REAL(DP), EXTERNAL :: v_vdw
 
 DO ind=1,nxyz
   potvdw(ind) = 0D0
@@ -160,17 +165,17 @@ END SUBROUTINE getvdwpot
 SUBROUTINE addgsmpot(field,iswitch)
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 !   add electrostatic potentials from GSM particles to potion(kdfull2)
 !     iswitch = 0 --> calculate potential of fixed ions
 !               1 --> calculate potential of mobile ions
 
-
-
 REAL(DP), INTENT(OUT)                        :: field(kdfull2)
 INTEGER, INTENT(IN)                      :: iswitch
 
-
+INTEGER :: ind, is, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, sigc, sigk, sigv, x1, y1, z1
+REAL(DP), EXTERNAL :: v_soft
 !      if (nclust.eq.0) return
 
 IF(idielec == 0) THEN
@@ -557,10 +562,10 @@ SUBROUTINE addgsmdensity(field,xx,yy,zz,sigm,ccharge,iparit)
 !     density to field on subgrid centered at xx,yy,zz
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
-REAL(DP), INTENT(OUT)                        :: field(kdfull2)
+REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
@@ -568,8 +573,9 @@ REAL(DP), INTENT(IN)                         :: sigm
 REAL(DP), INTENT(IN)                         :: ccharge
 INTEGER, INTENT(IN)                          :: iparit
 
-INTEGER :: conv3to1
-INTEGER :: getnearestgridpoint
+INTEGER :: ind, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
+INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint
 
 
 ind = getnearestgridpoint(xx,yy,zz)
@@ -608,13 +614,13 @@ END SUBROUTINE addgsmdensity
 SUBROUTINE addgsmdensities(field)
 !************************************************************
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
+REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
 
-
-REAL(DP), INTENT(OUT)                        :: field(kdfull2)
-
-INTEGER :: conv3to1
+INTEGER :: ind, is, ix, iy, iz
+REAL(DP) :: rr, rx, ry, rz, sigc, sigv, sigk,  x1, y1, z1
+INTEGER,EXTERNAL :: conv3to1
 
 DO is=1,nc
   
@@ -736,11 +742,15 @@ SUBROUTINE calc_frho(rho)
 ! for computation of Van der Waals potential and forces
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 
+INTEGER :: i, ico, ind, is, ix, iy, iz
+REAL(DP) :: r, r2, rhodvsdr, sgm,  x1, y1, z1
 REAL(DP) :: ri(3)
+
+REAl(DP), EXTERNAL:: dvsdr
 
 DO is=1,nc
   DO i=1,3
@@ -791,7 +801,7 @@ END SUBROUTINE calc_frho
 
 !     ************************************
 
-FUNCTION v_vdw(ri,r,is,fac)
+REAL(DP) FUNCTION v_vdw(ri,r,is,fac)
 
 !     ************************************
 
@@ -799,16 +809,20 @@ FUNCTION v_vdw(ri,r,is,fac)
 
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                 :: ri(3)
-REAL(DP), INTENT(IN OUT)                 :: r
+REAL(DP), INTENT(IN)                 :: ri(3)
+REAL(DP), INTENT(IN)                 :: r
 INTEGER, INTENT(IN)                  :: is
 REAL(DP), INTENT(IN)         :: fac
 
 
 ! frho is a vector of configuration space
+INTEGER :: ico
+REAL(DP) :: dvsdrtmp, elnum, sgm
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
+
+REAL(DP), EXTERNAL :: dvsdr
 
 elnum = nclust*1D0
 
@@ -832,11 +846,11 @@ END FUNCTION v_vdw
 
 !----V_Ar_el_core--------------------------------------------------------------
 
-FUNCTION v_ar_el_core(r)
+REAL(DP) FUNCTION v_ar_el_core(r)
 !     corepotential of Ar (sfort-range part)
 !---------------------------------------------------------------------------
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                     :: r
@@ -844,26 +858,25 @@ REAL(DP), PARAMETER :: coreheight=0.47D0
 REAL(DP), PARAMETER :: coreradius=2.2D0
 REAL(DP), PARAMETER :: corewidth=1.6941D0
 
-v_ar_el_core = -e2*coreheight*(1.0D0+EXP(corewidth*(r-coreradius)))**(-1.)
+v_ar_el_core = -e2*coreheight*(1.0D0+EXP(corewidth*(r-coreradius)))**(-1)
 
 RETURN
 END FUNCTION v_ar_el_core
 
 !-----V_Ar_el----------------------------------------------------------
 
-FUNCTION v_ar_el(r)
-
+REAL(DP) FUNCTION v_ar_el(r)
+USE params
+IMPLICIT NONE
 !     Ar electron potential
 !     from Xiao-Ping Li et al, J.Chem.Phy. 85 (1986) 3444,
 !     fitted dipole response subtracted.
 
-USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
-!      data e2/2.0/
-
-
 REAL(DP), INTENT(IN)                         :: r
-REAL(DP) :: coef(0:14)                ! the coefficients
+
+REAL(DP) :: r2, el_ar_psp, v_dip
+REAL(DP) :: coef(0:14)   
+             ! the coefficients
 DATA  coef(0)/ 7.26018748D-1/
 DATA  coef(1)/-1.89605233D-2/
 DATA  coef(2)/ 3.55049697D-4/
@@ -889,7 +902,7 @@ REAL(DP) :: rfit(0:2)
 !      data rfit/7.629608,15.47005,0.2018586/    ! fitted for a=11.08
 DATA rfit/8.161628D0,15.60000D0,0.4996526D0/    ! fitted for a=10.6
 
-
+REAL(DP), EXTERNAL :: v_soft
 !-------------------------------------------------------------------
 
 r2 = r*r
@@ -919,10 +932,10 @@ END FUNCTION v_ar_el
 
 !-----V_Ar_el_dyn-------------------------------------------------------
 
-FUNCTION v_ar_el_dyn(r)
+REAL(DP) FUNCTION v_ar_el_dyn(r)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     computes the reduced effective Ar-electron potential.
 !     in deviation from the notes, the 'core' potential is
@@ -930,6 +943,11 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: r
+
+INTEGER :: iter
+REAL(DP) :: effc, effch
+REAL(DP) :: rstep, vdip, vrep, rcor, epsil, rsmall
+REAL(DP) :: rpmin, rpold, sigma_ar, v_core, v_dipa
 !DATA c_dipmod/3.378/       ! spring constant of dipole model in Ha
 !      data sigma_Ar/1.43/
 DATA rstep/1.0D-3/
@@ -947,6 +965,8 @@ DATA rsmall/0.012D0/
 
 LOGICAL :: tcore
 DATA tcore/.true./
+
+REAL(DP),EXTERNAL :: v_soft
 
 !-------------------------------------------------------------------
 
@@ -985,15 +1005,19 @@ END FUNCTION v_ar_el_dyn
 
 !-----V_ion_el------------------------------------------------------------
 
-FUNCTION v_ion_el(rr,nptype)
+REAL(DP) FUNCTION v_ion_el(rr,nptype)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     effective ion-electron potential
 !       r      =  distance at which potential is computed
 !       nptype =  type of ion (see array np(*) in 'init.F')
 
+REAL(DP), INTENT(IN) :: rr
+INTEGER, INTENT(IN) :: nptype
+
+REAL(DP), EXTERNAL :: v_ar_el_core,v_soft
 !------------------------------------------------------------------------
 
 IF(nptype == -18) THEN
@@ -1014,11 +1038,14 @@ END FUNCTION v_ion_el
 REAL(DP) FUNCTION v_ar_ar(r)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Ar-Ar potential
 
 REAL(DP), INTENT(IN)                     :: r
+
+REAL(DP) :: alpha_ar, beta_ar, c6_ar, c8_ar,  a_ar
+REAL(DP) :: rabs, core
 DATA  alpha_ar,beta_ar, c6_ar, c8_ar,  a_ar  &
     /  1.7301D0, 1.7966D0,55.465D0,3672.9D0,794.21D0/
 
@@ -1039,10 +1066,10 @@ END FUNCTION v_ar_ar
 
 !-----V_Ar_Na-----------------------------------------------------
 
-FUNCTION v_ar_na(r)
+REAL(DP) FUNCTION v_ar_na(r)
 
 USE params
-IMPLICIT REAL(DP) (A-H,O-Z)
+IMPLICIT NONE
 
 !     Ar-Na potential
 
@@ -1065,6 +1092,7 @@ IMPLICIT REAL(DP) (A-H,O-Z)
 
 
 REAL(DP), INTENT(IN)                         :: r
+REAL(DP) a1, a2, a3, b1, b2
 DATA a1/334.85D0/
 DATA a2/52.5D0/
 DATA a3/1383.0D0/
