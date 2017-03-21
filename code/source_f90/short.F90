@@ -1370,7 +1370,7 @@ END SUBROUTINE setbornparas
 
 !------------------------------------------------------------
 
-REAl(DP) FUNCTION funkpower(r,p)
+REAL(DP) FUNCTION funkpower(r,p)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
@@ -1387,7 +1387,7 @@ END FUNCTION funkpower
 
 !------------------------------------------------------------
 
-REAl(DP) FUNCTION funkfermi(r,a,b,c)
+REAL(DP) FUNCTION funkfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE

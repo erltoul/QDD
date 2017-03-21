@@ -1276,12 +1276,13 @@ END SUBROUTINE printfield2
 
 !------------------------------------------------------------
 
-SUBROUTINE printforces(iflag)
+SUBROUTINE printforces(iflag,iterat)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: iflag
+INTEGER, INTENT(IN)                      :: iterat
 
 INTEGER :: i
 

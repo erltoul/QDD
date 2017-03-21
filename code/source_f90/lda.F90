@@ -25,7 +25,7 @@ SUBROUTINE calclocal(rho,aloc)
 !       ******************************
 
 !       computes local part of Hamiltonian
-!       'time' <= 0  signal static iteration i.e. without laser field
+!       'tfs' <= 0  signal static iteration i.e. without laser field
 
 
 USE params
@@ -46,21 +46,10 @@ IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
 
 !     check workspace
 
-!IF(usew1) STOP ' in SSTEP: workspace W1 already active '
-!      if(usew4) stop ' in SSTEP: workspace W3 already active '
-!usew1 = .true.
-!      usew4 = .true.
 ALLOCATE(rhon(kdfull2))
 ALLOCATE(chpdft(2*kdfull2))
-!ALLOCATE(vlaser(kdfull2))
-
 
 !       first, the netto charge density
-
-
-
-
-!test      write(6,'(a)') 'CALCLOCAL:'
 
 DO ind=1,nxyz
   IF(nion2 == 0) THEN
@@ -80,24 +69,17 @@ END IF
 !     warning : counet inserts the esquar factor
 
 
-
 #if(gridfft)
 IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
 IF (nion2 == 0) CALL solv_fft(rhon,chpcoul,dx,dy,dz)
 #endif
-!usew1 = .false.
-!test      call prifld(rhon,'Coulomb dens.')
-!test      call prifld(chpcoul,'Coulomb pot.')
-
-!chpcoul=0D0
 
 !     the lda part
 
 IF(ifsicp /= 5) THEN
   CALL calc_lda(rho,chpdft)
-!test        call prifld(chpcoul,'xc potential')
 ELSE
   chpdft = 0D0
 END IF

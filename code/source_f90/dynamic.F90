@@ -572,7 +572,7 @@ END IF
 
 IF (izforcecorr /= -1) THEN
   CALL checkzeroforce(rho,aloc)
-!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably hazardous. 
+!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably eroneous. F.L.
 END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
@@ -989,7 +989,7 @@ END IF
 
 !     final composition and print
 
-energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
+energy=eshell+enrear+ecback+ecorr+enonlc/2D0+ecrhoimage
 #if(raregas)
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
@@ -1020,10 +1020,10 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &        enig,                       &
      &        engg,                       &
      &                2*ecback,           &
-     &                2.*ecback+ecorr,    &
+     &                2D0*ecback+ecorr,    &
      &                ecrho-ecback-ecrhoimage,&
      &                enonlc,             &
-     &                2.*ecback+ecorr+enonlc,&
+     &                2D0*ecback+ecorr+enonlc,&
      &                energy,            &
      &                etot, &
      &                elaser, &

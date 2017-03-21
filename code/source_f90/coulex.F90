@@ -22,7 +22,7 @@ USE, intrinsic :: iso_c_binding
 USE FFTW
 USE kinetic, ONLY: FFTW_planflag
 #endif
-USE params, ONLY: DP,numthr,e2
+USE params, ONLY: DP,PI,numthr,e2,zero
 IMPLICIT NONE
 
 SAVE
@@ -35,7 +35,6 @@ INTEGER,PRIVATE :: kfft2
 INTEGER,PRIVATE :: kfft,kfftx,kffty,kfftz
 !INTEGER,PARAMETER,PRIVATE :: kdcorf=(kxmax/2+1)*(kymax/2+1)*(kzmax/2+1)
 ! include block: xkgrid
-REAL(DP),ALLOCATABLE,PRIVATE :: xval(:),yval(:),zval(:)
 REAL(DP),ALLOCATABLE,PRIVATE :: xt2(:),yt2(:),zt2(:)
 REAL(DP),PRIVATE :: dx,dy,dz,dxsp,grnorm,fnorm
 INTEGER,PRIVATE :: nx,ny,nz,nx1,ny1,nz1,nxi,nyi,nzi,nxy1,nxyz
@@ -67,13 +66,6 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:)
 REAL(DP), PRIVATE, ALLOCATABLE :: rffta(:,:,:)
 #endif
 
-
-! include block: option
-REAL(DP),PARAMETER,PRIVATE :: zero=0D0
-REAL(DP),PARAMETER,PRIVATE :: pi=3.141592653589793D0
-
-!COMMON /fftcom/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax)
-
 CONTAINS
 
 SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
@@ -103,7 +95,6 @@ dx=dx0
 dy=dy0
 dz=dz0
 
-ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 
 #if(netlib_fft)
@@ -1462,7 +1453,6 @@ CALL fftw_destroy_plan(pbackx)
 CALL fftw_destroy_plan(pbacky)
 CALL fftw_destroy_plan(pbackz)
 
-DEALLOCATE(xval,yval,zval)
 DEALLOCATE(xt2,yt2,zt2)
 DEALLOCATE(fftax,fftay,fftb)
 DEALLOCATE(ikm)

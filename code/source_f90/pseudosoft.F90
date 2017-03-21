@@ -23,51 +23,58 @@
 SUBROUTINE calcpseudo()
 
 !     ***********************
+!     Call the appropriate routine for the calculation of pseudopotentials (PsP)
+
 USE params
 USE kinetic
 IMPLICIT NONE
 !      dimension rho(2*kdfull2)
-!REAL(DP) :: fieldtmp(kdfull2)
 #if(raregas)
 INTEGER :: ind
 #endif
 
-IF(nion2 == 2) THEN
-  call  pseudo_external()
+! Choice of ionic background :
+IF(nion2 == 2) THEN         ! read background from a file (potion.dat)
+  CALL  pseudo_external()
   RETURN
-ELSE IF(nion2 == 0) THEN
-  RETURN
+ELSE IF(nion2 == 0) THEN    ! Jellium (Homogeneous Electron Gas)
+  RETURN                    
 END IF
+! Or else, background from ionic PsP :
 
-
-IF(ipsptyp == 0) THEN
-  IF(idielec == 0) THEN
-    CALL pseudosoft()
+SELECT CASE(ipsptyp)
+  CASE(0)   ! soft local PsP
+    IF(idielec == 0) THEN
+      CALL pseudosoft()         ! Psp, nothing special
 #if(raregas)
-  ELSE
-    CALL pseudosoft_dielec()
+    ELSE
+      CALL pseudosoft_dielec()  ! PsP with dielectric support
 #endif
-  END IF
-ELSE IF(ipsptyp >= 1) THEN
-  CALL pseudogoed()
-ELSE
-  STOP ' CALCPSEUDO: this type of PsP not yet implemented'
-END IF
+    END IF
+    
+  CASE(1:4)  ! Goedecker PsP (soft or local)
+    CALL pseudogoed()       
+    
+  CASE DEFAULT
+    STOP ' CALCPSEUDO: this type of PsP not yet implemented'
+END SELECT
+
 
 #if(raregas)
 IF(idielec == 1) THEN
+  ! Dielectric layer
   DO ind=1,kdfull2
-    rfieldtmp(ind)=potion(ind)
+    rfieldtmp(ind)=potion(ind) ! potion will be erased in pseudosoft2
   END DO
   IF(ipsptyp == 0) THEN
-    CALL pseudosoft2()
+    CALL pseudosoft2()    !!! Not clear what happens here : seems to be similar to pseudosoft_dielec, but outside the layer (and slightly different formula)
   ELSE IF(ipsptyp >= 1) THEN
     STOP ' Goedecker PsP and dielectric layer incompatible'
   END IF
   DO ind=1,kdfull2
     CALL conv1to3(ind)
-    IF(iindtmp(1) > nint(xdielec/dx)+nx) THEN
-      potion(ind)=rfieldtmp(ind)
+    IF(iindtmp(1) > nint(xdielec/dx)+nx) THEN 
+      potion(ind)=rfieldtmp(ind)  ! Outside the layer, take PsP as it was first computed
     END IF
   END DO
 END IF

@@ -52,32 +52,31 @@ IF (ifreezekspot == 1 .AND. tfs > 0) RETURN
 
 
 #ifdef REALSWITCH
-
-
-
-IF(ifsicp == 1) THEN
-  CALL calc_sicgamr(rho,aloc,q0)
-ELSE IF(ifsicp == 2) THEN
-  CALL calc_adsicr(rho,aloc)
-ELSE IF(ifsicp == 3) THEN
-  CALL calc_slaterr(rho,aloc,q0)
-ELSE IF(ifsicp == 4) THEN
-  CALL calc_sicklir(rho,aloc,q0)
-ELSE
-  RETURN
-END IF
+SELECT CASE(ifsicp)
+  CASE(1)
+    CALL calc_sicgamr(rho,aloc,q0)
+  CASE(2)
+    CALL calc_adsicr(rho,aloc)
+  CASE(3)
+    CALL calc_slaterr(rho,aloc,q0)
+  CASE(4)
+    CALL calc_sicklir(rho,aloc,q0)
+  CASE DEFAULT
+    RETURN
+END SELECT
 #else
-IF(ifsicp == 1) THEN
-  CALL calc_sicgam(rho,aloc,q0)
-ELSE IF(ifsicp == 2) THEN
-  CALL calc_adsic(rho,aloc)
-ELSE IF(ifsicp == 3) THEN
-  CALL calc_slater(rho,aloc,q0)
-ELSE IF(ifsicp == 4) THEN
-  CALL calc_sickli(rho,aloc,q0)
-ELSE
-  RETURN
-END IF
+SELECT CASE(ifsicp)
+  CASE(1)
+    CALL calc_sicgam(rho,aloc,q0)
+  CASE(2)
+    CALL calc_adsic(rho,aloc)
+  CASE(3)
+    CALL calc_slater(rho,aloc,q0)
+  CASE(4)
+    CALL calc_sickli(rho,aloc,q0)
+  CASE DEFAULT
+    RETURN
+END SELECT
 #endif
 RETURN
 #ifdef REALSWITCH

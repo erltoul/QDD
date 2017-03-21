@@ -57,7 +57,9 @@ COMPLEX(DP) :: cdtact
 ! Lagrangian matrix in the SIC step. The version of exponential
 ! evolution with subtraction of the Lagrangian matrix is found
 ! in 'exp_evolp'. The strategy needs yet testing. It was not
-! really beneficial so far.
+! really beneficial so far.  (01/2013)
+! 
+!  what is the current status of this issue ?  F.L. (03/2017)
 LOGICAL,PARAMETER :: tnorotate=.true.
 
 
@@ -89,14 +91,14 @@ IF(.NOT.timagtime) THEN
   IF(tnorotate .OR. ifsicp .NE. 8) THEN
     DO nb=1,nstate
       qwork(:,nb) = q0(:,nb)
-      CALL exp_evol(qwork(1,nb),aloc,nb,4,cdtact,q1)
+      CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
     END DO
   ELSE
 #if(twostsic)
     qwork = q0
     CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
 #else
-    STOP " IFSICP==8 reqires compilation with option twostsic"
+    STOP " IFSICP==8 requires compilation with option twostsic"
 #endif
   END IF
 
@@ -122,7 +124,7 @@ nterms = 4
 ! itpri = MOD(it,ipasinf) + 1    ?? FL
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
-    CALL exp_evol(q0(1,nb),aloc,nb,nterms,cdtact,q1)
+    CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
 ELSE
 #if(twostsic)
@@ -176,7 +178,7 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 !       aloc     = local potential for the actual spin component
 !       ak       = kinetic energies in momentum space
 !       nbe      = number of state
-!       norder   = order of epxansion (4 recommended for full step))
+!       norder   = order of expansion (4 recommended for full step))
 !       dtact    = time step
 
 !     Note: The propagation uses the action of the Hamiltonian
@@ -266,7 +268,6 @@ COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
 COMPLEX(DP) :: dti,cfac,cacc(kstate)
 INTEGER :: i, ilocbas 
 INTEGER :: na, nbe, nc, nterm
-!test      complex wfovlp,energexp
 
 !----------------------------------------------------------------------
 

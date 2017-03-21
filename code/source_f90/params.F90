@@ -54,7 +54,6 @@ INTEGER :: ng
 
 INTEGER,PARAMETER :: maxnang=100    ! max. angular bins for PAD
 INTEGER,PARAMETER :: maxmps=180    ! max. nr. analyzing points for PES
-! parameter(drtab=1e-4)
 
 
 ! physical units and constants (here Rydberg units)
@@ -114,7 +113,7 @@ INTEGER :: nxsh,nysh,nzsh
 INTEGER :: minx,maxx
 INTEGER :: miny,maxy
 INTEGER :: minz,maxz
-! bounds of esc. el.
+! bounds of escaped electron
 INTEGER :: nbnx,nbxx
 INTEGER :: nbny,nbxy
 INTEGER :: nbnz,nbxz
@@ -249,7 +248,7 @@ INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
 INTEGER :: ifrhoint_time=0,iangmo=0,ifspemoms=0,iftransme=0
-INTEGER :: iterat,itersicp6
+INTEGER :: itersicp6
 LOGICAL :: tstinf
 REAL(DP) :: rheattemp=0D0        ! re-heat temperature
 REAL(DP) :: tempion=0D0,dt1=0D0
@@ -308,7 +307,8 @@ COMPLEX(DP),ALLOCATABLE :: psisavex(:,:)
 
 !     the energy transmitted from calc-lda to info etc
 
-REAL(DP) :: enrear,ecback,ecrho,ecorr,dt12,sgaus,ekion,energy
+REAL(DP) :: enrear  ! rearrangement energy
+REAL(DP) :: ecback,ecrho,ecorr,dt12,sgaus,ekion,energy
 REAL(DP) :: energ2,enerpw,encoulsp,entrop,epot,espnb,esh1
 REAL(DP) :: etot,ekionold,qold2,qold3,qold4
 REAL(DP) :: ekmat=0D0,engg,enii,enig,ecrhoimage=0D0

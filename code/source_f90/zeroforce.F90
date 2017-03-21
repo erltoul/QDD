@@ -216,7 +216,7 @@ IMPLICIT NONE
 INTEGER :: is, ishift
 REAL(DP) :: zforcex, zforcey, zforcez
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 
 !       workspaces
