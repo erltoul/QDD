@@ -404,7 +404,7 @@ AM_CONDITIONAL([USE_FFTW],[test "x$FFTW_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_MKL], [test "x$MKL_IS_HERE" = xyes ])
 AM_CONDITIONAL([USE_CUDA],[test "x$CUDA_IS_HERE" = xyes ])
 AM_CONDITIONAL([CALLS_FFTW],[test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ])
-
+AM_CONDITIONAL([USE_FINDIFF],[test "x$findiff" = x1])
 AS_IF([test "x$FFTW_IS_HERE" = xyes || test "x$MKL_IS_HERE" = xyes ],
       [AC_MSG_NOTICE([FFTW linker flags: LD_FFTW=$LD_FFTW])])
 

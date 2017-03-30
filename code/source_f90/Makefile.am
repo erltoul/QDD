@@ -195,7 +195,7 @@ OBJCOMMON = $(OBJKINPARA) \
 						restart.$(OBJEXT) restartc.$(OBJEXT)\
 						static.$(OBJEXT) dynamic.$(OBJEXT) lda.$(OBJEXT) util.$(OBJEXT) abso_bc.$(OBJEXT) \
 						pseudosoft.$(OBJEXT) pseudogoed.$(OBJEXT) ionmd.$(OBJEXT) forces.$(OBJEXT)\
- 		        carlo.$(OBJEXT) localize.$(OBJEXT) localizer.$(OBJEXT)  subgrids.$(OBJEXT)  analyse.$(OBJEXT)\
+					        carlo.$(OBJEXT) localize.$(OBJEXT) localizer.$(OBJEXT)  subgrids.$(OBJEXT)  analyse.$(OBJEXT)\
 						rho.$(OBJEXT) rhoc.$(OBJEXT) nonloc.$(OBJEXT) nonlocc.$(OBJEXT)\
 						schmid.$(OBJEXT) zeroforce.$(OBJEXT) functions.$(OBJEXT)\
 						loc_mfield.$(OBJEXT) givens.$(OBJEXT)\
@@ -243,7 +243,14 @@ __top_builddir__bin_gpu_pwteleman_LDADD = $(OBJCUDA) $(OBJCOMMON) $(LDLIBS)
 __top_builddir__bin_gpu_pwteleman_LDFLAGS = $(LINKERFLAGS)
 __top_builddir__bin_gpu_pwteleman-main.$(OBJEXT): $(OBJCUDA) $(OBJCOMMON)
 endif
-
+if USE_FINDIFF
+bin_PROGRAMS= $(top_builddir)/bin/findiff_pwteleman
+__top_builddir__bin_findiff_pwteleman_SOURCES = main.F90
+__top_builddir__bin_findiff_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+__top_builddir__bin_findiff_pwteleman_LDADD =  $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
+__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+endif
 ########################################################################
 #               Compilation rules for objects
 ########################################################################       
@@ -283,6 +290,10 @@ endif
 # coulsolv.o
 if USE_NETLIB
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
+if USE_FINDIFF
+coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff.F90 params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 if CALLS_FFTW
