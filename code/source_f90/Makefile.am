@@ -249,13 +249,19 @@ __top_builddir__bin_findiff_pwteleman_SOURCES = main.F90
 __top_builddir__bin_findiff_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 __top_builddir__bin_findiff_pwteleman_LDADD =  $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 __top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
-__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON) findiff.o
 endif
 ########################################################################
 #               Compilation rules for objects
 ########################################################################       
 # Dependencies concerning objects are needed,  due to numerous #include statement.
 # This breaks the normal dependencies tracking, hence the lists of source files above. 
+
+# findiff-fft : used for internship of M.N., should be removed with changes to #if(gridfft) in fft.F90 and others...
+if USE_FINDIFF
+findiff-fft.$(OBJEXT): findiff-fft.F90 define.h params.$(OBJEXT)
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+if
 
 # params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
