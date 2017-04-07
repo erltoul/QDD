@@ -185,6 +185,7 @@ GPU_COMPILER=nvcc
 else
 OBJCOULSOLV =coulsolv.$(OBJEXT)
 endif
+# also need some fft functions from netlib to solve Poisson equation with "findiff" :
 ########################################################################
 # 		        	Program name and compilation rules
 ########################################################################
@@ -249,7 +250,7 @@ __top_builddir__bin_findiff_pwteleman_SOURCES = main.F90
 __top_builddir__bin_findiff_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 __top_builddir__bin_findiff_pwteleman_LDADD =  $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 __top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
-__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON) findiff.o
+__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
 ########################################################################
 #               Compilation rules for objects
@@ -292,18 +293,22 @@ if USE_CUDA
 kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90  $(OBJCUDA) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
+if USE_FINDIFF
+kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
 
 # coulsolv.o
 if USE_NETLIB
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-if USE_FINDIFF
-coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff.F90 params.$(OBJEXT) Makefile
-	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-endif
 if CALLS_FFTW
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTW) $(OBJKINPARA) Makefile
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
+if USE_FINDIFF
+coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 # coulsolv does not work with cuda (yet ?)
