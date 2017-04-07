@@ -191,7 +191,6 @@ GPU_COMPILER=nvcc
 else
 OBJCOULSOLV =coulsolv.$(OBJEXT)
 endif
-
 ########################################################################
 # 		        	Program name and compilation rules
 ########################################################################
