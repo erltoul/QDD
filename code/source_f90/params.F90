@@ -89,9 +89,7 @@ INTEGER :: nxyz,nyf,nxyf
 INTEGER :: kdfull2,kdfull2fine
 !INTEGER,PARAMETER :: kfbox=kdfull2                    ! ??
 INTEGER :: nx,ny,nz
-!~ #if(paraworld)
 INTEGER :: nxfine, nyfine, nzfine
-!~ #endif
 !INTEGER,PARAMETER :: nx1=nx+1,ny1=ny+1,nz1=nz+1,nzi=nz1,nzr=nz+nz  !?
 !INTEGER,PARAMETER :: nxy1=nx1*ny1    !?
 !INTEGER,PARAMETER :: ksmax=nx+1,kdfull=(nx+1)*(ny+1)*(nz+1)    !?

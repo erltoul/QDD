@@ -1470,7 +1470,7 @@ SUBROUTINE cosqi (n,wsave,ifac)
 !          are required for different values of N.  The contents of
 !          WSAVE must not be changed between calls of COSQF1 or COSQB1.
 !
-!  IFAC    an integer work array which must be dimensioned at least 15.
+!  IFAC    an integer work array which must be dimensioned at least 10.
 !          Condtions applying on WSAVE also apply on IFAC. 
 USE params, ONLY:DP
 IMPLICIT NONE
