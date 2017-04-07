@@ -267,7 +267,7 @@ endif
 if USE_FINDIFF
 findiff-fft.$(OBJEXT): findiff-fft.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-if
+endif
 
 # params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
