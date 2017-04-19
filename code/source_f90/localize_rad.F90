@@ -726,7 +726,7 @@ IMPLICIT NONE
 INTEGER, INTENT(IN)                      :: is
 INTEGER, INTENT(IN)                      :: iprint
 
-INTEGER, PARAMETER :: itmax=2000
+INTEGER, PARAMETER :: itermax=2000
 REAL(DP), PARAMETER :: step=0.5D0
 REAL(DP), PARAMETER :: precis=1.0D-14
 
@@ -772,7 +772,7 @@ DO na=1,ndim(is)
 END DO
 
 IF(iprint > 0) WRITE(6,'(a)') '  iter  variance '
-DO iter=1,itmax
+DO iter=1,itermax
   
 !       averages of x,y,z
   
@@ -896,7 +896,7 @@ REAL(DP), INTENT(OUT)                      :: averstate(kdimin)
 !      'ndim'    dimension of 'a' and 'vecs'
 
 
-INTEGER, PARAMETER :: itmax=2000
+INTEGER, PARAMETER :: itermax=2000
 
 INTEGER, PARAMETER :: mprint=-1
 REAL(DP), PARAMETER :: step=0.5D0
@@ -926,7 +926,7 @@ DO i=1,ndim
     END IF
   END DO
 END DO
-DO iter=1,itmax
+DO iter=1,itermax
   IF(iter == 1) THEN
     actstep = step/10.0D0
   ELSE
