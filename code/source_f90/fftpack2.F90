@@ -77,7 +77,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: x(n)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(*)
 INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 REAL(DP)::x1
@@ -107,8 +107,8 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
-REAL(DP), INTENT(IN)                         :: w(1)
-REAL(DP), INTENT(OUT)                        :: xh(1)
+REAL(DP), INTENT(IN)                         :: w(*)
+REAL(DP), INTENT(OUT)                        :: xh(*)
 INTEGER, INTENT(OUT)                         :: ifac(10)
 
 INTEGER ::  i, k ,kc, modn, np2, ns2, xim1
@@ -149,7 +149,7 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,2,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,2)
-REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
 
 INTEGER :: i, ic, idp2, k  
 REAL(DP)  :: ti2, tr2
@@ -197,8 +197,8 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,3,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,3)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
 
 INTEGER:: i, ic, idp2, k 
 REAL(DP)::  ci2, ci3, cr2, cr3
@@ -252,9 +252,9 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,4,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,4)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
-REAL(DP), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
+REAL(DP), INTENT(IN)                         :: wa3(*)
 
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ci2, ci3, ci4, cr2, cr3, cr4
@@ -327,10 +327,10 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,5,l1)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,5)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
-REAL(DP), INTENT(IN)                         :: wa3(1)
-REAL(DP), INTENT(IN)                         :: wa4(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
+REAL(DP), INTENT(IN)                         :: wa3(*)
+REAL(DP), INTENT(IN)                         :: wa4(*)
 
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5
@@ -416,7 +416,7 @@ REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: ch2(idl1,ip)
-REAL(DP), INTENT(IN)                         :: wa(1)
+REAL(DP), INTENT(IN)                         :: wa(*)
 
 INTEGER:: i, ic, idij, idp2, ik, ipp2, ipph, is
 INTEGER:: j, j2, jc, k, l, lc, nbd
@@ -648,7 +648,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: r(n)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(*)
 INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 IF (n == 1) RETURN
@@ -663,8 +663,8 @@ IMPLICIT NONE
 !See rfftb1 above
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(n)
-REAL(DP), INTENT(IN OUT)                     :: ch(1)
-REAL(DP), INTENT(IN OUT)                     :: wa(1)
+REAL(DP), INTENT(IN OUT)                     :: ch(*)
+REAL(DP), INTENT(IN OUT)                     :: wa(*)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 INTEGER:: i, idl1, ido, ip, iw, ix2, ix3, ix4
@@ -792,7 +792,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: wsave(*)
 INTEGER, INTENT(IN OUT)                      :: ifac(10)
 
 REAL(DP):: tsqx
@@ -818,8 +818,8 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(n)
-REAL(DP), INTENT(IN)                         :: w(1)
-REAL(DP), INTENT(OUT)                        :: xh(1)
+REAL(DP), INTENT(IN)                         :: w(*)
+REAL(DP), INTENT(OUT)                        :: xh(*)
 INTEGER, INTENT(IN)                         :: ifac(10)
 
 INTEGER:: i, k, kc, modn, np2, ns2
@@ -859,7 +859,7 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
 REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
-REAL(DP), INTENT(IN)                         :: wa1(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
 
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ti2, tr2
@@ -903,8 +903,8 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,l1,3)
 REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
 
 REAL(DP) :: ci2, cr2, di2, di3, dr2, dr3
 REAL(DP) :: taur, taui, ti2, ti3, tr2, tr3
@@ -953,9 +953,9 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,l1,4)
 REAL(DP), INTENT(OUT)                        :: ch(ido,4,l1)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
-REAL(DP), INTENT(IN)                         :: wa3(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
+REAL(DP), INTENT(IN)                         :: wa3(*)
 
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ci2, ci3, ci4, cr2, cr3, cr4
@@ -1029,10 +1029,10 @@ INTEGER, INTENT(IN)                      :: ido
 INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,l1,5)
 REAL(DP), INTENT(OUT)                        :: ch(ido,5,l1)
-REAL(DP), INTENT(IN)                         :: wa1(1)
-REAL(DP), INTENT(IN)                         :: wa2(1)
-REAL(DP), INTENT(IN)                         :: wa3(1)
-REAL(DP), INTENT(IN)                         :: wa4(1)
+REAL(DP), INTENT(IN)                         :: wa1(*)
+REAL(DP), INTENT(IN)                         :: wa2(*)
+REAL(DP), INTENT(IN)                         :: wa3(*)
+REAL(DP), INTENT(IN)                         :: wa4(*)
 
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5
@@ -1113,7 +1113,7 @@ REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
 REAL(DP), INTENT(IN OUT)                     :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
-REAL(DP), INTENT(IN)                         :: wa(1)
+REAL(DP), INTENT(IN)                         :: wa(*)
 
 INTEGER:: i, ic, idij, idp2, ik, ipp2, ipph, is
 INTEGER:: j, j2, jc, k, l, lc, nbd
@@ -1300,8 +1300,8 @@ USE params, ONLY:DP
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                     :: r(1)
-REAL(DP), INTENT(IN OUT)                     :: wsave(1)
+REAL(DP), INTENT(IN OUT)                     :: r(*)
+REAL(DP), INTENT(IN OUT)                     :: wsave(*)
 INTEGER, INTENT(IN)                      ::ifac(10)
 
 IF (n /= 1) CALL rfftf1 (n,r,wsave,wsave(n+1), ifac)
@@ -1374,8 +1374,8 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: c(n)
-REAL(DP), INTENT(IN OUT)                 :: ch(1)
-REAL(DP), INTENT(IN)                     :: wa(1)
+REAL(DP), INTENT(IN OUT)                 :: ch(*)
+REAL(DP), INTENT(IN)                     :: wa(*)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 INTEGER:: i, idl1, ido, ip, iw, ix2, ix3, ix4
@@ -1476,7 +1476,7 @@ USE params, ONLY:DP
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(*)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 
 INTEGER:: k
@@ -1487,7 +1487,7 @@ DATA pih /1.57079632679491D0/
 dt = pih/REAL(n,DP)
 fk = 0D0
 DO  k=1,n
-  fk = fk+1.
+  fk = fk+1.0D0
   wsave(k) = COS(fk*dt)
 END DO
 CALL rffti (n,wsave(n+1),ifac)
@@ -1549,7 +1549,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: x(n)
-REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(*)
 INTEGER, INTENT(IN)                      :: ifac(10)
 
 INTEGER::i, k, kc, modn, nm1, np1, ns2
@@ -1637,7 +1637,7 @@ USE params, ONLY:DP, PI
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(*)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 
 INTEGER:: k, kc, nm1, np1, ns2
@@ -1665,7 +1665,7 @@ USE params, ONLY:DP
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(*)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 
 
@@ -1726,7 +1726,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                    :: x(n)
-REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 INTEGER:: k, kc, ns2
@@ -1806,7 +1806,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: x(n)
-REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 INTEGER:: k, kc, ns2
@@ -1834,7 +1834,7 @@ USE params, ONLY:DP
 IMPLICIT NONE
 
 INTEGER, INTENT(IN OUT)                  :: n
-REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 CALL cosqi (n,wsave,ifac)
@@ -1892,7 +1892,7 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: x(n)
-REAL(DP), INTENT(IN OUT)                 :: wsave(1)
+REAL(DP), INTENT(IN OUT)                 :: wsave(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 INTEGER:: iw1, iw2, iw3, np1
@@ -1911,10 +1911,10 @@ USE params, ONLY:DP
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(IN OUT)                 :: war(1)
-REAL(DP), INTENT(IN)                     :: was(1)
+REAL(DP), INTENT(IN OUT)                 :: war(*)
+REAL(DP), INTENT(IN)                     :: was(*)
 REAL(DP), INTENT(OUT)                    :: xh(10)
-REAL(DP), INTENT(IN OUT)                 :: x(1)
+REAL(DP), INTENT(IN OUT)                 :: x(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
 INTEGER:: i, k, kc, modn, np1, ns2
@@ -1968,7 +1968,7 @@ USE params, ONLY:DP,PI
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: wsave(1)
+REAL(DP), INTENT(OUT)                    :: wsave(*)
 INTEGER,INTENT(OUT)                      :: ifac(10)
 
 INTEGER:: k, np1, ns2
@@ -2009,7 +2009,7 @@ USE params, ONLY:DP, tPI
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: wa(1)
+REAL(DP), INTENT(OUT)                    :: wa(*)
 INTEGER, INTENT(OUT)                     :: ifac(10)
 INTEGER :: ntryh(4)
 

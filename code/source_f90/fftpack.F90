@@ -16,17 +16,6 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
-#include"define.h"
-
-#if(findiff|numerov)
-SUBROUTINE dummypack()
-RETURN
-END SUBROUTINE dummypack
-#endif
-
-
-#if(gridfft)
-
 !-----COMPLEX FFT PACKAGE FROM NETLIB -----------------------------------------
  
  
@@ -80,7 +69,6 @@ END SUBROUTINE dummypack
 
 
 !------------------------------------------------------------------------------
-
 
 SUBROUTINE dcfti1 (n,wa,ifac)
 USE params, ONLY:DP,tPI
@@ -2050,6 +2038,3 @@ ENDIF
 END SUBROUTINE dradfg
 
 INCLUDE "fftpack2.F90"
-
-#endif
-
