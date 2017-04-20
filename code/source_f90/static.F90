@@ -58,13 +58,37 @@ REAL(DP) :: xcm, ycm, zcm
 REAL(DP),ALLOCATABLE :: qaux(:,:)
 
 IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
-
 ! test Coulomb
 CALL calcrhor(rho,psir)
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
-CALL falr(rho,chpcoul,kdfull2)
-CALL prifld(chpcoul,'coulomb pot')
 
+
+
+
+!__test solv poisson
+WRITE(6,*) 'KDFULL2 = ',kdfull2
+do i = 1,kxbox
+   write(6,*) rho(i)
+enddo
+!WRITE(6,*) 'rho = ',rho
+!STOP'TEST RHO'
+!______________________
+
+
+
+
+#if(netlib_fft|fftw_cpu)
+CALL falr(rho,chpcoul,kdfull2)
+#else
+
+CALL solv_poisson(rho,chpcoul,kdfull2)
+! NOT YET FOR FINITES DIFFERENCES
+
+
+#endif
+
+CALL prifld(chpcoul,'coulomb pot')
+!STOP'TEST SOLV_POISSON'
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
 !     be communicated by 'all.inc'
@@ -82,6 +106,8 @@ IF(istat == 1) THEN
   CALL pricm(rho)
   CALL infor(rho,0)
 END IF
+
+
 
 
 !     initial computation of mean field, protocol prints, headers
@@ -484,8 +510,9 @@ INTEGER :: i, ishift
 INTEGER :: ktridig  !=(kstate+kstate*kstate)/2
 INTEGER :: nbe, nph
 INTEGER :: ncount_init, ncount_rate, ncount_max, ncount_step, ncount_orth, ncount_syst, ncount_fin
-REAL(DP)::time_init, time_step, time_orth, time_cpu, time_fin
+REAL(DP) :: time_init, time_step, time_orth, time_cpu, time_fin
 REAL(DP) :: sum0,sumk,sume,sum2
+REAL(DP) :: wf0,wfstep
 REAL(DP),ALLOCATABLE :: hmatr(:,:)
 REAL(DP),ALLOCATABLE :: heigen(:)
 REAL(DP),ALLOCATABLE :: vect(:,:)
@@ -526,7 +553,7 @@ COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
 REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
 #endif
 #else
-REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
+REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 #endif
 
 !-------------------------------------------------------------------------
@@ -887,11 +914,20 @@ ENDDO
 #endif
 ! end of fftw_gpu switch
 
+
+
+
+
+
+
+
+
+    
 #if(findiff|numerov)
   
 !      action of kinetic energy, exp.values, and gradient step
 !      (this version of finite differences needs yet development)
-  
+DO nbe=1,nstate
   IF(e0dmp > small) STOP 'damped gradient not yet for finite differences'
   CALL rkin3d(q0(1,nbe),q2)
   sumk = 0D0

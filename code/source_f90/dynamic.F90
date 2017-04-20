@@ -529,7 +529,7 @@ END IF
 !      because it is unchanged by unitary potential step)
 !     propagation of substrate dipoles is done in 'dyn_mfield'.
 
-CALL dyn_mfield(rho,aloc,q0,dt)
+CALL dyn_mfield(rho,aloc,q0,dt,it)
 
 
 
@@ -1110,9 +1110,13 @@ REAL(DP) :: sum0
 #if(gridfft)
 REAl(DP) :: sumk, sum0ex
 #if(netlib_fft|fftw_cpu)
-INTEGER :: ii
+INTEGER ::ii
 REAL(DP) :: vol
 #endif
+#endif
+#if(findiff|numerov)
+REAL(DP)::acc
+INTEGER:: i
 #endif
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
 !COMPLEX(DP) :: psi2(kdfull2)
@@ -1151,16 +1155,16 @@ ekinout = sumk/sum0ex
 
 !     exp.value of kinetic energy
 
-CALL ckin3d(psi(1,nb),psi2)
+CALL ckin3d(psin,psi2)
 sum0 = 0D0
 acc = 0D0
 DO i=1,nxyz
-  acc = REAL(psi(i,nb),DP)*REAL(psi2(i),DP) + AIMAG(psi(i,nb))*AIMAG(psi2(i))  &
+  acc = REAL(psin(i),DP)*REAL(psi2(i),DP) + AIMAG(psin(i))*AIMAG(psi2(i))  &
       + acc
-  sum0 = REAL(psi(i,nb),DP)*REAL(psi(i,nb),DP) + AIMAG(psi(i,nb))*AIMAG(psi(i,nb))  &
+  sum0 = REAL(psin(i),DP)*REAL(psin(i),DP) + AIMAG(psin(i))*AIMAG(psin(i))  &
       + sum0
 END DO
-ekinout = REAL(wfovlp(psi(:,nb),psi2),DP)
+ekinout = REAL(wfovlp(psin,psi2),DP)
 #endif
 
 DEALLOCATE(psi2)

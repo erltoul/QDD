@@ -434,7 +434,7 @@ END SUBROUTINE localize
 
 #else
 !----localize-----------------------------------------------------------
-
+#ifdef COMPLEXSWITCH
 SUBROUTINE localize(rho,psi,it)
 
 !  dummy
@@ -452,7 +452,7 @@ RETURN
 
 END SUBROUTINE localize
 !----localizer-----------------------------------------------------------
-
+#else
 SUBROUTINE localizer(rho,psi,it)
 
 !  dummy
@@ -469,6 +469,7 @@ INTEGER, INTENT(IN) :: it
 RETURN
 
 END SUBROUTINE localizer
+#endif
 #endif
 
 

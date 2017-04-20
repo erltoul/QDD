@@ -255,7 +255,7 @@ __top_builddir__bin_findiff_pwteleman_SOURCES = main.F90
 __top_builddir__bin_findiff_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
 __top_builddir__bin_findiff_pwteleman_LDADD =  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 __top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
-__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+__top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
 ########################################################################
 #               Compilation rules for objects
@@ -265,7 +265,7 @@ endif
 
 # findiff-fft : used for internship of M.N., should be removed with changes to #if(gridfft) in fft.F90 and others...
 if USE_FINDIFF
-findiff-fft.$(OBJEXT): findiff-fft.F90 define.h params.$(OBJEXT)
+fishpack.$(OBJEXT): hw3crt.F90 define.h fftpack.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 
@@ -313,7 +313,7 @@ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 if USE_FINDIFF
-coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+coulsolv.$(OBJEXT): coulsolv.F90 define.h solv_poisson.F90 fishpack.$(OBJEXT) $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 # coulsolv does not work with cuda (yet ?)
@@ -474,7 +474,7 @@ zeroforce.$(OBJEXT): zeroforce.F90 define.h util.$(OBJEXT) $(OBJKINPARA)
 # functions.o
 functions.$(OBJEXT): functions.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-	
+
 # loc_mfield.o
 loc_mfield.$(OBJEXT): loc_mfield.F90 define.h $(OBJCOULSOLV) $(OBJKINPARA)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
@@ -508,11 +508,11 @@ pot_substrate.$(OBJEXT): pot_substrate.F90 define.h params.$(OBJEXT)
 # forces_substrate.o
 forces_substrate.$(OBJEXT): forces_substrate.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-	
+
 # md_substrate.o
 md_substrate.$(OBJEXT): md_substrate.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-	
+
 # short.o
 short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
@@ -520,7 +520,7 @@ short.$(OBJEXT): short.F90 define.h params.$(OBJEXT)
 # image.o
 image.$(OBJEXT): image.F90 define.h $(OBJCOULSOLV) util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
-	
+
 # attachement.o
 attachement.$(OBJEXT): attachement.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<

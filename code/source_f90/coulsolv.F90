@@ -32,5 +32,5 @@
 
 #if(findiff|numerov)
 !INCLUDE "gridcoul.F90"
-INCLUDE "findiff-sinft.F90"
+#include "solv_poisson.F90"
 #endif

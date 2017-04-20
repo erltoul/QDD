@@ -23,6 +23,6 @@
 #endif 
 
 #if(findiff|numerov)
-INCLUDE "findiff.F90"
+#include "findiff.F90"
 #endif
 

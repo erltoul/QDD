@@ -21,6 +21,7 @@ USE params
 IMPLICIT NONE
 
 CONTAINS
+#if(findiff)
 !-----rkin3D_3r------------------------------------------------------------
 
 SUBROUTINE rkin3d(psi,dxpsi)
@@ -33,8 +34,8 @@ SUBROUTINE rkin3d(psi,dxpsi)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: psi(minx:maxx,miny:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 
 
@@ -58,9 +59,9 @@ lengz  = maxz+maxz+1
 !     reset accumulator
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    DO ix = -maxx, maxx
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    DO ix = minx, maxx
       dxpsi(ix,iy,iz) = zero
     END DO
   END DO
@@ -70,9 +71,9 @@ END DO
 !     kinetic energy in x direction
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL rkin1d_3r(psi(-maxx,iy,iz),dx,lengx,1, dxpsi(-maxx,iy,iz))
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL rkin1d_3r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
   END DO
 END DO
 
@@ -82,9 +83,9 @@ END DO
 
 
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL rkin1d_3r(psi(ix,-maxy,iz),dy,lengy,lengx, dxpsi(ix,-maxy,iz))
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL rkin1d_3r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
   END DO
 END DO
 
@@ -92,9 +93,9 @@ END DO
 !     kinetic energy in z direction
 
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL rkin1d_3r(psi(ix,iy,-maxz),dz,lengz,lengy*lengx, dxpsi(ix,iy,-maxz))
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL rkin1d_3r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
   END DO
 END DO
 
@@ -127,8 +128,8 @@ REAL(DP), INTENT(OUT)                        :: dxpsi(*)
 INTEGER :: ninc
 INTEGER :: i
 REAL(DP):: d2i
-REAL(DP):: ! Wellenfunktion psi
-REAL(DP):: ! Ableitung der Wellenfunktion psi
+!REAL(DP):: ! Wellenfunktion psi
+!REAL(DP):: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -159,8 +160,8 @@ SUBROUTINE ckin3d(psi,dxpsi)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx,-maxy:maxy,-
-COMPLEX(DP), INTENT(OUT)                     :: dxpsi(-maxx:maxx,-maxy:maxy,-
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
+COMPLEX(DP), INTENT(OUT)                     :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 
 
@@ -184,9 +185,9 @@ lengz  = maxz+maxz+1
 !     reset accumulator
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    DO ix = -maxx, maxx
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    DO ix = minx, maxx
       dxpsi(ix,iy,iz) = zero
     END DO
   END DO
@@ -196,9 +197,9 @@ END DO
 !     kinetic energy in x direction
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL ckin1d_3r(psi(-maxx,iy,iz),dx,lengx,1, dxpsi(-maxx,iy,iz))
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL ckin1d_3r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
   END DO
 END DO
 
@@ -208,9 +209,9 @@ END DO
 
 
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL ckin1d_3r(psi(ix,-maxy,iz),dy,lengy,lengx, dxpsi(ix,-maxy,iz))
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL ckin1d_3r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
   END DO
 END DO
 
@@ -218,9 +219,9 @@ END DO
 !     kinetic energy in z direction
 
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL ckin1d_3r(psi(ix,iy,-maxz),dz,lengz,lengy*lengx, dxpsi(ix,iy,-maxz))
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL ckin1d_3r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
   END DO
 END DO
 
@@ -253,8 +254,8 @@ COMPLEX(DP), INTENT(OUT)                     :: dxpsi(*)
 INTEGER :: ninc
 INTEGER :: i
 REAL(DP):: d2i
-COMPLEX(DP) :: ! Wellenfunktion psi
-COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
+!COMPLEX(DP) :: ! Wellenfunktion psi
+!COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -297,11 +298,11 @@ SUBROUTINE d3mixpropag (psi, deltim)
 !     list parameters:
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx, miny:maxy,minz:maxz)
 REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
-!      complex neupsi (-MAXX:MAXX, -MAXY:MAXY, -MAXZ:MAXZ)
+!      complex neupsi (MINX:MAXX, MINY:MAXY, MINZ:MAXZ)
 !                      ! new Function
 
 ! Timestep
@@ -313,23 +314,23 @@ INTEGER :: ix, iy, iz
 !-----------------------------------------------------------------------
 
 !      write(6,*) ' enter D3MIXSTEP: norm=',wfnorm(psi)
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL kinprop_1d3(psi(-maxx,iy,iz),2*maxx+1,1,dx,deltim )
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL kinprop_1d3(psi(minx,iy,iz),2*maxx+1,1,dx,deltim )
   END DO
 END DO            ! x- direction
 !      write(6,*) ' after x D3MIXSTEP: norm=',wfnorm(psi)
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL kinprop_1d3(psi(ix,-maxy,iz),2*maxy+1,2*maxx+1, dy,deltim)
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL kinprop_1d3(psi(ix,miny,iz),2*maxy+1,2*maxx+1, dy,deltim)
   END DO
 END DO            ! y- direction
 !      write(6,*) ' after y D3MIXSTEP: norm=',wfnorm(psi)
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL kinprop_1d3(psi(ix,iy,-maxz),2*maxz+1,  &
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL kinprop_1d3(psi(ix,iy,minz),2*maxz+1,  &
         (2*maxx+1)*(2*maxy+1),dz,deltim)
   END DO
 END DO            ! z- direction
@@ -410,14 +411,14 @@ COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
 COMPLEX(DP) :: diag
 COMMON /invnum3c/ invnum,diag
 
-INTEGER :: ! array size
-COMPLEX(DP) :: ! wave function to be propagated
+!INTEGER :: ! array size
+!COMPLEX(DP) :: ! wave function to be propagated
 COMPLEX(DP) :: solve
 COMPLEX(DP) :: psip,psim,psi0
-REAL(DP):: ! mesh size
+!REAL(DP):: ! mesh size
 
-INTEGER ::               ! Work array size
-INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
+!INTEGER ::               ! Work array size
+INTEGER:: ndimx
 
 COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
 !c     $                  offdiag,           ! constant off-diagonal el.
@@ -429,7 +430,7 @@ INTEGER :: i, n, ninc            ! loop index
 
 !     direct step (1-i dt/2 H) on psi
 
-
+ndimx = 2 * (maxx + maxy + maxz) + 3
 ninc=1
 psi0 = psi(ninc)
 ninc=ninc+inc
@@ -494,8 +495,8 @@ SUBROUTINE ckin3d(psi,dxpsi)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx,-maxy:maxy,-
-COMPLEX(DP), INTENT(OUT)                     :: dxpsi(-maxx:maxx,-maxy:maxy,-
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
+COMPLEX(DP), INTENT(OUT)                     :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 
 
@@ -519,9 +520,9 @@ lengz  = maxz+maxz+1
 !     reset accumulator
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    DO ix = -maxx, maxx
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    DO ix = minx, maxx
       dxpsi(ix,iy,iz) = zero
     END DO
   END DO
@@ -531,9 +532,9 @@ END DO
 !     kinetic energy in x direction
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL ckin1d_5r(psi(-maxx,iy,iz),dx,lengx,1, dxpsi(-maxx,iy,iz))
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL ckin1d_5r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
   END DO
 END DO
 
@@ -543,9 +544,9 @@ END DO
 
 
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL ckin1d_5r(psi(ix,-maxy,iz),dy,lengy,lengx, dxpsi(ix,-maxy,iz))
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL ckin1d_5r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
   END DO
 END DO
 
@@ -553,9 +554,9 @@ END DO
 !     kinetic energy in z direction
 
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL ckin1d_5r(psi(ix,iy,-maxz),dz,lengz,lengy*lengx, dxpsi(ix,iy,-maxz))
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL ckin1d_5r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
   END DO
 END DO
 
@@ -588,8 +589,8 @@ COMPLEX(DP), INTENT(OUT)                     :: dxpsi(*)
 INTEGER :: ninc,inc2
 INTEGER :: i
 REAL(DP):: d2i
-COMPLEX(DP) :: ! Wellenfunktion psi
-COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
+!COMPLEX(DP) :: ! Wellenfunktion psi
+!COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -634,8 +635,8 @@ SUBROUTINE rkin3d(psi,dxpsi)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: psi(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: dxpsi(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: psi(minx:maxx,miny:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 
 
@@ -659,9 +660,9 @@ lengz  = maxz+maxz+1
 !     reset accumulator
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    DO ix = -maxx, maxx
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    DO ix = minx, maxx
       dxpsi(ix,iy,iz) = zero
     END DO
   END DO
@@ -671,9 +672,9 @@ END DO
 !     kinetic energy in x direction
 
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL rkin1d_5r(psi(-maxx,iy,iz),dx,lengx,1, dxpsi(-maxx,iy,iz))
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL rkin1d_5r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
   END DO
 END DO
 
@@ -683,9 +684,9 @@ END DO
 
 
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL rkin1d_5r(psi(ix,-maxy,iz),dy,lengy,lengx, dxpsi(ix,-maxy,iz))
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL rkin1d_5r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
   END DO
 END DO
 
@@ -693,9 +694,9 @@ END DO
 !     kinetic energy in z direction
 
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL rkin1d_5r(psi(ix,iy,-maxz),dz,lengz,lengy*lengx, dxpsi(ix,iy,-maxz))
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL rkin1d_5r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
   END DO
 END DO
 
@@ -728,8 +729,8 @@ REAL(DP), INTENT(OUT)                        :: dxpsi(*)
 INTEGER :: ninc,inc2
 INTEGER :: i
 REAL(DP):: d2i
-REAL(DP):: ! Wellenfunktion psi
-REAL(DP):: ! Ableitung der Wellenfunktion psi
+!REAL(DP):: ! Wellenfunktion psi
+!REAL(DP):: ! Ableitung der Wellenfunktion psi
 
 !-----------------------------------------------------------------------
 
@@ -787,8 +788,8 @@ SUBROUTINE d3mixpropag (psi, neupsi, deltim)
 !     list parameters:
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(-maxx:maxx, -maxy:maxy,
-COMPLEX(DP), INTENT(IN OUT)                  :: neupsi(-maxx:maxx, -maxy:maxy,
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx, miny:maxy,minz:maxz)
+COMPLEX(DP), INTENT(IN OUT)                  :: neupsi(minx:maxx, miny:maxy,minz:maxz)
 REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
@@ -804,21 +805,21 @@ INTEGER :: ix, iy, iz
 
 !-----------------------------------------------------------------------
 
-DO iz = -maxz, maxz
-  DO iy = -maxy, maxy
-    CALL kinprop_1d5(psi(-maxx,iy,iz),2*maxx+1,1,dx,deltim)
+DO iz = minz, maxz
+  DO iy = miny, maxy
+    CALL kinprop_1d5(psi(minx,iy,iz),2*maxx+1,1,dx,deltim)
   END DO
 END DO            ! x- direction
 
-DO iz = -maxz, maxz
-  DO ix = -maxx, maxx
-    CALL kinprop_1d5(psi(ix,-maxy,iz),2*maxy+1,2*maxx+1, dy,deltim)
+DO iz = minz, maxz
+  DO ix = minx, maxx
+    CALL kinprop_1d5(psi(ix,miny,iz),2*maxy+1,2*maxx+1, dy,deltim)
   END DO
 END DO            ! y- direction
 
-DO iy = -maxy, maxy
-  DO ix = -maxx, maxx
-    CALL kinprop_1d5(psi(ix,iy,-maxz),2*maxz+1,  &
+DO iy = miny, maxy
+  DO ix = minx, maxx
+    CALL kinprop_1d5(psi(ix,iy,minz),2*maxz+1,  &
         (2*maxx+1)*(2*maxy+1),dz,deltim)
   END DO
 END DO            ! z- direction
@@ -911,13 +912,13 @@ COMPLEX(DP) :: diag,offd
 COMMON /invnum5c/ invnum,diag,offd
 
 
-INTEGER :: ! array size
-COMPLEX(DP) :: ! wave function to be propagated
+!INTEGER :: ! array size
+!COMPLEX(DP) :: ! wave function to be propagated
 COMPLEX(DP) :: solve
 COMPLEX(DP) :: psip,psim,psi0
-REAL(DP):: ! mesh size
+!REAL(DP):: ! mesh size
 
-INTEGER ::               ! Work array size
+!INTEGER ::               ! Work array size
 INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
 
 COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
@@ -972,7 +973,7 @@ END DO
 
 RETURN
 END SUBROUTINE kinprop_1d5
-
+#endif
 END MODULE kinetic
 
 
