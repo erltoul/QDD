@@ -160,7 +160,7 @@ SUBROUTINE ckin3d(psi,dxpsi)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
+COMPLEX(DP), INTENT(IN)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
 COMPLEX(DP), INTENT(OUT)                     :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 
@@ -351,16 +351,18 @@ SUBROUTINE inv3p_ini(deltim)
 
 
 REAL(DP), INTENT(IN OUT)                     :: deltim
-COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+COMPLEX(DP),ALLOCATABLE :: invnum(:)
 !inverse diagonal elements
 COMPLEX(DP) :: diag
 !diagonalelement of forward-matrix
-COMMON /invnum3c/ invnum,diag
+!COMMON /invnum3c/ invnum,diag
 
 
 
 COMPLEX(DP) :: fac   !diagonal elements
 INTEGER :: n     !loop
+
+ALLOCATE(invnum(2*(maxx+maxy+maxz)+3))
 
 
 !---------------------------------------------------------------------------
@@ -380,7 +382,7 @@ END DO
 diag = CMPLX(2.0D0,2.0D0*dx*dx/deltim,DP)
 
 !      write(6,*) ' init: diag,invnum=',diag,invnum
-
+DEALLOCATE(invnum)
 RETURN
 END SUBROUTINE inv3p_ini
 
@@ -407,9 +409,9 @@ INTEGER, INTENT(IN)                      :: ndiml
 INTEGER, INTENT(IN)                      :: inc
 REAL(DP), INTENT(IN OUT)                     :: deltax
 REAL(DP), INTENT(IN OUT)                     :: deltim
-COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+COMPLEX(DP),ALLOCATABLE :: invnum(:)
 COMPLEX(DP) :: diag
-COMMON /invnum3c/ invnum,diag
+!COMMON /invnum3c/ invnum,diag
 
 !INTEGER :: ! array size
 !COMPLEX(DP) :: ! wave function to be propagated
@@ -420,13 +422,15 @@ COMPLEX(DP) :: psip,psim,psi0
 !INTEGER ::               ! Work array size
 INTEGER:: ndimx
 
-COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
+COMPLEX(DP),ALLOCATABLE:: reff(:)      ! effective r.h.s.
 !c     $                  offdiag,           ! constant off-diagonal el.
 !c     $                  offdiag2           ! squared off-diagonal el.
 
 INTEGER :: i, n, ninc            ! loop index
 
 !----------------------------------------------------------------------------
+
+ALLOCATE(invnum(2*(maxx+maxy+maxz)+3),reff(ndimx))
 
 !     direct step (1-i dt/2 H) on psi
 
@@ -466,6 +470,8 @@ DO n = ndiml-1, 1, -1
   psi(ninc) = solve
 END DO
 
+DEALLOCATE(invnum,reff)
+
 RETURN
 END SUBROUTINE kinprop_1d3
 
@@ -495,7 +501,7 @@ SUBROUTINE ckin3d(psi,dxpsi)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
+COMPLEX(DP), INTENT(IN)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
 COMPLEX(DP), INTENT(OUT)                     :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
 
 

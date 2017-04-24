@@ -28,6 +28,8 @@ USE params
 USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
 #if(netlib_fft|fftw_cpu)
 USE coulsolv, ONLY:falr
+#else
+USE coulsolv, ONLY:solv_poisson
 #endif
 #if(twostsic)
 USE twostr
@@ -60,22 +62,9 @@ REAL(DP),ALLOCATABLE :: qaux(:,:)
 IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 ! test Coulomb
 CALL calcrhor(rho,psir)
+
+
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
-
-
-
-
-!__test solv poisson
-WRITE(6,*) 'KDFULL2 = ',kdfull2
-do i = 1,kxbox
-   write(6,*) rho(i)
-enddo
-!WRITE(6,*) 'rho = ',rho
-!STOP'TEST RHO'
-!______________________
-
-
-
 
 #if(netlib_fft|fftw_cpu)
 CALL falr(rho,chpcoul,kdfull2)
@@ -84,11 +73,10 @@ CALL falr(rho,chpcoul,kdfull2)
 CALL solv_poisson(rho,chpcoul,kdfull2)
 ! NOT YET FOR FINITES DIFFERENCES
 
-
 #endif
 
-CALL prifld(chpcoul,'coulomb pot')
-!STOP'TEST SOLV_POISSON'
+CALL prifld(2*chpcoul,'coulomb pot')
+STOP'TEST SOLV_POISSON'
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
 !     be communicated by 'all.inc'

@@ -109,6 +109,9 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv,ONLY:solv_poisson
+#endif
 IMPLICIT NONE
 REAL(DP),PARAMETER :: sgnkli=-1D0
 #if(parayes)
@@ -228,7 +231,7 @@ IF(numspin==2) THEN
 !      call falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
 #endif
 #if(findiff|numerov)
-  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+  CALL solv_poisson(rho1(1),couldif,kdfull2)
 !      call solv_FFT(rho2(1),coulsum,dx,dy,dz)
 #endif
   facup = 1D0/npartup
@@ -296,6 +299,10 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv,ONLY:solv_poisson
+#endif
+
 IMPLICIT NONE
 
 REAL(DP),PARAMETER :: sgnkli=-1D0
@@ -545,8 +552,8 @@ IF(numspin==2) THEN
   END IF
 #endif
 #if(findiff|numerov)
-  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
-  CALL solv_fft(rho2(1),coulsum,dx,dy,dz)
+  CALL solv_poisson(rho1(1),couldif,kdfull2)
+  CALL solv_poisson(rho2(1),coulsum,kdfull2)
 #endif
   facup = 1D0/npartup
 
@@ -1179,6 +1186,11 @@ USE kinetic
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv,ONLY:solv_poisson
+#endif
+
+
 IMPLICIT NONE
 
 #if(parayes)
@@ -1255,7 +1267,7 @@ IF(occup(nb) > small) THEN
   CALL falr(rho1,couldif,kdfull2)
 #endif
 #if(findiff|numerov)
-  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
+  CALL solv_poisson(rho1(1),couldif,kdfull2)
 #endif
   IF(testprint) THEN
     WRITE(11,'(a)') '     ','     '
@@ -1328,6 +1340,10 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv,ONLY:solv_poisson
+#endif
+
 IMPLICIT NONE
 
 #ifdef REALSWITCH
@@ -1401,9 +1417,9 @@ DO nbe=1,nstate
 #endif
 #endif
 #if(findiff|numerov)
-      CALL solv_fft(rh,acl,dx,dy,dz)
+      CALL solv_poisson(rh,acl,kdfull2)
 #ifdef COMPLEXSWITCH
-      CALL solv_fft(rhi,acli,dx,dy,dz)
+      CALL solv_poisson(rhi,acli,kdfull2)
 #endif
 #endif
       

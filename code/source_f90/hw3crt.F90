@@ -615,7 +615,10 @@ SUBROUTINE hw3crt(XS,XF,L,LBDCND,BDXS,BDXF,YS,YF,M,MBDCND,BDYS,&
   IWB = NUNK+1
   IWC = IWB+NUNK
   IWW = IWC+NUNK
-  write(6,*) Lbound(w), ubound(W), size(W)
+  
+  !  write(6,*) Lbound(w), ubound(W), size(W)
+  write(6,*) LSTART,LSTOP,MSTART,MSTOP
+  
   DO K=1,NUNK
      I = IWC+K-1
      W(K) = C3

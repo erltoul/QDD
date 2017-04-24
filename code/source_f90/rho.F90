@@ -43,6 +43,7 @@ REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
 #else
 COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 #endif
+
 INTEGER :: ind, ishift, nb
 REAL(DP) :: rhodif, rhotot
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
@@ -138,6 +139,7 @@ DO ind=1,nxyz
 END DO
 
 CALL emoms(rho)                    ! moments for the whole system (in qe)
+
 IF(eproj/=0) CALL projmoms(rho,q0) ! moments for the projectile and the target, (in qeproj and qetarget)
 
 
@@ -157,7 +159,7 @@ END SUBROUTINE calcrho
 
 #ifdef COMPLEXSWITCH 
 !-----calc_current------------------------------------------------------
-
+#if(gridfft)
 SUBROUTINE calc_current(current,q0)
 
 !  current 'current' for set of complex wavefunctions 'q0'
@@ -185,6 +187,7 @@ current=0D0
 
 ! accumulate
 DO nb=1,nstate
+   
   CALL xgradient_rspace(q0(1,nb),dq0)
   current(:,1) = current(:,1) + occup(nb)*AIMAG(CONJG(q0(:,nb))*dq0(:))
   CALL ygradient_rspace(q0(1,nb),dq0)
@@ -198,6 +201,7 @@ DEALLOCATE(dq0)
 RETURN
 
 END SUBROUTINE calc_current
+#endif
 #endif
 !-----spmoms------------------------------------------------------------
 

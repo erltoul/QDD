@@ -253,7 +253,7 @@ if USE_FINDIFF
 bin_PROGRAMS= $(top_builddir)/bin/findiff_pwteleman
 __top_builddir__bin_findiff_pwteleman_SOURCES = main.F90
 __top_builddir__bin_findiff_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
-__top_builddir__bin_findiff_pwteleman_LDADD =  $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_findiff_pwteleman_LDADD = fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
 __top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
 __top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif

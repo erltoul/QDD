@@ -33,6 +33,9 @@ USE util, ONLY:laserp,projectp
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv
+#endif
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
@@ -85,7 +88,7 @@ END IF
 IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
-IF (nion2 == 0) CALL solv_fft(rhon,chpcoul,dx,dy,dz)
+IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
 #endif
 !usew1 = .false.
 !test      call prifld(rhon,'Coulomb dens.')

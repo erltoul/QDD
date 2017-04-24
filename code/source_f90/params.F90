@@ -433,15 +433,16 @@ nthr=numthr-1
 #endif
 #if(findiff|numerov)
 ! bounds of loops
- minx=-nx;maxx=nx
- miny=-ny;maxy=ny
- minz=-nz;maxz=nz
+ minx=-nx+1;maxx=nx
+ miny=-ny+1;maxy=ny
+ minz=-nz+1;maxz=nz
 ! bounds of esc. el.
- nbnx=-nx+1;nbxx=nx-1
- nbny=-ny+1;nbxy=ny-1
- nbnz=-nz+1;nbxz=nz-1
+ nbnx=-nx+1+1;nbxx=nx-1
+ nbny=-ny+1+1;nbxy=ny-1
+ nbnz=-nz+1+1;nbxz=nz-1
 ! offset for x,y,z-values   ???
- nxsh=0;nysh=0;nzsh=0
+ !nxsh=0;nysh=0;nzsh=0
+  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
 #endif
 
 ! max. nr. of ions

@@ -33,6 +33,9 @@ USE params
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
+#if(findiff|numerov)
+USE coulsolv,ONLY:solv_poisson
+#endif
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -66,7 +69,7 @@ END IF
 CALL falr(rho,chpcoul,kdfull2)
 #endif
 #if(findiff|numerov)
-CALL solv_fft(rho,chpcoul,dx,dy,dz)
+CALL solv_poisson(rho,chpcoul,kdfull2)
 #endif
 
 !WRITE(6,'(/2a)') 'along x:  x  rho rho_image  coul'

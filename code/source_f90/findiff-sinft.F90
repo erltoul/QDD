@@ -17,30 +17,30 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE coulsolv
-USE params, ONLY: maxx,maxy,maxz,DP
+USE params, ONLY: maxx,maxy,maxz,DP,minx,miny,minz,zero
 SAVE
-PRIVATE
-!-----work3D------------------------------------------------------------
-REAL(DP) :: workx(2*maxx+1)
-REAL(DP) :: workxi(2*maxx+1)
-REAL(DP) :: wsavex (6*maxx+15)
-REAL(DP) :: kinx(-maxx:maxx)
-REAL(DP) :: pfacx, pinvfacx, invnormx
-INTEGER :: ndimx,ndimpx,maxmx
-
-REAL(DP) :: worky(2*maxy+1)
-REAL(DP) :: workyi(2*maxy+1)
-REAL(DP) :: wsavey (6*maxy+15)
-REAL(DP) :: kiny(-maxy:maxy)
-REAL(DP) :: pfacy, pinvfacy, invnormy
-INTEGER :: ndimy,ndimpy,maxmy
-
-REAL(DP) :: workz(2*maxz+1)
-REAL(DP) :: workzi(2*maxz+1)
-REAL(DP) :: wsavez (6*maxz+15)
-REAL(DP) :: kinz(-maxz:maxz)
-REAL(DP) :: pfacz, pinvfacz, invnormz
-INTEGER :: ndimz,ndimpz,maxmz
+!!$PRIVATE
+!!$!-----work3D------------------------------------------------------------
+!!$REAL(DP) :: workx(2*maxx+1)
+!!$REAL(DP) :: workxi(2*maxx+1)
+!!$REAL(DP) :: wsavex (6*maxx+15)
+!!$REAL(DP) :: kinx(-maxx:maxx)
+!!$REAL(DP) :: pfacx, pinvfacx, invnormx
+!!$INTEGER :: ndimx,ndimpx,maxmx
+!!$
+!!$REAL(DP) :: worky(2*maxy+1)
+!!$REAL(DP) :: workyi(2*maxy+1)
+!!$REAL(DP) :: wsavey (6*maxy+15)
+!!$REAL(DP) :: kiny(-maxy:maxy)
+!!$REAL(DP) :: pfacy, pinvfacy, invnormy
+!!$INTEGER :: ndimy,ndimpy,maxmy
+!!$
+!!$REAL(DP) :: workz(2*maxz+1)
+!!$REAL(DP) :: workzi(2*maxz+1)
+!!$REAL(DP) :: wsavez (6*maxz+15)
+!!$REAL(DP) :: kinz(-maxz:maxz)
+!!$REAL(DP) :: pfacz, pinvfacz, invnormz
+!!$INTEGER :: ndimz,ndimpz,maxmz
 
 !COMMON /work3d/ workx,worky,workz,wsavex,wsavey,wsavez,  &
 !    workxi,workyi,workzi, kinx,kiny,kinz,  &
@@ -48,7 +48,31 @@ INTEGER :: ndimz,ndimpz,maxmz
 !    pfacz, pinvfacz, invnormz, ndimx,ndimpx,maxmx,  &
 !    ndimy,ndimpy,maxmy, ndimz,ndimpz,maxmz
 
+
+REAL(DP),ALLOCATABLE,PRIVATE :: workx(:),worky(:),workz(:)
+REAL(DP),ALLOCATABLE,PRIVATE :: workxi(:),workyi(:),workzi(:)
+REAL(DP),ALLOCATABLE,PRIVATE :: wsavex(:),wsavey(:),wsavez(:)
+REAL(DP),ALLOCATABLE,PRIVATE :: kinx(:),kiny(:),kinz(:)
+REAL(DP),PRIVATE :: pfacx, pinvfacx, invnormx
+REAL(DP),PRIVATE :: pfacy, pinvfacy, invnormy
+REAL(DP),PRIVATE :: pfacz, pinvfacz, invnormz
+
+INTEGER,PRIVATE :: ndimx,ndimpx,maxmx
+INTEGER,PRIVATE :: ndimy,ndimpy,maxmy
+INTEGER,PRIVATE :: ndimz,ndimpz,maxmz
+
 CONTAINS
+
+SUBROUTINE init_findiff_sinft(maxx,maxy,maxz)
+INTEGER,INTENT(IN)::maxx,maxy,maxz
+ALLOCATE(workx(2*maxx+1),worky(2*maxx+1),workz(2*maxx+1))
+ALLOCATE(workxi(2*maxx+1),workyi(2*maxx+1),workzi(2*maxx+1))
+ALLOCATE(wsavex(6*maxx+15),wsavey(6*maxx+15),wsavez(6*maxx+15))
+ALLOCATE(kinx(-maxx:maxx),kiny(-maxy:maxx),kinz(-maxz:maxx))
+
+ENDSUBROUTINE init_findiff_sinft
+
+
 SUBROUTINE solv_fft(rhoin,pot,deltax,deltay,deltaz)
 
 !USE params
@@ -61,8 +85,8 @@ SUBROUTINE solv_fft(rhoin,pot,deltax,deltay,deltaz)
 !INCLUDE 'work3D.inc'
 
 
-REAL(DP), INTENT(IN OUT)                     :: rhoin(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: rhoin(-maxx:maxx,-maxy:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,minz:maxz)
 REAL(DP), INTENT(IN OUT)                     :: deltax
 REAL(DP), INTENT(IN OUT)                     :: deltay
 REAL(DP), INTENT(IN OUT)                     :: deltaz
@@ -150,7 +174,7 @@ SUBROUTINE homog_sol(pot,deltax,deltay,deltaz,  &
 !INCLUDE 'work3D.inc'
 
 
-REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: pot(-maxx:maxx,-maxy:maxy,minz:maxz)
 REAL(DP), INTENT(IN)                         :: deltax
 REAL(DP), INTENT(IN)                         :: deltay
 REAL(DP), INTENT(IN)                         :: deltaz
@@ -192,7 +216,7 @@ DATA testpr/.false./
 
 !     stabilised sinh as internal statement function
 
-sins(x) = SINH(SIGN(MIN(ABS(x),72.0D0),x))
+!sins(x) = SINH(SIGN(MIN(ABS(x),72.0D0),x))
 
 !-----------------------------------------------------------------------
 
@@ -366,7 +390,7 @@ SUBROUTINE boundc(rhoin,deltax,deltay,deltaz,  &
 
 
 
-REAL(DP), INTENT(IN)                         :: rhoin(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: rhoin(-maxx:maxx,-maxy:maxy,minz:maxz)
 REAL(DP), INTENT(IN)                         :: deltax
 REAL(DP), INTENT(IN)                         :: deltay
 REAL(DP), INTENT(IN)                         :: deltaz
@@ -376,7 +400,7 @@ REAL(DP), INTENT(OUT)                        :: potbcyl(-maxx:maxx,-maxz:maxz)
 REAL(DP), INTENT(OUT)                        :: potbcyu(-maxx:maxx,-maxz:maxz)
 REAL(DP), INTENT(OUT)                        :: potbczl(-maxx:maxx,-maxy:maxy)
 REAL(DP), INTENT(OUT)                        :: potbczu(-maxx:maxx,-maxy:maxy)
-REAL(DP), INTENT(OUT)                        :: potini(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(OUT)                        :: potini(-maxx:maxx,-maxy:maxy,minz:maxz)
 INTEGER, INTENT(IN)                      :: ifinit
 
 
@@ -694,8 +718,8 @@ SUBROUTINE d3sinft (fieldin, fieldout)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: fieldin(-maxx:maxx,-maxy:maxy,-
-COMPLEX(DP), INTENT(OUT)                     :: fieldout(-maxx:maxx,-maxy:maxy,-
+COMPLEX(DP), INTENT(IN OUT)                  :: fieldin(-maxx:maxx,-maxy:maxy,minz:maxz)
+COMPLEX(DP), INTENT(OUT)                     :: fieldout(-maxx:maxx,-maxy:maxy,minz:maxz)
 
 
 
@@ -816,8 +840,8 @@ SUBROUTINE kin3d_fr(field, kin_field)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: field(-maxx:maxx,-maxy:maxy,-
-COMPLEX(DP), INTENT(OUT)                     :: kin_field(-maxx:maxx,-maxy:maxy,-
+COMPLEX(DP), INTENT(IN OUT)                  :: field(-maxx:maxx,-maxy:maxy,minz:maxz)
+COMPLEX(DP), INTENT(OUT)                     :: kin_field(-maxx:maxx,-maxy:maxy,minz:maxz)
 
 
 
@@ -883,8 +907,8 @@ SUBROUTINE d3sinfpropag(field, prop_field, del_time)
 
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: field(-maxx:maxx,-maxy:maxy,-
-COMPLEX(DP), INTENT(OUT)                     :: prop_field(-maxx:maxx,-maxy:maxy,-
+COMPLEX(DP), INTENT(IN OUT)                  :: field(-maxx:maxx,-maxy:maxy,minz:maxz)
+COMPLEX(DP), INTENT(OUT)                     :: prop_field(-maxx:maxx,-maxy:maxy,minz:maxz)
 REAL(DP), INTENT(IN OUT)                     :: del_time
 
 
@@ -954,8 +978,8 @@ SUBROUTINE d3sinftreal (fieldin, fieldout)
 
 
 
-REAL(DP), INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN)                         :: fieldin(-maxx:maxx,-maxy:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: fieldout(-maxx:maxx,-maxy:maxy,minz:maxz)
 
 
 
@@ -1055,8 +1079,8 @@ SUBROUTINE d3sinflaplace(field, lapl_field)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: lapl_field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: lapl_field(-maxx:maxx,-maxy:maxy,minz:maxz)
 
 
 
@@ -1127,8 +1151,8 @@ SUBROUTINE d3sinfinverse(field, inv_field, e0inv)
 
 
 
-REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,-
-REAL(DP), INTENT(OUT)                        :: inv_field(-maxx:maxx,-maxy:maxy,-
+REAL(DP), INTENT(IN OUT)                     :: field(-maxx:maxx,-maxy:maxy,minz:maxz)
+REAL(DP), INTENT(OUT)                        :: inv_field(-maxx:maxx,-maxy:maxy,minz:maxz)
 REAL(DP), INTENT(IN)                         :: e0inv
 
 
@@ -1410,7 +1434,7 @@ SUBROUTINE sinti (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wsave(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA pi /3.14159265358979D0/
 
@@ -1429,7 +1453,7 @@ SUBROUTINE rffti (n,wsave)
 
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 
 IF (n == 1) RETURN
@@ -1442,7 +1466,7 @@ SUBROUTINE rffti1 (n,wa,ifac)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: wa(*)
 INTEGER, INTENT(OUT)                     :: ifac(3)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 INTEGER :: ntryh(4)
 DATA ntryh(1),ntryh(2),ntryh(3),ntryh(4)/4,2,3,5/
 
@@ -1512,7 +1536,7 @@ SUBROUTINE sint (n,x,wsave)
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                     :: x(1)
 REAL(DP), INTENT(IN OUT)                     :: wsave(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 
 np1 = n+1
@@ -1530,7 +1554,7 @@ INTEGER, INTENT(IN)                      :: l1
 REAL(DP), INTENT(IN)                         :: cc(ido,l1,2)
 REAL(DP), INTENT(OUT)                        :: ch(ido,2,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 
 DO  k=1,l1
@@ -1570,7 +1594,7 @@ REAL(DP), INTENT(IN)                         :: cc(ido,l1,3)
 REAL(DP), INTENT(OUT)                        :: ch(ido,3,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA taur,taui /-.5D0,.866025403784439D0/
 
@@ -1615,7 +1639,7 @@ REAL(DP), INTENT(OUT)                        :: ch(ido,4,l1)
 REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA hsqt2 /.7071067811865475D0/
 
@@ -1683,7 +1707,7 @@ REAL(DP), INTENT(IN)                         :: wa1(1)
 REAL(DP), INTENT(IN)                         :: wa2(1)
 REAL(DP), INTENT(IN)                         :: wa3(1)
 REAL(DP), INTENT(IN)                         :: wa4(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA tr11,ti11,tr12,ti12 /.309016994374947D0,.951056516295154D0,  &
     -.809016994374947D0,.587785252292473D0/
@@ -1750,12 +1774,12 @@ INTEGER, INTENT(IN)                      :: ip
 INTEGER, INTENT(IN)                      :: l1
 INTEGER, INTENT(IN)                      :: idl1
 REAL(DP), INTENT(OUT)                        :: cc(ido,ip,l1)
-REAL(DP), INTENT(IN OUT)                     :: c1(ido,l1,ip)
-REAL(DP), INTENT(IN OUT)                     :: c2(idl1,ip)
+REAL(DP), INTENT(OUT)                     :: c1(ido,l1,ip)
+REAL(DP), INTENT(OUT)                     :: c2(idl1,ip)
 REAL(DP), INTENT(OUT)                        :: ch(ido,l1,ip)
 REAL(DP), INTENT(OUT)                        :: ch2(idl1,ip)
 REAL(DP), INTENT(IN)                         :: wa(*)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA tpi/6.28318530717959D0/
 
@@ -1927,8 +1951,8 @@ INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(OUT)                        :: c(1)
 REAL(DP), INTENT(IN)                         :: ch(1)
 REAL(DP), INTENT(IN OUT)                     :: wa(*)
-INTEGER, INTENT(IN)                      :: ifac(2)
-IMPLICIT REAL(DP)(a-h,o-z)
+INTEGER, INTENT(IN)                      :: ifac(*)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 
 nf = ifac(2)
@@ -1997,7 +2021,7 @@ REAL(DP), INTENT(IN)                         :: was(1)
 REAL(DP), INTENT(OUT)                        :: xh(2)
 REAL(DP), INTENT(IN OUT)                     :: x(1)
 INTEGER, INTENT(IN OUT)                  :: ifac(1)
-IMPLICIT REAL(DP)(a-h,o-z)
+!IMPLICIT REAL(DP)(a-h,o-z)
 
 DATA sqrt3 /1.73205080756888D0/
 
@@ -2044,7 +2068,27 @@ xh(n) = -x(n+1)
 END DO
 RETURN
 END SUBROUTINE sint1
+
+
+FUNCTION sins(x)
+  USE params,ONLY:DP
+  
+  REAL(DP)::sins
+  REAL(DP),INTENT(IN)::x
+  
+!     stabilised sinh as internal statement function
+
+  sins = SINH(SIGN(MIN(ABS(x),72.0D0),x))
+
+ENDFUNCTION sins
+
+
+
+
+
 !INCLUDE "findiff.F90"
+
+
 
 
 

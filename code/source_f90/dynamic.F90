@@ -846,6 +846,10 @@ IF(tstinf) then
 ENDIF
 
 IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
+#if(findiff|numerov)
+  WRITE(6,*) "jstboosqtinv NOT YET FOR FINITE DIFFERENCE"
+  STOP
+#else
   ALLOCATE(current(kdfull2,3))
   ALLOCATE(qtmp(kdfull2))
   CALL calc_current(current,psi)
@@ -866,6 +870,7 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
   WRITE(92,'(1f15.6,500f12.6)') tfs,(spvariancebi(nb),nb=1,nstate)
   CLOSE(92)
   DEALLOCATE(current,qtmp)
+#endif
 END IF
 
 #if(parayes)

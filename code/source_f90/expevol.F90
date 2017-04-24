@@ -619,7 +619,7 @@ COMPLEX(DP) :: cf
 
 
 !----------------------------------------------------------------------
-
+#if(gridfft)
 ALLOCATE(q1(kdfull2),q2(kdfull2))
 
 q1=qact
@@ -650,6 +650,10 @@ qact = qact + h2m* &
 
 WRITE(*,*) ' HPSI_BOOSTINV: E_coll=',dvol*h2m*SUM(rho(:)* &
  (current(:,1)**2+current(:,2)**2+current(:,3)**2))
+
+#else
+WRITE(6,*)'HPSI_BOOSTINV NOT YET FOR FINITES DIFFERENCES'
+#endif
 
 RETURN
 END SUBROUTINE hpsi_boostinv

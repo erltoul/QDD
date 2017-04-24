@@ -160,7 +160,6 @@ CALL initwf(psir)              ! init wf, jellium, static parameters
 
 !                                     initialize surface
 
-
 #if(raregas)
 IF (isurf == 1) THEN
   CALL initfunctions

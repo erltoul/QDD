@@ -28,6 +28,7 @@ SUBROUTINE initnamelists
 !------------------------------------------------------------
 USE params
 USE kinetic
+
 IMPLICIT NONE
 
 CHARACTER (LEN=80) :: title
@@ -415,7 +416,7 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
 #endif
 
 #if(findiff|numerov)
-IF(ifhamdiag>0) STOP ' step with H diagonalization not yet for fin.diff.'
+!IF(ifhamdiag>0) STOP ' step with H diagonalization not yet for fin.diff.'
 #endif
 
 
@@ -2064,9 +2065,10 @@ WRITE(*,*) 'after ininqb'
 !     initialize H.O. wavefunctions
 
 IF(init_lcao /= 1) THEN
-    CALL initho(psir)
-    CALL initho(psir)
-  
+   CALL initho(psir)   
+   CALL initho(psir)
+
+   
 !       remove symmetry restrictions
   
 !  IF(init_lcao /= 1) CALL rem_sym(psir)
@@ -2085,9 +2087,9 @@ IF(init_lcao /= 1) THEN
           ' occ',occup(i),' sp',ispin(nr), ' knots:',nq(1,nr),nq(2,nr),nq(3,nr)
 !    END IF
   END DO
-  
+
 ELSE
-  
+
 !       optionally LCGO initialization
   
 !  CALL ininodes()
@@ -2124,7 +2126,7 @@ WRITE(7,*) ' SHIFTFIELD overridden'
 IF(ABS(shiftwfx)+ABS(shiftwfy)+ABS(shiftwfz) > 1D-20) THEN
   DO nbe=1,nstate
     CALL shiftfield(psir(:,nbe),shiftwfx,shiftwfy,shiftwfz)
-  END DO
+ END DO
 END IF
 #endif
 
@@ -2137,7 +2139,9 @@ WRITE(*,*) ' wfs initialized: myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(6,*) 'myn=',myn,' before SCHMID'
 #endif
+
 CALL schmidt(psir)
+
 #if(parayes)
 WRITE(6,*) 'myn=',myn,' after SCHMID'
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
@@ -2911,6 +2915,7 @@ DO nb=1,nstate
   
 !       composition of the factorised wave-function
 !       occupies only upper box (1/8 part), but is returned on 'psir'
+ 
   
   ii=0
   DO iz=1,nz2
@@ -2924,9 +2929,11 @@ DO nb=1,nstate
       END DO
     END DO
   END DO
-  
+
   
 END DO
+
+
 
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
@@ -3426,7 +3433,7 @@ IF(level>=1) THEN
   WRITE(6,*) 'level',level,dx,kxbox
 !    write(outnam,*) level 
 
-    nx2=kxbox
+  nx2=kxbox
   ny2=kybox
   nz2=kzbox
   kdfull2=nx2*ny2*nz2
@@ -3450,6 +3457,7 @@ IF(level>=1) THEN
   nbnz=2;nbxz=nz2-1
 ! mid-point for x,y,z-values
   nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
+
 #endif
 #if(findiff|numerov)
 ! bounds of loops
@@ -3462,10 +3470,14 @@ IF(level>=1) THEN
   nbnz=-nz+1;nbxz=nz-1
 ! offset for x,y,z-values   ???
   nxsh=0;nysh=0;nzsh=0
+
 #endif
 
 END IF
+
 #endif
+
+ 
 
 ALLOCATE(xval(nx2),yval(ny2),zval(nz2))        !  grid coordinates
 ALLOCATE(xt2(nx2),yt2(ny2),zt2(nz2))           !  coordinates**2
@@ -3528,9 +3540,10 @@ CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 
 !     init Coulomb solver
 
-#if(findiff|numerov)
-CALL d3sinfinit (dx,dy,dz)
-#else
+!!$#if(findiff|numerov)
+!!$CALL d3sinfinit (dx,dy,dz)
+!!$#else
+#if(gridfft)
 #if(coufou || coudoub)
 CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
 #endif

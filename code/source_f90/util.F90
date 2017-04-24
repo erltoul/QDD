@@ -4283,7 +4283,7 @@ END SUBROUTINE dipole_qp
 
 
 ! ******************************
-
+#if(gridfft)
 SUBROUTINE testgradient(wfin)
 
 ! ******************************
@@ -4340,7 +4340,7 @@ WRITE(7,'(a,5(1pg13.5))') ' test gradients:', &
 DEALLOCATE(wftest)
 
 END SUBROUTINE testgradient
-
+#endif
 
 COMPLEX(DP) FUNCTION determinant(a,n,np)
 ! Determinant of a complex matrix 'a'. This function is merely an interface for cludcmp.

@@ -1913,7 +1913,7 @@ IMPLICIT NONE
 INTEGER, INTENT(IN)                      :: n
 REAL(DP), INTENT(IN OUT)                 :: war(*)
 REAL(DP), INTENT(IN)                     :: was(*)
-REAL(DP), INTENT(OUT)                    :: xh(10)
+REAL(DP), INTENT(OUT)                    :: xh(*)
 REAL(DP), INTENT(IN OUT)                 :: x(*)
 INTEGER, INTENT(IN OUT)                  :: ifac(10)
 
