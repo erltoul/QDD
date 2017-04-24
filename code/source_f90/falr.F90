@@ -187,7 +187,7 @@ END SUBROUTINE rhofld
 !-----result------------------------------------------------------------
 
 SUBROUTINE result(chpfalr,kdf)
-
+USE params, ONLY:e2
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT) :: chpfalr(kdf)
@@ -197,7 +197,7 @@ INTEGER:: nmax
 !       inclusion of e2
 
 nmax=nxi*nyi*nzi
-chpfalr(1:nmax) = 2D0*potc(1:nmax)
+chpfalr(1:nmax) = e2*potc(1:nmax)
 
 RETURN
 END SUBROUTINE result

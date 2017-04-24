@@ -75,8 +75,8 @@ CALL solv_poisson(rho,chpcoul,kdfull2)
 
 #endif
 
-CALL prifld(2*chpcoul,'coulomb pot')
-STOP'TEST SOLV_POISSON'
+CALL prifld(chpcoul,'coulomb pot')
+STOP'test solv poisson'
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
 !     be communicated by 'all.inc'
@@ -941,6 +941,10 @@ END DO                                            ! end loop over states
 DEALLOCATE(q2)
 #endif
 #endif
+
+STOP'TEST SSTEP'
+
+
 
 DEALLOCATE(q1)
 #if(netlib_fft|fftw_cpu)

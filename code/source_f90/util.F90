@@ -2354,6 +2354,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along x:',comment
 ind = 0
+#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2363,6 +2364,18 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
+#endif
+#if(findiff)
+DO jz=minz,maxz
+  DO jy=miny,maxy
+    DO jx=minx,maxx
+      ind    = 1 + ind
+      IF(jz == 0 .AND. jy == 0)  &
+          WRITE(6,'(1x,f6.2,g13.5)') (jx)*dx,field(ind)
+    END DO
+  END DO
+END DO
+#endif
 
 RETURN
 END SUBROUTINE prifld
