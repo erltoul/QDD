@@ -200,9 +200,9 @@ DO i3=0,icrsz
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
       IF((rr <= radion) &
-                      & .AND. ((i3l+i3+nz-1) &   !  avoid segfault bug if going
-                      & .AND. (i2l+i2+ny-1) &    !  out of box  (bug identified by Wandong Yu)
-                      & .AND. (i1l+i1+nx-1) )) THEN   
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2))) THEN   
         
         ind = ind + 1
         IF(ind > knl) STOP " CALCPR: subgrid exceeded. enhance KNL"
@@ -329,9 +329,9 @@ DO i3=0,icrsz
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
       IF((rr <= radion) &
-                      & .AND. ((i3l+i3+nz-1) &   !  avoid segfault bug if going
-                      & .AND. (i2l+i2+ny-1) &    !  out of box  (bug identified by Wandong Yu)
-                      & .AND. (i1l+i1+nx-1) )) THEN   
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2) )) THEN   
         
         ind = ind + 1
         p0_1(ind,ion) = 0D0
@@ -457,9 +457,9 @@ DO i3=0,icrsz
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
       IF((rr <= radion) &
-                      & .AND. ((i3l+i3+nz-1) &   !  avoid segfault bug if going
-                      & .AND. (i2l+i2+ny-1) &    !  out of box  (bug identified by Wandong Yu)
-                      & .AND. (i1l+i1+nx-1) )) THEN   
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2) )) THEN   
         
         ind = ind + 1
         p0_1(ind,ion)   = 0D0
