@@ -2360,7 +2360,7 @@ DO jz=minz,maxz
     DO jx=minx,maxx
       ind    = 1 + ind
       IF(jz == nzsh .AND. jy == nysh)  &
-          WRITE(6,'(1x,f6.2,g13.5)') (jx-nxsh)*dx,field(ind)
+           WRITE(6,'(1x,f6.2,g13.5)') (jx-nxsh)*dx,field(ind)
     END DO
   END DO
 END DO
@@ -2371,7 +2371,7 @@ DO jz=minz,maxz
     DO jx=minx,maxx
       ind    = 1 + ind
       IF(jz == 0 .AND. jy == 0)  &
-          WRITE(6,'(1x,f6.2,g13.5)') (jx)*dx,field(ind)
+             WRITE(6,'(1x,f6.2,g13.5)') (jx)*dx,field(ind)
     END DO
   END DO
 END DO
@@ -2399,6 +2399,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along z:',comment
 ind = 0
+#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2408,6 +2409,18 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
+#endif
+#if(findiff)
+DO jz=minz,maxz
+  DO jy=miny,maxy
+    DO jx=minx,maxx
+      ind    = 1 + ind
+      IF(jx == 0 .AND. jy == 0)  &
+             WRITE(6,'(1x,f6.2,g13.5)') (jz)*dz,field(ind)
+    END DO
+  END DO
+END DO
+#endif
 
 RETURN
 END SUBROUTINE prifldz

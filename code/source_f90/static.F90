@@ -51,6 +51,9 @@ LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
 
+!real(DP) :: time_start,time_end
+
+
 #if(twostsic)
 INTEGER :: ii, jj
 #endif
@@ -66,17 +69,20 @@ CALL calcrhor(rho,psir)
 
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 
+!call cpu_time(time_start)
 #if(netlib_fft|fftw_cpu)
 CALL falr(rho,chpcoul,kdfull2)
 #else
-
 CALL solv_poisson(rho,chpcoul,kdfull2)
-! NOT YET FOR FINITES DIFFERENCES
-
 #endif
+!call cpu_time(time_end)
+
+!write(6,*) time_end-time_start
+!STOP'TEST TIME CALCULATION'
+
 
 CALL prifld(chpcoul,'coulomb pot')
-STOP'test solv poisson'
+
 !     Number of pre-iterations for static solution with IFSICP=6.
 !     This parameter is to be set here "by hand" such that it can
 !     be communicated by 'all.inc'
@@ -116,6 +122,8 @@ IF(ifsicp >= 7) CALL infor_sic(psir)
 IF(myn == 0)THEN
   CALL prifld(rho,'density    ')
   CALL prifld(aloc,'potential   ')
+
+
   IF(nion2 /= 0) CALL prifld(potion,'potential_io')
   WRITE(7,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
   WRITE(6,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
@@ -176,7 +184,10 @@ DO iter1=1,ismax
   END IF
   
   IF(ifsicp /= 7) THEN
-    CALL sstep(psir,aloc,iter1) 
+
+     CALL sstep(psir,aloc,iter1)
+
+     
 #if(twostsic)
   ELSE
     CALL sstep_lsic(psir,akv,aloc,iter1,qaux)
@@ -251,8 +262,9 @@ END IF
 
 !     final protocol on file 'pstat.<name>''
 
-CALL pri_pstat(psir,rho)
-
+!CALL pri_pstat(psir,rho)
+!write(6,*) size(psir),size(rho)
+!STOP 'TEST PIR PSTAT'
 !     save real wavefunctions for further applications
 
 IF(tspinprint) CLOSE(12)          ! ???
@@ -313,6 +325,7 @@ IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
   STOP ' terminate with static iteration '
 END IF
 
+
 !     file for groundstate at the end of static iteration
 
 !     optionally print KS potential along axes
@@ -333,8 +346,6 @@ END IF
 #if(parano)
 IF(iftransme==1 .AND. (nstate > nclust)) CALL transel(psir)
 #endif
-
-
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -406,7 +417,9 @@ SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
 !     Output:
 !      aloc   = local mean-field potential
 
-USE params
+  USE params
+
+  
 #if(twostsic)
 USE twostr
 USE localize_rad
@@ -424,6 +437,8 @@ INTEGER, INTENT(IN)                  :: iter1
 
 CALL calcrhor(rho,psir)
 CALL coul_mfield(rho)
+
+
 #if(raregas)
 IF (NE > 0) THEN
 !   WRITE(*,*) ' ADJUSTDIP from STATIC mfield'
@@ -440,12 +455,11 @@ IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
 #if(twostsic)
 ELSE IF(ifsicp == 7) THEN
-  CALL calc_locsic(psir,psiaux)
+   CALL calc_locsic(psir,psiaux)
 ELSE IF(ifsicp ==8 .AND. iter1 > 0) THEN
-  CALL static_sicfield(rho,aloc,psir,iter1)
+   CALL static_sicfield(rho,aloc,psir,iter1)
 #endif
 END IF
-
 RETURN
 END SUBROUTINE static_mfield
 
@@ -509,37 +523,46 @@ INTEGER,ALLOCATABLE :: npoi(:,:)
 INTEGER :: ntridig(2),nstsp(2)
 LOGICAL, PARAMETER :: tprham=.false.
 !#endif
+
 #if(twostsic)
 REAL(DP):: espbef, espaft
 #if(parano)
 INTEGER :: ni
 #endif
 #endif
+
 #if(fftw_gpu)
 INTEGER(C_INT) :: size_data
 #endif
+
 #if(parano)
 DATA tocc,tcpu/.false.,.true./
 #endif
+
 #if(parayes)
 DATA tocc,tcpu/.false.,.true./     ! no reoccupation in parallel
 #endif
+
 LOGICAL,PARAMETER :: tproj=.false.
 !       workspaces
 
 #if(netlib_fft|fftw_cpu)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
 #endif
+
 REAL(DP),ALLOCATABLE :: qex(:,:)
+
 #if(gridfft)
 #if(netlib_fft|fftw_cpu)
 REAL(DP)::vol
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
 #endif
+
 #if(fftw_gpu)
 REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
 #endif
+
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 #endif
@@ -585,6 +608,12 @@ ALLOCATE(q2(kdfull2))
 #endif
 
 
+#if(findiff)
+ALLOCATE(q1(kdfull2))
+ALLOCATE(q2(kdfull2))
+#endif
+
+
 #if(parano)
 IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
   ktridig=(kstate+kstate*kstate)/2
@@ -597,7 +626,9 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 END IF
 #endif
 
-
+!-----------------------------------------------------------------------
+!     NETLIB_FFT | FFTW_CPU
+!-----------------------------------------------------------------------
 !?      dvol=dx*dy*dz
 #if(netlib_fft|fftw_cpu)
 DO nbe=1,nstate
@@ -756,7 +787,12 @@ END DO                                            ! end loop over states
 ! end of FFT switch
 #endif
 !end of netlib/fftw switch
-  
+
+
+
+!-----------------------------------------------------------------------
+!     FFTW_GPU
+!-----------------------------------------------------------------------
 #if(fftw_gpu)
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
@@ -911,24 +947,27 @@ ENDDO
 
 
     
-#if(findiff|numerov)
-  
+#if(findiff|numerov)  
+
 !      action of kinetic energy, exp.values, and gradient step
 !      (this version of finite differences needs yet development)
 DO nbe=1,nstate
-  IF(e0dmp > small) STOP 'damped gradient not yet for finite differences'
-  CALL rkin3d(q0(1,nbe),q2)
-  sumk = 0D0
+   ! IF(e0dmp > small) STOP 'damped gradient not yet for finite differences'
+   CALL rkin3d(q0(:,nbe),q2)
+
+   sumk = 0D0
   sume = 0D0
   sum2 = 0D0
   DO i=1,nxyz
-    wfstep = (q2(i)+q1(i))
-    wf0    = q0(i,nbe)
+    !wfstep = (q2(i)+q1(i))
+     wfstep = q2(i)
+     wf0    = q0(i,nbe)
     sume   = wf0*wfstep + sume
     sum2   = wfstep*wfstep + sum2
     sumk   = wf0*q2(i) + sumk
     q0(i,nbe)=q0(i,nbe)-epswf*wfstep
-  END DO
+ END DO
+ 
   sume = sume*dvol
   sum2 = sum2*dvol
   sumk = sumk*dvol
@@ -937,16 +976,16 @@ DO nbe=1,nstate
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
 END DO                                            ! end loop over states
 
+DEALLOCATE(q2)
+
 #if(fftw_gpu)
 DEALLOCATE(q2)
 #endif
 #endif
 
-STOP'TEST SSTEP'
-
-
 
 DEALLOCATE(q1)
+
 #if(netlib_fft|fftw_cpu)
 DEALLOCATE(q2)
 #endif

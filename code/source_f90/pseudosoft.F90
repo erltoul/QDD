@@ -205,19 +205,17 @@ IF(ipseudo == 1)THEN
     
   END DO ! sodium core loop
   
-  
 #if(raregas)  
   IF(isurf /= 0) CALL pseudosoft_substrate(pseudorho,potsave)
 #endif
-  
-  
+
 #if(gridfft)
   CALL falr(pseudorho,potion,kdfull2)
 #endif
 #if(findiff|numerov)
   CALL solv_poisson(pseudorho,potion,kdfull2)
 #endif
-  
+
   
 #if(raregas)
   IF (isurf /= 0 .AND. ivdw /= 2) THEN

@@ -471,7 +471,10 @@ DO nb=1,nstate
   END IF
 #endif
 #if(findiff|numerov)
-  CALL d3mixpropag (q0(1,nb),dt1)
+
+  CALL d3mixpropag (q0(:,nb),dt1)
+  write(6,*) size(q0)
+    STOP'TEST d3MIX'
 #endif
 !#if(paropenmp)
 !WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
@@ -823,7 +826,11 @@ IF(tstinf) then
   DO nb=1,nstate
     qtmp = psi(:,nb)
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
-    CALL hpsi(qtmp,aloc(ishift+1),nb,1)  
+
+    
+    CALL hpsi(qtmp,aloc(ishift+1),nb,1)
+
+    
 #if(!parayes)
     CALL project(qtmp,qtmp,ispin(nb),psi)
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP))

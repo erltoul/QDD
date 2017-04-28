@@ -226,7 +226,6 @@ DO nterm=1,norder
     qact(i) = qact(i) + cfac*qwork(i)
   END DO
 END DO
-
 RETURN
 END SUBROUTINE exp_evol
 
@@ -282,6 +281,7 @@ dti = dtact*CMPLX(0D0,1D0,DP)
 !~ END IF
 
 ! compute H-matrix, store h*psi wavefunctions
+
 DO nbe=1,nstate
   ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
   CALL hpsi(qact(1,nbe),aloc(ilocbas),nbe,1)
@@ -481,7 +481,11 @@ CALL fftback(q1,q2,ffta,gpu_ffta)
 #endif
 IF(tpri) ekinsp(nbe) = wfovlp(qact,q2)
 #else
-STOP ' HPSI not yet appropriate for finite differences'
+
+CALL ckin3d(qact,q1)
+q2 = h2m * q1
+
+!STOP ' HPSI not yet appropriate for finite differences'
 #endif
 
 

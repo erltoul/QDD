@@ -197,7 +197,7 @@ END IF
 
 !IF(nclust > 0 .AND. irest == 0 .AND. istat == 0 .AND. ismax > 0)  
 IF(nclust > 0 .AND. irest == 0 .AND. ismax > 0)  THEN
-  CALL statit(psir,rho,aloc)
+   CALL statit(psir,rho,aloc)
 END IF
 
 
@@ -520,14 +520,15 @@ DO it=irest,itmax   ! time-loop
       
       
 !     propagation of the wfs
-      WRITE(*,*) 'propagation of the wfs'
+       WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw, .NOT. imaginary_time)
       ELSE
         IF(ifcnevol == 1) THEN
-          WRITE(*,*) 'Crank call '
-          CALL  CrankNicolson_exp(psi,aloc,rho,it,psiw)
-        ELSE
+           WRITE(*,*) 'Crank call '
+           CALL  CrankNicolson_exp(psi,aloc,rho,it,psiw)
+           !STOP'TEST CRANK NICOLSON'
+       ELSE
           CALL tstep(psi,aloc,rho,it)
         END IF
       END IF

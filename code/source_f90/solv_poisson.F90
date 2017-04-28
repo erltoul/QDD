@@ -48,6 +48,7 @@ CALL boundc(RHO,dx,dy,dz,potbcxl,potbcxu,potbcyl,potbcyu,potbczl,potbczu,POTC_MA
 !
 
 FTPI = -4.*3.1415927
+
 DO I3=2,(kzbox-1)
 DO I2=2,(kybox-1)
 DO I1=2,(kxbox-1)
@@ -225,158 +226,158 @@ IF(testpr) THEN
 END IF
 
 
-!     z-boundaries
-
-zz(1) = deltaz*maxz
-zz(2) = deltaz*minz
-
-zz2 = zz*zz
-
-DO iy=miny,maxy
-  y  = deltay*iy
-  drr2 = y*y+zz2
-  DO ix=minx,maxx
-    x  = deltax*ix
-    rr2 = one/(x*x+drr2)
-    rr  = SQRT(rr2)
-    potbczu(ix,iy) = rr(1)*(mulm00*y00(x,y,zz(1)) +rr2(1)*( mulm10*y10(x,y,zz(1))  &
-        +mulm11r*y11r(x,y,zz(1)) +mulm11i*y11i(x,y,zz(1))  &
-        +rr2(1)*( mulm20*y20(x,y,zz(1)) +mulm21r*y21r(x,y,zz(1))  &
-        +mulm21i*y21i(x,y,zz(1)) +mulm22r*y22r(x,y,zz(1))  &
-        +mulm22i*y22i(x,y,zz(1)) )))
-    potbczl(ix,iy) = rr(2)*(mulm00*y00(x,y,zz(2)) +rr2(2)*( mulm10*y10(x,y,zz(2))  &
-        +mulm11r*y11r(x,y,zz(2)) +mulm11i*y11i(x,y,zz(2))  &
-        +rr2(2)*( mulm20*y20(x,y,zz(2)) +mulm21r*y21r(x,y,zz(2))  &
-        +mulm21i*y21i(x,y,zz(2)) +mulm22r*y22r(x,y,zz(2))  &
-        +mulm22i*y22i(x,y,zz(2)) )))
-  END DO
-END DO
-
-!     y-boundaries
-
-yy(1) = deltay*maxy
-yy(2) = deltay*miny
-
-yy2 = yy*yy
-
-DO iz=minz,maxz
-  z  = deltaz*iz
-  drr2 = z*z+yy2
-  DO ix=minx,maxx
-    x  = deltax*ix
-    rr2 = one/(x*x+drr2)
-    rr  = SQRT(rr2)
-    potbcyu(ix,iz) = rr(1)*(mulm00*y00(x,yy(1),z) +rr2(1)*( mulm10*y10(x,yy(1),z)  &
-        +mulm11r*y11r(x,yy(1),z) +mulm11i*y11i(x,yy(1),z)  &
-        +rr2(1)*( mulm20*y20(x,yy(1),z) +mulm21r*y21r(x,yy(1),z)  &
-        +mulm21i*y21i(x,yy(1),z) +mulm22r*y22r(x,yy(1),z)  &
-        +mulm22i*y22i(x,yy(1),z) )))
-    potbcyl(ix,iz) = rr(2)*(mulm00*y00(x,yy(2),z) +rr2(2)*( mulm10*y10(x,yy(2),z)  &
-        +mulm11r*y11r(x,yy(2),z) +mulm11i*y11i(x,yy(2),z)  &
-        +rr2(2)*( mulm20*y20(x,yy(2),z) +mulm21r*y21r(x,yy(2),z)  &
-        +mulm21i*y21i(x,yy(2),z) +mulm22r*y22r(x,yy(2),z)  &
-        +mulm22i*y22i(x,yy(2),z) )))
-  END DO
-END DO
-!     x-boundaries
-
-xx(1)  = deltax*maxx
-xx(2)  = deltax*minx
-xx2 = xx*xx
-DO iz=minz,maxz
-  z  = deltaz*iz
-  drr2 = z*z+xx2
-  DO iy=miny,maxy
-    y  = deltay*iy
-    rr2 = one/(y*y+drr2)
-    rr  = SQRT(rr2)
-    potbcxu(iy,iz) = rr(1)*(mulm00*y00(xx(1),y,z) +rr2(1)*( mulm10*y10(xx(1),y,z)  &
-        +mulm11r*y11r(xx(1),y,z) +mulm11i*y11i(xx(1),y,z)  &
-        +rr2(1)*( mulm20*y20(xx(1),y,z) +mulm21r*y21r(xx(1),y,z)  &
-        +mulm21i*y21i(xx(1),y,z) +mulm22r*y22r(xx(1),y,z)  &
-        +mulm22i*y22i(xx(1),y,z) )))
-    potbcxl(iy,iz) = rr(2)*(mulm00*y00(xx(2),y,z) +rr2(2)*( mulm10*y10(xx(2),y,z)  &
-        +mulm11r*y11r(xx(2),y,z) +mulm11i*y11i(xx(2),y,z)  &
-        +rr2(2)*( mulm20*y20(xx(2),y,z) +mulm21r*y21r(xx(2),y,z)  &
-        +mulm21i*y21i(xx(2),y,z) +mulm22r*y22r(xx(2),y,z)  &
-        +mulm22i*y22i(xx(2),y,z) )))
- END DO
-END DO
-
-
-
 !!$!     z-boundaries
 !!$
+!!$zz(1) = deltaz*maxz
+!!$zz(2) = deltaz*minz
 !!$
-!!$z  = deltaz*maxz
-!!$z2 = z*z
+!!$zz2 = zz*zz
+!!$
 !!$DO iy=miny,maxy
 !!$  y  = deltay*iy
-!!$  dr2 = y*y+z2
+!!$  drr2 = y*y+zz2
 !!$  DO ix=minx,maxx
 !!$    x  = deltax*ix
-!!$    r2 = one/(x*x+dr2)
-!!$    r  = SQRT(r2)
-!!$    potbczu(ix,iy) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
-!!$        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
-!!$        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
-!!$        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
-!!$        +mulm22i*y22i(x,y,z) )))
-!!$    potbczl(ix,iy) = r*(mulm00*y00(x,y,-z) +r2*( mulm10*y10(x,y,-z)  &
-!!$        +mulm11r*y11r(x,y,-z) +mulm11i*y11i(x,y,-z)  &
-!!$        +r2*( mulm20*y20(x,y,-z) +mulm21r*y21r(x,y,-z)  &
-!!$        +mulm21i*y21i(x,y,-z) +mulm22r*y22r(x,y,-z)  &
-!!$        +mulm22i*y22i(x,y,-z) )))
-!!$ END DO
+!!$    rr2 = one/(x*x+drr2)
+!!$    rr  = SQRT(rr2)
+!!$    potbczu(ix,iy) = rr(1)*(mulm00*y00(x,y,zz(1)) +rr2(1)*( mulm10*y10(x,y,zz(1))  &
+!!$        +mulm11r*y11r(x,y,zz(1)) +mulm11i*y11i(x,y,zz(1))  &
+!!$        +rr2(1)*( mulm20*y20(x,y,zz(1)) +mulm21r*y21r(x,y,zz(1))  &
+!!$        +mulm21i*y21i(x,y,zz(1)) +mulm22r*y22r(x,y,zz(1))  &
+!!$        +mulm22i*y22i(x,y,zz(1)) )))
+!!$    potbczl(ix,iy) = rr(2)*(mulm00*y00(x,y,zz(2)) +rr2(2)*( mulm10*y10(x,y,zz(2))  &
+!!$        +mulm11r*y11r(x,y,zz(2)) +mulm11i*y11i(x,y,zz(2))  &
+!!$        +rr2(2)*( mulm20*y20(x,y,zz(2)) +mulm21r*y21r(x,y,zz(2))  &
+!!$        +mulm21i*y21i(x,y,zz(2)) +mulm22r*y22r(x,y,zz(2))  &
+!!$        +mulm22i*y22i(x,y,zz(2)) )))
+!!$  END DO
 !!$END DO
 !!$
 !!$!     y-boundaries
 !!$
-!!$y  = deltay*maxy
-!!$y2 = y*y
+!!$yy(1) = deltay*maxy
+!!$yy(2) = deltay*miny
+!!$
+!!$yy2 = yy*yy
+!!$
 !!$DO iz=minz,maxz
 !!$  z  = deltaz*iz
-!!$  dr2 = z*z+y2
+!!$  drr2 = z*z+yy2
 !!$  DO ix=minx,maxx
 !!$    x  = deltax*ix
-!!$    r2 = one/(x*x+dr2)
-!!$    r  = SQRT(r2)
-!!$    potbcyu(ix,iz) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
-!!$        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
-!!$        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
-!!$        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
-!!$        +mulm22i*y22i(x,y,z) )))
-!!$    potbcyl(ix,iz) = r*(mulm00*y00(x,-y,z) +r2*( mulm10*y10(x,-y,z)  &
-!!$        +mulm11r*y11r(x,-y,z) +mulm11i*y11i(x,-y,z)  &
-!!$        +r2*( mulm20*y20(x,-y,z) +mulm21r*y21r(x,-y,z)  &
-!!$        +mulm21i*y21i(x,-y,z) +mulm22r*y22r(x,-y,z)  &
-!!$        +mulm22i*y22i(x,-y,z) )))
+!!$    rr2 = one/(x*x+drr2)
+!!$    rr  = SQRT(rr2)
+!!$    potbcyu(ix,iz) = rr(1)*(mulm00*y00(x,yy(1),z) +rr2(1)*( mulm10*y10(x,yy(1),z)  &
+!!$        +mulm11r*y11r(x,yy(1),z) +mulm11i*y11i(x,yy(1),z)  &
+!!$        +rr2(1)*( mulm20*y20(x,yy(1),z) +mulm21r*y21r(x,yy(1),z)  &
+!!$        +mulm21i*y21i(x,yy(1),z) +mulm22r*y22r(x,yy(1),z)  &
+!!$        +mulm22i*y22i(x,yy(1),z) )))
+!!$    potbcyl(ix,iz) = rr(2)*(mulm00*y00(x,yy(2),z) +rr2(2)*( mulm10*y10(x,yy(2),z)  &
+!!$        +mulm11r*y11r(x,yy(2),z) +mulm11i*y11i(x,yy(2),z)  &
+!!$        +rr2(2)*( mulm20*y20(x,yy(2),z) +mulm21r*y21r(x,yy(2),z)  &
+!!$        +mulm21i*y21i(x,yy(2),z) +mulm22r*y22r(x,yy(2),z)  &
+!!$        +mulm22i*y22i(x,yy(2),z) )))
 !!$  END DO
 !!$END DO
-!!$
 !!$!     x-boundaries
 !!$
-!!$x  = deltax*maxx
-!!$x2 = x*x
+!!$xx(1)  = deltax*maxx
+!!$xx(2)  = deltax*minx
+!!$xx2 = xx*xx
 !!$DO iz=minz,maxz
 !!$  z  = deltaz*iz
-!!$  dr2 = z*z+x2
+!!$  drr2 = z*z+xx2
 !!$  DO iy=miny,maxy
 !!$    y  = deltay*iy
-!!$    r2 = one/(y*y+dr2)
-!!$    r  = SQRT(r2)
-!!$    potbcxu(iy,iz) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
-!!$        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
-!!$        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
-!!$        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
-!!$        +mulm22i*y22i(x,y,z) )))
-!!$    potbcxl(iy,iz) = r*(mulm00*y00(-x,y,z) +r2*( mulm10*y10(-x,y,z)  &
-!!$        +mulm11r*y11r(-x,y,z) +mulm11i*y11i(-x,y,z)  &
-!!$        +r2*( mulm20*y20(-x,y,z) +mulm21r*y21r(-x,y,z)  &
-!!$        +mulm21i*y21i(-x,y,z) +mulm22r*y22r(-x,y,z)  &
-!!$        +mulm22i*y22i(-x,y,z) )))
+!!$    rr2 = one/(y*y+drr2)
+!!$    rr  = SQRT(rr2)
+!!$    potbcxu(iy,iz) = rr(1)*(mulm00*y00(xx(1),y,z) +rr2(1)*( mulm10*y10(xx(1),y,z)  &
+!!$        +mulm11r*y11r(xx(1),y,z) +mulm11i*y11i(xx(1),y,z)  &
+!!$        +rr2(1)*( mulm20*y20(xx(1),y,z) +mulm21r*y21r(xx(1),y,z)  &
+!!$        +mulm21i*y21i(xx(1),y,z) +mulm22r*y22r(xx(1),y,z)  &
+!!$        +mulm22i*y22i(xx(1),y,z) )))
+!!$    potbcxl(iy,iz) = rr(2)*(mulm00*y00(xx(2),y,z) +rr2(2)*( mulm10*y10(xx(2),y,z)  &
+!!$        +mulm11r*y11r(xx(2),y,z) +mulm11i*y11i(xx(2),y,z)  &
+!!$        +rr2(2)*( mulm20*y20(xx(2),y,z) +mulm21r*y21r(xx(2),y,z)  &
+!!$        +mulm21i*y21i(xx(2),y,z) +mulm22r*y22r(xx(2),y,z)  &
+!!$        +mulm22i*y22i(xx(2),y,z) )))
 !!$ END DO
 !!$END DO
+
+
+
+!     z-boundaries
+
+
+z  = deltaz*maxz
+z2 = z*z
+DO iy=miny,maxy
+  y  = deltay*iy
+  dr2 = y*y+z2
+  DO ix=minx,maxx
+    x  = deltax*ix
+    r2 = one/(x*x+dr2)
+    r  = SQRT(r2)
+    potbczu(ix,iy) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
+        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
+        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
+        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
+        +mulm22i*y22i(x,y,z) )))
+    potbczl(ix,iy) = r*(mulm00*y00(x,y,-z) +r2*( mulm10*y10(x,y,-z)  &
+        +mulm11r*y11r(x,y,-z) +mulm11i*y11i(x,y,-z)  &
+        +r2*( mulm20*y20(x,y,-z) +mulm21r*y21r(x,y,-z)  &
+        +mulm21i*y21i(x,y,-z) +mulm22r*y22r(x,y,-z)  &
+        +mulm22i*y22i(x,y,-z) )))
+ END DO
+END DO
+
+!     y-boundaries
+
+y  = deltay*maxy
+y2 = y*y
+DO iz=minz,maxz
+  z  = deltaz*iz
+  dr2 = z*z+y2
+  DO ix=minx,maxx
+    x  = deltax*ix
+    r2 = one/(x*x+dr2)
+    r  = SQRT(r2)
+    potbcyu(ix,iz) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
+        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
+        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
+        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
+        +mulm22i*y22i(x,y,z) )))
+    potbcyl(ix,iz) = r*(mulm00*y00(x,-y,z) +r2*( mulm10*y10(x,-y,z)  &
+        +mulm11r*y11r(x,-y,z) +mulm11i*y11i(x,-y,z)  &
+        +r2*( mulm20*y20(x,-y,z) +mulm21r*y21r(x,-y,z)  &
+        +mulm21i*y21i(x,-y,z) +mulm22r*y22r(x,-y,z)  &
+        +mulm22i*y22i(x,-y,z) )))
+  END DO
+END DO
+
+!     x-boundaries
+
+x  = deltax*maxx
+x2 = x*x
+DO iz=minz,maxz
+  z  = deltaz*iz
+  dr2 = z*z+x2
+  DO iy=miny,maxy
+    y  = deltay*iy
+    r2 = one/(y*y+dr2)
+    r  = SQRT(r2)
+    potbcxu(iy,iz) = r*(mulm00*y00(x,y,z) +r2*( mulm10*y10(x,y,z)  &
+        +mulm11r*y11r(x,y,z) +mulm11i*y11i(x,y,z)  &
+        +r2*( mulm20*y20(x,y,z) +mulm21r*y21r(x,y,z)  &
+        +mulm21i*y21i(x,y,z) +mulm22r*y22r(x,y,z)  &
+        +mulm22i*y22i(x,y,z) )))
+    potbcxl(iy,iz) = r*(mulm00*y00(-x,y,z) +r2*( mulm10*y10(-x,y,z)  &
+        +mulm11r*y11r(-x,y,z) +mulm11i*y11i(-x,y,z)  &
+        +r2*( mulm20*y20(-x,y,z) +mulm21r*y21r(-x,y,z)  &
+        +mulm21i*y21i(-x,y,z) +mulm22r*y22r(-x,y,z)  &
+        +mulm22i*y22i(-x,y,z) )))
+ END DO
+END DO
 
 
 potini(minx,miny:maxy,minz:maxz) = potbcxl(miny:maxy,minz:maxz)

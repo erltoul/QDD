@@ -29,7 +29,7 @@ SUBROUTINE calclocal(rho,aloc)
 
 
 USE params
-USE util, ONLY:laserp,projectp
+USE util, ONLY:laserp,projectp,prifld
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
@@ -100,7 +100,7 @@ IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
 
 IF(ifsicp /= 5) THEN
   CALL calc_lda(rho,chpdft)
-!test        call prifld(chpcoul,'xc potential')
+  !test        call prifld(chpcoul,'xc potential')
 ELSE
   chpdft = 0D0
 END IF
@@ -123,9 +123,9 @@ END IF
 
 DO ind=1,nxyz
   IF(nion2 /= 0) THEN
-    add=chpcoul(ind)-potion(ind)
+     add=chpcoul(ind)-potion(ind)
   ELSE
-    add=chpcoul(ind)
+     add=chpcoul(ind)
   END IF
   IF(tfs > 0D0) THEN
      add = temp + vlaser(ind) + Vproj(ind)
@@ -142,7 +142,6 @@ DO ind=1,nxyz
 #endif
 
 END DO
-
 
 
 IF(tfs > 0D0)  THEN
