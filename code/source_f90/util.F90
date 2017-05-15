@@ -2354,7 +2354,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along x:',comment
 ind = 0
-#if(gridfft)
+!#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2364,8 +2364,8 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-#endif
-#if(findiff)
+!#endif
+#if(tfindiff)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2399,7 +2399,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along z:',comment
 ind = 0
-#if(gridfft)
+!#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2409,8 +2409,8 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-#endif
-#if(findiff)
+!#endif
+#if(tfindiff)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx

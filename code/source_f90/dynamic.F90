@@ -396,7 +396,6 @@ CALL cpu_time(time_init)
 CALL system_clock(ncount_init,ncount_rate,ncount_max)
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
 
-
 itsub = MOD(it,ipasinf) + 1
 
 ri = -dt1*0.5D0
@@ -472,9 +471,8 @@ DO nb=1,nstate
 #endif
 #if(findiff|numerov)
 
-  CALL d3mixpropag (q0(:,nb),dt1)
-  write(6,*) size(q0)
-    STOP'TEST d3MIX'
+  !CALL d3mixpropag (q0(:,nb),dt1)
+! STOP'TEST D3MIXPROPAG'
 #endif
 !#if(paropenmp)
 !WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol

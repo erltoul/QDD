@@ -3408,11 +3408,12 @@ IMPLICIT NONE
 #if(paraworld||parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-INTEGER :: nrank
 #endif
-#if(paraworld)
+
+INTEGER :: nrank=0
+
 INTEGER::coeff,level
-#endif
+
 INTEGER :: ix, iy, iz
 REAL(DP) :: dxfine, dyfine, dzfine, dvolfine
 REAL(DP) :: x1,y1,z1
@@ -3420,6 +3421,8 @@ REAL(DP) :: x1,y1,z1
 #if(paraworld)
 
 CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+#endif
+
 level=nrank
 
 IF(level>=1) THEN
@@ -3446,7 +3449,8 @@ IF(level>=1) THEN
   kdfull2fine=(2*kxbox)*(2*kybox)*(2*kzbox)
   nx=nx2/2;ny=ny2/2;nz=nz2/2
   nxfine=kxbox;nyfine=kybox;nzfine=kzbox
-#if(gridfft)
+  END IF
+!#if(gridfft)
 ! bounds of loops
   minx=1;maxx=nx2
   miny=1;maxy=ny2
@@ -3458,8 +3462,8 @@ IF(level>=1) THEN
 ! mid-point for x,y,z-values
   nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
 
-#endif
-#if(findiff|numerov)
+!#endif
+#if(tfindiff|tnumerov)
 ! bounds of loops
   minx=-nx;maxx=nx
   miny=-ny;maxy=ny
@@ -3473,9 +3477,9 @@ IF(level>=1) THEN
 
 #endif
 
-END IF
 
-#endif
+
+
 
  
 

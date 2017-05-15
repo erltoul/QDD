@@ -237,7 +237,7 @@ INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
 INTEGER :: isitmax=0         ! number of imaginary-time steps (afterburn)
 INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=1,iswitch_interpol=0, ifexpevol=0,ifcnevol=1 ! expe=exponential, cn = Crank Nicolson multigrid
+INTEGER :: iffastpropag=1,iswitch_interpol=0, ifexpevol=0,ifcnevol=0 ! expe=exponential, cn = Crank Nicolson multigrid
 INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
@@ -419,7 +419,7 @@ nthr=numthr-1
  if(ksttot2 < ksttot) kstate=1+kstate
  ksttot = knode*kstate    ! final value
  knodem=knode-1
-#if(gridfft)
+!#if(gridfft)
 ! bounds of loops
  minx=1;maxx=nx2
  miny=1;maxy=ny2
@@ -430,8 +430,8 @@ nthr=numthr-1
  nbnz=2;nbxz=nz2-1
 ! mid-point for x,y,z-values
  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
-#endif
-#if(findiff|numerov)
+!#endif
+#if(tfindiff|tnumerov)
 ! bounds of loops
  minx=-nx+1;maxx=nx
  miny=-ny+1;maxy=ny

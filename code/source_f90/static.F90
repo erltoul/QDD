@@ -51,9 +51,6 @@ LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
 
-!real(DP) :: time_start,time_end
-
-
 #if(twostsic)
 INTEGER :: ii, jj
 #endif
@@ -69,17 +66,11 @@ CALL calcrhor(rho,psir)
 
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 
-!call cpu_time(time_start)
 #if(netlib_fft|fftw_cpu)
 CALL falr(rho,chpcoul,kdfull2)
 #else
 CALL solv_poisson(rho,chpcoul,kdfull2)
 #endif
-!call cpu_time(time_end)
-
-!write(6,*) time_end-time_start
-!STOP'TEST TIME CALCULATION'
-
 
 CALL prifld(chpcoul,'coulomb pot')
 
@@ -111,8 +102,12 @@ END IF
 CALL calcpseudo()                 ! initialize pseudo-potentials
 CALL static_mfield(rho,aloc,psir,qaux,0)
 CALL pricm(rho)
+
+
 IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
-    rvectmp(1),rvectmp(2),rvectmp(3)
+     rvectmp(1),rvectmp(2),rvectmp(3)
+
+
 CALL infor(rho,0)
 #if(twostsic)
 IF(ifsicp >= 7) CALL infor_sic(psir)
@@ -184,9 +179,9 @@ DO iter1=1,ismax
   END IF
   
   IF(ifsicp /= 7) THEN
-
+    
      CALL sstep(psir,aloc,iter1)
-
+     
      
 #if(twostsic)
   ELSE
@@ -567,6 +562,12 @@ REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 #endif
 
+#if(findiff)
+REAL(DP),DIMENSION(:),ALLOCATABLE :: psipr
+REAL(DP),DIMENSION(:),ALLOCATABLE :: w4
+REAL(DP)::vol
+#endif
+
 !-------------------------------------------------------------------------
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
@@ -608,9 +609,10 @@ ALLOCATE(q2(kdfull2))
 #endif
 
 
-#if(findiff)
+#if(findiff|numerov)
 ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
+ALLOCATE(psipr(kdfull2))
 #endif
 
 
@@ -651,6 +653,7 @@ DO nbe=1,nstate
       q1(i)=q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
   END IF
+
   
   IF(ifsicp == 5) THEN
     q1=q1+qex(:,nbe)
@@ -670,6 +673,7 @@ DO nbe=1,nstate
   
   IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
   
+
   
 #if(gridfft)
 ALLOCATE(psipr(kdfull2))
@@ -712,12 +716,15 @@ ALLOCATE(psipr(kdfull2))
       sumk  = vol*akv(i) + sumk
       sume =  REAL(q2(i),DP)*REAL(psipr(i),DP) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
       sum2 =  REAL(q2(i),DP)*REAL(q2(i),DP) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
-    END DO
+   END DO
+
+  
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
 !          amoy(nbe)   = sume
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+
 #if(parayes)
     evarsp2(nbe) = evarsp(nbe)
 #endif
@@ -761,7 +768,7 @@ ALLOCATE(psipr(kdfull2))
 !     perform the damped gradient step and orthogonalize the new basis
   
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-  
+
 !  IF(iter > 0) THEN  
   IF(tproj) THEN
     IF(e0dmp > small) THEN
@@ -794,6 +801,7 @@ END DO                                            ! end loop over states
 !     FFTW_GPU
 !-----------------------------------------------------------------------
 #if(fftw_gpu)
+
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
@@ -813,6 +821,11 @@ DO nbe=1,nstate
       q1(i,nbe)=q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
     END DO
   END IF
+
+
+
+
+
   
   IF(ifsicp == 5) THEN
     q1(:,nbe)=q1(:,nbe)+qex(:,nbe)
@@ -949,38 +962,199 @@ ENDDO
     
 #if(findiff|numerov)  
 
-!      action of kinetic energy, exp.values, and gradient step
-!      (this version of finite differences needs yet development)
 DO nbe=1,nstate
-   ! IF(e0dmp > small) STOP 'damped gradient not yet for finite differences'
-   CALL rkin3d(q0(:,nbe),q2)
+  ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
+  
+  
+!       action of the potential in coordinate space
+!       plus non local part of ps
+!       plus optionally exchange part
+  
+  
+  IF(ipsptyp == 1) THEN
+    CALL nonlocalr(q0(1,nbe),q1)
+    enonlo(nbe)= wfovlp(q0(:,nbe),q1)
+    DO  i=1,nxyz
+      q1(i)=q1(i)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
+    END DO
+  ELSE
+    DO  i=1,nxyz
+      q1(i)=q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
+    END DO
+  END IF
+  
+  IF(ifsicp == 5) THEN
+    q1=q1+qex(:,nbe)
+  END IF
+  
 
-   sumk = 0D0
-  sume = 0D0
-  sum2 = 0D0
-  DO i=1,nxyz
-    !wfstep = (q2(i)+q1(i))
-     wfstep = q2(i)
-     wf0    = q0(i,nbe)
-    sume   = wf0*wfstep + sume
-    sum2   = wfstep*wfstep + sum2
-    sumk   = wf0*q2(i) + sumk
-    q0(i,nbe)=q0(i,nbe)-epswf*wfstep
- END DO
- 
-  sume = sume*dvol
-  sum2 = sum2*dvol
-  sumk = sumk*dvol
-  ekinsp(nbe) = sumk
-  evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
-  amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
-END DO                                            ! end loop over states
-
-DEALLOCATE(q2)
-
-#if(fftw_gpu)
-DEALLOCATE(q2)
+!JM : subtract SIC potential for state NBE
+#if(twostsic)
+  espbef = wfovlp(q0(:,nbe),q1)
+  IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
+  espaft = wfovlp(q0(:,nbe),q1)
 #endif
+!JM
+  
+  
+!       optionally compute expectation value of potential energy
+  
+  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
+  
+
+  
+
+!ALLOCATE(psipr(kdfull2))
+  
+!        action of the kinetic energy in momentum space
+!  CALL rftf(q0(1,nbe),psipr)
+   CALL rkin3d(q0(:,nbe),psipr)
+
+
+   
+  
+!       compose to h|psi>
+  q2 =psipr*h2m+q1
+
+  
+!       Optionally compute expectation value of kinetic energy
+!       and variance of mean field Hamiltonian.
+!       This is done in Fourier space to save FFT's.
+!       Variance 'evarsp2' excludes non-diagonal elements within
+!       occupied space.
+  
+  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
+    
+!#if(parano)
+   ALLOCATE(w4(kdfull2))
+   w4=q2
+   CALL project(w4,w4,ispin(nbe),q0)
+   evarsp2(nbe) =  SQRT(wfovlp(w4,w4))
+   DEALLOCATE(w4)
+!#endif
+    
+    sum0 = 0D0
+    sumk = 0D0
+    sume = 0D0
+    sum2 = 0D0
+    DO  i=1,nxyz
+      !vol   = REAL(psipr(i),DP)*REAL(psipr(i),DP) +AIMAG(psipr(i))*AIMAG(psipr(i))
+      !sum0  = vol + sum0
+      !sumk  = vol*akv + sumk
+      !sume =  REAL(q2(i),DP)*REAL(psipr(i),DP) +AIMAG(q2(i))*AIMAG(psipr(i))  + sume
+      !sum2 =  REAL(q2(i),DP)*REAL(q2(i),DP) +AIMAG(q2(i))*AIMAG(q2(i))  + sum2
+
+
+       
+       vol   = q0(i,nbe)*q0(i,nbe)
+     
+
+     
+      sum0  = vol + sum0
+      sumk  = h2m*psipr(i)*q0(i,nbe) + sumk
+      sume = q2(i)*q0(i,nbe) + sume
+      sum2 = q2(i)*q2(i) + sum2
+
+       
+   END DO
+  
+    ekinsp(nbe) = sumk/sum0
+    sume = sume/sum0
+    sum2 = sum2/sum0
+!          amoy(nbe)   = sume
+    evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+#if(parayes)
+    evarsp2(nbe) = evarsp(nbe)
+#endif
+  END IF
+
+!!$  
+#if(parano)
+  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
+!       accumulate mean-field Hamiltonian within occupied states,
+!       for later diagonalization
+
+    IF(iter > 0) THEN  
+      q1=q2
+      iactsp = ispin(nbe)
+      nstsp(iactsp) = 1+nstsp(iactsp)
+      npoi(nstsp(iactsp),iactsp) = nbe
+      DO nbc=1,nbe
+        IF(iactsp == ispin(nbc)) THEN
+          ntridig(iactsp) = 1+ntridig(iactsp)
+          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1)
+          IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
+              hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
+#if(twostsic)  
+          hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
+#endif
+          IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
+              hmatr(ntridig(iactsp),iactsp)
+        END IF
+      END DO
+#if(twostsic)  
+      DO nbc=nbe+1,nstate
+        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
+      END DO
+#endif
+    END IF
+
+  END IF
+#endif
+  
+!!$  
+!     perform the damped gradient step and orthogonalize the new basis
+  
+  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
+
+!  IF(iter > 0) THEN  
+ 
+      q2 = - epswf*q2
+   
+   
+    CALL project(q2,q2,ispin(nbe),q0)
+    q0(:,nbe) = q0(:,nbe)+q2
+ 
+!DEALLOCATE(psipr)
+END DO                                            ! end loop over states
+DEALLOCATE(psipr)
+
+
+!!$!      action of kinetic energy, exp.values, and gradient step
+!!$!      (this version of finite differences needs yet development)
+!!$DO nbe=1,nstate
+!!$    ! IF(e0dmp > small) STOP 'damped gradient not yet for finite differences'
+!!$
+!!$
+!!$   
+!!$   CALL rkin3d(q0(:,nbe),q2)
+!!$
+!!$  sumk = 0D0
+!!$  sume = 0D0
+!!$  sum2 = 0D0
+!!$  DO i=1,nxyz
+!!$    wfstep = (q2(i)+q1(i))
+!!$     !wfstep = q2(i)
+!!$     wf0    = q0(i,nbe)
+!!$    sume   = wf0*wfstep + sume
+!!$    sum2   = wfstep*wfstep + sum2
+!!$    sumk   = wf0*q2(i) + sumk
+!!$    q0(i,nbe)=q0(i,nbe)-epswf*wfstep
+!!$ END DO
+!!$ 
+!!$  sume = sume*dvol
+!!$  sum2 = sum2*dvol
+!!$  sumk = sumk*dvol
+!!$  ekinsp(nbe) = sumk
+!!$  evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
+!!$  amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
+!!$END DO                                            ! end loop over states
+!!$
+!!$DEALLOCATE(q2)
+!!$
+!!$#if(fftw_gpu)
+!!$DEALLOCATE(q2)
+!!$#endif
 #endif
 
 
@@ -1198,7 +1372,6 @@ DO nb=1,nstate
   IF(nc+nk+ne.gt.0) ecorr=energ_ions()
 #endif
 END DO
-
 ecorr=energ_ions()
 
 #if(parano)

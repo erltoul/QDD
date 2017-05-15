@@ -23,12 +23,19 @@ IMPLICIT NONE
 CONTAINS
 #if(findiff)
 
-!-----rkin3D_3r------------------------------------------------------------
+!-----RKIN3D_3R------------------------------------------------------------
 
 SUBROUTINE rkin3d(psi,dxpsi)
 
-!RKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI'
+!RKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE REAL NUMBERS
 !THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN THREE POINTS
+
+!-----------------------------------------------------------------------
+
+!                   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)
+!   DXPSI(X,Y,Z) =  ------------ + ------------ + ------------
+!                       DX2            DY2            DZ2
   
 !-----------------------------------------------------------------------
 
@@ -37,15 +44,15 @@ REAL(DP), INTENT(OUT)                        :: dxpsi(kdfull2)
 
 !-----------------------------------------------------------------------
 
-INTEGER :: ix, iy, iz              ! loop indices
-INTEGER :: ista, iend, ind
+INTEGER :: ix, iy, iz              ! LOOP INDICES
+INTEGER :: ista, iend, ind         ! INDICE OF SELECTION OF THE DIRECTION
 
 !-----------------------------------------------------------------------
 
-!     reset accumulator
+!     RESET ACCUMULATOR
 dxpsi = 0
 
-!     kinetic energy in x direction
+!     KINETIC ENERGY IN X DIRECTION
 ind = 1
 DO iz = 1,kzbox
    DO iy = 1,kybox
@@ -55,7 +62,7 @@ DO iz = 1,kzbox
    END DO
 END DO
 
-!     kinetic energy in y direction
+!     KINETIC ENERGY IN Y DIRECTION
 ind = kxbox
 DO iz = 1,kzbox
    DO ix = 1,kxbox
@@ -65,7 +72,7 @@ DO iz = 1,kzbox
    END DO
 END DO
 
-!     kinetic energy in z direction
+!     KINETIC ENERGY IN Z DIRECTION
 ind = kxbox*kybox
 DO iy = 1,kybox
    DO ix = 1,kxbox
@@ -78,26 +85,38 @@ END DO
 RETURN
 END SUBROUTINE rkin3d
 
-!-----d2_3r1D ----------------------------------------------------------
+!-----D2_3R1D ----------------------------------------------------------
 
 SUBROUTINE rkin1d_3r(psi,deltax,nmax,dxpsi)
 
-!     computes kinetic energy in one dimension and accumulates
-!     that on 'dxpsi'
-!     uses three points finites differences.
-
-!     psi    = input array ( a 3D array in calling routine)
-!     dxpsi  = output containing 2. derivative + input value
-!     deltax = mesh spacing
-!     nmax   = number of mesh point in given direction
-
+!     PSI    = INPUT ARRAY IN ONE DIRECTION (A 3D ARRAY IN CALLING ROUTINE)
+!     DELTAX = MESH SPACING
+!     NMAX   = NUMBER OF MESH POINT IN GIVEN DIRECTION
+!     DXPSI  = OUTPUT CONTAINING 2. DERIVATIVE + INPUT VALUE
+  
+!-----------------------------------------------------------------------
+  
+!RKIN3D_3R COMPUTES THE SECOND DERIVATIVE  OF 'PSI' IN ONE DIRECTION AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE REAL NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN THREE POINTS
+  
+!-----------------------------------------------------------------------
+!
+!  DXPSI(X) = PSI(X+H) - 2*PSI(X) + PSI(X-H) 
+!             ------------------------------
+!                        (H^2)
+!  
+!-----------------------------------------------------------------------
+  
 REAL(DP), INTENT(IN)                         :: psi(*)
 REAL(DP), INTENT(IN)                         :: deltax
 INTEGER, INTENT(IN)                          :: nmax
 REAL(DP), INTENT(INOUT)                      :: dxpsi(*)
 
-INTEGER :: i
-REAL(DP):: d2i
+!-----------------------------------------------------------------------
+
+INTEGER :: i          ! LOOP INDICE
+REAL(DP):: d2i        ! FINITE DIFFERENCE COEFFICIENT
 
 !-----------------------------------------------------------------------
 d2i = -one/(deltax*deltax)
@@ -114,12 +133,19 @@ dxpsi(nmax) = d2i*(psi(nmax-1)-2*psi(nmax)) + dxpsi(nmax)
 RETURN
 END SUBROUTINE rkin1d_3r
 
-!-----ckin3D_3r------------------------------------------------------------
+!-----CKIN3D_3R------------------------------------------------------------
 
 SUBROUTINE ckin3d(psi,dxpsi)
 
-!CKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI'
+!CKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE COMPLEX NUMBERS
 !THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN THREE POINTS
+
+!-----------------------------------------------------------------------
+
+!                   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)
+!   DXPSI(X,Y,Z) =  ------------ + ------------ + ------------
+!                       DX2            DY2            DZ2
   
 !-----------------------------------------------------------------------
 
@@ -128,15 +154,15 @@ COMPLEX(DP), INTENT(OUT)                        :: dxpsi(kdfull2)
 
 !-----------------------------------------------------------------------
 
-INTEGER :: ix, iy, iz              ! loop indices
-INTEGER :: ista, iend, ind
+INTEGER :: ix, iy, iz              ! LOOP INDICES
+INTEGER :: ista, iend, ind         ! INDICE OF SELECTION OF THE DIRECTION
 
 !-----------------------------------------------------------------------
 
-!     reset accumulator
+!     RESET ACCUMULATOR
 dxpsi = 0
 
-!     kinetic energy in x direction
+!     KINETIC ENERGY IN X DIRECTION
 ind = 1
 DO iz = 1,kzbox
    DO iy = 1,kybox
@@ -146,22 +172,22 @@ DO iz = 1,kzbox
    END DO
 END DO
 
-!     kinetic energy in y direction
+!     KINETIC ENERGY IN Y DIRECTION
 ind = kxbox
 DO iz = 1,kzbox
    DO ix = 1,kxbox
       ista = (iz-1)*kxbox*kybox + (ix-1) + 1 
-      iend = (iz-1)*kxbox*kybox + (ix-1) + kxbox*(kybox-1)+1
+      iend = (iz-1)*kxbox*kybox + (ix-1) + kxbox*(kybox-1) + 1
       CALL ckin1d_3r(psi(ista:iend:ind),dy,kybox,dxpsi(ista:iend:ind))
    END DO
 END DO
 
-!     kinetic energy in z direction
+!     KINETIC ENERGY IN Z DIRECTION
 ind = kxbox*kybox
 DO iy = 1,kybox
    DO ix = 1,kxbox
       ista = (iy-1)*kxbox + (ix-1) + 1
-      iend = (iy-1)*kxbox + (ix-1) + kxbox*kybox*(kzbox-1)+1
+      iend = (iy-1)*kxbox + (ix-1) + kxbox*kybox*(kzbox-1) + 1
       CALL ckin1d_3r(psi(ista:iend:ind),dz,kzbox,dxpsi(ista:iend:ind))
    END DO
 END DO
@@ -172,22 +198,32 @@ END SUBROUTINE ckin3d
 
 SUBROUTINE ckin1d_3r(psi,deltax,nmax,dxpsi)
 
-!     computes kinetic energy in one dimension and accumulates
-!     that on 'dxpsi'
-!     uses three points finites differences.
-
-!     psi    = input array ( a 3D array in calling routine)
-!     dxpsi  = output containing 2. derivative + input value
-!     deltax = mesh spacing
-!     nmax   = number of mesh point in given direction
+!     PSI    = INPUT ARRAY IN ONE DIRECTION (A 3D ARRAY IN CALLING ROUTINE)
+!     DELTAX = MESH SPACING
+!     NMAX   = NUMBER OF MESH POINT IN GIVEN DIRECTION
+!     DXPSI  = OUTPUT CONTAINING 2. DERIVATIVE + INPUT VALUE
+  
+!-----------------------------------------------------------------------
+  
+!CKIN3D_3R COMPUTES THE SECOND DERIVATIVE  OF 'PSI' IN ONE DIRECTION AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE COMPLEX NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN THREE POINTS
+  
+!-----------------------------------------------------------------------
+!
+!  DXPSI(X) = PSI(X+H) - 2*PSI(X) + PSI(X-H) 
+!             ------------------------------
+!                        (H^2)
+!  
+!-----------------------------------------------------------------------
 
 COMPLEX(DP), INTENT(IN)                         :: psi(*)
 REAL(DP), INTENT(IN)                            :: deltax
 INTEGER, INTENT(IN)                             :: nmax
 COMPLEX(DP), INTENT(INOUT)                      :: dxpsi(*)
 
-INTEGER :: i
-REAL(DP):: d2i
+INTEGER :: i          ! LOOP INDICE
+REAL(DP):: d2i        ! FINITE DIFFERENCE COEFFICIENT
 
 !-----------------------------------------------------------------------
 d2i = -one/(deltax*deltax)
@@ -229,8 +265,7 @@ SUBROUTINE d3mixpropag (psi, deltim)
 
 
 
-  COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx, miny:maxy,minz:maxz)
-  !COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
@@ -240,30 +275,40 @@ REAL(DP), INTENT(IN OUT)                     :: deltim
 ! Timestep
 !     variables:
 
-INTEGER :: ix, iy, iz
-! loop indices
+!-----------------------------------------------------------------------
+
+INTEGER :: ix, iy, iz              ! LOOP INDICES
+INTEGER :: ista, iend, ind         ! INDICE OF SELECTION OF THE DIRECTION
 
 !-----------------------------------------------------------------------
 
 !      write(6,*) ' enter D3MIXSTEP: norm=',wfnorm(psi)
 DO iz = minz, maxz
-  DO iy = miny, maxy
-    CALL kinprop_1d3(psi(minx,iy,iz),2*maxx+1,1,dx,deltim )
+   DO iy = miny, maxy
+      !      CALL kinprop_1d3(psi(minx,iy,iz),2*maxx+1,1,dx,deltim )
+      ista = (iz-1)*kxbox*kybox + (iy-1)*kxbox + 1
+      iend = (iz-1)*kxbox*kybox + (iy-1)*kxbox + kxbox
+      CALL kinprop_1d3(psi(ista:iend:ind),dx,kxbox,deltim)
   END DO
 END DO            ! x- direction
 !      write(6,*) ' after x D3MIXSTEP: norm=',wfnorm(psi)
 
 DO iz = minz, maxz
   DO ix = minx, maxx
-    CALL kinprop_1d3(psi(ix,miny,iz),2*maxy+1,2*maxx+1, dy,deltim)
+     !CALL kinprop_1d3(psi(ix,miny,iz),2*maxy+1,2*maxx+1, dy,deltim)
+     ista = (iz-1)*kxbox*kybox + (ix-1) + 1 
+     iend = (iz-1)*kxbox*kybox + (ix-1) + kxbox*(kybox-1) + 1
+     CALL kinprop_1d3(psi(ista:iend:ind),dy,kybox,deltim)
   END DO
 END DO            ! y- direction
 !      write(6,*) ' after y D3MIXSTEP: norm=',wfnorm(psi)
 
 DO iy = miny, maxy
   DO ix = minx, maxx
-    CALL kinprop_1d3(psi(ix,iy,minz),2*maxz+1,  &
-        (2*maxx+1)*(2*maxy+1),dz,deltim)
+     !CALL kinprop_1d3(psi(ix,iy,minz),2*maxz+1,(2*maxx+1)*(2*maxy+1),dz,deltim)
+     ista = (iy-1)*kxbox + (ix-1) + 1
+     iend = (iy-1)*kxbox + (ix-1) + kxbox*kybox*(kzbox-1) + 1
+     CALL kinprop_1d3(psi(ista:iend:ind),dz,kzbox,deltim)
   END DO
 END DO            ! z- direction
 !      write(6,*) ' after z D3MIXSTEP: norm=',wfnorm(psi)
@@ -321,7 +366,7 @@ END SUBROUTINE inv3p_ini
 
 !-----kinprop_1d3--------------------------------------------------------------
 
-SUBROUTINE kinprop_1d3 (psi, ndiml, inc, deltax, deltim)
+SUBROUTINE kinprop_1d3 (psi, deltax, ndiml, deltim)
 
 
 !                        1
@@ -336,11 +381,10 @@ SUBROUTINE kinprop_1d3 (psi, ndiml, inc, deltax, deltim)
 !USE params
 
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(ndiml)
-INTEGER, INTENT(IN)                      :: ndiml
-INTEGER, INTENT(IN)                      :: inc
-REAL(DP), INTENT(IN OUT)                     :: deltax
-REAL(DP), INTENT(IN OUT)                     :: deltim
+COMPLEX(DP), INTENT(IN OUT)                  :: psi(*)
+INTEGER, INTENT(IN)                          :: ndiml
+REAL(DP), INTENT(IN)                         :: deltax
+REAL(DP), INTENT(IN)                         :: deltim
 COMPLEX(DP),ALLOCATABLE :: invnum(:)
 COMPLEX(DP) :: diag
 !COMMON /invnum3c/ invnum,diag
@@ -358,7 +402,7 @@ COMPLEX(DP),ALLOCATABLE:: reff(:)      ! effective r.h.s.
 !c     $                  offdiag,           ! constant off-diagonal el.
 !c     $                  offdiag2           ! squared off-diagonal el.
 
-INTEGER :: i, n, ninc            ! loop index
+INTEGER :: i, n, ninc  ,inc         ! loop index
 
 !----------------------------------------------------------------------------
 
@@ -406,305 +450,244 @@ DEALLOCATE(invnum,reff)
 
 RETURN
 END SUBROUTINE kinprop_1d3
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
+
+
+
+
+
 #if(numerov)
 !-----ckin3D_5r------------------------------------------------------------
 
-SUBROUTINE ckin3d(psi,dxpsi)
-
-!USE params
-!      include 'pot3D.inc'
-
-!     computes kinetic energy (- Laplacian) 5 point finite differences
-!     and reflecting boundary conditions
-
-
-
-COMPLEX(DP), INTENT(IN)                  :: psi(minx:maxx,miny:maxy,minz:maxz)
-COMPLEX(DP), INTENT(OUT)                     :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
-
-
-
-!-----------------------------------------------------------------------
-
-
-INTEGER :: ix, iy, iz              ! loop indices
-INTEGER :: lengx,lengy,lengz
-
-
-!-----------------------------------------------------------------------
-
-
-!     number of mesh points in each direction
-
-lengx  = maxx+maxx+1
-lengy  = maxy+maxy+1
-lengz  = maxz+maxz+1
-
-
-!     reset accumulator
-
-
-DO iz = minz, maxz
-  DO iy = miny, maxy
-    DO ix = minx, maxx
-      dxpsi(ix,iy,iz) = zero
-    END DO
-  END DO
-END DO
-
-
-!     kinetic energy in x direction
-
-
-DO iz = minz, maxz
-  DO iy = miny, maxy
-    CALL ckin1d_5r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
-  END DO
-END DO
-
-
-
-!     kinetic energy in y direction
-
-
-
-DO iz = minz, maxz
-  DO ix = minx, maxx
-    CALL ckin1d_5r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
-  END DO
-END DO
-
-
-!     kinetic energy in z direction
-
-
-DO iy = miny, maxy
-  DO ix = minx, maxx
-    CALL ckin1d_5r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
-  END DO
-END DO
-
-
-RETURN
-END SUBROUTINE ckin3d
-!-----ckin1D_5r ----------------------------------------------------------
-
-SUBROUTINE ckin1d_5r(psi,deltax,nmax,inc,dxpsi)
-
-!USE params
-
-!     computes kinetic energy in one dimension and accumulates
-!     that on 'dxpsi'.
-!     uses five point finite differences.
-
-!     psi    = input array ( a 3D array in calling routine)
-!     dxpsi  = output containing 2. derivative + input value
-!     deltax = mesh spacing
-!     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighbouring mesh points
-
-
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(*)
-REAL(DP), INTENT(IN OUT)                     :: deltax
-INTEGER, INTENT(IN)                      :: nmax
-INTEGER, INTENT(IN)                      :: inc
-COMPLEX(DP), INTENT(OUT)                     :: dxpsi(*)
-
-INTEGER :: ninc,inc2
-INTEGER :: i
-REAL(DP):: d2i
-!COMPLEX(DP) :: ! Wellenfunktion psi
-!COMPLEX(DP) :: ! Ableitung der Wellenfunktion psi
-
-!-----------------------------------------------------------------------
-
-d2i = -one/(deltax*deltax)/12.0D0
-inc2  = inc+inc
-
-ninc = 1
-dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) )
-
-ninc=ninc+inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)               )
-
-
-DO i = 3,nmax-2
-  ninc=ninc+inc
-  dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-      -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
-END DO
-
-ninc=ninc + inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(                16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
-
-ninc=ninc + inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
-
-
-RETURN
-END SUBROUTINE ckin1d_5r
-!-----rkin3D_5r------------------------------------------------------------
-
 SUBROUTINE rkin3d(psi,dxpsi)
 
-!USE params
-!      include 'pot3D.inc'
-
-!     computes kinetic energy (- Laplacian) 5 point finite differences
-!     and reflecting boundary conditions
-
-
-
-REAL(DP), INTENT(IN OUT)                     :: psi(minx:maxx,miny:maxy,minz:maxz)
-REAL(DP), INTENT(OUT)                        :: dxpsi(minx:maxx,miny:maxy,minz:maxz)
-
-
+!RKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE REAL NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN FIVE POINTS
 
 !-----------------------------------------------------------------------
 
+!                   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)
+!   DXPSI(X,Y,Z) =  ------------ + ------------ + ------------
+!                       DX2            DY2            DZ2
+  
+!-----------------------------------------------------------------------
 
-INTEGER :: ix, iy, iz              ! loop indices
-INTEGER :: lengx,lengy,lengz
-
+REAL(DP), INTENT(IN)                         :: psi(kdfull2)
+REAL(DP), INTENT(OUT)                        :: dxpsi(kdfull2)
 
 !-----------------------------------------------------------------------
 
+INTEGER :: ix, iy, iz              ! LOOP INDICES
+INTEGER :: ista, iend, ind         ! INDICE OF SELECTION OF THE DIRECTION
 
-!     number of mesh points in each direction
+!-----------------------------------------------------------------------
 
-lengx  = maxx+maxx+1
-lengy  = maxy+maxy+1
-lengz  = maxz+maxz+1
+!     RESET ACCUMULATOR
+dxpsi = 0
 
-
-!     reset accumulator
-
-
-DO iz = minz, maxz
-  DO iy = miny, maxy
-    DO ix = minx, maxx
-      dxpsi(ix,iy,iz) = zero
-    END DO
-  END DO
+!     KINETIC ENERGY IN X DIRECTION
+ind = 1
+DO iz = 1,kzbox
+   DO iy = 1,kybox
+      ista = (iz-1)*kxbox*kybox + (iy-1)*kxbox + 1
+      iend = (iz-1)*kxbox*kybox + (iy-1)*kxbox + kxbox
+      CALL rkin1d_5r(psi(ista:iend:ind),dx,kxbox,dxpsi(ista:iend:ind))
+   END DO
 END DO
 
-
-!     kinetic energy in x direction
-
-
-DO iz = minz, maxz
-  DO iy = miny, maxy
-    CALL rkin1d_5r(psi(minx,iy,iz),dx,lengx,1, dxpsi(minx,iy,iz))
-  END DO
+!     KINETIC ENERGY IN Y DIRECTION
+ind = kxbox
+DO iz = 1,kzbox
+   DO ix = 1,kxbox
+      ista = (iz-1)*kxbox*kybox + (ix-1) + 1 
+      iend = (iz-1)*kxbox*kybox + (ix-1) + kxbox*(kybox-1) + 1
+      CALL rkin1d_5r(psi(ista:iend:ind),dy,kybox,dxpsi(ista:iend:ind))
+   END DO
 END DO
 
-
-
-!     kinetic energy in y direction
-
-
-
-DO iz = minz, maxz
-  DO ix = minx, maxx
-    CALL rkin1d_5r(psi(ix,miny,iz),dy,lengy,lengx, dxpsi(ix,miny,iz))
-  END DO
+!     KINETIC ENERGY IN Z DIRECTION
+ind = kxbox*kybox
+DO iy = 1,kybox
+   DO ix = 1,kxbox
+      ista = (iy-1)*kxbox + (ix-1) + 1
+      iend = (iy-1)*kxbox + (ix-1) + kxbox*kybox*(kzbox-1) + 1
+      CALL rkin1d_5r(psi(ista:iend:ind),dz,kzbox,dxpsi(ista:iend:ind))
+   END DO
 END DO
-
-
-!     kinetic energy in z direction
-
-
-DO iy = miny, maxy
-  DO ix = minx, maxx
-    CALL rkin1d_5r(psi(ix,iy,minz),dz,lengz,lengy*lengx, dxpsi(ix,iy,minz))
-  END DO
-END DO
-
 
 RETURN
 END SUBROUTINE rkin3d
-!-----rkin1D_5r ----------------------------------------------------------
+!-----CKIN1D_5R ----------------------------------------------------------
 
-SUBROUTINE rkin1d_5r(psi,deltax,nmax,inc,dxpsi)
+SUBROUTINE rkin1d_5r(psi,deltax,nmax,dxpsi)
 
-!USE params
-
-!     computes kinetic energy in one dimension and accumulates
-!     that on 'dxpsi'.
-!     uses five point finite differences.
-
-!     psi    = input array ( a 3D array in calling routine)
-!     dxpsi  = output containing 2. derivative + input value
-!     deltax = mesh spacing
-!     nmax   = number of mesh point in given direction
-!     inc    = increment which connects neighbouring mesh points
-
-
-REAL(DP), INTENT(IN OUT)                     :: psi(*)
-REAL(DP), INTENT(IN OUT)                     :: deltax
-INTEGER, INTENT(IN)                      :: nmax
-INTEGER, INTENT(IN)                      :: inc
-REAL(DP), INTENT(OUT)                        :: dxpsi(*)
-
-INTEGER :: ninc,inc2
-INTEGER :: i
-REAL(DP):: d2i
-!REAL(DP):: ! Wellenfunktion psi
-!REAL(DP):: ! Ableitung der Wellenfunktion psi
-
+!     PSI    = INPUT ARRAY IN ONE DIRECTION (A 3D ARRAY IN CALLING ROUTINE)
+!     DELTAX = MESH SPACING
+!     NMAX   = NUMBER OF MESH POINT IN GIVEN DIRECTION
+!     DXPSI  = OUTPUT CONTAINING 2. DERIVATIVE + INPUT VALUE
+  
+!-----------------------------------------------------------------------
+  
+!RKIN3D_5R COMPUTES THE SECOND DERIVATIVE  OF 'PSI' IN ONE DIRECTION AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE REAL NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN FIVE POINTS
+  
+!-----------------------------------------------------------------------
+!
+!  DXPSI(X) = - PSI(X-2H) + 16*PSI(X-H) - 30*PSI(X) + 16*PSI(X+H) - PSI(X+2H)
+!             ---------------------------------------------------------------
+!                                         12*(H^2)
+!  
 !-----------------------------------------------------------------------
 
+REAL(DP), INTENT(IN)                  :: psi(*)
+REAL(DP), INTENT(IN)                     :: deltax
+INTEGER, INTENT(IN)                          :: nmax
+REAL(DP), INTENT(INOUT)                   :: dxpsi(*)
+
+!-----------------------------------------------------------------------
+INTEGER :: i          ! LOOP INDICE
+REAL(DP):: d2i        ! FINITE DIFFERENCE COEFFICIENT
+!-----------------------------------------------------------------------
 d2i = -one/(deltax*deltax)/12.0D0
-inc2  = inc+inc
+!-----------------------------------------------------------------------
+i = 1
+dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) )
 
-ninc = 1
-dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) )
-
-ninc=ninc+inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)               )
-
+i = 2
+dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) + 16.0D0*psi(i-1) )
 
 DO i = 3,nmax-2
-  ninc=ninc+inc
-  dxpsi(ninc) = dxpsi(ninc) +d2i*(-psi(ninc+inc2)+16.0D0*psi(ninc+inc)  &
-      -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
+  dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) + 16.0D0*psi(i-1) - psi(i-2) )
 END DO
 
-ninc=ninc + inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(                16.0D0*psi(ninc+inc)  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
+i = nmax-1
+dxpsi(i) = dxpsi(i) + d2i*( 16.0D0*psi(i+1) - 30.0D0*psi(i) +16.0D0*psi(i-1)-psi(i-2) )
 
-ninc=ninc + inc
-dxpsi(ninc) = dxpsi(ninc) +d2i*(  &
-    -30.0D0*psi(ninc) +16.0D0*psi(ninc-inc)-psi(ninc-inc2))
+i = nmax
+dxpsi(i) = dxpsi(i) + d2i*( - 30.0D0*psi(i) + 16.0D0*psi(i-1) - psi(i-2) )
 
 
 RETURN
 END SUBROUTINE rkin1d_5r
+!-----rkin3D_5r------------------------------------------------------------
+
+SUBROUTINE ckin3d(psi,dxpsi)
+
+!CKIN3D COMPUTES THE LAPLACIAN OF 'PSI' AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE COMPLEX NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN FIVE POINTS
+
+!-----------------------------------------------------------------------
+
+!                   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)   D2PSI(X,Y,Z)
+!   DXPSI(X,Y,Z) =  ------------ + ------------ + ------------
+!                       DX2            DY2            DZ2
+  
+!-----------------------------------------------------------------------
+
+COMPLEX(DP), INTENT(IN)                         :: psi(kdfull2)
+COMPLEX(DP), INTENT(OUT)                        :: dxpsi(kdfull2)
+
+!-----------------------------------------------------------------------
+
+INTEGER :: ix, iy, iz              ! LOOP INDICES
+INTEGER :: ista, iend, ind         ! INDICE OF SELECTION OF THE DIRECTION
+
+!-----------------------------------------------------------------------
+
+!     RESET ACCUMULATOR
+dxpsi = 0
+
+!     KINETIC ENERGY IN X DIRECTION
+ind = 1
+DO iz = 1,kzbox
+   DO iy = 1,kybox
+      ista = (iz-1)*kxbox*kybox + (iy-1)*kxbox + 1
+      iend = (iz-1)*kxbox*kybox + (iy-1)*kxbox + kxbox
+      CALL ckin1d_5r(psi(ista:iend:ind),dx,kxbox,dxpsi(ista:iend:ind))
+   END DO
+END DO
+
+!     KINETIC ENERGY IN Y DIRECTION
+ind = kxbox
+DO iz = 1,kzbox
+   DO ix = 1,kxbox
+      ista = (iz-1)*kxbox*kybox + (ix-1) + 1 
+      iend = (iz-1)*kxbox*kybox + (ix-1) + kxbox*(kybox-1)+1
+      CALL ckin1d_5r(psi(ista:iend:ind),dy,kybox,dxpsi(ista:iend:ind))
+   END DO
+END DO
+
+!     KINETIC ENERGY IN Z DIRECTION
+ind = kxbox*kybox
+DO iy = 1,kybox
+   DO ix = 1,kxbox
+      ista = (iy-1)*kxbox + (ix-1) + 1
+      iend = (iy-1)*kxbox + (ix-1) + kxbox*kybox*(kzbox-1)+1
+      CALL ckin1d_5r(psi(ista:iend:ind),dz,kzbox,dxpsi(ista:iend:ind))
+   END DO
+END DO
+
+RETURN
+END SUBROUTINE ckin3d
+!-----rkin1D_5r ----------------------------------------------------------
+
+SUBROUTINE ckin1d_5r(psi,deltax,nmax,dxpsi)
+
+!     PSI    = INPUT ARRAY IN ONE DIRECTION (A 3D ARRAY IN CALLING ROUTINE)
+!     DELTAX = MESH SPACING
+!     NMAX   = NUMBER OF MESH POINT IN GIVEN DIRECTION
+!     DXPSI  = OUTPUT CONTAINING 2. DERIVATIVE + INPUT VALUE
+  
+!-----------------------------------------------------------------------
+  
+!CKIN3D_5R COMPUTES THE SECOND DERIVATIVE OF 'PSI' IN ONE DIRECTION AND PUT THE RESULT IN 'DXPSI' 
+!'PSI' AND 'DXPSI' ARE COMPLEX NUMBERS
+!THIS COMPUTATION IS BASED ON THE FINITES DIFFERENCES METHOD IN FIVE POINTS
+  
+!-----------------------------------------------------------------------
+!
+!  DXPSI(X) = - PSI(X-2H) + 16*PSI(X-H) - 30*PSI(X) + 16*PSI(X+H) - PSI(X+2H)
+!             ---------------------------------------------------------------
+!                                         12*(H^2)
+! 
+!-----------------------------------------------------------------------
+ 
+COMPLEX(DP), INTENT(IN)                         :: psi(*)
+REAL(DP), INTENT(IN)                         :: deltax
+INTEGER, INTENT(IN)                          :: nmax
+COMPLEX(DP), INTENT(OUT)                        :: dxpsi(*)
+!-----------------------------------------------------------------------
+INTEGER :: i          ! LOOP INDICE
+REAL(DP):: d2i        ! FINITE DIFFERENCE COEFFICIENT
+!-----------------------------------------------------------------------
+d2i = -one/(deltax*deltax)/12.0D0
+!-----------------------------------------------------------------------
+i = 1
+dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) )
+
+i = 2
+dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) + 16.0D0*psi(i-1) )
+
+DO i = 3,nmax-2
+  dxpsi(i) = dxpsi(i) + d2i*( - psi(i+2) + 16.0D0*psi(i+1) - 30.0D0*psi(i) + 16.0D0*psi(i-1) - psi(i-2) )
+END DO
+
+i = nmax-1
+dxpsi(i) = dxpsi(i) + d2i*( 16.0D0*psi(i+1) - 30.0D0*psi(i) +16.0D0*psi(i-1)-psi(i-2) )
+
+i = nmax
+dxpsi(i) = dxpsi(i) + d2i*( - 30.0D0*psi(i) + 16.0D0*psi(i-1) - psi(i-2) )
+
+
+RETURN
+END SUBROUTINE ckin1d_5r
 
 !-----d3mixpropag_5----------------------------------------------------
 
-SUBROUTINE d3mixpropag (psi, neupsi, deltim)
+SUBROUTINE d3mixpropag (psi, deltim)
 
 !USE params
 !      include 'pot3D.inc'
@@ -727,7 +710,7 @@ SUBROUTINE d3mixpropag (psi, neupsi, deltim)
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(minx:maxx, miny:maxy,minz:maxz)
-COMPLEX(DP), INTENT(IN OUT)                  :: neupsi(minx:maxx, miny:maxy,minz:maxz)
+!COMPLEX(DP), INTENT(IN OUT)                  :: neupsi(minx:maxx, miny:maxy,minz:maxz)
 REAL(DP), INTENT(IN OUT)                     :: deltim
 
 !                      ! old Function
@@ -777,11 +760,13 @@ SUBROUTINE inv5p_ini(deltim)
 
 
 REAL(DP), INTENT(IN)                         :: deltim
-COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+!COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+COMPLEX(DP),ALLOCATABLE :: invnum(:)
+
 !inverse diagonal Elements
 COMPLEX(DP) :: diag,offd
 !matrix-elements for forward-matrix
-COMMON /invnum5c/ invnum,diag,offd
+!COMMON /invnum5c/ invnum,diag,offd
 
 
 REAL(DP):: fac1,fac2   !diagonal elements
@@ -791,6 +776,10 @@ INTEGER :: n,dim   !loop
 
 
 !---------------------------------------------------------------------------
+ALLOCATE(invnum(2*(maxx+maxy+maxz)+3))
+
+
+
 
 WRITE(*,*) 'Inititalisierung der Koeffizienten fuer Numerov'
 
@@ -798,7 +787,7 @@ IF(dx /= dy .OR. dy /= dz .OR. dz /= dy)  &
     STOP 'only same gridstep in every direction'
 
 fac1=(-72.0D0*deltim*deltim + 10.0D0*dx**4)/ (36.0D0*deltim*deltim + dx**4)
-fac2=72.0D0*deltim*deltax*dx / (36.0D0*deltim*deltim + dx**4)
+fac2=72.0D0*deltim*dx*dx / (36.0D0*deltim*deltim + dx**4)
 fac = CMPLX(fac1,fac2,DP)
 
 invnum(1) = one/fac
@@ -809,14 +798,14 @@ END DO
 
 
 fac1 = (72.0D0*deltim*deltim + 10.0D0*dx**4)/ (36.0D0*deltim*deltim + dx**4)
-fac2 = 48.0D0*deltim*deltax*dx / (36.0D0*deltim*deltim + dx**4)
+fac2 = 48.0D0*deltim*dx*dx / (36.0D0*deltim*deltim + dx**4)
 diag = CMPLX(fac1,fac2,DP)
 
 fac1=(-36.0D0*deltim*deltim + dx**4)/ (36.0D0*deltim*deltim + dx**4)
-fac2=12.0D0*deltim*deltax*dx / (deltax**4 + 36.0D0*deltim*deltim)
+fac2=12.0D0*deltim*dx*dx / (dx**4 + 36.0D0*deltim*deltim)
 offd = CMPLX(fac1,fac2,DP)
 
-
+DEALLOCATE(invnum)
 
 RETURN
 END SUBROUTINE inv5p_ini
@@ -841,13 +830,14 @@ SUBROUTINE kinprop_1d5 (psi, ndiml, inc, deltax, deltim)
 
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(ndiml)
-INTEGER, INTENT(IN)                      :: ndiml
-INTEGER, INTENT(IN)                      :: inc
+INTEGER, INTENT(IN)                          :: ndiml
+INTEGER, INTENT(IN)                          :: inc
 REAL(DP), INTENT(IN OUT)                     :: deltax
 REAL(DP), INTENT(IN OUT)                     :: deltim
-COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+!COMPLEX(DP) :: invnum(2*(maxx+maxy+maxz)+3)
+COMPLEX(DP),ALLOCATABLE :: invnum(:),reff(:)
 COMPLEX(DP) :: diag,offd
-COMMON /invnum5c/ invnum,diag,offd
+!COMMON /invnum5c/ invnum,diag,offd
 
 
 !INTEGER :: ! array size
@@ -856,10 +846,13 @@ COMPLEX(DP) :: solve
 COMPLEX(DP) :: psip,psim,psi0
 !REAL(DP):: ! mesh size
 
-!INTEGER ::               ! Work array size
-INTEGER, PARAMETER :: ndimx = 2 * (maxx + maxy + maxz) + 3
 
-COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
+!INTEGER ::               ! Work array size
+INTEGER :: ndimx
+
+!COMPLEX(DP) :: reff (ndimx)      ! effective r.h.s.
+!COMPLEX,ALLOCATABLE :: invnum
+
 !c     $                  offdiag,           ! constant off-diagonal el.
 !c     $                  offdiag2           ! squared off-diagonal el.
 
@@ -869,8 +862,8 @@ REAL(DP):: fac1,fac2,fac3,fac4
 !----------------------------------------------------------------------------
 
 !     direct step (1-i dt/2 H) on psi
-
-
+ndimx = 2 * (maxx + maxy + maxz) + 3
+ALLOCATE(invnum(ndimx),reff(ndimx))
 
 
 ninc=1
@@ -908,6 +901,9 @@ DO n = ndiml-1, 1, -1
   solve = (reff(n) - solve)*invnum(n)
   psi(ninc) = solve
 END DO
+
+DEALLOCATE(invnum)
+
 
 RETURN
 END SUBROUTINE kinprop_1d5

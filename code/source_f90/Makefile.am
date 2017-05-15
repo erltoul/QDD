@@ -181,6 +181,11 @@ if USE_FINDIFF
 OBJFFTPACK =fftpack.$(OBJEXT)
 endif
 
+if USE_NUMEROV
+OBJFFTPACK =fftpack.$(OBJEXT)
+endif
+
+
 if CALLS_FFTW
 OBJFFTW =fftw.$(OBJEXT)
 endif
@@ -257,6 +262,14 @@ __top_builddir__bin_findiff_pwteleman_LDADD = fishpack.$(OBJEXT) $(OBJFFTPACK) $
 __top_builddir__bin_findiff_pwteleman_LDFLAGS = $(LINKERFLAGS)
 __top_builddir__bin_findiff_pwteleman-main.$(OBJEXT): fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
 endif
+if USE_NUMEROV
+bin_PROGRAMS= $(top_builddir)/bin/numerov_pwteleman
+__top_builddir__bin_numerov_pwteleman_SOURCES = main.F90
+__top_builddir__bin_numerov_pwteleman_FCFLAGS = $(COMPILERFLAGS1) 
+__top_builddir__bin_numerov_pwteleman_LDADD = fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV) $(OBJCOMMON) $(LDLIBS)
+__top_builddir__bin_numerov_pwteleman_LDFLAGS = $(LINKERFLAGS)
+__top_builddir__bin_numerov_pwteleman-main.$(OBJEXT): fishpack.$(OBJEXT) $(OBJFFTPACK) $(OBJCOULSOLV)  $(OBJKINPARA) $(OBJCOMMON)
+endif
 ########################################################################
 #               Compilation rules for objects
 ########################################################################       
@@ -268,6 +281,11 @@ if USE_FINDIFF
 fishpack.$(OBJEXT): hw3crt.F90 define.h fftpack.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
+if USE_NUMEROV
+fishpack.$(OBJEXT): hw3crt.F90 define.h fftpack.$(OBJEXT) params.$(OBJEXT)
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
+
 
 # params.o
 params.$(OBJEXT): params.F90 define.h surf.F90 pseudo.F90 Makefile
@@ -302,7 +320,10 @@ if USE_FINDIFF
 kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-
+if USE_NUMEROV
+kinetic.$(OBJEXT): kinetic.F90 define.h fft.F90 findiff.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
 # coulsolv.o
 if USE_NETLIB
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTPACK) params.$(OBJEXT) Makefile
@@ -313,6 +334,10 @@ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
 if USE_FINDIFF
+coulsolv.$(OBJEXT): coulsolv.F90 define.h solv_poisson.F90 fishpack.$(OBJEXT) $(OBJFFTPACK) params.$(OBJEXT) Makefile
+	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
+endif
+if USE_NUMEROV
 coulsolv.$(OBJEXT): coulsolv.F90 define.h solv_poisson.F90 fishpack.$(OBJEXT) $(OBJFFTPACK) params.$(OBJEXT) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif

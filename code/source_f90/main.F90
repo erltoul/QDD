@@ -523,13 +523,18 @@ DO it=irest,itmax   ! time-loop
        WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw, .NOT. imaginary_time)
-      ELSE
-        IF(ifcnevol == 1) THEN
+     ELSE
+
+       IF(ifcnevol == 1) THEN
+!#if(findiff|numerov) 
            WRITE(*,*) 'Crank call '
            CALL  CrankNicolson_exp(psi,aloc,rho,it,psiw)
-           !STOP'TEST CRANK NICOLSON'
+          !STOP'TEST CRANK NICOLSON'
+!#endif
        ELSE
+
           CALL tstep(psi,aloc,rho,it)
+          !STOP'TEST TSTEP'
         END IF
       END IF
 !      WRITE(*,*) ' MAIN: nabsorb=',nabsorb

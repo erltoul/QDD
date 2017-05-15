@@ -90,6 +90,7 @@ IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 #if(findiff|numerov)
 IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
 #endif
+
 !usew1 = .false.
 !test      call prifld(rhon,'Coulomb dens.')
 !test      call prifld(chpcoul,'Coulomb pot.')
