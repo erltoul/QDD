@@ -1,7 +1,6 @@
 &GLOBAL
 nclust=8,nion=8,
 nspdw=4,
-nc=0,nk=0,
 temp=0.0,
 dx=0.8,dy=0.8,dz=0.8,
 kxbox=64,kybox=64,kzbox=64,kstate=10,
@@ -30,5 +29,6 @@ e0=0.0,
 &END
 &SURFACE
 iPotStatic=0,
+nc=0,nk=0
 &END
 nxin=24,nyin=24,nzin=24,

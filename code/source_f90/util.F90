@@ -2848,7 +2848,7 @@ END FUNCTION gasdev
 
 
 !------------------------------------------------------------
-SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperature,masse, ipflag)
+SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperat,masse, ipflag)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
@@ -2857,7 +2857,7 @@ REAL(DP),INTENT(OUT) :: pxt(:)
 REAL(DP),INTENT(OUT) :: pyt(:)
 REAL(DP),INTENT(OUT) :: pzt(:)
 INTEGER,INTENT(IN) :: nteil
-REAL(DP),INTENT(IN) :: temperature
+REAL(DP),INTENT(IN) :: temperat
 REAL(DP),INTENT(IN)  :: masse
 INTEGER,INTENT(IN) :: ipflag
 
@@ -2868,7 +2868,7 @@ REAL(DP) :: ekhaben,eksoll,fac,sumx,sumy,sumz,sc,temper
 
 WRITE(6,*) 'ENTERING GIVETEMPERATURE'
 
-temper=temperature*6.507D-6
+temper=temperat*6.507D-6
 
 fac=SQRT(temper/masse)
 

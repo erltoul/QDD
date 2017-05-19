@@ -167,6 +167,7 @@ CALL fftinp
 
 ! test section
 IF(tcoultest) THEN
+  kdum=nx*ny*nz
   ALLOCATE(rhotest(nx*ny*nz),ctest(nx*ny*nz))
   rhotest = 0D0
   ii = 0
