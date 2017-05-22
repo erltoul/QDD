@@ -389,8 +389,12 @@ DO  i=1,nroot
 !     orthogonalize if roots are close.
 !     the absolute value in the next test is to assure that the trivec
 !     section is independent of the order of the eigenvalues.
-  IF((i /= 1) .AND. (ABS(root(i-1)-aroot) < toler)) THEN
-    ia = ia+1
+  IF((i /= 1) THEN
+    IF(ABS(root(i-1)-aroot) < toler)) THEN
+      ia = ia+1
+    ELSE
+      ia=0
+    ENDIF
   ELSE
     ia=0
   END IF
