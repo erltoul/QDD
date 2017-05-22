@@ -107,7 +107,7 @@ ELSE IF (ivdw == 2) THEN
   vdwh = 201.25D0
   
 END IF
-
+#if(raregas)
 IF(isurf /= 0)THEN
   IF (ivdw == 0 .OR. ivdw == 1) THEN
     DO ind=1,kfermi
@@ -151,7 +151,7 @@ IF(isurf /= 0)THEN
   WRITE(6,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
   WRITE(7,'(a,i5)') ' nsg_arelcore=',nsg_arelcore
 END IF
-
+#endif
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 !     general Fermi function

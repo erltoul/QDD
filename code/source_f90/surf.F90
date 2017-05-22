@@ -116,7 +116,8 @@ REAL(DP) :: sigmack, sigmavv,sigmakk,sigmakv,zsurf
 REAL(DP) :: chgcore,chgval,chgkat
 REAL(DP) :: cspr=6.7585128D0              ! =6.119**2*e2/11.08
 REAL(DP) :: me=0.00238562D0               ! =4.38/1836.0
-REAL(DP) :: mkat=1D1,mion=39.95D0    
+REAL(DP) :: mkat=1D1,mion=39.95D0
+INTEGER :: nrare=0 !  Number of raregas atoms 
 INTEGER :: nc=0   ! Number of fixed cores in substrate (O cores in MgO(001) ?)
 INTEGER :: nk=0   ! Number of fixed cations in substrate (Mg cations in MGO(001) ?)
 INTEGER :: ne=0   ! Number of fixed shells in substrate 

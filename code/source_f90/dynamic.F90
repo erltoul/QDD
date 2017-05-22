@@ -2216,6 +2216,7 @@ IF(irest <= 0) THEN                    !  write file headers
           WRITE(148,'(a)') ' & '
           CLOSE(148)
         END IF
+#if(raregas)   
         IF(isurf /= 0)THEN
 ! Velocities of substrate cores
           OPEN(26,STATUS='unknown',FORM='formatted', FILE='pvelcore.'//outnam)
@@ -2224,27 +2225,23 @@ IF(irest <= 0) THEN                    !  write file headers
           OPEN(126,STATUS='unknown',FORM='formatted', FILE='pvelkat.'//outnam)
           WRITE(126,'(a)') ' & '
           CLOSE(126)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='pkinencore.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='pkinencore.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='pkinenkat.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='pkinenkat.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='ptempsurf.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='ptempsurf.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-#if(raregas)          
 !                                   Velocities of Argon clouds (if available)
           IF(ifadiadip /= 1) THEN
             OPEN(27,STATUS='unknown',FORM='formatted', FILE='pveldip.'//outnam)
             WRITE(27,'(a)') ' & '
             CLOSE(27)
           END IF
-#endif
         END IF
+#endif
       END IF
       
       IF(jforce /= 0) THEN
@@ -2257,26 +2254,23 @@ IF(irest <= 0) THEN                    !  write file headers
           
           IF(e0 /= 0D0) THEN
 ! Forces from laser
-            OPEN(31,STATUS='unknown',FORM='formatted',  &
-                FILE='plforce.3.'//outnam)
+            OPEN(31,STATUS='unknown',FORM='formatted', FILE='plforce.3.'//outnam)
             WRITE(31,'(a)') ' & '
             CLOSE(31)
           END IF
           
         END IF
-        IF(isurf /= 0) THEN
 #if(raregas)
+        IF(isurf /= 0) THEN
           IF(nc+NE+nk > 0)THEN
 ! Forces on Argon cores
-            OPEN(28,STATUS='unknown',FORM='formatted',  &
-                FILE='pforce.1.'//outnam)
+            OPEN(28,STATUS='unknown',FORM='formatted', FILE='pforce.1.'//outnam)
             WRITE(28,'(a)') ' & '
             CLOSE(28)
             
             IF(e0 /= 0D0) THEN
 ! Forces from laser
-              OPEN(32,STATUS='unknown',FORM='formatted',  &
-                  FILE='plforce.1.'//outnam)
+              OPEN(32,STATUS='unknown',FORM='formatted', FILE='plforce.1.'//outnam)
               WRITE(32,'(a)') ' & '
               CLOSE(32)
             END IF
@@ -2284,24 +2278,21 @@ IF(irest <= 0) THEN                    !  write file headers
             IF(nclust > 0)THEN
 ! Forces on Argon clouds
 ! (else, there have no forces)
-              OPEN(29,STATUS='unknown',FORM='formatted',  &
-                  FILE='pforce.2.'//outnam)
+              OPEN(29,STATUS='unknown',FORM='formatted', FILE='pforce.2.'//outnam)
               WRITE(29,'(a)') ' & '
               CLOSE(29)
               
               IF(e0 /= 0D0) THEN
 ! Forces from laser
-                OPEN(33,STATUS='unknown',FORM='formatted',  &
-                    FILE='plforce.2.'//outnam)
+                OPEN(33,STATUS='unknown',FORM='formatted', FILE='plforce.2.'//outnam)
                 WRITE(33,'(a)') ' & '
                 CLOSE(33)
               END IF
               
             END IF
           END IF
-#endif
         END IF
-
+#endif
       END IF
       IF(jener > 0) THEN
         

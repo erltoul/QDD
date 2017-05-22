@@ -326,7 +326,6 @@ INTEGER,PARAMETER :: nxsg=7,nysg=7,nzsg=7      ! size of subgrids
 INTEGER :: modionstep=1                        ! modulus for ion step
 INTEGER :: inewforce
 INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
-INTEGER :: nrare=0,nfix=0                    !  Nr. of raregas atoms
 INTEGER,ALLOCATABLE :: nfixed(:)                    !  Nr. of fixed ions
 INTEGER :: idielec=0                     !  switch to dielectricum
 REAL(DP) :: xdielec=0D0                  !  x below which dielectric zone is activated
@@ -389,6 +388,7 @@ INTEGER,ALLOCATABLE :: lengnod(:),displ(:)
 #if(fftw_gpu)
 INTEGER :: num_gpus !total number of gpus on the node
 INTEGER :: mygpu !number of the actual gpu used by the node
+INTEGER :: int_pass
 #endif
 !                          these includes should be shifted to own modules
 #if(raregas)

@@ -100,11 +100,9 @@ CALL init_parallele()
 CALL cuda_gpu_init()
 #endif
 
-
+CALL initnamelists          ! read all input parameters
 
 CALL checkoptions()       !check coherence of preprocessor option
-
-CALL initnamelists          ! read all input parameters
   
 IF(icooltyp == 3) CALL init_simann() ! initialize and read parameters for simulated annealing
   

@@ -9,6 +9,7 @@ b2occ=-0.0,deocc=0.1,
 init_lcao=0,
 epsoro=1.0e-6,
 epswf=0.8,e0dmp=1.2,
+isurf=1,
 &END
 &DYNAMIC
 jesc=0,
@@ -30,6 +31,5 @@ ifredmas=1,
 ionmdtyp=0,
 &END
 &SURFACE
-iPotStatic=0,
 &END
 

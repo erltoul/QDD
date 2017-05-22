@@ -2420,23 +2420,3 @@ RETURN
 END SUBROUTINE printsurfpot
 !------------------------------------------------------------
 #endif
-!------------------------------------------------------------
-
-SUBROUTINE setzero(field,ilength)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-
-REAL, INTENT(OUT)                        :: field(kdfull2*2)
-INTEGER, INTENT(IN)                      :: ilength
-
-INTEGER :: ind
-
-DO ind = 1,ilength
-  field(ind) = 0D0
-END DO
-
-
-RETURN
-END SUBROUTINE setzero
-!------------------------------------------------------------

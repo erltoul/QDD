@@ -1601,6 +1601,8 @@ IMPLICIT  NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+integer::j
+
 
 CALL prifld(rho,'density    ')
 CALL prifld(aloc,'potential   ')
@@ -1671,6 +1673,7 @@ USE util, ONLY: printfield
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+INTEGER ::i
 
 OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
 DO i=1,nstate
