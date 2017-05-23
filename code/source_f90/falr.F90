@@ -598,14 +598,16 @@ LOGICAL,PARAMETER :: refmom=.true.
 !  END FUNCTION fx1
 !END INTERFACE
 INTEGER :: i, i1, i2, i3, l
-REAL(DP) :: one,two,oh, xmax, ymax, zmax, xyzmin, xyzmax
+!REAL(DP) :: one,two,oh, xmax, ymax, zmax, xyzmin, xyzmax
+REAL(DP) :: one,two, xmax, ymax, zmax, xyzmin, xyzmax
 REAL(DP) :: agen, binup, rad0, fzrm, qg, qgint, qr2,rad,gfc
 REAL(DP) :: pfy00, pfy10, pfy11, pfy20, pfy21, pfy22, pfy30, pfy31, pfy32, pfy33, pfy40, pfy41, pfy42, pfy43, pfy44
 REAL(DP) :: y00,y10,y11r,y11i,y20,y21r,y21i,y22r,y22i,y30,y31r,y31i,y32r,y32i,y33r,y33i,y40,y41r,y41i,y42r,y42i,y43r,y43i,y44r,y44i
 REAL(DP) :: q00,q10,q11r,q11i,q20,q21r,q21i,q22r,q22i,q30,q31r,q31i,q32r,q32i,q33r,q33i,q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i
 REAl(DP) :: t1,t2
 REAL(DP) :: x,y,z,rr,xx,yy,zz
-DATA one,two,oh/1D0,2D0,0.5D0/
+!DATA one,two,oh/1D0,2D0,0.5D0/
+DATA one,two/1D0,2D0/
 !DATA    mumpri/.false./
 !DATA    refmom/.true./
 
@@ -1279,8 +1281,8 @@ INTEGER, INTENT(IN)                      :: ipx
 INTEGER, INTENT(IN)                      :: ipy
 INTEGER, INTENT(IN)                      :: ipz
 
-INTEGER :: i,i1,i2,i3,ii,j
-
+!INTEGER :: i,i1,i2,i3,ii,j
+INTEGER :: i,i1,i2,i3,j
 !------------------------------------------------------------------------------
 
 i = 0
@@ -1555,7 +1557,7 @@ REAL(DP) :: nzzh, nyyh, sqh, tnorm, xp, yp, zp
 !             pski   imaginary part of the wave-function
 
 DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
-INTEGER wisdomtest
+!INTEGER wisdomtest
 
 !----------------------------------------------------------------------
 

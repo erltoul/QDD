@@ -76,8 +76,6 @@ dkx=pi/(dx*REAL(nx,DP))
 dky=pi/(dy*REAL(ny,DP))
 dkz=pi/(dz*REAL(nz,DP))
 
-
-
 !   scaling factor for Thomas-Fermi energy
 tf_fac = 0.6D0*(6.0D0*pi**2)**(2D0/3D0)
 
@@ -461,7 +459,7 @@ USE params
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN) :: it
 
 !-----------------------------------------------------------------------

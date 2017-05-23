@@ -210,10 +210,10 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
     READ(5,*)  title
     outnam = title(1:13)
     IF(outnam == '   ')  STOP " no title given "
-    WRITE(*,*) ' title is now: '//outnam
+    WRITE(6,*) ' title is now: '//outnam
     WRITE(iu,*) ' title is now: '//outnam
     CLOSE(5)
-
+write(6,*) outnam, "**************************************"
     
     OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
     
@@ -286,7 +286,7 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
   IF(nion2 == 0) iemomsrel=0    ! relat. to center of box for jellium
 
   
-#if(parayes)
+#if(parayes|paraworld)
   CALL comm_inputparams()
 #endif
   
@@ -2146,6 +2146,7 @@ CALL schmidt(psir)
 WRITE(6,*) 'myn=',myn,' after SCHMID'
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 #endif
+
 RETURN
 END SUBROUTINE initwf
 

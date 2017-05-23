@@ -751,7 +751,7 @@ SUBROUTINE hw3crt(XS,XF,L,LBDCND,BDXS,BDXF,YS,YF,M,MBDCND,BDYS,&
   187 CONTINUE
   188 CONTINUE
       RETURN
-      END
+      END SUBROUTINE
 !~       FUNCTION PIMACH (DUM)
 !~ !
 !~ !     THIS SUBPROGRAM SUPPLIES THE VALUE OF THE CONSTANT PI CORRECT TO
@@ -1122,7 +1122,7 @@ SUBROUTINE hw3crt(XS,XF,L,LBDCND,BDXS,BDXF,YS,YF,M,MBDCND,BDYS,&
       A(N) = SAVE(6)
   122 CONTINUE
       RETURN
-      END
+      END SUBROUTINE
 
 
 !    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -1217,6 +1217,7 @@ SUBROUTINE hw3crt(XS,XF,L,LBDCND,BDXS,BDXF,YS,YF,M,MBDCND,BDYS,&
   121 CONTINUE
       CALL RFFTI (M,WY,ifac)
       GO TO 124
+      !122 CALL SINQI (M,WY,ifac)
   122 CALL SINQI (M,WY,ifac)
       GO TO 124
   123 CALL COSQI (M,WY,ifac)
@@ -1321,7 +1322,7 @@ SUBROUTINE hw3crt(XS,XF,L,LBDCND,BDXS,BDXF,YS,YF,M,MBDCND,BDYS,&
         ENDDO
       ENDDO
       RETURN
-      END
+      END SUBROUTINE
 
 !    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

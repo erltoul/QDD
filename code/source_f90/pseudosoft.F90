@@ -132,8 +132,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: pseudorho,potsave,potshort
 INTEGER,EXTERNAL :: isoutofbox
 INTEGER,EXTERNAL :: conv3to1
 INTEGER,EXTERNAL :: getnearestgridpoint
-INTEGER,EXTERNAL :: v_soft
-
+!INTEGER,EXTERNAL :: v_soft
+REAL(DP),EXTERNAL :: v_soft
 !--------------------------------------------------------------
 
 

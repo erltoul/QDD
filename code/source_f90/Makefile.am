@@ -28,7 +28,7 @@ EXTRA_DIST =define.h\
 # Compiler-dependent options
 if GFORT
 if USE_DEBUG
-OPT1  =  -pg -g -fbacktrace
+OPT1  =  -pg -g -fbacktrace -fbounds-check
 OPT2  =  $(OPT1)
 OPT3  =  $(OPT2)
 else
@@ -42,7 +42,7 @@ if IFORT
 if USE_DEBUG
 OPT1  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -autodouble
 OPT2  =  -pg -fpp -warn all -warn nodeclarations -g -CB -traceback -align all -autodouble
-OPT3  =  -pg -fpp -warn all -warn nodeclarations -g                -align all -autodouble
+OPT3  =  -pg -fpp -warn all -warn nodeclarations -g -CB            -align all -autodouble
 else
 if USE_XW
 OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all

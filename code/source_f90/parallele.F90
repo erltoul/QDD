@@ -53,7 +53,7 @@ call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,icode)
 call mpi_comm_dup(mpi_comm_world,mpi_world_dup,icode)
 write(6,*) 'split done'
 #endif
-#if(parayes)
+#if(parayes||paraworld)
 !IF(nprocs /= knode) STOP
 knode = nprocs
 !IF(knode /= kstate) STOP "knode must be equal to kstate !"
@@ -95,7 +95,7 @@ RETURN
 END SUBROUTINE init_parallele
 
 
-#if(parayes)
+#if(parayes||paraworld)
 !-----comm_inputparams-------------------------------------------------
 
 SUBROUTINE comm_inputparams()
@@ -828,7 +828,7 @@ RETURN
 END SUBROUTINE comm_simann
 #endif
 
-#if(parayes)
+#if(parayes||paraworld)
 
 
 !       *****************************

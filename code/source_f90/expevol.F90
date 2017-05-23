@@ -202,6 +202,8 @@ INTEGER :: i, ilocbas, isig, nterm
 
 !      write(*,*) 'entering EXP_EVOL'
 
+
+
 IF (ispin(nrel2abs(nbe)) == 1) THEN
   ilocbas = 1
 ELSE IF (ispin(nrel2abs(nbe)) == 2) THEN
@@ -483,7 +485,7 @@ IF(tpri) ekinsp(nbe) = wfovlp(qact,q2)
 #else
 
 CALL ckin3d(qact,q1)
-q2 = h2m * q1
+q2 = -h2m * q1
 
 !STOP ' HPSI not yet appropriate for finite differences'
 #endif

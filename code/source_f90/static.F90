@@ -61,6 +61,8 @@ REAL(DP),ALLOCATABLE :: qaux(:,:)
 
 IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
 ! test Coulomb
+
+
 CALL calcrhor(rho,psir)
 
 
@@ -562,7 +564,7 @@ REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 #endif
 
-#if(findiff)
+#if(findiff|numerov)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: psipr
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w4
 REAL(DP)::vol
@@ -1007,10 +1009,9 @@ DO nbe=1,nstate
 !ALLOCATE(psipr(kdfull2))
   
 !        action of the kinetic energy in momentum space
-!  CALL rftf(q0(1,nbe),psipr)
+  !  CALL rftf(q0(1,nbe),psipr)
+
    CALL rkin3d(q0(:,nbe),psipr)
-
-
    
   
 !       compose to h|psi>

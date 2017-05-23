@@ -47,9 +47,12 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 INTEGER :: ind, ishift, nb
 REAL(DP) :: rhodif, rhotot
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
-REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
-REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
-REAL(DP) :: rhodownarrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhodownarray(nx2,ny2,nz2)
+!REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
+!REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
+!REAL(DP) :: rhodownarrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhodownarray(nx2,ny2,nz2)
+
+
+
 #if(parayes)
 LOGICAL,PARAMETER :: ttestpara=.FALSE.
 #endif
@@ -71,12 +74,13 @@ LOGICAL,PARAMETER :: ttestpara=.FALSE.
   rho=0D0
 #endif
 
-rhoup=0D0
-rhodown=0D0
-rhouparrayfine=0D0
-rhouparray=0D0
-rhodownarrayfine=0D0
-rhodownarray=0D0
+  
+!rhoup=0D0
+!rhodown=0D0
+!rhouparrayfine=0D0
+!rhouparray=0D0
+!rhodownarrayfine=0D0
+!rhodownarray=0D0
 
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
@@ -524,13 +528,13 @@ DO ia=1,nx2i
   ia1=ia/2+1
   DO ja=1,ny2i
     ja1=ja/2+1
-		DO ka=1,nz2i
+    DO ka=1,nz2i
       ka1=ka/2+1
       ai(ia,ja,ka)=(1.0D0/8.0D0)*(a(ia1-1,ja1-1,ka1-1)+a(ia1-1,ja1-1,ka1+1)+&
       a(ia1-1,ja1+1,ka1-1)+a(ia1-1,ja1+1,ka1+1)+&
       a(ia1+1,ja1-1,ka1-1)+a(ia1+1,ja1-1,ka1+1)+&
       a(ia1+1,ja1+1,ka1-1)+a(ia1+1,ja1+1,ka1+1))
-		END DO
+   END DO
   END DO
 END DO
 DO ia=1,nx2i
@@ -619,7 +623,7 @@ END DO
 !filling the even interpolated points in the center of elementary squares
 DO ia=2,nx2i,2
   DO ja=2,ny2i,2
-		DO ka=2,nz2i,2
+     DO ka=2,nz2i,2
       ai(ia,ja,ka)=(1.0D0/8.0D0)*(ai(ia-1,ja-1,ka-1)+ai(ia-1,ja-1,ka+1)+&
       ai(ia-1,ja+1,ka-1)+ai(ia-1,ja+1,ka+1)+&
       ai(ia+1,ja-1,ka-1)+ai(ia+1,ja-1,ka+1)+&
