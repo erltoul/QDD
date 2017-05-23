@@ -529,7 +529,7 @@ END IF
 !      because it is unchanged by unitary potential step)
 !     propagation of substrate dipoles is done in 'dyn_mfield'.
 
-CALL dyn_mfield(rho,aloc,q0,dt)
+CALL dyn_mfield(rho,aloc,q0,dt,it)
 
 
 

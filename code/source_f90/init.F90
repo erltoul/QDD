@@ -121,7 +121,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
 
 #if(raregas)
 NAMELIST /surface/  &
-    ne,nc,nk,  &
+    ne,nc,nk,nrare,  &
     surftemp,ipotfixed,ifmdshort,ifadiadip,  &
     sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0, &
     cspr,mion,me,mkat,isrtyp,isrtypall,  &

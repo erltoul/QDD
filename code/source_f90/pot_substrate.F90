@@ -853,7 +853,7 @@ USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN OUT)                     :: r
+REAL(DP), INTENT(IN) :: r
 REAL(DP), PARAMETER :: coreheight=0.47D0
 REAL(DP), PARAMETER :: coreradius=2.2D0
 REAL(DP), PARAMETER :: corewidth=1.6941D0
@@ -1011,7 +1011,7 @@ USE params
 IMPLICIT NONE
 
 !     effective ion-electron potential
-!       r      =  distance at which potential is computed
+!       rr      =  distance at which potential is computed
 !       nptype =  type of ion (see array np(*) in 'init.F')
 
 REAL(DP), INTENT(IN) :: rr
