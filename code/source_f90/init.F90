@@ -285,11 +285,10 @@ write(6,*) outnam, "**************************************"
 ! adapt input parameters if necessary
   IF(nion2 == 0) iemomsrel=0    ! relat. to center of box for jellium
 
-  
-#if(parayes|paraworld)
+
+#if(parayes||paraworld)
   CALL comm_inputparams()
 #endif
-  
   
   tdipolxyz = dpolx*dpolx+dpoly*dpoly+dpolz*dpolz .GT. 0D0
   
@@ -748,6 +747,7 @@ ELSE
   WRITE(num,'(i3)') myn
   maxnum=3
 END IF
+outname=trim(num)//trim(outnam)
 OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
 
 
@@ -1865,6 +1865,9 @@ WRITE (6,*) 'Entering initions()'
 #if(parayes)
 CALL comm_ionconfig()
 #endif
+#if(paraworld)
+knode = 1
+#endif
 
 
 !        check consistency of ions  (obsolete?)
@@ -2030,8 +2033,15 @@ IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
+#if(paraworld)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+
+
+
 INTEGER ::i,nr,nbe,nbr
 REAL(DP)::en
 REAL(DP), ALLOCATABLE :: rfieldaux(:)
@@ -2058,11 +2068,13 @@ IF(ifhamdiag>0 .AND. nstate>nclust) THEN
   STOP  ' IFHAMDIAG>0 only allowed for NSTATE=NCLUST'
 END IF
 WRITE(*,*) 'before ininqb'
+
 CALL ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 WRITE(*,*) 'after ininqb'
 
 
 !     initialize H.O. wavefunctions
+
 
 IF(init_lcao /= 1) THEN
    CALL initho(psir)   
@@ -2160,6 +2172,10 @@ IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+#endif
+#if(paraworld)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size),isa
 #endif
 
 INTEGER, INTENT(IN)                      :: nelect
@@ -2393,6 +2409,7 @@ IF(iforce == 1) STOP "option IFORCE obsolete"
 !        write(7,'(t2, 3i2, tr5, f9.3, tr3, i2)')
 !     &      (nq(k,i), k=1,3), occu(i), ispin(i)
 !      enddo
+
 IF(tocc .AND. nstate > nelect)  &
     CALL pair(esp,occu,ph,nclust,nstate,gp,eferm,temp,partnm,  &
     90,4,epstmp,-1,ksttot)
@@ -2448,7 +2465,13 @@ DEALLOCATE(ph)
 !    occup=array of occupation as a function of  relative index
 !          -> always 1.0 in the present code
 
-#if(parano)
+
+!write(6,*) nstate,size(nhome),size(occup),size(occu),nstate
+!call mpi_finalize(icooltyp)
+!stop'rarararara'
+
+
+#if(parano||paraworld)
 DO i=1,nstate
   nrel2abs(i)=i
   nabs2rel(i)=i
@@ -2461,6 +2484,8 @@ nstate_all = nstate
 !     number for the last wf, with an even nstate !
 
 #endif
+
+
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 !old      nsttest=0
@@ -2468,8 +2493,7 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 !old      do ipr=0,knode-1
 !old         nprov=0
 !old         do ifull=1,kstate
-!old            nsttest=nsttest+1
-!old            if(nsttest.le.nstate) nprov=ifull
+!old            nsttest=nsttest!old            if(nsttest.le.nstate) nprov=ifull
 !old            if(myn.eq.ipr)  nloc=nprov
 !old            write(30+myn,*)
 !old     &           'ipr',ipr,'ifull',ifull,'nprov',nprov,'nloc',nloc
@@ -2848,11 +2872,19 @@ IMPLICIT NONE
 
 #if(parayes)
 INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
+INTEGER :: is(mpi_status_size),isa
+#endif
+#if(paraworld)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size),isa
 #endif
 
 
 REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
+
+
+
+
 REAL(DP) :: valx(nx2),valy(ny2),valz(nz2)
 !~ REAL(DP), ALLOCATABLE :: phix(:)
 INTEGER :: i,ii,inx,iny,inz,ix,iy,iz,nb
@@ -2886,9 +2918,8 @@ ELSE
   bk1   = osfac*(bk1**sixth)
 END IF
 
-
 DO nb=1,nstate
-  
+
 !       number of knots
   
   
@@ -2919,6 +2950,8 @@ DO nb=1,nstate
  
   
   ii=0
+  write(6,*) nx2,ny2,nz2,kstate
+  write(6,*) knode,nstate 
   DO iz=1,nz2
     vz=valz(iz)
     DO iy=1,ny2
@@ -2936,12 +2969,15 @@ END DO
 
 
 
+
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 WRITE(*,*) ' wfs initialized: myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(6,*) 'myn=',myn,' before SCHMID'
 #endif
+
+
 CALL schmidt(psir)
 #if(parayes)
 WRITE(6,*) 'myn=',myn,' after SCHMID'
@@ -3464,19 +3500,19 @@ IF(level>=1) THEN
   nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
 
 !#endif
-#if(tfindiff|tnumerov)
-! bounds of loops
-  minx=-nx;maxx=nx
-  miny=-ny;maxy=ny
-  minz=-nz;maxz=nz
-! bounds of esc. el.
-  nbnx=-nx+1;nbxx=nx-1
-  nbny=-ny+1;nbxy=ny-1
-  nbnz=-nz+1;nbxz=nz-1
-! offset for x,y,z-values   ???
-  nxsh=0;nysh=0;nzsh=0
-
-#endif
+!!$#if(tfindiff|tnumerov)
+!!$! bounds of loops
+!!$  minx=-nx;maxx=nx
+!!$  miny=-ny;maxy=ny
+!!$  minz=-nz;maxz=nz
+!!$! bounds of esc. el.
+!!$  nbnx=-nx+1;nbxx=nx-1
+!!$  nbny=-ny+1;nbxy=ny-1
+!!$  nbnz=-nz+1;nbxz=nz-1
+!!$! offset for x,y,z-values   ???
+!!$  nxsh=0;nysh=0;nzsh=0
+!!$
+!!$#endif
 
 
 

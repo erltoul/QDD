@@ -28,10 +28,18 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 !
 
 ! number of nodes (=1 for serial version)
-INTEGER :: knode=2
+#if(parayes)
+INTEGER :: knode=4
+!we should get it from mpi_comm_size
+#endif
+#if(paraworld||parano)
+INTEGER :: knode=1
+INTEGER :: ifile=60 ! for save 
+!to be improved and gotten from the size of the communicator in the paraworld case
+#endif
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
-INTEGER :: kstate=0
+INTEGER :: kstate=20
 ! max. total nr. electron  states
 INTEGER :: ksttot
 INTEGER,PRIVATE :: ksttot2
@@ -232,6 +240,7 @@ REAL(DP) :: drcharges=5D0
 
 
 CHARACTER (LEN=13) :: outnam
+CHARACTER (LEN=13) :: outname
 INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
@@ -410,6 +419,7 @@ nthr=numthr-1
  nxyz=nx2*ny2*nz2;nyf=nx2;nxyf=nx2*ny2
  kdfull2=kxbox*kybox*kzbox
  nx=nx2/2;ny=ny2/2;nz=nz2/2
+
 ! deduce nr. of states per node, readjust total nr. of states
 ! note: the input variable 'kstate' means total nr. of states
 !       and is copied first to the correct variable 'ksttot'.
@@ -418,6 +428,7 @@ nthr=numthr-1
  ksttot2 = knode*kstate    ! trial value
  if(ksttot2 < ksttot) kstate=1+kstate
  ksttot = knode*kstate    ! final value
+ 
  knodem=knode-1
 !#if(gridfft)
 ! bounds of loops
@@ -431,19 +442,19 @@ nthr=numthr-1
 ! mid-point for x,y,z-values
  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
 !#endif
-#if(tfindiff|tnumerov)
-! bounds of loops
- minx=-nx+1;maxx=nx
- miny=-ny+1;maxy=ny
- minz=-nz+1;maxz=nz
-! bounds of esc. el.
- nbnx=-nx+1+1;nbxx=nx-1
- nbny=-ny+1+1;nbxy=ny-1
- nbnz=-nz+1+1;nbxz=nz-1
-! offset for x,y,z-values   ???
- !nxsh=0;nysh=0;nzsh=0
-  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
-#endif
+!!$#if(tfindiff|tnumerov)
+!!$! bounds of loops
+!!$ minx=-nx+1;maxx=nx
+!!$ miny=-ny+1;maxy=ny
+!!$ minz=-nz+1;maxz=nz
+!!$! bounds of esc. el.
+!!$ nbnx=-nx+1+1;nbxx=nx-1
+!!$ nbny=-ny+1+1;nbxy=ny-1
+!!$ nbnz=-nz+1+1;nbxz=nz-1
+!!$! offset for x,y,z-values   ???
+!!$ !nxsh=0;nysh=0;nzsh=0
+!!$  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
+!!$#endif
 
 ! max. nr. of ions
 ng=nion
@@ -458,7 +469,8 @@ SUBROUTINE init_fields()
 ALLOCATE(nq(3,ksttot))                         !  nodes of init. states
 ALLOCATE(ipar(3,ksttot))                       !  xyz-parities
 ALLOCATE(ispin(ksttot))                        !  spin of states
-ALLOCATE(nrel2abs(kstate),nabs2rel(ksttot))    !  pointer to wfs
+!ALLOCATE(nrel2abs(kstate),nabs2rel(ksttot))    !  pointer to wfs
+ALLOCATE(nrel2abs(ksttot),nabs2rel(ksttot))    !  pointer to wfs
 ALLOCATE(nrel2abs_other(kstate,0:knode-1))     !  pointer to wfs
 ALLOCATE(nhome(ksttot))                        !  home node of wf
 #if(parayes)
@@ -478,8 +490,8 @@ ALLOCATE(spvariancebi(kstate))                !  s.p. energy variances
 ALLOCATE(qeorb_all(ksttot,11))                !  s.p. dipole moments
 ALLOCATE(spenergybi(kstate))
 ALLOCATE(spnorm(kstate))                      !  norm of s.p. wf
-ALLOCATE(occup(kstate))                       !  occupation weight
-
+!ALLOCATE(occup(kstate))                       !  occupation weight
+ALLOCATE(occup(ksttot))                       !  occupation weight
 ALLOCATE(rhojel(kdfull2))                !  jellium density
 ALLOCATE(potion(kdfull2))                !  pseudopotentials
 ALLOCATE(potFixedIon(kdfull2))           !  potential from frozen ions

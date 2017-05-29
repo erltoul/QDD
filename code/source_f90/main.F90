@@ -94,6 +94,7 @@ REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
 
 CALL cpu_time(time_absinit)
 
+
 CALL init_parallele() 
 
 #if(fftw_gpu)
@@ -105,9 +106,11 @@ CALL cuda_gpu_init()
 CALL checkoptions()       !check coherence of preprocessor option
 
 CALL initnamelists          ! read all input parameters
-  
+
+!write(6,*) kxbox,kybxox,kzbox,kdfull2
+
 IF(icooltyp == 3) CALL init_simann() ! initialize and read parameters for simulated annealing
-  
+
 CALL init_baseparams()    !init grid size, number of states ...
 
 CALL check_isrtyp         ! check short range interaction matrix
@@ -117,6 +120,7 @@ CALL iperio                     ! initializing the 'periodic table'
 CALL changeperio   ! overwrites default periodic system if necessary
 
 CALL iparams()               ! check dynamic  parameters
+
 
 CALL init_grid()    ! init coulomb solver, kinetic energy, grid properties
 
@@ -189,7 +193,7 @@ CALL timer(1)
 !       static
 !
 !       *******************************************
-!SIC: Self Interaction Correction
+!SIC: Self Ineraction Correction
 !                                     initialize parameters for FSIC
 IF(nclust > 0 .AND. ifsicp >= 7) THEN
   CALL init_fsicr()
@@ -209,6 +213,9 @@ IF(icooltyp == 3) THEN
 END IF
 
 DEALLOCATE(psir)
+#if(paraworld)
+outnam=outname
+#endif
 
 
 !       ****************************************************
@@ -329,6 +336,9 @@ IF(nclust > 0)THEN
     IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi)
 !                   ??: 'evaluate' should come after 'restart2' ??
     IF (iscatterelectron /=0) CALL init_scattel(psi)
+#if(paraworld)
+outnam=outname
+#endif
     CALL restart2(psi,outnam,.false.)
     IF (iaddcluster /= 0) CALL addcluster(psi,outnam)
     WRITE(7,'(a,i3)') 'restart irest=',irest
@@ -728,7 +738,7 @@ DEALLOCATE(psi)
 !                                       ! ends 'else' of 'if(ifscan)'
 !#endif
 
-#if(parayes)
+#if(parayes||paraworld)
 CALL mpi_finalize(icode)
 #endif
 #if(simpara)

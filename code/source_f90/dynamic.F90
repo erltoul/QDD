@@ -718,7 +718,7 @@ USE params
 USE util, ONLY:wfovlp,safeopen,project
 IMPLICIT NONE
 
-#if(parayes)
+#if(parayes||paraworld)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 REAL(DP) :: enonlcp, esh1p, eshellp
@@ -754,7 +754,7 @@ REAL(DP),EXTERNAL :: energ_ions
 
 OPEN(2743,FILE='energies.'//outnam)
 
-#if(parayes)
+#if(parayes||paraworld)
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 #else
 myn = 0
@@ -3064,7 +3064,7 @@ IF(trequest > 0D0) THEN
   END IF
 #if(parayes)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  CALL mpi_finalize (icode)
+  !CALL mpi_finalize (icode)
 #endif
   STOP ' finish at TREQUEST'
  END IF

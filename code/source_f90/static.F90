@@ -315,9 +315,9 @@ IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
          write(*,*) ' CALL RSAVE  1. case'
   CALL infor(rho,-1)
   
-#if(parayes)
-  CALL mpi_finalize(icode)
-#endif
+!#if(parayes)
+!  CALL mpi_finalize(icode)
+!#endif
   
   STOP ' terminate with static iteration '
 END IF

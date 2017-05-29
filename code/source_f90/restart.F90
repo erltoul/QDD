@@ -104,7 +104,7 @@ END DO
 
 #endif
 
-#if(simpara)
+#if(simpara||paraworld)
 mynact = 0
 #else
 mynact = myn
@@ -117,22 +117,22 @@ mynact = myn
 #ifdef REALSWITCH
 
   IF(mynact==0)  &
-    OPEN(UNIT=60,STATUS='old',FORM='unformatted', FILE='rsave.'//outna)  
+    OPEN(UNIT=ifile,STATUS='old',FORM='unformatted', FILE='rsave.'//outna)  
 
 #else
 
   IF(mynact==0) THEN
     IF(tstatin) THEN
-      INQUIRE(60,OPENED=topenf)
+      INQUIRE(ifile,OPENED=topenf)
       IF(.NOT.topenf) THEN
-        OPEN(UNIT=60,STATUS='old',FORM='unformatted',FILE='rsave.'//outna) 
+        OPEN(UNIT=ifile,STATUS='old',FORM='unformatted',FILE='rsave.'//outna) 
         IF(TTEST) WRITE(*,*) ' rsave opened'
       ELSE
-        REWIND(60)
-        IF(TTEST) WRITE(*,*) ' unit 60 taken as is'
+        REWIND(ifile)
+        IF(TTEST) WRITE(*,*) ' unit ifile taken as is'
       END IF
     ELSE
-      OPEN(UNIT=60,STATUS='old',FORM='unformatted', FILE='save.'//outna) 
+      OPEN(UNIT=ifile,STATUS='old',FORM='unformatted', FILE='save.'//outna) 
     END IF
   END IF
 
@@ -141,7 +141,7 @@ mynact = myn
 
 IF(mynact==0) THEN
   !  read the iteration where the data has been saved last:
-  READ(60) iact,nstate_test,nclust,nion,nspdw,trealin
+  READ(ifile) iact,nstate_test,nclust,nion,nspdw,trealin
   IF(nstate_test /= nstate_all) &
    STOP ' RESTART: inconsistent nr. of states'
   IF(ttest) WRITE(*,*) 'READ iact etc:',iact,nstate_test,nclust,nion,nspdw,trealin
@@ -174,14 +174,14 @@ IF(trealin) ALLOCATE(psiauxr(kdfull2))
 IF(nclust > 0)THEN
   DO nb=1,nstate
     IF(trealin) THEN
-      READ(60) occup(nb),psiauxr(1:nxyz)
+      READ(ifile) occup(nb),psiauxr(1:nxyz)
       psi(1:nxyz,nb) = psiauxr(1:nxyz)
     ELSE
-      READ(60) occup(nb),psi(1:nxyz,nb)
+      READ(ifile) occup(nb),psi(1:nxyz,nb)
     END IF
   END DO
   IF(ttest) WRITE(*,*) ' READ occup:',occup(1:nstate)
-  READ(60) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
+  READ(ifile) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
   IF(ttest) THEN
     WRITE(*,*) ' READ amoy:',amoy(1:nstate)
     WRITE(*,*) ' READ epotsp:',epotsp(1:nstate)
@@ -198,10 +198,10 @@ IF(nclust > 0)THEN
     nba = nabs2rel(nb)
     IF(myn == 0) THEN
       IF(trealin) THEN
-        READ(60) occupact,psiauxr(1:nxyz)
+        READ(ifile) occupact,psiauxr(1:nxyz)
         psiaux = psiauxr
       ELSE
-        READ(60) occupact,psiaux(1:nxyz)
+        READ(ifile) occupact,psiaux(1:nxyz)
       END IF
         IF(ttest) WRITE(*,*) ' READ: psiaux at myn,nb,occup=',myn,nb,occupact
     END IF
@@ -214,7 +214,7 @@ IF(nclust > 0)THEN
     IF(ttest .AND. myn==nod) WRITE(*,*) ' SENT to node,nb=',nod,nb
   END DO
 
-  IF(myn == 0) READ(60) amoya(1:nstate_all),epotspa(1:nstate_all), &
+  IF(myn == 0) READ(ifile) amoya(1:nstate_all),epotspa(1:nstate_all), &
                         ekinspa(1:nstate_all)
 
 
@@ -247,18 +247,18 @@ IF(trealin) DEALLOCATE(psiauxr)
 IF(mynact==0) THEN
 
 !  DO i=1,ksttot
-!    READ(60) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
+!    READ(ifile) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
 !  END DO
 
 !  read protonic coordinates and momenta
   IF(nion > 0) THEN
 #ifdef REALSWITCH
-      READ(60) dummy
+      READ(ifile) dummy
 #else
     IF(tstatin) THEN
-      READ(60) dummy
+      READ(ifile) dummy
     ELSE
-      READ(60) cx(1:nion),cy(1:nion),cz(1:nion), &
+      READ(ifile) cx(1:nion),cy(1:nion),cz(1:nion), &
                cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
     END IF
 #endif
@@ -273,27 +273,27 @@ IF(mynact==0) THEN
 !  read substrate coordinates and momenta
 #if(raregas)
   IF (isurf /= 0) THEN
-    READ(60) imobc(1:nc),xc(1:nc),yc(1:nc),zc(1:nc), &
+    READ(ifile) imobc(1:nc),xc(1:nc),yc(1:nc),zc(1:nc), &
              pxc(1:nc),pyc(1:nc),pzc(1:nc)
-    READ(60) imobe(1:ne),xe(1:ne),ye(1:ne),ze(1:ne), &
+    READ(ifile) imobe(1:ne),xe(1:ne),ye(1:ne),ze(1:ne), &
              pxe(1:ne),pye(1:ne),pze(1:ne)
-    READ(60) imobk(1:nk),xk(1:nk),yk(1:nk),zk(1:nk), &
+    READ(ifile) imobk(1:nk),xk(1:nk),yk(1:nk),zk(1:nk), &
              pxk(1:nk),pyk(1:nk),pzk(1:nk)
-    READ(60) potfixedion(1:kdfull2)
+    READ(ifile) potfixedion(1:kdfull2)
     IF(ttest) WRITE(*,*) ' surface read in. nc,nk,ne=',nc,nk,ne
   END IF
 #endif
 
 
   IF(nclust > 0) THEN
-    READ(60) qe(1:kmom),se(1:3)
+    READ(ifile) qe(1:kmom),se(1:3)
     IF(ttest) WRITE(*,*) ' moments read in:',qe(1:4)
 #ifdef COMPLEXSWITCH
     IF (nabsorb > 0) THEN
       IF(tstatin) THEN
         rhoabso = 0D0
       ELSE
-        READ(60) rhoabso(1:kdfull2)
+        READ(ifile) rhoabso(1:kdfull2)
         IF(ttest) WRITE(*,*) ' rhoabso read in'
       END IF
       IF(jescmaskorb /=0) THEN
@@ -303,7 +303,7 @@ IF(mynact==0) THEN
            rhoabsoorb_all = 0D0
         ELSE
           DO nbe=1,nstate_all
-            READ(60) rhoabsoorb_all(1:kdfull2,nbe)
+            READ(ifile) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
         END IF
 #else
@@ -311,7 +311,7 @@ IF(mynact==0) THEN
            rhoabsoorb = 0D0
         ELSE
           DO nbe=1,nstate
-            READ(60) rhoabsoorb(1:kdfull2,nbe)
+            READ(ifile) rhoabsoorb(1:kdfull2,nbe)
             IF(ttest) WRITE(*,*) ' rhoabsoorb read in'
           ENDDO
         ENDIF
@@ -322,7 +322,7 @@ IF(mynact==0) THEN
     IF(ttest) WRITE(*,*) ' before laser switch:',tstatin
     IF(.NOT.tstatin) THEN
       IF(ttest) WRITE(*,*) ' before reading laser'
-      READ(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
+      READ(ifile) acc1old,acc2old,foft1old,foft2old,timeold,ilas,fpulseinteg1,fpulseinteg2,elaser
       IF(ttest) WRITE(*,*) 'laser read:',acc1old,acc2old,foft1old,foft2old,timeold
     END IF
 #endif
@@ -364,7 +364,7 @@ END IF
 #if(twostsic)
 IF(ifsicp >= 6) THEN
 #ifdef REALSWITCH
-  READ(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
+  READ(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
   WRITE(*,*) ' READ vecsr:'
   DO n=1,ndims(1)
     WRITE(*,'(8f10.6)') vecsr(1:ndims(1),n,1)
@@ -372,11 +372,11 @@ IF(ifsicp >= 6) THEN
 #endif
 #ifdef COMPLEXSWITCH
   WRITE(*,*) ' before reading VECS'
-  READ(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  READ(ifile) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
   WRITE(*,*) vecs(1,1,1)
   IF(.NOT.tstatin) THEN
-    READ(60) ExpDABold(1:kstate,1:kstate,1:2)
-    READ(60) wfrotate(1:kstate,1:kstate,1:2)
+    READ(ifile) ExpDABold(1:kstate,1:kstate,1:2)
+    READ(ifile) wfrotate(1:kstate,1:kstate,1:2)
   END IF
   WRITE(*,*) ' READ vecs:',ndims
   DO n=1,ndims(1)
@@ -393,18 +393,18 @@ END IF
   IF(mynact==0) THEN
      IF(.NOT.tstatin .AND. jattach /=0) THEN
         WRITE(*,*) 'read totintegprob: istat,irest=',istat,irest 
-        READ(60) totintegprob
+        READ(ifile) totintegprob
         WRITE(*,*) totintegprob
-        READ(60) reference_energy
+        READ(ifile) reference_energy
         WRITE(*,*) reference_energy
      END IF
   END IF
 #endif
 
 IF(tstatin) THEN 
-  CLOSE(UNIT=60)
+  CLOSE(UNIT=ifile)
 ELSE
-  CLOSE(UNIT=60,STATUS='keep')
+  CLOSE(UNIT=ifile,STATUS='keep')
 END IF
 
 #if(parayes)
@@ -505,7 +505,7 @@ CALL mpi_barrier (mpi_comm_world, icode)
 
 #endif
 
-#if(simpara)
+#if(simpara||paraworld)
   mynact = 0
 #else
   mynact = myn
@@ -517,10 +517,10 @@ IF(ttest) WRITE(*,*) ' SAVE-BEFORE: myn=',myn
 
 IF(mynact==0) THEN
   IF(isave > 0) THEN
-    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna) 
+    OPEN(UNIT=ifile,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna) 
     WRITE(*,*) ' RSAVE opened'
   ELSE
-    OPEN(UNIT=60,STATUS='scratch',FORM='unformatted') 
+    OPEN(UNIT=ifile,STATUS='scratch',FORM='unformatted') 
     WRITE(*,*) ' scratch opened'
   END IF
   trealin=.true.
@@ -530,13 +530,13 @@ END IF
 
 IF(mynact==0) THEN
   IF(isa<0) THEN
-    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna)   
+    OPEN(UNIT=ifile,STATUS='unknown',FORM='unformatted', FILE='rsave.'//outna)   
     WRITE(*,*) ' RSAVE opened for complex output'
-    REWIND(60)
+    REWIND(ifile)
   ELSE
-    OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
+    OPEN(UNIT=ifile,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)   
     WRITE(*,*) ' SAVE opened for complex output'
-    REWIND(60)
+    REWIND(ifile)
   END IF
   trealin=.false.
 END IF
@@ -546,7 +546,7 @@ END IF
   
 !  write iteration at which the data is saved
 IF(mynact==0) THEN
-  WRITE(60) isa,nstate_all,nclust,nion,nspdw,trealin
+  WRITE(ifile) isa,nstate_all,nclust,nion,nspdw,trealin
   IF(ttest) WRITE(*,*) 'WROTE iact etc:',iact,nstate_test,nclust,nion,nspdw,trealin
 END IF
   
@@ -556,9 +556,9 @@ END IF
 #if(parano)
 IF(nclust > 0)THEN
   DO nb=1,nstate
-    WRITE(60) occup(nb),psi(1:nxyz,nb)
+    WRITE(ifile) occup(nb),psi(1:nxyz,nb)
   END DO
-  WRITE(60) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
+  WRITE(ifile) amoy(1:nstate),epotsp(1:nstate),ekinsp(1:nstate)
   IF(TTEST) WRITE(6,*)' SAVE: wavefunctions written'
 END IF
 #endif
@@ -578,7 +578,7 @@ IF(nclust > 0)THEN
     CALL csend_and_receive(psi(1,nba),psiaux,kdfull2,nod,0)
 #endif
     IF(myn == 0) THEN
-       WRITE(60) occupact,psiaux(1:nxyz)
+       WRITE(ifile) occupact,psiaux(1:nxyz)
        IF(ttest) WRITE(*,*) ' RECEIVED and written: node,nb=',nod,nb
     END IF
   END DO
@@ -598,7 +598,7 @@ IF(nclust > 0)THEN
       ekinspa(nba) = ekinsps(nb)
     END DO
   END DO
-  IF(myn == 0) WRITE(60) amoya(1:nstate_all),epotspa(1:nstate_all), &
+  IF(myn == 0) WRITE(ifile) amoya(1:nstate_all),epotspa(1:nstate_all), &
                          ekinspa(1:nstate_all)
   WRITE(*,*) ' after send ekins: myn=',myn
 
@@ -620,7 +620,7 @@ END IF
     
 IF(mynact==0) THEN
 !  DO i=1,ksttot
-!    WRITE(60) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
+!    WRITE(ifile) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
 !  END DO
     
     
@@ -628,38 +628,38 @@ IF(mynact==0) THEN
     
 !  write protonic coordinates and momenta:
   IF(nion > 0) &
-    WRITE(60) cx(1:nion),cy(1:nion),cz(1:nion), &
+    WRITE(ifile) cx(1:nion),cy(1:nion),cz(1:nion), &
              cpx(1:nion),cpy(1:nion),cpz(1:nion),np(1:nion)
     IF(TTEST) WRITE(*,*) 'ionic coordinates written'
 !  write substrate coordinates and momenta
 #if(raregas)
   IF (isurf /= 0) THEN
-    WRITE(60) imobc(1:nc),xc(1:nc),yc(1:nc),zc(1:nc), &
+    WRITE(ifile) imobc(1:nc),xc(1:nc),yc(1:nc),zc(1:nc), &
              pxc(1:nc),pyc(1:nc),pzc(1:nc)
-    WRITE(60) imobe(1:ne),xe(1:ne),ye(1:ne),ze(1:ne), &
+    WRITE(ifile) imobe(1:ne),xe(1:ne),ye(1:ne),ze(1:ne), &
              pxe(1:ne),pye(1:ne),pze(1:ne)
-    WRITE(60) imobk(1:nk),xk(1:nk),yk(1:nk),zk(1:nk), &
+    WRITE(ifile) imobk(1:nk),xk(1:nk),yk(1:nk),zk(1:nk), &
              pxk(1:nk),pyk(1:nk),pzk(1:nk)
-    WRITE(60) potfixedion(1:kdfull2)
+    WRITE(ifile) potfixedion(1:kdfull2)
   END IF
 #endif    
     
 !  write dipole moment etc:
     IF(nclust > 0) THEN 
-      WRITE(60) qe(1:kmom),se(1:3)
+      WRITE(ifile) qe(1:kmom),se(1:3)
       IF(TTEST) WRITE(*,*) 'electronic moments written'
     
 #ifdef COMPLEXSWITCH
       IF (isa>0 .AND. nabsorb > 0) THEN
-        WRITE(60) rhoabso(1:kdfull2)
+        WRITE(ifile) rhoabso(1:kdfull2)
         IF(jescmaskorb /=0) THEN
 #if(parayes)
           DO nbe=1,nstate_all
-            WRITE(60) rhoabsoorb_all(1:kdfull2,nbe)
+            WRITE(ifile) rhoabsoorb_all(1:kdfull2,nbe)
           END DO
 #else
           DO nbe=1,nstate
-            WRITE(60) rhoabsoorb(1:kdfull2,nbe)
+            WRITE(ifile) rhoabsoorb(1:kdfull2,nbe)
           ENDDO
 #endif
         END IF
@@ -667,7 +667,7 @@ IF(mynact==0) THEN
       END IF
 !     writing cumulators for laser field
       IF(isa.GE.0) THEN
-        WRITE(60) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
+        WRITE(ifile) acc1old,acc2old,foft1old,foft2old,timeold,ilas,&
                   fpulseinteg1,fpulseinteg2,elaser
         WRITE(*,*) 'laser written:',acc1old,acc2old,foft1old,foft2old,timeold
       END IF
@@ -678,7 +678,7 @@ END IF
 #if(twostsic)
 #ifdef REALSWITCH
     IF(ifsicp >= 6) THEN
-      WRITE(60) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
+      WRITE(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
       DO n=1,ndims(1)
         WRITE(*,'(10f10.5)') vecsr(1:ndims(1),n,1)
@@ -690,9 +690,9 @@ END IF
 #endif
 #ifdef COMPLEXSWITCH
     IF(ifsicp >= 6) THEN
-      WRITE(60) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
-      WRITE(60) expdabold(1:kstate,1:kstate,1:2)
-      WRITE(60) wfrotate(1:kstate,1:kstate,1:2)
+      WRITE(ifile) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+      WRITE(ifile) expdabold(1:kstate,1:kstate,1:2)
+      WRITE(ifile) wfrotate(1:kstate,1:kstate,1:2)
       WRITE(*,*) 'vecs and expdabold written'
       WRITE(*,*) ndims
       DO n=1,ndims(1)
@@ -707,12 +707,12 @@ END IF
 
 #ifdef COMPLEXSWITCH
 IF (jattach /=0) THEN
-   WRITE(60) totintegprob
-   WRITE(60) reference_energy
+   WRITE(ifile) totintegprob
+   WRITE(ifile) reference_energy
 END IF
 #endif
 
-IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
+IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=ifile,STATUS='keep')
     
 #if(parayes)
   DEALLOCATE(psiaux)
@@ -726,7 +726,7 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=60,STATUS='keep')
     WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
 !  END IF
 
-!  CLOSE(60)
+!  CLOSE(ifile)
   
   RETURN
 #ifdef REALSWITCH
@@ -784,15 +784,15 @@ COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
 CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
 
 INTEGER :: i,iact,idum,ii,ion,k,nb,nclustt,niont,nspdwt,nstatet
-OPEN(UNIT=60,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)
+OPEN(UNIT=ifile,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)
 
 
 !  read the iteration where the data has been saved last:
 
 
-READ(60) iact,nstatet,nclustt,niont,nspdwt
+READ(ifile) iact,nstatet,nclustt,niont,nspdwt
 DO i=1,nstatet
-  READ(60) occup(i+nstate)
+  READ(ifile) occup(i+nstate)
 END DO
 
 
@@ -803,16 +803,16 @@ irest=iact
 IF(nclustt > 0)THEN
   DO nb=1,nstatet
     DO i=1,nxyz
-      READ(60) psi(i,nb+nstate)
+      READ(ifile) psi(i,nb+nstate)
     END DO
   END DO
 END IF
 
 DO i=1,ksttot
   IF (i <= nstatet) THEN
-    READ(60) ispin(i+nstate), nrel2abs(i+nstate),nabs2rel(i+nstate)
+    READ(ifile) ispin(i+nstate), nrel2abs(i+nstate),nabs2rel(i+nstate)
   ELSE
-    READ(60) idum,idum,idum
+    READ(ifile) idum,idum,idum
   END IF
 END DO
 
@@ -822,8 +822,8 @@ END DO
 !  read protonic coordinates and momenta
 WRITE(6,*) nion,niont
 DO ion=1,niont
-  READ(60) cx(ion+nion),cy(ion+nion),cz(ion+nion), np(ion+nion)
-  READ(60) cpx(ion+nion),cpy(ion+nion),cpz(ion+nion), np(ion+nion)
+  READ(ifile) cx(ion+nion),cy(ion+nion),cz(ion+nion), np(ion+nion)
+  READ(ifile) cpx(ion+nion),cpy(ion+nion),cpz(ion+nion), np(ion+nion)
 END DO
 
 
@@ -831,23 +831,23 @@ END DO
 IF (isurf /= 0) THEN
 
   DO i=1,nc
-    READ(60) imobc(i)
-    READ(60) xc(i),yc(i),zc(i)
-    READ(60) pxc(i),pyc(i),pzc(i)
+    READ(ifile) imobc(i)
+    READ(ifile) xc(i),yc(i),zc(i)
+    READ(ifile) pxc(i),pyc(i),pzc(i)
   END DO
   DO i=1,NE
-    READ(60) imobe(i)
-    READ(60) xe(i),ye(i),ze(i)
-    READ(60) pxe(i),pye(i),pze(i)
+    READ(ifile) imobe(i)
+    READ(ifile) xe(i),ye(i),ze(i)
+    READ(ifile) pxe(i),pye(i),pze(i)
   END DO
   DO i=1,nk
-    READ(60) imobk(i)
-    READ(60) xk(i),yk(i),zk(i)
-    READ(60) pxk(i),pyk(i),pzk(i)
+    READ(ifile) imobk(i)
+    READ(ifile) xk(i),yk(i),zk(i)
+    READ(ifile) pxk(i),pyk(i),pzk(i)
   END DO
   
   DO i=1,kdfull2
-    READ(60) potfixedion(i)
+    READ(ifile) potfixedion(i)
   END DO
   
 END IF
@@ -856,22 +856,22 @@ END IF
 
 IF(nclustt > 0)THEN
   DO k=1,kmom
-    READ(60) qe(k)
+    READ(ifile) qe(k)
   END DO
   DO i=1,3
-    READ(60) se(i)
+    READ(ifile) se(i)
   END DO
 END IF
 
 
 IF (nabsorb > 0) THEN
   DO ii=1,kdfull2
-    READ(60) rhoabso(ii)
+    READ(ifile) rhoabso(ii)
   END DO
 END IF
 
 
-CLOSE(UNIT=60,STATUS='keep')
+CLOSE(UNIT=ifile,STATUS='keep')
 
 nstate=nstate+nstatet
 nclust=nclust+nclustt

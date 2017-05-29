@@ -40,6 +40,7 @@ INTEGER :: nprocs
 !------------------------------------------------------------------
 
 myn=0
+
 #if(parayes||simpara||paraworld)
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(icode)
@@ -48,26 +49,32 @@ CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
 WRITE(*,*) nprocs,knode
 #if(paraworld)
 CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+ifile=60+1000*nrank
 level=nrank/2
-call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,icode)
-call mpi_comm_dup(mpi_comm_world,mpi_world_dup,icode)
+!call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,icode)
+!call mpi_comm_dup(mpi_comm_world,mpi_world_dup,icode)
 write(6,*) 'split done'
 #endif
+
+
 #if(parayes||paraworld)
+!#if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
 !IF(knode /= kstate) STOP "knode must be equal to kstate !"
 #else
-knode = 1
-nprocs= 1
+#if(parano)
+#if(!paraworld)
+!knode = 1
+!nprocs= 1         
+#endif
+#endif
 #endif
 WRITE(*,*) ' before mpi_comm_rank'
 CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
 nb=myn
-#else             
-knode = 1         
-nprocs= 1         
 #endif
+
 
 #if(paropenmp)
 #if(fftwnomkl)
@@ -90,7 +97,6 @@ nthr = 0
 WRITE(*,*) ' INIT_PARALLELE: nthr=',nthr
 
 
-
 RETURN
 END SUBROUTINE init_parallele
 
@@ -106,6 +112,8 @@ USE params
 USE kinetic
 IMPLICIT NONE
 INCLUDE 'mpif.h'
+
+
 INTEGER :: is(mpi_status_size)
 INTEGER :: ii, ic, nod
 #if(raregas)
@@ -120,7 +128,6 @@ CALL i_scatter(kxbox)
 CALL i_scatter(kybox)
 CALL i_scatter(kzbox)
 CALL i_scatter(kstate)
-
 
 CALL pi_scatter(scaleclustx)
 CALL pi_scatter(scaleclusty)
@@ -152,6 +159,8 @@ CALL i_scatter(ihome)
 CALL i_scatter(iemomsrel)
 CALL i_scatter(ifspemoms)
 CALL i_scatter(iffastpropag)
+CALL i_scatter(ifexpevol)
+CALL i_scatter(ifcnevol)
 CALL i_scatter(iflocaliz)
 CALL i_scatter(jgeomion)
 CALL i_scatter(jangabso)
@@ -183,7 +192,6 @@ CALL i_scatter(jplotdensitydiff2d)
 CALL i_scatter(jplotdensity2d)
 CALL i_scatter(jcharges)
 CALL i_scatter(iscatterelectron)
-
 
 CALL pi_scatter(drcharges)
 CALL pi_scatter(tempion)
@@ -333,7 +341,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dy,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
-#if(raregas)
+!#if(raregas)
     CALL mpi_send(radjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(surjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(bbeta,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -347,7 +355,7 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dpolx,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpoly,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpolz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
-    
+#if(raregas)
     CALL mpi_send(surftemp,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmac,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmav,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
