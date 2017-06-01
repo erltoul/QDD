@@ -335,7 +335,7 @@ REAL(DP), INTENT(IN)                         :: wa4(1)
 INTEGER:: i, ic, idp2, k
 REAL(DP):: ci2, ci3, ci4, ci5, cr2, cr3, cr4, cr5
 REAL(DP):: di2, di3, di4, di5, dr2, dr3, dr4, dr5
-REAL(DP):: ti1, ti2, ti3, ti4, ti5, tr1, tr2, tr3, tr4, tr5
+REAL(DP):: ti2, ti3, ti4, ti5, tr2, tr3, tr4, tr5
 REAL(DP):: tr11, ti11, tr12, ti12
 
 
