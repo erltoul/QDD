@@ -90,8 +90,9 @@ IMPLICIT NONE
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-
+#if(raregas)
 INTEGER :: i
+#endif
 REAL(DP) :: dummy, enpol, enpol0
 REAL(DP), EXTERNAL :: energ_ions
 

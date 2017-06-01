@@ -37,9 +37,11 @@ REAL(DP), INTENT(IN OUT) :: aux(kdfull2)
 COMPLEX(DP), INTENT(IN)     :: psi(kdfull2)
 COMPLEX(DP), INTENT(IN OUT) :: aux(kdfull2)
 INTEGER, INTENT(IN)        :: ionact
+INTEGER :: maxion, minion
+
 #endif
 
-INTEGER :: i, ion, maxion, minion
+INTEGER :: i, ion
 
 #ifdef REALSWITCH
 

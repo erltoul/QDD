@@ -45,7 +45,6 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
 LOGICAL,PARAMETER :: tcpu=.true.
-LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
 
@@ -238,11 +237,6 @@ END IF
 !     final protocol on file 'pstat.<name>''
 
 CALL pri_pstat(psir,rho)
-
-!     save real wavefunctions for further applications
-
-IF(tspinprint) CLOSE(12)          ! ???
-
 
 
 !       call printSurfPot(592)

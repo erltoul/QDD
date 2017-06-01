@@ -490,7 +490,7 @@ COMPLEX(DP),INTENT (OUT) ::ao(2*nx2,2*ny2,2*nz2)
 COMPLEX(dp) :: ai(0:2*nx2,0:2*ny2,0:2*nz2)
 COMPLEX(dp) :: a(0:nx2,0:ny2,0:nz2)
 INTEGER:: nx2i,ny2i,nz2i
-INTEGER :: ia,ja,ka,i0
+INTEGER :: ia,ja,ka
 INTEGER :: ia1,ja1,ka1
 
 ai(:,:,:) = 0.0D0
@@ -585,7 +585,7 @@ COMPLEX(DP),INTENT (IN) :: a(nx2,ny2,nz2)
 COMPLEX(DP),INTENT (OUT) ::ai(2*nx2,2*ny2,2*nz2)
 #endif
 INTEGER:: nx2i,ny2i,nz2i
-INTEGER :: ia,ja,ka,i0
+INTEGER :: ia,ja,ka
 
 ai(:,:,:) = 0.0D0
 !write (*,*)'hello1'
@@ -718,12 +718,10 @@ IMPLICIT NONE
 !smothing array
 REAL(DP),INTENT (OUT) :: as(nx2,ny2,nz2)
 !smoothing target array
-INTEGER :: nx2i,ny2i,nz2i
 REAL(DP),INTENT (IN) ::a(2*nx2,2*ny2,2*nz2)
 
 #else
 COMPLEX(DP),INTENT (OUT) :: as(nx2,ny2,nz2)
-INTEGER :: nx2i,ny2i,nz2i
 !smoothing target array
 COMPLEX(DP),INTENT (IN) ::a(2*nx2,2*ny2,2*nz2)
 #endif
@@ -731,10 +729,6 @@ INTEGER :: ia,ja,ka,i1,i2,i3
 REAL(DP) :: fac
 as=0.0
 
-! nx2i=2*nx2-1
-! ny2i=2*ny2-1
-! nz2i=2*nz2-1
-! 
 !*******************************
 DO ia=1,nx2
   IF ((ia==1).or.(ia==nx2))THEN ! for the orthogonal border plans to the x axis

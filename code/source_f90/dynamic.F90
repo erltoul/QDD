@@ -634,12 +634,12 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 ELSE IF(ifsicp >= 7)THEN
 !  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
   CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))           !MV
-!ccccccJM     Generalized Slater pot
+!JM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
-!ccccccJM     2 state SIC
+!JM     2 state SIC
   ELSE IF(ifsicp == 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
@@ -729,7 +729,7 @@ REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: it
 
-INTEGER :: ico, ind, ion, ishift, iss, nb, nbe
+INTEGER :: ind, ion, ishift, iss, nb, nbe
 REAL(DP) :: ekin, ehilf, eshell, enonlc
 REAL(DP) :: ek, tinfs, xm
 REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
@@ -744,6 +744,9 @@ LOGICAL,PARAMETER :: ttest=.FALSE.
 LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 
 REAL(DP),EXTERNAL :: energ_ions
+#if(raregas)
+INTEGER :: ico
+#endif
 !------------------------------------------------------------------
 
 
@@ -2646,12 +2649,12 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: it
 
-REAL(DP) :: rho(2*kdfull2)
 #if(raregas)
 INTEGER :: i, ii, ion, nimobc, nimobk
 REAL(DP) :: sumcx, sumcy, sumcz, sumkx, sumky, sumkz
 REAL(DP) :: ekx, eky, ekz, ekcx, ekcy, ekcz, ekvx, ekvy, ekvz
 REAL(DP) :: amfac1, amfac2
+REAL(DP) :: rho(2*kdfull2)
 #endif
 
 !----------------------------------------------------------------

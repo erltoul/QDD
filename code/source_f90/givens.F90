@@ -121,8 +121,8 @@ INTEGER, INTENT(IN OUT)                  :: njx
 
 INTEGER, PARAMETER :: n1=200
 
-INTEGER :: i, ia, ic, id, ii, im, iter, j, j1, ji, jj, jp2, jump, k, l, n, nroot, nsize, nm1, nm2, nom, nomtch
-REAL(DP) :: ac, acc, ak, anorm, alimit, aroot, bb, del1, delbig, delta
+INTEGER :: i, ia, ic, id, ii, im, iter, j, j1, jj, jp2, jump, k, l, n, nroot, nsize, nm1, nm2, nom, nomtch
+REAL(DP) :: acc, ak, anorm, alimit, aroot, bb, del1, delbig, delta
 REAL(DP) :: elim1, elim2, f0, factor, small, temp, toler, theta1, trial
 REAL(DP) :: rand1, rootl, rootx, rpower, rpow1
 REAL(DP) :: b(n1,5)

@@ -1528,7 +1528,7 @@ REAL(DP) :: dd, distmax, xcm, ycm, zcm, ctmpx, ctmpy, ctmpz
 REAL(DP) :: optis, dgrid, sumion, v0, rnorm, tempv, xm
 REAL(DP) :: vxn02,vyn02,vzn02
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
-INTEGER :: i,ii,inx,inxg,ion,iunit,n,nxopti
+INTEGER :: i,ii,inx,inxg,ion,iunit,nxopti
 
 INTEGER ::  igrid(7)
 data igrid /32,48,64,72,96,128,160/
@@ -2016,7 +2016,6 @@ INTEGER :: is(mpi_status_size)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 INTEGER ::i,nr,nbe,nbr
 REAL(DP)::en
-REAL(DP), ALLOCATABLE :: rfieldaux(:)
 
 !----------------------------------------------------------------------
 
@@ -2555,7 +2554,7 @@ INTEGER, INTENT(IN)                      :: iturn
 INTEGER :: i1,i2,i3,ii,iter
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),vecalp(3)
 REAL(DP) :: anglex,angley,anglez,alpha,beta,thetax,thetay,thetaz,theta0
-REAL(DP) :: alphael,beta2j,gamma2j,gammaj
+REAL(DP) :: alphael,beta2j,gammaj
 REAL(DP) :: onetrd,d4pi,alpfac,q20fac,q22fac,q40fac
 REAL(DP) :: alphbk,betabk,hexabk,bet2EF
 REAL(DP) :: deralp,derbet,delalp,delbet

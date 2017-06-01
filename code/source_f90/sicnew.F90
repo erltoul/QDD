@@ -1332,7 +1332,8 @@ IMPLICIT NONE
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT)                        :: qex(kdfull2,kstate)
-INTEGER :: nbe
+INTEGER :: i,nbe
+REAL(DP) :: sump
 #else
 COMPLEX(DP), INTENT(IN)                         :: q0(kdfull2)
 COMPLEX(DP), INTENT(OUT)                        :: qex(kdfull2)
@@ -1348,8 +1349,8 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acl
 
 LOGICAL,PARAMETER :: ttest=.false.
-INTEGER :: i,ind,nb2
-REAL(DP) :: sump
+INTEGER :: ind,nb2
+
 
 IF(ifsicp /= 5) STOP ' in EXCHANGE: wrong option IFSICP'
 
