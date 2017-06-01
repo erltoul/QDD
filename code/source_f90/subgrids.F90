@@ -93,24 +93,28 @@ END SUBROUTINE initsubgrids
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofield(field,funk,x0,y0,z0,fact)
+SUBROUTINE addfunctofield(field,func,x0,y0,z0,fact)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
-!     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
-!     version with zero parameters in funk
-
+!     adds function func(x-x0,y-y0,z-z0) to field(x,y,z)
+!     version with zero parameters in func
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL, EXTERNAL                         :: funk
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r)
+    USE params
+    REAL(DP),INTENT(IN) :: r
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz, max 
 REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
-!EXTERNAL varelcore, vfermi,v_soft
 
 ind = 0
 
@@ -129,7 +133,7 @@ DO iz=minz,maxz
       
       ind = ind + 1
       
-      field(ind) = field(ind) + funk(rr)*fact
+      field(ind) = field(ind) + func(rr)*fact
       
     END DO
   END DO
@@ -143,21 +147,27 @@ END SUBROUTINE addfunctofield
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofield1(field,funk,x0,y0,z0,fact,para)
+SUBROUTINE addfunctofield1(field,func,x0,y0,z0,fact,para)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
-!     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
-!     version with 1 parameter in funk
-
+!     adds function func(x-x0,y-y0,z-z0) to field(x,y,z)
+!     version with 1 parameter in func
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP), EXTERNAL                           :: funk
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                         :: fact
 REAL(DP), INTENT(IN)                     :: para
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP),INTENT(IN) :: r
+    REAL(DP),INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) ::rr, rx, ry, rz, x1, y1, z1 
@@ -179,7 +189,7 @@ DO iz=minz,maxz
       
       ind = ind + 1
       
-      field(ind) = field(ind) + funk(rr,para)*fact
+      field(ind) = field(ind) + func(rr,para)*fact
       
     END DO
   END DO
@@ -192,16 +202,15 @@ END SUBROUTINE addfunctofield1
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofield3(field,funk,x0,y0,z0,fact,para1,para2, para3)
+SUBROUTINE addfunctofield3(field,func,x0,y0,z0,fact,para1,para2, para3)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
-!     adds function f(x-x0,y-y0,z-z0) to field(x,y,z)
-!     version with 3 parameter in funk
+!     adds function func(x-x0,y-y0,z-z0) to field(x,y,z)
+!     version with 3 parameter in func
 
 
 REAL(DP), INTENT(IN OUT)           :: field(kdfull2)
-REAL(DP), EXTERNAL                 :: funk
 REAL(DP), INTENT(IN)               :: x0
 REAL(DP), INTENT(IN)               :: y0
 REAL(DP), INTENT(IN)               :: z0
@@ -209,6 +218,16 @@ REAL(DP), INTENT(IN)               :: fact
 REAL(DP), INTENT(IN)               :: para1
 REAL(DP), INTENT(IN)               :: para2
 REAL(DP), INTENT(IN)               :: para3
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,a,b,c)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: a
+    REAL(DP), INTENT(IN) :: b
+    REAL(DP), INTENT(IN) :: c
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
@@ -229,7 +248,7 @@ DO iz=minz,maxz
       
       ind = ind + 1
       
-      field(ind) = field(ind) + funk(rr,para1,para2, para3)*fact
+      field(ind) = field(ind) + func(rr,para1,para2, para3)*fact
       
     END DO
   END DO
@@ -243,20 +262,25 @@ END SUBROUTINE addfunctofield3
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofieldonsubgrid(field,funkt,x0,y0,z0,fact, nsgsize)
+SUBROUTINE addfunctofieldonsubgrid(field,func,x0,y0,z0,fact, nsgsize)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
 !     same as above routine but with subgrids
 
-
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP), EXTERNAL                       :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                     :: fact
 INTEGER, INTENT(IN)                      :: nsgsize
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r)
+      USE params
+      REAL(DP),INTENT(IN) :: r
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
@@ -296,7 +320,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             
             
             
-            field(ind) = field(ind) + funkt(rr)*fact
+            field(ind) = field(ind) + func(rr)*fact
             
             
             
@@ -316,7 +340,7 @@ END SUBROUTINE addfunctofieldonsubgrid
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofieldonsubgrid1(field,funkt,x0,y0,z0,fact, para,nsgsize)
+SUBROUTINE addfunctofieldonsubgrid1(field,func,x0,y0,z0,fact, para,nsgsize)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
@@ -324,13 +348,20 @@ IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP),EXTERNAL                        :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
 REAL(DP), INTENT(IN)                     :: fact
 REAL(DP), INTENT(IN)                     :: para
 INTEGER, INTENT(IN)                      :: nsgsize
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP),INTENT(IN) :: r
+    REAL(DP),INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
@@ -370,7 +401,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             
             
             
-            field(ind) = field(ind) + funkt(rr,para)*fact
+            field(ind) = field(ind) + func(rr,para)*fact
             
             
             
@@ -389,7 +420,7 @@ END SUBROUTINE addfunctofieldonsubgrid1
 
 !------------------------------------------------------------
 
-SUBROUTINE addfunctofieldonsubgrid3(field,funkt,x0,y0,z0,fact,  &
+SUBROUTINE addfunctofieldonsubgrid3(field,func,x0,y0,z0,fact,  &
     para1,para2,para3,nsgsize)
 !------------------------------------------------------------
 USE params
@@ -398,7 +429,6 @@ IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP),EXTERNAL                  :: funkt
 REAL(DP), INTENT(IN)                         :: x0
 REAL(DP), INTENT(IN)                         :: y0
 REAL(DP), INTENT(IN)                         :: z0
@@ -407,6 +437,16 @@ REAL(DP), INTENT(IN)                     :: para1
 REAL(DP), INTENT(IN)                     :: para2
 REAL(DP), INTENT(IN)                     :: para3
 INTEGER, INTENT(IN)                      :: nsgsize
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,a,b,c)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: a
+    REAL(DP), INTENT(IN) :: b
+    REAL(DP), INTENT(IN) :: c
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
@@ -447,7 +487,7 @@ DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
             
             
             
-            field(ind) = field(ind) + funkt(rr,para1,para2,para3)*fact
+            field(ind) = field(ind) + func(rr,para1,para2,para3)*fact
             
             
             
@@ -475,8 +515,6 @@ IMPLICIT NONE
 !     to field(x,y,z).
 !     The function is interpolated from tabulated values
 !     in array 'table'.
-
-
 REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
 REAL(DP), INTENT(IN)                     :: table(kfermi)
 REAL(DP), INTENT(IN)                         :: x0
@@ -628,19 +666,22 @@ IMPLICIT NONE
 
 !     where \vec R = (xx,yy,zz)
 
-
-
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
-
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: sumx, sumy, sumz, radial, rr, rx, ry, rz, x1, y1, z1
-!~ EXTERNAL dvsdr,dgaussdr
 
 
 
@@ -701,10 +742,16 @@ IMPLICIT NONE
 
 !     where \vec R = (xx,yy,zz)
 
-
-
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), EXTERNAL                           :: func
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
+
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
@@ -870,16 +917,21 @@ END SUBROUTINE updatesubgrids
 
 !------------------------------------------------------------
 
-SUBROUTINE putfunctosubgrid(qfield,indpart,funktion)
+SUBROUTINE putfunctosubgrid(qfield,indpart,func)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
 
-
-
 REAL(DP), INTENT(OUT)                        :: qfield(kdsub)
 INTEGER, INTENT(IN)                      :: indpart
-REAL(DP), EXTERNAL                       :: funktion
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz, ix0, iy0, iz0
 REAL(DP) :: r, ss, x1, y1, z1, x0, y0, z0
@@ -922,7 +974,7 @@ DO iz=iz0-nzsg,iz0+nzsg
       r = (x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+(z1-z0)*(z1-z0)
       r = SQRT(r)
       
-      qfield(ind) = funktion(r,ss)
+      qfield(ind) = func(r,ss)
       
     END DO
   END DO
@@ -1322,19 +1374,22 @@ IMPLICIT NONE
 
 !     where \vec R = (xx,yy,zz)
 
-
-
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)                     :: param
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: acc, rr, rx, ry, rz, x1, y1, z1
-REAL(DP), EXTERNAL :: v_soft
-REAL(DP), EXTERNAL :: dv_softdr
 
 
 ind = 0
@@ -1383,20 +1438,22 @@ IMPLICIT NONE
 
 
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), EXTERNAL                         :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: rder, sumx, sumy, sumz
 REAL(DP):: radial, rr, rx, ry, rz, x1, y1, z1
-
-REAL(DP), EXTERNAL :: v_soft,gauss
-
-
-
 
 ind = 0
 sumx = 0D0
@@ -1456,13 +1513,19 @@ IMPLICIT NONE
 !     where \vec R = (xx,yy,zz)
 
 
-
 REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), EXTERNAL                           :: func
 REAL(DP), INTENT(IN)                         :: xx
 REAL(DP), INTENT(IN)                         :: yy
 REAL(DP), INTENT(IN)                         :: zz
 REAL(DP), INTENT(IN)         :: param
+! Function name passed as an argument :
+INTERFACE 
+  REAL(DP) FUNCTION func(r,s)
+    USE params
+    REAL(DP), INTENT(IN) :: r
+    REAL(DP), INTENT(IN) :: s
+  END FUNCTION func
+END INTERFACE
 
 INTEGER,EXTERNAL :: getnearestgridpoint
 INTEGER,EXTERNAL :: conv3to1
