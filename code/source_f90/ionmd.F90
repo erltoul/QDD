@@ -1386,8 +1386,11 @@ REAL(DP), INTENT(OUT)                        :: eeth
 
 INTEGER :: i, ind, n, nb
 REAL(DP) :: ajalpha, rhoalpha
-REAL(DP) :: dkx, dky, dkz, ex, ey, ez, q1, tel
+REAL(DP) :: dkx, dky, dkz, q1, tel
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
+#if(parayes)
+REAL(DP) :: ex, ey, ez
+#endif
 COMPLEX(DP) :: test
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz

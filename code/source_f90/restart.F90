@@ -65,13 +65,14 @@ LOGICAL, INTENT(IN)                       :: tstatin
 
 CHARACTER (LEN=13), INTENT(IN)            :: outna
 
-INTEGER ::  iact, nstate_test, mynact, n, nb, nbe
+INTEGER ::  iact, nstate_test, mynact, n, nb
 REAL(DP) :: dummy
 REAL(DP), ALLOCATABLE :: psiauxr(:)
 LOGICAL :: trealin
 LOGICAL,PARAMETER :: ttest = .TRUE.
 
 #ifdef COMPLEXSWITCH
+INTEGER :: nbe
 LOGICAL :: topenf
 #endif
 

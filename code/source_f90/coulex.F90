@@ -364,7 +364,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: kdum
+INTEGER, INTENT(IN)                  :: kdum   ! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3
 REAL(DP) ::factor
@@ -491,7 +491,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: chpfalr(kdfull)
 REAL(DP), INTENT(IN)                         :: rhokr(kdred)
-REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
+REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3, ii
 
@@ -585,8 +585,9 @@ INTEGER :: i1, nzzh, nyyh
 REAL(DP) ::  tnorm, time_fin
 INTEGER,SAVE :: mxini=0,myini=0,mzini=0
 !DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+#if(fftw_cpu)
 LOGICAL,SAVE :: tinifft=.false.
-
+#endif
 !----------------------------------------------------------------------
 
 
@@ -1341,9 +1342,9 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
-INTEGER ::  i0, i1, i2, i3, i30, icconj, ii, nx11
+INTEGER ::  i0, i1, i2, i3, i30, ii, nx11
 #if(netlib_fft)
-INTEGER::ir,ic,irconj,iconj  ! Index for real and complex components when stored in fftay
+INTEGER::ir,ic,irconj,icconj  ! Index for real and complex components when stored in fftay
 #endif
 !----------------------------------------------------------------------
 

@@ -1550,7 +1550,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: sproj,starget
 REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
 
 #if(parano)
@@ -1655,7 +1655,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: sproj,starget
 REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
 
 #if(parano)
@@ -2452,7 +2452,7 @@ IMPLICIT NONE
 INTEGER, INTENT(IN)              :: i
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 
-INTEGER :: ind, jx, jy, jz, num
+INTEGER :: ind, jx, jy, num
 
 
 !     print 2d-field
@@ -3076,7 +3076,7 @@ COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
 COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
 
-INTEGER :: i, nbe
+INTEGER :: nbe
 COMPLEX(DP) :: ovl
 
 !*********************************************************
@@ -4354,7 +4354,6 @@ INTEGER, INTENT(IN)                :: np
 
 REAL(DP)     :: d
 COMPLEX(DP)  :: det
-INTEGER :: nst
 INTEGER :: indx(n)
 INTEGER :: ierror
 

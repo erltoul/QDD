@@ -71,8 +71,8 @@ COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 INTEGER :: ion, it
 #if(raregas)
 INTEGER :: i
-#endif
 REAL(DP):: dt
+#endif
 REAL(DP):: totalprob,totalovlp
 REAL(DP):: time_absfin
 LOGICAL :: imaginary_time= .true.
@@ -1094,7 +1094,7 @@ REAL(DP),INTENT(IN) :: cyg
 REAL(DP),INTENT(IN) :: czg
 INTEGER, INTENT(IN) :: ion
 
-INTEGER :: i, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+INTEGER :: ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
 REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
 REAL(DP) :: r0, r1, radion, rfac, rr, x, y, z, xion, yion, zion
 REAL(DP) :: gamfac, proj, xnorm
@@ -1225,8 +1225,8 @@ REAL(DP),INTENT(IN) :: cyg
 REAL(DP),INTENT(IN) :: czg
 INTEGER, INTENT(IN) :: ion
 
-INTEGER :: i, ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
-REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
+INTEGER :: ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+REAL(DP) :: dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
 REAL(DP) :: r0, r1, r2, radion, rfac, rr, x, y, z, xion, yion, zion
 REAL(DP) :: gamfac, proj, xnorm
 

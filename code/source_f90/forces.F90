@@ -255,7 +255,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 
-INTEGER :: ii, ix, iy, iz, jj
+INTEGER :: ii, jj
 REAL(DP) :: dist, dist2, radfor, forcex, forcey, forcez
 REAL(DP) :: xi, yi, zi, xr, yr, zr
 
@@ -460,7 +460,7 @@ INTEGER, INTENT(IN)                  :: it
 CHARACTER (LEN=1) :: ext
 INTEGER :: ind, ion, ion1, is, ix, iy, iz
 REAL(DP) :: c1, c2, chpddr, dist2, dist3, pch
-REAL(DP) :: r2, rder, rdn, rloc, rion, zion
+REAL(DP) :: r2, rder, rdn, rloc, zion
 REAL(DP) :: rr, rr3,  rx, ry, rz, x1, y1, z1
 
 REAL(DP),EXTERNAL :: v_ion_el_lgoed
@@ -1012,7 +1012,7 @@ INTEGER, INTENT(IN)                          :: is
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: c1, c2, f1, f2, pt1, pt2, rloc, zion
-REAL(DP) :: r1, rr, rx, ry, rz, x1, y1, z1
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 
 REAL(DP),EXTERNAL :: v_ion_el_lgoed
 REAL(DP),EXTERNAL :: v_soft

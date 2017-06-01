@@ -360,8 +360,8 @@ REAL(DP) :: e, ep
 #endif
 INTEGER :: ii
 REAL(DP) :: ec, rp, xi
-REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3, da4
-REAL(DP) :: b0, b1, b2, b3, b4, db0, db1, db2, db3, db4
+REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3
+REAL(DP) :: b1, b2, b3, b4, db1, db2, db3, db4
 REAl(DP) :: t, t1, t2, t3, t4, t5, t6, t7, t8, t10, t11, t12, t13, t15, t17, &
           & t22, t23, t24, t25, t26, t28, t29, t34, t35, t36, t37, t42, t44, t48, &
           & t53, t58, t63, t64, t65, t68, t70, t71, t72, t77, t82,  t83, t88, t93, t98, t102, t109, t135
