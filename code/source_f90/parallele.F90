@@ -290,7 +290,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
 !~     CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(idenspl,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(ekmat,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nfix,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(itft,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(tnode,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -465,7 +464,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(idenspl,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(ekmat,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
-  CALL mpi_recv(nfix,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(itft,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(tnode,1,mpi_double_precision,0,mpi_any_tag,  &
