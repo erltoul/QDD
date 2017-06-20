@@ -744,39 +744,49 @@ as=0.0
 ! nz2i=2*nz2-1
 ! 
 !*******************************
-DO ia=1,nx2
-  IF ((ia==1).or.(ia==nx2))THEN ! for the orthogonal border plans to the x axis
-    DO ja=1,ny2
-      DO ka=1,nz2
-        as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
-        END DO
-      END DO
-  END IF
-END DO
+!DO ia=1,nx2
+!  IF ((ia==1).or.(ia==nx2))THEN ! for the orthogonal border plans to the x axis
+!    DO ja=1,ny2
+!      DO ka=1,nz2
+!        as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
+!        END DO
+!      END DO
+!  END IF
+!END DO
 
-DO ja=1,ny2
-  IF ((ja==1).or.(ja==ny2))THEN ! for the orthogonal border plans to the y axis
-    DO ka=1,nz2
-      DO ia=1,nx2
-    !    if((ia.ne.1).and.(ia.ne.nx2))then
-        as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
-    !    end if
-      END DO
-    END DO
-  END IF
-END DO
+as(1,1:ny2,1:nz2) = a(1,1:2*ny2:2,1:2*nz2:2)
+as(nx2,1:ny2,1:nz2) = a(nx2,1:2*ny2:2,1:2*nz2:2)
 
-DO ka=1,nz2
-  IF ((ka==1).or.(ka==nz2))THEN ! for the orthogonal border plans to the z axis
-    DO ia=1,nx2
-      !if((ia.ne.1).and.(ia.ne.nx2))then
-      DO ja=1,ny2
-        IF((ja.ne.1).and.(ja.ne.ny2)) as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
-      END DO
-      !end if
-    END DO
-  END IF
-END DO
+!DO ja=1,ny2
+!  IF ((ja==1).or.(ja==ny2))THEN ! for the orthogonal border plans to the y axis
+!    DO ka=1,nz2
+!      DO ia=1,nx2
+!    !    if((ia.ne.1).and.(ia.ne.nx2))then
+!        as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
+!    !    end if
+!      END DO
+!    END DO
+!  END IF
+!END DO
+
+as(1:nx2,1,1:nz2) = a(1:2*nx2:2,1,1:2*nz2:2)
+as(1:ny2,ny2,1:nz2) = a(1:2*ny2:2,ny2,1:2*nz2:2)
+
+!DO ka=1,nz2
+!  IF ((ka==1).or.(ka==nz2))THEN ! for the orthogonal border plans to the z axis
+!    DO ia=1,nx2
+!      !if((ia.ne.1).and.(ia.ne.nx2))then
+!      DO ja=1,ny2
+!        IF((ja.ne.1).and.(ja.ne.ny2)) as(ia,ja,ka)=a(2*ia-1,2*ja-1,2*ka-1)
+!      END DO
+!      !end if
+!    END DO
+!  END IF
+!END DO
+
+as(1:nx2,1:ny2,1) = a(1:2*nx2:2,1:2*ny2:2,nz2)
+as(1:nx2,1:ny2,nz2) = a(1:nx2:2,1:2*ny2:2,nz2)
+
 !*******************************
 !for the inner points
 DO ia=2,nx2-1
@@ -796,7 +806,7 @@ DO ia=2,nx2-1
             as(ia,ja,ka)=as(ia,ja,ka)+fac* a(2*ia+i1,2*ja+i2,2*ka+i3)
           END DO
         END DO
-			END DO
+     END DO
     END DO
   END DO
 END DO

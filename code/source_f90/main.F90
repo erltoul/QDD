@@ -763,8 +763,8 @@ WRITE(123,*)'cuFFT'
 WRITE(123,*)'Box :',nx2,ny2,nz2
 WRITE(123,*)'Walltime =',time_absfin-time_absinit
 CLOSE(123)
+WRITE(6,*)'Walltime =',time_absfin-time_absinit
 ENDIF
-
 END PROGRAM tdlda_m
 
 
