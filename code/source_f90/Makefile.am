@@ -23,7 +23,8 @@ EXTRA_DIST =define.h\
 						givens.F90 parallele.F90 multi_exp.F90 expevol.F90\
 						pot_substrate.F90 forces_substrate.F90 md_substrate.F90\
 						short.F90 image.F90 attachement.F90\
-						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
+						cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu\
+						gpu_compute.cu coulex.cu
 
 # Compiler-dependent options
 if GFORT
@@ -289,7 +290,7 @@ if CALLS_FFTW
 coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJFFTW) $(OBJKINPARA) Makefile
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 endif
-# coulsolv does not work with cuda (yet ?)
+# coulsolv.o is not used with cuda : already contained in cuda.o (file coulex.cu included in cuda.F90. Bad practices as always).
 #~ if USE_CUDA
 #~ coulsolv.$(OBJEXT): coulsolv.F90 define.h falr.F90 coulex.F90 findiff-sinft.F90 $(OBJCUDA) params.o Makefile
 #~ 	$(FC) $(COMPILERFLAGS1) -c -o $@ $< $(AM_LDFLAGS)
@@ -499,7 +500,7 @@ attachement.$(OBJEXT): attachement.F90 define.h util.$(OBJEXT) params.$(OBJEXT)
 	$(FC) $(CPPFLAGS) $(COMPILERFLAGS1) -c -o $@ $<
 
 #cuda.o
-cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu
+cuda.$(OBJEXT): cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu gpu_compute.cu coulex.cu
 	$(GPU_COMPILER) $(CPPFLAGS) $(GPUCOMPILERFLAGS) -c -o $@ $<
 
 

@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([pw-teleman], [022017], [francois.labbe@univ-lemans.fr])
+AC_INIT([pw-teleman], [072017], [francois.labbe@univ-lemans.fr])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
 # Remark : Unable to properly use Fortran options of Autotools, due to preprocessor flags in the code.
