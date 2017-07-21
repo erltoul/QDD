@@ -46,9 +46,6 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 INTEGER :: ind, ishift, nb
 REAL(DP) :: rhodif, rhotot
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
-REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
-REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
-REAL(DP) :: rhodownarrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhodownarray(nx2,ny2,nz2)
 #if(parayes)
 LOGICAL,PARAMETER :: ttestpara=.FALSE.
 #endif
@@ -69,13 +66,6 @@ LOGICAL,PARAMETER :: ttestpara=.FALSE.
 #if(parano)
   rho=0D0
 #endif
-
-rhoup=0D0
-rhodown=0D0
-rhouparrayfine=0D0
-rhouparray=0D0
-rhodownarrayfine=0D0
-rhodownarray=0D0
 
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
@@ -123,7 +113,6 @@ DEALLOCATE(rh)
 #endif
 
 
-!GB      sum1=0D0
 DO ind=1,nxyz
   IF(numspin==2) THEN
     rhotot      = rho(ind) + rho(ind+nxyz)
@@ -134,7 +123,6 @@ DO ind=1,nxyz
   END IF
   rho(ind)      = rhotot
   rho(ind+nxyz) = rhodif/MAX(rhotot,1D-8)
-!GB        sum1 = sum1 + rho(ind)
 END DO
 
 CALL emoms(rho)                    ! moments for the whole system (in qe)
