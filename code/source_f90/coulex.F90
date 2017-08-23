@@ -121,7 +121,6 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #if(coudoub3D && fftw_cpu)
 #if(paropenmp)
   call dfftw_init_threads(iret)
-!  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
   WRITE(*,*) ' init Coul FFTW threads: iret=',iret,', nr. of threads=',numthr
 #endif

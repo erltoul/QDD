@@ -34,7 +34,6 @@ INTEGER :: knode=2
 INTEGER :: kstate=0
 ! max. total nr. electron  states
 INTEGER :: ksttot
-INTEGER,PRIVATE :: ksttot2
 
 !  settings ad definitions for openmp parallel computing
 #if(paropenmp)
@@ -412,9 +411,8 @@ nthr=numthr-1
 ! note: the input variable 'kstate' means total nr. of states
 !       and is copied first to the correct variable 'ksttot'.
  ksttot = kstate
- kstate = ksttot/knode
- ksttot2 = knode*kstate    ! trial value
- if(ksttot2 < ksttot) kstate=1+kstate
+ kstate = ksttot/knode     ! trial value
+ if((knode*kstate) < ksttot) kstate=kstate+1
  ksttot = knode*kstate    ! final value
  knodem=knode-1
 #if(gridfft)

@@ -13,7 +13,6 @@ extern int params_mp_knode_;
 extern int params_mp_kstate_;
 // max. total nr. electron  states
 extern int params_mp_ksttot_;
-extern int params_mp_ksttot2_;
 
 
 // maximum number of ions
