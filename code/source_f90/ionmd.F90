@@ -476,7 +476,7 @@ IF (isurf /= 0 .AND. nc > 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nc))
   xm = mion*1836D0*ame
-  CALL leapfr(xc(1),yc(1),zc(1),pxc(1),pyc(1),pzc(1),dt1,xm,nc,1)
+  CALL leapfr(xc(1:nc),yc(1:nc),zc(1:nc),pxc(1:nc),pyc(1:nc),pzc(1:nc),dt1,xm,nc,1)
   DEALLOCATE(xm)
 END IF
 
@@ -493,7 +493,7 @@ IF (nk > 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nk))
   xm = mkat*1836D0*ame
-  CALL leapfr(xk(1),yk(1),zk(1),pxk(1),pyk(1),pzk(1),dt1,xm,nk,3)
+  CALL leapfr(xk(1:nk),yk(1:nk),zk(1:nk),pxk(1:nk),pyk(1:nk),pzk(1:nk),dt1,xm,nk,3)
   DEALLOCATE(xm)
 END IF
 #endif
@@ -515,7 +515,7 @@ IF (nion > 0 .AND.imob /= 0) THEN
      xm(i)=amu(np(i))*1836D0*ame
   END DO
 !  xm(:)=amu(np(:))*1836D0*ame
-  CALL leapfr(cx(1),cy(1),cz(1), cpx(1),cpy(1),cpz(1),  &
+  CALL leapfr(cx(1:nion),cy(1:nion),cz(1:nion), cpx(1:nion),cpy(1:nion),cpz(1:nion),  &
       dt1,xm,nion,4)
   DEALLOCATE(xm)
 
@@ -588,7 +588,7 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nc))
     xm = 1D0               ! setting for propagation of momenta
-    CALL leapfr(pxc(1),pyc(1),pzc(1), fxc(1),fyc(1),fzc(1),dt1,xm,nc,1)
+    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1,xm,nc,1)
     DEALLOCATE(xm)
   END IF
   
@@ -596,7 +596,7 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nk))
     xm = 1D0               ! setting for propagation of momenta
-    CALL leapfr(pxk(1),pyk(1),pzk(1), fxk(1),fyk(1),fzk(1),dt1,xm,nk,3)
+    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk), fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1,xm,nk,3)
     DEALLOCATE(xm)
   END IF
 END IF
@@ -608,7 +608,7 @@ IF (nion > 0 .AND. imob /= 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm = 1D0               ! setting for propagation of momenta
-  CALL leapfr(cpx(1),cpy(1),cpz(1),fx(1),fy(1),fz(1),dt1,xm,nion,4)
+  CALL leapfr(cpx(1:nion),cpy(1:nion),cpz(1:nion),fx(1:nion),fy(1:nion),fz(1:nion),dt1,xm,nion,4)
   DEALLOCATE(xm)
 END IF
 
@@ -730,8 +730,8 @@ IF (isurf /= 0 .AND. nc > 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nc))
   xm = mion*1836D0*ame
-  CALL velverlet1(xc(1),yc(1),zc(1),pxc(1),pyc(1),pzc(1), &
-                  fxc(1),fyc(1),fzc(1),dt1,xm,nc,1)
+  CALL velverlet1(xc(1:nc),yc(1:nc),zc(1:nc),pxc(1:nc),pyc(1:nc),pzc(1:nc), &
+                  fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1,xm,nc,1)
   DEALLOCATE(xm)
 END IF
 IF (nk > 0) THEN
@@ -747,8 +747,8 @@ IF (nk > 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nk))
   xm = mkat*1836D0*ame
-  CALL velverlet1(xk(1),yk(1),zk(1),pxk(1),pyk(1),pzk(1), &
-                  fxk(1),fyk(1),fzk(1),dt1*modionstep,xm,nk,3)
+  CALL velverlet1(xk(1:nk),yk(1:nk),zk(1:nk),pxk(1:nk),pyk(1:nk),pzk(1:nk), &
+                  fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1*modionstep,xm,nk,3)
   DEALLOCATE(xm)
 END IF
 #endif
@@ -767,8 +767,8 @@ IF (nion > 0 .AND.imob /= 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm(:)=amu(np(:))*1836D0*ame
-  CALL velverlet1(cx(1),cy(1),cz(1), cpx(1),cpy(1),cpz(1), &
-                  fx(1),fy(1),fz(1),dt1*modionstep,xm,nion,4)
+  CALL velverlet1(cx(1:nion),cy(1:nion),cz(1:nion), cpx(1:nion),cpy(1:nion),cpz(1:nion), &
+                  fx(1:nion),fy(1:nion),fz(1:nion),dt1*modionstep,xm,nion,4)
   DEALLOCATE(xm)
 
 ! correct ionic c.m. to restore value before step
@@ -1012,13 +1012,13 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nc))
     xm = 1D0
-    CALL leapfr(pxc(1),pyc(1),pzc(1), fxc(1),fyc(1),fzc(1),dt1/2D0,xm,nc,1)
+    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1/2D0,xm,nc,1)
     DEALLOCATE(xm)
 !     propagation of clouds
     IF(ifadiadip /= 1) THEN
       ALLOCATE(xm(1:ne))    ! possible buf with gfortran = debian64
       xm = 1D0
-      CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/4D0,xm,ne,2)
+      CALL leapfr(pxe(1:ne),pye(1:ne),pze(1:ne), fxe(1:ne),fye(1:ne),fze(1:ne),dt1/4D0,xm,ne,2)
       DEALLOCATE(xm)
     END IF
   END IF
@@ -1027,7 +1027,7 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nk))
     xm = 1D0
-    CALL leapfr(pxk(1),pyk(1),pzk(1),fxk(1),fyk(1),fzk(1),dt1/2D0,xm,nk,3)
+    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk),fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1/2D0,xm,nk,3)
     DEALLOCATE(xm)
   END IF
   
@@ -1040,8 +1040,8 @@ IF(nion > 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm = 1D0
-  CALL leapfr(cpx(1),cpy(1),cpz(1),  &
-              fx(1),fy(1),fz(1),dt1/2.,xm,nion,4)
+  CALL leapfr(cpx(1:nion),cpy(1:nion),cpz(1:nion),  &
+              fx(1:nion),fy(1:nion),fz(1:nion),dt1/2D0,xm,nion,4)
   DEALLOCATE(xm)
 END IF
 
@@ -1386,8 +1386,11 @@ REAL(DP), INTENT(OUT)                        :: eeth
 
 INTEGER :: i, ind, n, nb
 REAL(DP) :: ajalpha, rhoalpha
-REAL(DP) :: dkx, dky, dkz, ex, ey, ez, q1, tel
+REAL(DP) :: dkx, dky, dkz, q1, tel
 REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
+#if(parayes)
+REAL(DP) :: ex, ey, ez
+#endif
 COMPLEX(DP) :: test
 
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz

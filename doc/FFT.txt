@@ -1,23 +1,34 @@
-Modified make commands :
+Run configure script to regenerate a makefile that will produced the required binary.
 
-./make.sh (./make.sh 1) (./make.sh 1 netlib) 
-Compile with netlib fftpack, sequential. The executable is called tdks_v000000_Mono_NETLIB.bin (000000 is the version number)
+./configure
+Default, compile with netlib fftpack, sequential. The executable is called bin/netlib_pwteleman.seq.
 
-./make.sh np (./make.sh np netlib)
-Compile with netlib fftpack, parallel with np proc 
+./configure --with-para --with-compiler=mpifort
+Compile with netlib fftpack, parallel (number of processors givent at runtime).
+The executable is called bin/netlib_pwteleman.par
+Instead of mpifort, one can use an other MPI wrappers, like mpif90, but in any case it has to be configured with ifort.
+One can also directly use ifort, but location of openmpi libraries must then be specfied using environment variable CPPFLAGS and LDFLAGS.
 
-./make.sh 1 fftw
-Compile with FFTW functions (need FFTW 3.3.2), sequential. The executable is called tdks_v000000_Mono_FFTW.bin
+./configure --with-fft=FFTW 
+Compile with FFTW functions (need FFTW 3.3.2 or later), sequential. 
+The executable is called bin/fftw_pwteleman.seq
 
-./make.sh np fftw
-Compile with FFTW functions (need FFTW 3.3.2), parallel with np proc. The executable is called tdks_v000000_Mpi_FFTW.bin
+./configure --with-fft=FFTW --with-para --with-compiler=mpifort
+A simple combination of previous examples. 
+Compile with FFTW functions (need FFTW 3.3.2), parallel (with number of processor given at runtime.)
+The executable is called bin/fftw_pwteleman.par
 
-./make.sh 1 gpu
-Compile with cuda functions, sequential. The executable is called tdks_v000000_Mono_FFTW.bin
+./configure --with-fft=CUFFT
+Compile with cuda functions, sequential. 
+The executable is called bin/gpu_pwteleman.seq
 
-./make.sh np gpu
-Compile with cuda functions, parallel with np proc. The number of GPUs is dependant on the number of GPUs in the computation node. 
-The best configuration is one MPI process for 1 GPU. The executable is called tdks_v000000_Mpi_cuFFT.bin
+./configure --with-fft=CUFFT  --with-para --with-compiler=mpifort
+A combination of previous examples. 
+Compile with cuda functions. The number of GPUs is dependant on the number of GPUs in the computation node. 
+The best configuration is one MPI process for 1 GPU.
+The executable is called bin/gpu_pwteleman.par
+
+
 
 Some word on wisdom (from the FFTW manual):
 

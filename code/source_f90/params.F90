@@ -42,7 +42,6 @@ INTEGER :: ifile=60 ! for save
 INTEGER :: kstate=20
 ! max. total nr. electron  states
 INTEGER :: ksttot
-INTEGER,PRIVATE :: ksttot2
 
 !  settings ad definitions for openmp parallel computing
 #if(paropenmp)
@@ -62,7 +61,6 @@ INTEGER :: ng
 
 INTEGER,PARAMETER :: maxnang=100    ! max. angular bins for PAD
 INTEGER,PARAMETER :: maxmps=180    ! max. nr. analyzing points for PES
-! parameter(drtab=1e-4)
 
 
 ! physical units and constants (here Rydberg units)
@@ -98,9 +96,7 @@ INTEGER :: nxyz,nyf,nxyf
 INTEGER :: kdfull2,kdfull2fine
 !INTEGER,PARAMETER :: kfbox=kdfull2                    ! ??
 INTEGER :: nx,ny,nz
-!~ #if(paraworld)
 INTEGER :: nxfine, nyfine, nzfine
-!~ #endif
 !INTEGER,PARAMETER :: nx1=nx+1,ny1=ny+1,nz1=nz+1,nzi=nz1,nzr=nz+nz  !?
 !INTEGER,PARAMETER :: nxy1=nx1*ny1    !?
 !INTEGER,PARAMETER :: ksmax=nx+1,kdfull=(nx+1)*(ny+1)*(nz+1)    !?
@@ -122,7 +118,7 @@ INTEGER :: nxsh,nysh,nzsh
 INTEGER :: minx,maxx
 INTEGER :: miny,maxy
 INTEGER :: minz,maxz
-! bounds of esc. el.
+! bounds of escaped electron
 INTEGER :: nbnx,nbxx
 INTEGER :: nbny,nbxy
 INTEGER :: nbnz,nbxz
@@ -258,7 +254,7 @@ INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
 INTEGER :: ifrhoint_time=0,iangmo=0,ifspemoms=0,iftransme=0
-INTEGER :: iterat,itersicp6
+INTEGER :: itersicp6
 LOGICAL :: tstinf
 REAL(DP) :: rheattemp=0D0        ! re-heat temperature
 REAL(DP) :: tempion=0D0,dt1=0D0
@@ -317,7 +313,8 @@ COMPLEX(DP),ALLOCATABLE :: psisavex(:,:)
 
 !     the energy transmitted from calc-lda to info etc
 
-REAL(DP) :: enrear,ecback,ecrho,ecorr,dt12,sgaus,ekion,energy
+REAL(DP) :: enrear  ! rearrangement energy
+REAL(DP) :: ecback,ecrho,ecorr,dt12,sgaus,ekion,energy
 REAL(DP) :: energ2,enerpw,encoulsp,entrop,epot,espnb,esh1
 REAL(DP) :: etot,ekionold,qold2,qold3,qold4
 REAL(DP) :: ekmat=0D0,engg,enii,enig,ecrhoimage=0D0
@@ -337,7 +334,6 @@ INTEGER,PARAMETER :: nxsg=7,nysg=7,nzsg=7      ! size of subgrids
 INTEGER :: modionstep=1                        ! modulus for ion step
 INTEGER :: inewforce
 INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
-INTEGER :: nrare=0,nfix=0                    !  Nr. of raregas atoms
 INTEGER,ALLOCATABLE :: nfixed(:)                    !  Nr. of fixed ions
 INTEGER :: idielec=0                     !  switch to dielectricum
 REAL(DP) :: xdielec=0D0                  !  x below which dielectric zone is activated
@@ -400,6 +396,7 @@ INTEGER,ALLOCATABLE :: lengnod(:),displ(:)
 #if(fftw_gpu)
 INTEGER :: num_gpus !total number of gpus on the node
 INTEGER :: mygpu !number of the actual gpu used by the node
+INTEGER :: int_pass
 #endif
 !                          these includes should be shifted to own modules
 #if(raregas)
@@ -424,9 +421,8 @@ nthr=numthr-1
 ! note: the input variable 'kstate' means total nr. of states
 !       and is copied first to the correct variable 'ksttot'.
  ksttot = kstate
- kstate = ksttot/knode
- ksttot2 = knode*kstate    ! trial value
- if(ksttot2 < ksttot) kstate=1+kstate
+ kstate = ksttot/knode     ! trial value
+ if((knode*kstate) < ksttot) kstate=kstate+1
  ksttot = knode*kstate    ! final value
  
  knodem=knode-1

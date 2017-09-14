@@ -44,13 +44,17 @@ REAL(DP), INTENT(IN)                         :: rho(kdfull2*2)
 INTEGER, INTENT(IN)                      :: iflag2
 
 INTEGER :: ityp1,ityp2
-INTEGER :: ind,ind1,ind2
+INTEGER :: ind1,ind2
+REAL(DP) ::  rder
+#if(raregas)
+INTEGER :: ind
 INTEGER :: itmp, itmp1, itmp2
 INTEGER :: ix, iy, iz
 INTEGER :: nsgsize
 REAL(DP) :: chpddr, dist, dist2
-REAL(DP) :: radfor, rder, signum, sumx, sumy, sumz
+REAL(DP) :: radfor, signum, sumx, sumy, sumz
 REAL(DP) :: r2, rr, xr, yr, zr, x1, y1, z1
+#endif
 
 INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint, iconvshorttolong
 REAL(DP), EXTERNAL :: fbornmayer, fbornmayermod, getdistance2, vararlj, varnashort, varelcore, v_ar_ar
@@ -1370,7 +1374,7 @@ END SUBROUTINE setbornparas
 
 !------------------------------------------------------------
 
-REAl(DP) FUNCTION funkpower(r,p)
+REAL(DP) FUNCTION funkpower(r,p)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
@@ -1387,7 +1391,7 @@ END FUNCTION funkpower
 
 !------------------------------------------------------------
 
-REAl(DP) FUNCTION funkfermi(r,a,b,c)
+REAL(DP) FUNCTION funkfermi(r,a,b,c)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE

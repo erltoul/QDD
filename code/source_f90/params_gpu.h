@@ -13,7 +13,6 @@ extern int params_mp_knode_;
 extern int params_mp_kstate_;
 // max. total nr. electron  states
 extern int params_mp_ksttot_;
-extern int params_mp_ksttot2_;
 
 
 // maximum number of ions
@@ -23,7 +22,6 @@ extern int params_mp_ng_;
 
 //extern int params_mp_maxnang_;    // max. angular bins for PAD
 //extern int params_mp_maxmps_;    // max. nr. analyzing points fpr PES
-// parameter(drtab=1e-4);
 
 
 // physical units and constants (here Rydberg units)

@@ -22,7 +22,7 @@ USE, intrinsic :: iso_c_binding
 USE FFTW
 USE kinetic, ONLY: FFTW_planflag
 #endif
-USE params, ONLY: DP,numthr,e2
+USE params, ONLY: DP,PI,numthr,e2,zero
 IMPLICIT NONE
 
 SAVE
@@ -35,7 +35,6 @@ INTEGER,PRIVATE :: kfft2
 INTEGER,PRIVATE :: kfft,kfftx,kffty,kfftz
 !INTEGER,PARAMETER,PRIVATE :: kdcorf=(kxmax/2+1)*(kymax/2+1)*(kzmax/2+1)
 ! include block: xkgrid
-REAL(DP),ALLOCATABLE,PRIVATE :: xval(:),yval(:),zval(:)
 REAL(DP),ALLOCATABLE,PRIVATE :: xt2(:),yt2(:),zt2(:)
 REAL(DP),PRIVATE :: dx,dy,dz,dxsp,grnorm,fnorm
 INTEGER,PRIVATE :: nx,ny,nz,nx1,ny1,nz1,nxi,nyi,nzi,nxy1,nxyz
@@ -67,13 +66,6 @@ COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:)
 REAL(DP), PRIVATE, ALLOCATABLE :: rffta(:,:,:)
 #endif
 
-
-! include block: option
-REAL(DP),PARAMETER,PRIVATE :: zero=0D0
-REAL(DP),PARAMETER,PRIVATE :: pi=3.141592653589793D0
-
-!COMMON /fftcom/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax)
-
 CONTAINS
 
 SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
@@ -103,7 +95,6 @@ dx=dx0
 dy=dy0
 dz=dz0
 
-ALLOCATE(xval(kxmax),yval(kymax),zval(kzmax))
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 
 #if(netlib_fft)
@@ -130,7 +121,6 @@ ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #if(coudoub3D && fftw_cpu)
 #if(paropenmp)
   call dfftw_init_threads(iret)
-!  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
   WRITE(*,*) ' init Coul FFTW threads: iret=',iret,', nr. of threads=',numthr
 #endif
@@ -176,6 +166,7 @@ CALL fftinp
 
 ! test section
 IF(tcoultest) THEN
+  kdum=nx*ny*nz
   ALLOCATE(rhotest(nx*ny*nz),ctest(nx*ny*nz))
   rhotest = 0D0
   ii = 0
@@ -372,7 +363,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
 REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: kdum
+INTEGER, INTENT(IN)                  :: kdum   ! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3
 REAL(DP) ::factor
@@ -499,7 +490,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: chpfalr(kdfull)
 REAL(DP), INTENT(IN)                         :: rhokr(kdred)
-REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
+REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3, ii
 
@@ -593,8 +584,9 @@ INTEGER :: i1, nzzh, nyyh
 REAL(DP) ::  tnorm, time_fin
 INTEGER,SAVE :: mxini=0,myini=0,mzini=0
 !DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
+#if(fftw_cpu)
 LOGICAL,SAVE :: tinifft=.false.
-
+#endif
 !----------------------------------------------------------------------
 
 
@@ -1349,9 +1341,9 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                        :: psxr(kdred)
 REAL(DP), INTENT(IN OUT)                     :: psxi(kdred)
-INTEGER ::  i0, i1, i2, i3, i30, icconj, ii, nx11
+INTEGER ::  i0, i1, i2, i3, i30, ii, nx11
 #if(netlib_fft)
-INTEGER::ir,ic,irconj,iconj  ! Index for real and complex components when stored in fftay
+INTEGER::ir,ic,irconj,icconj  ! Index for real and complex components when stored in fftay
 #endif
 !----------------------------------------------------------------------
 
@@ -1462,7 +1454,6 @@ CALL fftw_destroy_plan(pbackx)
 CALL fftw_destroy_plan(pbacky)
 CALL fftw_destroy_plan(pbackz)
 
-DEALLOCATE(xval,yval,zval)
 DEALLOCATE(xt2,yt2,zt2)
 DEALLOCATE(fftax,fftay,fftb)
 DEALLOCATE(ikm)

@@ -199,11 +199,13 @@ DO i3=0,icrsz
       x = (i1l+i1)*dx
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
-      rr=rr
-      IF(rr <= radion) THEN
+      IF((rr <= radion) &
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2))) THEN   
         
         ind = ind + 1
-        IF(ind > knl) STOP " CALCPR: subgrid exeeded. enhance KNL"
+        IF(ind > knl) STOP " CALCPR: subgrid exceeded. enhance KNL"
         p0_1(ind,ion) = 0D0
 !        p1_1(ind,ion) = 0D0
 !        p1_1x(ind,ion) = 0D0
@@ -326,7 +328,10 @@ DO i3=0,icrsz
       x = (i1l+i1)*dx
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
-      IF(rr <= radion) THEN
+      IF((rr <= radion) &
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2) )) THEN   
         
         ind = ind + 1
         p0_1(ind,ion) = 0D0
@@ -451,7 +456,10 @@ DO i3=0,icrsz
       x = (i1l+i1)*dx
       xion = x-cxact
       rr=SQRT(MAX(xion*xion+yion*yion+zion*zion,small))
-      IF(rr <= radion) THEN
+      IF((rr <= radion) &
+                      & .AND. (((i3l+i3+nz-1)<nz2) &   !  avoid segfault bug if going
+                      & .AND. ((i2l+i2+ny-1)<ny2) &    !  out of box  (bug identified by Wandong Yu)
+                      & .AND. ((i1l+i1+nx-1)<nx2) )) THEN   
         
         ind = ind + 1
         p0_1(ind,ion)   = 0D0

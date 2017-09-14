@@ -25,7 +25,7 @@ SUBROUTINE calclocal(rho,aloc)
 !       ******************************
 
 !       computes local part of Hamiltonian
-!       'time' <= 0  signal static iteration i.e. without laser field
+!       'tfs' <= 0  signal static iteration i.e. without laser field
 
 
 USE params
@@ -49,21 +49,10 @@ IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
 
 !     check workspace
 
-!IF(usew1) STOP ' in SSTEP: workspace W1 already active '
-!      if(usew4) stop ' in SSTEP: workspace W3 already active '
-!usew1 = .true.
-!      usew4 = .true.
 ALLOCATE(rhon(kdfull2))
 ALLOCATE(chpdft(2*kdfull2))
-!ALLOCATE(vlaser(kdfull2))
-
 
 !       first, the netto charge density
-
-
-
-
-!test      write(6,'(a)') 'CALCLOCAL:'
 
 DO ind=1,nxyz
   IF(nion2 == 0) THEN
@@ -83,7 +72,6 @@ END IF
 !     warning : counet inserts the esquar factor
 
 
-
 #if(gridfft)
 IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 #endif
@@ -91,17 +79,10 @@ IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
 IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
 #endif
 
-!usew1 = .false.
-!test      call prifld(rhon,'Coulomb dens.')
-!test      call prifld(chpcoul,'Coulomb pot.')
-
-!chpcoul=0D0
-
 !     the lda part
 
 IF(ifsicp /= 5) THEN
   CALL calc_lda(rho,chpdft)
-  !test        call prifld(chpcoul,'xc potential')
 ELSE
   chpdft = 0D0
 END IF
@@ -381,8 +362,8 @@ REAL(DP) :: e, ep
 #endif
 INTEGER :: ii
 REAL(DP) :: ec, rp, xi
-REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3, da4
-REAL(DP) :: b0, b1, b2, b3, b4, db0, db1, db2, db3, db4
+REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3
+REAL(DP) :: b1, b2, b3, b4, db1, db2, db3, db4
 REAl(DP) :: t, t1, t2, t3, t4, t5, t6, t7, t8, t10, t11, t12, t13, t15, t17, &
           & t22, t23, t24, t25, t26, t28, t29, t34, t35, t36, t37, t42, t44, t48, &
           & t53, t58, t63, t64, t65, t68, t70, t71, t72, t77, t82,  t83, t88, t93, t98, t102, t109, t135

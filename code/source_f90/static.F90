@@ -47,7 +47,6 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
 LOGICAL,PARAMETER :: tcpu=.true.
-LOGICAL,PARAMETER :: tspinprint=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
 
@@ -260,13 +259,8 @@ END IF
 !     final protocol on file 'pstat.<name>''
 
 !CALL pri_pstat(psir,rho)
-!write(6,*) size(psir),size(rho)
-!STOP 'TEST PIR PSTAT'
+
 !     save real wavefunctions for further applications
-
-IF(tspinprint) CLOSE(12)          ! ???
-
-
 
 !       call printSurfPot(592)
 
@@ -1592,10 +1586,10 @@ INTEGER :: is(mpi_status_size)
 #if(parano)
 INTEGER :: nb
 #endif
-!~ #if(coufou)
+#if(coufou)
 REAL(DP) :: p00,p10,p11r,p11i,p20,p21r,p21i,p22r,p22i,p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
     p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2
-!~ #endif
+#endif
 omegam = omega_mieplasmon(rho)
 
 !      eshell=0.0
@@ -1693,9 +1687,11 @@ IF(myn == 0) THEN
   WRITE(42,'(a,3f11.4)')  'xx,yy,zz:',qe(5),qe(6),qe(7)
   WRITE(42,'(a,3f11.4)')  'xy,zx,zy:',qe(8),qe(9),qe(10)
   rms = SQRT(qe(5)+qe(6)+qe(7))
+#if(coufou)
   WRITE(42,'(a,3f11.4)')  'q20,30,4:',p20,p30,p40
   WRITE(42,'(a,3f11.4)')  'renorm. :',  &
       p20/(qe(1)*rms**2),p30/(qe(1)*rms**3),p40/(qe(1)*rms**4)
+#endif
   WRITE(42,'(a,3f11.4)')  'spindip.:',se(1),se(2),se(3)
   WRITE(42,'(a,4f11.4)') 'omegam,rhops,N_el,rhomix:',  &
       omegam,rhopss,apnum,rhomix
@@ -1842,6 +1838,8 @@ IMPLICIT  NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+integer::j
+
 
 CALL prifld(rho,'density    ')
 CALL prifld(aloc,'potential   ')
@@ -1912,6 +1910,7 @@ USE util, ONLY: printfield
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+INTEGER ::i
 
 OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
 DO i=1,nstate

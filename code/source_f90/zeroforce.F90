@@ -217,8 +217,6 @@ REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
 INTEGER :: is, ishift
 REAL(DP) :: zforcex, zforcey, zforcez
 
-
-
 !       workspaces
 
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials

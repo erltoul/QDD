@@ -1276,12 +1276,13 @@ END SUBROUTINE printfield2
 
 !------------------------------------------------------------
 
-SUBROUTINE printforces(iflag)
+SUBROUTINE printforces(iflag,iterat)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
 
 INTEGER, INTENT(IN)                      :: iflag
+INTEGER, INTENT(IN)                      :: iterat
 
 INTEGER :: i
 
@@ -1549,7 +1550,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: sproj,starget
 REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
 
 #if(parano)
@@ -1654,7 +1655,7 @@ INTEGER :: is(mpi_status_size)
 #endif
 
 INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget,summ,sumx,sumy,sumz
+REAL(DP) :: sproj,starget
 REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
 
 #if(parano)
@@ -2477,7 +2478,7 @@ IMPLICIT NONE
 INTEGER, INTENT(IN)              :: i
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 
-INTEGER :: ind, jx, jy, jz, num
+INTEGER :: ind, jx, jy, num
 
 
 !     print 2d-field
@@ -2873,7 +2874,7 @@ END FUNCTION gasdev
 
 
 !------------------------------------------------------------
-SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperature,masse, ipflag)
+SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperat,masse, ipflag)
 !------------------------------------------------------------
 USE params
 IMPLICIT NONE
@@ -2882,7 +2883,7 @@ REAL(DP),INTENT(OUT) :: pxt(:)
 REAL(DP),INTENT(OUT) :: pyt(:)
 REAL(DP),INTENT(OUT) :: pzt(:)
 INTEGER,INTENT(IN) :: nteil
-REAL(DP),INTENT(IN) :: temperature
+REAL(DP),INTENT(IN) :: temperat
 REAL(DP),INTENT(IN)  :: masse
 INTEGER,INTENT(IN) :: ipflag
 
@@ -2893,7 +2894,7 @@ REAL(DP) :: ekhaben,eksoll,fac,sumx,sumy,sumz,sc,temper
 
 WRITE(6,*) 'ENTERING GIVETEMPERATURE'
 
-temper=temperature*6.507D-6
+temper=temperat*6.507D-6
 
 fac=SQRT(temper/masse)
 
@@ -3101,7 +3102,7 @@ COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
 COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
 INTEGER, INTENT(IN)    :: ispact
 
-INTEGER :: i, nbe
+INTEGER :: nbe
 COMPLEX(DP) :: ovl
 
 !*********************************************************
@@ -4379,7 +4380,6 @@ INTEGER, INTENT(IN)                :: np
 
 REAL(DP)     :: d
 COMPLEX(DP)  :: det
-INTEGER :: nst
 INTEGER :: indx(n)
 INTEGER :: ierror
 

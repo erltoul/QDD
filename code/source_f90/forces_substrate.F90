@@ -1527,7 +1527,7 @@ DO iit=1,200
   
   xm(:)= me*ame*1836D0
    
-  CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt1/2D0,xm,NE,2)
+  CALL leapfr(xe(1:ne),ye(1:ne),ze(1:ne), pxe(1:ne),pye(1:ne),pze(1:ne),dt1/2D0,xm,ne,2)
   
   CALL getforces(rho,psidummy,it,0)
   
@@ -1555,7 +1555,7 @@ DO iit=1,200
   
   xm=1D0  ! fxe, fye, fze are forces
   
-  CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt1/2D0,xm,NE,2)
+  CALL leapfr(pxe(1:ne),pye(1:ne),pze(1:ne), fxe(1:ne),fye(1:ne),fze(1:ne),dt1/2D0,xm,ne,2)
   
   
   IF (dmsfxold < dmsfx .OR. dmsfyold < dmsfy .OR. dmsfzold < dmsfz) THEN
@@ -1623,8 +1623,7 @@ DO iter=1,200
   CALL rgetmaxforce(2)
   
   WRITE(6,'(a,2e17.7)') ' maxpol, meanpol = ', rmaxpol,rrrr
-  WRITE(6,'(a,3e17.7)') 'max. fx, fy, fz: ', rvectmp(1),  &
-      rvectmp(2), rvectmp(3)
+  WRITE(6,'(a,3e17.7)') 'max. fx, fy, fz: ', rvectmp(1), rvectmp(2), rvectmp(3)
   
   DO irar=1,NE
     posox=xe(irar)

@@ -48,20 +48,7 @@ DATA fname/'for005.001','for005.010','for005.011',  &
     'forjel.001','forjel.010','forjel.011',  &
     'forjel.100','forjel.101','forjel.110'/
 #endif
-#if(raregas)
-NAMELIST /global/   nclust,nion,nspdw,nion2,nc,nk,numspin,  &
-    temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
-    init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
-    radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
-    epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
-    scaleclust,scaleclustx,scaleclusty,scaleclustz, &
-    shiftclustx,shiftclusty,shiftclustz,  &
-    rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
-    idebug,ishiftcmtoorigin,iaddcluster,  &
-    iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
-    ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
-    nproj_states
-#else
+
 NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
@@ -73,8 +60,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     idebug,ishiftcmtoorigin,iaddcluster,  &
     iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
     ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
-    nproj_states
-#endif
+    nproj_states, epsdi,idielec,xdielec
 
 
 !*************************************************************
@@ -111,7 +97,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol,ifcnevol, &
-    tempion,idenspl,ekmat,nfix,  &
+    tempion,idenspl,ekmat,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
     projinix,projiniy,projiniz, &
@@ -134,9 +120,9 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     phangle,phphase,nhstate,npstate, &
     jstateoverlap
 
-
-NAMELIST /surface/  &
 #if(raregas)
+NAMELIST /surface/  &
+    ne,nc,nk,nrare,  &
     surftemp,ipotfixed,ifmdshort,ifadiadip,  &
     sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0, &
     cspr,mion,me,mkat,isrtyp,isrtypall,  &
@@ -167,11 +153,8 @@ NAMELIST /surface/  &
     fixcbelow,fixebelow,fixkbelow, fixcbelowy,fixebelowy,fixkbelowy,  &
     fixcbelowx,fixebelowx,fixkbelowx, unfixcrad,unfixerad,unfixkrad,  &
     iusecell,iuselast,ibh,cbh,iforcecl2co, &
-    enerinfty,epsdi,idielec,xdielec,iararlj
-#else
-    epsdi,idielec,xdielec
+    enerinfty,iararlj
 #endif
-
 
 WRITE(6,*) 'Reading for005.// ...'
 
@@ -358,7 +341,7 @@ INTEGER :: i,j
 
 !     some initializations
 #if(raregas)
-NE = nc
+ne = nc
 #endif
 trequest=trequest*60D0
 phi=phi*pi/180D0              ! convert input 'phi' from degree
@@ -401,7 +384,7 @@ IF(nion2 == 2 .AND. ifsicp >= 3)  &
     STOP 'external PsP not compatible with KLI or Slater-SIC'
 
 #if(raregas)
-IF(nc+NE+nk.gt.ngpar) STOP ' not enough NGPAR for substrate'
+IF(nc+ne+nk.gt.ngpar) STOP ' not enough NGPAR for substrate'
 #endif
 
 !#if(hamdiag&parayes)
@@ -1546,7 +1529,7 @@ REAL(DP) :: dd, distmax, xcm, ycm, zcm, ctmpx, ctmpy, ctmpz
 REAL(DP) :: optis, dgrid, sumion, v0, rnorm, tempv, xm
 REAL(DP) :: vxn02,vyn02,vzn02
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),totvalec=0D0
-INTEGER :: i,ii,inx,inxg,ion,iunit,n,nxopti
+INTEGER :: i,ii,inx,inxg,ion,iunit,nxopti
 
 INTEGER ::  igrid(7)
 data igrid /32,48,64,72,96,128,160/
@@ -2044,7 +2027,6 @@ REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
 INTEGER ::i,nr,nbe,nbr
 REAL(DP)::en
-REAL(DP), ALLOCATABLE :: rfieldaux(:)
 
 !----------------------------------------------------------------------
 
@@ -2601,7 +2583,7 @@ INTEGER, INTENT(IN)                      :: iturn
 INTEGER :: i1,i2,i3,ii,iter
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),vecalp(3)
 REAL(DP) :: anglex,angley,anglez,alpha,beta,thetax,thetay,thetaz,theta0
-REAL(DP) :: alphael,beta2j,gamma2j,gammaj
+REAL(DP) :: alphael,beta2j,gammaj
 REAL(DP) :: onetrd,d4pi,alpfac,q20fac,q22fac,q40fac
 REAL(DP) :: alphbk,betabk,hexabk,bet2EF
 REAL(DP) :: deralp,derbet,delalp,delbet
@@ -3163,187 +3145,187 @@ END IF
 RETURN
 END SUBROUTINE spinsep
 
-!-----fixion------------------------------------------------------------
+!~ !-----fixion------------------------------------------------------------
 
-SUBROUTINE fixion
+!~ SUBROUTINE fixion
 
-!     to fix two layers along y and z of an argon cluster (only cores)
-!     to simulate the bulk
-!     the input file must have already the positions of the bulk
+!~ !     to fix two layers along y and z of an argon cluster (only cores)
+!~ !     to simulate the bulk
+!~ !     the input file must have already the positions of the bulk
 
-USE params
-IMPLICIT NONE
+!~ USE params
+!~ IMPLICIT NONE
 
-INTEGER :: ind, ind1, ind2, ion
-INTEGER :: icy(nion),icz(nion)
-INTEGER :: nfixedyu(nion),nfixedyd(nion)
-INTEGER :: nfixedzu(nion),nfixedzd(nion)
+!~ INTEGER :: ind, ind1, ind2, ion
+!~ INTEGER :: icy(nion),icz(nion)
+!~ INTEGER :: nfixedyu(nion),nfixedyd(nion)
+!~ INTEGER :: nfixedzu(nion),nfixedzd(nion)
 
-! two layers along y and z are fixed
-! first layer
-ind = 0
-nfixedyu(1) = 1
-nfixedyd(1) = 1
-nfixedzu(1) = 1
-nfixedzd(1) = 1
-icy(1) = cy(1)
-IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) < 0D0) icy(1) = icy(1) - 1
-IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) > 0D0) icy(1) = icy(1) + 1
-icz(1) = cz(1)
-IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) < 0D0) icz(1) = icz(1) - 1
-IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) > 0D0) icz(1) = icz(1) + 1
-DO ion=2,nrare
-  icy(ion) = cy(ion)
-  IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) < 0D0) icy(ion) = icy(ion) - 1
-  IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) > 0D0) icy(ion) = icy(ion) + 1
-  DO ind1=1,ion-1
-    IF(nfixedyu(ind1) > 0)THEN
-      IF(icy(ion) > icy(ind1))THEN
-        nfixedyu(ion) = ion
-        nfixedyu(ind1) = 0
-      ELSE IF(icy(ion) == icy(ind1))THEN
-        nfixedyu(ion) = ion
-      ELSE
-        nfixedyu(ion) = 0
-      END IF
-    END IF
-    IF(nfixedyd(ind1) > 0)THEN
-      IF(icy(ion) < icy(ind1))THEN
-        nfixedyd(ion) = ion
-        nfixedyd(ind1) = 0
-      ELSE IF(icy(ion) == icy(ind1))THEN
-        nfixedyd(ion) = ion
-      ELSE
-        nfixedyd(ion) = 0
-      END IF
-    END IF
-  END DO
-END DO
-DO ion=2,nrare
-  icz(ion) = cz(ion)
-  IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) < 0D0) icz(ion) = icz(ion) - 1
-  IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) > 0D0) icz(ion) = icz(ion) + 1
-  DO ind1=1,ion-1
-    IF(nfixedzu(ind1) > 0)THEN
-      IF(icz(ion) > icz(ind1))THEN
-        nfixedzu(ion) = ion
-        nfixedzu(ind1) = 0
-      ELSE IF(icz(ion) == icz(ind1))THEN
-        nfixedzu(ion) = ion
-      ELSE
-        nfixedzu(ion) = 0
-      END IF
-    END IF
-    IF(nfixedzd(ind1) > 0)THEN
-      IF(icz(ion) < icz(ind1))THEN
-        nfixedzd(ion) = ion
-        nfixedzd(ind1) = 0
-      ELSE IF(icz(ion) == icz(ind1))THEN
-        nfixedzd(ion) = ion
-      ELSE
-        nfixedzd(ion) = 0
-      END IF
-    END IF
-  END DO
-END DO
-DO ion=1,nion
-  IF(ion <= nrare)THEN
-    IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
-          .OR. nfixedzd(ion) > 0)THEN
-      nfixed(ion) = ion
-      ind = ind +1
-    ELSE
-      nfixed(ion) = 0
-    END IF
-  ELSE
-    nfixed(ion) = 0
-  END IF
-END DO
+!~ ! two layers along y and z are fixed
+!~ ! first layer
+!~ ind = 0
+!~ nfixedyu(1) = 1
+!~ nfixedyd(1) = 1
+!~ nfixedzu(1) = 1
+!~ nfixedzd(1) = 1
+!~ icy(1) = cy(1)
+!~ IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) < 0D0) icy(1) = icy(1) - 1
+!~ IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) > 0D0) icy(1) = icy(1) + 1
+!~ icz(1) = cz(1)
+!~ IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) < 0D0) icz(1) = icz(1) - 1
+!~ IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) > 0D0) icz(1) = icz(1) + 1
+!~ DO ion=2,nrare
+!~   icy(ion) = cy(ion)
+!~   IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) < 0D0) icy(ion) = icy(ion) - 1
+!~   IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) > 0D0) icy(ion) = icy(ion) + 1
+!~   DO ind1=1,ion-1
+!~     IF(nfixedyu(ind1) > 0)THEN
+!~       IF(icy(ion) > icy(ind1))THEN
+!~         nfixedyu(ion) = ion
+!~         nfixedyu(ind1) = 0
+!~       ELSE IF(icy(ion) == icy(ind1))THEN
+!~         nfixedyu(ion) = ion
+!~       ELSE
+!~         nfixedyu(ion) = 0
+!~       END IF
+!~     END IF
+!~     IF(nfixedyd(ind1) > 0)THEN
+!~       IF(icy(ion) < icy(ind1))THEN
+!~         nfixedyd(ion) = ion
+!~         nfixedyd(ind1) = 0
+!~       ELSE IF(icy(ion) == icy(ind1))THEN
+!~         nfixedyd(ion) = ion
+!~       ELSE
+!~         nfixedyd(ion) = 0
+!~       END IF
+!~     END IF
+!~   END DO
+!~ END DO
+!~ DO ion=2,nrare
+!~   icz(ion) = cz(ion)
+!~   IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) < 0D0) icz(ion) = icz(ion) - 1
+!~   IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) > 0D0) icz(ion) = icz(ion) + 1
+!~   DO ind1=1,ion-1
+!~     IF(nfixedzu(ind1) > 0)THEN
+!~       IF(icz(ion) > icz(ind1))THEN
+!~         nfixedzu(ion) = ion
+!~         nfixedzu(ind1) = 0
+!~       ELSE IF(icz(ion) == icz(ind1))THEN
+!~         nfixedzu(ion) = ion
+!~       ELSE
+!~         nfixedzu(ion) = 0
+!~       END IF
+!~     END IF
+!~     IF(nfixedzd(ind1) > 0)THEN
+!~       IF(icz(ion) < icz(ind1))THEN
+!~         nfixedzd(ion) = ion
+!~         nfixedzd(ind1) = 0
+!~       ELSE IF(icz(ion) == icz(ind1))THEN
+!~         nfixedzd(ion) = ion
+!~       ELSE
+!~         nfixedzd(ion) = 0
+!~       END IF
+!~     END IF
+!~   END DO
+!~ END DO
+!~ DO ion=1,nion
+!~   IF(ion <= nrare)THEN
+!~     IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
+!~           .OR. nfixedzd(ion) > 0)THEN
+!~       nfixed(ion) = ion
+!~       ind = ind +1
+!~     ELSE
+!~       nfixed(ion) = 0
+!~     END IF
+!~   ELSE
+!~     nfixed(ion) = 0
+!~   END IF
+!~ END DO
 
-! second layer
-ind2 = 1
-DO WHILE(nfixed(ind2) > 0)
-  ind2 = ind2 + 1
-END DO
-nfixedyu(ind2) = ind2
-nfixedyd(ind2) = ind2
-nfixedzu(ind2) = ind2
-nfixedzd(ind2) = ind2
-DO ion=ind2+1,nrare
-  IF(ion /= nfixed(ion))THEN
-    DO ind1=ind2,ion-1
-      IF(ind1 /= nfixed(ind1))THEN
-        IF(nfixedyu(ind1) > 0)THEN
-          IF(icy(ion) > icy(ind1))THEN
-            nfixedyu(ion) = ion
-            nfixedyu(ind1) = 0
-          ELSE IF(icy(ion) == icy(ind1))THEN
-            nfixedyu(ion) = ion
-          ELSE
-            nfixedyu(ion) = 0
-          END IF
-        END IF
-        IF(nfixedyd(ind1) > 0)THEN
-          IF(icy(ion) < icy(ind1))THEN
-            nfixedyd(ion) = ion
-            nfixedyd(ind1) = 0
-          ELSE IF(icy(ion) == icy(ind1))THEN
-            nfixedyd(ion) = ion
-          ELSE
-            nfixedyd(ion) = 0
-          END IF
-        END IF
-      END IF
-    END DO
-  END IF
-END DO
-DO ion=ind2+1,nrare
-  IF(ion /= nfixed(ion))THEN
-    DO ind1=ind2,ion-1
-      IF(ind1 /= nfixed(ind1))THEN
-        IF(nfixedzu(ind1) > 0)THEN
-          IF(icz(ion) > icz(ind1))THEN
-            nfixedzu(ion) = ion
-            nfixedzu(ind1) = 0
-          ELSE IF(icz(ion) == icz(ind1))THEN
-            nfixedzu(ion) = ion
-          ELSE
-            nfixedzu(ion) = 0
-          END IF
-        END IF
-        IF(nfixedzd(ind1) > 0)THEN
-          IF(icz(ion) < icz(ind1))THEN
-            nfixedzd(ion) = ion
-            nfixedzd(ind1) = 0
-          ELSE IF(icz(ion) == icz(ind1))THEN
-            nfixedzd(ion) = ion
-          ELSE
-            nfixedzd(ion) = 0
-          END IF
-        END IF
-      END IF
-    END DO
-  END IF
-END DO
-DO ion=1,nion
-  IF(nfixed(ion) == 0)THEN
-    IF(ion <= nrare)THEN
-      IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
-            .OR. nfixedzd(ion) > 0)THEN
-        nfixed(ion) = ion
-        ind = ind +1
-      ELSE
-        nfixed(ion) = 0
-      END IF
-    ELSE
-      nfixed(ion) = 0
-    END IF
-  END IF
-END DO
-WRITE(6,*)'number of atoms fixed:',ind
+!~ ! second layer
+!~ ind2 = 1
+!~ DO WHILE(nfixed(ind2) > 0)
+!~   ind2 = ind2 + 1
+!~ END DO
+!~ nfixedyu(ind2) = ind2
+!~ nfixedyd(ind2) = ind2
+!~ nfixedzu(ind2) = ind2
+!~ nfixedzd(ind2) = ind2
+!~ DO ion=ind2+1,nrare
+!~   IF(ion /= nfixed(ion))THEN
+!~     DO ind1=ind2,ion-1
+!~       IF(ind1 /= nfixed(ind1))THEN
+!~         IF(nfixedyu(ind1) > 0)THEN
+!~           IF(icy(ion) > icy(ind1))THEN
+!~             nfixedyu(ion) = ion
+!~             nfixedyu(ind1) = 0
+!~           ELSE IF(icy(ion) == icy(ind1))THEN
+!~             nfixedyu(ion) = ion
+!~           ELSE
+!~             nfixedyu(ion) = 0
+!~           END IF
+!~         END IF
+!~         IF(nfixedyd(ind1) > 0)THEN
+!~           IF(icy(ion) < icy(ind1))THEN
+!~             nfixedyd(ion) = ion
+!~             nfixedyd(ind1) = 0
+!~           ELSE IF(icy(ion) == icy(ind1))THEN
+!~             nfixedyd(ion) = ion
+!~           ELSE
+!~             nfixedyd(ion) = 0
+!~           END IF
+!~         END IF
+!~       END IF
+!~     END DO
+!~   END IF
+!~ END DO
+!~ DO ion=ind2+1,nrare
+!~   IF(ion /= nfixed(ion))THEN
+!~     DO ind1=ind2,ion-1
+!~       IF(ind1 /= nfixed(ind1))THEN
+!~         IF(nfixedzu(ind1) > 0)THEN
+!~           IF(icz(ion) > icz(ind1))THEN
+!~             nfixedzu(ion) = ion
+!~             nfixedzu(ind1) = 0
+!~           ELSE IF(icz(ion) == icz(ind1))THEN
+!~             nfixedzu(ion) = ion
+!~           ELSE
+!~             nfixedzu(ion) = 0
+!~           END IF
+!~         END IF
+!~         IF(nfixedzd(ind1) > 0)THEN
+!~           IF(icz(ion) < icz(ind1))THEN
+!~             nfixedzd(ion) = ion
+!~             nfixedzd(ind1) = 0
+!~           ELSE IF(icz(ion) == icz(ind1))THEN
+!~             nfixedzd(ion) = ion
+!~           ELSE
+!~             nfixedzd(ion) = 0
+!~           END IF
+!~         END IF
+!~       END IF
+!~     END DO
+!~   END IF
+!~ END DO
+!~ DO ion=1,nion
+!~   IF(nfixed(ion) == 0)THEN
+!~     IF(ion <= nrare)THEN
+!~       IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
+!~             .OR. nfixedzd(ion) > 0)THEN
+!~         nfixed(ion) = ion
+!~         ind = ind +1
+!~       ELSE
+!~         nfixed(ion) = 0
+!~       END IF
+!~     ELSE
+!~       nfixed(ion) = 0
+!~     END IF
+!~   END IF
+!~ END DO
+!~ WRITE(6,*)'number of atoms fixed:',ind
 
-RETURN
-END SUBROUTINE fixion
+!~ RETURN
+!~ END SUBROUTINE fixion
 
 
 
@@ -3378,6 +3360,11 @@ IF(directenergy .AND. ifsicp==5) &
    STOP ' directenergy=.true. not yet prepared for exact exchange '
 #if(!raregas)
 IF(ivdw /=0) STOP " set raregas=1 when using VdW"
+IF(isurf/=0) STOP " set isurf=0 or use raregas=1"
+#endif
+
+#if(raregas)
+IF(isurf==0) STOP " set isurf=1 when using raregas"
 #endif
 
 #if(twostsic)

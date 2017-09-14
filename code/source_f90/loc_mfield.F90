@@ -42,9 +42,8 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 
 #if(raregas)
 INTEGER :: ii
-#endif
-
 REAL(DP), ALLOCATABLE :: rhotmp(:)
+#endif
 
 !----------------------------------------------------------------
 
@@ -166,8 +165,9 @@ REAL(DP), INTENT(IN)                     :: dt
 INTEGER,INTENT(IN)                       :: it
 LOGICAL, INTENT(IN)                      :: tdyn
 
-
+#if(raregas)
 COMPLEX(DP) :: psidummy(1)
+#endif
 LOGICAL,PARAMETER :: tspinprint=.true.
 
 

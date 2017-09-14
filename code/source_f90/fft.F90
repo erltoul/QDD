@@ -512,7 +512,9 @@ IMPLICIT NONE
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 !COMPLEX(DP) ::ffftax(nx2,0:3),ffftay(ny2,0:3),ffftb(nz2,nx2,0:3)
+#if(fftw_cpu && !oldkinprop)
 INTEGER :: ithr
+#endif
 #if(fftw_gpu)
 INTEGER(C_INT) :: typefft=4
 #endif

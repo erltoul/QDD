@@ -71,8 +71,8 @@ COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 INTEGER :: ion, it
 #if(raregas)
 INTEGER :: i
+REAL(DP):: dt
 #endif
-!REAL(DP):: dt
 REAL(DP):: totalprob,totalovlp
 REAL(DP):: time_absfin
 LOGICAL :: imaginary_time= .true.
@@ -101,13 +101,9 @@ CALL init_parallele()
 CALL cuda_gpu_init()
 #endif
 
-
-
-CALL checkoptions()       !check coherence of preprocessor option
-
 CALL initnamelists          ! read all input parameters
 
-!write(6,*) kxbox,kybxox,kzbox,kdfull2
+CALL checkoptions()       !check coherence of preprocessor option
 
 IF(icooltyp == 3) CALL init_simann() ! initialize and read parameters for simulated annealing
 
@@ -236,8 +232,8 @@ IF(isitmax>0 .AND. ismax>0) THEN
 #endif
    CALL calcpseudo()
    CALL calclocal(rho,aloc)                          !  ??
-   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
-   IF(ipsptyp == 1) THEN
+   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)    ! Not pure LDA : use some type of SIC (SIC-GAM, ADSIC, SIC-Slater, SIC-KLI ...)
+   IF(ipsptyp == 1) THEN ! full Goedecker pseudopotentials require projectors
     DO ion=1,nion
       IF (iswitch_interpol==1) THEN
         CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
@@ -249,13 +245,14 @@ IF(isitmax>0 .AND. ismax>0) THEN
      IF(iswitch_interpol==1) CALL mergetabs
    END IF
    CALL info(psi,rho,aloc,-1)
-   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
    
+   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
    IF(ifcnevol == 1) THEN
     WRITE(6,*) 'allocate space for CN propagation'
     ALLOCATE(psiw(kdfull2,kstate))
    ENDIF
    
+   ! Start imaginary time iterations
    DO it=1,isitmax
      WRITE(*,*) ' afterburn. iteration=',it
      IF(ifexpevol == 1) THEN
@@ -264,7 +261,7 @@ IF(isitmax>0 .AND. ismax>0) THEN
        STOP 'imaginary-time step requires exponential evolution'
 !       CALL tstep(psi,aloc,rho,it)
      END IF
-     CALL cschmidt(psi)
+     CALL cschmidt(psi)    ! schmidt normalization  of results
      IF(MOD(it,istinf)==0)   CALL info(psi,rho,aloc,it)
    END DO
    DEALLOCATE(psiw)
@@ -363,7 +360,6 @@ outnam=outname
         IF (iswitch_interpol==1) CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
 #endif
         CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
       END DO
 #if(paraworld)
 #else
@@ -388,16 +384,8 @@ outnam=outname
   
   CALL dyn_mfield(rho,aloc,psi,0D0,0)
   
-!      WRITE(*,*) 'ndims=',ndims,' , vecs after mean field 1:'
-!      DO n=1,ndims(1)
-!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
-!      END DO
-!      DO n=1,ndims(2)
-!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
-!      END DO
-
   IF(irest == 0) CALL info(psi,rho,aloc,0)
-  IF(iangmo == 1 .AND. iexcit == 1)  CALL instit(psi)    !notes
+  IF(iangmo == 1 .AND. iexcit == 1)  CALL instit(psi)    ! notes
   IF(ifrhoint_time == 1) THEN
     CALL rhointxy(rho,0)
     CALL rhointxz(rho,0)
@@ -482,20 +470,15 @@ ekionold=0D0
 CALL flush(7)
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
+
 !cpx=0D0;cpy=0D0;cpz=0D0
+
 CALL stimer(1)
-!      WRITE(*,*) 'ndims=',ndims,' , vecs before dynamics:'
-!      DO n=1,ndims(1)
-!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(1),n,1)
-!      END DO
-!      DO n=1,ndims(2)
-!        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
-!      END DO
+
 time=0
 tfs=0
 DO it=irest,itmax   ! time-loop
 
-  iterat = it      ! to communicate time step
   ijel=it
 #if(paraworld)
   tfs=tfs+dt1*0.0484D0
@@ -505,9 +488,6 @@ DO it=irest,itmax   ! time-loop
   CALL print_densdiff(rho,it)       ! right place here ???
   
 !         if(nclust.gt.0) call savings(psi,it)
-  
-!test           call calcrho(rho,psi)      !  ??????????
-  
   
   IF(jattach/=0 .AND. it==irest) THEN
      CALL init_occ_target()
@@ -530,25 +510,18 @@ DO it=irest,itmax   ! time-loop
       
       
 !     propagation of the wfs
-       WRITE(*,*) 'propagation of the wfs'
+      WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw, .NOT. imaginary_time)
-     ELSE
-
-       IF(ifcnevol == 1) THEN
-
+      ELSE
+        IF(ifcnevol == 1) THEN
           WRITE(*,*) 'Crank call '
-
-           !CALL  CrankNicolson_exp(psi,aloc,rho,it,psiw)
           CALL CrankNicolson_exp(psi,aloc,rho,it)
-
-       ELSE
-
+        ELSE
           CALL tstep(psi,aloc,rho,it)
         END IF
       END IF
-!      WRITE(*,*) ' MAIN: nabsorb=',nabsorb
-      IF(nabsorb > 0) CALL  absbc(psi,rho)
+      IF(nabsorb > 0) CALL  absbc(psi,rho) ! Existence of absorbing poins on boundary
       
       
 !            protocol of densities
@@ -1130,7 +1103,7 @@ REAL(DP),INTENT(IN) :: cyg
 REAL(DP),INTENT(IN) :: czg
 INTEGER, INTENT(IN) :: ion
 
-INTEGER ::  ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+INTEGER :: ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
 REAL(DP) :: dvolfine, dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
 REAL(DP) :: r0, r1, radion, rfac, rr, x, y, z, xion, yion, zion
 REAL(DP) :: gamfac, proj, xnorm
@@ -1261,7 +1234,7 @@ REAL(DP),INTENT(IN) :: cyg
 REAL(DP),INTENT(IN) :: czg
 INTEGER, INTENT(IN) :: ion
 
-INTEGER ::  ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
+INTEGER :: ii, il, in, ind, inn, i1, i2, i3, i1l, i2l, i3l, icrsx, icrsy, icrsz
 REAL(DP) ::  dxfine, dyfine, dzfine  ! should be global variables ? (in params.F90 ?)
 REAL(DP) :: r0, r1, r2, radion, rfac, rr, x, y, z, xion, yion, zion
 REAL(DP) :: gamfac, proj, xnorm

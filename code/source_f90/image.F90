@@ -325,9 +325,9 @@ IF(ipseudo == 1)THEN
     
   END DO ! sodium core loop
   
-  
+#if(raregas)  
   IF(isurf /= 0) CALL pseudosoft_substrate(pseudorho,potsave)
-  
+#endif
   
 #if(gridfft)
   CALL falr(pseudorho,potion,kdfull2)
@@ -336,13 +336,13 @@ IF(ipseudo == 1)THEN
   CALL solv_fft(pseudorho,potion,dx,dy,dz)
 #endif
   
-  
+#if(raregas)  
   IF (isurf /= 0 .AND. ivdw /= 2) THEN
     CALL addshortrepulsivepotonsubgrid(potshort,1)
   ELSE IF (isurf /= 0 .AND. ivdw == 2) THEN
     CALL addshortrepulsivepot(potshort,1)
   END IF
-  
+#endif
   
 ELSE ! ipseudo=0
   
@@ -384,12 +384,12 @@ ELSE ! ipseudo=0
     END IF ! iDielec.eq.0
   END DO
   
-  
   IF (isurf /= 0) THEN
     CALL addgsmpot(potion,1)
     CALL addshortrepulsivepot(potshort,1)
   END IF
-  
+
+
 END IF ! ipseudo
 
 IF(nc > 0 .AND. ivdw == 1) CALL getvdwpot
@@ -595,7 +595,7 @@ IF(ipseudo == 1) THEN
   END DO ! sodium core loop
   
 !mb         if (isurf.ne.0) call addGSMDensities(pseudorho)
-  
+ 
   IF (isurf /= 0) THEN
     DO i=1,nc+NE+nk
       CALL getparas(i)

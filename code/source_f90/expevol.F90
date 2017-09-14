@@ -57,7 +57,9 @@ COMPLEX(DP) :: cdtact
 ! Lagrangian matrix in the SIC step. The version of exponential
 ! evolution with subtraction of the Lagrangian matrix is found
 ! in 'exp_evolp'. The strategy needs yet testing. It was not
-! really beneficial so far.
+! really beneficial so far.  (01/2013)
+! 
+!  what is the current status of this issue ?  F.L. (03/2017)
 LOGICAL,PARAMETER :: tnorotate=.true.
 
 
@@ -89,14 +91,14 @@ IF(.NOT.timagtime) THEN
   IF(tnorotate .OR. ifsicp .NE. 8) THEN
     DO nb=1,nstate
       qwork(:,nb) = q0(:,nb)
-      CALL exp_evol(qwork(1,nb),aloc,nb,4,cdtact,q1)
+      CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
     END DO
   ELSE
 #if(twostsic)
     qwork = q0
     CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
 #else
-    STOP " IFSICP==8 reqires compilation with option twostsic"
+    STOP " IFSICP==8 requires compilation with option twostsic"
 #endif
   END IF
 
@@ -122,7 +124,7 @@ nterms = 4
 ! itpri = MOD(it,ipasinf) + 1    ?? FL
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
   DO nb=1,nstate
-    CALL exp_evol(q0(1,nb),aloc,nb,nterms,cdtact,q1)
+    CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
 ELSE
 #if(twostsic)
@@ -176,7 +178,7 @@ SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 !       aloc     = local potential for the actual spin component
 !       ak       = kinetic energies in momentum space
 !       nbe      = number of state
-!       norder   = order of epxansion (4 recommended for full step))
+!       norder   = order of expansion (4 recommended for full step))
 !       dtact    = time step
 
 !     Note: The propagation uses the action of the Hamiltonian
@@ -266,8 +268,7 @@ COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
 
 COMPLEX(DP) :: dti,cfac,cacc(kstate)
 INTEGER :: i, ilocbas 
-INTEGER :: na, nbe, nc, nterm
-!test      complex wfovlp,energexp
+INTEGER :: na, nbe, ncs, nterm
 
 !----------------------------------------------------------------------
 
@@ -287,18 +288,18 @@ dti = dtact*CMPLX(0D0,1D0,DP)
 DO nbe=1,nstate
   ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
   CALL hpsi(qact(1,nbe),aloc(ilocbas),nbe,1)
-  DO nc=1,nstate
-    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
-      chmatrix(nc,nbe) = wfovlp(psi(:,nc),qact(:,nbe))
+  DO ncs=1,nstate
+    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+      chmatrix(ncs,nbe) = wfovlp(psi(:,ncs),qact(:,nbe))
     ELSE
-      chmatrix(nc,nbe) = CMPLX(0D0,0D0,DP)
+      chmatrix(ncs,nbe) = CMPLX(0D0,0D0,DP)
     END IF
   END DO
 END DO
 ! symmetrize H-matrix
-DO nbe=1,nstate; DO nc=1,nbe-1
-  chmatrix(nc,nbe) = (chmatrix(nc,nbe)+CONJG(chmatrix(nbe,nc)))/2D0
-  chmatrix(nbe,nc) = CONJG(chmatrix(nc,nbe))
+DO nbe=1,nstate; DO ncs=1,nbe-1
+  chmatrix(ncs,nbe) = (chmatrix(ncs,nbe)+CONJG(chmatrix(nbe,ncs)))/2D0
+  chmatrix(nbe,ncs) = CONJG(chmatrix(ncs,nbe))
 END DO; END DO
 
 ! now the Taylor expansion (recycle stored h*psi in first step)
@@ -317,13 +318,13 @@ DO nbe=1,nstate
       qact(:,nbe) = psi(:,nbe)    ! restore original wavefunctions
       cacc(:) = chmatrix(:,nbe)
     ELSE
-      DO nc=1,nstate
-        IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
-          cacc(nc) = CMPLX(0D0,0D0,DP)
+      DO ncs=1,nstate
+        IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+          cacc(ncs) = CMPLX(0D0,0D0,DP)
           DO na=1,nstate
-            IF(ispin(nrel2abs(na)) == ispin(nrel2abs(nc))) THEN
-              cacc(nc) = cacc(nc) + chmatrix(nc,na)*wfovlp(psi(:,na),qwork)
-!              WRITE(*,*) ' NBE,NC,NA,ovlp:',nbe,nc,na,wfovlp(psi(1,na),qwork)
+            IF(ispin(nrel2abs(na)) == ispin(nrel2abs(ncs))) THEN
+              cacc(ncs) = cacc(ncs) + chmatrix(ncs,na)*wfovlp(psi(:,na),qwork)
+!              WRITE(*,*) ' NBE,NCS,NA,ovlp:',nbe,ncs,na,wfovlp(psi(1,na),qwork)
             END IF
           END DO
         END IF
@@ -332,9 +333,9 @@ DO nbe=1,nstate
     END IF
     ! project H-matrix
 !    WRITE(*,*) ' NBE,cacc:',nbe,cacc(1:nstate)
-    DO nc=1,nstate
-      IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nc))) THEN
-        qwork(:) = qwork(:) - psi(:,nc)*cacc(nc)
+    DO ncs=1,nstate
+      IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+        qwork(:) = qwork(:) - psi(:,ncs)*cacc(ncs)
       END IF
     END DO
     ! accumulate to Taylor series

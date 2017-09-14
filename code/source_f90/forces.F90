@@ -255,7 +255,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 
-INTEGER :: ii, ix, iy, iz, jj
+INTEGER :: ii, jj
 REAL(DP) :: dist, dist2, radfor, forcex, forcey, forcez
 REAL(DP) :: xi, yi, zi, xr, yr, zr
 
@@ -460,7 +460,7 @@ INTEGER, INTENT(IN)                  :: it
 CHARACTER (LEN=1) :: ext
 INTEGER :: ind, ion, ion1, is, ix, iy, iz
 REAL(DP) :: c1, c2, chpddr, dist2, dist3, pch
-REAL(DP) :: r2, rder, rdn, rloc, rion, zion
+REAL(DP) :: r2, rder, rdn, rloc, zion
 REAL(DP) :: rr, rr3,  rx, ry, rz, x1, y1, z1
 
 REAL(DP),EXTERNAL :: v_ion_el_lgoed
@@ -767,8 +767,6 @@ CHARACTER (LEN=1) :: ext
 DATA zshift,yshift,xshift /0.001D0,0.001D0,0.001D0/
 DATA zshinv,yshinv,xshinv /1000D0,1000D0,1000D0/
 
-LOGICAL, PARAMETER :: ttestpara=.false.
-
 ALLOCATE(q1(kdfull2),rhoslp(kdfull2),rhoslm(kdfull2))
 ALLOCATE(fxnl(nion),fynl(nion),fznl(nion))
 
@@ -948,7 +946,6 @@ END DO
                      mpi_sum,mpi_comm_world,icode)
   fz(1:nion) = fz(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  IF(ttestpara) WRITE(*,*) ' FX,FY,FZ: after allreduce'
   DEALLOCATE(ftemp)
 #else
   fx(1:nion) = fx(1:nion)+fxnl(1:nion)
@@ -1012,7 +1009,7 @@ INTEGER, INTENT(IN)                          :: is
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: c1, c2, f1, f2, pt1, pt2, rloc, zion
-REAL(DP) :: r1, rr, rx, ry, rz, x1, y1, z1
+REAL(DP) :: rr, rx, ry, rz, x1, y1, z1
 
 REAL(DP),EXTERNAL :: v_ion_el_lgoed
 REAL(DP),EXTERNAL :: v_soft

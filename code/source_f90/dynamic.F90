@@ -573,7 +573,7 @@ END IF
 
 IF (izforcecorr /= -1) THEN
   CALL checkzeroforce(rho,aloc)
-!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably hazardous. 
+!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably eroneous. F.L.
 END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
@@ -635,12 +635,12 @@ IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
 ELSE IF(ifsicp >= 7)THEN
 !  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
   CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))           !MV
-!ccccccJM     Generalized Slater pot
+!JM     Generalized Slater pot
   IF(ifsicp == 7)THEN
     ifsicp=3
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
-!ccccccJM     2 state SIC
+!JM     2 state SIC
   ELSE IF(ifsicp == 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
@@ -730,7 +730,7 @@ REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
 !REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
 INTEGER, INTENT(IN)                      :: it
 
-INTEGER :: ico, ind, ion, ishift, iss, nb, nbe
+INTEGER :: ind, ion, ishift, iss, nb, nbe
 REAL(DP) :: ekin, ehilf, eshell, enonlc
 REAL(DP) :: ek, tinfs, xm
 REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
@@ -745,6 +745,9 @@ LOGICAL,PARAMETER :: ttest=.FALSE.
 LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 
 REAL(DP),EXTERNAL :: energ_ions
+#if(raregas)
+INTEGER :: ico
+#endif
 !------------------------------------------------------------------
 
 
@@ -999,7 +1002,7 @@ END IF
 
 !     final composition and print
 
-energy=eshell+enrear+ecback+ecorr+enonlc/2.+ecrhoimage
+energy=eshell+enrear+ecback+ecorr+enonlc/2D0+ecrhoimage
 #if(raregas)
 IF(ivdw == 1)energy = energy + evdw
 ecoul=ecback+ecrho+ecorr+ecrhoimage
@@ -1030,10 +1033,10 @@ IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
      &        enig,                       &
      &        engg,                       &
      &                2*ecback,           &
-     &                2.*ecback+ecorr,    &
+     &                2D0*ecback+ecorr,    &
      &                ecrho-ecback-ecrhoimage,&
      &                enonlc,             &
-     &                2.*ecback+ecorr+enonlc,&
+     &                2D0*ecback+ecorr+enonlc,&
      &                energy,            &
      &                etot, &
      &                elaser, &
@@ -2230,6 +2233,7 @@ IF(irest <= 0) THEN                    !  write file headers
           WRITE(148,'(a)') ' & '
           CLOSE(148)
         END IF
+#if(raregas)   
         IF(isurf /= 0)THEN
 ! Velocities of substrate cores
           OPEN(26,STATUS='unknown',FORM='formatted', FILE='pvelcore.'//outnam)
@@ -2238,27 +2242,23 @@ IF(irest <= 0) THEN                    !  write file headers
           OPEN(126,STATUS='unknown',FORM='formatted', FILE='pvelkat.'//outnam)
           WRITE(126,'(a)') ' & '
           CLOSE(126)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='pkinencore.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='pkinencore.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='pkinenkat.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='pkinenkat.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-          OPEN(148,STATUS='unknown',FORM='formatted',  &
-              FILE='ptempsurf.'//outnam)
+          OPEN(148,STATUS='unknown',FORM='formatted', FILE='ptempsurf.'//outnam)
           WRITE(148,'(a)') ' & '
           CLOSE(148)
-#if(raregas)          
 !                                   Velocities of Argon clouds (if available)
           IF(ifadiadip /= 1) THEN
             OPEN(27,STATUS='unknown',FORM='formatted', FILE='pveldip.'//outnam)
             WRITE(27,'(a)') ' & '
             CLOSE(27)
           END IF
-#endif
         END IF
+#endif
       END IF
       
       IF(jforce /= 0) THEN
@@ -2271,26 +2271,23 @@ IF(irest <= 0) THEN                    !  write file headers
           
           IF(e0 /= 0D0) THEN
 ! Forces from laser
-            OPEN(31,STATUS='unknown',FORM='formatted',  &
-                FILE='plforce.3.'//outnam)
+            OPEN(31,STATUS='unknown',FORM='formatted', FILE='plforce.3.'//outnam)
             WRITE(31,'(a)') ' & '
             CLOSE(31)
           END IF
           
         END IF
-        IF(isurf /= 0) THEN
 #if(raregas)
+        IF(isurf /= 0) THEN
           IF(nc+NE+nk > 0)THEN
 ! Forces on Argon cores
-            OPEN(28,STATUS='unknown',FORM='formatted',  &
-                FILE='pforce.1.'//outnam)
+            OPEN(28,STATUS='unknown',FORM='formatted', FILE='pforce.1.'//outnam)
             WRITE(28,'(a)') ' & '
             CLOSE(28)
             
             IF(e0 /= 0D0) THEN
 ! Forces from laser
-              OPEN(32,STATUS='unknown',FORM='formatted',  &
-                  FILE='plforce.1.'//outnam)
+              OPEN(32,STATUS='unknown',FORM='formatted', FILE='plforce.1.'//outnam)
               WRITE(32,'(a)') ' & '
               CLOSE(32)
             END IF
@@ -2298,24 +2295,21 @@ IF(irest <= 0) THEN                    !  write file headers
             IF(nclust > 0)THEN
 ! Forces on Argon clouds
 ! (else, there have no forces)
-              OPEN(29,STATUS='unknown',FORM='formatted',  &
-                  FILE='pforce.2.'//outnam)
+              OPEN(29,STATUS='unknown',FORM='formatted', FILE='pforce.2.'//outnam)
               WRITE(29,'(a)') ' & '
               CLOSE(29)
               
               IF(e0 /= 0D0) THEN
 ! Forces from laser
-                OPEN(33,STATUS='unknown',FORM='formatted',  &
-                    FILE='plforce.2.'//outnam)
+                OPEN(33,STATUS='unknown',FORM='formatted', FILE='plforce.2.'//outnam)
                 WRITE(33,'(a)') ' & '
                 CLOSE(33)
               END IF
               
             END IF
           END IF
-#endif
         END IF
-
+#endif
       END IF
       IF(jener > 0) THEN
         
@@ -2669,12 +2663,12 @@ IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: it
 
-REAL(DP) :: rho(2*kdfull2)
 #if(raregas)
 INTEGER :: i, ii, ion, nimobc, nimobk
 REAL(DP) :: sumcx, sumcy, sumcz, sumkx, sumky, sumkz
 REAL(DP) :: ekx, eky, ekz, ekcx, ekcy, ekcz, ekvx, ekvy, ekvz
 REAL(DP) :: amfac1, amfac2
+REAL(DP) :: rho(2*kdfull2)
 #endif
 
 !----------------------------------------------------------------

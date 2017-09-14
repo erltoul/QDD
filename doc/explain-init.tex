@@ -369,10 +369,10 @@ simultaneously\\
 &it has to be correlant with pseudopotentails\\
 &corresponds to ecut in solid state\\
 {\tt imob          }& global switch to allow ionic motion (if set to 1) \\
-{\tt isurf            }& switch for Ar or MgO surface (isurf=1 activates
-          surface\\
-{\tt nc               }& number of O cores in MgO(001)\\
-{\tt nk               }& number of Mg cations in MgO(001)\\
+{\tt isurf            }& switch for Ar or MgO surface (isurf=1 activates surface)\\
+{\tt iDielec          }& switch to dielectic support\\
+{\tt xDielec          }& x below which dielectric zone is activated\\
+{\tt epsDi            }& dielectric constant in the dielectric zone\\
 {\tt rotclustx,y,z } & vector fo angle of initial rotation of ions\\
 \hline
 \multicolumn{2}{c}{\it initialization of wave functions} \\
@@ -569,6 +569,9 @@ localization in statics
 \hline
 \multicolumn{2}{c}{Namelist {\tt SURFACE}} in {\tt for005.<name>} \\
 \hline
+{\tt ne               }& Number of fixed shells in substrate\\
+{\tt nc               }& number of O cores in MgO(001)\\
+{\tt nk               }& number of Mg cations in MgO(001)\\
 {\tt ivdw} & handling of Van-der-Waals with substrate atoms\\
     & 0 $\Longrightarrow$ no VdW\\
     & 1 $\Longrightarrow$ enables full computation of VdW\\
@@ -611,9 +614,6 @@ localization in statics
 {\tt unfixCLateralRadx  }& radius of cylinder with mobile cores \\
 {\tt unfixELateralRadx  }& radius of cylinder with mobile valence electrons\\
 {\tt fixCBelowx       }&   fixes cores which lay below given x value\\
-{\tt iDielec          }& switch to dielectic support\\
-{\tt xDielec          }& x below which dielectric zone is activated\\
-{\tt epsDi            }& dielectric constant in the dielectric zone\\
 \hline
 \end{tabular}
 
@@ -738,6 +738,8 @@ polarized molecules.
     All {\tt common} blocks have been replaced by modules
     and corresponding {\tt USE} command. The then appearing
     dependences are mapped in the {\tt makefile}.
+  \item The code has been moved to {\tt IMPLICIT NONE}. All variables should
+    now be declared.
   \item
     All code is now genuinly double precision and can be
     complied without the {\tt autodouble} option. Only exception
@@ -781,8 +783,7 @@ polarized molecules.
         is trated in a separate program connected to the electronic
         part by a master routine written in {ttt python}.
   \item Full SIC has yet to be implemented.
-  \item The code should be successively moved to {\tt IMPLICIT NONE}.
-\end{itemize}
+  \end{itemize}
 
 \newpage
 

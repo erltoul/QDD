@@ -47,15 +47,6 @@ COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)         ! cPW
 INTEGER :: ind, ishift, nb
 REAL(DP) :: rhodif, rhotot
 REAL(DP), INTENT(OUT) :: rho(2*kdfull2)
-!REAL(DP)::rhoup(kdfull2),rhodown(kdfull2)
-!REAL(DP) :: rhouparrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhouparray(nx2,ny2,nz2)
-!REAL(DP) :: rhodownarrayfine(2*nx2-1,2*ny2-1,2*nz2-1),rhodownarray(nx2,ny2,nz2)
-
-
-
-#if(parayes)
-LOGICAL,PARAMETER :: ttestpara=.FALSE.
-#endif
 
 !-----------------------------------------------------------------
 
@@ -74,25 +65,11 @@ LOGICAL,PARAMETER :: ttestpara=.FALSE.
   rho=0D0
 #endif
 
-  
-!rhoup=0D0
-!rhodown=0D0
-!rhouparrayfine=0D0
-!rhouparray=0D0
-!rhodownarrayfine=0D0
-!rhodownarray=0D0
-
 DO nb=1,nstate
   ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-#if(parayes)
-  IF(ttestpara) THEN
-    WRITE(6,'(a,4i10)') ' RHO: myn,nb,is,ishift=',  &
-        myn,nb,ispin(nrel2abs(nb)),ishift
-  END IF
-#endif
   DO ind=1,nxyz
 #ifdef REALSWITCH
-    
+
 #if(parayes)
     rh(ind+ishift)=rh(ind+ishift)+ occup(nb)*q0(ind,nb)*q0(ind,nb)
 #endif
@@ -123,12 +100,10 @@ CALL mpi_allreduce(rh,rho,2*nxyz,mpi_double_precision,  &
     mpi_sum,mpi_comm_world,icode)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !         mx=2*nxyz
-IF(ttestpara) WRITE(*,*) ' RHO: after allreduce'
 DEALLOCATE(rh)
 #endif
 
 
-!GB      sum1=0D0
 DO ind=1,nxyz
   IF(numspin==2) THEN
     rhotot      = rho(ind) + rho(ind+nxyz)
@@ -139,7 +114,6 @@ DO ind=1,nxyz
   END IF
   rho(ind)      = rhotot
   rho(ind+nxyz) = rhodif/MAX(rhotot,1D-8)
-!GB        sum1 = sum1 + rho(ind)
 END DO
 
 CALL emoms(rho)                    ! moments for the whole system (in qe)
@@ -498,7 +472,7 @@ COMPLEX(DP),INTENT (OUT) ::ao(2*nx2,2*ny2,2*nz2)
 COMPLEX(dp) :: ai(0:2*nx2,0:2*ny2,0:2*nz2)
 COMPLEX(dp) :: a(0:nx2,0:ny2,0:nz2)
 INTEGER:: nx2i,ny2i,nz2i
-INTEGER :: ia,ja,ka,i0
+INTEGER :: ia,ja,ka
 INTEGER :: ia1,ja1,ka1
 
 ai(:,:,:) = 0.0D0
@@ -593,7 +567,7 @@ COMPLEX(DP),INTENT (IN) :: a(nx2,ny2,nz2)
 COMPLEX(DP),INTENT (OUT) ::ai(2*nx2,2*ny2,2*nz2)
 #endif
 INTEGER:: nx2i,ny2i,nz2i
-INTEGER :: ia,ja,ka,i0
+INTEGER :: ia,ja,ka
 
 ai(:,:,:) = 0.0D0
 !write (*,*)'hello1'
@@ -726,12 +700,10 @@ IMPLICIT NONE
 !smothing array
 REAL(DP),INTENT (OUT) :: as(nx2,ny2,nz2)
 !smoothing target array
-INTEGER :: nx2i,ny2i,nz2i
 REAL(DP),INTENT (IN) ::a(2*nx2,2*ny2,2*nz2)
 
 #else
 COMPLEX(DP),INTENT (OUT) :: as(nx2,ny2,nz2)
-INTEGER :: nx2i,ny2i,nz2i
 !smoothing target array
 COMPLEX(DP),INTENT (IN) ::a(2*nx2,2*ny2,2*nz2)
 #endif
@@ -739,10 +711,6 @@ INTEGER :: ia,ja,ka,i1,i2,i3
 REAL(DP) :: fac
 as=0.0
 
-! nx2i=2*nx2-1
-! ny2i=2*ny2-1
-! nz2i=2*nz2-1
-! 
 !*******************************
 !DO ia=1,nx2
 !  IF ((ia==1).or.(ia==nx2))THEN ! for the orthogonal border plans to the x axis

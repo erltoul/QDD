@@ -81,6 +81,11 @@ IMPLICIT NONE
 !-----------------------------------------------------------------------
 INTEGER,INTENT(IN) :: nx0, ny0, nz0
 REAL(DP),INTENT(IN):: dx0, dy0, dz0
+!~ INTEGER :: ii,i1,i2,i3, kdum
+!~ LOGICAL,PARAMETER :: tcoultest=.true.
+!~ REAL(DP) :: charge
+!~ REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
+
 ! compute array parameters
 kxmax=nx0;kymax=ny0;kzmax=nz0
 ksmax=kxmax
@@ -139,6 +144,8 @@ CALL fftinp
 !     this has to be done only once, even if you call coufou (see below)
 !     more than one time. of course, your grid must stay the same.
 CALL coucor
+
+
 RETURN
 END SUBROUTINE init_coul
 

@@ -31,4 +31,5 @@ e0=0.0,
 &END
 &SURFACE
 iPotStatic=0,
+nc=0,nk=0
 &END

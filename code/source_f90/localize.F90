@@ -46,7 +46,7 @@ COMPLEX(DP) :: p(kdfull2)
 INTEGER,INTENT(IN)                        :: it
 
 INTEGER :: i, idirection, ind, indadd, is, ix, iy, iz, midx, midy, midz, nb
-REAL(DP) :: dkx, dky, dkz, ocfac, rp, sign, sumfac, sumpart, tf_fac, x1, y1, z1
+REAL(DP) :: dkx, dky, dkz, ocfac, rp, sign, sumpart, tf_fac, x1, y1, z1
 COMPLEX(DP) :: q2(kdfull2)
 #if(netlib_fft|fftw_cpu)
 INTEGER :: i1, i2, i3
