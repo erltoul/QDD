@@ -114,6 +114,16 @@ AS_IF([test "x$coufou" = x1],
       [
       AS_IF([test "x$coudoub" = x1 ], [AC_MSG_FAILURE([coufou and coudoub cannot be enabled simulatneously in define.h])])
       ])
+
+#with gridfft enabled, one of coufou, coudoub must be enabled.
+AS_IF([test "x$gridfft" = x1 ], 
+      [
+      AS_IF([test "x$coufou" = x0 ],
+            [
+            AS_IF([test "x$coudoub" = x0 ], [AC_MSG_FAILURE([with gridfft enabled, one of coufou, coudoub must be enabled in define.h .])])
+            ]
+            )
+      ]) 
 ########################################################################
 #                   Check options and libraries
 ########################################################################
@@ -419,7 +429,7 @@ AC_MSG_NOTICE([linker flags:      LDFLAGS=$LDFLAGS])
 #~ echo "LDFLAGS: $LDFLAGS"
 #~ echo "LD_MPI: $LD_MPI" 
 #~ echo "LD_FFTW: $LD_FFTW" 
-AC_CONFIG_HEADERS([define.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
                  code/source_f90/Makefile])
 AC_OUTPUT
