@@ -123,7 +123,13 @@ AS_IF([test "x$gridfft" = x1 ],
             AS_IF([test "x$coudoub" = x0 ], [AC_MSG_FAILURE([with gridfft enabled, one of coufou, coudoub must be enabled in define.h .])])
             ]
             )
-      ]) 
+      ])
+# Check oniom
+# Only if findiff
+AS_IF([test "x$oniom" = x1], 
+      [
+      AS_IF([test "x$findiff" = x0 ], [AC_MSG_FAILURE([oniom = 1 only availlable with findiff = in define.h ])])
+      ])
 ########################################################################
 #                   Check options and libraries
 ########################################################################
