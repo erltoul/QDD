@@ -34,7 +34,6 @@ INTEGER :: knode=4
 #endif
 #if(paraworld||parano)
 INTEGER :: knode=1
-INTEGER :: ifile=60 ! for save 
 !to be improved and gotten from the size of the communicator in the paraworld case
 #endif
 ! max. nr. electron states per node
@@ -237,6 +236,7 @@ REAL(DP) :: drcharges=5D0
 
 CHARACTER (LEN=13) :: outnam
 CHARACTER (LEN=13) :: outname
+INTEGER :: ifile=60 ! unit number for save 
 INTEGER :: iflocaliz=0                           ! evaluate localization
 INTEGER :: myn                                 ! nr. of actual node
 INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
