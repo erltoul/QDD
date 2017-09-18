@@ -935,15 +935,15 @@ END DO
   ALLOCATE(ftemp(nion))
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fxnl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,icode)
+                     mpi_sum,mpi_comm_world,mpi_ierror)
   fx(1:nion) = fx(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fynl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,icode)
+                     mpi_sum,mpi_comm_world,mpi_ierror)
   fy(1:nion) = fy(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   CALL mpi_allreduce(fznl,ftemp,nion,mpi_double_precision,  &
-                     mpi_sum,mpi_comm_world,icode)
+                     mpi_sum,mpi_comm_world,mpi_ierror)
   fz(1:nion) = fz(1:nion)+ftemp(1:nion)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
   DEALLOCATE(ftemp)

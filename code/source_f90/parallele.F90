@@ -43,16 +43,16 @@ myn=0
 
 #if(parayes||simpara||paraworld)
 WRITE(*,*) ' before mpi_init'
-CALL mpi_init(icode)
+CALL mpi_init(mpi_ierror)
 WRITE(*,*) ' before mpi_comm_size'
-CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
+CALL  mpi_comm_size(mpi_comm_world,nprocs,mpi_ierror)
 WRITE(*,*) nprocs,knode
 #if(paraworld)
-CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+CALL  mpi_comm_rank(mpi_comm_world,nrank,mpi_ierror)
 ifile=60+1000*nrank
 level=nrank/2
-!call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,icode)
-!call mpi_comm_dup(mpi_comm_world,mpi_world_dup,icode)
+!call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,mpi_ierror)
+!call mpi_comm_dup(mpi_comm_world,mpi_world_dup,mpi_ierror)
 write(6,*) 'split done'
 #endif
 
@@ -71,7 +71,7 @@ knode = nprocs
 #endif
 #endif
 WRITE(*,*) ' before mpi_comm_rank'
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 nb=myn
 #endif
 
@@ -122,7 +122,7 @@ INTEGER :: i, j
 !------------------------------------------------------------------
 
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 
 CALL i_scatter(kxbox)
 CALL i_scatter(kybox)
@@ -696,54 +696,54 @@ INTEGER :: nod
 IF(myn == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
-    CALL mpi_send(ch,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(amu,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(cc1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(cc2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(crloc,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(crs,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(chs,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(chg1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(chg2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(sgm1,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(sgm2,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(r0g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(r1g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(r2g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h0_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h0_22g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h0_33g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h1_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h1_22g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h2_11g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(h0_12g,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(radiong,185,mpi_double_precision,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(ch,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(amu,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(cc1,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(cc2,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(crloc,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(crs,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(chs,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(chg1,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(chg2,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(sgm1,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(sgm2,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(r0g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(r1g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(r2g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h0_11g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h0_22g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h0_33g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h1_11g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h1_22g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h2_11g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(h0_12g,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(radiong,185,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
   END DO
   
 ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
-  CALL mpi_recv(ch,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(amu,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(cc1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(cc2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(crloc,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(crs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(chs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(chg1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(chg2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(sgm1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(sgm2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(r0g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(r1g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(r2g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h0_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h0_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h0_33g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h1_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h1_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h2_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(h0_12g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(radiong,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,icode)
+  CALL mpi_recv(ch,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(amu,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(cc1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(cc2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(crloc,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(crs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(chs,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(chg1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(chg2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(sgm1,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(sgm2,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(r0g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(r1g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(r2g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h0_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h0_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h0_33g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h1_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h1_22g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h2_11g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(h0_12g,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(radiong,185,mpi_double_precision,0,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
   
 END IF
 
@@ -772,62 +772,62 @@ n = myn
 IF(n == 0 .AND. knode /= 1)THEN
   
   DO nod=1,knode-1
-    CALL mpi_send(ionsin,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(iknow,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(facann,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(nrun,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(nloop1,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(nloop2,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(cptemp,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(ncsim,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(errtot,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(ncon,1,mpi_integer,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,icode)
-    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,icode)
+    CALL mpi_send(ionsin,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(iknow,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(facann,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(nrun,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(nloop1,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(nloop2,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(cptemp,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(delpos,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(ERR,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(errks0,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(trfac2,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(prfac2,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(errsim,1,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(ncsim,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(errtot,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(ncon,1,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(erfac1,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(trfac1,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(prfac1,1,mpi_double_precision,nod,1, mpi_comm_world,mpi_ierror)
+    CALL mpi_send(rand_seed,isize_seed,mpi_integer,nod,1, mpi_comm_world,mpi_ierror)
   END DO
   
 ELSE IF(n /= 0 .AND. knode /= 1)THEN
   
-  CALL mpi_recv(ionsin,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
-  CALL mpi_recv(iknow,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+  CALL mpi_recv(ionsin,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(iknow,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(facann,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
-  CALL mpi_recv(nrun,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
-  CALL mpi_recv(nloop1,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
-  CALL mpi_recv(nloop2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(nrun,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(nloop1,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(nloop2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(cptemp,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(delpos,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(ERR,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(errks0,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(trfac2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(prfac2,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(errsim,1,1,mpi_double_precision,0,  &
-      mpi_any_tag,mpi_comm_world,is,icode)
-  CALL mpi_recv(ncsim,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+      mpi_any_tag,mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(ncsim,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(errtot,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
-  CALL mpi_recv(ncon,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(ncon,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(erfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(trfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
   CALL mpi_recv(prfac1,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,icode)
-  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,icode)
+      mpi_comm_world,is,mpi_ierror)
+  CALL mpi_recv(rand_seed,isize_seed,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,mpi_ierror)
 END IF
 
 RETURN
@@ -879,7 +879,7 @@ REAL, INTENT(IN OUT)                     :: rout(kdf)
 INTEGER, INTENT(IN OUT)                  :: kdf
 
 CALL mpi_allgather(rin(mint),nt,mpi_double_precision,  &
-    rout,nt,mpi_double_precision,mpi_comm_world,icode)
+    rout,nt,mpi_double_precision,mpi_comm_world,mpi_ierror)
 RETURN
 END SUBROUTINE pi_allgather
 
@@ -951,7 +951,7 @@ INTEGER :: is(mpi_status_size)
 
 INTEGER :: i, it, j, l, maxr, minr, n,  nax, nin, nt
 
-CALL  mpi_comm_rank(mpi_comm_world,n,icode)
+CALL  mpi_comm_rank(mpi_comm_world,n,mpi_ierror)
 
 l=LOG(kstate*1D0)/LOG(2D0)-1
 nax=ntr
@@ -968,23 +968,23 @@ DO it=0,l
     nt=n-2D0**REAL(it,DP)
   END IF
   IF(MOD(j,2) == 0) THEN
-    CALL mpi_send(nax,1,mpi_integer,nt,1,mpi_comm_world,icode)
-    CALL mpi_send(nin,1,mpi_integer,nt,2,mpi_comm_world,icode)
+    CALL mpi_send(nax,1,mpi_integer,nt,1,mpi_comm_world,mpi_ierror)
+    CALL mpi_send(nin,1,mpi_integer,nt,2,mpi_comm_world,mpi_ierror)
     CALL mpi_send(rout(nin),nax,mpi_double_precision,  &
-        nt,3,mpi_comm_world,icode)
-    CALL mpi_recv(maxr,1,mpi_integer, nt,4,mpi_comm_world,is,icode)
-    CALL mpi_recv(minr,1,mpi_integer, nt,5,mpi_comm_world,is,icode)
+        nt,3,mpi_comm_world,mpi_ierror)
+    CALL mpi_recv(maxr,1,mpi_integer, nt,4,mpi_comm_world,is,mpi_ierror)
+    CALL mpi_recv(minr,1,mpi_integer, nt,5,mpi_comm_world,is,mpi_ierror)
     CALL mpi_recv(rout(minr),maxr,mpi_double_precision,  &
-        nt,6,mpi_comm_world,is,icode)
+        nt,6,mpi_comm_world,is,mpi_ierror)
   ELSE
-    CALL mpi_recv(maxr,1,mpi_integer, nt,1,mpi_comm_world,is,icode)
-    CALL mpi_recv(minr,1,mpi_integer, nt,2,mpi_comm_world,is,icode)
+    CALL mpi_recv(maxr,1,mpi_integer, nt,1,mpi_comm_world,is,mpi_ierror)
+    CALL mpi_recv(minr,1,mpi_integer, nt,2,mpi_comm_world,is,mpi_ierror)
     CALL mpi_recv(rout(minr),maxr,mpi_double_precision,  &
-        nt,3,mpi_comm_world,is,icode)
-    CALL mpi_send(nax,1,mpi_integer,nt,4,mpi_comm_world,icode)
-    CALL mpi_send(nin,1,mpi_integer,nt,5,mpi_comm_world,icode)
+        nt,3,mpi_comm_world,is,mpi_ierror)
+    CALL mpi_send(nax,1,mpi_integer,nt,4,mpi_comm_world,mpi_ierror)
+    CALL mpi_send(nin,1,mpi_integer,nt,5,mpi_comm_world,mpi_ierror)
     CALL mpi_send(rout(nin),nax,mpi_double_precision,  &
-        nt,6,mpi_comm_world,icode)
+        nt,6,mpi_comm_world,mpi_ierror)
     nin=nin-maxr
   END IF
   nax=nax+maxr
@@ -1165,8 +1165,8 @@ INTEGER :: is(mpi_status_size)
 INTEGER :: i, ntranche,rest,nprocs
 !------------------------------------------------------------------
 
-CALL mpi_comm_rank(mpi_comm_world,myn,icode)
-CALL mpi_comm_size(mpi_comm_world,nprocs,icode)
+CALL mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
+CALL mpi_comm_size(mpi_comm_world,nprocs,mpi_ierror)
 
 ALLOCATE(lengnod(nprocs))
 ALLOCATE(displ(0:nprocs-1))
@@ -1181,8 +1181,8 @@ IF (myn == 0) THEN
    END DO
    lengnod(nprocs)=ntranche+rest
 END IF
-CALL mpi_bcast(lengnod,nprocs,mpi_integer,0,mpi_comm_world,icode)
-CALL mpi_bcast(displ,nprocs,mpi_integer,0,mpi_comm_world,icode)
+CALL mpi_bcast(lengnod,nprocs,mpi_integer,0,mpi_comm_world,mpi_ierror)
+CALL mpi_bcast(displ,nprocs,mpi_integer,0,mpi_comm_world,mpi_ierror)
 
 RETURN
 END SUBROUTINE init_boxpara

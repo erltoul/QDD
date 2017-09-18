@@ -278,7 +278,7 @@ if(params_mp_itmax_ == 0 && params_mp_isave_ > 0) {
   params_mp_int_pass_=-1;
   infor_(psir,rho);
 #if(parayes)
-  mpi_finalize(params_mp_icode_)
+  mpi_finalize(params_mp_mpi_ierror)
 #endif
   
   cout<<" terminate with static iteration"<<endl;

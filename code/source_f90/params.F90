@@ -154,7 +154,7 @@ INTEGER,ALLOCATABLE :: nhome(:)                 !  home node of wf
 INTEGER,ALLOCATABLE ::  nstate_node(:)   ! number of active states in a node
 INTEGER,ALLOCATABLE ::  nstart_node(:)   ! offset address for counting in a node
 INTEGER,ALLOCATABLE ::  ispin_node(:,:)
-INTEGER :: icode, mpi_ierror  ! why 2 variables ? 
+INTEGER :: mpi_ierror  ! error code returned by fortran mpi subroutine
 #endif
 
 
@@ -247,7 +247,11 @@ INTEGER :: irest=0,istat=0, isave=0,idenspl=0
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
 INTEGER :: jinfo=10,jdip=-9999,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
-INTEGER :: jgeomel=0,jangabso=0,jelf=0,jstinf=10,jstboostinv=0
+INTEGER :: jgeomel=0
+INTEGER :: jangabso=0
+INTEGER :: jelf=0
+INTEGER :: jstinf=10
+INTEGER :: jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
 INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1

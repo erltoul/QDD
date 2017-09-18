@@ -90,7 +90,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: amoys,epotsps,ekinsps
 INTEGER,DIMENSION(:,:),ALLOCATABLE :: nrel2absf
 
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 
 ALLOCATE(psiaux(kdfull2))
 ALLOCATE(amoya(ksttot),epotspa(ksttot),ekinspa(ksttot))
@@ -149,11 +149,11 @@ IF(mynact==0) THEN
 END IF
 #if(parayes)
 IF(knode>1) THEN
-  CALL mpi_bcast(iact,1,mpi_integer,0,mpi_comm_world,icode)
-!  CALL mpi_bcast(nstate,1,mpi_integer,0,mpi_comm_world,icode)
-  CALL mpi_bcast(nclust,1,mpi_integer,0,mpi_comm_world,icode)
-  CALL mpi_bcast(nion,1,mpi_integer,0,mpi_comm_world,icode)
-  CALL mpi_bcast(nspdw,1,mpi_integer,0,mpi_comm_world,icode)
+  CALL mpi_bcast(iact,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
+!  CALL mpi_bcast(nstate,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
+  CALL mpi_bcast(nclust,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
+  CALL mpi_bcast(nion,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
+  CALL mpi_bcast(nspdw,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
 END IF
 #endif
 
@@ -191,7 +191,7 @@ IF(nclust > 0)THEN
 END IF
 #endif
 #if(parayes)
-CALL mpi_barrier (mpi_comm_world, icode)
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 IF(nclust > 0)THEN
   DO nb=1,nstate_all
@@ -220,7 +220,7 @@ IF(nclust > 0)THEN
 
 
 
-  CALL mpi_barrier (mpi_comm_world, icode)
+  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 
   DO nod=0,knode-1
@@ -334,19 +334,19 @@ END IF
 #if(parayes)
 IF(knode > 1) THEN
   IF(nclust > 0) THEN
-    CALL mpi_bcast(qe(1:kmom),kmom,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(se(1:3),3,mpi_double_precision,0,mpi_comm_world,icode)
+    CALL mpi_bcast(qe(1:kmom),kmom,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(se(1:3),3,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
   END IF
   IF (nabsorb > 0) &
     CALL mpi_bcast(rhoabso(1:kdfull2),kdfull2, &
-                   mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(foft2old,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(fpulseinteg1,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,icode)
-    CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,icode)
+                   mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(acc1old,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(acc2old,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(foft1old,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(foft2old,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(fpulseinteg1,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(fpulseinteg2,1,mpi_double_precision,0,mpi_comm_world,mpi_ierror)
+    CALL mpi_bcast(ilas,1,mpi_integer,0,mpi_comm_world,mpi_ierror)
 END IF
 
 #ifdef COMPLEXSWITCH
@@ -489,7 +489,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: amoya,epotspa,ekinspa
 REAL(DP),DIMENSION(:),ALLOCATABLE :: amoys,epotsps,ekinsps
 INTEGER,DIMENSION(:,:),ALLOCATABLE :: nrel2absf
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 
 ALLOCATE(psiaux(kdfull2))
 ALLOCATE(amoya(ksttot),epotspa(ksttot),ekinspa(ksttot))
@@ -502,7 +502,7 @@ DO nod=0,knode-1
   END DO
 END DO
 
-CALL mpi_barrier (mpi_comm_world, icode)
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 #endif
 
@@ -565,7 +565,7 @@ END IF
 #endif
 #if(parayes)
 
-CALL mpi_barrier (mpi_comm_world, icode)
+CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 IF(nclust > 0)THEN
   DO nb=1,nstate_all
@@ -584,7 +584,7 @@ IF(nclust > 0)THEN
     END IF
   END DO
   
-  CALL mpi_barrier (mpi_comm_world, icode)
+  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
   WRITE(*,*) ' before send ekins: myn=',myn
   DO nod=0,knode-1
@@ -904,7 +904,7 @@ REAL(DP) :: instring(length),outstring(length)
 INTEGER :: length,in_node,dest_node
 
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 
 IF(dest_node == in_node .AND. myn == dest_node) THEN
   outstring = instring
@@ -913,12 +913,12 @@ END IF
 
 IF(myn == dest_node) &
    CALL mpi_recv(outstring,length,mpi_double_precision,in_node, &
-                 mpi_any_tag, mpi_comm_world,is,icode)
+                 mpi_any_tag, mpi_comm_world,is,mpi_ierror)
 
 
 IF(myn == in_node)  &
    CALL mpi_send(instring,length,mpi_double_precision,dest_node,1,  &
-        mpi_comm_world,icode)
+        mpi_comm_world,mpi_ierror)
 
 
 RETURN 
@@ -944,7 +944,7 @@ COMPLEX(DP) :: instring(length),outstring(length)
 INTEGER :: length,in_node,dest_node
 
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 
 IF(dest_node == in_node .AND. myn == dest_node) THEN
   outstring = instring
@@ -955,12 +955,12 @@ write(6,*) "in", size(instring)," out ",  size(outstring)
 
 IF(myn == dest_node) &
    CALL mpi_recv(outstring,length,mpi_double_complex,in_node, &
-                 mpi_any_tag, mpi_comm_world,is,icode)
+                 mpi_any_tag, mpi_comm_world,is,mpi_ierror)
 
 
 IF(myn == in_node)  &
    CALL mpi_send(instring,length,mpi_double_complex,dest_node,1,  &
-        mpi_comm_world,icode)
+        mpi_comm_world,mpi_ierror)
 
 
 RETURN 

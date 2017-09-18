@@ -861,14 +861,14 @@ DO nba=1,nstate_all
       rp(j)=AIMAG(q0phase)
     END DO
     IF(myn /= 0) THEN
-      CALL mpi_send(rp,2*nmps,mpi_double_precision,0,nba,mpi_comm_world,icode)
+      CALL mpi_send(rp,2*nmps,mpi_double_precision,0,nba,mpi_comm_world,mpi_ierror)
       IF(ttestpar) WRITE(*,*) ' sent: nba,node=',nba,myn
     END IF
   END IF
   IF(myn == 0) THEN
     IF(mynact /= 0) THEN
        CALL mpi_recv(rp,2*nmps,mpi_double_precision,mynact,nba,  &
-                     mpi_comm_world,is,icode)
+                     mpi_comm_world,is,mpi_ierror)
        IF(ttestpar) WRITE(*,*) ' received: nba,from node=',nba,mynact
     END IF
     WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500

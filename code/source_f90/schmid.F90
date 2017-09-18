@@ -151,7 +151,7 @@ ALLOCATE(q3(kdfull2))
 
 !     determine own node 'myn'
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 !     loop over nodes and states: w.f. to be normalized
@@ -169,7 +169,7 @@ DO nod2=0,myn-1
       CALL flush()
     END IF
     CALL mpi_recv(q3,kdfull2, mpi_double_precision,nod2,nbe2*2+1,  &
-        mpi_comm_world,is,icode)
+        mpi_comm_world,is,mpi_ierror)
     isp3 = ispin_node(nbe2,nod2)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: received myn,nbe2,nod2,tag=',  &
@@ -219,7 +219,7 @@ DO nbe1=1,nstate_node(myn)
       CALL flush()
     END IF
     CALL mpi_ssend(q0(1,nbe1),kdfull2,mpi_double_precision,  &
-        nod2,nbe1*2+1,mpi_comm_world,icode)
+        nod2,nbe1*2+1,mpi_comm_world,mpi_ierror)
     IF(ttest) THEN
       WRITE(6,'(a,5i5)') 'SCHMID: sent myn,nbe1,nod2,tag=',  &
           myn,nbe1,nod2,nbe1*2+1
@@ -238,12 +238,12 @@ IF(tsync) THEN
   IF(myn == knode-1) THEN
     iend = 1
     DO nod2=0,knode-2
-      CALL mpi_bsend(iend,1,mpi_integer, nod2,1,mpi_comm_world,icode)
+      CALL mpi_bsend(iend,1,mpi_integer, nod2,1,mpi_comm_world,mpi_ierror)
       IF(ttest) WRITE(*,*) ' terminator sent myn=',myn
     END DO
   ELSE
     CALL mpi_recv(iend,1,mpi_integer,knode-1,  &
-        mpi_any_tag,mpi_comm_world,is,icode)
+        mpi_any_tag,mpi_comm_world,is,mpi_ierror)
     IF(ttest) WRITE(*,*) ' terminator received myn,iend=',myn,iend
   END IF
 END IF

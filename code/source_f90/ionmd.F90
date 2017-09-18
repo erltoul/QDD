@@ -1555,21 +1555,21 @@ DO ind=1,kdfull2
   aj(ind)=ajtx(ind)
 END DO
 CALL pi_allreduce(aj,ajtx,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,icode)
+    mpi_comm_world,mpi_ierror)
 DO ind=1,kdfull2
   aj(ind)=ajty(ind)
 END DO
 CALL pi_allreduce(aj,ajty,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,icode)
+    mpi_comm_world,mpi_ierror)
 DO ind=1,kdfull2
   aj(ind)=ajtz(ind)
 END DO
 CALL pi_allreduce(aj,ajtz,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,icode)
+    mpi_comm_world,mpi_ierror)
 
-CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
-CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
-CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,icode)
+CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
+CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
+CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
 expjx=ex
 expjy=ey
 expjz=ez
@@ -1673,7 +1673,7 @@ END DO                     !loop over states
 eeth=tel*dvol*0.5D0*hbar*hbar/2D0/ame !atomic units (h/2m)**2
 #if(parayes)
 tel=eeth
-CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
+CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
 #endif
 
 WRITE(6,'(a,f12.5)') ' electronic thermal energy: ',eeth

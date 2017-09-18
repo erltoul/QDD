@@ -1711,7 +1711,7 @@ DO iz=minz,maxz
         END DO
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
         CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-          mpi_sum,mpi_comm_world,icode)
+          mpi_sum,mpi_comm_world,mpi_ierror)
         CALL mpi_barrier(mpi_comm_world, mpi_ierror)
 #endif
         starget=rho(ind)-sproj
@@ -3921,7 +3921,7 @@ DO i=1,nstate
 ENDDO
 
 #if(parayes)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 IF(myn/=0) THEN
   prob(ksttot+1)=0D0
   CALL mpi_send(rtmpuse,nstate,mpi_double_precision,0,myn,mpi_comm_world,mpi_ierror)

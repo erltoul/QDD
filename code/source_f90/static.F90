@@ -310,7 +310,7 @@ IF(itmax == 0 .AND. isitmax== 0 .AND. isave > 0) THEN
   CALL infor(rho,-1)
   
 !#if(parayes)
-!  CALL mpi_finalize(icode)
+!  CALL mpi_finalize(mpi_ierror)
 !#endif
   
   STOP ' terminate with static iteration '
@@ -1386,20 +1386,20 @@ END DO
 
 #if(parayes)
 
-CALL mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(espnb,espnbp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(eshell,eshellp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(esh1,esh1p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(enonlc,enonlcp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(sumvar,sumvarp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(sumvar2,sumvar2p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 espnb=espnbp
 esh1=esh1p
@@ -1600,7 +1600,7 @@ omegam = omega_mieplasmon(rho)
 
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 IF(myn == 0) THEN
 #endif
   OPEN(42,POSITION='append',FILE='pstat.'//outnam)

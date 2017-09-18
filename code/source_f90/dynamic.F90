@@ -381,7 +381,7 @@ REAL(DP) :: ri, dt, pr, time_init, time_fin, time_cpu
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #else
 myn = 0
 #endif
@@ -758,7 +758,7 @@ INTEGER :: ico
 OPEN(2743,FILE='energies.'//outnam)
 
 #if(parayes||paraworld)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #else
 myn = 0
 #endif
@@ -855,7 +855,7 @@ ENDIF
 
 IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
 #if(findiff|numerov)
-  WRITE(6,*) "jstboosqtinv NOT YET FOR FINITE DIFFERENCE"
+  WRITE(6,*) "jstboostinv NOT YET FOR FINITE DIFFERENCE"
   STOP
 #else
   ALLOCATE(current(kdfull2,3))
@@ -888,11 +888,11 @@ CALL  prispe_parallele(6,it)
 IF(ttest) WRITE(*,*) ' INFO: before allreduce. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(eshell,eshellp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(esh1,esh1p,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(enonlc,enonlcp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 !DO iss=2,1,-1
 !   CALL mpi_allreduce(estar(iss),estarp(iss),1,mpi_double_precision,  &
 !        mpi_sum,mpi_comm_world,ic)
@@ -1343,9 +1343,9 @@ END DO
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(arho,arhop,kdfull2,mpi_double_precision,  &
-                   mpi_sum,mpi_comm_world,icode)
+                   mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(ekintot,ekintotp,1,mpi_double_precision,  &
-                   mpi_sum,mpi_comm_world,icode)
+                   mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 #endif
 
@@ -3058,7 +3058,7 @@ IF(trequest > 0D0) THEN
   END IF
 #if(parayes)
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  !CALL mpi_finalize (icode)
+  !CALL mpi_finalize (mpi_ierror)
 #endif
   STOP ' finish at TREQUEST'
  END IF

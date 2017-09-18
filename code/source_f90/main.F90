@@ -81,10 +81,6 @@ LOGICAL :: imaginary_time= .true.
 REAL(DP), EXTERNAL:: energ_ions   ! declared in ion_md
 REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
 
-!~ #if(raregas)
-!~ LOGICAL :: tmf
-!~ #endif
-
 !     *******************************************
 
 !     init
@@ -116,7 +112,6 @@ CALL iperio                     ! initializing the 'periodic table'
 CALL changeperio   ! overwrites default periodic system if necessary
 
 CALL iparams()               ! check dynamic  parameters
-
 
 CALL init_grid()    ! init coulomb solver, kinetic energy, grid properties
 
@@ -471,8 +466,6 @@ CALL flush(7)
 CALL stimer(1)
 WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
 
-!cpx=0D0;cpy=0D0;cpz=0D0
-
 CALL stimer(1)
 
 time=0
@@ -502,13 +495,7 @@ DO it=irest,itmax   ! time-loop
 !          pure electronic dynamics
     
     IF(nclust > 0) THEN
-      
-!~ #if(raregas)
-!~       tmf=.false.
-!~       IF(tmf) CALL loc_mfield_dummy(rho,aloc)   ! ???
-!~ #endif
-      
-      
+         
 !     propagation of the wfs
       WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
@@ -708,17 +695,15 @@ DEALLOCATE(psi)
 #if(fftw_gpu)
 !CALL cuda_end()
 #endif
-!                                       ! ends 'else' of 'if(ifscan)'
-!#endif
 
 #if(parayes||paraworld)
-CALL mpi_finalize(icode)
+CALL mpi_finalize(mpi_ierror)
 #endif
 #if(simpara)
 WRITE(7,*) ' before final barrier. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(7,*) ' after final barrier. myn=',myn
-CALL mpi_finalize(icode)
+CALL mpi_finalize(mpi_ierror)
 #endif
 
 IF(myn==0) THEN
@@ -741,103 +726,6 @@ ENDIF
 END PROGRAM tdlda_m
 
 
-!~ !#include "define.h"
-
-!~ #if(raregas)
-!~ !     ************************************
-
-!~ SUBROUTINE loc_mfield_dummy(rho,aloc)
-
-!~ !     ************************************
-
-!~ !     This routine is a dummy version -- usage still unclear.
-!~ !     Most probably obsolete!!!
-
-!~ !     The local part of the mean field
-!~ !     plus an update of the pseudo-potentials.
-
-!~ !     Input:
-!~ !      rho    = electron density
-!~ !      dt     = stepsize (in case of dynamics)
-!~ !      tdyn   = switch to dynamic case
-!~ !     Output:
-!~ !      aloc   = local mean field
-
-!~ USE params
-!~ #if(netlib_fft|fftw_cpu)
-!~ USE coulsolv
-!~ #endif
-!~ IMPLICIT REAL(DP) (A-H,O-Z)
-
-
-!~ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-!~ REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-
-
-
-!~ REAL(DP),ALLOCATABLE :: rhotmp(:)
-!~ COMPLEX(DP) :: psidummy(1)
-
-
-!~ ALLOCATE(rhotmp(2*kdfull2))
-!~ IF(idielec /= 1) THEN
-!~   CALL calcpseudo()
-!~   CALL calcrho(rho,psi)
-!~   DO ii=1,2*kdfull2
-!~     rhotmp(ii)=rho(ii)
-!~   END DO
-!~   CALL addimage(rho,1)
-  
-!~ ! Coulomb of the electronic density
-!~ #if(gridfft)
-!~   CALL falr(rho,chpcoul,kdfull2)
-!~ #endif
-!~ #if(findiff|numerov)
-!~   CALL solv_fft(rho,chpcoul,dx,dy,dz)
-!~ #endif
-!~   CALL calclocal(rho,aloc)
-!~ END IF
-
-!~ IF(idielec == 1) THEN
-  
-!~   DO ii=1,2*kdfull2
-!~     rho(ii)=rhotmp(ii)
-!~   END DO
-!~   DO ii=1,kdfull2
-!~     rfieldtmp(ii)=chpcoul(ii)
-!~   END DO
-!~   CALL addimage(rho,0)
-  
-!~ #if(gridfft)
-!~ !         if(ipseudo.eq.1)
-!~   CALL falr(rho,chpcoul,kdfull2)
-!~ #endif
-!~ #if(findiff|numerov)
-!~ !         if(ipseudo.eq.1)
-!~   CALL solv_fft(rho,chpcoul,dx,dy,dz)
-!~ #endif
-  
-  
-!~   DO ii=1,kdfull2
-!~     CALL conv1to3(ii)
-!~     IF(iindtmp(1) > nint(xdielec/dx)+nx)THEN
-!~       chpcoul(ii)=rfieldtmp(ii)
-!~     END IF
-!~   END DO
-!~   DO ii=1,2*kdfull2
-!~     rho(ii)=rhotmp(ii)
-!~   END DO
-  
-!~ END IF
-
-!~ CALL calclocal(rho,aloc)
-!~ IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
-
-!~ DEALLOCATE(rhotmp)
-
-!~ RETURN
-!~ END SUBROUTINE loc_mfield_dummy
-!~ #endif
 
 SUBROUTINE mergetabs
 

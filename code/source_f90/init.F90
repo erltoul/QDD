@@ -2128,7 +2128,7 @@ END IF
 !     final ortho-normalization to clean up
 
 #if(parayes)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 WRITE(*,*) ' wfs initialized: myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(6,*) 'myn=',myn,' before SCHMID'
@@ -2469,7 +2469,7 @@ nstate_all = nstate
 
 
 #if(parayes)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 !old      nsttest=0
 !old      nloc=0
 !old      do ipr=0,knode-1
@@ -2953,7 +2953,7 @@ END DO
 
 
 #if(parayes)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 WRITE(*,*) ' wfs initialized: myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 WRITE(6,*) 'myn=',myn,' before SCHMID'
@@ -3444,7 +3444,7 @@ REAL(DP) :: x1,y1,z1
 !------------------------------------------------------------------
 #if(paraworld)
 
-CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
+CALL  mpi_comm_rank(mpi_comm_world,nrank,mpi_ierror)
 #endif
 
 level=nrank

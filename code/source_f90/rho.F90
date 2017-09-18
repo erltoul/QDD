@@ -97,7 +97,7 @@ END DO
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !         mx=2*nxyz
 CALL mpi_allreduce(rh,rho,2*nxyz,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 !         mx=2*nxyz
 DEALLOCATE(rh)
@@ -228,7 +228,7 @@ ALLOCATE(qeorb(kstate,11))
 
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 IF(myn == 0) THEN
 #endif
   WRITE(iunit,'(a)') 'protocol of s.p. moments:',  &
@@ -313,16 +313,16 @@ END DO
 IF(myn /= 0) THEN
   nod = myn
   CALL mpi_send(qeorb,11*kstate,mpi_double_precision,  &
-      0,nod,mpi_comm_world,icode)
-  CALL mpi_send(iprisav,2*kstate,mpi_integer, 0,nod,mpi_comm_world,icode)
+      0,nod,mpi_comm_world,mpi_ierror)
+  CALL mpi_send(iprisav,2*kstate,mpi_integer, 0,nod,mpi_comm_world,mpi_ierror)
   IF(ttest) WRITE(*,*) ' SPMOMS: sent at node:',myn
 ELSE
   DO nod2=0,knode-1
     IF(nod2 > 0) THEN
       CALL mpi_recv(qeorb,11*kstate,mpi_double_precision,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,icode)
+          nod2,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
       CALL mpi_recv(iprisav,2*kstate,mpi_integer,  &
-          nod2,mpi_any_tag,mpi_comm_world,is,icode)
+          nod2,mpi_any_tag,mpi_comm_world,is,mpi_ierror)
       IF(ttest) WRITE(*,*)' SPMOMS: recv from  node=',nod2
     END IF
     DO nbe=1,nstate_node(nod2)

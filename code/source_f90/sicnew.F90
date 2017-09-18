@@ -338,12 +338,12 @@ END IF
 CALL act_part_num(npartup,npartdw,npartto)
 
 #if(parayes)
-CALL mpi_comm_rank(mpi_comm_world,nod,icode)
+CALL mpi_comm_rank(mpi_comm_world,nod,mpi_ierror)
 size=lengnod(nod+1)
 ALLOCATE(rhonod1(size))
 ALLOCATE(rhonod2(size))
-CALL pi_scatterv(rho,nxyz,rhonod1,size,icode)
-CALL pi_scatterv(rho(nxyz+1),nxyz,rhonod2,size,icode)
+CALL pi_scatterv(rho,nxyz,rhonod1,size,mpi_ierror)
+CALL pi_scatterv(rho(nxyz+1),nxyz,rhonod2,size,mpi_ierror)
 ALLOCATE(tp1(size))
 ALLOCATE(tp2(size))
 #else
@@ -381,8 +381,8 @@ IF(numspin==2) THEN
     END DO
   END IF
 #if(parayes)
-  CALL pi_allgatherv(tp1,size,rhospu,nxyz,icode)
-  CALL pi_allgatherv(tp2,size,rhospu(nxyz+1),nxyz,icode)
+  CALL pi_allgatherv(tp1,size,rhospu,nxyz,mpi_ierror)
+  CALL pi_allgatherv(tp2,size,rhospu(nxyz+1),nxyz,mpi_ierror)
 #endif
 
   IF(npartdw > 0) THEN
@@ -400,8 +400,8 @@ IF(numspin==2) THEN
     END DO
   END IF
 #if(parayes)
-  CALL pi_allgatherv(tp1,size,rhospd,nxyz,icode)
-  CALL pi_allgatherv(tp2,size,rhospd(nxyz+1),nxyz,icode)
+  CALL pi_allgatherv(tp1,size,rhospd,nxyz,mpi_ierror)
+  CALL pi_allgatherv(tp2,size,rhospd(nxyz+1),nxyz,mpi_ierror)
 #endif
 
 !     DFT for averaged spinup and spindown density
@@ -421,10 +421,10 @@ IF(numspin==2) THEN
 #if(parayes)
 ALLOCATE(aloc1(size))
 ALLOCATE(aloc2(size))
-CALL pi_scatterv(chpdftspu,nxyz,tp1,size,icode)
-CALL pi_scatterv(chpdftspd(nxyz+1),nxyz,tp2,size,icode)
-CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
-CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,icode)
+CALL pi_scatterv(chpdftspu,nxyz,tp1,size,mpi_ierror)
+CALL pi_scatterv(chpdftspd(nxyz+1),nxyz,tp2,size,mpi_ierror)
+CALL pi_scatterv(aloc,nxyz,aloc1,size,mpi_ierror)
+CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,mpi_ierror)
 #endif
 
   IF(npartup > 0) THEN
@@ -437,7 +437,7 @@ CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,icode)
 #endif
     END DO
 #if(parayes)
-    CALL pi_allgatherv(aloc1,size,aloc,nxyz,icode)
+    CALL pi_allgatherv(aloc1,size,aloc,nxyz,mpi_ierror)
 #endif
   END IF
 
@@ -454,7 +454,7 @@ CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,icode)
     END DO
 #endif
 #if(parayes)
-    CALL pi_allgatherv(aloc2,size,aloc(nxyz+1),nxyz,icode)
+    CALL pi_allgatherv(aloc2,size,aloc(nxyz+1),nxyz,mpi_ierror)
 #endif
   END IF
 
@@ -484,8 +484,8 @@ ELSE
   END DO
 
 #if(parayes)
-CALL pi_allgatherv(tp1,size,rhosp,nxyz,icode)
-CALL pi_allgatherv(tp2,size,rhosp(nxyz+1),nxyz,icode)
+CALL pi_allgatherv(tp1,size,rhosp,nxyz,mpi_ierror)
+CALL pi_allgatherv(tp2,size,rhosp(nxyz+1),nxyz,mpi_ierror)
 #endif
 
 !     DFT for averaged s.p. state
@@ -495,8 +495,8 @@ CALL pi_allgatherv(tp2,size,rhosp(nxyz+1),nxyz,icode)
 !     subtract from pure LDA potential
 
 #if(parayes)
-CALL pi_scatterv(chpdftsp,nxyz,tp1,size,icode)
-CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
+CALL pi_scatterv(chpdftsp,nxyz,tp1,size,mpi_ierror)
+CALL pi_scatterv(aloc,nxyz,aloc1,size,mpi_ierror)
 #endif
 !  DO ind=1,nxyz
   DO ind=1,size
@@ -507,7 +507,7 @@ CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
 #endif
   END DO
 #if(parayes)
-  CALL pi_allgatherv(aloc1,size,aloc,nxyz,icode)
+  CALL pi_allgatherv(aloc1,size,aloc,nxyz,mpi_ierror)
 #endif
 
   enrear   = enrearsave-enrear*npartto
@@ -538,8 +538,8 @@ IF(numspin==2) THEN
 #endif
   END DO
 #if(parayes)
-    CALL pi_allgatherv(tp1,size,rho1,nxyz,icode)
-    CALL pi_allgatherv(tp2,size,rho2,nxyz,icode)
+    CALL pi_allgatherv(tp1,size,rho1,nxyz,mpi_ierror)
+    CALL pi_allgatherv(tp2,size,rho2,nxyz,mpi_ierror)
 #endif
 
 #if(gridfft)
@@ -557,9 +557,9 @@ IF(numspin==2) THEN
   facup = 1D0/npartup
 
 #if(parayes)
-  CALL pi_scatterv(coulsum,nxyz,tp1,size,icode)
-  CALL pi_scatterv(couldif,nxyz,tp2,size,icode)
-  CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
+  CALL pi_scatterv(coulsum,nxyz,tp1,size,mpi_ierror)
+  CALL pi_scatterv(couldif,nxyz,tp2,size,mpi_ierror)
+  CALL pi_scatterv(aloc,nxyz,aloc1,size,mpi_ierror)
 #endif
 !  DO ind=1,nxyz
   DO ind=1,size
@@ -572,14 +572,14 @@ IF(numspin==2) THEN
 #endif
   END DO
 #if(parayes)
-  CALL pi_allgatherv(aloc1,size,aloc,nxyz,icode)
+  CALL pi_allgatherv(aloc1,size,aloc,nxyz,mpi_ierror)
 #endif
 
 
   IF (npartdw > 0) THEN
   
 #if(parayes)
-    CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,icode)
+    CALL pi_scatterv(aloc(nxyz+1),nxyz,aloc2,size,mpi_ierror)
 #endif
     facdw = 1D0/npartdw
 !    DO ind=1,nxyz
@@ -594,7 +594,7 @@ IF(numspin==2) THEN
 #endif
     END DO
 #if(parayes)
-    CALL pi_allgatherv(aloc2,size,aloc(nxyz+1),nxyz,icode)
+    CALL pi_allgatherv(aloc2,size,aloc(nxyz+1),nxyz,mpi_ierror)
     DEALLOCATE(aloc1,aloc2,tp1,tp2)
 #endif
   
@@ -620,8 +620,8 @@ ELSE
 
   fac = 1D0/npartto
 #if(parayes)
-  CALL pi_scatterv(chpcoul,nxyz,tp1,size,icode)
-  CALL pi_scatterv(aloc,nxyz,aloc1,size,icode)
+  CALL pi_scatterv(chpcoul,nxyz,tp1,size,mpi_ierror)
+  CALL pi_scatterv(aloc,nxyz,aloc1,size,mpi_ierror)
 !  WRITE(*,*) 'scattering of chpcoul and aloc done'
 #endif
 !  DO ind=1,nxyz
@@ -633,7 +633,7 @@ ELSE
 #endif
   END DO
 #if(parayes)
-  CALL pi_allgatherv(aloc1,size,aloc,nxyz,icode)
+  CALL pi_allgatherv(aloc1,size,aloc,nxyz,mpi_ierror)
   DEALLOCATE(aloc1,tp1,tp2)
 #endif
 
@@ -1137,9 +1137,9 @@ END DO
 #if(parayes)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(partup,partupp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(partdw,partdwp,1,mpi_double_precision,  &
-    mpi_sum,mpi_comm_world,icode)
+    mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 partup = partupp
 partdw = partdwp

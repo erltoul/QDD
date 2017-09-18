@@ -55,7 +55,7 @@ INTEGER, EXTERNAL :: isoutofbox
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #else
 myn=0
 #endif

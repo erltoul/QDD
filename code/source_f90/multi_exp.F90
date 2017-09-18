@@ -88,12 +88,12 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 !----------------------------------------------------------------------
 
 #if(paraworld)
-  CALL  mpi_comm_rank(mpi_comm_world,nrank,icode)
-  !CALL  MPI_COMM_SIZE(mpi_comm_world,nprocs,icode)
+  CALL  mpi_comm_rank(mpi_comm_world,nrank,mpi_ierror)
+  !CALL  MPI_COMM_SIZE(mpi_comm_world,nprocs,mpi_ierror)
   level=nrank
   !WRITE(2000*(level+1)+6,*) level,nprocs
   !CALL flush(2000*level)
-  !CALL MPI_FINALIZE(icode)
+  !CALL MPI_FINALIZE(mpi_ierror)
   !STOP
 #endif
 
@@ -141,15 +141,15 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
   iter_CN = 0
 
 #if(paraworld)
-  CALL  mpi_comm_size(mpi_comm_world,nprocs,icode)
-  CALL  mpi_comm_rank(mpi_comm_world,level,icode)
+  CALL  mpi_comm_size(mpi_comm_world,nprocs,mpi_ierror)
+  CALL  mpi_comm_rank(mpi_comm_world,level,mpi_ierror)
   kdfull28 = (kxbox/2)*(kybox/2)*(kzbox/2)
 
   IF(level.NE.0) THEN
      DO nb = 1,nstate
-        CALL mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_world,is,icode)
+        CALL mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level-1,1,mpi_comm_world,is,mpi_ierror)
      ENDDO
-     CALL mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_world,is,icode)
+     CALL mpi_recv(dt1,1,mpi_double_precision,level-1,3,mpi_comm_world,is,mpi_ierror)
   ENDIF
 #endif
 
@@ -200,9 +200,9 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 !from fine array to coarse array
         CALL from3Dto1Dc(q1,qarray,nx2/2,ny2/2,nz2/2)
 !from coarse array to coarse !vector
-        CALL mpi_send(q1,kdfull28,mpi_double_complex,level+1,1,mpi_comm_world,icode)
+        CALL mpi_send(q1,kdfull28,mpi_double_complex,level+1,1,mpi_comm_world,mpi_ierror)
      ENDDO
-     CALL mpi_send(dt1,1,mpi_double_precision,level+1,3,mpi_comm_world,icode)
+     CALL mpi_send(dt1,1,mpi_double_precision,level+1,3,mpi_comm_world,mpi_ierror)
   ENDIF
 
   iter_CN = 0
@@ -212,11 +212,11 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 !--------------------
   IF(level.NE.nprocs-1) THEN
      DO nb = 1,nstate
-        CALL mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level+1,2,mpi_comm_world,is,icode)
-        CALL mpi_recv(hpsisave(1,nb),kdfull2,mpi_double_complex,level+1,12,mpi_comm_world,is,icode)
+        CALL mpi_recv(q0(1,nb),kdfull2,mpi_double_complex,level+1,2,mpi_comm_world,is,mpi_ierror)
+        CALL mpi_recv(hpsisave(1,nb),kdfull2,mpi_double_complex,level+1,12,mpi_comm_world,is,mpi_ierror)
      ENDDO
-     CALL mpi_recv(aloc,kdfull2,mpi_double_precision,level+1,13,mpi_comm_world,is,icode)
-     CALL mpi_recv(aloc(1+nx2*ny2*nz2),kdfull2,mpi_double_precision,level+1,13,mpi_comm_world,is,icode)
+     CALL mpi_recv(aloc,kdfull2,mpi_double_precision,level+1,13,mpi_comm_world,is,mpi_ierror)
+     CALL mpi_recv(aloc(1+nx2*ny2*nz2),kdfull2,mpi_double_precision,level+1,13,mpi_comm_world,is,mpi_ierror)
   ENDIF
 
   DO WHILE (rnorm_err.GT.threshold) 
@@ -270,7 +270,7 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
         CALL from1Dto3Dc(q0(1,nb),qarray,nx2,ny2,nz2)    !from coarse vector to coarse array
         CALL interpol3Dc(qarray,qarrayfine)               !from coarse array to fine array
         CALL from3Dto1Dc(qactfine,qarrayfine,2*nx2,2*ny2,2*nz2)
-        CALL mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,2,mpi_comm_world,icode)
+        CALL mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,2,mpi_comm_world,mpi_ierror)
 !from coarse array to coarse !vector
         IF (ispin(nrel2abs(nb)) == 1) THEN
            ilocbas = 1
@@ -285,18 +285,18 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
         CALL from1Dto3Dc(hpsisave(1,nb),qarray,nx2,ny2,nz2)  !from coarse vector to coarse array
         CALL interpol3Dc(qarray,qarrayfine)  !from coarse array to fine array
         CALL from3Dto1Dc(qactfine,qarrayfine,2*nx2,2*ny2,2*nz2)
-        CALL mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,12,mpi_comm_world,icode)
+        CALL mpi_send(qactfine,kdfull2fine,mpi_double_complex,level-1,12,mpi_comm_world,mpi_ierror)
         !from coarse array to coarse !vector
 
      ENDDO
      CALL from1Dto3D(aloc,qarray,nx2,ny2,nz2)  !from coarse vector to coarse array
      CALL interpol3D(qarray,qarrayfine)  !from coarse array to fine array
      CALL from3Dto1D(qactfine,qarrayfine,2*nx2,2*ny2,2*nz2)
-     CALL mpi_send(qactfine,kdfull2fine,mpi_double_precision,level-1,13,mpi_comm_world,icode)
+     CALL mpi_send(qactfine,kdfull2fine,mpi_double_precision,level-1,13,mpi_comm_world,mpi_ierror)
      CALL from1Dto3D(aloc(nx2*ny2*nz2+1),qarray,nx2,ny2,nz2)  !from coarse vector to coarse array
      CALL interpol3D(qarray,qarrayfine)  !from coarse array to fine array
      CALL from3Dto1D(qactfine,qarrayfine,2*nx2,2*ny2,2*nz2)
-     CALL mpi_send(qactfine,kdfull2fine,mpi_double_precision,level-1,13,mpi_comm_world,icode)
+     CALL mpi_send(qactfine,kdfull2fine,mpi_double_precision,level-1,13,mpi_comm_world,mpi_ierror)
 ENDIF
 
 q0 = x

@@ -234,7 +234,7 @@ ii     = 0
 ec=0D0
 ec1=0D0
 #if(parayes)
-CALL  mpi_comm_rank(mpi_comm_world,myn,icode)
+CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #endif
 #if(parano)
 myn=0
@@ -292,8 +292,8 @@ e1=ec1                  ! this is the full functional
 #if(parayes)
 CALL pi_allgather(chpdft,mini,ntranche,p1,kdfull2)
 CALL pi_allgather(chpdft(nxyz+1),mini,ntranche,p2,kdfull2)
-CALL pi_allreduce(ec,e,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
-CALL pi_allreduce(ec1,e1,1,mpi_double_precision, mpi_sum,mpi_comm_world,icode)
+CALL pi_allreduce(ec,e,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
+CALL pi_allreduce(ec1,e1,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
 DO i=1,nxyz
   chpdft(i)=p1(i)
 !mb if number of down spin electrons is 0, then print 0
@@ -411,13 +411,13 @@ ec=0D0
 !CALL cpu_time(time_start)
 
 #if(parayes)
-CALL mpi_comm_rank(mpi_comm_world,nod,icode)
+CALL mpi_comm_rank(mpi_comm_world,nod,mpi_ierror)
 mysize=lengnod(nod+1)
 
 ALLOCATE(rhonod1(mysize))
 ALLOCATE(rhonod2(mysize))
-CALL pi_scatterv(rho,nxyz,rhonod1,mysize,icode)
-CALL pi_scatterv(rho(nxyz+1),nxyz,rhonod2,mysize,icode)
+CALL pi_scatterv(rho,nxyz,rhonod1,mysize,mpi_ierror)
+CALL pi_scatterv(rho(nxyz+1),nxyz,rhonod2,mysize,mpi_ierror)
 
 ALLOCATE(chpdftnod1(mysize))
 ALLOCATE(chpdftnod2(mysize))
@@ -585,14 +585,14 @@ DO ii=1,mysize
 END DO
 !!!!$OMP END PARALLEL DO
 #if(parayes)
-CALL pi_allgatherv(chpdftnod1,mysize,chpdft,nxyz,icode)
-CALL pi_allgatherv(chpdftnod2,mysize,chpdft(nxyz+1),nxyz,icode)
+CALL pi_allgatherv(chpdftnod1,mysize,chpdft,nxyz,mpi_ierror)
+CALL pi_allgatherv(chpdftnod2,mysize,chpdft(nxyz+1),nxyz,mpi_ierror)
 DEALLOCATE(chpdftnod1,chpdftnod2)
 DEALLOCATE(rhonod1,rhonod2)
-CALL mpi_allreduce(ec,e,1,mpi_double_precision,mpi_sum,mpi_comm_world,icode)
+CALL mpi_allreduce(ec,e,1,mpi_double_precision,mpi_sum,mpi_comm_world,mpi_ierror)
 IF(directenergy) &
      CALL mpi_allreduce(enerpw,ep,1,mpi_double_precision,&
-     mpi_sum,mpi_comm_world,icode)
+     mpi_sum,mpi_comm_world,mpi_ierror)
 ec=e
 enerpw=ep
 #endif
