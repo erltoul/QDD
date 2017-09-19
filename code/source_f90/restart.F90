@@ -724,7 +724,7 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=ifile,STATUS='keep')
   
   
 !  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
-    WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'
+!     WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'  ! garbage file ?
 !  END IF
 
 !  CLOSE(ifile)

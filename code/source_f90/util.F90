@@ -2475,7 +2475,7 @@ SUBROUTINE mtv_fld(field,i)
 USE params
 IMPLICIT NONE
 
-INTEGER, INTENT(IN)              :: i
+INTEGER, INTENT(IN)              :: i  ! 1=static, 2=dynamic (only change is filenaming)
 REAL(DP), INTENT(IN)             :: field(kdfull2)
 
 INTEGER :: ind, jx, jy, num
@@ -2540,7 +2540,7 @@ REAL(DP), ALLOCATABLE :: rho(:)
 
 ALLOCATE(rho(2*kdfull2))
 
-!     print integrated 3d-field
+!     print integrated 3d-field (dimension to integrate on depends of values of i3dx, i3dz)
 
 xmin1=-nx*dx
 ymin1=-ny*dy

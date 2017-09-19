@@ -816,8 +816,8 @@ END DO
 
 CALL spmoms(psi,6)
 
-WRITE(441,'(f10.3,10(1pg13.5))') tfs,enonlo(1:nstate)
-CALL FLUSH(441)
+!WRITE(441,'(f10.3,10(1pg13.5))') tfs,enonlo(1:nstate)  ! Another rubbish file ?
+!CALL FLUSH(441)
 
 
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
@@ -1014,7 +1014,7 @@ etot = energy + ekion
 
 
 energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
-WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, &
+! WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, & ! Rubbish file ? 
   eshell+enrear+ecback+ecorr,ecback+ecorr
 
 IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
@@ -1081,7 +1081,6 @@ IF(myn == 0) THEN
     IF(.NOT.topenf) OPEN(17,POSITION='append',FILE='infosp.'//outnam)
     WRITE(17,'(a,i5,f8.3,1pg13.5)') 'time_step,time,energy=',it,tinfs,etot
     CLOSE(17)
-!    IF(.NOT.topenf)  CLOSE(17)
   END IF
   
 #if(parayes)

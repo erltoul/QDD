@@ -178,7 +178,10 @@ extern double params_mp_drcharges_;
 extern const char params_mp_outnam_;
 extern int params_mp_iflocaliz_;                           // evaluate localization
 extern int params_mp_myn_;                                 // nr. of actual node
-extern int params_mp_ifls_,params_mp_ismax_,params_mp_itmax_,params_mp_istinf_,params_mp_ipasinf_;
+extern int params_mp_ismax_;
+extern int params_mp_itmax_;
+extern int params_mp_istinf_;
+extern int params_mp_ipasinf_;
 extern int params_mp_idyniter_;        // number iterations to start dynamic E0DMP 
 extern int params_mp_iffastpropag_,params_mp_ifexpevol_;
 extern int params_mp_irest_,params_mp_istat_,params_mp_isave_,params_mp_idenspl_;

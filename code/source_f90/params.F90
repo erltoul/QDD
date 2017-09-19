@@ -234,16 +234,36 @@ REAL(DP) :: reference_energy=0D0
 REAL(DP) :: drcharges=5D0
 
 
-CHARACTER (LEN=13) :: outnam
-CHARACTER (LEN=13) :: outname
-INTEGER :: ifile=60 ! unit number for save 
-INTEGER :: iflocaliz=0                           ! evaluate localization
-INTEGER :: myn                                 ! nr. of actual node
-INTEGER :: ifls,ismax=1000,itmax=1000,istinf=10,ipasinf=1
-INTEGER :: isitmax=0         ! number of imaginary-time steps (afterburn)
-INTEGER :: idyniter=0        ! number iterations to start dynamic E0DMP 
-INTEGER :: iffastpropag=1,iswitch_interpol=0, ifexpevol=0,ifcnevol=0 ! expe=exponential, cn = Crank Nicolson multigrid
-INTEGER :: irest=0,istat=0, isave=0,idenspl=0
+INTEGER :: ifile=60              ! unit number for save 
+INTEGER :: iflocaliz=0           ! evaluate localization
+INTEGER :: myn                   ! nr. of actual node
+INTEGER :: ismax=1000       ! maximum number of static iterations
+INTEGER :: itmax=1000       ! number of time steps for electronic propagation
+INTEGER :: isitmax=0        ! number of imaginary-time steps (afterburn)
+INTEGER :: idyniter=0       ! number iterations to start dynamic E0DMP 
+
+! Printing informations 
+
+CHARACTER (LEN=13) :: outnam     ! outpu file name
+CHARACTER (LEN=13) :: outname    ! output file name with node number in it.
+INTEGER :: istinf=10        ! modulus for printing information in static iteration
+INTEGER :: ipasinf=1        ! modulus for printing information on observables
+
+
+INTEGER :: iffastpropag=1 !accelerated time step in TV splitting
+
+INTEGER :: iswitch_interpol=0 
+INTEGER :: ifexpevol=0,ifcnevol=0 ! expe=exponential, cn = Crank Nicolson multigrid
+
+INTEGER :: irest=0,istat=0    ! switch to restart/read dynamics from file ’save’
+INTEGER :: isave=0            ! saves results after every ’isave’ steps
+                              !   on file ’rsave’ in and after static iteration
+                              !   on file ’save’ in dynamic propagation
+                              
+INTEGER :: idenspl=0  ! print densities integrated over x, y and z in 3 separated files
+                      !  (at the end in static, every 'idenspl' steps in dynamic)
+INTEGER :: ifrhoint_time=0 ! print densities integrated over xy, xz, yz in 3 separated files
+
 INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
 INTEGER :: jinfo=10,jdip=-9999,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
@@ -257,7 +277,7 @@ INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
 INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
-INTEGER :: ifrhoint_time=0,iangmo=0,ifspemoms=0,iftransme=0
+INTEGER :: iangmo=0,ifspemoms=0,iftransme=0
 INTEGER :: itersicp6
 LOGICAL :: tstinf
 REAL(DP) :: rheattemp=0D0        ! re-heat temperature
