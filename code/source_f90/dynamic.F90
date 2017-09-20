@@ -1015,7 +1015,7 @@ etot = energy + ekion
 
 energ2 = esh1+enerpw+ecrho+ecback+ecorr+enonlc -ecrhoimage
 ! WRITE(953,'(f8.4,10(1pg13.5))') tfs,eshell,enrear,ecback,ecorr, & ! Rubbish file ? 
-  eshell+enrear+ecback+ecorr,ecback+ecorr
+!  eshell+enrear+ecback+ecorr,ecback+ecorr
 
 IF (myn == 0 .AND. jenergy > 0 .AND. MOD(it,jenergy) == 0 ) THEN
   CALL safeopen(163,it,jenergy,'penergies')
