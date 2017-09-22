@@ -2200,7 +2200,8 @@ INTEGER :: nstpernode, nstaccum, nod, nodeplus
 
 REAL(DP),ALLOCATABLE :: ph(:)             ! degeneracy of wavefunction, for
 REAL(DP) :: occu(ksttot)
-REAL(DP) :: ecutdw, ecutup, efrmup, efrmdw,nelup,neldw
+REAL(DP) :: ecutdw, ecutup, efrmup, efrmdw
+INTEGER  :: nelup,neldw
 REAL(DP) :: gp,partnm,epstmp,sav
 LOGICAL :: tocc
 DATA tocc/.false./

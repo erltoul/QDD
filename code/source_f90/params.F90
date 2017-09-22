@@ -567,6 +567,10 @@ ALLOCATE(fprojx(ng),fprojy(ng),fprojz(ng))
 !                                      book keeping for LCGO initialization
 ALLOCATE(radini(1:ng),ipol(1:ng))
 ALLOCATE( initord(1:3,1:ng),nmaxst(1:ng))
+!~ radini=0.0_dp
+!~ ipol=0.0_dp
+!~ initord=0.0_dp
+!~ nmaxst=0
 
 IF(icooltyp == 3) ALLOCATE(eloc(0:ng),enoloc(0:ng),eion(ng,ng),eiinew(ng))
 
