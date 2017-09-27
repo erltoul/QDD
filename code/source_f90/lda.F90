@@ -110,7 +110,7 @@ DO ind=1,nxyz
      add=chpcoul(ind)
   END IF
   IF(tfs > 0D0) THEN
-     add = temp + vlaser(ind) + Vproj(ind)
+     add = add + vlaser(ind) + Vproj(ind)
   END IF
 
   aloc(ind)=chpdft(ind)+add
