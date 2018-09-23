@@ -5,14 +5,14 @@
 !
 ! grid: FFT or finite difference
 !
-#define gridfft 0
-#define findiff 1
+#define gridfft 1
+#define findiff 0
 #define numerov 0
 !
 ! coulomb solver  (set all to 0 for 'findiff' or 'numerov')
 !
 #define coufou 0
-#define coudoub 0
+#define coudoub 1
 !   switch to 3D FFTW in Coulomb solver (preliminary option)
 #define coudoub3D 0
 !

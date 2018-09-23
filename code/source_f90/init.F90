@@ -3354,9 +3354,7 @@ IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible'
 #endif
 IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
-#if(!pw92)
-IF(directenergy) STOP ' directenergy=.true. requires Perdew&Wang functional '
-#endif
+IF(directenergy .AND. idenfunc.NE.1) STOP ' directenergy=.true. requires Perdew&Wang functional '
 IF(directenergy .AND. ifsicp==5) &
    STOP ' directenergy=.true. not yet prepared for exact exchange '
 #if(!raregas)
