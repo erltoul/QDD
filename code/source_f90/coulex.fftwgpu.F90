@@ -89,7 +89,7 @@ ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 !ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 ALLOCATE(akv2r(kdred),akv2i(kdred))
 ALLOCATE(ikm(kxmax,kymax))
-CALL my_cuda_allocate_coulex() ! Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
+!CALL my_cuda_allocate_coulex() ! Pinned memory allocation to make CPU>GPU and GPU>CPU transfers faster
 
 !     call input routine fftinp, which initializes the grid and fft tabl
 

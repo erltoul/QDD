@@ -1470,13 +1470,6 @@ DO nb=1,nstate
 
   CALL fftback(q2,p)
 #endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
@@ -1495,13 +1488,6 @@ DO nb=1,nstate
   CALL fftback(q2,p)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
@@ -1520,13 +1506,6 @@ DO nb=1,nstate
   CALL fftback(q2,p)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
@@ -1600,13 +1579,6 @@ DO nb=1,nstate
   CALL fftback(q2,p)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
@@ -1626,13 +1598,6 @@ DO nb=1,nstate
   CALL fftback(q2,p)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
@@ -1652,13 +1617,6 @@ DO nb=1,nstate
   CALL fftback(q2,p)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-
-  CALL fftback(q2,p,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))

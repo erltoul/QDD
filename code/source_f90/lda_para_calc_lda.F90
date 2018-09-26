@@ -377,7 +377,6 @@ INTEGER :: nod
 
 !!!!!      icount = 0
 
-#if(!lda_gpu)
 DATA a0  /0.458165293D0 /
 DATA da0 /0.119086804D0 /
 
@@ -600,17 +599,6 @@ ec=e
 enerpw=ep
 #endif
 
-#else(lda_gpu)
-enrear = 0D0
-ec=0D0
-
-IF(directenergy) THEN
-  enerpw = 0D0
-  CALL calc_lda_enerpw_gpu(rho,chpdft,ec,enerpw)
-ELSE
-  CALL calc_lda_gpu(rho,chpdft,ec)
-END IF
-#endif
 
 enrear=ec*dvol
 !  CALL cpu_time(time_end)

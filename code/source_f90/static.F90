@@ -258,7 +258,7 @@ END IF
 
 !     final protocol on file 'pstat.<name>''
 
-!CALL pri_pstat(psir,rho)
+CALL pri_pstat(psir,rho)
 
 !     save real wavefunctions for further applications
 
@@ -522,10 +522,6 @@ INTEGER :: ni
 #endif
 #endif
 
-#if(fftw_gpu)
-INTEGER(C_INT) :: size_data
-#endif
-
 #if(parano)
 DATA tocc,tcpu/.false.,.true./
 #endif
@@ -544,15 +540,10 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
 REAL(DP),ALLOCATABLE :: qex(:,:)
 
 #if(gridfft)
-#if(netlib_fft|fftw_cpu)
 REAL(DP)::vol
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
-#endif
 
-#if(fftw_gpu)
-REAL(DP),ALLOCATABLE :: q1(:,:),w4(:,:)
-#endif
 
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
@@ -568,9 +559,6 @@ REAL(DP)::vol
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
 
-#if(fftw_gpu)
-size_data=nstate*kdfull2
-#endif
 
 nph=3-numspin
 
@@ -595,14 +583,6 @@ ALLOCATE(q1(kdfull2))
 ALLOCATE(q2(kdfull2))
 #endif
 
-#if(fftw_gpu)
-#if(gridfft)
-ALLOCATE(q1(kdfull2,kstate))
-#else
-ALLOCATE(q1(kdfull2))
-ALLOCATE(q2(kdfull2))
-#endif
-#endif
 
 
 #if(findiff|numerov)
@@ -790,165 +770,6 @@ END DO                                            ! end loop over states
 ! end of FFT switch
 #endif
 !end of netlib/fftw switch
-
-
-
-!-----------------------------------------------------------------------
-!     FFTW_GPU
-!-----------------------------------------------------------------------
-#if(fftw_gpu)
-
-DO nbe=1,nstate
-  ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
-  
-  
-!       action of the potential in coordinate space
-!       plus non local part of ps
-!       plus optionally exchange part
-
-  IF(ipsptyp == 1) THEN
-    CALL nonlocalr(q0(1,nbe),q1(1,nbe))
-    enonlo(nbe)= wfovlp(q0(:,nbe),q1(:,nbe))
-    DO  i=1,nxyz
-      q1(i,nbe)=q1(i,nbe)+q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
-    END DO
-  ELSE
-    DO  i=1,nxyz
-      q1(i,nbe)=q0(i,nbe)*(aloc(i+ishift)-amoy(nbe))
-    END DO
-  END IF
-
-
-
-
-
-  
-  IF(ifsicp == 5) THEN
-    q1(:,nbe)=q1(:,nbe)+qex(:,nbe)
-  END IF
-  
-
-!JM : subtract SIC potential for state NBE
-#if(twostsic)
-  IF(ifsicp == 8) CALL subtr_sicpot(q1(1,nbe),nbe)
-#endif
-!JM
-  
-  
-!       optionally compute Cexpectation value of potential energy
-  
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1(:,nbe)) + amoy(nbe)
-  
-  
-#if(gridfft)
-ENDDO !END LOOP OVER STATES
-
-!BEGINING OF THE GPU OPERATIONS
-  
-!        action of the kinetic energy in momentum space
-  CALL rftf2(q0,fftaglob,gpu_fftaglob)
-
-  CALL rftf2(q1,ffta2,gpu_ffta2)
-
-!       compose to h|psi>
-
-  CALL hpsi_cuda(gpu_fftaglob,gpu_ffta2,gpu_akvfft,size_data,kdfull2) !  q2 = psipr*akv+q2 on the GPU
-
-!       Optionally compute expectation value of kinetic energy
-!       and variance of mean field Hamiltonian.
-!       This is done in Fourier space to save FFT's.
-!       Variance 'evarsp2' excludes non-diagonal elements within
-!       occupied space.
-  
-  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
-    
-#if(parano)
-    ALLOCATE(w4(kdfull2,kstate))
-    CALL gpu_to_gpu(gpu_fftaglob,gpu_ffta_int,size_data) !save gpu_ffta for later
-    CALL rfftback2(w4,fftaglob,gpu_ffta_int)
-
-    CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
-    CALL rfftback2(w4,ffta2,gpu_ffta_int)
-
-
-DO nbe=1,nstate    
-    CALL project(w4(:,nbe),w4(:,nbe),ispin(nbe),q0)
-    evarsp2(nbe) =  SQRT(wfovlp(w4(:,nbe),w4(:,nbe)))
-ENDDO
-    DEALLOCATE(w4)
-#endif
-
-DO nbe=1,nstate
-    sum0 = 0D0
-    sumk = 0D0
-    sume = 0D0
-    sum2 = 0D0
-    CALL sum_calc(sum0,sumk,sume,sum2,gpu_fftaglob,gpu_ffta2,gpu_akvfft,nxyz,nbe)
-    ekinsp(nbe) = sumk/sum0
-    sume = sume/sum0
-    sum2 = sum2/sum0
-!          write(6,*) ' norm,spe=',sum0,sume
-!          amoy(nbe)   = sume
-    evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
-
-ENDDO !END LOOP OVER STATES
-
-#if(parayes)
-DO nbe=1,nstate    
-    evarsp2(nbe) = evarsp(nbe)
-ENDDO
-#endif
-  END IF
-  
-#if(parano)
-  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
-!       accumulate mean-field Hamiltonian within occupied states,
-!       for later diagonalization
-
-    IF(iter > 0) THEN  
-
-      CALL gpu_to_gpu(gpu_ffta2,gpu_ffta_int,size_data) !save gpu_ffta2 for later
-
-      CALL rfftback2(q1,ffta2,gpu_ffta_int)
-    DO nbe=1,nstate    
-      iactsp = ispin(nbe)
-      nstsp(iactsp) = 1+nstsp(iactsp)
-      npoi(nstsp(iactsp),iactsp) = nbe
-      DO nbc=1,nbe
-        IF(iactsp == ispin(nbc)) THEN
-          ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1(:,nbe))
-          IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
-              hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
-          IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
-              hmatr(ntridig(iactsp),iactsp)
-        END IF
-      END DO
-    ENDDO
-    END IF
-
-  END IF
-#endif
-!     perform the damped gradient step and orthogonalise the new basis
-DO nbe=1,nstate    
-  IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
-    IF(e0dmp > small) THEN
-!      psipr = psipr - q2*epswf/(akv+e0dmp)
-      CALL d_grad1(gpu_fftaglob,gpu_ffta2,gpu_akvfft,epswf,e0dmp,kdfull2,nbe)
-    ELSE
-!      psipr = psipr - epswf*q2
-      CALL d_grad2(gpu_fftaglob,gpu_ffta2,epswf,kdfull2,nbe)
-    END IF
-ENDDO
-    CALL rfftback2(q0,fftaglob,gpu_fftaglob)
-!  END IF
-#endif
-! end of FFT switch
-#endif
-! end of fftw_gpu switch
-
-
-
 
 
 
@@ -1147,9 +968,6 @@ DEALLOCATE(psipr)
 !!$
 !!$DEALLOCATE(q2)
 !!$
-!!$#if(fftw_gpu)
-!!$DEALLOCATE(q2)
-!!$#endif
 #endif
 
 
@@ -1828,142 +1646,5 @@ END IF
 RETURN
 END SUBROUTINE reocc
 
-#if(fftw_gpu)
-!print routines.
-
-SUBROUTINE printone(rho,aloc)
-USE params
-USE util, ONLY:prifld
-IMPLICIT  NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-integer::j
 
 
-CALL prifld(rho,'density    ')
-CALL prifld(aloc,'potential   ')
-IF(nion2 /= 0) CALL prifld(potion,'potential_io')
-WRITE(7,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
-WRITE(6,'(f8.4,a,4f12.4)') 0.0,' initial moments',(qe(j),j=1,4)
-WRITE(7,*)
-
-WRITE(6,'(a)')'+++ start of static iteration +++'
-WRITE(7,'(a)')'+++ start of static iteration +++'
-
-IF(dpolx*dpolx+dpoly*dpoly*dpolz*dpolz > 0D0) WRITE(7,'(a,3f8.4)')  &
-    ' static dipole potential: dpolx,dpoly,dpolz=', dpolx,dpoly,dpolz
-WRITE(7,*)
-WRITE(6,*) 'ismax=',ismax
-
-END SUBROUTINE printone
-
-
-SUBROUTINE printtwo()
-USE params
-IMPLICIT NONE
-
-WRITE(7,'(a,i5)') 'iter= ',int_pass
-WRITE(7,'(a,f12.4,a,2(/5x,5f12.4))') 'binding energy=',binerg,  &
-      ', moments: monop.,dip,quad=', qe(1),qe(2),qe(3),qe(4),  &
-      qe(5),qe(6),qe(7),qe(8),qe(9),qe(10)
-
-IF(numspin==2)  WRITE(7,'(a,3f10.4)') 'spindipole',se(1),se(2),se(3)
-!            write(7,*) ' sumvar,epsoro=',sumvar,epsoro
-!            write(6,*) ' sumvar,epsoro=',sumvar,epsoro
-
-END SUBROUTINE printtwo
-
-
-SUBROUTINE printthree(rho,aloc)
-USE params
-USE util, ONLY:prifld
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-
-WRITE(7,*) ' static iteration terminated with ', int_pass,' iterations'
-
-CALL prifld(rho,'density    ')
-CALL prifld(aloc,'potential   ')
-CALL prifld(chpcoul,'Coul-potent.')
-
-END SUBROUTINE printthree
-
-SUBROUTINE print_densdiffc(rho)
-USE params
-
-  REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-
-  OPEN(590,STATUS='unknown',FILE='densdiff')
-  DO i=1,kdfull2*2
-    WRITE(590,*) rho(i)
-  END DO
-  CLOSE(590)
-
-END SUBROUTINE print_densdiffc
-
-SUBROUTINE print_orb(psir)
-USE params
-USE util, ONLY: printfield
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-INTEGER ::i
-
-OPEN(522,STATUS='unknown',FILE='pOrbitals.'//outnam)
-DO i=1,nstate
-  WRITE(522,'(a,i3)') '# state nr: ',i
-  WRITE(522,'(a,f12.5)') '# occupation: ',occup(i)
-  WRITE(522,'(a,f12.5)') '# s.p. energy: ',amoy(i)
-  CALL printfield(522,psir(1,i),'tp.psir')
-  WRITE(522,*)  ! separate blocks for gnuplot
-  WRITE(522,*)  !
-END DO
-  CLOSE(522)
-
-END SUBROUTINE print_orb
-
-#if(raregas)
-SUBROUTINE print_surf(rho)
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-
-IF (iuselast == -1) THEN
-  IF (myn == 0) THEN
-    OPEN(308,STATUS='unknown',FILE='for005surf.init')
-    WRITE(308,*) nc,nk
-    DO i=1,nc
-      WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
-          ze(i),imobc(i),imobe(i)
-    END DO
-    DO i=1,nk
-      WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
-    END DO
-    CLOSE(308)
-  END IF
-  STOP
-ELSE IF (iuselast == -2) THEN
-  WRITE(*,*) ' ADJUSTDIP from STATIC uselast'
-  CALL adjustdip(rho,-1)
-  IF (myn == 0) THEN
-    OPEN(308,STATUS='unknown',FILE='for005surf.init')
-    WRITE(308,*) nc,nk
-    DO i=1,nc
-      WRITE(308,'(6e17.7,2i6)') xc(i),yc(i),zc(i),xe(i),ye(i),  &
-          ze(i),imobc(i),imobe(i)
-    END DO
-    DO i=1,nk
-      WRITE(308,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
-    END DO
-    CLOSE(308)
-  END IF
-  STOP
-END IF
-
-END SUBROUTINE print_surf
-#endif
-#endif

@@ -93,10 +93,6 @@ CALL cpu_time(time_absinit)
 
 CALL init_parallele() 
 
-#if(fftw_gpu)
-CALL cuda_gpu_init()
-#endif
-
 CALL initnamelists          ! read all input parameters
 
 CALL checkoptions()       !check coherence of preprocessor option
@@ -116,10 +112,6 @@ CALL iparams()               ! check dynamic  parameters
 CALL init_grid()    ! init coulomb solver, kinetic energy, grid properties
 
 CALL init_fields()  ! allocate params arrays
-
-#if(lda_gpu)
-CALL cuda_lda_init() 
-#endif
 
 #if(twostsic)
 IF(numspin==2) CALL init_radmatrix()   ! initialize matrices of radial moments
@@ -687,14 +679,6 @@ ENDIF
 
 DEALLOCATE(psi)
 
-#if(fftw_cpu|fftw_gpu)
-!CALL fft_end()
-!CALL coulsolv_end()
-#endif
-
-#if(fftw_gpu)
-!CALL cuda_end()
-#endif
 
 #if(parayes||paraworld)
 CALL mpi_finalize(mpi_ierror)
@@ -714,9 +698,6 @@ WRITE(123,*)'NETLIB'
 #endif
 #if(fftw_cpu)
 WRITE(123,*)'FFTW'
-#endif
-#if(fftw_gpu)
-WRITE(123,*)'cuFFT'
 #endif
 WRITE(123,*)'Box :',nx2,ny2,nz2
 WRITE(123,*)'Walltime =',time_absfin-time_absinit

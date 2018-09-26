@@ -2355,7 +2355,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along x:',comment
 ind = 0
-!#if(gridfft)
+#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2365,7 +2365,7 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-!#endif
+#endif
 #if(tfindiff)
 DO jz=minz,maxz
   DO jy=miny,maxy
@@ -2400,7 +2400,7 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along z:',comment
 ind = 0
-!#if(gridfft)
+#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2410,7 +2410,7 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-!#endif
+#endif
 #if(tfindiff)
 DO jz=minz,maxz
   DO jy=miny,maxy
@@ -4173,12 +4173,7 @@ COMPLEX(DP),ALLOCATABLE ::  q1(:)
 #if(gridfft)
 ALLOCATE(q1(kdfull2))
 
-#if(netlib_fft|fftw_cpu)
 CALL fftf(q0,q1)
-#endif
-#if(fftw_gpu)
-CALL fftf(q0,q1,ffta,gpu_ffta)
-#endif
 
 
 dkx=pi/(dx*REAL(nx,DP))
@@ -4219,18 +4214,11 @@ dkz=pi/(dz*REAL(nz,DP))
 !  END DO
 !END DO
 
-#if(netlib_fft|fftw_cpu)
 DO ind=1,kdfull2
   q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
 ENDDO
 
 CALL fftback(q1,q0)
-#endif
-#if(fftw_gpu)
-CALL multiply_shift(gpu_ffta,gpu_akxfft,gpu_akyfft,gpu_akzfft,shix,shiy,shiz)
-
-CALL fftback(q1,q0,ffta,gpu_ffta)
-#endif
 
 DEALLOCATE(q1)
 
@@ -4344,16 +4332,9 @@ CALL zgradient_rspace(wfin,wftest)
 CALL zgradient_rspace(wftest,wftest)
 ekintestz = dvol*SUM(wfin*wftest)
 
-#if(netlib_fft|fftw_cpu)
 CALL fftf(wfin,wftest)
 wftest = akv*wftest
 CALL fftback(wftest,wftest)
-#endif
-#if(fftw_gpu)
-CALL fftf(wfin,wftest,ffta,gpu_ffta)
-CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
-CALL fftback(wftest,wftest,ffta,gpu_ffta)
-#endif
 ekintot = dvol*SUM(wfin*wftest)
 
 WRITE(6,'(a,5(1pg13.5))') ' test gradients:', &

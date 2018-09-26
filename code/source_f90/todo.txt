@@ -1,0 +1,1 @@
+redundant compile-time options: gridfft <-->  netlib_fft & fftw_cpu

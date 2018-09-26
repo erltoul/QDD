@@ -63,7 +63,7 @@ DO is=1,numspin
     ishift = (is-1)*nxyz
     
 !       Fourier transformation
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
     
 !       Laplacian and integral
@@ -72,19 +72,11 @@ DO is=1,numspin
       dervk(i) = potk(i)*akv(i)
     END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
-
-!       Laplacian and integral
-
-    CALL multiply_ak_real(gpu_ffta,gpu_akvfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     denominator = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
-!       x-derivative
-#if(netlib_fft|fftw_cpu)
+!       x-derivative      
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      DO i2=1,ny2
@@ -107,11 +99,7 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     xlambda = counter/denominator
     DO i=1,nxyz
@@ -119,7 +107,7 @@ DO is=1,numspin
     END DO
     
 !       y-derivative
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      DO i2=1,ny2
@@ -142,11 +130,7 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     ylambda = counter/denominator
     DO i=1,nxyz
@@ -154,7 +138,7 @@ DO is=1,numspin
     END DO
     
 !       z-derivative
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      IF(i3 >= (nz+1)) THEN
@@ -178,12 +162,7 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-!    dervk = -akz*potk
-    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     counter = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     zlambda = counter/denominator
     DO i=1,nxyz
@@ -229,16 +208,13 @@ DO is=1,numspin
     
 !       Fourier transformation
     
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
     CALL rftf(aloc(1+ishift),potk)
-#endif
-#if(fftw_gpu)
-    CALL rftf(aloc(1+ishift),potk,ffta,gpu_ffta)
-#endif
+!#endif
     
     
 !       x-derivative
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      DO i2=1,ny2
@@ -262,17 +238,12 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-!    dervk = -akx*potk
-    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     zforcex = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     
 !       y-derivative
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      DO i2=1,ny2
@@ -296,17 +267,12 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-!    dervk = -aky*potk
-    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     zforcey = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     
 !       z-derivative
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 !    ind=0
 !    DO i3=1,nz2
 !      IF(i3 >= (nz+1)) THEN
@@ -330,12 +296,7 @@ DO is=1,numspin
 !      END DO
 !    END DO
     CALL rfftback(dervk,potwork)
-#endif
-#if(fftw_gpu)
-!    dervk = -akz*potk
-    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-#endif
+!#endif
     zforcez = wfovlp(rho(1+ishift : kdfull2+ishift),potwork)
     
     

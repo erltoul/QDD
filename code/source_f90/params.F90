@@ -416,12 +416,6 @@ PROCEDURE(),POINTER :: calc_lda
 #if(parayes)
 INTEGER,ALLOCATABLE :: lengnod(:),displ(:)
 #endif
-
-#if(fftw_gpu)
-INTEGER :: num_gpus !total number of gpus on the node
-INTEGER :: mygpu !number of the actual gpu used by the node
-INTEGER :: int_pass
-#endif
 !                          these includes should be shifted to own modules
 #if(raregas)
 #include "surf.F90"

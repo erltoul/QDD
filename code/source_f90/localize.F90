@@ -156,9 +156,6 @@ DO is=2,1,-1
 #if(netlib_fft|fftw_cpu)
       CALL rftf(psi(1,nb),q2)
 #endif
-#if(fftw_gpu)
-      CALL rftf(psi(1,nb),q2,ffta,gpu_ffta)
-#endif
 #else
 #if(netlib_fft|fftw_cpu)
       CALL fftf(psi(1,nb),q2)
@@ -170,29 +167,14 @@ DO is=2,1,-1
         q2(ind)=q2(ind)*akk(ind)*eye
       END DO
 #endif
-#if(fftw_gpu)
-      IF(idirection.EQ.1) THEN
-          CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-      ELSEIF(idirection.EQ.2) THEN
-          CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-      ELSEIF(idirection.EQ.3) THEN
-          CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-      ENDIF
-#endif
 #ifdef REALSWITCH
 #if(netlib_fft|fftw_cpu)
       CALL rfftback(q2,p)
-#endif
-#if(fftw_gpu)
-      CALL rfftback(q2,p,ffta,gpu_ffta)
 #endif
 #else
 
 #if(netlib_fft|fftw_cpu)
       CALL fftback(q2,p)
-#endif
-#if(fftw_gpu)
-      CALL fftback(q2,p,ffta,gpu_ffta)
 #endif
 #endif
       DO ind=1,kdfull2

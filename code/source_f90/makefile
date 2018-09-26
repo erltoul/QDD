@@ -27,7 +27,6 @@ OMP_THREADS = NO
 #   * NETLIB
 #   * FFTW
 #   * MKL
-#   * cuFFT
 TYPE_FFT = NETLIB
 
 # DEBUG: enable debugging
@@ -166,9 +165,6 @@ ifeq "$(CF90)" "XLF_R"
   endif
 endif
 
-ifeq "$(TYPE_FFT)" "cuFFT"
-	GPUCOMPILER  = nvcc
-endif
 
 #####################################################################
 #                    Compiler-dependent options                     #
@@ -268,20 +264,6 @@ ifeq "$(CF90)" "XLF_R"
 	OPT3  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
 endif
 
-ifeq "$(TYPE_FFT)" "cuFFT"
-	#OPTGPU = -O3 --gpu-architecture sm_13 
-	#OPTGPU = -O3 --gpu-architecture sm_20 
-	#OPTGPU = -O3 --gpu-architecture sm_30 
-	OPTGPU = -O3 --gpu-architecture sm_35  -maxrregcount=72 --use_fast_math --ptxas-options=-v 
-#for CCC with older GPU cards 
-   # OPTGPU = -O3 --gpu-architecture sm_20  -maxrregcount=20 --use_fast_math --ptxas-options=-v
-  ifeq "$(DEBUG)" "YES"
-	#OPTGPU = -g -G --gpu-architecture sm_13 
-	OPTGPU = -g -G --gpu-architecture sm_20 
-	#OPTGPU = -g -G --gpu-architecture sm_30 
-	#OPTGPU = -g -G --gpu-architecture sm_35 
-  endif
-endif
 
 #####################################################################
 #                        Compilation rules                          #
@@ -310,10 +292,6 @@ else
   ifeq ($(TYPE_FFT), NETLIB)
 	FFTWADD = -Dnetlib_fft
 	netlib_fft_value := 1
-  endif
-  ifeq ($(TYPE_FFT), cuFFT)
-	FFTWADD = -Dfftw_gpu
-	fftw_gpu_value := 1
   endif
 endif
 
@@ -344,7 +322,7 @@ endif
 COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-GPUCOMPILERFLAGS = $(OPTGPU) $(MPIADD) $(OMPADD)
+
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
 IDRIS =
 ifeq "$(CF90)" "XLF_R"
@@ -412,17 +390,8 @@ else
   endif
 endif
 
-#Flags for directly linking the cuda libraries
-ifeq ($(TYPE_FFT), cuFFT)
-        CUDAFLAGS += -L/opt/cuda/5.0/lib64/ -lcufft -lcudart
-# for CCC
-        CUDAFLAGS += -L$(CUDA_LIBDIR)   -lcufft -lcudart
-#for CRIHAN
-	CUDAFLAGS += -L /soft/cuda_5.0/cuda/lib64/ -lcufft -lcudart
 
-endif
-
-LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL) $(CUDAFLAGS) 
+LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL)
 
 ifeq ($(LINK_STATIC), YES)
 	LINKERFLAGS += $(STATIC)
@@ -473,9 +442,6 @@ define.mk: ;
 define.h: ;
 *.F90: ;
 *.cu: ;
-define_cuda.h: ;
-params_gpu.h: ;
-values_gpu.h: ;
 
 #####################################################################
 #                             Checks                                #
@@ -491,7 +457,7 @@ valid_MPI_PARALLEL := YES SIM NO
 valid_OMP_THREADS := DYN YES NO
 
 # List of valid TYPE_FFT values.
-valid_FFT := FFTW NETLIB MKL cuFFT
+valid_FFT := FFTW NETLIB MKL
 
 gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
@@ -617,12 +583,6 @@ ifeq ($(USE_MPI), YES)
   endif
 endif
 
-# lda_gpu is only enabled when using cuFFT calls.
-ifneq ($(lda_gpu_value),0)
-  ifneq ($(TYPE_FFT),cuFFT)
-       $(error ERROR: lda_gpu requires the use of GPU)
-  endif
-endif
 	@echo "Done with the initial checks, starting compilation..."
 	@echo "#######################################################"
 
@@ -644,10 +604,10 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
-ifneq ($(TYPE_FFT), cuFFT)
+#   ifneq ($(TYPE_FFT), cuFFT)
 OBJINT += coulsolv.o
 MODLIST += coulsolv.mod
-endif
+#   endif
 # Object file for FFT:
 ifeq ($(TYPE_FFT), NETLIB)
   FFT_OBJ = fftpack.o
@@ -655,10 +615,6 @@ endif
 ifeq ($(calls_FFTW), YES)
   FFT_OBJ = fftw.o
   MODLIST += fftw.mod
-endif
-ifeq ($(TYPE_FFT), cuFFT)
-  FFT_OBJ += cuda.o cuda_alloc.o
-  MODLIST += cuda_alloc.mod
 endif
 # Sic-conditional objects:
 ifneq ($(twostsic_value), 0)
@@ -676,14 +632,11 @@ OBJS_NPAR = $(filter-out params.o, $(OBJS))
 OBJS_KIN  = dynamic.o expevol.o ionmd.o util.o zeroforce.o
 OBJS_COUL = image.o lda.o loc_mfield.o
 OBJS_KINCOUL = init.o main.o pseudosoft.o
-ifneq ($(TYPE_FFT), cuFFT)
+#  ifneq ($(TYPE_FFT), cuFFT)
 DEPS_KINCOUL = kinetic.mod coulsolv.mod
-else
-DEPS_KINCOUL = kinetic.mod
-endif
-ifeq ($(TYPE_FFT), cuFFT)
-  DEPS_KINCOUL += cuda_alloc.mod
-endif
+#  else
+#  DEPS_KINCOUL = kinetic.mod
+#  endif
 
 # Dependencies on makefile, define.mk, define.h and params.mod
 # Dependencies are inherited, so there's no need to repeat them
@@ -695,18 +648,15 @@ $(OBJS_NPAR): makefile define.mk define.h params.mod
 # Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
 # with no other special requirements:
 $(OBJS_KIN):     kinetic.mod
-ifneq ($(TYPE_FFT), cuFFT)
+#  ifneq ($(TYPE_FFT), cuFFT)
 $(OBJS_COUL):    coulsolv.mod
-endif
+#  endif
 $(OBJS_KINCOUL): $(DEPS_KINCOUL)
 
 # Set FFTW-dependent modules:
 ifeq ($(calls_FFTW), YES)
 coulsolv.mod: fftw.mod
 kinetic.mod: fftw.mod
-endif
-ifeq "$(TYPE_FFT)" "cuFFT"
-kinetic.mod: cuda_alloc.mod
 endif
 
 #####################################################################
@@ -760,9 +710,9 @@ endif
 
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 
-ifneq "$(TYPE_FFT)" "cuFFT"
+#  ifneq "$(TYPE_FFT)" "cuFFT"
 coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.mod $(FFT_OBJ)
-endif
+#  endif
 static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 
 rho.o: rho.F90
@@ -794,6 +744,10 @@ fftpack.o: fftpack.F90 fftpack2.F90
 	$(COMPILER) $(COMPILERFLAGS2) -c $<
 endif
 
+
+main.o: main.F90 util.o 
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
 givens.o: givens.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
@@ -809,8 +763,4 @@ restartc.o: restart.F90 kinetic.mod
 parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-ifeq "$(TYPE_FFT)" "cuFFT"
-cuda.o: cuda.cu define_cuda.h values_gpu.h params_gpu.h static_gpu.cu makefile
-	$(GPUCOMPILER) $(GPUCOMPILERFLAGS) -c $<
-endif
 

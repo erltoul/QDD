@@ -73,7 +73,7 @@ dkz=pi/(dz0*nz)
 ALLOCATE(ak(kdfull2),akv(kdfull2))
 ALLOCATE(akpropx(kxmax),akpropy(kymax),akpropz(kzmax))
 !ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
-CALL my_cuda_allocate(nx2,ny2,nz2) !Pinned memory allocation to make CPU>GPU and GPU>CPU memcopies faster
+!CALL my_cuda_allocate(nx2,ny2,nz2) !Pinned memory allocation to make CPU>GPU and GPU>CPU memcopies faster
 
 WRITE(7,*) 'h bar squared over two m electron',h2m
 WRITE(7,*) ' testprint EYE=',eye

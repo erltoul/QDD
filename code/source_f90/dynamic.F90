@@ -461,12 +461,6 @@ DO nb=1,nstate
     q1(1:kdfull2,ithr) = ak*q1(1:kdfull2,ithr)
     CALL fftback(q1(1,ithr),q0(1,nb))
 #endif
-#if(fftw_gpu)
-    CALL fftf(q0(1,nb),q1(1,ithr),ffta,gpu_ffta)
-!    CALL cmult3d(q1,ak)
-    CALL multiply_ak2(gpu_ffta,gpu_akfft,kdfull2)
-    CALL fftback(q1(1,ithr),q0(1,nb),ffta,gpu_ffta)
-#endif
   END IF
 #endif
 #if(findiff|numerov)
@@ -1142,9 +1136,6 @@ ALLOCATE(psi2(kdfull2))
 #if(netlib_fft|fftw_cpu)
 CALL fftf(psin,psi2)
 #endif
-#if(fftw_gpu)
-CALL fftf(psin,psi2,ffta,gpu_ffta)
-#endif
 sum0 = 0D0
 sumk = 0D0
 #if(netlib_fft|fftw_cpu)
@@ -1153,11 +1144,6 @@ DO ii=1,kdfull2
   sum0  = vol + sum0
   sumk  = vol*akv(ii) + sumk
 END DO
-#endif
-#if(fftw_gpu)
-CALL sum_calc2(sum0,sumk,gpu_ffta,gpu_akvfft,kdfull2)
-CALL copy_from_gpu(ffta,gpu_ffta,kdfull2)
-CALL copy3dto1d(ffta,psi2,nx2,ny2,nz2)
 #endif
 sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
 ekinout = sumk/sum0ex
@@ -1375,11 +1361,6 @@ IF(extendedTF) THEN
   CALL gradient(gradrhok,gradrhok,1)
   CALL rfftback(gradrhok,gradrho)
 #endif
-#if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
-  CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
-#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1395,11 +1376,6 @@ IF(extendedTF) THEN
   CALL gradient(gradrhok,gradrhok,2)
   CALL rfftback(gradrhok,gradrho)
 #endif
-#if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
-  CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
-#endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
@@ -1414,11 +1390,6 @@ IF(extendedTF) THEN
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,3)
   CALL rfftback(gradrhok,gradrho)
-#endif
-#if(fftw_gpu)
-  CALL rftf(gradrho,gradrhok,ffta,gpu_ffta)
-  CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-  CALL rfftback(gradrhok,gradrho,ffta,gpu_ffta)
 #endif
   DO i=1,kdfull2
 !    IF (arho(i).ne.0D0) 
@@ -1724,13 +1695,6 @@ DO nb=1,nstate
   CALL fftback(q2,q2)
 #endif
 
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akxfft,kdfull2)
-
-  CALL fftback(q2,q2,ffta,gpu_ffta)
-#endif
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
@@ -1748,13 +1712,6 @@ DO nb=1,nstate
 
   CALL fftback(q2,q2)
 #endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akyfft,kdfull2)
-
-  CALL fftback(q2,q2,ffta,gpu_ffta)
-#endif
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
     jalpha=test
@@ -1769,13 +1726,6 @@ DO nb=1,nstate
   END DO
 
   CALL fftback(q2,q2)
-#endif
-#if(fftw_gpu)
-  CALL fftf(psi(1,nb),q2,ffta,gpu_ffta)
-
-  CALL multiply_ak2(gpu_ffta,gpu_akzfft,kdfull2)
-
-  CALL fftback(q2,q2,ffta,gpu_ffta)
 #endif
 
   DO ind=1,kdfull2
