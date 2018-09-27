@@ -1,1 +1,26 @@
-redundant compile-time options: gridfft <-->  netlib_fft & fftw_cpu
+1) redundant compile-time options: 
+      gridfft <-->  netlib_fft & fftw_cpu   ; try to deduce gridfft from both others
+
+2) makefile:
+      write documentation for handling 'makefile'
+
+3) option 'coudoub3D':
+      check performance on various platforms and decide for one option
+
+4) entry of options:
+      trhough 'define.h' as well as through 'makefile'
+      try to have only one channel
+      possibly write a batch file with interactive entry of options
+      (see 'make.sh')
+
+5) finite differences:
+      this seems to be installed, but requires more testing;
+      before spending time on that, run benchmarks.
+
+6) raregas:
+      this option has not been used for long, need testing.
+
+
+
+
+
