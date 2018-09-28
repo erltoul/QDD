@@ -1,9 +1,87 @@
-Vanilla installation (using furnished library NETLIB for fft) can be done using command:
-  ./configure
+                   Status 28. September 2018
+                   =========================
 
-then run :
-  make
 
-binary is named netlib_pwteleman.seq, it is located in ./bin
+Structure of directories:
+-------------------------
 
-More documentation can be found  in pwteleman/doc/  (explain-init.pdf)
+bench           some benchmarks (MKL, NETLIB etc)
+bin             storage for executables
+code            all sources
+  source_f90    the core of the Fortran90 3D code
+  source_aux    routines for a posteriori analysis
+  source_py     Python sources (??)
+  create_FFTW_wisdom  to produce a permanent wisdom file (??)
+
+doc             documentation
+  explain-init.pdf  detailed explanations, status 2014
+  FFT.txt       explanations of (some) options 
+  openmp_...    explanations of options concerning OPENMP
+  ase-pw...     interface to ASE (??)
+
+presentation    file 'pres.pdf' is a first intro to TELEMAN
+
+samples         test cases with standard TELEMAN input
+
+samples_py      test cases with Python input
+
+
+Files in "root" directory QDD:
+------------------------------
+  The files compile, config*, install*, missing
+  seem to provide some automatic batch files for
+  installation and compilations. Meaning unclear.
+
+
+
+
+Points to be decided:
+---------------------
+
+1) There is 'make.sh' which produces a 'makefile' by taking
+   interactively (?) instructions from the user. Its use is
+   undocumented. We need to check what it is doing and then
+   decvide whether it is useful.
+
+
+2) There is an interface to ASE (atomistic simulation environment)
+   using python scripts. It produces automatically input for
+   TELEMAN. Should we maintain that?
+   (--> probably independent, can be added later)
+
+
+Next homework tasks (see also 'todo.txt'):
+------------------------------------------
+
+1) makefile & define.h:
+      these files contain the option for an actual compilation;
+      we have to write documentation which options exist, how
+      to enter them, and where to enter them. Presently an
+      older version of that exsists in 'doc/explain.pdf'.
+      This needs update and a summary in the header of
+      'makefile' or 'make.sh'.
+
+2) entry of options:
+      trhough 'define.h' as well as through 'makefile'
+      try to have only one channel
+      possibly write a batch file with interactive entry of options
+      (see 'make.sh')
+
+3) redundant compile-time options: 
+      redunant options gridfft <-->  netlib_fft & fftw_cpu; 
+      try to deduce gridfft from both others
+
+4) option 'coudoub3D':
+      check performance on various platforms and decide for one option
+
+5) finite differences:
+      this seems to be installed, but requires more testing;
+      before spending time on that, run benchmarks.
+
+6) raregas:
+      this option has not been used for long, need testing.
+
+
+
+
+
