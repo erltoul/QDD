@@ -16,7 +16,6 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "define.h"
 SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 
 !     Propagation with the Crank-Nicolson schem

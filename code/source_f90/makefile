@@ -27,7 +27,7 @@ OMP_THREADS = YES
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -370,9 +370,9 @@ else
 endif
 
 # Compiler flags
-COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
+COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
+COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
+COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
 IDRIS =
@@ -510,31 +510,31 @@ valid_OMP_THREADS := DYN YES NO
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
-gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-lda_gpu_value  :=$(shell echo -e "\\n\#if(lda_gpu)  \\nlda_gpu  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#lda_gpu_value  :=$(shell echo -e "\\n\#if(lda_gpu)  \\nlda_gpu  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
-initial_checks: makefile define.mk define.h
+initial_checks: makefile
 	@echo "#######################################################"
 	@echo  Lists of known compilation parameters.
 	@echo "#######################################################"
 	@echo  Parameters defined in define.h:
 	@echo "--------------------------------------------"
-	@echo "gridfft       $(gridfft_value)"
-	@echo "findiff       $(findiff_value)"
-	@echo "numerov       $(numerov_value)"
-	@echo "coufou        $(coufou_value)"
-	@echo "coudoub       $(coudoub_value)"
-	@echo "coudoub3D     $(coudoub3D_value)"
-	@echo "twostsic      $(twostsic_value)"
-	@echo "raregas       $(raregas_value)"
-	@echo "lda_gpu       $(lda_gpu_value)"
+	@echo "gridfft       $(GRIDFFT)"
+	@echo "findiff       $(FINDIFF)"
+	@echo "numerov       $(NUMEROV)"
+	@echo "coufou        $(COUFOU)"
+	@echo "coudoub       $(COUDOUB)"
+	@echo "coudoub3D     $(COUDOUB3D)"
+	@echo "twostsic      $(TWOSTSIC)"
+	@echo "raregas       $(RAREGAS)"
+#	@echo "lda_gpu       $(lda_gpu_value)"
 	@echo "#######################################################"
 	@echo  Parameters defined in makefile / define.mk:
 	@echo "--------------------------------------------"
@@ -592,17 +592,17 @@ ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 endif
 
 # gridfft, findiff, numerov: only one can be enabled.
-ifneq ($(gridfft_value), 0)
-  ifneq ($(findiff_value), 0)
+ifneq ($(GRIDFFT),NO)
+  ifneq ($(FINDIFF),NO)
 	$(error ERROR: gridfft and findiff cannot be enabled simultaneously in define.h)
   endif
-  ifneq ($(numerov_value), 0)
+  ifneq ($(NUMEROV),NO)
 	$(error ERROR: gridfft and numerov cannot be enabled simultaneously in define.h)
   endif
 else
 	$(warning WARNING: gridfft disabled, so TYPE_FFT=$(TYPE_FFT) will be disregarded)
-  ifeq ($(findiff_value), 0)
-    ifeq ($(numerov_value), 0)
+  ifeq ($(FINDIFF),NO)
+    ifeq ($(NUMEROV),NO)
 	$(error ERROR: gridfft, findiff and numerov cannot be simultaneously disabled in define.h)
     endif
   endif
@@ -614,14 +614,14 @@ else
 endif
 
 # coufou, coudoub: only one can be enabled.
-ifneq ($(coufou_value), 0)
-  ifneq ($(coudoub_value), 0)
+ifneq ($(COUFOU),NO)
+  ifneq ($(COUDOUB),NO)
 	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
   endif
 endif
 
 # coudoub3D is only enabled when using FFTW calls.
-ifneq ($(coudoub3D_value), 0)
+ifneq ($(COUDOUB3D),NO)
   ifneq ($(calls_FFTW), YES)
 	$(error ERROR: coudoub3D requires the use of FFTW)
   endif
