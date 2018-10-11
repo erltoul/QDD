@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = GFORT
+CF90 = IFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -50,28 +50,79 @@ MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
-MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
+#MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 #for CCC
-MKL_WRAPPERS = $(MKL_ROOT)/mkl/interfaces/fftw3xf
+MKL_WRAPPERS = $(MKLROOT)/interfaces/fftw3xf
+
+FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3/lib
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
-MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
+#MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
 #for CCC
-MKLPATH = $(MKL_LIBDIR)
+MKLPATH = $(MKLROOT)/lib
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
-MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
+#MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
 #for CCC
-MKLINCLUDE =  $(MKL_INCDIR)/fftw
+MKLINCLUDE = $(MKLROOT)/include/fftw
 
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
+#####################################################################
+#               Code selection					                    #
+#####################################################################
+
+# Code version
+CODE_VERSION = 74
+# grid: FFT or finite difference
+GRIDFFT = YES
+FINDIFF = NO
+NUMEROV = NO
+# Coulomb solver  (set all to 0 for 'findiff' or 'numerov')
+COUFOU = NO
+COUDOUB = YES
+# Switch to 3D FFTW in Coulomb solver (preliminary option)
+COUDOUB3D = NO
+# Full SIC and localized SIC
+TWOSTSIC = NO
+CMPLXSIC = NO
+# Switch to extended model with polarizable raregas
+RAREGAS = NO
+
+CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
+ifeq ($(GRIDFFT),YES)
+	CODE_OPTIONS += -Dgridfft
+endif
+ifeq ($(FINDIFF),YES)
+    CODE_OPTIONS += -Dfindiff
+endif
+ifeq ($(NUMEROV),YES)
+    CODE_OPTIONS += -Dnumerov
+endif
+ifeq ($(COUFOU),YES)
+    CODE_OPTIONS += -Dcoufou
+endif
+ifeq ($(COUDOUB),YES)
+    CODE_OPTIONS += -Dcoudoub
+endif
+ifeq ($(COUDOUB3D),YES)
+    CODE_OPTIONS += -Dcoudoub3D
+endif
+ifeq ($(TWOSTSIC),YES)
+    CODE_OPTIONS += -Dtwostsic
+endif
+ifeq ($(CMPLXSIC),YES)
+    CODE_OPTIONS += -Dcmplxsic
+endif
+ifeq ($(RAREGAS),YES)
+    CODE_OPTIONS += -Draregas
+endif
 
 #####################################################################
 #                Process parallelization options                    #
@@ -86,9 +137,9 @@ endif
 
 # OpenMP
 ifeq ($(OMP_THREADS), NO)
-	OMP= NO
+	OMP = NO
 else
-	OMP= YES
+	OMP = YES
 endif
 
 #####################################################################
@@ -139,7 +190,7 @@ ifeq "$(CF90)" "IFORT"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL =  -qopenmp
   endif
 endif
 
@@ -151,7 +202,7 @@ ifeq "$(CF90)" "IFORT1"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL = -qopenmp
   endif
 endif
 
@@ -218,7 +269,7 @@ ifeq "$(CF90)" "IFORT"
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
-	OPT1  = -openmp -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  =  -fpp -w       -g                 -align all -autodouble
   ifeq "$(DEBUG)" "YES"
@@ -383,9 +434,10 @@ ifeq ($(TYPE_FFT), MKL)
 else
   ifeq ($(TYPE_FFT), FFTW)
     ifeq ($(OMP), YES)
-	FFTWFLAGS += -lfftw3_omp -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3_omp
     endif
-	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
+	#FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
 
   endif
 endif
@@ -408,20 +460,19 @@ DATE =$(shell date +%d.%m.%y)
 # Set type of parallelization.
 ifeq ($(MPI_PARALLEL), YES)
 	MPI_NAME = MPI
-        EXEC = essai.seq
 else
   ifeq ($(MPI_PARALLEL), SIM)
 	MPI_NAME = SIM
-        EXEC = essai.seq
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
     else
 	MPI_NAME = Mono
     endif
-    EXEC = essai.seq
   endif
 endif
+
+EXEC = qdd
 
 #####################################################################
 #                 Phony targets and empty recipes                   #
@@ -489,7 +540,7 @@ initial_checks: makefile define.mk define.h
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
-	@echo "OMP_THREADS   $(OMP_THREADS)"
+	@echo "	   $(OMP_THREADS)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
