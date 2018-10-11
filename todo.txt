@@ -25,5 +25,3 @@
 
 6) raregas:
       this option has not been used for long, need testing.
-
-
