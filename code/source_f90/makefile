@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = IFORT
+CF90 = GFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -27,7 +27,7 @@ OMP_THREADS = YES
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -54,7 +54,7 @@ MKL_THREADS = NO
 #for CCC
 MKL_WRAPPERS = $(MKLROOT)/interfaces/fftw3xf
 
-FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3/lib
+FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3-icc/lib
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
@@ -238,7 +238,7 @@ endif
 # endif
 
 ifeq "$(CF90)" "GFORT"
-	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 #	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse
@@ -253,7 +253,7 @@ endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
+	OPT1  = $(OMPADDL) -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
   ifeq "$(DEBUG)" "YES"
