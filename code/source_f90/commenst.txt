@@ -1,0 +1,9 @@
+params.F90:
+fpulseinteg1_ma,fpulseinteg2_ma defined her, used in 'util.F90',
+but never printed?
+
+
+IFSICP==8:
+this option not yet properly implemented on new repository.
+
+

@@ -651,7 +651,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o \
        pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o attachement.o
+       short.o image.o lattice.o attachement.o rta.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -812,6 +812,9 @@ restartc.o: restart.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
 
 parallele.o: parallele.F90 kinetic.mod
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+rta.o: rta.F90 kinetic.mod params.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 

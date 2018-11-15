@@ -403,6 +403,22 @@ REAL(DP) :: projvelx=0D0,projvely=0D0,projvelz=0D0   ! projectile velocity
 REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile position
                    ! impact parameter = min(projinix,projiniy,projiniz)
 
+!MV parameters for RTA calculation
+INTEGER  ::jrtaint=0		!MV interval to cal for a new search of equilibrium state
+REAL(DP) ::rtamu=0			!MV mu associated to rho
+REAL(DP) ::rtamuj=0			!MV mu associated to j
+REAL(DP) ::rtasumvar2max=1.d-6	!MV exit criterion: target value of sumvar2
+REAL(DP) ::rtaeps=0.d0			!MV eps for eqst gradient algorithm
+REAL(DP) ::rtae0dmp=0.d0		!MV eodmp for eqst gradient algorithm
+REAL(DP) ::rtatempinit=0.d0		!MV initial temperature for eqst gradient algorithm
+integer  ::rtaforcetemperature=0		!MV force the same temperature for both spins
+real(DP) ::rtasigee=6.5d0!MVdefault value for Na
+real(DP) ::rtars=3.7!MVdefault value for Na
+REAL(DP) ::elasermask!MV laser energy with correction for the mask
+! parameters for density matrix calculation!MV
+COMPLEX(DP),allocatable:: psitophi(:,:)!MV change of basis matix to reference basis 
+!MV parameters for RTA
+integer:: eqstnspup,eqstnspdw!MV
 
 
 ! workspace for communication
@@ -472,6 +488,14 @@ nthr=numthr-1
 ! max. nr. of ions
 ng=nion
 
+! max. nr. of ions
+ng=nion
+! MV init rta values
+if (jrtaint>0) then!MV init only if used
+  if (rtaeps<1.d-5)rtaeps=epswf!MV if rtaeps not specified,use static value
+  if (rtae0dmp<1.d-5)rtae0dmp=e0dmp!MV same as above
+  if (rtamu<1.d-6 .or. rtamuj<1.d-6) stop 'rtamu rtamuj must be specified'
+endif
 
 END SUBROUTINE init_baseparams
 
