@@ -20,14 +20,14 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -50,28 +50,79 @@ MKL_THREADS = NO
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
-MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
+#MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 #for CCC
-MKL_WRAPPERS = $(MKL_ROOT)/mkl/interfaces/fftw3xf
+MKL_WRAPPERS = $(MKLROOT)/interfaces/fftw3xf
+
+FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3-icc/lib
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
-MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
+#MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
 #for CCC
-MKLPATH = $(MKL_LIBDIR)
+MKLPATH = $(MKLROOT)/lib
 # Path for hyperion:
 # MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
-MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
+#MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
 #for CCC
-MKLINCLUDE =  $(MKL_INCDIR)/fftw
+MKLINCLUDE = $(MKLROOT)/include/fftw
 
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
+#####################################################################
+#               Code selection					                    #
+#####################################################################
+
+# Code version
+CODE_VERSION = 74
+# grid: FFT or finite difference
+GRIDFFT = YES
+FINDIFF = NO
+NUMEROV = NO
+# Coulomb solver  (set all to 0 for 'findiff' or 'numerov')
+COUFOU = NO
+COUDOUB = YES
+# Switch to 3D FFTW in Coulomb solver (preliminary option)
+COUDOUB3D = NO
+# Full SIC and localized SIC
+TWOSTSIC = NO
+CMPLXSIC = NO
+# Switch to extended model with polarizable raregas
+RAREGAS = NO
+
+CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
+ifeq ($(GRIDFFT),YES)
+	CODE_OPTIONS += -Dgridfft
+endif
+ifeq ($(FINDIFF),YES)
+    CODE_OPTIONS += -Dfindiff
+endif
+ifeq ($(NUMEROV),YES)
+    CODE_OPTIONS += -Dnumerov
+endif
+ifeq ($(COUFOU),YES)
+    CODE_OPTIONS += -Dcoufou
+endif
+ifeq ($(COUDOUB),YES)
+    CODE_OPTIONS += -Dcoudoub
+endif
+ifeq ($(COUDOUB3D),YES)
+    CODE_OPTIONS += -Dcoudoub3D
+endif
+ifeq ($(TWOSTSIC),YES)
+    CODE_OPTIONS += -Dtwostsic
+endif
+ifeq ($(CMPLXSIC),YES)
+    CODE_OPTIONS += -Dcmplxsic
+endif
+ifeq ($(RAREGAS),YES)
+    CODE_OPTIONS += -Draregas
+endif
 
 #####################################################################
 #                Process parallelization options                    #
@@ -86,9 +137,9 @@ endif
 
 # OpenMP
 ifeq ($(OMP_THREADS), NO)
-	OMP= NO
+	OMP = NO
 else
-	OMP= YES
+	OMP = YES
 endif
 
 #####################################################################
@@ -139,7 +190,7 @@ ifeq "$(CF90)" "IFORT"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL =  -qopenmp
   endif
 endif
 
@@ -151,7 +202,7 @@ ifeq "$(CF90)" "IFORT1"
 	LDLIBS    = -lmpi
   endif
   ifeq "$(OMP)" "YES"
-	OMPADDL =  -openmp
+	OMPADDL = -qopenmp
   endif
 endif
 
@@ -187,7 +238,7 @@ endif
 # endif
 
 ifeq "$(CF90)" "GFORT"
-	OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 #	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse
@@ -202,7 +253,7 @@ endif
 
 
 ifeq "$(CF90)" "GFORT1"
-	OPT1  =  -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
+	OPT1  = $(OMPADDL) -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
 	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
   ifeq "$(DEBUG)" "YES"
@@ -218,7 +269,7 @@ ifeq "$(CF90)" "IFORT"
 #	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
 #	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
-	OPT1  = -openmp -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT1  = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
 	OPT3  =  -fpp -w       -g                 -align all -autodouble
   ifeq "$(DEBUG)" "YES"
@@ -319,9 +370,9 @@ else
 endif
 
 # Compiler flags
-COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
-COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD))
+COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
+COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
+COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
 IDRIS =
@@ -383,9 +434,10 @@ ifeq ($(TYPE_FFT), MKL)
 else
   ifeq ($(TYPE_FFT), FFTW)
     ifeq ($(OMP), YES)
-	FFTWFLAGS += -lfftw3_omp -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3_omp
     endif
-	FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
+	#FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
 
   endif
 endif
@@ -408,20 +460,19 @@ DATE =$(shell date +%d.%m.%y)
 # Set type of parallelization.
 ifeq ($(MPI_PARALLEL), YES)
 	MPI_NAME = MPI
-        EXEC = essai.seq
 else
   ifeq ($(MPI_PARALLEL), SIM)
 	MPI_NAME = SIM
-        EXEC = essai.seq
   else
     ifeq ($(OMP), YES)
 	MPI_NAME = OMP
     else
 	MPI_NAME = Mono
     endif
-    EXEC = essai.seq
   endif
 endif
+
+EXEC = qdd
 
 #####################################################################
 #                 Phony targets and empty recipes                   #
@@ -459,37 +510,37 @@ valid_OMP_THREADS := DYN YES NO
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
-gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-lda_gpu_value  :=$(shell echo -e "\\n\#if(lda_gpu)  \\nlda_gpu  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
+#lda_gpu_value  :=$(shell echo -e "\\n\#if(lda_gpu)  \\nlda_gpu  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
-initial_checks: makefile define.mk define.h
+initial_checks: makefile
 	@echo "#######################################################"
 	@echo  Lists of known compilation parameters.
 	@echo "#######################################################"
 	@echo  Parameters defined in define.h:
 	@echo "--------------------------------------------"
-	@echo "gridfft       $(gridfft_value)"
-	@echo "findiff       $(findiff_value)"
-	@echo "numerov       $(numerov_value)"
-	@echo "coufou        $(coufou_value)"
-	@echo "coudoub       $(coudoub_value)"
-	@echo "coudoub3D     $(coudoub3D_value)"
-	@echo "twostsic      $(twostsic_value)"
-	@echo "raregas       $(raregas_value)"
-	@echo "lda_gpu       $(lda_gpu_value)"
+	@echo "gridfft       $(GRIDFFT)"
+	@echo "findiff       $(FINDIFF)"
+	@echo "numerov       $(NUMEROV)"
+	@echo "coufou        $(COUFOU)"
+	@echo "coudoub       $(COUDOUB)"
+	@echo "coudoub3D     $(COUDOUB3D)"
+	@echo "twostsic      $(TWOSTSIC)"
+	@echo "raregas       $(RAREGAS)"
+#	@echo "lda_gpu       $(lda_gpu_value)"
 	@echo "#######################################################"
 	@echo  Parameters defined in makefile / define.mk:
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
-	@echo "OMP_THREADS   $(OMP_THREADS)"
+	@echo "	   $(OMP_THREADS)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
@@ -541,17 +592,17 @@ ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 endif
 
 # gridfft, findiff, numerov: only one can be enabled.
-ifneq ($(gridfft_value), 0)
-  ifneq ($(findiff_value), 0)
+ifneq ($(GRIDFFT),NO)
+  ifneq ($(FINDIFF),NO)
 	$(error ERROR: gridfft and findiff cannot be enabled simultaneously in define.h)
   endif
-  ifneq ($(numerov_value), 0)
+  ifneq ($(NUMEROV),NO)
 	$(error ERROR: gridfft and numerov cannot be enabled simultaneously in define.h)
   endif
 else
 	$(warning WARNING: gridfft disabled, so TYPE_FFT=$(TYPE_FFT) will be disregarded)
-  ifeq ($(findiff_value), 0)
-    ifeq ($(numerov_value), 0)
+  ifeq ($(FINDIFF),NO)
+    ifeq ($(NUMEROV),NO)
 	$(error ERROR: gridfft, findiff and numerov cannot be simultaneously disabled in define.h)
     endif
   endif
@@ -563,14 +614,14 @@ else
 endif
 
 # coufou, coudoub: only one can be enabled.
-ifneq ($(coufou_value), 0)
-  ifneq ($(coudoub_value), 0)
+ifneq ($(COUFOU),NO)
+  ifneq ($(COUDOUB),NO)
 	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
   endif
 endif
 
 # coudoub3D is only enabled when using FFTW calls.
-ifneq ($(coudoub3D_value), 0)
+ifneq ($(COUDOUB3D),NO)
   ifneq ($(calls_FFTW), YES)
 	$(error ERROR: coudoub3D requires the use of FFTW)
   endif

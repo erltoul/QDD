@@ -17,7 +17,6 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "define.h"
 
 MODULE util
 

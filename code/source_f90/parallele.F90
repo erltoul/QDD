@@ -16,7 +16,6 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
-#include"define.h"
  
 !-----init_parallele-------------------------------------------------
 
@@ -35,7 +34,7 @@ INTEGER :: nb
 INTEGER :: level,mpi_world_dup, new_comm, nrank
 #endif
 #endif
-INTEGER :: nprocs
+INTEGER :: nprocs, numprocs, numprocm
 
 !------------------------------------------------------------------
 
