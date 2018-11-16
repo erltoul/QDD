@@ -437,7 +437,8 @@ else
 	FFTWFLAGS += -lfftw3_omp
     endif
 	#FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
-	FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
+	#FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
+	FFTWFLAGS += -lfftw3 -lm 
 
   endif
 endif
@@ -485,14 +486,14 @@ EXEC = qdd
 all: $(EXEC)
 
 clean:
-	@rm -rfv *.o *.mod *.il $(shell ls *.i | grep -v makefile.i) *.f
+	@rm -rfv *.o *.mod *.il
 
 # Prevent make from trying to update the source files:
 makefile: ;
-define.mk: ;
-define.h: ;
+#define.mk: ;
+#define.h: ;
 *.F90: ;
-*.cu: ;
+#*.cu: ;
 
 #####################################################################
 #                             Checks                                #
@@ -651,7 +652,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o \
        pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o attachement.o rta.o
+       short.o image.o lattice.o attachement.o rta.o zdiag.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -692,9 +693,12 @@ DEPS_KINCOUL = kinetic.mod coulsolv.mod
 # Dependencies on makefile, define.mk, define.h and params.mod
 # Dependencies are inherited, so there's no need to repeat them
 # in the targets below.
-$(MODLIST):   makefile define.mk define.h
-params.o:     makefile define.mk define.h
-$(OBJS_NPAR): makefile define.mk define.h params.mod
+#$(MODLIST):   makefile define.mk define.h
+#params.o:     makefile define.mk define.h
+#$(OBJS_NPAR): makefile define.mk define.h params.mod
+$(MODLIST):   makefile 
+params.o:     makefile 
+$(OBJS_NPAR): makefile params.mod
 
 # Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
 # with no other special requirements:
@@ -715,7 +719,7 @@ endif
 #####################################################################
 
 .SUFFIXES:
-.SUFFIXES: .F90 .o .mod
+.SUFFIXES: .F90 .f .o .mod
 
 $(EXEC): initial_checks $(OBJS)
 	@echo Linking executable $@
@@ -817,4 +821,6 @@ parallele.o: parallele.F90 kinetic.mod
 rta.o: rta.F90 kinetic.mod params.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
+zdiag.o: zdiag.f
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
