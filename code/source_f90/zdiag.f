@@ -1,6 +1,6 @@
       SUBROUTINE CDIAG(hmatr,eigen,vect,nlin,ndim)
 !
-!     Diagonalization of a complex hermitian matrix.
+!     Diagonalization of a complex hermition matrix.
 !     Basically a driver for the LINPACK routine ZHBEVD.
 !
       IMPLICIT NONE
@@ -17,9 +17,9 @@
       REAL(8),ALLOCATABLE  :: rwork(:)
       INTEGER,ALLOCATABLE  :: iwork(:)
 
-!      WRITE(6,'(a)') ' input matrix CDIAG::'
-!      DO n1=1,nlin
-!        WRITE(6,'(30(1pg13.5))') hmatr(1:nlin,n1)
+!      WRITE(*,'(a)') ' input matrix CDIAG::'
+!      DO n1=1,10
+!        WRITE(*,'(20(f13.5))') hmatr(1:10,n1)
 !      END DO
       ALLOCATE(hmatr_lin(nlin+1,nlin),iwork(5*nlin+3))
       ALLOCATE(cwork(2*nlin*nlin),rwork(2*nlin*nlin+5*nlin+1))
@@ -1601,7 +1601,7 @@
 *
       IF( INFO.NE.0 ) THEN
          WRITE(*,*) ' ZLASCL: KL,M=',kl,m
-!         CALL XERBLA( 'ZLASCL', -INFO )
+         CALL XERBLA( 'ZLASCL', -INFO )
          RETURN
       END IF
 *

@@ -652,7 +652,8 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o \
        pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o attachement.o rta.o zdiag.o
+       short.o image.o lattice.o attachement.o rta.o\
+       HEeigensystem.o mini.o zdiag.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -823,4 +824,7 @@ rta.o: rta.F90 kinetic.mod params.mod
 
 zdiag.o: zdiag.f
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+HEeigensystem.o: HEeigensystem.f
+	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
