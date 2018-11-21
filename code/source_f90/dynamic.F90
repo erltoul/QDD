@@ -2500,7 +2500,7 @@ REAL(DP), EXTERNAL :: getdistance2
 
 !----------------------------------------------------------------
 
-!      tfs=it*dt1*0.0484
+      tfs=it*dt1*0.0484
 
 CALL getcm(1,0,0)                  !  c.m. now on 'rvectmp(1:3)'
 IF (jposcm > 0 .AND. MOD(it,jposcm) == 0) THEN
