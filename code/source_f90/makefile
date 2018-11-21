@@ -20,7 +20,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = YES
+OMP_THREADS = DYN
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -245,9 +245,9 @@ ifeq "$(CF90)" "GFORT"
 #	OPT2  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse -fdefault-real-8
 #	OPT3  = -cpp -w -g
   ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-	OPT2  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
+	OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+	OPT2  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+	OPT3  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
   endif
 endif
 

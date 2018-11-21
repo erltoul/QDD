@@ -12,3 +12,7 @@ this option not yet properly implemented on new repository.
 
 Mask:
 possibly not yet fully imported.
+
+
+Calc_var:
+Projection in calculation of variance?
