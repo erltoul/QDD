@@ -90,17 +90,19 @@ Tutorial }
 
 \begin{frame}
 \frametitle{Before you start the calculations}
-\begin{enumerate}
-\item Just go in the pwteleman directory and enter {\tt source ./install\_pwteleman} and follow the instructions
+\begin{enumerate}  
+\item Just go in the pwteleman directory and enter {\tt source ./install_pwteleman} and follow the instructions
 \item The only prerequisite is a working {\tt gfortran} in your path (type  {\tt sudo apt-get install gfortran} if you have root on Linux)
-\item Enter {\tt source ./install\_pwteleman d} for gfortran compilation with debug options 
-\item  {\tt source ./install\_pwteleman a }for all possible compilations, if you have Intel Fortran Compiler and NVCC 
-\item   {\tt source ./install\_pwteleman t }to test your results and cross-correlate them against reference results  (quite long) 
-\item  At any time you can try {\tt code/source\_f90/regressionmatrix} to measure the change in your results vs reference results 
-\item   {\tt source ./install\_pwteleman i } for GPU compilations only (if you have Intel Fortran and NVCC) 
+\item Enter {\tt source ./install_pwteleman d } for gfortran compilation with debug options 
+\item  {\tt source ./install_pwteleman a }for all possible compilations, if you have Intel Fortran Compiler and NVCC 
+
+\item   {\tt source ./install_pwteleman t }to test your results and cross-correlate them against reference results  (quite long) 
+\item  At any time you can try {\tt code/source_f90/regressionmatrix} to measure the change in your results vs reference results 
+\item   {\tt source ./install_pwteleman i } for GPU compilations only (if you have Intel Fortran and NVCC) 
 \item if it fails  to {\tt source\_f90} directory :\\
 \vspace*{0.2cm}
-{\tt cd pw-teleman\_dev-all\_20131009/code/source\_f90/}\\
+{\tt cd pw-teleman\_dev-all\_20131009/code/source\_f90/
+}\\
 \vspace*{0.2cm}
 Before compilation, you might want to update some settings,\\ for detailed explanations see {\tt openmp\_explain.txt}.
 \vspace*{0.2cm}
@@ -115,9 +117,13 @@ Before compilation, you might want to update some settings,\\ for detailed expla
 {\tt ./make.sh 1 fftw} 
 \vspace*{0.2cm}
 \item The executable will be copied to the working
- directory which is one level below the sub-directory {\tt source\_f90}. The file called {\tt pwteleman.par} is the new executable.
+ directory which is one level below the sub-directory {\tt source\_f90}. The file called {\tt pwteleman.par} is
+ the new executable.
 \end{enumerate} 
-%%\includegraphics[width=4.5cm]<1->{fig/magh}
+ 
+ %\includegraphics[width=4.5cm]<1->{fig/magh}
+
+   
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -125,18 +131,20 @@ Before compilation, you might want to update some settings,\\ for detailed expla
 \frametitle{Jellium model for Na8 - Real Time TDDFT}
 \begin{enumerate}
 \item Go the {\tt na8-jel} directory\\
-%\vspace*{0.2cm}
+\vspace*{0.2cm}
 {\tt cd pw-teleman\_dev-all\_20131009/samples/na8-jel}\\
-%\vspace*{0.2cm}
+\vspace*{0.2cm}
 you should see following files:\\
-%\vspace*{0.2cm}
+\vspace*{0.2cm}
 \begin{tabular}{ll}
 {\tt for005.na8-jel} &{\scriptsize{\textcolor{red}{general input for settings, static and dynamics}}}\\
 {\tt for005}  &{\scriptsize{\textcolor{red}{defines the qualifier na8-jel for the other {\tt for005} files}}}\\
 \end{tabular}
-%\vspace*{0.4cm}
+\vspace*{0.4cm}
+
+
 \item Open and read the sample file {\tt for005.na8-jel}, there are three namelists:\\
-%\vspace*{0.4cm}
+\vspace*{0.4cm}
 \begin{tabular}{ll}
  {\tt \&GLOBAL} & {\scriptsize{\textcolor{red}{choice of the system, initialization of wave functions, convergence issues}}}\\
 {\tt \&DYNAMIC}&{\scriptsize{\textcolor{red}{numerical and physical parameters for statics and dynamics, }}}\\
@@ -272,7 +280,7 @@ gnuplot>  plot './spectra' u 2:3 w l
 \begin{enumerate}
 \item Go the {\tt H2} directory\\
 \vspace*{0.2cm}
-{\tt cd pw-teleman\_dev-all\_20131009/samples\_py/H2}\\
+{\tt cd pw-teleman\_dev-all\_20131009/samples_py/H2}\\
 \vspace*{0.2cm}
 you should see following files:\\
 \vspace*{0.2cm}
@@ -472,25 +480,25 @@ From closer inspection you can see that the corresponding period of the oscillat
 \frametitle{Coupling of the PWTELEMAN code with ASE}
 
 \begin{block}{}
-   \href{https://wiki.fysik.dtu.dk/ase/overview.html}{ASE} is an Atomistic Simulation Environment written in the \href{http://www.python.org/}{Python} programming language with the aim of setting up, steering, and analyzing atomistic simulations.\\
+   \href{https://wiki.fysik.dtu.dk/ase/overview.html}{ASE} is an Atomistic Simulation Environment written in the \href{http://www.python.org/}{Python} programming language with the aim of setting up, steering, and analyzing atomistic simulations .\\
     The coupling of the PWTELEMAN code with ASE  is still in progress.
    \end{block}
    \vspace*{1.2cm}
 
-%\begin{columns}
-%  \begin{column}{0.5\textwidth}
-%  Useful informations about ASE:\\
-%     \vspace*{0.2cm}
-%Overview \href{https://wiki.fysik.dtu.dk/ase/overview.html}{\beamerbutton{click!}}\\
-%What is Phyton? \href{https://wiki.fysik.dtu.dk/ase/python.html#python-info}{\beamerbutton{click!}}\\
-%ASE and Phyton tutorials \href{https://wiki.fysik.dtu.dk/ase/tutorials/tutorials.html}{\beamerbutton{click!}}\\
-%Documentation \href{https://wiki.fysik.dtu.dk/ase/ase/ase.html}{\beamerbutton{click!}}\\
-%  \end{column}
-%  \begin{column}{0.5\textwidth}
-%  \centering
-% \includegraphics[width=5.5cm]{fig/co}   
-%  \end{column}
-%\end{columns}
+\begin{columns}
+  \begin{column}{0.5\textwidth}
+  Useful informations about ASE:\\
+     \vspace*{0.2cm}
+Overview \href{https://wiki.fysik.dtu.dk/ase/overview.html}{\beamerbutton{click!}}\\
+What is Phyton? \href{https://wiki.fysik.dtu.dk/ase/python.html#python-info}{\beamerbutton{click!}}\\
+ASE and Phyton tutorials \href{https://wiki.fysik.dtu.dk/ase/tutorials/tutorials.html}{\beamerbutton{click!}}\\
+Documentation \href{https://wiki.fysik.dtu.dk/ase/ase/ase.html}{\beamerbutton{click!}}\\
+  \end{column}
+  \begin{column}{0.5\textwidth}
+  \centering
+ \includegraphics[width=5.5cm]{fig/co}   
+  \end{column}
+\end{columns}
 
 \end{frame}
 
@@ -503,8 +511,8 @@ From closer inspection you can see that the corresponding period of the oscillat
 \begin{enumerate}
 
 \item \small{First thing, you need to install ASE: \href{https://wiki.fysik.dtu.dk/ase/download.html}{https://wiki.fysik.dtu.dk/ase/download.html}
-\item \small{Run the install script in order to get paths correctly, or look into it }
-\item \small{{\tt source ./install\_pwteleman}
+\item \small{Run the install script in order to get paths correcly, or look into it }
+\item \small{{\tt source ./install_pwteleman}
      \vspace*{0.2cm}
      
 \item Then, go to {\tt Na} directory:}\\
