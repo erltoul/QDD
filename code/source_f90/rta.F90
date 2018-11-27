@@ -570,7 +570,7 @@ SUBROUTINE calc_var(hpsi,psi1,sumvar2)
 
   REAL(DP)                                 :: evarsp2,evarsp2b
   INTEGER:: N
-  COMPLEX(DP)                              ::wfovlp,qout(kdfull2),ovl
+  COMPLEX(DP)                              :: qout(kdfull2),ovl
   ! hpsi is the term h psi in k space
   ! psi1 the wavefunctions (in real space)
 !                WRITE(*,*)'in var'
