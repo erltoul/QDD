@@ -27,7 +27,7 @@ OMP_THREADS = NO
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -823,6 +823,9 @@ rta.o: rta.F90 kinetic.mod params.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 zdiag.o: zdiag.f
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+mini.o: mini.f
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 HEeigensystem.o: HEeigensystem.f
