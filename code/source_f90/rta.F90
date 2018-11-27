@@ -34,7 +34,7 @@ rs=rtars!3.7(rta2)
 	CALL srhomat(psi,aloc,psiorth,occuporth)! new basis is psi orth with occuporth
 	occup=occuporth!because dyn_mfield needs occup
 	Nel0=sum(occup(1:nstate))!number of electrons
-        CALL dyn_mfield(rho,aloc,psiorth,0D0) 
+        CALL dyn_mfield(rho,aloc,psiorth,0D0) !  to check after transfo
         WRITE(*,*)'_____________before eq: iterat=',iterat
         CALL info(psiorth,rho,aloc,iterat)
         Eref=energy
