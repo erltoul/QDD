@@ -117,7 +117,8 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw,jattach, &
     phangle,phphase,nhstate,npstate, &
-    jstateoverlap
+    jstateoverlap,&    !MV: now follow parameters for rta
+    jrtaint,rtamu,rtamuj,rtasumvar2max,rtaeps,rtae0dmp,rtatempinit,rtaforcetemperature,rtasigee,rtars!rta2 added rtasigee, rtars
 
 #if(raregas)
 NAMELIST /surface/  &

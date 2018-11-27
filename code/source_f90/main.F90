@@ -67,9 +67,9 @@ REAL(DP),ALLOCATABLE :: aloc(:),rho(:)
 REAL(DP),ALLOCATABLE :: psir(:,:)
 COMPLEX(DP),ALLOCATABLE :: psi(:,:),psiw(:,:)
 
-INTEGER :: ion, it
-#if(raregas)
+INTEGER :: ion, it,nspup
 INTEGER :: i
+#if(raregas)
 REAL(DP):: dt
 #endif
 REAL(DP):: totalprob,totalovlp
@@ -175,7 +175,7 @@ CALL timer(1)
 !       static
 !
 !       *******************************************
-!SIC: Self Ineraction Correction
+!SIC: Self Interaction Correction
 !                                     initialize parameters for FSIC
 IF(nclust > 0 .AND. ifsicp >= 7) THEN
   CALL init_fsicr()
@@ -334,6 +334,50 @@ outnam=outname
 !        WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
 !      END DO
   END IF
+!MV  allocate and initialise psitophi
+allocate (psitophi(nstate,nstate))
+psitophi=0D0
+do i=1,nstate
+  psitophi(i,i)=1D0
+enddo
+!MV reorder wave functions and refresh potentials with the new wave functions
+!if (jrhomat>0)  then
+if (irest==0)  then!only if this is first pass. If irest <>0 then no temperature
+    call ordo_per_spin(psi)!MV
+    CALL calcpseudo()
+    CALL dyn_mfield(rho,aloc,psi,0D0)! note rho computed in dyn_mfield, then potentials
+    write(*,*)'after reordering'
+    CALL info(psi,rho,aloc,0)  !to update the occupation numbers and amoy
+    !here give a initial temperature
+if(rtatempinit.gt.1.d-6) then
+    call fermi_init(amoy,rtatempinit,occup,1)!occup changed in Fermi
+    call fermi_init(amoy,rtatempinit,occup,2)!occup changed in Fermi
+    CALL dyn_mfield(rho,aloc,psi,0D0)
+endif
+    write(*,*)'after temperature'
+   CALL info(psi,rho,aloc,0)  !to update the occupation numbers and amoy
+    else!irest <>0 then all this mess because ispin not stored
+      nspup=0
+      do i=1,nstate
+      if (ispin(i)==1) nspup=nspup+1!count nspup
+      enddo
+      do i=1,nstate
+        if (i<= nspup) then
+          ispin(i)=1
+        else
+          ispin(i)=2
+        endif
+      enddo
+      eqstnspup=nspup
+      eqstnspdw=nstate-eqstnspup
+
+endif
+!endif
+!MV end of reorder
+!MV create a file to store rho, v, pMP, pPES
+!  open(803,status='replace',file='pMP.'//outnam)
+  open(1003,status='replace',file='pPES.'//outnam)
+  open(1004,status='replace',file='prhov.'//outnam)
 !                                           refresh potentials
   IF(irest > 0 .OR. istat > 0) THEN
     CALL calcpseudo()
@@ -472,6 +516,11 @@ DO it=irest,itmax   ! time-loop
   CALL print_densdiff(rho,it)       ! right place here ???
   
 !         if(nclust.gt.0) call savings(psi,it)
+if (jrtaint.NE.0) then
+  if (mod(it,jrtaint).eq.0.and.it>0.and.(it>irest)) then!to avoid  rta after a restart
+        call rta(psi,aloc,rho,it)!MV
+   endif
+endif
   
   IF(jattach/=0 .AND. it==irest) THEN
      CALL init_occ_target()
@@ -677,6 +726,7 @@ ENDIF
 !  ********************  end of main program ****************************
 
 DEALLOCATE(psi)
+DEALLOCATE(psitophi)!MV
 
 
 #if(parayes||paraworld)
