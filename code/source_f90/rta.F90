@@ -35,7 +35,7 @@ rs=rtars!3.7(rta2)
 	occup=occuporth!because dyn_mfield needs occup
 	Nel0=sum(occup(1:nstate))!number of electrons
         CALL dyn_mfield(rho,aloc,psiorth,0D0) 
-        WRITE(*,*)'_____________before eq'
+        WRITE(*,*)'_____________before eq: iterat=',iterat
         CALL info(psiorth,rho,aloc,iterat)
         Eref=energy
         WRITE(*,'(a,40f10.6)')'occup    ',(occup(i),i=1,nstate)
@@ -44,7 +44,7 @@ rs=rtars!3.7(rta2)
 	CALL OccupPerSpin('start rta',Occref)!memorize for final correction
 	
 	!compute the T distribution of occupation numbers
- CALL eqstate(psiorth,aloc,rho,psieq,occuporth)!find density current constained state of same energy(T increased)
+ CALL eqstate(psiorth,aloc,rho,psieq,occuporth,iterat)!find density current constained state of same energy(T increased)
  CALL OccupPerSpin('end eqstate',Occspin)
 
  CALL occupT0(occup(1:nstate),amoy(1:nstate),Estar)! computes Estar, occup is unchanged
@@ -272,6 +272,8 @@ REAL(DP)::curr0(kdfull2,3),curr1(kdfull2,3),lambdaj(kdfull2,3),errj,muj!paramete
 REAL(DP)::sumvar2,eal,fac,EspPerMod(nstate),EspTotRef
 REAL(DP)::EspPerSpinRef(2),EspPerSpinAchieved(2),EspPerSpinTarget(2),temp(2),mut,EspTotAchieved
 INTEGER::i,j,ishift,ii,nspup,nspdw
+
+WRITE(*,*) "EQSTATE: iterat=",iterat
 nspup=eqstnspup
 nspdw=eqstnspdw
 err=1.d3
@@ -340,11 +342,12 @@ CALL coul_mfield(rho)
   lambda=lambda+2.d0*(rhotot1-rhotot0)*mu!update lambda(Augmented Lagrangian rule)
   lambdaj=lambdaj+2.d0*(curr1-curr0)*muj
   IF(mod(j,1).eq.0) THEN
-      WRITE(*,'(i6,20f14.7)') j,centfx,err,errj,mu,muj,ma0,ma1,EspTotRef,EspTotAchieved&
+      WRITE(*,'(a,i6,20f14.7)') ' RTA-iteration:',j,centfx,err,errj,mu,muj,ma0,ma1,EspTotRef,EspTotAchieved&
       ,EspTotRef-EspTotAchieved,sumvar2,EspPerSpinAchieved(1)-EspPerSpinAchieved(2)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ENDIF 
+!  IF(j>3) STOP
 ENDDO!DO j=1...
-OPEN(1000,STATUS='old',POSITION='append',FORM='formatted',FILE='pspeed.'//outnam)
+OPEN(1000,STATUS='unknown',POSITION='append',FORM='formatted',FILE='pspeed.'//outnam)
         WRITE (1000,'(6g14.5)') (rhotot0(ny*(nyf+nxyf)+ii,1),&
           rhotot0(ny*(nyf+nxyf)+ii,2),rhotot1(ny*(nyf+nxyf)+ii,1),rhotot1(ny*(nyf+nxyf)+ii,2),&
           curr0(ny*(nyf+nxyf)+ii,1),curr1(ny*(nyf+nxyf)+ii,1),ii=1,nx2)
@@ -353,7 +356,7 @@ OPEN(1000,STATUS='old',POSITION='append',FORM='formatted',FILE='pspeed.'//outnam
         CALL cpu_time(time1)
         WRITE(*,*)'j,time', j, (time1-time0)
         CALL dyn_mfield(rho,aloc,psi1,0D0) 
-       WRITE(*,*)'_____________in eqstate 2'
+       WRITE(*,*)'_____________in eqstate 2: iterat=',iterat
         CALL info(psi1,rho,aloc,iterat)
       WRITE(*   ,'(2i4,11f14.7)') iterat,j,sumvar2,err,errj,mu,muj,energy
       OPEN(1001,POSITION='append',FILE='peqstate')
@@ -460,7 +463,7 @@ dkvol=((2*pi)**3)*dvol!I do not understand this coefficient, it is used in calc 
     ENDDO!N
 	CALL calc_var(hpsip,psi1,sumvar2 )!hppsip in k space
 IF ((mod(j,1).eq.0)) THEN
-	WRITE(*,'(a,(20f10.6))')'emod1 ener + Lagrangi',(emod(N),N=1,nstate)
+	WRITE(*,'(a,i6,(20f10.6))')'emod1 ener+Lagrangi. j=',j,(emod(N),N=1,nstate)
 	WRITE(*,'(a,(21f10.6))')'ekmod1 ener per mode',(ekmod(N),N=1,nstate)
 	WRITE(*,'(a,(21f10.6))')'occup',(occup(N),N=1,nstate)
 !	WRITE(*,'(a,f14.9)')'sumvar2 penalty',sumvar2
@@ -555,7 +558,7 @@ DO nb=1,nstate
 END DO
 RETURN
 END SUBROUTINE calcrhotot
-!_________________________________________calc_var_____________________________________
+!___________________________________calc_var__________________________________
 SUBROUTINE calc_var(hpsi,psi1,sumvar2)
   use params, only :DP,kdfull2,nstate,kstate,ispin,occup
   USE kinetic
@@ -563,9 +566,11 @@ SUBROUTINE calc_var(hpsi,psi1,sumvar2)
   IMPLICIT NONE
   COMPLEX(DP), INTENT(IN)                  :: psi1(kdfull2,kstate)
   COMPLEX(DP), INTENT(IN OUT)              :: hpsi(kdfull2,kstate)
-  REAL(DP)                                 :: evarsp2,sumvar2
+  REAL(DP), INTENT(OUT)                    :: sumvar2
+
+  REAL(DP)                                 :: evarsp2,evarsp2b
   INTEGER:: N
-  COMPLEX(DP)                              ::wfovlp,qout(kdfull2)
+  COMPLEX(DP)                              ::wfovlp,qout(kdfull2),ovl
   ! hpsi is the term h psi in k space
   ! psi1 the wavefunctions (in real space)
 !                WRITE(*,*)'in var'
@@ -575,14 +580,19 @@ DO N=1,nstate
     CALL fftback(hpsi(1,N),hpsi(1,N))
 ENDDO
 
-!do the calc
+!do the calc     !?? PGR: is 'c_project' the right thing to call ??
 DO N=1,nstate
-    CALL c_project(hpsi(:,N),qout,ispin(N),psi1)
+!    CALL c_project(hpsi(:,N),qout,ispin(N),psi1)
+    ovl=wfovlp(psi1(:,N),hpsi(:,N))
+    qout=hpsi(:,N)-psi1(:,N)*ovl
     evarsp2 =  SQRT( real( wfovlp(qout,qout) ) )
     sumvar2   = sumvar2 + occup(N)*evarsp2**2
+!WRITE(*,'(a,2i4,4(1pg13.5))') "RTA CALC_VAR:",N,ispin(N),occup(N),evarsp2,&
+!  SQRT( real( wfovlp(hpsi(:,N),hpsi(:,N)) ) )
 ENDDO
 !WRITE(*,'(a, 40i3)') 'ispin in sumvar2', (ispin(N),N=1,nstate)
 !WRITE(*,'(a, 40f10.6)') 'occup in sumvar2', (occup(N),N=1,nstate)
+
 
 END SUBROUTINE calc_var
 !_______________________________Fermi1______________________________________________________
@@ -719,14 +729,13 @@ IMPLICIT NONE
 SUBROUTINE srhomat(psi,aloc,psiorth,occuporth)
 USE params, only: DP, kdfull2,kstate,nstate,ispin,nrel2abs,nxyz,occup,apnum,psitophi
 IMPLICIT NONE
-REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate),psiorth(kdfull2,kstate)
-REAL(DP),intent(out)				:: occuporth(kstate)
+REAL(DP), INTENT(IN)            :: aloc(2*kdfull2)
+COMPLEX(DP), INTENT(IN OUT)     :: psi(kdfull2,kstate),psiorth(kdfull2,kstate)
+REAL(DP),intent(out)	        :: occuporth(kstate)
+
+
 INTEGER:: i,j
 COMPLEX(DP):: scal(nstate,nstate),scal0(nstate,nstate)
- 
-
-
       COMPLEX(DP)::D1on_rho(nstate,nstate),rhomat(nstate,nstate)
       REAL(DP) :: eigen(nstate) ,eigen0(nstate)     ! eigenvalues
       COMPLEX(8) :: v(nstate,nstate),vp(nstate,nstate),u(nstate,nstate),w(nstate,nstate)  ! eigenvectors
@@ -783,7 +792,7 @@ ENDDO
 !uptage the change of basis matrix
 psitophi=matmul(winv,psitophi)!matmul(psitophi,winv)
 
-occuporth=eigen
+occuporth(1:nstate)=eigen
 
 END SUBROUTINE srhomat
 
