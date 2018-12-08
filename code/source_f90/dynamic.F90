@@ -729,6 +729,7 @@ REAL(DP) :: ek, tinfs, xm
 REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
 REAL(DP) ::  en(kstate)
 COMPLEX(DP),ALLOCATABLE :: qtmp(:)
+COMPLEX(DP),ALLOCATABLE :: psitmp(:,:)
 REAL(DP),ALLOCATABLE :: current(:,:)
 REAL(DP) ::  estar(2),estarETF(2)
 COMPLEX(DP), ALLOCATABLE :: psiaux(:)
@@ -814,6 +815,7 @@ CALL spmoms(psi,6)
 
 
 tstinf = jstinf > 0 .AND. MOD(it,jstinf)==0
+!tstinf=.FALSE.
 IF(tstinf) then
   IF(ifsicp==5)  psisavex = psi
   ALLOCATE(qtmp(kdfull2))

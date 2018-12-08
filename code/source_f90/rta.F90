@@ -344,6 +344,7 @@ CALL coul_mfield(rho)
   IF(mod(j,1).eq.0) THEN
       WRITE(*,'(a,i6,20f14.7)') ' RTA-iteration:',j,centfx,err,errj,mu,muj,ma0,ma1,EspTotRef,EspTotAchieved&
       ,EspTotRef-EspTotAchieved,sumvar2,EspPerSpinAchieved(1)-EspPerSpinAchieved(2)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     CALL flush(6)
   ENDIF 
 !  IF(j>3) STOP
 ENDDO!DO j=1...
@@ -582,7 +583,7 @@ ENDDO
 
 !do the calc     !?? PGR: is 'c_project' the right thing to call ??
 DO N=1,nstate
-!    CALL c_project(hpsi(:,N),qout,ispin(N),psi1)
+!    CALL cproject(hpsi(:,N),qout,ispin(N),psi1)
     ovl=wfovlp(psi1(:,N),hpsi(:,N))
     qout=hpsi(:,N)-psi1(:,N)*ovl
     evarsp2 =  SQRT( real( wfovlp(qout,qout) ) )
@@ -1045,3 +1046,38 @@ ENDDO
 !WRITE(*,'(a,i3,25f9.6)') 'in ff: iflag, mu T fvec',iflag,mu,T,fvec
 
 END SUBROUTINE ff
+SUBROUTINE cproject(qin,qout,ispact,q0)
+
+!     ******************************
+!     projects all (!) states 'q0' out of 'qin'.
+!      q0     = set of s.p. wavefunctions (complex)
+!      qin    = wavefunction from which 'q0' are to be removed (complex)
+!      qout   = resulting wavefunction
+!      ispact = spin of 'qin'
+!
+!     old version! 
+
+USE params
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN)   :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: qin(kdfull2)
+COMPLEX(DP), INTENT(OUT)  :: qout(kdfull2)
+INTEGER, INTENT(IN)    :: ispact
+
+INTEGER :: nbe
+COMPLEX(DP) :: ovl
+
+!*********************************************************
+
+qout=qin
+
+DO nbe=1,nstate
+  IF(ispin(nbe) == ispact) THEN
+    ovl=dvol*SUM(CONJG(q0(:,nbe))*qout)
+    qout(:)=qout(:)-q0(:,nbe)*ovl
+  END IF
+END DO
+
+RETURN
+END SUBROUTINE cproject
