@@ -20,7 +20,8 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = DYN
+OMP_THREADS = NO
+
 
 # TYPE_FFT: FFT solver
 # Available options:
