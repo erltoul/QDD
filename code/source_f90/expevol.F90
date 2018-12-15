@@ -88,6 +88,7 @@ IF(ifsicp==5) psisavex = q0
 IF(.NOT.timagtime) THEN
   cdtact = CMPLX(dt1/2D0,0D0,DP)
   IF(tnorotate .OR. ifsicp .NE. 8) THEN
+!    WRITE(*,*) 'EXPEVOL: half step, dt=',cdtact
     DO nb=1,nstate
       qwork(:,nb) = q0(:,nb)
       CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
@@ -122,6 +123,7 @@ END IF
 nterms = 4
 ! itpri = MOD(it,ipasinf) + 1    ?? FL
 IF(tnorotate .OR. ifsicp .NE. 8) THEN
+!    WRITE(*,*) 'EXPEVOL: full step, dt=',cdtact
   DO nb=1,nstate
     CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
@@ -445,6 +447,7 @@ COMPLEX(DP),ALLOCATABLE :: qex(:)
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:),q1fine(:),q2fine(:),qactfine(:)
 COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
+REAL(DP) :: wnorm
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
 LOGICAL,PARAMETER :: ttest=.false.
@@ -457,8 +460,8 @@ COMPLEX(DP) :: cf
 !----------------------------------------------------------------------
 
 
-!      write(*,*) 'entering HPSI'
-tpri = ABS(itpri)==1
+tpri =  ABS(itpri)==1
+!      write(*,*) 'entering HPSI, tpri=',tpri
 
 
 ALLOCATE(q1(kdfull2),q2(kdfull2))
@@ -473,10 +476,12 @@ DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO
 CALL fftback(q1,q2)
+!WRITE(*,*) 'FFTW kin'
 #else
 CALL ckin3d(qact,q1)
+!WRITE(*,*) 'CKIN3D'
 #endif
-q2 = -h2m * q1
+!q2 = -h2m * q1
 
 !STOP ' HPSI not yet appropriate for finite differences'
 
@@ -558,7 +563,7 @@ IF(tpri) THEN
   is=ispin(nrel2abs(nbe))
   IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
    ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
-      ekinsp(nbe),epotsp(nbe),amoy(nbe)
+      ekinsp(nbe),epotsp(nbe),REAL(wfovlp(q2,q2),DP)
   CALL flush(6)
 !      SQRT(REAL(wfovlp(q2,q2))),ABS(wfovlp(qact,q2))
 ELSE
