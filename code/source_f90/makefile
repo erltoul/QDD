@@ -6,7 +6,7 @@
 #   * IFORT (serial & parallel & debug version)
 #   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
-CF90 = GFORT
+CF90 = IFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -20,14 +20,14 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = FFTW
+TYPE_FFT = MKL
 
 # DEBUG: enable debugging
 # Available options:
@@ -46,13 +46,13 @@ LINK_STATIC = NO
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = NO
+MKL_THREADS = YES
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
 #MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 #for CCC
-MKL_WRAPPERS = $(MKLROOT)/interfaces/fftw3xf
+MKL_WRAPPERS = $(HOME)/code/fftw3xf
 
 FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3-icc/lib
 
@@ -479,7 +479,7 @@ EXEC = qdd
 #                 Phony targets and empty recipes                   #
 #####################################################################
 
-.PHONY: all initial_checks clean
+.PHONY: all initial_checks clean qdd
 
 .DEFAULT_GOAL: all
 
@@ -541,7 +541,7 @@ initial_checks: makefile
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
-	@echo "	   $(OMP_THREADS)"
+	@echo "OMP_THREADS   $(OMP_THREADS)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
