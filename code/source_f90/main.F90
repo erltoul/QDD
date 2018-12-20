@@ -143,7 +143,7 @@ SELECT CASE(nion2)
 END SELECT
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
-    call ordo_per_spin_real(psir)!MV
+!    call ordo_per_spin_real(psir)!MV
 
 !                                     initialize surface
 

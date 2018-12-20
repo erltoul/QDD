@@ -312,7 +312,7 @@ CALL coul_mfield(rho)
 !at next fermi the density is changed a lot and err and sumvar are exploding. Also energy is ver out of balance
 !in order to control this this version introduces an additionnalloop, with little authority (0.001 on Temp)
 ! and evry tenth step at most, in order to reorder the Occ vs Esp     
-   WRITE(17,'(a,i5/a)') 'RTA protocaol at iterat=',iterat,&
+   WRITE(177,'(a,i5/a)') 'RTA protocol at iterat=',iterat,&
     '  j  err   errj    diffrho  sumj0 sumj1  diffE  sumvar2 '
    DO while(sumvar2>rtasumvar2max.or.abs(EspTotRef-EspTotAchieved)>1.d-4.or.err>0.2d0)!main loop
         IF((sumvar2<1.d-1.and.err<1.0).and.mod(j,10).eq.0)then !update the occupation numbers without changing the target energy
@@ -351,9 +351,9 @@ CALL coul_mfield(rho)
       WRITE(*,'(a,i6,20f14.7)') ' RTA-iteration:',j,centfx,err,errj,mu,muj,ma0,ma1,EspTotRef,EspTotAchieved&
       ,EspTotRef-EspTotAchieved,sumvar2,EspPerSpinAchieved(1)-EspPerSpinAchieved(2)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      CALL flush(6)
-     WRITE(17,'(a,i6,20(1pg14.6))') ' RTA-iteration:',j,err,errj,ma0-ma1,&
+     WRITE(177,'(a,i6,20(1pg14.6))') ' RTA-iteration:',j,err,errj,ma0-ma1,&
       sum(abs(curr0)),sum(abs(curr1)),EspTotRef-EspTotAchieved,sumvar2
-     CALL flush(17) 
+     CALL flush(177) 
   ENDIF 
   IF(j>100) STOP
 ENDDO!DO j=1...
@@ -1009,50 +1009,6 @@ DO i=1,nstate
 ENDDO
 DEALLOCATE(occuploc,ispinloc,psiloc)
 END SUBROUTINE ordo_per_spin
-!_____________________________ordo_per_spin_________________________________
-SUBROUTINE ordo_per_spin_real(psi)
-
-USE params, only: DP,nspdw,nstate,ispin,occup,kdfull2,kstate,eqstnspup,eqstnspdw
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)    :: psi(kdfull2,kstate)
-
-REAL(DP),ALLOCATABLE     :: occuploc(:)
-REAL(DP), ALLOCATABLE :: psiloc(:,:)
-INTEGER,ALLOCATABLE      :: ispinloc(:)
-INTEGER                  :: i,j,ind(kstate),compt,nspup
-
-ALLOCATE(occuploc(kstate),ispinloc(kstate),psiloc(kdfull2,kstate))
-compt=0
-DO i=1,nstate
- 
- IF (ispin(i).eq.1)THEN
-    compt=compt+1
-    ind(compt)=i
- ENDIF
- WRITE(*,*) i,compt, ind(compt)
-ENDDO
-eqstnspup=compt
-!IF (.not.(compt.eq.nspup)) stop'inconsistent number of spins up'
-DO i=1,nstate
- IF(ispin(i).eq.2)THEN
-    compt=compt+1
-    ind(compt)=i
- ENDIF
- WRITE(*,*) i,compt, ind(compt)
-ENDDO
-eqstnspdw=nstate-eqstnspup
-!IF (.not.(compt.eq.nstate)) stop'inconsistent number of spins tot'
-psiloc=psi
-ispinloc=ispin
-occuploc=occup
-DO i=1,nstate
- psi(:,i)=psiloc(:,ind(i))
- ispin(i)=ispinloc(ind(i))
- occup(i)=occuploc(ind(i))
-ENDDO
-DEALLOCATE(occuploc,ispinloc,psiloc)
-END SUBROUTINE ordo_per_spin_real
 !___________________________________________Temperature_______________________________________________________________
 SUBROUTINE temperature(mu,T)
 !compute a sort atemperature by fitting occup
