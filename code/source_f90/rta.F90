@@ -1009,6 +1009,50 @@ DO i=1,nstate
 ENDDO
 DEALLOCATE(occuploc,ispinloc,psiloc)
 END SUBROUTINE ordo_per_spin
+!_____________________________ordo_per_spin_________________________________
+SUBROUTINE ordo_per_spin_real(psi)
+
+USE params, only: DP,nspdw,nstate,ispin,occup,kdfull2,kstate,eqstnspup,eqstnspdw
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN OUT)    :: psi(kdfull2,kstate)
+
+REAL(DP),ALLOCATABLE     :: occuploc(:)
+REAL(DP), ALLOCATABLE :: psiloc(:,:)
+INTEGER,ALLOCATABLE      :: ispinloc(:)
+INTEGER                  :: i,j,ind(kstate),compt,nspup
+
+ALLOCATE(occuploc(kstate),ispinloc(kstate),psiloc(kdfull2,kstate))
+compt=0
+DO i=1,nstate
+ 
+ IF (ispin(i).eq.1)THEN
+    compt=compt+1
+    ind(compt)=i
+ ENDIF
+ WRITE(*,*) i,compt, ind(compt)
+ENDDO
+eqstnspup=compt
+!IF (.not.(compt.eq.nspup)) stop'inconsistent number of spins up'
+DO i=1,nstate
+ IF(ispin(i).eq.2)THEN
+    compt=compt+1
+    ind(compt)=i
+ ENDIF
+ WRITE(*,*) i,compt, ind(compt)
+ENDDO
+eqstnspdw=nstate-eqstnspup
+!IF (.not.(compt.eq.nstate)) stop'inconsistent number of spins tot'
+psiloc=psi
+ispinloc=ispin
+occuploc=occup
+DO i=1,nstate
+ psi(:,i)=psiloc(:,ind(i))
+ ispin(i)=ispinloc(ind(i))
+ occup(i)=occuploc(ind(i))
+ENDDO
+DEALLOCATE(occuploc,ispinloc,psiloc)
+END SUBROUTINE ordo_per_spin_real
 !___________________________________________Temperature_______________________________________________________________
 SUBROUTINE temperature(mu,T)
 !compute a sort atemperature by fitting occup

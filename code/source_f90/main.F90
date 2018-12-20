@@ -143,6 +143,7 @@ SELECT CASE(nion2)
 END SELECT
 
 CALL initwf(psir)              ! init wf, jellium, static parameters
+    call ordo_per_spin_real(psir)!MV
 
 !                                     initialize surface
 
@@ -558,6 +559,8 @@ endif
         CALL rhointxz(rho,it)
         CALL rhointyz(rho,it)
       END IF
+      IF(MOD(it,jstinf)==0) CALL testcurrent(psi,it)
+
 #if(raregas)
     ELSE
       IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt,.true.)

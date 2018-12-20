@@ -869,7 +869,9 @@ DO i3=1,nz2
 #endif
 !                 multiply by k_x factor in k_x space
     DO i1=1,nx2
-      IF(i1 >= (nx+1)) THEN
+      IF(i1 == (nx+1)) THEN
+        zkx = 0D0
+      ELSE IF(i1 > (nx+1)) THEN
         zkx=(i1-nx2-1)*dkx
       ELSE
         zkx=(i1-1)*dkx
@@ -961,7 +963,9 @@ DO i3=1,nz2
 #endif
 !                 multiply by k_y factor in k_y space
     DO i2=1,ny2
-      IF(i2 >= (ny+1)) THEN
+      IF(i2 == (ny+1)) THEN
+        zky = 0D0
+      ELSE IF(i2 > (ny+1)) THEN
         zky=(i2-ny2-1)*dky
       ELSE
         zky=(i2-1)*dky
@@ -1064,7 +1068,9 @@ DO i2=1,ny2
 #endif
 !                 multiply by k_z factor in k_z space
     DO i3=1,nz2
-      IF(i3 >= (nz+1)) THEN
+      IF(i3 == (nz+1)) THEN
+        zkz = 0D0
+      ELSE IF(i3 > (nz+1)) THEN
         zkz=(i3-nz2-1)*dkz
       ELSE
         zkz=(i3-1)*dkz

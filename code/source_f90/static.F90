@@ -216,6 +216,7 @@ DO iter1=1,ismax
 
   CALL flush(6)
 
+
 END DO                                      ! end iteration loop
 
 IF(myn == 0)THEN
@@ -522,7 +523,7 @@ INTEGER :: ni
 #endif
 
 #if(parano)
-DATA tocc,tcpu/.false.,.true./
+DATA tocc,tcpu/.TRUE.,.true./
 #endif
 
 #if(parayes)
@@ -1087,7 +1088,7 @@ CALL schmidt(q0)
 !     readjust occupations numbers to actual s.p. energies
 
 
-IF(tocc .AND. nclust < nstate*nph .AND. iter > istinf) CALL reocc()
+IF(tocc .AND. nclust < nstate*nph .AND. iter > 10*istinf) CALL reocc()
 
 
 
@@ -1593,7 +1594,8 @@ SUBROUTINE reocc()
 !     ******************************
 
 
-!     readjust occupations numbers to actual s.p. energies
+!     Readjust occupations numbers to actual s.p. energies.
+!     
 
 USE params
 USE util, ONLY:pair
@@ -1604,13 +1606,14 @@ INTEGER :: nelecs(2)
 REAL(DP) :: epstmp, occo, partnm, gp
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
-
+REAL(DP),SAVE :: efermsav(2)=(/0D0,0D0/)
 
 !--------------------------------------------------------------------
 
 DO nbe=1,nstate
   amoy(nbe)   = ekinsp(nbe)+epotsp(nbe)
   occold(nbe) = occup(nbe)
+  ocwork(nbe)= occold(nbe)
 END DO
 epstmp = 1D-8
 occo = 1D0-occmix
@@ -1625,12 +1628,15 @@ IF(numspin==2) THEN
         ph(nbe) = 0D0
       END IF
     END DO
-    eferm  = 0D0         ! restart search of eferm from scratch
+!    eferm  = 0D0         ! restart search of eferm from scratch
+    eferm=efermsav(is)
     CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
         partnm,200,4,epstmp,-1,ksttot)
+    efermsav(is)=eferm
     DO nbe=1,nstate
       IF(ispin(nbe) == is) THEN
         occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
+!        WRITE(*,'(a,i3,5f9.5)') 'occs:',nbe,ph(nbe),amoy(nbe),occup(nbe),ocwork(nbe),occold(nbe)
       END IF
     END DO
   END DO
