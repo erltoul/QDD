@@ -2397,7 +2397,7 @@ IF(tocc .AND. nstate > nelect)  &
     CALL pair(esp,occu,ph,nclust,nstate,gp,eferm,temp,partnm,  &
     90,4,epstmp,-1,ksttot)
 
-!     reorder states in reverse order of 'occu' (largest first)
+!     reorder states in reverse order of 'occu' (largest first), spin-wise
 
 DO is=1,numspin
   DO i=1,nstate

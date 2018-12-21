@@ -273,6 +273,7 @@ REAL(DP)::curr0(kdfull2,3),curr1(kdfull2,3),lambdaj(kdfull2,3),errj,muj!paramete
 REAL(DP)::sumvar2,eal,fac,EspPerMod(nstate),EspTotRef
 REAL(DP)::EspPerSpinRef(2),EspPerSpinAchieved(2),EspPerSpinTarget(2),temp(2),mut,EspTotAchieved
 INTEGER::i,j,ishift,ii,nspup,nspdw
+LOGICAL :: topen
 
 WRITE(*,*) "EQSTATE: iterat=",iterat
 nspup=eqstnspup
@@ -290,9 +291,9 @@ err=1.d3
  CALL calc_current(curr0,psi)
  curr1=curr0
  ma0=dvol*sum(rhotot0)
- CALL prifld(curr0(:,1),'j_1')
- CALL prifld(curr0(:,2),'j_2')
- CALL prifld(curr0(:,3),'j_3')
+! CALL prifld(curr0(:,1),'j_1')
+! CALL prifld(curr0(:,2),'j_2')
+! CALL prifld(curr0(:,3),'j_3')
 WRITE(*,*) '  j      centfx       err           errj          mu        muj           &
             ma0           ma1'
 j=0
@@ -312,8 +313,10 @@ CALL coul_mfield(rho)
 !at next fermi the density is changed a lot and err and sumvar are exploding. Also energy is ver out of balance
 !in order to control this this version introduces an additionnalloop, with little authority (0.001 on Temp)
 ! and evry tenth step at most, in order to reorder the Occ vs Esp     
+   INQUIRE(UNIT=177,OPENED=topen)
+   IF(.NOT.topen) OPEN(177,FILE='convergence_RTA')
    WRITE(177,'(a,i5/a)') 'RTA protocol at iterat=',iterat,&
-    '  j  err   errj    diffrho  sumj0 sumj1  diffE  sumvar2 '
+    '  j  err   errj     diffrho    sumj0     sumj1     diffE    sumvar2 '
    DO while(sumvar2>rtasumvar2max.or.abs(EspTotRef-EspTotAchieved)>1.d-4.or.err>0.2d0)!main loop
         IF((sumvar2<1.d-1.and.err<1.0).and.mod(j,10).eq.0)then !update the occupation numbers without changing the target energy
                 !idea: keep the occ in line with  the energies
@@ -505,6 +508,7 @@ contains
  SUBROUTINE calc_hamiltonien
    COMPLEX(DP),ALLOCATABLE::A(:),grad(:),gradApsi(:),jgradpsi(:)
    REAL(DP)::hbarm
+!   REAL(DP) :: jg1,jg2
    ALLOCATE(A(kdfull2),grad(kdfull2),gradApsi(kdfull2),jgradpsi(kdfull2))
       ishift=(ispin(N)-1)*kdfull2
       hbarm=hbar/ame
@@ -530,20 +534,26 @@ contains
         CALL xgradient_rspace(psi1(1,N),grad)
         CALL xgradient_rspace(Apsi,gradApsi)
         jgradpsi=         A(:)*grad(:)+gradApsi
+!        jg1 = REAL(SUM(CONJG(jgradpsi)*jgradpsi))
         A=eye*(2*muj* (curr1(:,2)-curr0(:,2))+lambdaj(:,2) )
         Apsi=A(:)*psi1(:,N)
         CALL ygradient_rspace(psi1(1,N),grad)
         CALL ygradient_rspace(Apsi,gradApsi)
         jgradpsi=jgradpsi+A(:)*grad(:)+gradApsi
+!        jg2 = REAL(SUM(CONJG(jgradpsi)*jgradpsi))
         A=eye*(2*muj* (curr1(:,3)-curr0(:,3))+lambdaj(:,3) )
         Apsi=A(:)*psi1(:,N)
         CALL zgradient_rspace(psi1(1,N),grad)
         CALL zgradient_rspace(Apsi,gradApsi)
         jgradpsi=jgradpsi+A(:)*grad(:)+gradApsi
+!        WRITE(*,'(a,i4,5(1pg13.5))') ' Hpsi terms:',N,&
+!           REAL(SUM(CONJG(vpsi)*vpsi)),&
+!           REAL(SUM(CONJG(ALpsi)*ALpsi)),&
+!           jg1,jg2,REAL(SUM(CONJG(jgradpsi)*jgradpsi))
         !total hamiltonian term
         ALpsi=vpsi+ALpsi-hbarm*jgradpsi!total potential+penalty term in real space
  DEALLOCATE(A,grad,gradApsi,jgradpsi)
- END SUBROUTINE calc_hamiltonien
+END SUBROUTINE calc_hamiltonien
 END SUBROUTINE Calc_psi1
 !____________________________________calcrhospin______________________________
 SUBROUTINE calcrhotot(rho,q0)

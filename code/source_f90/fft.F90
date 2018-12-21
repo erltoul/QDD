@@ -1095,12 +1095,14 @@ DO i2=1,ny2
     DO i3=1,nz2                  ! copy back
       ind=(i3-1)*nxyf+(i2-1)*nyf+i1
       i3m = MOD(i3+nz,nz2)+1
+#if(fftw_cpu)
+      gradfout(ind)= fftaz(modz(i3))/nz2
+#endif
 #if(netlib_fft)
       ic=2*i3m
       ir=ic-1
       gradfout(ind)= CMPLX(fftaz(ir),fftaz(ic),DP)/nz2
 #endif
-!      gradfout(ind)= fftaz(modz(i3))/nz2
     END DO
 !
   END DO
