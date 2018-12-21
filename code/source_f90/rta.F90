@@ -358,7 +358,7 @@ CALL coul_mfield(rho)
       sum(abs(curr0)),sum(abs(curr1)),EspTotRef-EspTotAchieved,sumvar2
      CALL flush(177) 
   ENDIF 
-  IF(j>100) STOP
+!  IF(j>100) STOP
 ENDDO!DO j=1...
 OPEN(1000,STATUS='unknown',POSITION='append',FORM='formatted',FILE='pspeed.'//outnam)
         WRITE (1000,'(6g14.5)') (rhotot0(ny*(nyf+nxyf)+ii,1),&
