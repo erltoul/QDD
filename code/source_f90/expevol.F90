@@ -451,7 +451,7 @@ COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
 REAL(DP) :: wnorm
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
-LOGICAL,PARAMETER :: ttest=.TRUE.
+LOGICAL,PARAMETER :: ttest=.FALSE.
 INTEGER :: i, is, na
 #if(twostsic)
 COMPLEX(DP) :: cf

@@ -102,7 +102,7 @@ CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 DEALLOCATE(rh)
 #endif
 
-
+!WRITE(*,*) 'RHO norms:',SUM(rho(1:nxyz))*dvol,SUM(rho(1+nxyz:nxyz+nxyz))*dvol
 DO ind=1,nxyz
   IF(numspin==2) THEN
     rhotot      = rho(ind) + rho(ind+nxyz)
