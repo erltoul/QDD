@@ -3319,8 +3319,8 @@ IF(iab > 1) THEN
   WRITE(7,*) 'kstate',kstate
   WRITE(6,*) 'nmax',nmax
   WRITE(7,*) 'nmax',nmax
-  WRITE(6,*) 'gw',(gw(i),i=1,nmax)
-  WRITE(6,*) 'ph',(gw(i),i=1,nmax)
+  WRITE(6,'(a,500f6.2)') 'gw',(gw(i),i=1,nmax)
+  WRITE(6,'(a,500f6.2)') 'ph',(ph(i),i=1,nmax)
   WRITE(6,*) 'nz',nz
   WRITE(7,*) 'gw',(gw(i),i=1,nmax)
   WRITE(7,*) 'ph',(ph(i),i=1,nmax)
@@ -4294,7 +4294,37 @@ RETURN
 
 END SUBROUTINE dipole_qp
 
+SUBROUTINE testcurrent(wfin,iteract)
 
+! ******************************
+
+
+!  Compute currents and print.
+!  
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN) :: wfin(kdfull2)
+INTEGER, INTENT(IN)     :: iteract
+
+REAL(DP), ALLOCATABLE :: curr0(:,:)
+
+
+ALLOCATE(curr0(kdfull2,3))
+CALL calc_current(curr0,wfin)
+ IF(iteract==0) THEN
+  CALL prifld(curr0(:,1),'j_1')
+  CALL prifld(curr0(:,2),'j_2')
+  CALL prifld(curr0(:,3),'j_3')
+ END IF
+WRITE(*,*) 'step nr.:',iteract,', integrated current:', sum(abs(curr0))
+DEALLOCATE(curr0)
+
+
+
+END SUBROUTINE testcurrent
 
 ! ******************************
 #if(gridfft)

@@ -2192,7 +2192,7 @@ REAL(DP) :: speact                ! actual s.p. energy in loop
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
 INTEGER :: nomxup, nomxdw, nmaxdiff, mspindw
-INTEGER :: i,isav,j,k
+INTEGER :: i,is,isav,j,k
 
 #if(parayes)
 INTEGER :: nstpernode, nstaccum, nod, nodeplus
@@ -2381,14 +2381,14 @@ WRITE(7,*) 'nstate ininqb',nstate
 IF(iforce == 1) STOP "option IFORCE obsolete"
 
 !    preliminary occupation numbers from estimated s.p. energies
-
-!      eferm  = 0.0         ! restart search of eferm from scratch
-!      epstmp = 1.e-8
-!      nnumb = 0
-!      nph   = ph(1)
-!      do i=1,nstate
-!        occu(i)=1.0
-!        nnumb = nph + nnumb
+!  DO j=i+1,nstate
+!      eferm  = 0.0         ! restart search of eferm from scratch    IF(ispin(j).NE.is) CYCLE  DO j=i+1,nstate
+!      epstmp = 1.e-8    IF(occu(j) > occu(i)) THEN
+!      nnumb = 0      sav      = occu(i)
+!      nph   = ph(1)      occu(i) = occu(j)
+!      do i=1,nstate      occu(j) = sav
+!        occu(i)=1.0      sav    = esp(i)
+!        nnumb = nph + nnumb      esp(i) = esp(j)
 !        write(7,'(t2, 3i2, tr5, f9.3, tr3, i2)')
 !     &      (nq(k,i), k=1,3), occu(i), ispin(i)
 !      enddo
@@ -2397,26 +2397,30 @@ IF(tocc .AND. nstate > nelect)  &
     CALL pair(esp,occu,ph,nclust,nstate,gp,eferm,temp,partnm,  &
     90,4,epstmp,-1,ksttot)
 
-!     reorder states in reverse order of 'occu' (largest first)
+!     reorder states in reverse order of 'occu' (largest first), spin-wise
 
-DO i=1,nstate
-  DO j=i+1,nstate
-    IF(occu(j) > occu(i)) THEN
-      sav      = occu(i)
-      occu(i) = occu(j)
-      occu(j) = sav
-      sav    = esp(i)
-      esp(i) = esp(j)
-      esp(j) = sav
-      isav    = ispin(i)
-      ispin(i) = ispin(j)
-      ispin(j) = isav
-      DO k=1,3
-        isav    = nq(k,i)
-        nq(k,i) = nq(k,j)
-        nq(k,j) = isav
-      END DO
-    END IF
+DO is=1,numspin
+  DO i=1,nstate
+    IF(ispin(i).NE.is) CYCLE
+    DO j=i+1,nstate
+      IF(ispin(j).NE.is) CYCLE
+      IF(occu(j) > occu(i)) THEN
+        sav      = occu(i)
+        occu(i) = occu(j)
+        occu(j) = sav
+        sav    = esp(i)
+        esp(i) = esp(j)
+        esp(j) = sav
+        isav    = ispin(i)
+        ispin(i) = ispin(j)
+        ispin(j) = isav
+        DO k=1,3
+          isav    = nq(k,i)
+          nq(k,i) = nq(k,j)
+          nq(k,j) = isav
+        END DO
+      END IF
+    END DO
   END DO
 END DO
 DO i=1,nstate

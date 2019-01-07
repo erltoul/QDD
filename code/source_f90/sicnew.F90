@@ -314,13 +314,12 @@ REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd,chpdftspu,chpdftspd
-!EQUIVALENCE (coulsum,w1),(couldif,w2)
-!EQUIVALENCE (rhosp,w1)
-!EQUIVALENCE (chpdftsp,w3)
-!EQUIVALENCE (rho2,rhosp)
 INTEGER :: ind, idx, npartdw, npartup, npartto, size
+INTEGER :: indpri
 REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
 REAL(DP) :: couldw, coulup, fac, facdw, facup, facdwh, facuph, factotal
+!LOGICAL,PARAMETER :: ttest=.TRUE.
+!INTEGER,EXTERNAL :: getnearestgridpoint
 #if(parayes)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,rhonod2,rhotp
 REAL(DP),DIMENSION(:),ALLOCATABLE :: tp1,tp2
@@ -415,7 +414,7 @@ IF(numspin==2) THEN
   END IF
 
   enrear   = enrearsave-enrear1*npartup-enrear2*npartdw
-!  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
+  WRITE(6,*) ' enrear.s=',enrearsave, enrear1,enrear2,enrear
 
 #if(parayes)
 ALLOCATE(aloc1(size))
@@ -526,6 +525,7 @@ IF(numspin==2) THEN
 
 !       compute Coulomb
 
+
 !  DO ind=1,nxyz
   DO ind=1,size
 #if(parayes)
@@ -540,6 +540,11 @@ IF(numspin==2) THEN
     CALL pi_allgatherv(tp1,size,rho1,nxyz,mpi_ierror)
     CALL pi_allgatherv(tp2,size,rho2,nxyz,mpi_ierror)
 #endif
+!  IF(ttest) THEN
+!    indpri=getnearestgridpoint((maxx-nxsh)*dx,0D0,0D0)
+!    WRITE(6,'(a,3(1pg13.5))') ' ADSIC before:',aloc(indpri),&
+!        SUM(rho2(1:size)),SUM(rho1(1:size))
+!  END IF
 
 #if(gridfft)
   CALL falr(rho1,couldif,kdfull2)
@@ -569,6 +574,8 @@ IF(numspin==2) THEN
     coulup    = 0.5D0*(coulsum(ind)+couldif(ind))
     aloc(ind) = aloc(ind) - coulup*facup
 #endif
+!  IF(ttest .AND. ind==indpri) &
+!       WRITE(6,'(a,2(1pg13.5))') ' ADSIC up:',aloc(indpri),coulup*facup
   END DO
 #if(parayes)
   CALL pi_allgatherv(aloc1,size,aloc,nxyz,mpi_ierror)
@@ -591,6 +598,8 @@ IF(numspin==2) THEN
       idx       = ind + nxyz
       aloc(idx) = aloc(idx) - facdw*couldw
 #endif
+!      IF(ttest .AND. ind==indpri) &
+!       WRITE(6,'(a,2(1pg13.5))') ' ADSIC dw:',aloc(indpri),couldw*facdw
     END DO
 #if(parayes)
     CALL pi_allgatherv(aloc2,size,aloc(nxyz+1),nxyz,mpi_ierror)
@@ -1146,10 +1155,10 @@ partdw = partdwp
 
 
 
-!mb      npartup = nint(partup+0.000001) ! M : integer ???
-!mb      npartdw = nint(partdw+0.000001)
-npartup = partup+0.000001D0 ! M : integer ???
-npartdw = partdw+0.000001D0
+npartup = NINT(partup)
+npartdw = NINT(partdw)
+!npartup = partup+0.000001D0 ! M : integer ???
+!npartdw = partdw+0.000001D0
 
 
 npartto =  npartup+ npartdw

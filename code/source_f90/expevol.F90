@@ -219,6 +219,7 @@ IF(ABS(IMAG(dtact))>1D-10) THEN
 ELSE
   isig = 1
 END IF
+!isig=-1
 dti = dtact*CMPLX(0D0,1D0,DP)
 cfac = CMPLX(1D0,0D0,DP)
 DO  i=1,nxyz
@@ -450,7 +451,7 @@ COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
 REAL(DP) :: wnorm
 LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
-LOGICAL,PARAMETER :: ttest=.false.
+LOGICAL,PARAMETER :: ttest=.FALSE.
 INTEGER :: i, is, na
 #if(twostsic)
 COMPLEX(DP) :: cf
@@ -559,7 +560,7 @@ IF(tpri) THEN
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
   q2 = q1+q2
 !  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2),DP)-amoy(nbe)**2)
-  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2)
+  spvariance(nbe) = SQRT(MAX(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2,1D-99))
   is=ispin(nrel2abs(nbe))
   IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
    ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &

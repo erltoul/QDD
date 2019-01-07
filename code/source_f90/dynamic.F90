@@ -22,7 +22,7 @@
 SUBROUTINE init_dynwf(psi)
 !------------------------------------------------------------
 USE params
-USE util, ONLY:phstate,stateoverl,dipole_qp
+USE util, ONLY:phstate,stateoverl,dipole_qp,prifld,testcurrent
 #if(twostsic)
 USE twost
 USE orthmat
@@ -35,7 +35,10 @@ COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 !REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 INTEGER :: ifreset
 REAL(DP) ::acc, palph, pbeta, phexe, sqtest, xion
+REAL(DP), ALLOCATABLE :: rhosav(:),alocsav(:),rho(:),aloc(:)
+LOGICAL,PARAMETER :: ttestrho=.TRUE.
 !----------------------------------------------------
+
 
 #if(twostsic)
   IF(ifsicp==8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
@@ -49,6 +52,20 @@ IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) ALLOCATE(psisavex(kdfull2,kstate))
 !     use of saved real wavefunctions, read and copy to complex
 
 CALL restart2(psi,outnam,.true.)
+
+WRITE(*,*) 'ttestrho=',ttestrho
+IF(ttestrho) THEN
+  CALL testcurrent(psi,0)
+  ALLOCATE(rhosav(2*kdfull2),alocsav(2*kdfull2))
+  ALLOCATE(rho(2*kdfull2),aloc(2*kdfull2))
+  rhosav=rho
+  alocsav=aloc
+  CALL dyn_mfield(rho,aloc,psi,0D0,0)
+  WRITE(*,*) 'INIT-DYN diff rho,aloc:',SUM(ABS(rho-rhosav)),&
+  SUM(ABS(aloc-alocsav))
+  DEALLOCATE(rhosav,alocsav)
+  DEALLOCATE(rho,aloc)
+END IF
 
 IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) psisavex = psi
 
@@ -1828,43 +1845,56 @@ END IF
 !test     &              + ri*ri*ri/6.0*eye*q3(ind) + ri2*ri2/6.0*q4(ind)
 !test     &           -ri2*ri2*ri/30.*eye*q5(ind)-ri2*ri2*ri2/90.*q6(ind)
 !test            enddo
-rii=ri*eye
+!rii=ri*eye
+cfac=-ri*eye
+rii=cfac
 DO ind=1,nxyz
-  qact(ind) = qact(ind) - rii*q1(ind)
+!  qact(ind) = qact(ind) - rii*q1(ind)
+  qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 
 CALL nonlocalc(q1,q2,0)
-ri2=ri*ri/2D0
+!ri2=ri*ri/2D0
+rii=rii*cfac/2D0
 DO ind=1,nxyz
-  qact(ind) = qact(ind) - ri2*q2(ind)
+!  qact(ind) = qact(ind) - ri2*q2(ind)
+  qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 IF(norder <= 2) RETURN
 
 CALL nonlocalc(q2,q1,0)
-cfac = ri*ri*ri/6D0*eye
+!cfac = ri*ri*ri/6D0*eye
+rii=rii*cfac/3D0
 DO ind=1,nxyz
-  qact(ind) = qact(ind) + cfac*q1(ind)
+!  qact(ind) = qact(ind) + cfac*q1(ind)
+  qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 IF(norder <= 3) RETURN
 
 CALL nonlocalc(q1,q2,0)
-rfac = ri2*ri2/6D0
+!rfac = ri2*ri2/6D0
+rii=rii*cfac/4D0
 DO ind=1,nxyz
-  qact(ind) = qact(ind) + rfac*q2(ind)
+!  qact(ind) = qact(ind) + rfac*q2(ind)
+  qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 IF(norder <= 4) RETURN
 
 CALL nonlocalc(q2,q1,0)
 cfac = -ri2*ri2*ri/30D0*eye
+rii=rii*cfac/5D0
 DO ind=1,nxyz
-  qact(ind) = qact(ind) + cfac*q1(ind)
+!  qact(ind) = qact(ind) + cfac*q1(ind)
+  qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 IF(norder <= 5) RETURN
 
 CALL nonlocalc(q1,q2,0)
-rfac = -ri2*ri2*ri2/90D0
+!rfac = -ri2*ri2*ri2/90D0
+rii=rii*cfac/6D0
 DO ind=1,nxyz
-  qact(ind) = qact(ind) + rfac*q2(ind)
+!  qact(ind) = qact(ind) + rfac*q2(ind)
+  qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 
 RETURN
