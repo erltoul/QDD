@@ -111,7 +111,8 @@ explicitely.
 }
 \\
 \PGRcomm{Routine requires that arrays are sorted in continuous blocks of
-  spin. Do we have an initial check for that?}
+  spin. Do we have an initial check for that? And we need to address
+  that in the general part which explains the layout of arrays.}
 
 \subsubsection*{\tt SUBROUTINE OccT1(occrefloc,enerloc,Etotloc,muloc,occtotloc,n,T,occuploc)}
 \begin{tabular}{lcl}
@@ -194,13 +195,238 @@ is kept constant during DCMF iteration and updated only at the very end.
 as {\tt rhotot0}. Unnecessary doubling?}
 
 
-\subsubsection*{\tt }
+\subsubsection*{\tt SUBROUTINE OccupT0(occloc,esploc,Estar)}
 \begin{tabular}{lcl}
- {\tt } &  &\\
+ {\tt esploc(1:nstate)} & in & given s.p. energies\\
+ {\tt occloc(1:nstate)} & in & given occupation numbers\\
+ {\tt Estar} & out & excitation energy relative to T=0 distribution\\
 \end{tabular}
+\\[4pt]
+Computes thermal excitation energy as difference of actual energy to
+the energy obtained by Fermi distribution for $T=0$. The latter
+distributions  is computed for the given s.p. energies which are the
+same as used for the thermal state.
 
 
 
+\subsubsection*{\tt SUBROUTINE calcrhotot(rho,q0)}
+\begin{tabular}{lcl}
+ {\tt q0(1:kdfull2,1:kstate) } & in & set of s.p. wavefunctions for
+ which density is accumulated\\
+ {\tt rho(kdfull2,2)} & out & resulting density\\
+\end{tabular}
+\\[4pt]
+Computes local density for set of wavefunctions {\tt q0}. Note that
+two crucial information is communicated via module {\tt params}, namely
+{\tt occup}, the array of occupation numbers, {\tt ispin} the
+array assigning spin top each s.p. state, and {\tt nstate}, the number
+of s.p. states.
+\\
+\PGRcomm{Exploiting the sorting of spin in blocks of s.p. states, we
+  could rewrite the code with to {\tt SUM} statements.}
+
+
+\subsubsection*{\tt SUBROUTINE calc\_var(hpsi,psi1,sumvar2)}
+\begin{tabular}{lcl}
+ {\tt psi1(kdfull2,kstate)}& in & set of s.p. states for which
+ variance of s.p. energies of calculated\\
+ {\tt hpsi(kdfull2,kstate)} & in/out & array
+ $H\rightarrow\psi_\alpha$, on input in $k$-space, on output in $r$-space
+\\
+ {\tt sumvar2} & out  & summed variance of s.p. energies\\
+\end{tabular}
+\\[4pt]
+Computes the sum of variances of the s.p. energies,
+$\langle\hat{\Delta h}^2|rangle$. 
+\\
+PGRcomm{The routine projects from each $hat{h}\psi_\alpha$
+all s.p. states $\psi_\beta$ from the pool of states. That is too
+much. The s.p. variance should be
+$\sum_\alpha\langle|\psi_\alpha|(\hat{h}-\varepsilon_\alpha)^2|\psi_\alpha\rangle$
+where $\varepsilon_\alpha=\langle|\psi_\alpha|\hat{h}|\psi_\alpha\rangle$.}
+
+
+
+
+\subsubsection*{\tt SUBROUTINE forceTemp(amoy,occup,n,temp,mu)}
+\begin{tabular}{lcl}
+ {\tt amoy(1:n)} & in & given s.p. energies\\
+ {\tt occup(1:n)} & in & given thermal occupation\\
+ {\tt n} & in & number of s.p. states\\
+ {\tt temp} & in & temperature\\
+ {\tt mu} & out & emerging chemical potential\\
+\end{tabular}
+\\[4pt]
+Determines chemical potential for given s.p. energies and temperature
+by call to {\tt OccT1}.
+\\
+\PGRcomm{Obsolete and never used.}
+
+
+
+
+\subsubsection*{\tt SUBROUTINE fermi\_init(ekmod,T,occup,ispinact)}
+\begin{tabular}{lcl}
+ {\tt ekmod(1:nstate)} & in & given s.p. energies\\
+ {\tt T} & in & given temperature\\
+ {\tt ispinact} & in & actual spin\\
+ {\tt occup(1:kstate)} & in/out & initial occupation and resulting
+ Fermi distribution for {\tt T}.\\
+\end{tabular}
+\\[4pt]
+Determines Fermi distribution for given s.p. energies and
+temperature. Searches appropriate chemical potential {\tt mu} by
+bracketing. Use for repreated calls to {\tt FUNCTION occ}.
+\\
+\PGRcomm{This routine {\tt fermi\_init} and the related
+{\tt FUNCTION occ} are never used, thus obsolete. May be removed.}
+
+
+
+\subsubsection*{\tt SUBROUTINE srhomat(psi,aloc,psiorth,occuporth)}
+\begin{tabular}{lcl}
+ {\tt psi(1:kdfull2,1:kstate)} & in & set of s.p. wavefunctions, not orth-normalized\\
+ {\tt psiorth(1:kdfull2,1:kstate)} & out & ortho-normalized natural orbitals\\
+ {\tt aloc(1:2*kdfull2)} & in & actual local potential\\
+ {\tt occuporth(1:kstate)} & out & occupation numbers for
+ ortho-normalized states\\
+\end{tabular}
+\\[4pt] Computes the density matrix of initial state goiven by set of
+wavefunctions {\tt psi} together with their occupations {\tt occup},
+the latter communicated through module {\tt params}.  Then
+diagonalizes the density matrix and computes on {\tt psiorth} the new
+wavefunctions associated with diagonal representation of the density
+matrix.  
+\\
+Finally updates running transformation matrix {\tt psitophi} which is
+communicated and stored through module {\tt params}.
+\\
+\PGRcomm{Usage and propagation of  {\tt psitophi} is somewhat hidden
+  because it is handled through a module. Needs to be explained somwhere.}
+
+
+\subsubsection*{\tt SUBROUTINE scalar(tab1,tab2,scal,ispin, mess)}
+\begin{tabular}{lcl}
+ {\tt tab1(1:kdfull2,1:kstate)} & in & 1. set of s.p. wavefunctions\\
+ {\tt tab2(1:kdfull2,1:kstate)} & in & 2. set of s.p. wavefunctions\\
+ {\tt ispin(1:nstate)} & in & spin of s.p. states\\
+ {\tt mess} & in & message for print inside routine\\
+ {\tt scal(nstate,nstate)} & out & matrix of wavefunction overlaps\\
+\end{tabular}
+\\[4pt]
+
+
+\subsubsection*{\tt SUBROUTINE cdiagspin(mat, eigen, vect, N)}
+\begin{tabular}{lcl}
+ {\tt mat(N,N)} & in & complex Hermitean matrix to be diagonalized\\
+ {\tt N} & in & dimension of matrix\\
+ {\tt eigen(N)} & out & resulting eigenbvalues\\
+ {\tt Vect(N,N)} & out & resulting eigenstates\\
+\end{tabular}
+\\[4pt]
+Driver routine for diagonalization of a complex Hermitean matrix of
+dimension {\tt N} which consists in a two blocks for separate spin.
+Refers for each single block to routine {\tt cdiag} and subsequent
+library routines contained therein.
+
+
+\subsubsection*{\tt SUBROUTINE indexx (n,arrin,indx)}
+\begin{tabular}{lcl}
+ {\tt n} & in & length of array\\
+ {\tt arrin(1:n)} & in & array to be sorted\\
+ {\tt indx(1:n)} & out & pointer array \\
+\end{tabular}
+\\[4pt]
+Evaluates sorting of an array in ascending order.
+
+
+
+\subsubsection*{\tt SUBROUTINE occupPerSpin(mess,Occ)}
+\begin{tabular}{lcl}
+ {\tt mess} & in & character variable with comment printed inside routine\\
+ {\tt Occ(1:2)} & out & total number of particles in each spin\\
+\end{tabular}
+\\[4pt]
+Computes number of particles in each sin block. Uses {\tt nstate} and
+occupations {\tt occup} from module {\tt params}.
+
+
+
+\subsubsection*{\tt CorrectEnergy2(Wref,Eref,w,E,Wout,nloc)}
+\begin{tabular}{lcl}
+ {\tt W(1:nloc)} & in & initial occupations numbers\\
+ {\tt E(1:nloc)} & in & given s.p. energies\\
+ {\tt Wref} & in & reference particle number to be reached\\
+ {\tt Eref} & in &  reference sum of s.p. energies to be reached\\
+ {\tt nloc} & in & actual number of states\\
+ {\tt Wout(nloc)} & out  & readjusted occupation numbers\\
+\end{tabular}
+\\[4pt]
+Final energy correction by one step along Fermi distribution
+(using Taylor expansion about actual distribution),
+see Eq.~(\ref{eq:})\PGRfoot{This equation from the
+  theory part, set to be written.}
+
+
+
+\subsubsection*{\tt SUBROUTINE ordo\_per\_spin(psi)}
+\begin{tabular}{lcl}
+ {\tt psi(1:kdfull2,1:kstate)} & in/out & s.p. wavefunctions before
+ and after reordering\\
+\end{tabular}
+\\[4pt]
+Reorder states  in two blocks of spin up and down.
+Applies that reshuffling to all relevant field of states,
+s.p. wavefunctions {\tt psi}, spin per state {\tt ispin},
+and occupations {\tt occup}. 
+\\
+\PGRcomm{Routine has been rendered obsolete by new initialization of
+  states which produces immediately the correct sorting. But routine
+  should be kept for possible later use (e.g., mixing states from
+  different sources.}
+
+\subsubsection*{\tt SUBROUTINE temperature(mu,T)}
+\begin{tabular}{lcl}
+ {\tt mu} & out & resulting chemical potential\\
+ {\tt T} & out & resulting temperature\\
+\end{tabular}
+\\[4pt]
+Takes s.p. energies {\tt amoy} and occupations {\tt occup} from module
+{\tt params} and fits a Fermi distribution to it. Temperature and
+chemical potentials of the fitted distribution are returned via list.
+Calls a fitting routine {\tt lmdif1} using subroutine {\tt ff} as argument.
+
+\subsubsection*{\tt SUBROUTINE ff(m,n,X,FVEC,IFLAG)}
+\begin{tabular}{lcl}
+ {\tt X(1:n)} & in & array handling chemical potential and temperature\\
+ {\tt Fvec(1:m)} & out & array of mismatches of distributions\\
+ {\tt n} & in & number of parameters of model, actually 2\\
+ {\tt m} & in & number of entries in array\\
+ {\tt iflag} & in & flaf possibly written (actually not used)\\
+\end{tabular}
+\\[4pt]
+Mismatch of {\tt occup} (via modules {\tt params}) from Fermi
+distribution to given chemical potential and temperature. To be used
+in fitting routine {\tt lmdef1}.
+
+
+\subsubsection*{\tt SUBROUTINE cproject(qin,qout,ispact,q0)}
+\begin{tabular}{lcl}
+ {\tt qin(1:kdfull2)} & in & s.p. wvaefunction to be projected\\
+ {\tt q0(1:kdfull2,1:kstate)} & in & set of s.p. wavefunctions which
+ is projected out from {\tt qin}\\
+ {\tt ispact} & in & spin associated with {\tt qin}\\
+ {\tt qout(1:kdfull2)} & out & projected s.p. wavefunction \\
+\end{tabular}
+\\[4pt] Projects away from {\tt qin} all contributions of the set 
+{\tt q0}.  
+\\ 
+\PGRcomm{This routine may become obsolete if we recode the
+  the variance in routine {\tt calc\_var} to meet the
+  standard definition.}
+
+
+\newpage
 
 
 \section{Formula from Ann.Phys. paper}

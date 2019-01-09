@@ -380,7 +380,7 @@ OPEN(1000,STATUS='unknown',POSITION='append',FORM='formatted',FILE='pspeed.'//ou
           curr0(ny*(nyf+nxyf)+ii,1),curr1(ny*(nyf+nxyf)+ii,1),ii=1,nx2)
           WRITE(1000,*)
  close(1000)
-        CALL cpu_time(time1)
+       CALL cpu_time(time1)
         WRITE(*,*)'j,time', j, (time1-time0)
         CALL dyn_mfield(rho,aloc,psi1,0D0) 
        WRITE(*,*)'_____________in eqstate 2: iterat=',iterat
