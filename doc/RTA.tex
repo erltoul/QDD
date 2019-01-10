@@ -38,6 +38,8 @@
 }
 {\end{list}}
 
+\unitlength 1mm
+\thicklines
 
 \begin{document}
 
@@ -71,7 +73,111 @@ density functional theory, metal cluster, plasmon, electron emission
 \end{keyword}
 \end{frontmatter}
 
-\section{The subroutines in detail}
+\newpage
+
+
+\section{The structure of the RTA package in {\tt rta.F90}}
+
+\subsection{The calling tree}
+
+Here is an oversight over the tree structure of the RTA routines.
+Those subroutines contained in  {\tt rta.F90} are explained in detail
+in section \ref{eq:details}. Subroutines coming from the TDLDA package
+or external sources are marked\PGRfoot{The {\tt HEigensystem} seems
+  copied from some library. This could cause copyright problems if we
+  publish the code. Is it from BLAS/LINPACK? Then we could
+replace the Fortran source by a library call.}
+\\
+\centerline{\fbox{
+\begin{picture}(122,159)(5,-155)
+\put(10,0){\mbox{\tt RTA}}
+   \put(20,-4){\mbox{\tt srhomat}}
+      \put(30,-8){\mbox{\tt scalar}}
+      \put(30,-12){\mbox{\tt cdiagmat}}
+         \put(40,-16){\mbox{\tt HEigensystem}}
+             \put(90,-16){\mbox{$\leftrightarrow$ library routine}}
+   \put(20,-20){\mbox{\tt eqstate}}
+      \put(30,-24){\mbox{\tt calcrhotot}}
+      \put(30,-28){\mbox{\tt calc\_current}}
+      \put(30,-32){\mbox{\tt calc\_Eref}}
+      \put(30,-36){\mbox{\tt fermi1}}
+         \put(40,-40){\mbox{\tt occT1}}
+      \put(30,-44){\mbox{\tt calc\_psi1}}
+         \put(40,-48){\mbox{\tt calc\_hamiltonien}}
+         \put(40,-52){\mbox{\tt calc\_var}}
+            \put(50,-56){\mbox{\tt cproject}}
+         \put(40,-60){\mbox{\tt calcrhotot}}
+         \put(40,-64){\mbox{\tt calc\_current}}
+         \put(40,-68){\mbox{\tt cschmidt}}
+             \put(90,-68){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-72){\mbox{\tt calc\_ekin}}
+             \put(90,-72){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-76){\mbox{\tt nonlocalc}}
+             \put(90,-76){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-80){\mbox{\tt fftf}}
+             \put(90,-80){\mbox{$\leftrightarrow$ FFTW3 package}}
+         \put(40,-84){\mbox{\tt fftback}}
+             \put(90,-84){\mbox{$\leftrightarrow$ FFTW3 package}}
+      \put(30,-88){\mbox{\tt coul\_mfield}}
+             \put(90,-88){\mbox{$\leftrightarrow$ TDLDA package}}
+      \put(30,-92){\mbox{\tt dyn\_mfield}}
+             \put(90,-92){\mbox{$\leftrightarrow$ TDLDA package}}
+      \put(30,-96){\mbox{\tt info}}
+             \put(90,-96){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-100){\mbox{\tt occupT0}}
+      \put(30,-104){\mbox{\tt indexx}}
+   \put(20,-108){\mbox{\tt calcrhoeq}}
+      \put(30,-112){\mbox{\tt cdiagmat}}
+         \put(40,-116){\mbox{\tt HEigensystem}}
+      \put(30,-120){\mbox{\tt  indexx}}
+   \put(20,-124){\mbox{\tt calc\_Eref}}
+   \put(20,-128){\mbox{\tt CorrectEnergy2}}
+   \put(20,-132){\mbox{\tt OccupPerSpin}}
+   \put(20,-136){\mbox{\tt temperature}}
+      \put(30,-140){\mbox{\tt lmdif1}}
+   \put(20,-144){\mbox{\tt dyn\_mfield}}
+             \put(90,-144){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-148){\mbox{\tt info}}
+             \put(90,-148){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-152){\mbox{\tt analyze\_elect}}
+             \put(90,-152){\mbox{$\leftrightarrow$ TDLDA package}}
+\end{picture}
+}}
+
+\subsection{The subroutines in detail}
+\label{eq:details}
+
+\subsubsection*{\tt SUBROUTINE rta(psi,aloc,rho,iterat)}
+\begin{tabular}{lcl}
+ {\tt iterat} & in & external iteration number (TDLDA time step)\\
+ {\tt psi(1:kdfull2,1:kstate)} & in/out& set of s.p. wavefunctions\\
+ {\tt rho(1:2*kdfull2)}& in/out & local densities for spin up and down\\
+ {\tt aloc(1:2*kdfull2)} & in/out& local potentials for spin up and down\\
+\end{tabular}
+\\[4pt]
+Basic RTA routine performing density constrained mean-field (DCMF)
+iterations, energy adjustment, admixing of local equilibrium states by
+calls to subroutines (see calling tree).
+
+
+
+\subsubsection*{\tt SUBROUTINE calcrhoeq(psiorthloc,psieqloc,psiloc,occuporthloc,occuploc,nstateloc)}
+\begin{tabular}{lcl}
+ {\tt nstateloc} & in & number of s.p. states in spin block\\
+ {\tt psiorthloc(1:kdfull2,1:nstateloc),} & in & set of TDLDA
+ wavefunctions (natural orbitals)\\
+ {\tt occuporthloc(1:nstateloc)} & in & occupations of TDLDA states\\
+ {\tt psieqloc(1:kdfull2,1:nstateloc)} & in& set of local-equilibrium wavefunctions\\
+ {\tt psiloc(1:kdfull2,1:nstateloc)} & out& set of final mixed wavefunctions\\
+ {\tt occuploc(1:nstateloc)} & in/out & \\
+\end{tabular}
+\\[4pt]
+Encapsulated in {\tt SUBROUTINE rta}. Performs the mixing of TDLDA
+states with local-equilibrium state according to relaxation rate
+for one spin block. The mixed densty matrix is expanded in a
+representation by both sets of s.p. states. 
+
+
 
 \subsubsection*{\tt SUBROUTINE calc\_Eref(occup,ispin,Ei,Eref)}
 \begin{tabular}{lcl}
@@ -132,11 +238,14 @@ s.p. energies, temperature {\tt T}, and wanted number of particles
 {\tt occrefloc} with precision {\tt 1D-12}. Delivers with it
 thermal occupation numbers and corresponding total particle number and
 sum of s.p. energies.
+\\
+\PGRcomm{This routine is specific to {/tt SUBROUTINE ferm1}. Could we
+encapsulate it by a {/tt CONTAINS}?}
 
 \subsubsection*{\tt SUBROUTINE
   Calc\_psi1(psi1,aloc,rhotot0,rhototloc,curr0,curr1,j,lambda,mu,lambdaj,muj,sumvar2,eal,ekmod)}
 \noindent
-combined with internal {\tt SUBROUTINE calc\_hamiltonien}.
+combined with encapsulated {\tt SUBROUTINE calc\_hamiltonien}.
 \\
 \begin{tabular}{lcl}
  {\tt j} & in & number of DCMF iteration, used here for print\\
@@ -365,7 +474,7 @@ occupations {\tt occup} from module {\tt params}.
 Final energy correction by one step along Fermi distribution
 (using Taylor expansion about actual distribution),
 see Eq.~(\ref{eq:})\PGRfoot{This equation from the
-  theory part, set to be written.}
+  theory part, yet to be written.}
 
 
 
@@ -424,6 +533,22 @@ in fitting routine {\tt lmdef1}.
 \PGRcomm{This routine may become obsolete if we recode the
   the variance in routine {\tt calc\_var} to meet the
   standard definition.}
+
+
+
+\subsubsection*{\tt }
+\begin{tabular}{lcl}
+ {\tt } & &\\
+\end{tabular}
+\\[4pt]
+
+
+
+\subsubsection*{\tt }
+\begin{tabular}{lcl}
+ {\tt } & &\\
+\end{tabular}
+\\[4pt]
 
 
 \newpage

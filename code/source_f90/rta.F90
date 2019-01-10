@@ -130,7 +130,7 @@ CONTAINS
 SUBROUTINE calcrhoeq(psiorthloc,psieqloc,psiloc,occuporthloc,occuploc,nstateloc)
     !to make a sum of psiorth(occuporth)*(1-eta) with psieq(occup)*eta projected 
     !and diagonalize
-    !this is done in a basis of 2*nstate
+    !this is done in a basis of 2*nstatlcre
     !then conserve only the nstate most populated states
     USE util, ONLY:wfovlp
     IMPLICIT NONE
@@ -775,7 +775,7 @@ COMPLEX(DP):: scal(nstate,nstate),scal0(nstate,nstate)
       COMPLEX(8) :: v(nstate,nstate),vp(nstate,nstate),u(nstate,nstate),w(nstate,nstate)  ! eigenvectors
       COMPLEX(8) :: winv(nstate,nstate)!inverse of w
       REAL(DP)    :: occup1(nstate)
-
+. 
 
 
 
