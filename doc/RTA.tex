@@ -8,10 +8,16 @@
 \usepackage{float}
 \usepackage{rotating}
 \usepackage{color}
-\usepackage{ulem}
+%\usepackage{ulem}
+\usepackage{tikz}
+\usepackage{epic}
 % \usepackage{caption,subcaption}
 %\usepackage{subeqnarray}
  
+
+\newcommand\encircle[1]{%
+  \tikz[baseline=(X.base)] 
+    \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
 
 \newcommand{\I}{\mathrm{i}}
 
@@ -91,55 +97,105 @@ replace the Fortran source by a library call.}
 \centerline{\fbox{
 \begin{picture}(122,159)(5,-155)
 \put(10,0){\mbox{\tt RTA}}
+\put(11,-1){\line(0,-1){150}}
    \put(20,-4){\mbox{\tt srhomat}}
+   \put(11,-3){\line(1,0){8}}
+   \put(21,-5){\line(0,-1){6}}
       \put(30,-8){\mbox{\tt scalar}}
+      \put(21,-7){\line(1,0){8}}
       \put(30,-12){\mbox{\tt cdiagmat}}
+      \put(21,-11){\line(1,0){8}}
+      \put(31,-13){\line(0,-1){2}}
          \put(40,-16){\mbox{\tt HEigensystem}}
+         \put(31,-15){\line(1,0){8}}
              \put(90,-16){\mbox{$\leftrightarrow$ library routine}}
    \put(20,-20){\mbox{\tt eqstate}}
+   \put(21,-21){\line(0,-1){74}}
+   \put(11,-19){\line(1,0){8}}
       \put(30,-24){\mbox{\tt calcrhotot}}
+      \put(21,-23){\line(1,0){8}}
       \put(30,-28){\mbox{\tt calc\_current}}
+      \put(21,-27){\line(1,0){8}}
       \put(30,-32){\mbox{\tt calc\_Eref}}
+      \put(21,-31){\line(1,0){8}}
       \put(30,-36){\mbox{\tt fermi1}}
+      \put(31,-37){\line(0,-1){2}}
+      \put(21,-35){\line(1,0){8}}
          \put(40,-40){\mbox{\tt occT1}}
+         \put(31,-39){\line(1,0){8}}
       \put(30,-44){\mbox{\tt calc\_psi1}}
+      \put(31,-45){\line(0,-1){38}}
+      \put(21,-43){\line(1,0){8}}
          \put(40,-48){\mbox{\tt calc\_hamiltonien}}
+         \put(31,-47){\line(1,0){8}}
          \put(40,-52){\mbox{\tt calc\_var}}
+         \put(41,-53){\line(0,-1){2}}
             \put(50,-56){\mbox{\tt cproject}}
+            \put(41,-55){\line(1,0){8}}
+            \put(90,-56){\mbox{\PGR{$\leftrightarrow$ \footnotesize obsolete?}}}
          \put(40,-60){\mbox{\tt calcrhotot}}
+         \put(31,-59){\line(1,0){8}}
          \put(40,-64){\mbox{\tt calc\_current}}
+         \put(31,-63){\line(1,0){8}}
          \put(40,-68){\mbox{\tt cschmidt}}
+         \put(31,-67){\line(1,0){8}}
              \put(90,-68){\mbox{$\leftrightarrow$ TDLDA package}}
          \put(40,-72){\mbox{\tt calc\_ekin}}
+         \put(31,-71){\line(1,0){8}}
              \put(90,-72){\mbox{$\leftrightarrow$ TDLDA package}}
          \put(40,-76){\mbox{\tt nonlocalc}}
+         \put(31,-75){\line(1,0){8}}
              \put(90,-76){\mbox{$\leftrightarrow$ TDLDA package}}
          \put(40,-80){\mbox{\tt fftf}}
+         \put(31,-79){\line(1,0){8}}
              \put(90,-80){\mbox{$\leftrightarrow$ FFTW3 package}}
          \put(40,-84){\mbox{\tt fftback}}
+         \put(31,-83){\line(1,0){8}}
              \put(90,-84){\mbox{$\leftrightarrow$ FFTW3 package}}
       \put(30,-88){\mbox{\tt coul\_mfield}}
+      \put(21,-87){\line(1,0){8}}
              \put(90,-88){\mbox{$\leftrightarrow$ TDLDA package}}
       \put(30,-92){\mbox{\tt dyn\_mfield}}
+      \put(21,-91){\line(1,0){8}}
              \put(90,-92){\mbox{$\leftrightarrow$ TDLDA package}}
       \put(30,-96){\mbox{\tt info}}
+      \put(21,-95){\line(1,0){8}}
              \put(90,-96){\mbox{$\leftrightarrow$ TDLDA package}}
    \put(20,-100){\mbox{\tt occupT0}}
+   \put(21,-101){\line(0,-1){2}}
+   \put(11,-99){\line(1,0){8}}
       \put(30,-104){\mbox{\tt indexx}}
+      \put(21,-103){\line(1,0){8}}
    \put(20,-108){\mbox{\tt calcrhoeq}}
+   \put(21,-109){\line(0,-1){10}}
+   \put(11,-107){\line(1,0){8}}
       \put(30,-112){\mbox{\tt cdiagmat}}
+      \put(31,-113){\line(0,-1){2}}
+      \put(21,-111){\line(1,0){8}}
          \put(40,-116){\mbox{\tt HEigensystem}}
+         \put(31,-115){\line(1,0){8}}
+             \put(90,-116){\mbox{$\leftrightarrow$ library routine}}
       \put(30,-120){\mbox{\tt  indexx}}
+      \put(21,-119){\line(1,0){8}}
    \put(20,-124){\mbox{\tt calc\_Eref}}
+   \put(11,-123){\line(1,0){8}}
    \put(20,-128){\mbox{\tt CorrectEnergy2}}
+   \put(11,-127){\line(1,0){8}}
    \put(20,-132){\mbox{\tt OccupPerSpin}}
+   \put(11,-131){\line(1,0){8}}
    \put(20,-136){\mbox{\tt temperature}}
+   \put(11,-135){\line(1,0){8}}
+   \put(21,-137){\line(0,-1){2}}
       \put(30,-140){\mbox{\tt lmdif1}}
+      \put(21,-139){\line(1,0){8}}
    \put(20,-144){\mbox{\tt dyn\_mfield}}
+   \put(11,-143){\line(1,0){8}}
              \put(90,-144){\mbox{$\leftrightarrow$ TDLDA package}}
    \put(20,-148){\mbox{\tt info}}
+   \put(11,-147){\line(1,0){8}}
              \put(90,-148){\mbox{$\leftrightarrow$ TDLDA package}}
    \put(20,-152){\mbox{\tt analyze\_elect}}
+   \put(11,-151){\line(1,0){8}}
              \put(90,-152){\mbox{$\leftrightarrow$ TDLDA package}}
 \end{picture}
 }}
@@ -752,78 +808,95 @@ the effective Wigner-Seitz radius of the electron cloud.  \PGR{Note
 
 
 
-\begin{figure*}
-\setlength\unitlength{0.91mm}
+
+\begin{figure}
+%\setlength\unitlength{0.91mm}
 \thicklines
 \begin{center}
 %\begin{sideways}
 \fbox{\small%\footnotesize
 %\begin{picture}(130,92)(0,108)
-\begin{picture}(144,102)(-2,102)
-\put(0,200){\mbox{starting point: 
-  $\hat{\rho}(t)
-  =
-  \sum_\alpha|\phi_\alpha(t)\rangle W_\alpha(t)\langle\phi_\alpha(t)|$
-}}
-%\put(0,181){\fbox{1}}
-\put(0.8,190.2){\mbox{1}}
-\put(1.42,191){\circle{3.5}}
-\put(5,198){\vector(0,-1){14}}
-\put(7,190){\mbox{mean-field propagation: 
-$\begin{array}{l}
- |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t+\Delta t,t)|\phi_\alpha(t)\rangle
-\\
- W_\alpha(t)=W_\alpha^{(mf)}=\mbox{const.}
-\end{array}$
-}}
-\put(0,180){\mbox{
-  $ \hat{\rho}_{mf} =\hat{\rho}_{mf}(t + \Delta t) 
-  =
-  \sum_\alpha|\phi_\alpha^{(mf)}\rangle W_\alpha^{(mf)}\langle\phi_\alpha^{(mf)}|$
-}}
-%\put(8,168){\line(1,-1){4}}
-%\put(12,164){\vector(1,0){58}}
-\put(65,181){\vector(1,0){20}}
-\put(85,180){\mbox{  $\varrho_{mf}(\mathbf{r},t+\Delta t)\,,\,\mathbf{j}_{mf}(\mathbf{r},t+\Delta t),E_{mf}$}}
-%\put(39.8,160.6){\mbox{2}}
-%\put(40.42,161.5){\circle{3.5}}
-\put(75.75,177.6){\mbox{2}}
-\put(76.42,178.5){\circle{3.5}}
-
-%\put(87.95,161){\line(1,0){3}}
-%\put(88,161){\line(0,-1){16.3}}
-%\put(88,154){\vector(1,0){3}}
-%\put(88,146){\line(0,-1){4.5}}
-%\put(88,144.5){\vector(1,0){3}}
-\put(106.8,169.5){\mbox{3}}
-\put(107.42,170.5){\circle{3.5}}
-%\put(82.8,154.5){\mbox{3}}
-%\put(83.42,155.5){\circle{3.5}}
-\put(110,178){\vector(0,-1){15}}
-\put(80,152){\mbox{
-\begin{minipage}{8cm}
+\begin{picture}(132,175)(-5,-175)
+\put(0,-5){\mbox{
+\begin{minipage}[t]{8cm}
 \begin{flushleft}
-%  $\varrho_{mf}(\mathbf{r},t+\Delta t)\,,\,\mathbf{j}_{mf}(\mathbf{r},t+\Delta t),E_{mf}$
-%\\[5pt]
+$\;$starting point: 
+\\[4pt]
+  $\hat{\rho}(t_0)
+  =
+  \sum_\alpha|\phi_\alpha(t_0)\rangle W_\alpha(t_0)\langle\phi_\alpha(t_0)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(5,-19){\encircle{1}}
+\put(3,-11.5){\vector(0,-1){25}}
+\put(6,-30){\fbox{\tt tstep}}
+\put(7,-25){\mbox{mean-field propagation: 
+$%\begin{array}{l}
+ |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t_1,t_0)|\phi_\alpha(t)\rangle
+\;,\;
+%\\
+ W_\alpha^\mathrm{(mf)}=W_\alpha(t)=\mbox{const.}
+%\end{array}
+$
+}}
+\put(0,-40){\mbox{
+  $ \hat{\rho}_\mathrm{mf} =\hat{\rho}_\mathrm{mf}(t_1) 
+  =
+  \sum_\alpha|\phi_\alpha^\mathrm{(mf)}\rangle 
+  W_\alpha^\mathrm{(mf)}\langle\phi_\alpha^\mathrm{(mf)}|$
+}}
+\put(5,-46){\encircle{2}}
+\put(6,-54.5){\fbox{\tt srhomat}}
+\put(3,-41.5){\vector(0,-1){15}}
+\put(0,-50){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express $\phi$ and $W$ through natural orbitals
+\\[20pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mf}(t_1)
+  =
+  \sum_\alpha|\phi_\alpha^\mathrm{nat}\rangle \tilde{W}_\alpha^\mathrm{nat}
+  \langle\phi_\alpha^\mathrm{nat}|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(44,-63){\vector(4,-1){24}}
+\put(51,-62){\encircle{3}}
+\put(61,-64){\fbox{\tt calcrhotot,calc\_current}}
+\put(69,-70){\mbox{  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1),E_\mathrm{mf}$}}
+
+\put(87,-72){\vector(1,-1){12}}
+%\put(117,-103.5){\vector(0,-1){8}}
+\dottedline{1}(117,-103.5)(117,-110.5)
+\put(117,-110.5){\vector(0,-1){1}}
+\put(85,-77){\encircle{4}}
+\put(97,-79){\fbox{\tt eqstate}}
+\put(67,-87){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
   density-constrained mean field (DCMF) %\\ $\hookrightarrow$ %$\Longrightarrow$
 \\[3pt]
-1. 
+$\Rightarrow$ 1. 
 $\begin{array}[t]{rcl}
   \hat{\rho}_{eq}
   &=&
-  \hat{\rho}_{eq}[\varrho_{mf}(\mathbf{r})\,,\,\mathbf{j}_{mf}(\mathbf{r}),E_{mf}]
+  \hat{\rho}_{eq}[\varrho_\mathrm{mf}(\mathbf{r})\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r}),E_\mathrm{mf}]
 \\[3pt]
   &=&
   \sum_\alpha|\phi'_\alpha\rangle  W'_\alpha\langle\phi'_\alpha|
 \end{array}$
 \\[4pt]
-2. intrinsic excitation energy $E^*_\mathrm{intr}$
+$\Rightarrow$ 2. intrinsic excitation energy $E^*_\mathrm{intr}$
 \end{flushleft}
 \end{minipage}
 }}
-\put(132,143){\vector(-1,-2){6.5}}
-\put(85,129){\mbox{
-\begin{minipage}{8cm}
+%\put(79,-93.5){\vector(-4,-1){33}}
+\dottedline{1}(77,-93.5)(47,-101.5)
+\put(47,-101.5){\vector(-4,-1){1}}
+\put(83,-110){\mbox{
+\begin{minipage}[t]{8cm}
 \begin{flushleft}
 relaxation time:
 \\[4pt]
@@ -831,60 +904,65 @@ $\hbar\tau_\mathrm{relax}^{-1}=0.40\,\sigma_{ee}r_s^{-2}\,E^*_\mathrm{intr}/N$
 \end{flushleft}
 \end{minipage}
 }}
+\dottedline{1}(83,-114)(31,-106)
+\put(31,-106){\vector(-4,1){1}}
 \put(4,177){\vector(0,-1){39}}
-%\put(80,149){\line(-3,-1){31}}
-%\put(80,149){\line(-3,-1){31}}
-\put(96,153.5){\line(-4,-1){55}}
-\put(54.7,145.1){\mbox{4}}
-\put(55.6,146.1){\circle{3.5}}
-\put(53.7,128.6){\mbox{4}}
-\put(54.6,129.6){\circle{3.5}}
-\put(0,154.5){\mbox{4}}
-\put(0.9,155.5){\circle{3.5}}
-\put(41,139.75){\vector(0,-1){3.9}}
-\put(0,121.5){\mbox{
-\begin{minipage}{8cm}
+\put(0,-96){\mbox{
+\begin{minipage}[t]{8cm}
 \begin{flushleft}
+\hspace*{1.8em}compose with rate $\tau_\mathrm{relax}$:
+\\[4pt]
 $\displaystyle
-\hat{\rho}(t\!+\!\Delta t) 
+\hat{\rho}_\mathrm{mix}
 = 
-\hat{\rho}_{mf} -
-\frac{\Delta t}{\tau_\mathrm{relax}}\left[\hat{\rho}_{mf}-\hat{\rho}_{eq}\right]
+\hat{\rho}_\mathrm{mf} -
+\frac{\Delta t}{\tau_\mathrm{relax}}\left[\hat{\rho}_\mathrm{mf}-\hat{\rho}_{eq}\right]
 $
-\\[12pt]
-\hspace*{1.8em}diagonalize to natural orbitals:
-\\[4pt]
-  $\hat{\rho}(t\!+\!\Delta t)
-  =
-  \sum_\alpha|\phi_\alpha(t\!+\!\Delta t)\rangle \tilde{W}_\alpha
-  \langle\phi_\alpha(t\!+\!\Delta t)|$
-\\[12pt]
-\hspace*{1.8em}final fine-tuning of $W_\alpha$ to reproduce $E_{mf}$
-\\[4pt]
-  $\hat{\rho}(t\!+\!\Delta t)
-  =
-  \sum_\alpha|\phi_\alpha(t\!+\!\Delta t)\rangle W_\alpha(t\!+\!\Delta t)
-  \langle\phi_\alpha(t\!+\!\Delta t)|$
 \end{flushleft}
 \end{minipage}
 }}
-\put(94,127.5){\line(-1,0){53}}
-\put(41,127.5){\vector(-2,1){6}}
-\put(4,131.5){\vector(0,-1){8.3}}
-\put(0.1,127.6){\mbox{5}}
-\put(0.9,128.5){\circle{3.5}}
-\put(4,119.5){\vector(0,-1){8.2}}
-\put(0.1,115.6){\mbox{6}}
-\put(0.9,116.5){\circle{3.5}}
+\put(3,-104){\vector(0,-1){31}}
+\put(5,-121){\encircle{5}}
+\put(6,-130.5){\fbox{\tt calcrhoeq}}
+\put(0,-126){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express new density through its natural orbitals:
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mix}
+  =
+  \sum_\alpha|\phi_\alpha(t_1)\rangle \tilde{W}_\alpha
+  \langle\phi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-140){\vector(0,-1){21}}
+\put(5,-146.5){\encircle{6}}
+\put(6,-155.5){\fbox{\tt temperature}}
+\put(0,-151){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}final fine-tuning of $W_\alpha$ to reproduce $E_\mathrm{mf}$
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}(t_1)
+  =
+  \sum_\alpha|\phi_\alpha(t_1)\rangle W_\alpha(t_1)\langle\phi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\dottedline{1}(3,-166)(3,-171)(-1.5,-171)(-1.5,-4.2)(0,-4.2)
+\put(0,-4.2){\vector(1,0){1}}
 \end{picture}
 }
 %\end{sideways}
 \end{center}
 \caption{\label{fig:summary} Sketch of the scheme for performing one
-  large time step $t\longrightarrow t\!+\!\Delta t$ in solving the RTA
+  large time step $t_0\longrightarrow t_1=t_0\!+\!\Delta t$ in solving the RTA
   equations.  The numbers in open circles indicate the steps as
   outlined in the text.  }
-\end{figure*}
+\end{figure}
 
 
 
