@@ -289,7 +289,7 @@ Fermion systems read \cite{Rei15a}
   -\mathrm{i}\big[\hat{h},\hat{\rho}\big]
   -
   \frac{1}{\tau_\mathrm{relax}}
-  \left(\hat{\rho}-\hat{\rho}_\mathrm{eq}[\varrho,\mathbf{j},E]\right)
+  \left(\hat{\rho}-\hat{\rho}_\mathrm{eq}[\varrho,\mathbf{j},E_\mathrm{sp}]\right)
   \;,
 \label{eq:EoMbasicrho}
 \\
@@ -297,7 +297,7 @@ Fermion systems read \cite{Rei15a}
   &=&
   \sum_\alpha \left|\phi_\alpha(\mathbf{r},t)\right|^2 W_\alpha
   \;,
-\\
+\label{eq:locdens}\\
   \mathbf{j}(\mathbf{r},t)
   &=&
   \sum_\alpha W_\alpha\phi_\alpha^*(\mathbf{r},t)
@@ -305,7 +305,12 @@ Fermion systems read \cite{Rei15a}
           {2\mathrm{i}}
      \phi_\alpha(\mathbf{r})
   \;,
-\label{eq:locdens}\\
+\label{eq:current}\\
+  E_\mathrm{sp}
+  &=&
+  \sum_\alpha W_\alpha\varepsilon_\alpha
+  \;,
+\\  
   \frac{\hbar}{\tau_\mathrm{relax}}
   &=&
   {0.40}\frac{\sigma_{ee}}{r_s^2}\frac{{E}^*_\mathrm{intr}}{N}
@@ -319,11 +324,14 @@ Fermion systems read \cite{Rei15a}
 \end{subequations}
 where $\hat{\rho}_\mathrm{eq}$ is the density operator of the thermal
 equilibrium for local density $\varrho(\mathbf{r},t)$, current
-distribution $\mathbf{j}(\mathbf{r},t)$ and total energy $E(t)$ given
-at that instant of time $t$ and computed from the actual state
-$\hat{\rho}(t)$.  The form (\ref{eq:locdens}) holds for the diagonal
-representation.  
-A crucial parameter is the relaxation time
+distribution $\mathbf{j}(\mathbf{r},t)$. The reference energy should
+be, in fact, the total energy $E(t)$ and computed from the actual
+state $\hat{\rho}(t)$. We replace that by the simpler total s.p.
+energy $E_\mathrm{sp}(t)$ which is legitimate because the difference
+to $E$ is a functional of $\varrho(\mathbf{r})$ only, a quantity which
+is kept frozen by construction.  The forms
+(\ref{eq:locdens},\ref{eq:current}) hold for the diagonal
+representation.  A crucial parameter is the relaxation time
 $\tau_\mathrm{relax}$ which is taken over from semi-classical Fermi
 liquid theory, for details see \cite{Rei15a}.  Key entries are: the
 intrinsic (thermal) energy of the system $E^*_\mathrm{intr}$ (see
@@ -334,43 +342,66 @@ electron density $\bar{\varrho}$.  Note that $r_s$ and $\sigma_{ee}$
 depend on an average density $\bar{\varrho}$ because a spatially
 varying $\tau_\mathrm{relax}$ would be very cumbersome to implement in
 a quantum mechanical expression.  The average density is deduced from
-the r.m.s. radius $r$ of the actual electron cloud as 
+the r.m.s. radius $r$ of the actual electron cloud as
 $\bar{\varrho}=(3N/(4\pi r^3))$\PGRfoot{Should we add that as
   displayed equation?}.
 
 This RTA equation (\ref{eq:EoMbasic}) is rather involved because its
 entries depend in various ways on the actual state $\hat{\rho}(t)$.
 The most expensive piece is the instantaneous equilibrium density
-$\hat{\rho}_\mathrm{eq}$ which minimizes LDA energy with constraint on
-the actual $\varrho(\mathbf{r})$, $\mathbf{j}(\mathbf{r})$ and energy
-$E$.  It is determined by the density-constrained mean-field (DCMF)
-equation
+operator
 \begin{subequations}
 \label{eq:DCMF}
+\begin{equation}
+  \hat{\rho}_\mathrm{eq}[\varrho,\mathbf{j},E]
+  =
+  |\phi_\alpha^\mathrm{(eq)}\rangle
+  W_\alpha^\mathrm{(eq)}\langle\phi_\alpha^\mathrm{(eq)}|
+\end{equation}
+which minimizes LDA energy with constraint on the actual
+$\varrho(\mathbf{r})$, $\mathbf{j}(\mathbf{r})$ and energy
+$E_\mathrm{sp}$.  It is determined by the density-constrained
+mean-field (DCMF) equation
 \begin{eqnarray}
-  &&
-  \left(
+  \hat{h}_\mathrm{DCMF}[\varrho,\mathbf{j},E]\phi_\alpha^\mathrm{(eq)}
+  &=&
+  \varepsilon_\alpha^\mathrm{(eq)}\phi_\alpha^\mathrm{(eq)}
+\\
+  \hat{h}_\mathrm{DCMF}[\varrho,\mathbf{j}]
+  &=&
   \hat{h}
   -
   \int d^3r\lambda(\mathbf{r})\hat{\varrho}(\mathbf{r})
   -
   \int d^3r\,\mbox{\boldmath$\lambda_j$}(\mathbf{r})\hat{\mathbf{j}}(\mathbf{r})
-  \right)
-  \phi_\alpha^\mathrm{(eq)}
-  =
-  \varepsilon_\alpha^\mathrm{(eq)}\phi_\alpha^\mathrm{(eq)}
-\\
-  &&
+\nonumber\\
+  &&\quad
+  -
+  \mu\int d^3r(\hat{\varrho}(\mathbf{r})-{\varrho}(\mathbf{r},t))^2
+  -
+  \mu_j\int
+  d^3r\,(\hat{\mathbf{j}}(\mathbf{r})-{\mathbf{j}}(\mathbf{r},t))^2
+\end{eqnarray}
+in combination with adjustment of particle number $N$ and s.p. energy
+$E_\mathrm{sp}(t)$ through a Fermi distribution
+\begin{eqnarray}
   W_\alpha^\mathrm{(eq)}
-  =
+  &=&
   \frac{1}{1+
   \exp((\langle\phi_\alpha^\mathrm{(eq)}|\hat{h}|\phi_\alpha^\mathrm{(eq)}\rangle-\mu^\mathrm{(eq)})/T^\mathrm{(eq)})}
+\label{eq:Fermi}\\
+  &&\hspace*{-4em}
+  \mu^\mathrm{(eq)}\leftrightarrow
+  \sum_\alpha W_\alpha^\mathrm{(eq)}=N(t)
+  \;,\;
+  T^\mathrm{(eq)}\leftrightarrow
+  \sum_\alpha W_\alpha^\mathrm{(eq)}
+  \langle\phi_\alpha^\mathrm{(eq)}|\hat{h}|\phi_\alpha^\mathrm{(eq)}\rangle
+  =
+  E_\mathrm{sp}(t)
+  \;.
 \end{eqnarray}
 \end{subequations}
-where the chemical potential $\mu^\mathrm{(eq)}$ is adjusted to the
-given particle number by $N(t)=\sum_\alpha W_\alpha^\mathrm{(eq)}$ and
-the temperature $T^\mathrm{(eq)}$ is tuned such the the LDA energy
-reproduces the wanted energy $E(t)$.
 %
 Although cumbersome to evaluate, it is important to use exactly this
 local, instantaneous equilibrium in the relaxation term. This
@@ -459,7 +490,7 @@ $
   $\displaystyle
   \hat{\rho}_\mathrm{mf}(t_1)
   =
-  \sum_\alpha|\phi_\alpha^\mathrm{nat}\rangle \tilde{W}_\alpha^\mathrm{nat}
+  \sum_\alpha|\phi_\alpha^\mathrm{nat}\rangle{W}_\alpha^\mathrm{nat}
   \langle\phi_\alpha^\mathrm{nat}|$
 \end{flushleft}
 \end{minipage}
@@ -467,7 +498,7 @@ $
 \put(44,-63){\vector(4,-1){24}}
 \put(51,-62){\encircle{3}}
 \put(61,-64){\fbox{\tt calcrhotot,calc\_current}}
-\put(69,-70){\mbox{  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1),E_\mathrm{mf}$}}
+\put(69,-70){\mbox{  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1),E_\mathrm{sp,mf}$}}
 
 \put(87,-72){\vector(1,-1){12}}
 %\put(117,-103.5){\vector(0,-1){8}}
@@ -568,6 +599,149 @@ $
 \end{figure}
 
 
+\begin{figure}
+%\setlength\unitlength{0.91mm}
+\thicklines
+\begin{center}
+%\begin{sideways}
+\fbox{\small%\footnotesize
+%\begin{picture}(130,92)(0,108)
+\begin{picture}(132,150)(-5,-150)
+\put(0,-5){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+starting point:
+  $\phi_\alpha^\mathrm{nat},{W}_\alpha^\mathrm{nat},\varepsilon_\alpha$ 
+  (after RTA step 2)
+ \\
+\hspace*{6.8em}
+  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,
+   \,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1)\,,\,E_\mathrm{sp,mf}$
+  (after RTA step 3)
+\end{flushleft}
+\end{minipage}
+}}
+%\put(5,-19){\encircle{1}}
+\put(3,-7){\vector(0,-1){10}}
+\put(71,-27){\fbox{\tt ferm1}}
+\put(0,-22){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Fermi distribution eq. (\ref{eq:Fermi}):
+$
+\varepsilon_\alpha, N, E_\mathrm{sp,mf}
+\longrightarrow
+W_\alpha^\mathrm{(eq)}, \mu^\mathrm{(eq)}, T^\mathrm{(eq)}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-25){\vector(0,-1){10}}
+\put(0,-39){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Accelerated gradient step with constrained Hamiltonian:
+\\
+\hspace*{3em}$
+\phi_\alpha^\mathrm{(new)}\longleftrightarrow
+\mathcal{O}\left\{
+\phi_\alpha-\hat{\mathcal{D}}^{-1}\left[
+ \hat{h}_\mathrm{DCMF}-
+ \langle\phi_\alpha|\hat{h}_\mathrm{DCMF}|\phi_\alpha\rangle
+\right]\phi_\alpha
+\right\}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(10,-49){\fbox{\tt calc\_psi1}}
+\put(3,-40){\vector(0,-1){15}}
+\put(3,-59){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+$\langle\Delta^2\hat{h}_\mathrm{DCMF}\rangle\stackrel{\mbox{?}}{<}\epsilon_1$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-61){\vector(0,-1){15}}
+\put(4,-68){\mbox{yes}}
+\put(0,-80){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Fermi distribution eq. (\ref{eq:Fermi}):
+\\
+\hspace*{2em}
+$
+\langle\phi_\alpha|\hat{h}|\phi_\alpha\rangle^\mathrm{(new)},
+\varepsilon_\alpha, N, E_\mathrm{sp,mf}
+\longrightarrow
+W_\alpha^\mathrm{(eq)}, \mu^\mathrm{(eq)}, T^\mathrm{(eq)}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(10,-90){\fbox{\tt ferm1}}
+\put(29,-58.5){\vector(1,0){45}}
+\put(49,-57.5){\mbox{no}}
+\put(76,-59){\mbox{$W_\alpha^\mathrm{(eq)}$=const.}}
+\put(3,-82){\vector(0,-1){24}}
+\put(85,-61){\line(0,-1){25}}
+\put(85,-86){\vector(-4,-1){80}}
+\put(3,-111){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+$\langle\Delta^2\hat{h}_\mathrm{DCMF}\rangle\stackrel{\mbox{?}}{<}\epsilon_0$
+$\;\&\;$
+$|E_\mathrm{s.p.}^\mathrm{(new)}-E_\mathrm{s.p.}^{(n)}|\stackrel{\mbox{?}}{<}\epsilon_2$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-113){\vector(0,-1){14}}
+\put(4,-121){\mbox{yes}}
+\put(3,-130){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+compute $E^*$ eq. (\ref{eq:Estar}), 
+$\tau_\mathrm{relax}$ eq. (\ref{eq:relaxtime})
+\end{flushleft}
+\end{minipage}
+}}
+\put(20,-135){\fbox{\tt occupT0}}
+\put(3,-132){\vector(0,-1){10}}
+\put(0,-145){\mbox{back to RTA loop}}
+\put(85,-112.5){\mbox{no}}
+\put(65,-110){\line(1,0){48}}
+\put(113,-110){\vector(0,1){7}}
+\put(72,-99){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+$
+\begin{array}{rcl}
+\lambda^{(n)}+2\mu(\varrho^\mathrm{(new)}-\varrho_\mathrm{mf})
+\!\!&=&\!\!
+\lambda^\mathrm{(new)}
+\\
+\mbox{\boldmath$\lambda_j$}^{(n)}
++
+2\mu_j(\mathbf{j}^\mathrm{(new)}-\mathbf{j}_\mathrm{mf})
+\!\!&=&\!\!
+\mbox{\boldmath$\lambda_j$}^\mathrm{(new)}
+\end{array}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(113,-93){\line(0,1){55}}
+\put(113,-38){\vector(-1,0){30}}
+\end{picture}
+}
+%\end{sideways}
+\end{center}
+\caption{\label{fig:summaryDCMF} Sketch of the scheme for solving the
+  DCMF eqs. (\ref{eq:DCMF}). This scheme expands {\tt SUBROUTINE
+    eqstate} in step 4 from the RTA scheme \ref{fig:summary}. 
+The symbol $\mathcal{O}$ stands for ortho-normalization of the
+newset of s.p. wavefunctions and $\mathcal{D}$ for the damping
+operator in the accelerated gradient step (\PGRcomm{Cross references
+  to TDLDA section yet to be defined.}).
+ }
+\end{figure}
+
 
 The solution of the RTA equations (\ref{eq:EoMbasic}) with
 (\ref{eq:DCMF}) is rather involved. We briefly summarize the solution
@@ -579,9 +753,7 @@ resolve it by standard techniques \cite{Cal00,Rei04aB} on a time step
 $\delta t$ which is much smaller (factor 10--100) than the RTA step
 $\Delta t$. We summarize this TDLDA propagation in the evolution
 operator $\hat{U}$ from Eq.~(\ref{eq:KSpropag}) and discuss only one
-RTA step. Its sub-steps are sketched in Figure \ref{fig:summary} and
-explained in the following whereby the step numbers here correspond to
-the ones in the Figure:
+RTA step:
 \begin{enumerate}
    \item\label{it:TDLDA} We first propagate $\hat{\rho}$ by pure
      TDLDA.  The s.p. states in diagonal representation
@@ -589,13 +761,15 @@ the ones in the Figure:
      |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t_1,t_0)|\phi_\alpha(t)\rangle$,
      while the occupation weights $W_\alpha(t_1)=W_\alpha(t_0)$ are
      kept frozen (pure mean-field propagation).
-   \item\label{it:natorb} Absorbing bounds may have removed parts
-     from the s.p. wavefunctions and so destroyed ortho-normalization.
-     We transform the propagated density operator to a representation
-     in terms of natural orbitals which is  diagonal representation
+   \item\label{it:natorb} Absorbing bounds may have removed parts from
+     the s.p. wavefunctions and so destroyed ortho-normalization.  We
+     transform the propagated density operator to a representation in
+     terms of natural orbitals which is diagonal representation
      (\ref{eq:rhodiag}) with an ortho-normal set of s.p. wavefunctions
      together with corresponding occupation weights
-     $\{\phi_\alpha^\mathrm{(nat)},W_\alpha^\mathrm{(nat)}\}$.
+     $\{\phi_\alpha^\mathrm{(nat)},W_\alpha^\mathrm{(nat)}\}$.  This
+     step can be overridden if reflecting (or periodic) boundaries are
+     used in which case TDLDA preserves ortho-normalizaton.
    \item\label{it:newrho} We compute density
      $\varrho(\mathbf{r},t_1)$, current
      $\mathbf{j}(\mathbf{r},t_1)$, and total energy
@@ -604,12 +778,30 @@ the ones in the Figure:
    \item\label{it:DCMF} We determine the thermal mean-field
      equilibrium state $\hat{\rho}_\mathrm{eq}$ constrained to the
      given $\varrho$, $\mathbf{j}$, and $E_\mathrm{mf}$ from step
-     \ref{it:newrho}.  This is achieved by Density-Constrained Mean
-     Field (DCMF) iterations as outlined in section
-     \ref{sec:summaryDCMF}.  The equilibrium state
+     \ref{it:newrho}.  This is achieved by the Density-Constrained
+     Mean eqs. (\ref{eq:DCMF}) which is done iteratively as sketched
+     in figure \ref{fig:summaryDCMF}.  The equilibrium state
      $\hat{\rho}_\mathrm{eq}$ is represented by new s.p. states
      $\{|\phi'_{\alpha}\rangle\}$ and new occupation numbers
      $W'_\alpha$ in diagonal form (\ref{eq:rhodiag}).
+     Having these, we determine finally the excitation energy
+     as energy relative to the temperture zero state
+     \begin{equation}
+        E^*_\mathrm{intr}
+        =
+        E_\mathrm{sp}
+        -
+        \sum_\alpha W_\alpha^{(T=0)}
+        \langle\phi_\alpha^\mathrm{(eq)}|\hat{h}|\phi_\alpha^\mathrm{(eq)}\rangle
+     \label{eq:Estar}
+     \end{equation}
+     where $W_\alpha^{(T=0)}$ are the occupation numbers determined
+     with the s.p. energies
+     $\langle\phi_\alpha^\mathrm{(eq)}|\hat{h}|\phi_\alpha^\mathrm{(eq)}\rangle$
+     at temperature $T=0$. This $E^*_\mathrm{intr}$ thus measures the
+     amount of thermal excitation energy in the
+     system\PGRfoot{Is this definition sufficient? Then we
+         could skip planned appendix \ref{app:eintr}.}
    \item \label{it:compo} We compose the new density operator as mixture
      of TDLDA propagated state $\hat{\rho}_\mathrm{mf}$ and
      equilibration driving term
@@ -640,11 +832,11 @@ the ones in the Figure:
      occupation weights $W_\alpha(t_1)$ which comply with
      energy conservation.
 \end{enumerate}
-The scheme is designed for use in connection with absorbing boundary
-conditions \cite{Cal00,Rei06c}. 
-In case of reflecting boundaries, natural orbital property is
-maintained under TDLDA propagation and step \ref{it:natorb}
-can be overridden.
+The above steps are sketched in Figure \ref{fig:summary} 
+whereby the step numbers here correspond to
+the ones in the Figure. The most involved part is
+step \ref{it:DCMF}, the solution of the DCMF equations.
+It is expanded in details in figure \ref{fig:summaryDCMF}.
 
 As said above, the time step $\delta t$ for propagation of TDLDA is
 very small because it is limited from above by the maximal energy on
@@ -674,15 +866,48 @@ acceptable for not too fast and not too energetic processes,
 preferably in compact systems.
 
 
-\section{Summary of the DCMF procedure}
-\label{sec:summaryDCMF}
 
 
-\PGRcomm{This section for DCMF in the same layout as for RTA, i.e. a
-  summary in text together with an even compacter summary diagram.}
 
 \section{The structure of the RTA package in {\tt rta.F90}}
 \label{eq:RTApack}
+
+\subsection{Input and output related to RTA}
+
+
+\PGRcomm{This subsection needs yet to be worked out in detail.}
+
+\medskip
+
+The {\tt NAMELIST dynamic} contains the following variables
+used in the RTA procedure:\PGRfoot{We should define a new {\tt
+    NAMELIST} and shift the RTA variables to there.}
+\begin{description}
+\item[\tt jrtaint:]
+\item[\tt rtamu:]
+\item[\tt rtamuj:]
+\item[\tt rtasumvar2max:]
+\item[\tt rtaeps:]
+\item[\tt rtae0dmp:]
+\item[\tt rtasigee:]
+\item[\tt rtars:]
+\item[\tt rtatempinit:]
+\item[\tt rtaforcetemperature:]
+\end{description}
+
+
+Most observables were already defined at TDLDA stage and thus
+are returned in the standard output files as explained in the TDLDA
+section\PGRfoot{Cross reference yet to be defined.}. New output files
+specific to observables from RTA are:\PGRfoot{These
+  files seem to carry only protocol for numerics. Where do we
+  print energy balance ($E_\mathrm{intr}^*$ etc)?}
+\begin{description}
+\item[\tt prta:]
+\item[\tt peqstat:]
+\item[\tt pspeed:]
+\item[\tt prhov:]
+\end{description}
 
 \subsection{The calling tree}
 \label{eq:treeRTA}
