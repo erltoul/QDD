@@ -52,7 +52,7 @@
 
 \begin{frontmatter}
 
-\title{Documentationm for the RTA code in 3D}
+\title{Documentation for the RTA code in 3D}
 
 \author{F.~Coppens$^a$}
 \author{M.~Vincendon$^a$}
@@ -78,7 +78,7 @@ huge block detailing the code.}
 
 \begin{keyword}
 %\PACS{05.30.Fk,31.70.Hq,34.10.+x,36.40.Cg}
-electronic disspation, time-dependent
+electronic dissipation, time-dependent
 density functional theory, ...
 \end{keyword}
 \end{frontmatter}
@@ -107,7 +107,7 @@ test that branch carefully.
 \label{sec:mf}
 
 \PGRcomm{This piece is copied from our basic RTA paper and servers her
-just to provide formulae needed later in RTA. It has yet to be
+just to provide formula needed later in RTA. It has yet to be
 rewritten in connection with the new section on TDLDA-MD.}
 
 
@@ -212,7 +212,7 @@ where $\hat{U}$ is the mean-field evolution operator (\ref{eq:KSpropag}).
 
 \PGRcomm{Here comes a calling tree as for RTA in section
   \ref{eq:treeRTA}. This tree is much larger and may have to be
-  splitted into static and dynamic part.
+  split into static and dynamic part.
 }
 
 \subsection{The TDLDA subroutines in detail}
@@ -232,7 +232,7 @@ One example is given as appetizer.
 \\[4pt]
 Computes Coulomb potential for given density by invoking
 Poisson solver.
-Th emerging coupomb potential is communicated as {\tt chpcoul}
+Th emerging coulomb potential is communicated as {\tt chpcoul}
 via module {\tt params}.
 In case of dielectric external media, adds pseudo-density for image
 charge.
@@ -278,7 +278,7 @@ $\hat{I}$ at the right-hand side consists stands for the
 quantum-mechanical collision term which, however, is extremely hard to
 handle for finite Fermion systems. A great simplification can be
 achieved by the relaxation-time approximation (RTA) which was used
-successfully in a wide variety of homogeneus systems
+successfully in a wide variety of homogeneous systems
 \cite{Pin66,Ash76}. The RTA equations for the present case of finite
 Fermion systems read \cite{Rei15a}
 \begin{subequations}
@@ -381,6 +381,7 @@ mean-field (DCMF) equation
   -
   \mu_j\int
   d^3r\,(\hat{\mathbf{j}}(\mathbf{r})-{\mathbf{j}}(\mathbf{r},t))^2
+\label{eq:hDCMF}
 \end{eqnarray}
 in combination with adjustment of particle number $N$ and s.p. energy
 $E_\mathrm{sp}(t)$ through a Fermi distribution
@@ -405,7 +406,7 @@ $E_\mathrm{sp}(t)$ through a Fermi distribution
 %
 Although cumbersome to evaluate, it is important to use exactly this
 local, instantaneous equilibrium in the relaxation term. This
-guarantees that the disspative step conserves local density, 
+guarantees that the dissipative step conserves local density, 
 current, and energy as it is mandatory for a good collision term
 \cite{Gue88a}.
 
@@ -736,7 +737,7 @@ $
   DCMF eqs. (\ref{eq:DCMF}). This scheme expands {\tt SUBROUTINE
     eqstate} in step 4 from the RTA scheme \ref{fig:summary}. 
 The symbol $\mathcal{O}$ stands for ortho-normalization of the
-newset of s.p. wavefunctions and $\mathcal{D}$ for the damping
+new set of s.p. wavefunctions and $\mathcal{D}$ for the damping
 operator in the accelerated gradient step (\PGRcomm{Cross references
   to TDLDA section yet to be defined.}).
  }
@@ -769,7 +770,7 @@ RTA step:
      together with corresponding occupation weights
      $\{\phi_\alpha^\mathrm{(nat)},W_\alpha^\mathrm{(nat)}\}$.  This
      step can be overridden if reflecting (or periodic) boundaries are
-     used in which case TDLDA preserves ortho-normalizaton.
+     used in which case TDLDA preserves ortho-normalization.
    \item\label{it:newrho} We compute density
      $\varrho(\mathbf{r},t_1)$, current
      $\mathbf{j}(\mathbf{r},t_1)$, and total energy
@@ -785,7 +786,7 @@ RTA step:
      $\{|\phi'_{\alpha}\rangle\}$ and new occupation numbers
      $W'_\alpha$ in diagonal form (\ref{eq:rhodiag}).
      Having these, we determine finally the excitation energy
-     as energy relative to the temperture zero state
+     as energy relative to the temperature zero state
      \begin{equation}
         E^*_\mathrm{intr}
         =
@@ -832,11 +833,27 @@ RTA step:
      occupation weights $W_\alpha(t_1)$ which comply with
      energy conservation.
 \end{enumerate}
-The above steps are sketched in Figure \ref{fig:summary} 
-whereby the step numbers here correspond to
-the ones in the Figure. The most involved part is
-step \ref{it:DCMF}, the solution of the DCMF equations.
-It is expanded in details in figure \ref{fig:summaryDCMF}.
+The above steps are sketched in Figure \ref{fig:summary} whereby the
+step numbers here correspond to the ones in the Figure. The most
+involved part is step \ref{it:DCMF}, the solution of the DCMF
+equations.  It is expanded in details in figure \ref{fig:summaryDCMF}.
+A word is in order about the termination criteria in DCMF iteration.
+The final check for total variance $\epsilon_0$ is an input parameter
+{\tt rtasumvar2max} to the RTA part, see section \ref{sec:IO}.  The
+two other switch criteria in figure \ref{fig:summaryDCMF} are
+hardwired in {\tt SUBROUTINE eqstate} in file {\tt rta.F90} with the
+values $\epsilon_1=10^{-1}$ and $\epsilon_2=10^{-4}$\PGRcomm{Switching
+DCMF iteration is more involved than that. There is also a parameter
+{\tt err}. How is that defined?
+\\
+We should turn $\epsilon_1$ and  $\epsilon_2$ to input variables and
+also for {\tt err}.
+\\
+A similar problem exists for {\tt ferm1}. The strategy for the 
+choice of the search interval {\tt [T0i,T1i]} requires explanation
+which should come at that place here. 
+}.
+
 
 As said above, the time step $\delta t$ for propagation of TDLDA is
 very small because it is limited from above by the maximal energy on
@@ -850,7 +867,7 @@ have the place for the benchmarks.}
 
 A word is in order about the system for which the present form of RTA
 can be used.  The relaxation time $\tau_\mathrm{relax}$ is allowed to
-depend on time which allows to accomodate changes of the dynamical
+depend on time which allows to accommodate changes of the dynamical
 state. But $\tau_\mathrm{relax}$ is one global number chosen according
 to the average electron density $\bar{\varrho}$, see
 eq. (\ref{eq:relaxtime}).  This requires systems which can be
@@ -873,7 +890,7 @@ preferably in compact systems.
 \label{eq:RTApack}
 
 \subsection{Input and output related to RTA}
-
+\label{sec:IO}
 
 \PGRcomm{This subsection needs yet to be worked out in detail.}
 
@@ -884,17 +901,37 @@ used in the RTA procedure:\PGRfoot{We should define a new {\tt
     NAMELIST} and shift the RTA variables to there.}
 \begin{description}
 \item[\tt jrtaint:]
+   Modulus for calling the RTA subroutine, i.e., nr. of TDLDA steps
+   per one RTA step. Course time step $\Delta t$ for RTA and fine
+   time step for TDLDA {\tt dt1} are related as
+   $\Delta t=${\tt jrtaint}$*${\tt dt1}.
 \item[\tt rtamu:]
+   Parameter $\mu$ in front of the quadratic density constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
 \item[\tt rtamuj:]
-\item[\tt rtasumvar2max:]
+   Parameter $\mu_j$ in front of the quadratic current constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
+\item[\tt rtasumvar2max:] Termination criterion $\epsilon_0$ in the
+   RTA step as used
+   in figure \ref{fig:summaryDCMF}. 
 \item[\tt rtaeps:]
+  Step size $\delta$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
 \item[\tt rtae0dmp:]
+  Energy offset $E_00$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
 \item[\tt rtasigee:]
+  In medium $e^-$-$e^-$ cross section used for the relaxation time 
+  (\ref{eq:relaxtime}).
 \item[\tt rtars:]
+  Effective  Wigner-Seitz radius $r_s$ used for the relaxation time 
+  (\ref{eq:relaxtime}).
 \item[\tt rtatempinit:]
+  The value {\tt rtatempinit}/10 is used as lower value for the search
+  of temperature in {\tt SUBROUTINE ferm1}.
 \item[\tt rtaforcetemperature:]
+  \PGRcomm{Seems to be obsolete?}
 \end{description}
-
 
 Most observables were already defined at TDLDA stage and thus
 are returned in the standard output files as explained in the TDLDA
@@ -1125,7 +1162,9 @@ sum of s.p. energies.
 encapsulate it by a {/tt CONTAINS}?}
 
 \subsubsection*{\tt SUBROUTINE
-  Calc\_psi1(psi1,aloc,rhotot0,rhototloc,curr0,curr1,j,lambda,mu,lambdaj,muj,sumvar2,eal,ekmod)}
+  Calc\_psi1(psi1,aloc,rhotot0,rhototloc,curr0,curr1,j,lambda,mu,
+\\
+lambdaj,muj,sumvar2,eal,ekmod)}
 \noindent
 combined with encapsulated {\tt SUBROUTINE calc\_hamiltonien}.
 \\
