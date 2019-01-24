@@ -775,7 +775,6 @@ COMPLEX(DP):: scal(nstate,nstate),scal0(nstate,nstate)
       COMPLEX(8) :: v(nstate,nstate),vp(nstate,nstate),u(nstate,nstate),w(nstate,nstate)  ! eigenvectors
       COMPLEX(8) :: winv(nstate,nstate)!inverse of w
       REAL(DP)    :: occup1(nstate)
-. 
 
 
 
