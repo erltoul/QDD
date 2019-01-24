@@ -36,7 +36,9 @@ CHARACTER (LEN=80) :: title
 !     &           'for005.100','for005.101','for005.110'/
 
 INTEGER,PARAMETER :: kparall=11
-INTEGER:: iu, nnx2
+INTEGER:: iu, nnx2, maxnum
+CHARACTER (LEN=3) :: num
+
 REAL(DP)::dx2
 #if(simpara)
 CHARACTER (LEN=10) :: fname(0:kparall)
@@ -176,17 +178,31 @@ CALL init_raregas()
 !     open input files
 
 
+IF(myn < 10) THEN 
+  WRITE(num,'(i1)') myn
+  maxnum = 1
+ELSE IF(myn < 100 .AND. myn > 9) THEN 
+  WRITE(num,'(i2)') myn
+  maxnum=2
+ELSE
+  WRITE(num,'(i3)') myn
+  maxnum=3
+END IF
+outname=trim(num)//trim(outnam)
+
 #if(simpara)
 IF(myn >= 0 .AND. myn <= kparall) THEN
   WRITE(*,*) ' open for005: myn=',myn,fname(myn)
   iu = 7+myn
   WRITE(iu,*) ' open for005: myn=',myn,fname(myn)
   OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE=fname(myn))
+  !OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
   WRITE(6,*) ' for005 opened: myn=',myn
   WRITE(iu,*) ' for005 opened: myn=',myn
 #else
   IF(myn == 0)THEN
     OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE='for005')
+    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     iu=7
 #endif
     WRITE(*,*) ' enter title (=qualifier) for that run:'
@@ -199,6 +215,7 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
 write(6,*) outnam, "**************************************"
     
     OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
+    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     
 !     read input from namelists
 
@@ -731,7 +748,8 @@ ELSE
   maxnum=3
 END IF
 outname=trim(num)//trim(outnam)
-OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
+! OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)   ! MOVED
+! TO INITNAMELISTS BY FRANCOIS COPPENS ON 24/01/2019
 
 
 !     output grid properties
