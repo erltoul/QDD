@@ -202,20 +202,20 @@ IF(myn >= 0 .AND. myn <= kparall) THEN
 #else
   IF(myn == 0)THEN
     OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE='for005')
-    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
+!    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     iu=7
 #endif
     WRITE(*,*) ' enter title (=qualifier) for that run:'
     READ(5,*)  title
     outnam = title(1:13)
     IF(outnam == '   ')  STOP " no title given "
+    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     WRITE(6,*) ' title is now: '//outnam
     WRITE(iu,*) ' title is now: '//outnam
     CLOSE(5)
 write(6,*) outnam, "**************************************"
-    
     OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
-    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
+    
     
 !     read input from namelists
 
