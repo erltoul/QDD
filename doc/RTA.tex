@@ -83,17 +83,13 @@ density functional theory, ...
 \end{keyword}
 \end{frontmatter}
 
-\newpage
+\section{Introduction}
+
+\PGRcomm{... yet to be written ...}
 
 
-
-\section{Time-dependent local density approximation (TDLDA)}
-\label{sec:TDLDA}
-
-\PGRcomm{The main part of the code is very complex and much has to be
-  explained. We need to address: LDA, pseudo-potentials, TDLDA, and
-  MD. The question is how we arrange that in proper sectioning or
-  whether we put generally known ``basics'' to appendices.
+\noindent
+\PGRcomm{Two general points yet to be clarified:
 \\
 The code is still capable of coupling to a dielectric
   environment. We should skip that for the CPC publication.
@@ -103,39 +99,616 @@ run finite differences instead of FFT. If we do so, then we have to
 test that branch carefully.
 }
 
-\subsection{Mean-field propagation}
+
+\section{Formal background: electronic DFT coupled to ionic motion}
+\label{sec:TDLDA}
+
+
+\subsection{Brief introduction to TDLDA-MD}
+
+\PGRcomm{The explanation of formal background is extremely compact and
+reduced to the basic formula. Here we should provide a breif overview
+of the history of DFT and of the physics behind.}
+
+\subsection{The total energy of the model}
+\label{sec:Etot}
+
+The basic dynamical variables are the set of single-particle
+(s.p.) wavefunctions with their occupation probabilities at teh side
+of electrons and classical coordniates and momenta for the ions,
+together
+\begin{equation}
+\begin{array}{lcl}
+  \mbox{s.p. wavefunctions:} && 
+  \varphi_\alpha\;,\;\alpha=1...\Omega
+  \quad,
+\\
+  \mbox{s.p. occupation probabilities:} && 
+  w_\alpha\;,\;\alpha=1...\Omega
+  \quad,
+\\
+  \mbox{ionic coordinates:} &&
+  \mathbf{R}_I\;,\; I=1,N_\mathrm{ion}
+  \quad,
+\\
+  \mbox{ionic momenta:} &&
+  \mathbf{P}_I\;,\; I=1,N_\mathrm{ion}
+  \quad.
+\end{array}
+\end{equation}
+A key quantity in connection with energy-density functionals
+is the electronic local density 
+\begin{equation}
+  \varrho_\uparrow\mathbf{r})
+  =
+  \sum_{\alpha\in\uparrow}w_\alpha
+  \varphi_\alpha^+(\mathbf{r})\varphi_\alpha^{\mbox{}}(\mathbf{r})
+  \quad,\quad
+  \varrho_\downarrow\mathbf{r})
+  =
+  \sum_{\alpha\in\downarrow}w_\alpha
+  \varphi_\alpha^+(\mathbf{r})\varphi_\alpha^{\mbox{}}(\mathbf{r})
+  \quad,
+\end{equation}
+which covers, in fact, two separate densities for spin-up and
+spin-down. To simplify the presentation of the formalism we
+ignore this distinction in the following and use simply
+one density $\varrho(\mathbf{r})$.
+
+
+Starting point is an expression for the total energy of the coupled
+electronic and ionic system:
+\begin{subequations}
+\label{eq:Etotal}
+\begin{eqnarray}
+  E_\mathrm{total}
+  &=&
+  E_\mathrm{kin}
+  +
+  E_\mathrm{C}
+  +
+  E_\mathrm{xc}
+  +
+  E_\mathrm{ext}
+  +
+  E_\mathrm{el,ion}
+  +
+  E_\mathrm{kin.ion}
+  +
+  E_\mathrm{pot,ion}
+  \;,
+\\
+  E_\mathrm{kin}[\{\varphi_\alpha\}]
+  &=&
+  \int d\mathbf{r}\,\sum_\alpha w_\alpha
+  \varphi_\alpha^+\frac{\hat{p}^2}{2m}\varphi_\alpha^{\mbox{}}
+  \quad,
+\label{eq:Ekin}
+\\
+  E_\mathrm{C}[\varrho]
+  &=&
+  \frac{e^2}{2}\int d^3rd^3r'\,
+  \frac{\varrho(\mathbf{r})\varrho(\mathbf{r}')}{|\mathbf{r}-\mathbf{r}'|}
+\\
+  E_\mathrm{xc}[\varrho]
+  &=&
+  \int d\mathbf{r}\,\varrho(\mathbf{r})
+  \epsilon_\mathrm{xc}\left(\varrho(\mathbf{r})\right)
+  \quad,
+\\
+  E_\mathrm{ext}[\varrho,t]
+  &=&
+  \int d\mathbf{r}\,\varrho(\mathbf{r})U_\mathrm{ext}(\mathbf{r},t)
+  \quad,
+\\
+  E_\mathrm{el,ion}[\{\varphi_\alpha\},\{\mathbf{R}_I\}]
+  &=&
+  \sum_I\int d\mathbf{r}\,\sum_\alpha w_\alpha
+  \varphi_\alpha^+
+  \hat{V}_\mathrm{PsP}(\mathbf{r}-\mathbf{R}_I)\varphi_\alpha^{\mbox{}}
+  \quad,
+\\
+  E_\mathrm{kin,ion}(\mathbf{P}_I)
+  &=&
+  \sum_I\frac{\mathbf{P}_I^2}{2M_I}
+  \quad,
+\\
+  E_\mathrm{pot,ion}(\mathbf{R}_I)
+  &=&
+  \frac{1}{2}\sum_{J\neq I}\frac{e^2}{|\mathbf{R}_I-\mathbf{R}_J|}
+  +
+  U_\mathrm{ext,ion}(\mathbf{R}_I,t)
+  \quad,
+\end{eqnarray}
+\end{subequations}
+where functionals of density are wavefunctions are indicated by square
+brackts and functions of coordinates by round brackets.  The
+$E_\mathrm{C}$ is the direct part of the electronic Coulomb energy.
+The $E_\mathrm{xc}$ is the energy-density functional for electronic
+exchange and correlations for which we use in the code two options:
+the functional of \cite{Per92} or the older from from \cite{Gun76}.
+The $E_\mathrm{ext}$ stands for the excitation mechanisms by external
+sources, either from a photon pulse of from the Coulomb field of a
+fast bypassing ion, see section \ref{sec:laser}. This part is, of
+course, absent in static calculations of the ground state.  The
+$E_\mathrm{el,ion}$ carries the interaction with the ions which is
+usually described by a pseudo-potential $\hat{V}_\mathrm{PsP}$, see
+section \ref{sec:practPsP}, or may be simplified in terms of the
+jellium model, see section \ref{sec:jell}.  Ionic kinetic and
+potential energy are described by the obvioous classical expressions.
+The $U_\mathrm{ext,ion}$ in the ionic potengtial energy describes the
+action of an external field on the ions (which is usually negligible
+as compared to the effect on the electrons).
+
+\subsubsection{Self-interaction correction (SIC)}
+\label{sec:SIC}
+
+\PGRcomm{We have yet to decide which levels of SIC we keep in the code
+and then explain them here properly.}
+
+\subsubsection{The pseudo-potentials}
+\label{sec:practPsP}
+
+There is a great variety of pseudo-potentials available.  The code
+employs two variants. Particularly efficient and simple to use are
+local pseudo-potentials integrated from a pseudo-density which is
+represented as sum of Gaussians.  The corresponding potential is then
+a sum of error functions
+\begin{subequations}
+\begin{eqnarray}
+  V_\mathrm{PsP}(\mathbf{r})
+  &=&
+  \sum_{i=1}^2 c_i \frac{\mbox{erf}(\mathbf{r}/\sigma_i)}{|(\mathbf{r})|}
+  \quad,
+\label{eq:locPsP}
+\\
+  \mbox{erf}(x) 
+  &=&
+  \sqrt{\frac{2}{\pi}}\int_0^x dy\,e^{-y^2}
+  \quad,
+\label{eq:erf}
+\end{eqnarray}
+\end{subequations}
+where the $\sigma_i$ are widths and the strength parameters $c_i$ have
+to line up to the total charge of the ionic core
+$c_1+c_2=Z_\mathrm{ion}$. This pseudo-potential is well suited for
+alkaline atoms for which it was originally developed \cite{Kue99}.
+
+More involved, but also more versatile in the applicability, is the
+pseudo-potential from \cite{Goe96} which is composed from a local and
+a non-local part as
+\begin{subequations}
+\begin{eqnarray}
+  \hat{V}_\mathrm{PsP}
+  &=&
+  {V}_\mathrm{loc}(\mathbf{r}-\mathbf{R})
+  +
+  \hat{V}_\mathrm{nloc}
+  \quad,
+\\
+  V_\mathrm{loc}(\mathbf{r}-\mathbf{R})
+  &=&
+  -\frac{Z_\mathrm{ion}}{x}\mbox{erf}\left(x\right)
+  +e^{-x^2}
+   \sum_{n=0}^3C_{n+1} 2^{n} x^{2n}
+  \quad,\quad
+  x
+  =
+  \frac{|\mathbf{r}-\mathbf{R}|}{r_\mathrm{loc}}
+  \quad,
+\\
+  \hat{V}_\mathrm{nloc}(\mathbf{r},\mathbf{r}')
+  &=&
+  \sum_{jl\mu}{\cal G}(\mathbf{r}-\mathbf{R}){\cal H}_{jl}{\cal G}(\mathbf{r}'-\mathbf{R})
+  \quad,
+\label{eq:nonloc}
+\end{eqnarray}
+where $\mathbf{R}$ is the position of the ionic core with respect to
+which the pseudo-potential is defined.  The ${\cal G}$ in the
+non-local part (\ref{eq:nonloc} serve to project out the electronic
+states which are occupied in the ionic core. These projector functions
+for the first few quantum numbers read
+\begin{eqnarray}
+  {\cal G}_{000}(\mathbf{x})
+  &=&
+  r_\mathrm{nloc}^{-3}\pi^{-3/2}
+  \exp{\left(-\frac{x^2}{2r_\mathrm{nloc}^{2}}\right)}
+  \quad,
+\\
+  {\cal G}_{01\mu}(\mathbf{x})
+  &=&
+  \sqrt{\frac{2}{3}}r_\mathrm{nloc}\nabla_\mu{\cal G}_{000}(\mathbf{x})
+  \quad,
+\label{eq:defineGl1}\\
+  {\cal G}_{100}(\mathbf{x})
+  &=&
+  \frac{r_\mathrm{nloc}^{2}}{\sqrt{6}}
+  \left(2\Delta-\frac{3}{r_\mathrm{nloc}^{2}}\right)
+  {\cal G}_{000}(\mathbf{x})
+  \quad.
+\end{eqnarray}
+\end{subequations}
+The projection looks expensive at first glance. However, one can
+exploit the fact that the Gaussians cover only a small region space of
+order of a few multiples of the non-local radius $r_\mathrm{nloc}$.
+Thus one needs to evaluate the projector only on a small sub-grid
+which reduces expense dramatically.
+
+\subsubsection{The soft jellium model for the ionic background}
+\label{sec:jell}
+
+The electronic wavefunctions of metals and metal clusters are spread
+softly over the whole system and hardly resolve the spatial structure
+the ionic cores. This allow to replace the detailed ionic background
+by a smooth, positive background density. 
+Such jellium approximation
+is a standard in the theory of bulk metals \cite{Ash76} and the
+adaptation to a finite cluster is straightforward. One carves from
+bulk jellium a finite element of constant positive charge
+corresponding to the average bulk density. The volume is chosen such
+that its total charge coincides with the given ionic charge.  For
+finite clusters, it is advantageous to use jellium with a soft surface
+profile. This is more suited for numerical handling and it improves
+the quakity of the model, e.g., by producing a correct peak energy for
+the optical response of metal clusters \cite{Rub91}. Versatile and
+easy to handle in this respect is a Woods-Saxon profile for the
+jellium density
+\begin{subequations}
+\label{eq:softJ}
+\begin{eqnarray}
+  \varrho_\mathrm{jel}(\mathbf{r})
+  &=&
+  \frac{3}{4\pi r_s^3}
+  \left[1+
+     \exp\left(\frac{|\mathbf{r}|-R(\vartheta,\phi)}
+                    {\sigma_\mathrm{jel}}\right)
+  \right]^{-1}
+  \quad,
+\\
+\noindent \mathrm{with}  \qquad R(\vartheta,\phi)
+  &=&
+  R_\mathrm{jel}\left(1+\sum_{lm}\alpha_{lm}Y_{lm}(\vartheta,\phi)\right)
+  \quad,
+\label{eq:defjell}
+\\
+  \int d\mathbf{r}\, \varrho_\mathrm{jel} 
+  &=&
+  N_\mathrm{ion}
+  \quad.
+\label{eq:R0cond}
+\end{eqnarray}
+\end{subequations}
+The jellium radius $R_\mathrm{jel}$ is determined by
+eq. (\ref{eq:R0cond}), the normalization to desired number of ions.
+The central density is determined by the bulk density
+$\rho_0={3}/({4\pi r_s^3})$ and the Wigner-Seitz radius $r_s$ is a
+genuine material parameter \cite{Ash76}. The $\sigma_\mathrm{jel}$
+parametrizes the surface width and the transition from 90\% to 10\%
+bulk density is achieved within $4\sigma_\mathrm{jel}$.  The model does
+also allow to describe deformed clusters by angular dependence
+$R(\vartheta,\phi)$ of the extension. This is achieved through the
+deformation coefficients $\alpha_{lm}$ weighting the impact of the
+spherical harmonics. For example, axially symmetric ellipsoids are
+tuned by $\alpha_{20}$, positive values producing prolate and negative
+values oblate shapes. The $\alpha_{30}$ generate octupole (pear-like)
+shapes which have considerable influence in metal cluster spectroscopy
+and $\alpha_{40}$ generates hexadecapole which play a role for
+fine-tuning the shape \cite{Mon95b}.  Triaxial shapes are produced by
+moments with $m\neq 0$. The cluster radius $R_\mathrm{jel}$ is fixed by
+the others parameters through eq. (\ref{eq:R0cond}) which is to be
+solved numerically by a root finding procedure.  After all, the
+leading parameters of the soft jellium model Eq. (\ref{eq:softJ}) are
+the Wigner-Seitz radius $r_s$ and the surface thickness $\sigma_{\rm
+  jel}$.  They are universal for a given material. Typical values are
+$r_s\sim 4\,\mathrm{a}_0$ with $\sigma_\mathrm{jel}\sim
+0.9\,\mathrm{a}_0$ for Na clusters, $r_s\sim 2.66\,\mathrm{a}_0$ and
+$\sigma_\mathrm{jel}\sim 0.76\,\mathrm{a}_0$ for {Mg clusters}, or
+$r_s\sim 3\,\mathrm{a}_0$ and $\sigma_\mathrm{jel}\sim
+0.78\,\mathrm{a}_0$ for Ag clusters. The deformation parameters
+$\alpha_{lm}$ depend on the actual cluster and strongly vary with
+system and size.
+
+
+The jellium approximation then consists in discarding the ionic
+contribution to the total energy (\ref{eq:Etotal}), i.e. the terms
+$E_\mathrm{kin,ion}$ and $E_\mathrm{pot,ion}$, and to replace the
+pseudo-potential background in $E_\mathrm{el,ion}$ by the Coulomb
+potential of the jellium density (\ref{eq:softJ}). There is no
+dynamics associated with the jellium. The model thus applies to
+situations where ionic motion can be ignored.
+
+
+
+\subsubsection{Phenomenological electronic shell models}
+\label{eq:phenshell}
+
+Experience shows that KS potentials for metal clusters have a typical
+profile characterized by a flat bottom and a smooth transition to
+zero. For neutral clusters, one can approximate that very well by a
+Woods-Saxon profile
+\begin{equation}
+  U_\mathrm{WS}(\mathbf{r})
+  =
+  -U_0
+  \left[1+
+     \exp\left(\frac{|\mathbf{r}|-R(\vartheta,\phi)}
+                    {\sigma_\mathrm{WS}}\right)
+  \right]^{-1}
+  \quad,
+\label{eq:WSpot}
+\end{equation}
+where, again, a possible deformation can be parametrized by an angular
+dependence of the radius
+%
+$R(\vartheta,\phi)=
+R_0\left(1\!+\!\sum_{lm}\alpha_{lm}Y_{lm}(\vartheta,\phi)\right)$,
+%
+similar to the jellium model of Eq. (\ref{eq:softJ}) for the density.
+In Eq. (\ref{eq:WSpot}) the potential depth $U_0$ is taken as the
+average binding potential in bulk matter. Computations in a fixed
+potential are somewhat simpler than with the self-consistent
+scheme. The Woods-Saxon model has thus been very often used for
+describing the electronic shell structure of clusters, particularly in
+early studies, for a review see \cite{Bra93}. It is meanwhile somewhat
+out of fashion. But we provide it in the code for quick tests and
+comparison.
+
+A substantial further simplification is achieved by realizing that
+shell effects are determined by the states near the Fermi surface and
+that these states practically see a harmonic potential. This suggests
+to use for first estimates a simple harmonic oscillator shell
+model. To mimic surface profile of the Woods-Saxon potential and so
+reproduce the sequence of shell closures in metal clusters
+ a phenomenologically tuned $\hat{l}^2$ term is added to the
+oscillator model.
+This yields the Clemenger-Nilsson model for the mean field potential
+\begin{equation} 
+  \hat{U}_\mathrm{CN}
+  =
+  \frac{m}{2}\left(
+  \omega_x^2x_{\mbox{}}^2+\omega_y^2y_{\mbox{}}^2+\omega_z^2z_{\mbox{}}^2
+  \right)
+  -
+  U_{l2}\hbar\bar{\omega}\left(\hat{l}^2-n(n+3)/6\right)
+\label{eq:CleNil}
+\end{equation}
+where $n$ is the global shell number ($n=n_x+n_y+n_z$). The three
+separate curvatures $\omega_i$ allow one to accommodate deformed situations
+including triaxiality. Volume conservation restricts their choice to
+$\omega_x\omega_y\omega_z=\omega_0^3=$constant. The separate values
+can also be expressed in terms of the quadrupole deformation
+$\alpha_{lm}$ as introduced above and in Eq. (\ref{eq:softJ}),
+e.g. for axially symmetric shapes by
+%
+$\omega_x=\omega_y=\omega_0\exp{(\alpha_{20}\sqrt{5/4\pi})},
+ \omega_z=\omega_0\exp{(-2\alpha_{20}\sqrt{5/4\pi})}$.
+%
+The parameter $U_{l2}$ serves to tune the downshift of high angular
+momentum orbits and thus of the shell sequence.
+%
+The Clemenger-Nilsson model was introduced into clusters physics in
+\cite{Cle85} taking up a much similar nuclear oscillator model
+\cite{Nil55}. An extensive review of early applications is given in
+\cite{Hee93}. The oscillator model is kept in the code mainly for
+testing because one has analytical the solutions for $U_{l2}=0$.
+
+Both shell models, Woods-Saxon or harmonic oscillator, overrule the
+total energy (\ref{eq:Etotal}). What remains is only the kinetic
+energy (\ref{eq:Ekin}) together with the given model potentials.
+Also this approach is, as the jellium model, applicable only in
+circumstances where ionic motion plays little role.
+
+
+
+\subsubsection{External excitation fields}
+\label{sec:laser}
+
+
+Lasers are the most important and very flexible means for a dedicated,
+well tuned excitation of electronic systems.  They produce a strong
+coherent electromagnetic field which can be well approximated by a
+classical time-dependent electromagnetic field.Typical wavelengths are
+in the range of several hundredths of nm. This is a huge distance as
+compared to the spatial extension of atoms, molecules, and (most)
+clusters.  One can thus treat the laser field in the limit of long
+wavelengths ($k \rightarrow 0$) which means to deal with a spatially
+homogeneous electrical field $\mathbf{E}$ at the cluster site and we
+can neglect the effect of the magnetic field.  The coupling
+Hamiltonian leaves of gauge transformation \cite{Jac62}.
+The external-field operator in velocity gauge reads\PGRfoot{I am not
+  sure that we shoulod show velocity gauge. It may be useful whne
+  explaining the computation of PES later on.}
+\begin{equation}
+  U_\mathrm{ext}
+  =
+  e\mathcal{\mathbf{E}}_0F(t)\hat{\mathbf{p}}
+  \quad,\quad
+  F(t)
+  =
+  \int dt'\,f(t')\exp{(-\mathrm{i}\omega_\mathrm{las}t')}
+  \quad,
+\label{eq:laserp}
+\end{equation}
+where $f(t')$ is the envelope of the photon pulse.
+The same pulse in space gauge becomes
+\begin{equation}
+  U_\mathrm{ext}
+  =
+  e{\cal\bf E}_0f(t)\!\cdot\!\hat{\mathbf{r}}
+  \exp{(-\mathrm{i}\omega_\mathrm{las}t)}
+\label{eq:laserr}
+\end{equation}
+which is simpler to handle because the laser field acts here simply as
+a time-dependent local operator. The code thus uses the external field
+in space gauge. Transformation to velocity gauge, if needed, can
+be performed a posteriori by standard rules of gauge transformation
+\cite{Mes95aB}\PGRfoot{Cross ref to phase correction in PES in section
+\ref{sec:observ}.}.
+%
+The photon pulse is characterized by frequency
+$\omega_\mathrm{las}$, peak field strength $E_0=|\mathbf{E}_0|$,
+polarization $\mathbf{E}_0/E_0$, and time profile $f(t)$. The
+field strength is usually parametrzed in terms of the laser intensity
+$I$ as
+\begin{equation}
+  E_0
+  =
+  c_{EI}
+  I^{1/2}
+  \quad,\quad
+  c_{EI}
+  =
+  1.07*10^{-8}
+  \frac{\mathrm{eV}}{\mathrm{a}_0}
+  \left(\frac{\mathrm{W}}{\mathrm{cm}^2}\right)^{-1/2}
+  \quad.
+\end{equation}
+The profile is a matter of debate.  The experimental pulse profiles
+are not precisely known either.  It is assumed to be a well peaked
+function with a certain full-width at half maximum (FWHM), in practice
+well approximated by a Gaussian.  In order to have a finite support
+for the pulse, we use the sin$^2$ pulse
+\begin{equation}
+  f(t)
+  =
+  \left\{\begin{array}{ll}
+    \sin^2{\left(\pi\frac{t}{2T_\mathrm{pulse}}\right)}
+        &\mbox{for}\quad t\in\{0,2T_\mathrm{pulse}\}  \\
+    0  &\mbox{else}
+  \end{array}\right.
+  \quad.
+\label{eq:sinpulse}
+\end{equation}
+%\end{subequations}
+It is close to a Gaussian pulse in the vicinity of peak field strength
+and combines high spectral selectivity with finite bounds. Note that
+the form (\ref{eq:sinpulse}) is scaled such that the pulse parameter
+$T_\mathrm{pulse}$ is identical with the {full-width at
+half-maximum} ({FWHM}).
+
+
+%\subsubsection{Charged projectiles}
+
+Probing electronic systems by beams of charged particles is a standard
+tool in atomic and molecular physics \cite{Bra92} and is also used in
+cluster physics. Highly charged ions, protons and to some extend also
+electrons can be considered as being structureless. What counts is
+only their Coulomb field.  Charged ions are heavy and can be treated
+with classical trajectories
+%
+$\mathrm{R}_\mathrm{ext}(t)$.
+%
+For sifficvioently heavy and fast projectiles, one can approximate
+these trajectories by straight lines and that is what is done in the
+code.  In any case, the effect of the ion (charge $Z_\mathrm{ext}$) on
+the system can again be described by a time dependent external field
+\begin{equation}
+  U_\mathrm{ext}(\mathbf{r},t)
+  =
+  \frac{Z_\mathrm{ext}e^2}{|\mathbf{r}-\mathbf{R}_\mathrm{ext}(t)|}
+  \quad.
+\label{eq:ionext}
+\end{equation}
+Magnetic effects are neglected. They may play a role only for extremely
+fast ions in the relativistic domain.
+%
+The ionic trajectories are characterized by the ion velocity
+$v_\mathrm{ion}$ and the impact parameter $b_\mathrm{ion}$ which is
+the distance of closest approach. The velocity is more or less well
+defined by the experimental setup. But the impinging ion beam will
+cover a broad range of impact parameters. From the theoretical side,
+one has then to run several calculations with systematically varied
+impact parameters.  Reaction cross sections are then computed by
+integration of the reaction probability over impact parameters, for
+examples see \cite{Rei98a}.
+
+
+\subsection{Equations of motion}
 \label{sec:mf}
 
-\PGRcomm{This piece is copied from our basic RTA paper and servers her
-just to provide formula needed later in RTA. It has yet to be
-rewritten in connection with the new section on TDLDA-MD.}
+\subsubsection{Electronic Kohn-Sham equations}
 
+Static and dynamical equations determining structure and dynamics of
+the electron cloud are determined by variation of the total energy
+with respect to the s.p. wavefunctions $\varphi_\alpha$.  This yields
+what is called the Kohn-Sham (KS) equations \cite{Koh65}.  We use
+energy-density functionals \cite{Per92,Gun76} i.e. functionals in
+local density approximation (LDA).  The dynamical application is
+called time-dependent LDA (TDLDA) and we use this acronym also in
+cases where we add SIC (see section \ref{sec:SIC}) to the treatment.
 
-The starting point and dominant feature of the dynamics is the
-propagation at the level of the mean field. In this paper, we are
-dealing with the electron dynamics in metal clusters and we describe
-it by time-dependent density functional theory at the level of the
-Time-Dependent Local-Density Approximation (TDLDA) treated in the real
-time domain \cite{Gro90,Gro96}.  It is augmented by a self-interaction
-correction (SIC) approximated by average-density SIC (ADSIC)
-\cite{Leg02} in order to attain correct ionization properties
-\cite{Klu13} in the course of the dynamical simulation. TDLDA is
-formulated within the usual Kohn-Sham picture in terms of a set of
-occupied single-particle (s.p.) wavefunctions
-$\{|\phi_\alpha\rangle,\alpha=1...N\}$. Their dynamics is described by
-the time-dependent Kohn-Sham equation
+The time-dependent KS equations determining the propagarion of
+electronic ground wavefunctions are
+\begin{subequations}
+\label{eq:KS}
+\begin{eqnarray}
+  \hat{h}_{\mathrm{KS}}\varphi_\alpha
+  &=&
+  \mathrm{i}\partial_t\varphi_\alpha
+  \quad\mbox{for}\quad
+  \alpha\in\{1,...,N_\mathrm{el}\}
+  \quad,
+\label{eq:TDKS}
+\\
+  \hat{h}_{\mathrm{KS}}
+  &=&
+  \frac{\hat{p}^2}{2m}
+  +
+  \underbrace{
+    U_\mathrm{C}(\mathbf{r})
+    +
+    \hat{U}_{\mathrm{xc}}
+    +
+    \hat{U}_\mathrm{back}
+    +
+    U_\mathrm{ext}(\mathbf{r},t)
+  }_{U_\mathrm{KS}}
+  \quad,
+\\
+  U_\mathrm{C}(\mathbf{r})
+  &=&
+  e^2\int d^3r'\,
+  \frac{\varrho(\mathbf{r}')}{|\mathbf{r}-\mathbf{r}'|}
+  \quad,
+\\
+  \hat{U}_{\mathrm{xc}}(\mathbf{r})
+  &=&
+  \epsilon\left(\varrho(\mathbf{r})\right)
+  +
+  \varrho(\mathbf{r})
+  \frac{\partial\epsilon_\mathrm{xc}\left(\varrho(\mathbf{r})\right)}{\partial\varrho}
+  \quad.
+\label{eq:Uxc}
+\end{eqnarray}
+The exchange-correlation potential $\hat{U}_{\mathrm{xc}}$ involves a
+construction ${\partial\epsilon}_\mathrm{xc}/{\partial\varrho}$ which is
+the formal derivative of the exchange correlation energy per particle
+$\epsilon_\mathrm{xc}$ with respect to the density $\varrho$ considered
+as an independent variable.  The time-dependent KS equations
+analogously read
 \begin{equation}
-  \I\partial_t|\phi_\alpha\rangle
+  \hat{h}_{\mathrm{KS}}\varphi_\alpha
   =
-  \hat{h}[\varrho]|\phi_\alpha\rangle
-\label{eq:KSwf}
+  \varepsilon_\alpha\varphi_\alpha
+  \quad\mbox{for}\quad
+  \alpha\in\{1,...,N_\mathrm{el}\}
+  \quad,
+\label{eq:statKS}
 \end{equation}
-where $\hat{h}$ is the Kohn-Sham mean-field Hamiltonian which is a
-functional of the instantaneous local density
-$\varrho(\mathbf{r},t)=\sum_\alpha|\phi_\alpha(\mathbf{r},t)|^2$
-\cite{Rei04aB,Dre90}. The time evolution delivered by
-Eq. (\ref{eq:KSwf}) can be expressed formally by the
-unitary one-body  time-evolution operator 
+\end{subequations}
+where $\hat{h}_\mathrm{KS}$ is composed in the same manner as in the
+time-dependent case (instantaneous approximation for $U_\mathrm{xc}$).
+The Kohn-Sham equations (\ref{eq:statKS}) pose a stationary eigenvalue
+problem. They provide the electronic ground state of a system.  The
+time-dependent Kohn-Sham equations (\ref{eq:TDKS}) pose an initial
+value problem. The natural starting point is the ground state as
+obtained from the stationary Kohn-Sham equation. The numerical
+solution of the KS equations is explained in section
+\ref{sec:numerics}.
+%
+The time evolution delivered by the dynamical KS Eqs. (\ref{eq:TDKS})
+can be expressed formally by the unitary one-body time-evolution
+operator
 \begin{subequations}
 \begin{equation}
   \hat{U}(t,t')
@@ -152,41 +725,62 @@ This yields a closed expression for the time-evolution of s.p. states
 \label{eq:KSpropag2}
 \end{equation}
 \end{subequations}
+This compact form will be used later on in connection with the
+extension of the propagation by dissipation, see section
+\ref{sec:RTA}.
 
-So far, TDLDA propagates pure states. Dissipation which we will add
-later on leads inevitably to mixed states. This requires to generalize
-the description from fully occupied s.p. wavefunctions to a one-body
-density operator $\hat{\rho}$. Its representation in
-  configuration space, i.e. in terms of a given set of s.p. states
-  $|\varphi_i\rangle$, reads in general
-  $\hat{\rho}=\sum_{ij}|\varphi_i\rangle\rho_{ij}\langle\varphi_j|$.
-  By appropriate transformation of the s.p. basis, one can diagonalize
-  the density matrix $\rho_{ij}$ which defines what are called natural
-  orbitals. The natural orbitals representation of the one-body
-  density operator then reads
+\subsubsection{LDA and TDLDA with mixed states}
+\label{sec:mix}
+
+So far, we dealt with the equations for pure states.  In case of
+stationary states at finite temperature and in case of dissipative we
+encounter mixed states.  This is described by associating an
+occupation weight $w_\alpha$ with each s.p. state $\varphi_\alpha$ as
+provided already in the initial setup in section \ref{sec:Etot}.  The
+weights $w_\alpha$ becomes crucial in the dissipative dynamics, see
+section \ref{sec:RTA}, they are kept frozen during TDLDA propagation,
+and they matter again for stationary states at finite temperature
+in which case they are determined by
+\begin{equation}
+  w_\alpha
+  =
+  \frac{1}{1+\exp((\varepsilon_\alpha-\mu)/T)}
+\label{eq:Fermi0}
+\end{equation}
+where the $\varepsilon_\alpha$ are the s.p. energies from teh
+stationary KS eqs. (\ref{eq:statKS}) and $\mu$ is the chemical
+potential tuned such that the total electron number is reproduced by
+$\sum_\alpha w_\alpha=N$.
+
+In case of mixed states, it is advantageous to express the
+entity $\{\varphi_\alpha,w_\alpha\}$ in compact manner by the one-body
+density operator 
 \begin{equation}
   \hat{\rho}
   =
-  \sum_{\alpha=1}^\infty|\phi_\alpha\rangle W_\alpha\langle\phi_\alpha|
+  \sum_{\alpha=1}^\infty|\phi_\alpha\rangle w_\alpha\langle\phi_\alpha|
   \quad.
 \label{eq:rhodiag}
 \end{equation}
-The weights $W_\alpha$ represent the probability with which a
-state $|\phi_\alpha\rangle$ is occupied. The mean-field propagation
-(\ref{eq:KSwf}) then becomes
+The solution of the thermal KS eqs., i.e. eqs. (\ref{eq:statKS})
+together with (\ref{eq:Fermi0}), provides the density operator
+immediately in this form which is called natural orbital
+representation (diagonal in the s.p. states). In general, the
+one-body density operator can be non-diagonal with respect to given
+s.p. states. Tis will play a role later on.
+
+As said above, the occupation weights $w_\alpha$ are kept frozen
+during TDLDA.  The KS equations (\ref{eq:TDKS}) then can be written
+compactly as\PGRfoot{I wonder whethr we should shift this introduction
+of the one-body density matrix to the RTA section.}
 \begin{equation}
   \I\partial_t\hat{\rho}
   =
   \left[\hat{h}[\varrho],\hat{\rho}\right]
 \label{eq:KSrho}
 \end{equation}
-where $\hat{h}[\varrho]$ is formally the same as before and the
-local density is now computed as
-\begin{equation}
-\varrho(\mathbf{r},t)=\sum_\alpha{W}_\alpha|\phi_\alpha(\mathbf{r},t)|^2 .
-\label{eq:rhoW}
-\end{equation}
-The (coherent) pure mean-field propagation (\ref{eq:KSrho})
+where $\hat{h}[\varrho]$ is the KS Hamiltonian as above.
+This  pure mean-field propagation (\ref{eq:KSrho})
 leaves the occupation weights $W_\alpha$ unchanged and propagates only
 the s.p. states.  The mean-field propagation of an initial state
 (\ref{eq:rhodiag}) then reads
@@ -194,7 +788,7 @@ the s.p. states.  The mean-field propagation of an initial state
   \hat{\rho}(t)
   &=&
   \sum_{\alpha=1}^\infty
-  |\phi_\alpha(t)\rangle W_\alpha\langle\phi_\alpha(t)|
+  |\phi_\alpha(t)\rangle w_\alpha\langle\phi_\alpha(t)|
 %\nonumber\\  
 %  &=&
   =
@@ -202,6 +796,64 @@ the s.p. states.  The mean-field propagation of an initial state
 \label{eq:KSrhoevol}
 \end{eqnarray}
 where $\hat{U}$ is the mean-field evolution operator (\ref{eq:KSpropag}).
+
+
+\subsubsection{Ionic dynamics}
+\label{sec:TDLDA-MD2}
+
+
+
+We finally add the ionic dynamics to complete the picture. Ions are
+described by classical Molecular Dynamics (MD), i.e.  classical
+equations of motion, under the influence of their mutual Coulomb
+force, the forces experienced from the electrons, and possibly
+external forces.  We start from the total energy (\ref{eq:Etotal})
+which serves as classical Hamiltonian in terms of $\mathbf{R}_I$ and
+$\mathbf{P}_I$. Standard variation yields the classical
+equations-of-motion for the ions of positions $\mathbf{R}_I$ and
+momenta $\mathbf{P}_I$
+\begin{subequations}
+\label{eq:propion}
+\begin{eqnarray}
+  \partial_t\mathbf{P}_I
+  &=&
+  -\nabla_{\mathbf{R}_I}\left[
+    E_\mathrm{pot,ion}(\mathrm{R}_I)
+    +
+    \sum_{\alpha=1}^{N_\mathrm{el}}
+    \left(\varphi_\alpha|V_\mathrm{PsP}^{\mbox{}}(\mathbf{r}-\mathbf{R}_I)|
+          \varphi_\alpha\right)
+  \right]
+  \quad,
+\label{eq:propionP}
+\\
+  \partial_t\mathbf{R}_I
+  &=&
+  \frac{\mathbf{P}_I}{M_I}
+  \quad.
+\end{eqnarray}
+\end{subequations}
+They are to be propagated simultaneously with TDLDA for the electrons, here
+represented by wavefunctions $\varphi_\alpha$.
+The ionic motion is coined molecular dynamics (MD).
+The simultaneous propagation scheme is called TDLDA-MD.
+It applies to all dynamical situations including those that are
+far from the adiabatic limit and embraces truly diabatic scenarios.
+The practical realization adds the (simple) classical propagation
+to the evolution of the electronic states. For solution schemes, see
+section \ref{sec:numerics}.\PGRfoot{Should we add a word on the
+limitations of TDLDA-MD?}
+
+\subsection{Observables}
+\label{sec:observ}
+
+\centerline{\PGRcomm{... yet to be written ...}}
+
+
+\subsection{Numerical schemes}
+\label{sec:numerics}
+
+\centerline{\PGRcomm{... yet to be written ...}}
 
 
 \section{The structure of the TDLDA package}
@@ -252,7 +904,7 @@ charge.
 
 
 \section{Relaxation-time approximation (RTA)}
-
+\label{sec:RTA}
 
 \subsection{The formal background of RTA}
 
