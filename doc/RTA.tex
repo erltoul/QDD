@@ -83,6 +83,9 @@ density functional theory, ...
 \end{keyword}
 \end{frontmatter}
 
+\tableofcontents
+
+
 \section{Introduction}
 
 \PGRcomm{... yet to be written ...}
@@ -844,16 +847,562 @@ to the evolution of the electronic states. For solution schemes, see
 section \ref{sec:numerics}.\PGRfoot{Should we add a word on the
 limitations of TDLDA-MD?}
 
-\subsection{Observables}
-\label{sec:observ}
-
-\centerline{\PGRcomm{... yet to be written ...}}
-
 
 \subsection{Numerical schemes}
 \label{sec:numerics}
 
+\subsubsection{Grid representation}
+\label{sec:grid}
+
 \centerline{\PGRcomm{... yet to be written ...}}
+
+
+
+\subsubsection{Static solution}
+\label{sec:numstatic}
+
+\centerline{\PGRcomm{... yet to be written ...}}
+
+
+
+\subsubsection{Propagation}
+\label{sec:numdyn}
+
+\centerline{\PGRcomm{... yet to be written ...}}
+
+
+\subsubsection{Absorbing boundary conditions}
+\label{sec:abso}
+
+
+A grid representation naturally leads to reflecting or periodic
+boundary conditions.  Reflection emerges for finite difference
+schemes.  A representation of the kinetic energy by complex Fourier
+transformation is associated with periodic boundary conditions where
+flow leaving the box at one side is re-fed at the opposite side. Both
+can lead to artifacts if a sizable fraction of electronic flow hits
+the boundaries.  There are several ways to solve the problem
+\cite{Wop14aR}.  The present 3D code employs the simple strategy of
+applying a mask function during time evolution \cite{Kra92a}. This
+technique is particularly easy to implement and has been widely used
+in the past. Its robustness and efficiency allow one to develop
+advanced analyzing techniques on the grid as, e.g., the computation of
+PES and PAD \cite{Rei06f}.  We give here a shot explanation.  A
+detailed description and discussion of this approach and its proper
+choice of numerical parameters is found in \cite{Rei06c}.
+
+
+Fig.~\ref{fig:mask}\PGRfoot{Figure needs to be redrawn for copyright
+  reasons.} sketches the implementation of absorbing boundary
+conditions with computation of PES and PAD on a coordinate space grid.
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.7\linewidth]{schem_abso}}
+%\centerline{\includegraphics[width=0.7\linewidth]{bounds}}
+\caption{Schematic view of a coordinate-space grid with
+absorbing bounds (ring zone), a sampling direction for accumulating PAD, and
+measuring points $\mathbf{r}_\mathcal{M}$ for the PES.
+ \label{fig:mask}}
+\end{figure}
+Proper handling of electron emission requires absorbing boundary
+conditions. These are indicated by the ring area in the figure
+covering here 3 grid points in each direction (actual calculations
+typically use 6 and more points.) The absorption is performed in each time
+step as~:
+\begin{subequations}
+\begin{eqnarray}
+  \varphi(\mathbf{r},t)
+  &\longrightarrow&
+  \tilde\varphi(\mathbf{r},t\!+\!\delta t)
+  =
+  \hat{\mathcal{U}}_\mathrm{KS}(t\!+\!\delta t,t)\, \varphi(\mathbf{r},t)
+  \quad,
+\label{eq:KSpart}\\
+  \varphi(\mathbf{r},t\!+\!\delta t)
+  &=&
+  \mathcal{M}(\mathbf{r})\, \tilde\varphi(\mathbf{r},t\!+\!\delta t)
+  \quad,
+\label{eq:maskact}
+\\
+  \mathcal{M}(\mathbf r)
+  &=&
+  \left\{\begin{array}{lll}
+  1 & \mbox{for} &|\mathbf{r}|<R_\mathrm{in}
+  \quad,
+  \\
+  \displaystyle
+ \cos\left(
+  \frac{|\mathbf{r}|-R_\mathrm{in}}{R_\mathrm{out}-R_\mathrm{in}}\frac{\pi}{2}
+ \right)^{\gamma_\mathcal{M}}
+  &\mbox{for}&
+  R_\mathrm{in}<|\mathbf{r}|<R_\mathrm{out}
+  \quad,
+  \\
+  0 
+  &\mbox{for}&
+  R_\mathrm{out}<|\mathbf{r}|
+  \quad.
+  \end{array}\right.
+\label{eq:mask}
+\end{eqnarray}
+\end{subequations}
+%
+First comes one standard KS step \PGRfoot{Crossref to numerical
+  section.} expressed here in terms of the TDLDA propagator
+$\hat{\mathcal{U}}_\mathrm{KS}$, which yields the intermediate wave
+function $\tilde\phi(\mathbf{r},t\!+\!\delta{t})$. This is followed by
+the action (\ref{eq:maskact}) of the mask function $\mathcal{M}$
+defined in Eq.(\ref{eq:mask}), which removes gradually any amplitude
+towards the bounds. We use here a spherically symmetric mask. The
+spherical profile is helpful to minimize griding artifacts when
+computing angular distributions \cite{Poh04b} (simpler rectangular
+masks may be used if PAD are not of interest). The absorbing bounds
+steadily reduce the norm of the wave functions from the inner mask
+radius $R_\mathrm{in}$ to the outer one $R_\mathrm{out}$.  This looks
+simple and straightforward. However, the mask technique is not
+perfect. One will always encounter a small amount of reflected flow,
+particularly for electrons with low kinetic energy. One can minimize
+the back-flow by proper choice of the exponent $\gamma_\mathcal{M}$
+entering the mask profile, see Eq.~(\ref{eq:mask}). This depends,
+however, on the actual numerics (number of absorbing points, size of
+time step), for a detailed discussion see \cite{Rei06c}. Typical
+values of $\gamma_\mathcal{M}$ are of order $1/8$ or lower.
+
+
+\subsection{Observables}
+\label{sec:observ}
+
+
+\subsubsection{Energies}
+\label{sec:energies}
+
+The total binding energy $E(N_\mathrm{el},{\bf R}^{(N_\mathrm{ion})})$,
+depending in ionic configuration and electron number, is a most
+prominent observable and it is naturally result of any calculations
+with energy-density functionals.  Comparison with measurements is
+usually done in terms of differences of energies, e.g., the monomer
+separation energy as the adiabatic energy difference
+%
+$E_\mathrm{mon}=E(N_\mathrm{el},{\bf R}^{(N_\mathrm{ion})})
+            -E(N_\mathrm{el}-1,{\bf R}^{(N_\mathrm{ion}-1)})$
+%
+where the both energies are to be taken from fully relaxed ionic
+configurations, or the vertical ionization potential
+(IP)
+%
+$E_\mathrm{IP}=E(N_\mathrm{el},{\bf R}^{(N_\mathrm{ion})})
+            -E(N_\mathrm{el}-1,{\bf R}^{(N_\mathrm{ion})})$
+%
+where the new electronic state in the $N_\mathrm{el}-1$ system has
+relaxed but the ions are kept in their original configuration.
+
+
+As a byproduct of mean field calculations, one obtains also the series
+of s.p. energies $\varepsilon_\alpha$.  But it is known that
+$\varepsilon_\alpha$ from (TD)LDA are spoiled by the self-interaction
+error. This defect can be cured by a SIC, see section \ref{sec:SIC},
+after which the set of $\varepsilon_\alpha$ provides a fair map of
+electron separation energies, particuarly of the IP
+\cite{Leg02,Klu13}. Experimental data on s.p. energies are mainly the
+IP and the sequence of peaks in PES from one-photon processes with
+weak laser pulses.  Note that the latter can also be computed directly
+from TDLDA and analysis of emitted electrons, see section
+\ref{sec:PES}, which is anyway compulsory above the regime of weak
+pulses. Besides comparison with data, the s.p. energies are very
+instructive observables for theoretical interpretation as, e.g.,
+analyzing electronic shell structure \cite{Hee93,Bra93}.
+
+Other ``theoretical'' observables are the separate energy
+contributions, particularly potential and kinetic energy.  The latter
+can be used to define an ``intrinsic kinetic energy''
+$E_\mathrm{kin,intr}$ which characterizes the amount of internal, so
+to say thermal, kinetic excitation of the electron cloud. This is a
+quantity which will play a kea role in the model for dissipation
+outlined in section \ref{sec:RTA}.
+
+
+\subsubsection{Densities and shapes}
+\label{sec:shapes}
+
+Energy-density functional produce also the electronic local density
+$\varrho(\mathbf{r})$ as natural outcome.  This together with the
+ionic configuration $\{\mathbf{R}_I\}$ constitutes the shape of a
+system and they do that in all detail which is in most cases
+overwhelmingly much information. The gross structure of a shape is
+well sorted in terms of its multipole moments. 
+Leading quantity is the is the root-mean-square (r.m.s.) radius
+which reads for the electrons
+\begin{subequations}
+\label{eq:moments}
+\begin{equation}
+  r_\mathrm{rms}
+  =
+  \sqrt{\frac{\int d^3r\,\varrho(\mathbf{r})\,r^2}{N}}
+  \quad.
+\end{equation}
+The further multipoles
+are best quantified in terms of dimensionless moments
+\begin{equation}
+  \alpha_{lm}
+  =
+  \frac{4\pi}{5}
+  \frac{\int d^3r\,\varrho(\mathbf{r})\, r^lY_{lm}}
+       {N_\mathrm{el}r_\mathrm{rms}^l}
+  \quad.
+\label{eq:def_dimless}
+\end{equation}
+\end{subequations}
+Axially symmetric systems are distinguished by
+$\alpha_{lm\!\neq\!0}=0$.  The appearance of $\alpha_{lm\!\neq\!0}\neq
+0$ can have two causes: first, the system is not aligned along its
+principal axes, and second, there is a true breaking of axial
+symmetry. The first action is then to rotate the system such that the
+$z$-axis is identical with one principal axis of the cluster. Axial
+symmetry is truly broken if we then still find some
+$\alpha_{lm\!\neq\!0}\neq 0$. As far as the quadrupole is concerned,
+the only remaining case is $\alpha_{22}=\alpha_{2\!-\!2}\neq 0$
+signaling triaxial shapes. One often regroups the quadrupole
+deformation parameters into total deformation $\beta_2$ and
+triaxiality $\gamma$ as
+\begin{equation}
+  \beta_2
+  =
+  \sqrt{\sum_m\alpha_{2m}^2}
+  \quad,\quad
+  \gamma
+  =
+  \mbox{atan}\left(\frac{\sqrt{2}\alpha_{22}}{\alpha_{20}}\right)
+  \quad.
+\label{eq:triax}
+\end{equation}
+This convention has been originally introduced to characterize shapes
+of nuclei \cite{Hil53} and has been taken over for clusters at several
+places, e.g. \cite{Lau91,Rei95b,Yan95}. It is to be noted that
+$\gamma=0^o$ as well as $\gamma=60^o$ represent axially symmetric
+shapes. The case $\gamma=0^o$ corresponds  to prolate shapes and
+$\gamma=60^o$ to oblate ones.
+
+The same definitions apply to ionic shapes if we replace $\int
+d^3r\,\varrho(\mathbf{r})\,r^lY_{lm}(\Omega_r)
+\longrightarrow\sum_IR_I^lY_{lm}(\Omega_R)$ in
+Eqs. (\ref{eq:moments}).
+In case of ions, 
+the quadrupole shape is often alternatively characterized by the
+moments of inertia
+\begin{equation}
+  I_{ii}=M\sum_I\left(R^2_{\mbox{}}-R_i^2\right)
+  \quad\mbox{for}\quad
+  i\in\{x,y,z\}
+  \quad,
+\end{equation}
+to be evaluated in the frame of principal axes of the cluster ions.  The
+mass $M$ is here the ion mass.
+The relation between these moments of inertia and the 
+above dimensionless quadrupole moments is
+\begin{subequations}
+\begin{eqnarray}
+  r_\mathrm{rms}
+  &=&
+  \sqrt{\frac{I_{xx}+I_{yy}+I_{zz}}{2MN}}
+  \quad,
+\\
+  \alpha_{20}
+  &=&
+  \frac{4\pi}{5}\sqrt{\frac{5}{16\pi}}
+  \frac{\langle I_{xx}+I_{yy}-2I_{zz}\rangle}{NMr^2}
+  \quad,
+\\
+  \alpha_{22}+\alpha_{2-2}
+  &=&
+  \frac{4\pi}{5}\sqrt{\frac{15}{8\pi}}
+  \frac{\langle I_{yy}-I_{xx}\rangle}{NMr^2}
+  \quad.
+\end{eqnarray}
+\end{subequations}
+
+Radius and multipole moments are at first glance static observables
+used to characterize cluster structure. But they are also important
+ingredients to evaluate response properties as will become apparent in
+the next two sections.
+
+
+\subsubsection{Polarizability}
+\label{sec:comppol}
+
+The static polarizability is a key observable of atoms, molecules, and
+clusters.  its computation is straightforward.  We discuss it here the
+most important case of dipole polarizability $\alpha_D$.  One applies
+a static external dipole field
+$U_\mathrm{ext}(\mathbf{r})=e\mathbf{E}_0\!\cdot\!{\bf r}$ and
+performs static calculations for a couple of $\mathbf{E}_0$.  This
+delivers a dipole momentum $\bar{\bf D}=\langle e\mathbf{r}\rangle$ as
+a function of $\mathbf{E}_0$. The tensor of static dipole
+polarizability is then
+\begin{equation}
+  (\alpha_D)_{ij}
+  =
+  \frac{\partial\bar{D}_i}{\partial{E}_{0,j}}\Big|_{\mathbf{E}_0=0}
+  \quad.
+\label{eq:comppolar}
+\end{equation}
+The polarizability matrix simplifies if the system has spatial
+symmetries. For example, an axially symmetric system aligned with the $z$-axis
+has $(\alpha_D)_{xz}=(\alpha_D)_{yz}=(\alpha_D)_{xy}=0$ and
+$(\alpha_D)_{xx}=(\alpha_D)_{yy}$ and a spherically symmetric system
+has additionally $(\alpha_D)_{xx}=(\alpha_D)_{zz}$.
+
+\subsubsection{Optical response}
+\label{sec:specan}
+
+Optical response is a key observable in cluster physics.  In the limit
+of long wavelengths, the photon field at the system site is related
+the dipole momentum $\mathbf{D}=\mathbf{r}$ where $\mathbf{r}$ is
+taken with respect to the center-of-mass of the electron cloud.  With
+the given code, the dipole excitation strenght can be computed by
+spectral analysis of the dipole response to an instantaneous dipole
+excitation of the system.  To that end, one starts from a well relaxed
+ground state and applies the instantaneous initial excitation by a
+small dipole boost
+\begin{subequations}
+\begin{equation}
+  \varphi_\alpha(\mathbf{r},t\!=\!0)
+  =
+  e^{\mathrm{i}\mathbf{p}_0\cdot\mathbf{r}}
+  \varphi_{\alpha,\mathrm{g.s.}}(\mathbf{r})
+\end{equation}
+where $\mathbf{p}_0$ is a (small) boost momentum.  One then propagates
+electrons with TDLDA and samples a protocol of the dipole momentum
+\begin{equation}
+  {\bf D}(t)
+  =
+  \int d{\bf r}\,{\bf r}\rho({\bf r},t)
+  \quad.
+\end{equation}
+After a sufficient time ($T_\mathrm{max}$), one Fourier transforms the
+dipole signal with an appropriate window function $\mathcal{W}(t)$ and
+finally obtains the spectral strength $S_{D_i}(\omega)$ in $x$, $y$,
+or $z$ directions and corresponding spectral power $\mathcal{P}_{D_i}$
+as\PGRfoot{The dipole strength function, also known as dynamic
+  polarizability, is in prinicple a tensor as $\alpha_D$ is. Should we
+address that or better restrict discussion to one coordinate only?}
+\begin{eqnarray}
+  S_{D_i}(\omega)
+  &=&
+  \Im\{\tilde{D}_i(\omega)\}
+  \quad,\quad
+  \tilde{D}_i(\omega)
+  =
+  \int dt\,\mathcal{W}(t)\,e^{\imath\omega t}D_i(t)
+  \quad,
+\\
+  \mathcal{P}_{D_i}(\omega)
+  &=&
+  |\tilde{D}_i(\omega)|^2
+  \quad.
+\end{eqnarray}
+\end{subequations}
+The maximum possible {spectral resolution} is given by
+$\delta\omega=2\pi/T_\mathrm{max}$.
+%
+The window function $\mathcal{W}(t)$ serves to attenuate the dipole
+signal toward the end point $T_\mathrm{max}$ in order to avoid
+artefacts from non-zero $\mathbf{D}(T_\mathrm{max})$
+\cite{Pre92}. Useful windows are
+$\mathcal{W}(t)=\cos^{2n}(t\pi/(2T_\mathrm{max})$ where $n$ is an
+integer number. The choice $n=1$ produces often still a buit rough
+$\Im\{\tilde{D}_i(\omega)\}$ while $n=2$ performs usually satisfyingly
+well.  It is interesting to note that this treatment in connection
+with absorbing boundary conditions (see section \ref{sec:abso}) allows
+to compute correctly the escape width of spectral states lying in
+the electron continuum. For details of spectral analysis and variants
+thereof see \cite{Cal97b}.
+
+Spectral analysis can equally well be performed with other
+observables, as e.g. higher multipoles, spin modes etc. The full
+TDLDA furthermore allows one to go beyond the linear regime. The more
+appropriate observable is then the power spectrum.
+
+
+The same principles of spectral analysis apply, of course, also for
+computing the vibrational spectra of clusters. Here we concentrate on
+the MD part of TDLDA-MD.  The analyzing times are, of course, to be
+taken much longer to supply sufficient spectral resolution for the
+excitations in the meV range, characteristic of ionic vibrational
+states, and the ionic multipole momenta ought to be used for the
+spectral analysis of ionic motion \cite{Rei02d}.
+
+
+
+\subsubsection{Ionization}
+\label{sec:ionization}
+
+Absorbing boundary conditions as explained in section \ref{sec:abso}
+provide a pertinent picture of electron emission.  There are several
+observables associated with emission from (photo-)excited systems: net
+ionization, photo-electron angular distribution (PAD), and
+photo-electron spectra (PES). We discuss them in the next three
+sections.
+
+The first observable is the total ionization, i.e. the number of
+escaped electrons $N_\mathrm{esc}$. This can be computed simply from
+the, now decreasing, single-particle norms as~:
+\begin{equation}
+  N_\mathrm{esc}(t)
+  =
+  \sum_{i=1}^N N_{\mathrm{esc},i}(t)
+  \quad,\quad
+  N_{\mathrm{esc},i}(t)
+  =
+  1-\sum_i \langle \varphi_i(t)|\varphi_i(t)\rangle
+  \quad.
+\label{eq:nesc}
+\end{equation}
+This shows that we have access to even more than the mere net
+ionization. Indeed each $1-N_{\mathrm{esc},i}$ yields the depletion of
+s.p. state $i$ separately. Both, total ionization and detailed level
+depletion are very instructive observables \cite{Din12c}.
+
+
+\subsubsection{Photo-electron angular distribution (PAD)}
+\label{sec:pad}
+
+
+The angular distributions
+$\mathrm{d}\sigma/\mathrm{d}\Omega(\vartheta,\phi)$ are evaluated in
+angular segments labeled by the azimuthal angle $\vartheta $ and the
+polar angle $\phi$, see Fig.~\ref{fig:mask}. The reference frame for
+these two angles is usually the $z$ axis identical with the laser
+polarization axis.  We
+collect all probability which was removed by the absorption step
+(\ref{eq:maskact}) and accumulate it.  A straightforward collection of
+grid points in a segment tends to produce noisy results because the
+number of grid points per segment fluctuates. We therefore associate
+with each grid point a smoothing function $\mathcal{S}(\mathbf{r})$
+which distributes the strength over a vicinity of order of grid
+spacing.  This suffices to produce acceptable smooth distributions.
+The PAD is thus computed as~:
+\begin{subequations}
+\label{eq:PADfixed}
+\begin{eqnarray}
+%  \frac{d\sigma}{d\Omega}(\vartheta,\varphi)
+  \mathcal{A}(\vartheta,\phi)
+  &=&
+  \sum_{i=1}^N\mathcal{A}^{(i)}(\vartheta,\phi)
+  \quad,
+\\
+  \mathcal{A}^{(i)}(\vartheta,\phi)
+  &=&
+  \sum_{\mathbf{n}\in\mbox{abs.b.c.}}
+  \int \textrm dr\,r^2\,\mathcal{S}(r\mathbf{e}_r-\mathbf{r}_\mathbf{n})
+   \, n_{\mathrm{esc},i}(\mathbf{r}_\mathbf{n})
+  \quad,
+\\
+  \mathcal{W}(\mathbf{r})
+  &=&
+  \frac{\mbox{max}(\Delta x-|x|,0)}{\Delta x} \, 
+  \frac{\mbox{max}(\Delta y-|y|,0)}{\Delta y} \,
+  \frac{\mbox{max}(\Delta z-|z|,0)}{\Delta z}
+  \quad,
+\\
+  n_{\mathrm{esc},i}(\mathbf{r}_\mathbf{n})
+  &=&
+  \int \textrm dt\,\left|\varphi_i(\mathbf{r}_\mathbf{n},t)\right|^2
+  \left[1-\mathcal{M}(\mathbf{r}_\mathbf{n},t)\right]
+  \quad,
+\end{eqnarray}
+\end{subequations}
+where $\mathbf{e}_r=\left(\sin\vartheta\cos\phi,
+\sin\vartheta\sin\phi,\cos\vartheta\right)$ is the unit vector in the
+direction of the wanted angles. The smoothing is done by simple tent
+functions which comply with the integration rule used in the
+normalization.  The angular segments in Fig.~\ref{fig:mask} try to
+symbolize this smoothing which collects (weighted) information in the
+vicinity of a ray. The above recipe applies to state specific PAD
+$\mathcal{A}_i$ as well as the total PAD
+$\mathcal{A}\equiv\mathrm{d}\sigma/\mathrm{d}\Omega(\vartheta,\phi)$.
+
+
+\subsubsection{Photoemission spectra (PES)}
+\label{sec:pes}
+
+
+The PES can be deduced from the temporal phase oscillations of the
+wave functions $\varphi(\mathbf{r}^{(v)}_\mathcal{M},t)$ at measuring
+points $\mathbf{r}_\mathcal{M}$ close to the absorbing bounds
+\cite{Poh00}.  The result for the PES sampled at
+$\mathbf{r}_\mathcal{M}$ is
+\begin{subequations}
+\label{eq:PESformula}
+\begin{eqnarray}
+  \mathcal{Y}(E_\mathrm{kin},\Omega_\mathcal{M})
+  &=&
+  \sum_\alpha w_\alpha
+  \mathcal{Y}_\alpha(E_\mathrm{kin},\Omega_\mathcal{M})
+  \quad,
+\\
+  \mathcal{Y}_\alpha(E_\mathrm{kin},\Omega_\mathcal{M})
+%  \propto
+%  \left|\widetilde{\varphi}^{(v)}_0(\sqrt{2\omega})\right|^2
+  &=&
+  \left|
+  \!\int\!\frac{dt}{\sqrt{2\pi}}\,e^{\mathrm{i}E_\mathrm{kin}t
+              -\mathrm{i}\delta q\sqrt{2E_\mathrm{kin}}
+              +\mathrm{i}\delta\Omega
+              +\mathrm{i}E_0F(t)\mathbf{e}_E\cdot\mathbf{r}_\mathcal{M}}
+               \varphi(\mathbf{r}_\mathcal{M},t)
+  \right|^2
+  \;,
+\label{eq:solve-wf}
+\\
+  \delta q(t)
+  &=&
+  E_0 \int_{0}^t\mathrm dt'\,F(t')
+  \quad,
+\label{eq:delq}\\
+  \delta\Omega(t)
+  &=&
+  \frac{E_0^2}{2}\int_{0}^t\mathrm dt'\,F(t')^2
+  \quad,
+\label{eq:delOmega}
+\end{eqnarray}
+\end{subequations}
+where $\mathbf{e}_E$ is the direction of (linear) polarisation of the
+electrical field, $\Omega_\mathcal{M}$ the space angle associated with
+$\mathbf{r}_\mathcal{M}$, and
+$F(t)=\int{d}t'\,f(t')\exp{(-\mathrm{i}\omega_\mathrm{las}t')}$ the
+time integrated laser pulse envelope introduced in
+Eq.~(\ref{eq:laserp}).  This form applies for the wavefunction
+$\varphi(\mathbf{r}_\mathcal{M},t)$ in space gauge as computed in the
+code. Note that the formula does not only give the total PES, but also
+the PES $\mathcal{Y}_\alpha$ for emission specifically from state
+$\alpha$.
+
+A detailed derivation of Eqs. (\ref{eq:PESformula}) is found in
+\cite{Din13a}.  We summarize here the ideas behind that compact
+formula.  It is deduced under the assumption that the measuring point
+$\mathbf{r}_\mathcal{M}$ is sufficiently far away from the system
+(placed around $\mathbf{r}=0$) such that that outgoing electron wave
+has direction
+$\mathbf{e}_{\mathbf{k}}=\mathbf{e}_\mathcal{M}=\mathbf{r}_\mathcal{M}/r_\mathcal{M}$.
+We expand the wavefunction at $\mathbf{r}_\mathcal{M}$ into outgoing
+waves with direction $\mathbf{e}_{\mathbf{k}}$ and momenta
+$k>0$. These are plane waves
+$e^{\mathrm{i}k\mathbf{e}_{\mathbf{k}}\cdot\mathbf{r}_\mathcal{M}}$
+for weak fields and for stronger fields the corresponding electron
+waves in the time-dependent photon field (Volkov states).  The fact
+that we have only outgoing waves in one direction allows to identify
+uniquely energy and momentum as
+$\mathbf{k}=\mathbf{e}_{\mathbf{k}}\sqrt{2E_\mathrm{kin}}$.  The
+energy is read off from the phase oscillations of
+$\varphi(\mathbf{r}^{(v)}_\mathcal{M},t)$ and the direction
+$\mathbf{e}_{\mathbf{k}}\Rightarrow\Omega_\mathrm{M}$ from the
+position of the measuring point.
+
+The formula (\ref{eq:PESformula}) applies for weak and for strong
+field, but still fails for extremely strong fields. The limits of
+validity depend on system and time structure of the pulse.  To give an
+order of magnitude, a intensity for long photon pulses impinging on Na
+clusters is $I\approx\times{10}^{15}$W/cm$^2$. For details see
+\cite{Din13a}.
 
 
 \section{The structure of the TDLDA package}
