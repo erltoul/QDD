@@ -20,6 +20,7 @@
     \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
 
 \newcommand{\I}{\mathrm{i}}
+\newcommand{\D}{\mathrm{d}}
 
 \newcommand{\PGR}[1]{{\color{blue} #1}}
 \newcommand{\PGRcomm}[1]{{\color{blue}\small\em PGR2all: #1}}
@@ -152,6 +153,7 @@ is the electronic local density
   \sum_{\alpha\in\downarrow}w_\alpha
   \varphi_\alpha^+(\mathbf{r})\varphi_\alpha^{\mbox{}}(\mathbf{r})
   \quad,
+\label{eq:locdens}
 \end{equation}
 which covers, in fact, two separate densities for spin-up and
 spin-down. To simplify the presentation of the formalism we
@@ -201,7 +203,7 @@ electronic and ionic system:
 \\
   E_\mathrm{ext}[\varrho,t]
   &=&
-  \int d\mathbf{r}\,\varrho(\mathbf{r})U_\mathrm{ext}(\mathbf{r},t)
+  \int d\mathbf{r}\,\varrho(\mathbf{r})V_\mathrm{ext}(\mathbf{r},t)
   \quad,
 \\
   E_\mathrm{el,ion}[\{\varphi_\alpha\},\{\mathbf{R}_I\}]
@@ -220,7 +222,7 @@ electronic and ionic system:
   &=&
   \frac{1}{2}\sum_{J\neq I}\frac{e^2}{|\mathbf{R}_I-\mathbf{R}_J|}
   +
-  U_\mathrm{ext,ion}(\mathbf{R}_I,t)
+  V_\mathrm{ext,ion}(\mathbf{R}_I,t)
   \quad,
 \end{eqnarray}
 \end{subequations}
@@ -239,7 +241,7 @@ usually described by a pseudo-potential $\hat{V}_\mathrm{PsP}$, see
 section \ref{sec:practPsP}, or may be simplified in terms of the
 jellium model, see section \ref{sec:jell}.  Ionic kinetic and
 potential energy are described by the obvioous classical expressions.
-The $U_\mathrm{ext,ion}$ in the ionic potengtial energy describes the
+The $V_\mathrm{ext,ion}$ in the ionic potengtial energy describes the
 action of an external field on the ions (which is usually negligible
 as compared to the effect on the electrons).
 
@@ -430,9 +432,9 @@ profile characterized by a flat bottom and a smooth transition to
 zero. For neutral clusters, one can approximate that very well by a
 Woods-Saxon profile
 \begin{equation}
-  U_\mathrm{WS}(\mathbf{r})
+  V_\mathrm{WS}(\mathbf{r})
   =
-  -U_0
+  -V_0
   \left[1+
      \exp\left(\frac{|\mathbf{r}|-R(\vartheta,\phi)}
                     {\sigma_\mathrm{WS}}\right)
@@ -447,7 +449,7 @@ $R(\vartheta,\phi)=
 R_0\left(1\!+\!\sum_{lm}\alpha_{lm}Y_{lm}(\vartheta,\phi)\right)$,
 %
 similar to the jellium model of Eq. (\ref{eq:softJ}) for the density.
-In Eq. (\ref{eq:WSpot}) the potential depth $U_0$ is taken as the
+In Eq. (\ref{eq:WSpot}) the potential depth $V_0$ is taken as the
 average binding potential in bulk matter. Computations in a fixed
 potential are somewhat simpler than with the self-consistent
 scheme. The Woods-Saxon model has thus been very often used for
@@ -466,13 +468,13 @@ reproduce the sequence of shell closures in metal clusters
 oscillator model.
 This yields the Clemenger-Nilsson model for the mean field potential
 \begin{equation} 
-  \hat{U}_\mathrm{CN}
+  \hat{V}_\mathrm{CN}
   =
   \frac{m}{2}\left(
   \omega_x^2x_{\mbox{}}^2+\omega_y^2y_{\mbox{}}^2+\omega_z^2z_{\mbox{}}^2
   \right)
   -
-  U_{l2}\hbar\bar{\omega}\left(\hat{l}^2-n(n+3)/6\right)
+  V_{l2}\hbar\bar{\omega}\left(\hat{l}^2-n(n+3)/6\right)
 \label{eq:CleNil}
 \end{equation}
 where $n$ is the global shell number ($n=n_x+n_y+n_z$). The three
@@ -486,14 +488,14 @@ e.g. for axially symmetric shapes by
 $\omega_x=\omega_y=\omega_0\exp{(\alpha_{20}\sqrt{5/4\pi})},
  \omega_z=\omega_0\exp{(-2\alpha_{20}\sqrt{5/4\pi})}$.
 %
-The parameter $U_{l2}$ serves to tune the downshift of high angular
+The parameter $V_{l2}$ serves to tune the downshift of high angular
 momentum orbits and thus of the shell sequence.
 %
 The Clemenger-Nilsson model was introduced into clusters physics in
 \cite{Cle85} taking up a much similar nuclear oscillator model
 \cite{Nil55}. An extensive review of early applications is given in
 \cite{Hee93}. The oscillator model is kept in the code mainly for
-testing because one has analytical the solutions for $U_{l2}=0$.
+testing because one has analytical the solutions for $V_{l2}=0$.
 
 Both shell models, Woods-Saxon or harmonic oscillator, overrule the
 total energy (\ref{eq:Etotal}). What remains is only the kinetic
@@ -522,7 +524,7 @@ The external-field operator in velocity gauge reads\PGRfoot{I am not
   sure that we shoulod show velocity gauge. It may be useful whne
   explaining the computation of PES later on.}
 \begin{equation}
-  U_\mathrm{ext}
+  V_\mathrm{ext}
   =
   e\mathcal{\mathbf{E}}_0F(t)\hat{\mathbf{p}}
   \quad,\quad
@@ -535,7 +537,7 @@ The external-field operator in velocity gauge reads\PGRfoot{I am not
 where $f(t')$ is the envelope of the photon pulse.
 The same pulse in space gauge becomes
 \begin{equation}
-  U_\mathrm{ext}
+  V_\mathrm{ext}
   =
   e{\cal\bf E}_0f(t)\!\cdot\!\hat{\mathbf{r}}
   \exp{(-\mathrm{i}\omega_\mathrm{las}t)}
@@ -606,7 +608,7 @@ these trajectories by straight lines and that is what is done in the
 code.  In any case, the effect of the ion (charge $Z_\mathrm{ext}$) on
 the system can again be described by a time dependent external field
 \begin{equation}
-  U_\mathrm{ext}(\mathbf{r},t)
+  V_\mathrm{ext}(\mathbf{r},t)
   =
   \frac{Z_\mathrm{ext}e^2}{|\mathbf{r}-\mathbf{R}_\mathrm{ext}(t)|}
   \quad.
@@ -658,23 +660,23 @@ electronic ground wavefunctions are
   \frac{\hat{p}^2}{2m}
   +
   \underbrace{
-    U_\mathrm{C}(\mathbf{r})
+    V_\mathrm{C}(\mathbf{r})
     +
-    \hat{U}_{\mathrm{xc}}
+    \hat{V}_{\mathrm{xc}}
     +
-    \hat{U}_\mathrm{back}
+    \hat{V}_\mathrm{back}
     +
-    U_\mathrm{ext}(\mathbf{r},t)
-  }_{U_\mathrm{KS}}
+    V_\mathrm{ext}(\mathbf{r},t)
+  }_{V_\mathrm{KS}}
   \quad,
 \\
-  U_\mathrm{C}(\mathbf{r})
+  V_\mathrm{C}(\mathbf{r})
   &=&
   e^2\int d^3r'\,
   \frac{\varrho(\mathbf{r}')}{|\mathbf{r}-\mathbf{r}'|}
   \quad,
 \\
-  \hat{U}_{\mathrm{xc}}(\mathbf{r})
+  \hat{V}_{\mathrm{xc}}(\mathbf{r})
   &=&
   \epsilon\left(\varrho(\mathbf{r})\right)
   +
@@ -683,7 +685,7 @@ electronic ground wavefunctions are
   \quad.
 \label{eq:Uxc}
 \end{eqnarray}
-The exchange-correlation potential $\hat{U}_{\mathrm{xc}}$ involves a
+The exchange-correlation potential $\hat{V}_{\mathrm{xc}}$ involves a
 construction ${\partial\epsilon}_\mathrm{xc}/{\partial\varrho}$ which is
 the formal derivative of the exchange correlation energy per particle
 $\epsilon_\mathrm{xc}$ with respect to the density $\varrho$ considered
@@ -700,7 +702,7 @@ analogously read
 \end{equation}
 \end{subequations}
 where $\hat{h}_\mathrm{KS}$ is composed in the same manner as in the
-time-dependent case (instantaneous approximation for $U_\mathrm{xc}$).
+time-dependent case (instantaneous approximation for $V_\mathrm{xc}$).
 The Kohn-Sham equations (\ref{eq:statKS}) pose a stationary eigenvalue
 problem. They provide the electronic ground state of a system.  The
 time-dependent Kohn-Sham equations (\ref{eq:TDKS}) pose an initial
@@ -851,24 +853,454 @@ limitations of TDLDA-MD?}
 \subsection{Numerical schemes}
 \label{sec:numerics}
 
-\subsubsection{Grid representation}
+\subsubsection{Grid representation and derivatives}
 \label{sec:grid}
 
-\centerline{\PGRcomm{... yet to be written ...}}
+%\subsubsection{Grid definition}
+%\label{sec:griddef}
+All wave functions and fields are defined on a three-dimensional (3D)
+equidistant Cartesian grid of {\tt nx} by {\tt ny} by {\tt nz} grid
+points. 
+%{\bf {\tt nx}, {\tt ny}, and {\tt nz} must be even numbers}.
+The spacing between the points is given as {\tt dx}, {\tt dy}, and
+{\tt dz} in units of a$_0$. For reasons of equilibrated accuracy, it
+is highly recommended to give the same value to all of them.  Typical
+values depend on the atoms/ions involved.  The pseudo-potentials
+(section \ref{sec:practPsP}) set the pace. The {\tt dx}, {\tt dy},
+{\tt dz} must not be larger than $\sqrt{2\log 2}$ times the smaller
+radius in the pseudopotential. In case of the jellium model (section
+ref{sec:jell}), the spacing should be of order of the surface width
+$\sigma_\mathrm{jel}$.
+
+The grid is automatically arranged in such a way that in each
+direction the same number of grid points are located on both sides of
+the origin. The coordinate values for e.~g., the $x$-direction are
+thus\PGRfoot{PGRtoFC: please check and correct if necessary.}:
+\begin{equation}\begin{split}
+ -\frac{{\tt nx}-1}{2}&{\tt dx},\quad -\frac{{\tt nx}-1}{2}{\tt
+  dx}+{\tt dx},\quad\ldots \quad -\frac{{\tt dx}}{2},\\
+  &+\frac{{\tt  dx}}{2},\quad \ldots\quad \frac{{\tt nx}-1}{2}{\tt
+    dx}. 
+\end{split}
+\end{equation}
+The corresponding values are available in the arrays {\tt x(nx)}, {\tt
+  y(ny)}, and {\tt z(nz)}.
+
+%\subsubsection{Derivatives}
+%\label{sec:deriv}
+
+The computation of currents and the action of the kinetic energy
+operator first and second derivatives.  We have two options for that
+in the code. Standard is the definition of derivatives via Fourier
+transformation\PGRfoot{Do we keep 3-point derivatives? Then we have to
+  explain them as well.}.  This delivers high precision at affordable
+expense space. For simplicity, we explain here the Fourier strategy
+for one dimension.
+
+Given are {\tt nx} discrete grid points $x_\nu$ in coordinate space.
+They are mapped
+to the same number of grid points $k_n$ in Fourier space
+(physically equivalent to momentum space) as
+\begin{subequations}
+\label{eq:FT}
+\begin{eqnarray}
+  x_\nu
+  &=&
+  \left(-\frac{{\tt nx}-1}{2}+\nu\right){\tt dx}
+  \quad,
+  \nu=1,...,{\tt nx}
+  \quad,
+\\ \label{eq:kvalues}
+  k_n  &=&
+  (n-1) {\tt dk},\quad n=1,\ldots {\tt nx}/2 \quad,
+\\ \nonumber
+  k_n&=&(n-{\tt nx}-1)\,{\tt dk},\quad n={\tt nx}/2+1,\ldots,{\tt nx} \quad,
+\\
+  {\tt dk}
+  &=&
+  \frac{2\pi}{{\tt nx}\cdot{\tt dx}}
+  \quad.
+\end{eqnarray}
+Note the particular indexing for the $k$-values. In principle, the
+values $k_n=(n-1){\tt dk}$ for all $n$ are equivalent for the Fourier
+transform, but for the second half of this range the negative
+$k$-values should be chosen because of their smaller magnitude. For
+the Fourier expansion, $k=-{\tt dk}$ and $k=({\tt nx}-1){\tt dk}$ are
+equivalent because of periodicity in $k$-space.
+
+A function $f(x_\nu)$ in coordinate space is mapped to a
+function $\tilde{f}(k_n)$ in Fourier space by
+\begin{eqnarray}
+  \tilde{f}(k_n)
+  &=&
+  \sum_{\nu=1}^{\tt nx}
+  \exp{\left(-\I k_nx_\nu\right)}f(x_\nu) 
+  \quad,
+\label{eq:FTforward}\\
+  f(x_\nu) 
+  &=&
+  \frac{1}{{\tt nx}}\sum_{n=1}^{\tt nx}
+  \exp{\left(\I k_nx_\nu\right)}\tilde{f}(k_n)
+\label{eq:FTbackward}
+\end{eqnarray}
+\end{subequations}
+This complex Fourier representation implies that the function $f$ is
+periodic with $f(x+{\tt dx}\cdot{\tt nx})=f(x)$. The appropriate
+integration scheme is the trapezoidal rule which complies with the above
+summations adding up all terms with equal weight.
+The derivatives of the exponential basis functions are
+\begin{equation}\label{eq:expbas}
+  \frac{\D^m}{\D x^m}\exp{(\I k_nx)}
+  =
+  (\I k_n)^m\exp{(\I k_nx)}
+  \quad.
+\end{equation}
+Computation of the $m$th derivative thus becomes a trivial
+multiplication by $(\I k_n)^m$ in Fourier space. Time critical
+derivatives are best evaluated in Fourier space using the fast Fourier
+transformation (FFT). To that end a forward transform
+(\ref{eq:FTforward}) is performed, then the values $\tilde{f}(k_n)$
+are multiplied by $(\I k_n)^m$ as given in Eq.~(\ref{eq:expbas}) and
+finally transformed $(\I{k}_n)^m\tilde{f}(k_n)$ back to coordinate
+space by the transformation (\ref{eq:FTbackward}).
+
+A word is in order about the first derivative. The upper point in the
+$k$-grid, ${\tt dk}\,{\tt nx}/2$, is ambiguous. Exploiting periodicity,
+it could be equally well $-{\tt dk}\,{\tt nx}/2$. 
+Both choices introduce an unwanted bias. 
+We circumvent the problem by setting 
+$k_{{\tt nx}/2}=-k_{{\tt nx}/2}=0$. 
 
 
 
-\subsubsection{Static solution}
-\label{sec:numstatic}
-
-\centerline{\PGRcomm{... yet to be written ...}}
 
 
+\subsubsection{Electronic ground state}
+\label{sec:numstaticel}
 
-\subsubsection{Propagation}
-\label{sec:numdyn}
 
-\centerline{\PGRcomm{... yet to be written ...}}
+The static KS equations (\ref{eq:statKS}), optionally combined with
+thermal occupation (\ref{eq:Fermi0}) of s.p. states are solved
+iteratively. The wave functions are iterated with a gradient step
+which is accelerated by pre-conditioning with kinetic-energy
+damping~\cite{Rei82a,Blu92}
+\begin{equation}
+  \varphi_\alpha^{(n+1)}
+  =
+  \mathcal{O}\left\{
+    \varphi_\alpha^{(n)} 
+    - 
+    \frac{\delta}{\hat{T} + E_0} 
+    \left( \hat{h}^{(n)} - 
+      \langle\varphi_\alpha^{(n)}|\hat{h}^{(n)}|\varphi_\alpha^{(n)}\rangle
+    \right)\varphi_\alpha^{(n)}\right\}
+  \label{eq:dampstep}
+\end{equation}
+where $\hat{T}=\hat{p}^2/(2m)$ is the operator of kinetic energy,
+$\mathcal{O}$ means orthonormalization of the whole set of new
+s.p. wavefunctions, and the upper index indicates the iteration
+number.  Note that this sort of kinetic-energy damping is particularly
+suited for the fast Fourier techniques that we use in the present
+code.  The damped gradient step has two numerical parameters, the step
+size $\delta$ and the damping regulator $E_0$. The latter should be
+chosen typically of the order of the depth of the local potential
+$V_\mathrm{KS}$. Typical values are $E_0=1...5$ Ry depending on the
+material under consideration. After proper choice of $E_0$, the step
+size is of order of $\delta=0.1...0.5$. Larger values yield faster
+iteration, but can run more easily into pathological conditions.
+
+
+In case of calculations at finite temperature (switched by setting
+{\tt temp}$>0$), the Fermi distribution (\ref{eq:Fermi0}) is
+determined using the actual s.p. energies
+$\varepsilon_\alpha=\langle\varphi_\alpha|\hat{h}|\varphi_\alpha\rangle$
+and adjusting the chemical potential $\mu$ such that the correct total
+electron number is reproduced, $\sum_\alpha w_\alpha=N$, which is done
+by bisection\PGRfoot{Check.}.
+
+Having the new s.p. wavefunctions and occupations, the new local
+electron densities (\ref{eq:locdens}) are computed and then the new KS
+Hamiltonian (\ref{eq:KS}). This then provides the starting point for
+the next iteration. The process is continued until sufficient
+convergence is achieved. We consider as the convergence criterion the
+averaged energy variance of the single particle states
+\begin{subequations}
+  \label{eq:totvar}
+  \begin{eqnarray}
+    \overline{\Delta\varepsilon}
+    &=&
+    \sqrt{\frac{\sum_\alpha w_\alpha\Delta\varepsilon_\alpha^2}
+         {N_\mathrm{el}}}
+    \quad,
+    \\
+    \Delta\varepsilon_\alpha^2
+    &=&
+    \langle\psi_\alpha|\hat{h}^2|\psi_\alpha\rangle
+    -
+    \varepsilon_\alpha^2
+    \quad,
+    \label{eq:spvar}
+    \\
+    \varepsilon_\alpha
+    &=&
+    \langle\psi_\alpha|\hat{h}|\psi_\alpha\rangle
+    \quad.
+    \label{eq:spenerg}
+  \end{eqnarray}
+\end{subequations}
+Vanishing total variance $\overline{\Delta\varepsilon}$ signals that
+we have reached minimum energy, i.e. a solution of the KS
+equations. However, this may be only a local minimum (isomeric
+state). It requires experience to judge whether one has found the
+absolute energy minimum. In case of doubt, one should redo a couple of
+static iterations from very different initial configurations.
+
+Initialization of the s.p. wavefunctions can be done in two ways.  one
+is to take the wave functions of the deformed harmonic oscillator, for
+details see e.g. \cite{Mar10aB} . These are characterized by
+$\vec{n}=(n_x,n_y,n_z)$, the number of nodes in each direction. We
+sort the states in order of increasing oscillator energy
+$\epsilon_\alpha^{(0)}=\hbar\omega_xn_x+\hbar\omega_yn_y+\hbar\omega_zn_z$
+and stop if the desired number of states is reached. The deformation
+of the initializing oscillator influences the initial state in two
+ways: first, through the deformation of the basis wave functions as
+such, and second, through the energy ordering of the
+$\epsilon_\alpha^{(0)}$ and corresponding sequence of levels
+built. Variation of initial conditions means basically a variation of
+the oscillator radius and deformation. In particular, the initial
+deformation decides in which local minimum the KS iteration will
+terminate. This initialization by harmonic oscillators is well suited
+for metallic bonding where the wavefunctions spread over the whole
+system. Covalent bonding produces localized states and here it is more
+appropriate to start also from localized states. In that case, we
+place Gaussians at each ionic site and, of more is needed, higher
+harmonic oscillator wavefunctions. Bookkeeping is more involved then
+and will be explained in connection with the input to the code.
+
+
+\subsubsection{Ionic ground state}
+\label{sec:numstaticion}
+
+
+Three strategies are implemented for the optimizing the ionic
+configuration: steepest descend, dynamical cooling, and simulated
+annealing. The simplest method is steepest descent. For given
+electronic configuration, one computes the Hellmann-Feynman forces on
+the ions and follows their direction for a short step. One re-iterates
+to the new electronic ground state and repeats the steps until
+convergence. This is the fastest method but prone to get stuck in
+side-minima. one should use it only if one knows a reliable starting
+configuration. 
+
+Dynamical cooling allows to explore more of the energy landscape and
+thus to avoid distraction by unimportant side-minima. From a given
+starting configuration, one runs full TDLDA-MD and keeps a protocol of
+ionic kinetic energy. Starting from a non-minimal configuration, this
+kinetic energy will first increase which is accompanied by a
+corresponding decrease of potential energy. As soon as kinetic energy
+turns to decrease, we stop propagation and reset all ionic velocities
+to zero. This defines the new starting point for the next round.
+The procedure is stopped if gain in kinetic energy falls below a given
+level of precision. This method is more forgiving than steepest
+descent. Still, it is also often kept in isomeric minima. One has to
+rerun it from different initial configurations to explore the
+landscape of minima.
+
+
+The most elaborate, expensive, and reliabel method is simulated
+annealing, for a detailed description see \cite{Pre92}.  Simulated
+annealing explores in Monte-Carlo fashion the energy landscape with a
+supposed thermal distribution of configurations thereby reducing the
+temperature successively which leads at the end to a ground state
+minimum for temperature zero. The method has several parameters which
+need to be tuned carefully to a given situation. It requires some
+experience to use it efficiently.
+
+
+
+\subsubsection{Electronic propagation}
+\label{sec:numdynel}
+
+
+Electronic dynamics at the level of TDLDA is governed by the
+time-dependent KS equation (\ref{eq:TDKS}).  formally resolved as. The
+code offers two different ways of determining the solution. Both
+methods starts directly from the fomulation as propagator
+(\ref{eq:KSpropag}). The first method, called exponential evolution,
+employs simply a Taylor expansion of the propagator
+\begin{eqnarray}
+  |\psi_\alpha(t\!+\!\Delta t)\rangle
+  &=&
+  \hat{\mathcal{T}}\exp\left(-\frac{\I}{\hbar}
+   \int_t^{t+\Delta t}\,\D t'\hat h(t')\right)
+  |\psi_\alpha(t)\rangle
+\nonumber\\
+  &\approx&
+  \sum_{n=0}^m
+  \frac{(-\I\Delta t)^n}{\hbar^n\,n!}\hat{h}^n\psi\;,
+  \label{eq:timepower}
+\end{eqnarray}
+where $\hat{h}$ in the expansion is taken at fixed time.  At time $t$,
+only $\hat{h}(t)$ is known. However, using that in the approximate
+propagator (\ref{eq:timepower}) generates undue bias on $t$ with
+disastrous consequences for energy conservation. The solution is to
+use a predictor-corrector scheme. For the predictor, we perform a half
+time step, i.e. using Eq. (\ref{eq:timepower}) with $\hat{h}(t)$ and
+$\Delta t/2$. This produces an intermediate wavefunction
+$|\psi_\alpha(t\!+\!\Delta t/2)\rangle$ with subsequent densities and
+KS Hamiltonian $\hat{h}(t\!+\!\Delta t/2)$. For the corrector step, we
+perform a full time step (\ref{eq:timepower}) with using the
+intermediate KS Hamiltonian $\hat{h}(t\!+\!\Delta t/2)$ in the
+expansion. Appropriate values for the order of expansion are
+$m=4...6$. Below that, conservation laws are at stake, and above that,
+we will not gain much because the time step is also limited by the
+speed of change of $\hat{h}_\mathrm{KS}(t)$. Altogether, this
+exponential evolution provides a reliable propagation with satisfying
+norm and energy conservation.
+
+An alternative propagation scheme is $T$-$V$-splitting \cite{Fei82}
+we we extend here for use in connection with non-local
+pseudo-potentials \ref{sec:practPsP}. The KS Hamiltonian is split into
+three pieces
+\begin{subequations}
+\begin{equation}
+  \hat{h}_\mathrm{KS}
+  =
+  \hat{T}_\mathrm{kin}
+  +
+  \hat{V}_\mathrm{nonl}
+  +
+  V_\mathrm{KS,loc}(\mathbf{r},t)
+\end{equation}
+where $\hat{V}_\mathrm{nonl}$ is the piece stemming from the
+non-local partr of the pseudo-potentials while
+$V_\mathrm{KS,loc}(\mathbf{r},t)$ collects all parts which form
+together a local potential. The latter is strongly time dependent
+due to the self-consistent electronic contributions. 
+The non-local part depends only on ionic motion which is snail-slow 
+at electronic scale such that we can ignore time dependence during an
+electronic step. We define a propagator for each one of the three
+parts and factorize the full propagator as
+\begin{eqnarray}
+  |\varphi_\alpha(t_1)\rangle
+  &=&
+  \hat{U}_\mathrm{KS}(t_1,t_0)|\varphi_\alpha(t)\rangle
+\nonumber\\
+  &\approx&
+  e^{-\frac{\I}{\hbar}\,\frac{\Delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)}
+  \hat{U}_\mathrm{nonl}
+  e^{-\frac{\I}{\hbar}\Delta t\hat{T}_\mathrm{kin}}
+  \hat{U}_\mathrm{nonl}
+  e^{-\frac{\I}{\hbar}\,\frac{\Delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_0)}
+  |\varphi_\alpha(t_0)\rangle
+  \;,
+\label{eq:TVsplit}\\
+  \hat{U}_\mathrm{nonl}
+  &=&
+  \sum_{n=0}^m
+  \frac{(-\I\Delta t)^n}{2\hbar^n\,n!}\hat{V}_\mathrm{nonl}^n
+  \quad,
+\\
+  t_0=t&,&t_1=t\!+\!\Delta t
+  \quad.
+\end{eqnarray}
+\end{subequations}
+The sequence (\ref{eq:TVsplit}) is built in symmetric manner to
+minimize the separation error. The quality of the splitting method
+depends on the size of the commutators between the three pieces of
+$\hat{h}_\mathrm{KS}$. It is the better the smaller the commutators
+are. The advantage of the method is that the two crucial propagators,
+kinetic and potential energy, are performed exactly. The local
+potential energy operator con be easily exponentiated in coordkinate
+space while the kinetic energy operator is exponentiated in Fourier
+space for which we employ forward and backward FFT as for the
+evaluation of derivatives (see section \ref{sec:grid}). The propagator
+of the non-local potential could also be resolved exactly, however
+with considerable book-keeping expense. It is thus handled by Taylor
+expansion. The $T$-$V$-splitting has a particular advantage concerning
+evaluations of the KS potential. Note that the separation
+(\ref{eq:TVsplit}) employs the potential at $t_0$ in the first
+potential step and at $t_1$ in the second. This avoid any bias by
+giving same weight to both times. The key saving now comes with the
+fact that the local propagator
+$e^{-\frac{\I}{\hbar}\,\frac{\Delta{t}}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)}$
+changes only the complex phase of the wavefunction and does not change
+the local density. Tus we can evalute the final new density for $t_1$
+already at the stage before applying this local propagator
+and no predictor-corrector strategy is neede any more.
+
+
+\subsubsection{Ionic propagation}
+\label{sec:numdynion}
+
+Time stepping for ionic molecular dynamics (MD) is done with the
+robust and reliable Verlet algorithm \cite{Ver67,Pre92}, also known as
+leap-frog algorithm. We present it here summarizing all ionic
+coordinates by one vector $\mathbf{R}$ and calling the
+ionic time step $\Delta t$, not to be mixed with the electronic time
+steo from the previous section.
+Propagating the ionic equations of motion (\ref{eq:propion})
+raises the same problem with update of the forces as we had
+experienced in quantum mechanical propagation. The Verlet aligorithm
+solves this by placing coordinates $\mathbf{R}$ and momenta
+$\mathbf{P}$ different time grid shifted by half a time step
+$\Delta t/2$. This then proceeds as
+\begin{subequations}
+\begin{eqnarray}
+  \mathbf{R}(t\!+\!\Delta t)
+  &=&
+  \mathbf{R}(t) + \Delta
+  t\mathbf{P}(t\!+\!{\textstyle\frac{1}{2}}\Delta t)
+  \quad,
+\label{eq:Verlet1}\\
+  \mathbf{P}(t\!+\!{\textstyle\frac{3}{2}}\Delta t)
+  &=&
+  \mathbf{P}(t\!+\!{\textstyle\frac{1}{2}}\Delta t)
+  + \Delta t\vec{F}(\mathbf{R}(t\!+\!\Delta t),t\!+\!\Delta t)
+  \quad.
+\end{eqnarray}
+\end{subequations}
+The advantage is that the force is needed only for propagating
+$\mathbf{P}$ and it is placed exactly at a half $\mathbf{P}$-step in
+the shifted-grid setup, readily available at the moment when it is
+needed. The disadvantage of the method appears at initialization and
+for computation of observables. In both cases one has to move one of
+the variables $\mathbf{R}$ or $\mathbf{P}$ by half a time step to have
+both at the same time.  This problem is avoided by slight modification
+of the Verlet algorithm, called velocity Verlet \cite{Pre92}. Here,
+both variables are handled at the same time grid.  The momentum
+$\mathbf{P}(t\!+\!{\textstyle\frac{1}{2}}\Delta t)$ at intermediate
+time is estimated by a predictor and the force at intermediate
+time is taken as average of force at $t$ and $t\!+\!\Delta t$.
+Tis amounts to
+\begin{subequations}
+\label{eq:velverlet}
+\begin{eqnarray}
+  \mathbf{R}(t\!+\!\Delta t)
+  &=&
+  \mathbf{R}(t)
+  + \Delta t\mathbf{P}(t\!+\!\Delta t)
+  + {\textstyle\frac{1}{2}}\Delta t^2\vec{F}(\mathbf{R}(t),t)
+\nonumber \\
+  \mathbf{P}(t\!+\!\Delta t)
+  &=&
+  \mathbf{P}(t)
+  +
+  \Delta t\frac{1}{2}
+   \left(\vec{F}(\mathbf{R}(t),t)
+          +\vec{F}(\mathbf{R}(t\!+\!\Delta t),t\!+\!\Delta t)\right)
+  \quad.
+\label{eq:velverlet2}
+\end{eqnarray}
+\end{subequations}
+Note that the force at the new time
+$\vec{F}(\mathbf{R}(t\!+\!\Delta t),t\!+\!\Delta t)$ is availabe for
+the $\mathbf{P}$-step because the $\mathbf{R}$-step has been
+completed before. Both steps are equivalent what precision, energy
+conservation, and stability is concerned.\PGRfoot{The question is
+  whether we want to keep both ionic steps in the code.}
+
+
 
 
 \subsubsection{Absorbing boundary conditions}
@@ -948,7 +1380,7 @@ step as~:
 %
 First comes one standard KS step \PGRfoot{Crossref to numerical
   section.} expressed here in terms of the TDLDA propagator
-$\hat{\mathcal{U}}_\mathrm{KS}$, which yields the intermediate wave
+$\hat{\mathcal{V}}_\mathrm{KS}$, which yields the intermediate wave
 function $\tilde\phi(\mathbf{r},t\!+\!\delta{t})$. This is followed by
 the action (\ref{eq:maskact}) of the mask function $\mathcal{M}$
 defined in Eq.(\ref{eq:mask}), which removes gradually any amplitude
@@ -1132,7 +1564,7 @@ The static polarizability is a key observable of atoms, molecules, and
 clusters.  its computation is straightforward.  We discuss it here the
 most important case of dipole polarizability $\alpha_D$.  One applies
 a static external dipole field
-$U_\mathrm{ext}(\mathbf{r})=e\mathbf{E}_0\!\cdot\!{\bf r}$ and
+$V_\mathrm{ext}(\mathbf{r})=e\mathbf{E}_0\!\cdot\!{\bf r}$ and
 performs static calculations for a couple of $\mathbf{E}_0$.  This
 delivers a dipole momentum $\bar{\bf D}=\langle e\mathbf{r}\rangle$ as
 a function of $\mathbf{E}_0$. The tensor of static dipole
