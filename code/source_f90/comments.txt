@@ -1,0 +1,33 @@
+Open points concering QDD code:
+-------------------------------
+
+Preprocessor:
+Make all array allocatable. Then we can skip all preprocessor
+flags.
+
+SIC:
+skip GAM and localized SIC?
+
+attachement:
+skip from public version.
+
+iscatterelectron:
+skip form public version?
+
+afterburn by imaginary-time propagation:
+This sequency has been moved to a separate routine in 'afterburn.F90'.
+It works only for exponential evolution. Does it make sense?
+
+IFSICP==8:
+this option perhaps not yet properly implemented on new repository.
+Check performance.
+
+Mask:
+possibly not yet fully imported. Check.
+
+Calc_var:
+Projection in calculation of variance?
+
+raregas:
+try to collect at few points and put to private section.
+

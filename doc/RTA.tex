@@ -111,15 +111,15 @@ test that branch carefully.
 \subsection{Brief introduction to TDLDA-MD}
 
 \PGRcomm{The explanation of formal background is extremely compact and
-reduced to the basic formula. Here we should provide a breif overview
+reduced to the basic formula. Here we should provide a brief overview
 of the history of DFT and of the physics behind.}
 
 \subsection{The total energy of the model}
 \label{sec:Etot}
 
 The basic dynamical variables are the set of single-particle
-(s.p.) wavefunctions with their occupation probabilities at teh side
-of electrons and classical coordniates and momenta for the ions,
+(s.p.) wavefunctions with their occupation probabilities at the side
+of electrons and classical coordinates and momenta for the ions,
 together
 \begin{equation}
 \begin{array}{lcl}
@@ -227,7 +227,7 @@ electronic and ionic system:
 \end{eqnarray}
 \end{subequations}
 where functionals of density are wavefunctions are indicated by square
-brackts and functions of coordinates by round brackets.  The
+brackets and functions of coordinates by round brackets.  The
 $E_\mathrm{C}$ is the direct part of the electronic Coulomb energy.
 The $E_\mathrm{xc}$ is the energy-density functional for electronic
 exchange and correlations for which we use in the code two options:
@@ -240,8 +240,8 @@ $E_\mathrm{el,ion}$ carries the interaction with the ions which is
 usually described by a pseudo-potential $\hat{V}_\mathrm{PsP}$, see
 section \ref{sec:practPsP}, or may be simplified in terms of the
 jellium model, see section \ref{sec:jell}.  Ionic kinetic and
-potential energy are described by the obvioous classical expressions.
-The $V_\mathrm{ext,ion}$ in the ionic potengtial energy describes the
+potential energy are described by the obvious classical expressions.
+The $V_\mathrm{ext,ion}$ in the ionic potential energy describes the
 action of an external field on the ions (which is usually negligible
 as compared to the effect on the electrons).
 
@@ -354,7 +354,7 @@ corresponding to the average bulk density. The volume is chosen such
 that its total charge coincides with the given ionic charge.  For
 finite clusters, it is advantageous to use jellium with a soft surface
 profile. This is more suited for numerical handling and it improves
-the quakity of the model, e.g., by producing a correct peak energy for
+the quality of the model, e.g., by producing a correct peak energy for
 the optical response of metal clusters \cite{Rub91}. Versatile and
 easy to handle in this respect is a Woods-Saxon profile for the
 jellium density
@@ -521,7 +521,7 @@ homogeneous electrical field $\mathbf{E}$ at the cluster site and we
 can neglect the effect of the magnetic field.  The coupling
 Hamiltonian leaves of gauge transformation \cite{Jac62}.
 The external-field operator in velocity gauge reads\PGRfoot{I am not
-  sure that we shoulod show velocity gauge. It may be useful whne
+  sure that we should show velocity gauge. It may be useful when
   explaining the computation of PES later on.}
 \begin{equation}
   V_\mathrm{ext}
@@ -553,7 +553,7 @@ be performed a posteriori by standard rules of gauge transformation
 The photon pulse is characterized by frequency
 $\omega_\mathrm{las}$, peak field strength $E_0=|\mathbf{E}_0|$,
 polarization $\mathbf{E}_0/E_0$, and time profile $f(t)$. The
-field strength is usually parametrzed in terms of the laser intensity
+field strength is usually parametrized in terms of the laser intensity
 $I$ as
 \begin{equation}
   E_0
@@ -603,7 +603,7 @@ with classical trajectories
 %
 $\mathrm{R}_\mathrm{ext}(t)$.
 %
-For sifficvioently heavy and fast projectiles, one can approximate
+For sufficiently heavy and fast projectiles, one can approximate
 these trajectories by straight lines and that is what is done in the
 code.  In any case, the effect of the ion (charge $Z_\mathrm{ext}$) on
 the system can again be described by a time dependent external field
@@ -642,7 +642,7 @@ local density approximation (LDA).  The dynamical application is
 called time-dependent LDA (TDLDA) and we use this acronym also in
 cases where we add SIC (see section \ref{sec:SIC}) to the treatment.
 
-The time-dependent KS equations determining the propagarion of
+The time-dependent KS equations determining the propagation of
 electronic ground wavefunctions are
 \begin{subequations}
 \label{eq:KS}
@@ -752,8 +752,8 @@ in which case they are determined by
   \frac{1}{1+\exp((\varepsilon_\alpha-\mu)/T)}
 \label{eq:Fermi0}
 \end{equation}
-where the $\varepsilon_\alpha$ are the s.p. energies from teh
-stationary KS eqs. (\ref{eq:statKS}) and $\mu$ is the chemical
+where the $\varepsilon_\alpha$ are the s.p. energies from the
+stationary KS Eqs. (\ref{eq:statKS}) and $\mu$ is the chemical
 potential tuned such that the total electron number is reproduced by
 $\sum_\alpha w_\alpha=N$.
 
@@ -767,16 +767,16 @@ density operator
   \quad.
 \label{eq:rhodiag}
 \end{equation}
-The solution of the thermal KS eqs., i.e. eqs. (\ref{eq:statKS})
+The solution of the thermal KS Eqs., i.e. Eqs. (\ref{eq:statKS})
 together with (\ref{eq:Fermi0}), provides the density operator
 immediately in this form which is called natural orbital
 representation (diagonal in the s.p. states). In general, the
 one-body density operator can be non-diagonal with respect to given
-s.p. states. Tis will play a role later on.
+s.p. states. This will play a role later on.
 
 As said above, the occupation weights $w_\alpha$ are kept frozen
 during TDLDA.  The KS equations (\ref{eq:TDKS}) then can be written
-compactly as\PGRfoot{I wonder whethr we should shift this introduction
+compactly as\PGRfoot{I wonder whether we should shift this introduction
 of the one-body density matrix to the RTA section.}
 \begin{equation}
   \I\partial_t\hat{\rho}
@@ -955,7 +955,7 @@ The derivatives of the exponential basis functions are
   (\I k_n)^m\exp{(\I k_nx)}
   \quad.
 \end{equation}
-Computation of the $m$th derivative thus becomes a trivial
+Computation of the $m$-th derivative thus becomes a trivial
 multiplication by $(\I k_n)^m$ in Fourier space. Time critical
 derivatives are best evaluated in Fourier space using the fast Fourier
 transformation (FFT). To that end a forward transform
@@ -997,7 +997,7 @@ damping~\cite{Rei82a,Blu92}
   \label{eq:dampstep}
 \end{equation}
 where $\hat{T}=\hat{p}^2/(2m)$ is the operator of kinetic energy,
-$\mathcal{O}$ means orthonormalization of the whole set of new
+$\mathcal{O}$ means ortho-normalization of the whole set of new
 s.p. wavefunctions, and the upper index indicates the iteration
 number.  Note that this sort of kinetic-energy damping is particularly
 suited for the fast Fourier techniques that we use in the present
@@ -1107,7 +1107,7 @@ rerun it from different initial configurations to explore the
 landscape of minima.
 
 
-The most elaborate, expensive, and reliabel method is simulated
+The most elaborate, expensive, and reliable method is simulated
 annealing, for a detailed description see \cite{Pre92}.  Simulated
 annealing explores in Monte-Carlo fashion the energy landscape with a
 supposed thermal distribution of configurations thereby reducing the
@@ -1125,7 +1125,7 @@ experience to use it efficiently.
 Electronic dynamics at the level of TDLDA is governed by the
 time-dependent KS equation (\ref{eq:TDKS}).  formally resolved as. The
 code offers two different ways of determining the solution. Both
-methods starts directly from the fomulation as propagator
+methods starts directly from the formulation as propagator
 (\ref{eq:KSpropag}). The first method, called exponential evolution,
 employs simply a Taylor expansion of the propagator
 \begin{eqnarray}
@@ -1173,7 +1173,7 @@ three pieces
   V_\mathrm{KS,loc}(\mathbf{r},t)
 \end{equation}
 where $\hat{V}_\mathrm{nonl}$ is the piece stemming from the
-non-local partr of the pseudo-potentials while
+non-local part of the pseudo-potentials while
 $V_\mathrm{KS,loc}(\mathbf{r},t)$ collects all parts which form
 together a local potential. The latter is strongly time dependent
 due to the self-consistent electronic contributions. 
@@ -1211,7 +1211,7 @@ depends on the size of the commutators between the three pieces of
 $\hat{h}_\mathrm{KS}$. It is the better the smaller the commutators
 are. The advantage of the method is that the two crucial propagators,
 kinetic and potential energy, are performed exactly. The local
-potential energy operator con be easily exponentiated in coordkinate
+potential energy operator con be easily exponentiated in coordinate
 space while the kinetic energy operator is exponentiated in Fourier
 space for which we employ forward and backward FFT as for the
 evaluation of derivatives (see section \ref{sec:grid}). The propagator
@@ -1225,9 +1225,9 @@ giving same weight to both times. The key saving now comes with the
 fact that the local propagator
 $e^{-\frac{\I}{\hbar}\,\frac{\Delta{t}}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)}$
 changes only the complex phase of the wavefunction and does not change
-the local density. Tus we can evalute the final new density for $t_1$
+the local density. Thus we can evaluate the final new density for $t_1$
 already at the stage before applying this local propagator
-and no predictor-corrector strategy is neede any more.
+and no predictor-corrector strategy is needed any more.
 
 
 \subsubsection{Ionic propagation}
@@ -1238,10 +1238,10 @@ robust and reliable Verlet algorithm \cite{Ver67,Pre92}, also known as
 leap-frog algorithm. We present it here summarizing all ionic
 coordinates by one vector $\mathbf{R}$ and calling the
 ionic time step $\Delta t$, not to be mixed with the electronic time
-steo from the previous section.
+step from the previous section.
 Propagating the ionic equations of motion (\ref{eq:propion})
 raises the same problem with update of the forces as we had
-experienced in quantum mechanical propagation. The Verlet aligorithm
+experienced in quantum mechanical propagation. The Verlet algorithm
 solves this by placing coordinates $\mathbf{R}$ and momenta
 $\mathbf{P}$ different time grid shifted by half a time step
 $\Delta t/2$. This then proceeds as
@@ -1272,7 +1272,7 @@ both variables are handled at the same time grid.  The momentum
 $\mathbf{P}(t\!+\!{\textstyle\frac{1}{2}}\Delta t)$ at intermediate
 time is estimated by a predictor and the force at intermediate
 time is taken as average of force at $t$ and $t\!+\!\Delta t$.
-Tis amounts to
+This amounts to
 \begin{subequations}
 \label{eq:velverlet}
 \begin{eqnarray}
@@ -1294,7 +1294,7 @@ Tis amounts to
 \end{eqnarray}
 \end{subequations}
 Note that the force at the new time
-$\vec{F}(\mathbf{R}(t\!+\!\Delta t),t\!+\!\Delta t)$ is availabe for
+$\vec{F}(\mathbf{R}(t\!+\!\Delta t),t\!+\!\Delta t)$ is available for
 the $\mathbf{P}$-step because the $\mathbf{R}$-step has been
 completed before. Both steps are equivalent what precision, energy
 conservation, and stability is concerned.\PGRfoot{The question is
@@ -1433,7 +1433,7 @@ of s.p. energies $\varepsilon_\alpha$.  But it is known that
 $\varepsilon_\alpha$ from (TD)LDA are spoiled by the self-interaction
 error. This defect can be cured by a SIC, see section \ref{sec:SIC},
 after which the set of $\varepsilon_\alpha$ provides a fair map of
-electron separation energies, particuarly of the IP
+electron separation energies, particularly of the IP
 \cite{Leg02,Klu13}. Experimental data on s.p. energies are mainly the
 IP and the sequence of peaks in PES from one-photon processes with
 weak laser pulses.  Note that the latter can also be computed directly
@@ -1448,7 +1448,7 @@ contributions, particularly potential and kinetic energy.  The latter
 can be used to define an ``intrinsic kinetic energy''
 $E_\mathrm{kin,intr}$ which characterizes the amount of internal, so
 to say thermal, kinetic excitation of the electron cloud. This is a
-quantity which will play a kea role in the model for dissipation
+quantity which will play a key role in the model for dissipation
 outlined in section \ref{sec:RTA}.
 
 
@@ -1589,7 +1589,7 @@ Optical response is a key observable in cluster physics.  In the limit
 of long wavelengths, the photon field at the system site is related
 the dipole momentum $\mathbf{D}=\mathbf{r}$ where $\mathbf{r}$ is
 taken with respect to the center-of-mass of the electron cloud.  With
-the given code, the dipole excitation strenght can be computed by
+the given code, the dipole excitation strength can be computed by
 spectral analysis of the dipole response to an instantaneous dipole
 excitation of the system.  To that end, one starts from a well relaxed
 ground state and applies the instantaneous initial excitation by a
@@ -1614,7 +1614,7 @@ dipole signal with an appropriate window function $\mathcal{W}(t)$ and
 finally obtains the spectral strength $S_{D_i}(\omega)$ in $x$, $y$,
 or $z$ directions and corresponding spectral power $\mathcal{P}_{D_i}$
 as\PGRfoot{The dipole strength function, also known as dynamic
-  polarizability, is in prinicple a tensor as $\alpha_D$ is. Should we
+  polarizability, is in principle a tensor as $\alpha_D$ is. Should we
 address that or better restrict discussion to one coordinate only?}
 \begin{eqnarray}
   S_{D_i}(\omega)
@@ -1637,10 +1637,10 @@ $\delta\omega=2\pi/T_\mathrm{max}$.
 %
 The window function $\mathcal{W}(t)$ serves to attenuate the dipole
 signal toward the end point $T_\mathrm{max}$ in order to avoid
-artefacts from non-zero $\mathbf{D}(T_\mathrm{max})$
+artifacts from non-zero $\mathbf{D}(T_\mathrm{max})$
 \cite{Pre92}. Useful windows are
 $\mathcal{W}(t)=\cos^{2n}(t\pi/(2T_\mathrm{max})$ where $n$ is an
-integer number. The choice $n=1$ produces often still a buit rough
+integer number. The choice $n=1$ produces often still a bit rough
 $\Im\{\tilde{D}_i(\omega)\}$ while $n=2$ performs usually satisfyingly
 well.  It is interesting to note that this treatment in connection
 with absorbing boundary conditions (see section \ref{sec:abso}) allows
@@ -1753,7 +1753,7 @@ $\mathcal{A}_i$ as well as the total PAD
 $\mathcal{A}\equiv\mathrm{d}\sigma/\mathrm{d}\Omega(\vartheta,\phi)$.
 
 
-\subsubsection{Photoemission spectra (PES)}
+\subsubsection{Photo-emission spectra (PES)}
 \label{sec:pes}
 
 
@@ -1797,7 +1797,7 @@ $\mathbf{r}_\mathcal{M}$ is
 \label{eq:delOmega}
 \end{eqnarray}
 \end{subequations}
-where $\mathbf{e}_E$ is the direction of (linear) polarisation of the
+where $\mathbf{e}_E$ is the direction of (linear) polarization of the
 electrical field, $\Omega_\mathcal{M}$ the space angle associated with
 $\mathbf{r}_\mathcal{M}$, and
 $F(t)=\int{d}t'\,f(t')\exp{(-\mathrm{i}\omega_\mathrm{las}t')}$ the
@@ -1842,19 +1842,202 @@ clusters is $I\approx\times{10}^{15}$W/cm$^2$. For details see
 
 
 \subsection{The TDLDA calling tree}
+\label{sec:TDLDAtree}
 
-\PGRcomm{Here comes a calling tree as for RTA in section
-  \ref{eq:treeRTA}. This tree is much larger and may have to be
-  split into static and dynamic part.
+The TDLDA packages is a rather complex collection of routines.  Thus
+the tree structure of the code is sketched only at the major level of
+callings and is presented in three separate diagrams: the main routine
+with all initializations and two calls to the major drivers for static
+and dynamic calculations in diagram \ref{fig:tree_main}, the static
+driver in diagram \ref{fig:tree_static}, and the dynamic driver in
+\ref{fig:tree_dyn}.
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,158)(5,-146)
+\put(10,8){\mbox{\tt main}}
+\put(11,7){\line(0,-1){147}}
+ \put(50,1){\mbox{\large general initializations}}
+   \put(20,-4){\mbox{\tt cpu\_time,  init\_parallele, init\_simann}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\mbox{\tt  initnamelists, checkoptions}}
+   \put(11,-7){\line(1,0){8}}
+   \put(20,-12){\mbox{\tt init\_baseparams, iparams}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt iperio, changeperio}}
+        \put(90,-16){\mbox{$\leftrightarrow$ PsP tables}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt init\_grid, init\_fields}}
+   \put(11,-19){\line(1,0){8}}
+   \put(20,-24){\mbox{\tt init\_radmatrix}}
+        \put(90,-24){\mbox{$\leftrightarrow$ tables for SIC}}
+   \put(11,-23){\line(1,0){8}}
+   \put(20,-28){\mbox{\tt ocoption, init\_output}}
+   \put(11,-27){\line(1,0){8}}
+   \put(20,-32){\mbox{\tt init\_jellium, initions}}
+   \put(11,-31){\line(1,0){8}}
+   \put(20,-36){\mbox{\tt pseudo\_external}}
+        \put(90,-36){\mbox{$\leftrightarrow$ read explicit PsP}}
+   \put(11,-35){\line(1,0){8}}
+   \put(20,-40){\mbox{\tt initwf}}
+   \put(11,-39){\line(1,0){8}}
+   \put(20,-44){\mbox{\tt init\_homfield}}
+   \put(11,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt timer, init\_boxpara}}
+   \put(11,-47){\line(1,0){8}}
+ \put(50,-55){\mbox{\large static part}}
+   \put(20,-60){\mbox{\tt init\_fsicr}}
+   \put(11,-59){\line(1,0){8}}
+   \put(20,-64){\fbox{\tt statit}}
+   \put(11,-63){\line(1,0){8}}
+   \put(20,-68){\mbox{\tt simann}}
+   \put(11,-67){\line(1,0){8}}
+   \put(20,-72){\mbox{\tt afterburn}}
+   \put(11,-72){\line(1,0){8}}
+ \put(50,-79){\mbox{\large dynamic part}}
+   \put(20,-84){\mbox{\tt init\_absbc, init\_abs\_accum, initmeasurepoints}}
+   \put(11,-83){\line(1,0){8}}
+   \put(20,-88){\mbox{\tt init\_dynprotocol, evaluate}}
+   \put(11,-87){\line(1,0){8}}
+   \put(20,-92){\mbox{\tt init\_fsic, init\_scattel{\rm(??)}}}
+   \put(11,-91){\line(1,0){8}}
+   \put(20,-96){\mbox{\tt init\_dynwf}}
+   \put(11,-95){\line(1,0){8}}
+   \put(20,-100){\mbox{\tt restart2, addcluster}}
+   \put(11,-99){\line(1,0){8}}
+   \put(20,-104){\mbox{\tt calclocal, calc\_sic, calcpseudo}}
+   \put(11,-103){\line(1,0){8}}
+   \put(20,-108){\mbox{\tt dyn\_mfield, fermi\_init, info}}
+   \put(11,-107){\line(1,0){8}}
+   \put(20,-112){\mbox{\tt mergetabs, ordo\_per\_spin}}
+   \put(11,-111){\line(1,0){8}}
+   \put(20,-116){\mbox{\tt calc\_proj, calc\_projFine}}
+   \put(11,-115){\line(1,0){8}}
+   \put(20,-120){\mbox{\tt mpi\_barrier}}
+   \put(11,-119){\line(1,0){8}}
+   \put(20,-124){\mbox{\tt rhointxy, rhointxz, rhointyz}}
+   \put(11,-123){\line(1,0){8}}
+   \put(20,-128){\mbox{\tt lffirststep}}
+   \put(11,-127){\line(1,0){8}}
+   \put(20,-132){\mbox{\tt open\_protok\_el, analyze\_elect}}
+   \put(11,-131){\line(1,0){8}}
+   \put(20,-136){\fbox{\tt dyn\_propag}}
+   \put(11,-135){\line(1,0){8}}
+   \put(20,-141){\mbox{\tt mpi\_finalize}}
+   \put(11,-140){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_main}
+Schematic calling tree for the main routine in {\tt main.F90}.
+The calling trees for the two major 
+subroutines in framed boxes are explained in
+subsequent figures \ref{fig:tree_static} and  \ref{fig:tree_dyn}.
 }
+\end{figure}
+
+
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,66)(5,-62)
+\put(10,0){\mbox{\tt static}}
+\put(11,-1){\line(0,-1){58}}
+   \put(20,-4){\mbox{\tt calcrhor}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\mbox{\tt falr, solv\_possion}}
+   \put(11,-7){\line(1,0){8}}
+   \put(20,-12){\mbox{\tt calcpseudo, static\_mfield}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt pricm, infor, prifld}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt sstep}}
+   \put(11,-19){\line(1,0){8}}
+   \put(21,-21){\line(0,-1){22}}
+      \put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+      \put(21,-23){\line(1,0){8}}
+      \put(30,-28){\mbox{\tt exchgr, subtr\_sicpot}}
+      \put(21,-27){\line(1,0){8}}
+      \put(30,-32){\mbox{\tt nonlocalr}}
+      \put(21,-31){\line(1,0){8}}
+      \put(30,-36){\mbox{\tt rftf, rfftback, rkin3D}}
+      \put(21,-35){\line(1,0){8}}
+      \put(30,-40){\mbox{\tt project, givens}}
+      \put(21,-39){\line(1,0){8}}
+      \put(30,-44){\mbox{\tt schmidt, reocc}}
+      \put(21,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt prifldz, pri\_pstat, printfield}}
+   \put(11,-47){\line(1,0){8}}
+   \put(20,-52){\mbox{\tt localizer, mtv\_field}}
+   \put(11,-51){\line(1,0){8}}
+   \put(20,-56){\mbox{\tt resume, rsave}}
+   \put(11,-55){\line(1,0){8}}
+   \put(20,-60){\mbox{\tt infor\_sic, diag\_lagr}}
+   \put(11,-59){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_static}
+Schematic calling tree for the static driver routine in {\tt static.F90}.
+}
+\end{figure}
+
+
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,70)(5,-66)
+\put(10,0){\mbox{\tt dyn\_propag}}
+\put(11,-1){\line(0,-1){62}}
+   \put(20,-4){\mbox{\tt stimer, print\_densdiff, savings}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\fbox{\tt rta}}
+   \put(11,-7){\line(1,0){8}}
+        \put(90,-8){\mbox{$\leftrightarrow$ see section \ref{sec:RTA}}}
+   \put(20,-12){\mbox{\tt init\_occ\_target, init\_psitarget}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt tstep\_exp, CrankNicholson\_exp}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt tstep}}
+   \put(11,-19){\line(1,0){8}}
+   \put(21,-21){\line(0,-1){18}}
+      \put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+      \put(21,-23){\line(1,0){8}}
+      \put(30,-28){\mbox{\tt nonlocstep}}
+      \put(21,-27){\line(1,0){8}}
+      \put(30,-32){\mbox{\tt kinprop, fftf, fftback}}
+      \put(21,-31){\line(1,0){8}}
+      \put(30,-36){\mbox{\tt eval\_unitrot}}
+      \put(21,-35){\line(1,0){8}}
+      \put(30,-40){\mbox{\tt dyn\_meanfield, escmask, checkzeroforce}}
+      \put(21,-39){\line(1,0){8}}
+   \put(20,-44){\mbox{\tt rhointxy, rhointxz, rhointyz, testcurrent}}
+   \put(11,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt itstep, itstepv, enerkin\_ions, reset\_ions}}
+   \put(11,-47){\line(1,0){8}}
+   \put(20,-52){\mbox{\tt calc\_pseudo, calclocal, calc\_sic}}
+   \put(11,-51){\line(1,0){8}}
+   \put(20,-56){\mbox{\tt calc\_proj, calc\_projFine}}
+   \put(11,-55){\line(1,0){8}}
+   \put(20,-60){\mbox{\tt analyze\_elect, analyze\_ions, energ\_ions}}
+   \put(11,-59){\line(1,0){8}}
+   \put(20,-64){\mbox{\tt mpi\_barrier}}
+   \put(11,-63){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_dyn}
+Schematic calling tree for the static driver routine in {\tt dynamic.F90}.
+The routine in the framed box is explained in great detail in section
+\ref{sec:RTA}. 
+}
+\end{figure}
 
 \subsection{The TDLDA subroutines in detail}
 \label{eq:detailsTDLDA}
 
 
-\PGRcomm{Here is to come a detailed description of all subroutines
+\PGRcomm{Here is to come a detailed description of the subroutines
   similar as for RTA in \ref{eq:details}, but here for the LDA part.
-One example is given as appetizer.
+Only one example is given as appetizer. The problem is that it cost
+enormous amounts of space to present all routines and functions at that
+level of detail. We should shift that to the
+supplementary material. It will comes there anyway if we decide to
+transfer all these details to {\tt doxygen}.
 }
 
 \subsubsection*{\tt SUBROUTINE coul\_mfield(rho)}
@@ -2367,7 +2550,7 @@ $
 %\end{sideways}
 \end{center}
 \caption{\label{fig:summaryDCMF} Sketch of the scheme for solving the
-  DCMF eqs. (\ref{eq:DCMF}). This scheme expands {\tt SUBROUTINE
+  DCMF Eqs. (\ref{eq:DCMF}). This scheme expands {\tt SUBROUTINE
     eqstate} in step 4 from the RTA scheme \ref{fig:summary}. 
 The symbol $\mathcal{O}$ stands for ortho-normalization of the
 new set of s.p. wavefunctions and $\mathcal{D}$ for the damping
@@ -2413,7 +2596,7 @@ RTA step:
      equilibrium state $\hat{\rho}_\mathrm{eq}$ constrained to the
      given $\varrho$, $\mathbf{j}$, and $E_\mathrm{mf}$ from step
      \ref{it:newrho}.  This is achieved by the Density-Constrained
-     Mean eqs. (\ref{eq:DCMF}) which is done iteratively as sketched
+     Mean Eqs. (\ref{eq:DCMF}) which is done iteratively as sketched
      in figure \ref{fig:summaryDCMF}.  The equilibrium state
      $\hat{\rho}_\mathrm{eq}$ is represented by new s.p. states
      $\{|\phi'_{\alpha}\rangle\}$ and new occupation numbers

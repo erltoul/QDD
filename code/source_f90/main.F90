@@ -72,13 +72,13 @@ INTEGER :: i
 #if(raregas)
 REAL(DP):: dt
 #endif
-REAL(DP):: totalprob,totalovlp
+!REAL(DP):: totalprob,totalovlp
 REAL(DP):: time_absfin
-LOGICAL :: imaginary_time= .true.
+LOGICAL,PARAMETER :: imaginary_time= .true.     ! activate static afterburn
 
 
 REAL(DP), EXTERNAL:: energ_ions   ! declared in ion_md
-REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
+!REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
 
 !     *******************************************
 
@@ -100,7 +100,10 @@ IF(icooltyp == 3) CALL init_simann() ! initialize and read parameters for simula
 
 CALL init_baseparams()    !init grid size, number of states ...
 
+
+#if(raregas)
 CALL check_isrtyp         ! check short range interaction matrix
+#endif
 
 CALL iperio                     ! initializing the 'periodic table'
 
@@ -205,60 +208,8 @@ outnam=outname
 !          imaginary-time iteration (to improve statics)
 !       ****************************************************
 
-IF(isitmax>0 .AND. ismax>0) THEN
-   WRITE(*,*) ' start afterburn. isitmax=',isitmax
-   CALL flush(6)
-   ALLOCATE(psi(kdfull2,kstate))
-#if(twostsic)
-   IF(ifsicp >= 7 .AND. nclust > 0 )  CALL init_fsic()
-   IF(ifsicp == 8) CALL expdabvol_rotate_init
-#endif
-   CALL restart2(psi,outnam,.true.)     ! read static wf's
-#if(twostsic)
-   IF(ifsicp>=7) CALL init_vecs()
-#endif
-   CALL calcpseudo()
-   CALL calclocal(rho,aloc)                          !  ??
-   IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)    ! Not pure LDA : use some type of SIC (SIC-GAM, ADSIC, SIC-Slater, SIC-KLI ...)
-   IF(ipsptyp == 1) THEN ! full Goedecker pseudopotentials require projectors
-    DO ion=1,nion
-      IF (iswitch_interpol==1) THEN
-        CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-      ELSE
-        CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-      END IF
-     END DO
-     IF(iswitch_interpol==1) CALL mergetabs
-   END IF
-   CALL info(psi,rho,aloc,-1)
-   
-   IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
-   IF(ifcnevol == 1) THEN
-    WRITE(6,*) 'allocate space for CN propagation'
-    ALLOCATE(psiw(kdfull2,kstate))
-   ENDIF
-   
-   ! Start imaginary time iterations
-   DO it=1,isitmax
-     WRITE(*,*) ' afterburn. iteration=',it
-     IF(ifexpevol == 1) THEN
-       CALL tstep_exp(psi,aloc,rho,it,psiw,imaginary_time)
-     ELSE
-       STOP 'imaginary-time step requires exponential evolution'
-!       CALL tstep(psi,aloc,rho,it)
-     END IF
-     CALL cschmidt(psi)    ! schmidt normalization  of results
-     IF(MOD(it,istinf)==0)   CALL info(psi,rho,aloc,it)
-   END DO
-   DEALLOCATE(psiw)
-   CALL info(psi,rho,aloc,-1)
-   CALL SAVE(psi,-1,outnam)
-   DEALLOCATE(psi)
-#if(twostsic)
-   IF(nclust>0 .AND. ifsicp>=7) CALL end_fsic()
-#endif
-   IF(itmax <= 0) STOP ' terminate with afterburn '
+IF(imaginary_time .AND. isitmax>0 .AND. ismax>0) THEN
+  CALL afterburn(psir,rho,aloc)
 END IF
 
 
@@ -448,19 +399,6 @@ endif
 #endif
 
   IF(myn == 0 .OR. knode == 1) CALL open_protok_el(0)
-
-!  IF(myn == 0 .OR. knode == 1) THEN
-!    IF(jdip /= 0)     CALL safeopen(8,0,1,'pdip')           ! cPW     ueberflue!ssig?
-!    IF(jquad /= 0)    CALL safeopen(9,0,1,'pquad')          ! cPW            "
-!    IF(jinfo /= 0)    CALL safeopen(17,0,1,'infosp')        ! cPW            "
-!    IF(jspdp /= 0)    CALL safeopen(78,0,1,'pspdip')        ! cPW            "
-!    IF(jang /= 0)     CALL safeopen(68,0,1,'pangmo')        ! cPW            "
-!    IF(jenergy /= 0)  CALL safeopen(163,0,1,'penergies')    ! cPW            "
-!    IF(jangabso /= 0) CALL safeopen(47,0,1,'pangabso')      ! cPW            "
-!    IF(jnorms /= 0)   CALL safeopen(806,0,1,'pescOrb')      ! cPW            " !  
-!    IF(jgeomel /= 0)  CALL safeopen(608,0,1,'pgeomel')      ! cPW            "
-!    IF(jmp /= 0)      CALL safeopen(803,0,1,'pMP')          ! cPW            "
-!  END IF
   
 ELSE
   ecorr = energ_ions()
@@ -495,175 +433,15 @@ ekionold=0D0
       reference_energy=etot
  END IF
 
-
-!---           here starts true propagation  --------------
-
-CALL flush(7)
-CALL stimer(1)
-WRITE(*,*) 'before loop: cpx,y,z:',cpx(1:nion),cpy(1:nion),cpz(1:nion)
-
-CALL stimer(1)
-
-time=0
-tfs=0
-DO it=irest,itmax   ! time-loop
-
-  ijel=it
-#if(paraworld)
-  tfs=tfs+dt1*0.0484D0
-#else
-  tfs=it*dt1*0.0484D0 !/(2.0*ame)
-#endif
-  CALL print_densdiff(rho,it)       ! right place here ???
-  
-!         if(nclust.gt.0) call savings(psi,it)
-if (jrtaint.NE.0) then
-  if (mod(it,jrtaint).eq.0.and.it>0.and.(it>irest)) then!to avoid  rta after a restart
-        call rta(psi,aloc,rho,it)!MV
-   endif
-endif
-  
-  IF(jattach/=0 .AND. it==irest) THEN
-     CALL init_occ_target()
-     WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
-     ALLOCATE(psi_target(kdfull2,nstate_target))
-     CALL init_psitarget()
-  END IF
-
-  IF(it > irest)THEN
-    
-    
-!          pure electronic dynamics
-    
-    IF(nclust > 0) THEN
-         
-!     propagation of the wfs
-      WRITE(*,*) 'propagation of the wfs'
-      IF(ifexpevol == 1) THEN
-        CALL tstep_exp(psi,aloc,rho,it,psiw, .NOT. imaginary_time)
-      ELSE
-        IF(ifcnevol == 1) THEN
-          WRITE(*,*) 'Crank call '
-          CALL CrankNicolson_exp(psi,aloc,rho,it)
-        ELSE
-          CALL tstep(psi,aloc,rho,it)
-        END IF
-      END IF
-      IF(nabsorb > 0) CALL  absbc(psi,rho) ! Existence of absorbing poins on boundary
-      
-      
-!            protocol of densities
-      
-      IF(ifrhoint_time == 1) THEN
-        CALL rhointxy(rho,it)
-        CALL rhointxz(rho,it)
-        CALL rhointyz(rho,it)
-      END IF
-      IF(MOD(it,jstinf)==0) CALL testcurrent(psi,it)
-
-#if(raregas)
-    ELSE
-      IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt,.true.)
-#endif
-    END IF
-    
-    IF(ionmdtyp==1 .OR. (ionmdtyp==2 .AND. MOD(it,modionstep)==0)) THEN
-      
-!            ionic propagation
-      
-      IF(ionmdtyp == 1) CALL itstep(rho,it,psi)
-      IF(ionmdtyp == 2) CALL itstepv(rho,it,psi)
-      ekion =  enerkin_ions()
-      IF(icooltyp > 0) CALL  reset_ions()
-      
-!            new total mean field  ('calclocal' still necessary ?)
-      
-      IF(nclust > 0)THEN
-        CALL calcpseudo()
-        CALL calclocal(rho,aloc)                          !  ??
-        IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
-        IF(ipsptyp == 1) THEN
-          DO ion=1,nion
-            IF (iswitch_interpol==1) then
-              CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-            ELSE
-              CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-            ENDIF
-          END DO
-        END IF
-      END IF
-    END IF
-    
-  END IF
-  
-!     ******** compute and write observables: ********
-  
-  CALL timer(2)
-  CALL stimer(2)
-  
-  IF(it > irest) THEN
-    IF(myn == 0) THEN
-#if(paraworld)
-!     tfs=tfs+dt1*0.0484D0
-#else
-      tfs=it*dt1*0.0484D0
-#endif
-      IF(nion2 > 0) CALL analyze_ions(it)
-      IF(isurf > 0) CALL analyze_surf(it)
-    END IF
-    IF(nclust > 0) THEN
-      CALL analyze_elect(psi,rho,aloc,it)
-    ELSE IF(MOD(it,100) == 0)THEN
-      ecorr = energ_ions()
-      etot = ecorr + ekion
-    END IF
-    ! The calculation of an electron attachment on a water molecule should 
-    ! proceed as follows:
-    ! 1) Perform a static calculation for a water molecule alone, with a 
-    !    'deocc' high enough, so that all bound states, occupied and empty, 
-    !    are calculated.
-    ! 2) Create the file 'occ_spe_target' containing the binding energy and 
-    !    the total energy as a first line, and then the isopin, occupation 
-    !    number and s.p. energie of each state.
-    ! 3) Perform a dynamical calculation with itmax=1 to generate a save file 
-    !    which should be moved to the parent directory and renamed 'wfs_target'.
-    ! 4) Perform a static and dynamical calculation with 'iscatterelectron=1' 
-    !    and a small deocc (e.g., 'deocc=0.1'), so that only occupied states 
-    !    of the water molecule are considered. The incoming electron is added 
-    !    just before the dynamics as the last (occupied) state, and thus 
-    !    labeled by nstate.
-    IF(jattach /= 0 .AND. it>irest .AND. MOD(it,jattach) == 0) then
-       call attach_prob(totalprob,totalovlp,psi)
-       totintegprob=totintegprob+dt1*0.0484D0*jattach*totalprob
-       write(6,'(a,e12.5,1x,i8,3(1x,1pg13.5))') &
-            'after ATTACHEMENT:',&
-            tfs,nmatch,totalprob,totintegprob,totalovlp
-       CALL safeopen(809,it,jattach,'pattach')
-       write(809,'(e12.5,1x,i8,3(1x,1pg13.5))') & 
-            tfs,nmatch,totalprob,totintegprob,totalovlp
-       CALL FLUSH(809)
-    END IF
-  
-    IF(nclust > 0) CALL savings(psi,it)
-  END IF
+!********************************************************************
+!
+!  dynamic propagation of electrons and ions
+!
+!********************************************************************
 
 
-#if(simpara)
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  WRITE(7,*) ' After barrier. myn,it=',myn,it
-#endif
-  
+CALL dyn_propag(psi,rho,aloc)
 
- 
-END DO
-
-!  ********************  end of dynamic loop ****************************
-
-
-
-OPEN(660,STATUS='unknown',FILE='progstatus')
-WRITE(660,*) 'dynamics finished'
-CLOSE(660)
 
 #if(simpara)
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
