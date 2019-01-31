@@ -3,7 +3,7 @@ Open points concering QDD code:
 
 Preprocessor:
 Make all array allocatable. Then we can skip all preprocessor
-flags.
+flags except those for parallelization.
 
 SIC:
 skip GAM and localized SIC?
@@ -29,5 +29,18 @@ Calc_var:
 Projection in calculation of variance?
 
 raregas:
-try to collect at few points and put to private section.
+try to collect at few points and skip in public section.
+
+
+
+
+private versus public sector:
+If all preprocessor parameters, except for parallelization,
+are replaced by dynamical variables (see above), we can
+skip parts of the package from the public sector by
+placing dummies instead of the real files for the relevant
+subroutines. We may consider hiding the content of the hidden
+options by giving the hidden routines innocent names as
+'CALL user_interface_1(...)'  etc.
+
 
