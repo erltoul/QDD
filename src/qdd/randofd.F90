@@ -1,0 +1,84 @@
+!This file is a part of PW-TELEMAN project.
+!PW-TELEMAN is a Time-Dependent Electronic Dynamics in Molecules And Nanosystems library.
+!Copyright (C) 2011-2015  Paul-Gerhard Reinhard, Eric Suraud, Florent Calvayrac,
+!Phuong Mai Dinh, David Brusson, Philipp Wopperer, José María Escartín Esteban.
+!
+!PW-Teleman is free software: you can redistribute it and/or modify
+!it under the terms of the GNU General Public License as published by
+!the Free Software Foundation, either version 3 of the License, or
+!(at your option) any later version.
+!
+!PW-Teleman is distributed in the hope that it will be useful,
+!but WITHOUT ANY WARRANTY; without even the implied warranty of
+!MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!GNU General Public License for more details.
+!
+!You should have received a copy of the GNU General Public License
+!along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
+
+!       **************************
+ 
+SUBROUTINE ithion
+
+!       **************************
+
+
+USE params
+!USE kinetic
+IMPLICIT REAL(DP) (A-H,O-Z)
+!       initial thermalization of the ions (only executed if needed)
+
+!       we assign 0.5*kb*t per degree of freedom
+
+ekin=0.5*bk*tempion
+WRITE(7,'(a,f9.4)')  'wanted temp',tempion
+WRITE (7,'(a,f9.4)') 'wanted energ  per degree of freedom',ekin
+xm=0.5*1836.0*amu(np(1))*ame
+WRITE(7,*) 'warning : ithion not yet able to treat unhomogeneous systems'
+
+!       attention to masses !
+
+ekin=ekin/3/nion*(3*nion-6.0)
+vmoy=SQRT(3.0*2.0*ekin/xm)
+WRITE(7,'(a,f9.4)') 'corresponding speed',vmoy
+pmoy=xm*vmoy
+
+!       we choose random directions of the speeds
+
+CALL spheric(pmoy,cpx,cpy,cpz,nion)
+CALL conslw(cx,cy,cz,cpx,cpy,cpz,nion)
+
+!       we rescale  the speeds
+
+DO ion=1,nion
+  ek=cpx(ion)*cpx(ion)
+  ek=ek+cpy(ion)*cpy(ion)
+  ek=ek+cpz(ion)*cpz(ion)
+  pn=SQRT(ek)
+  cpx(ion)=cpx(ion)/pn*pmoy
+  cpy(ion)=cpy(ion)/pn*pmoy
+  cpz(ion)=cpz(ion)/pn*pmoy
+END DO
+CALL conslw(cx,cy,cz,cpx,cpy,cpz,nion)
+ekion=0.0
+DO ion=1,nion
+  ek=0.0
+  ek=ek+cpx(ion)*cpx(ion)
+  ek=ek+cpy(ion)*cpy(ion)
+  ek=ek+cpz(ion)*cpz(ion)
+  xm=0.5*1836.0*amu(np(1))*ame
+  ek=ek/2.0/xm
+  WRITE(7,'(a,i2,a,f9.4)') 'ion',ion,'ek=',ek
+  ekion=ekion+ek
+  WRITE(7,'(a,i2,3f9.4)') 'ion',ion,cpx(ion),cpy(ion),cpz(ion)
+END DO
+WRITE(7,'(a,f9.4)') 'kin.energ after renormalization',ekion
+ekion=ekion/(3*nion-6.0)
+WRITE(7,'(a,f9.4)') 'av.kin.energ per net degree of freedom',ekion
+ekion=ekion*2.0/bk
+WRITE(7,'(a,f9.4)') 'corresponding temperature',ekion
+
+
+
+RETURN
+END SUBROUTINE ithion
