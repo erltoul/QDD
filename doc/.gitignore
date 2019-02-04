@@ -2,6 +2,6 @@
 *.dvi
 *.log
 *.ps
-*.pdf
+#*.pdf
 *.toc
 .texpadtmp

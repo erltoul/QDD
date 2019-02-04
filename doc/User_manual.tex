@@ -1,8 +1,11 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% PLEASE COMPILE WITH XELATEX TO GET THE FONT SIZES RIGHT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[11pt,a4paper]{article}
 \input{User_manual.preamble.tex}
 
 \title{\fontsize{50}{60}\selectfont{Quantum Dissipative Dynamics}\\\vspace{7ex}\fontsize{50}{60}\selectfont{\textsf{User manual}}\vspace{8ex}}
-\author{F.M.G.J. Coppens\\P.-G. Reinhard\\M. Vincendon\\E. Suraud}
+\author{F.M.G.J. Coppens\\P.-G. Reinhard\\M. Vincendon\\M. Seve Dinh\\E. Suraud}
 
 \begin{document}
 	\maketitle
@@ -37,11 +40,11 @@
 		\end{verbatim}
 		will be referred to in this guide as the `\texttt{\$QDD\_ROOT}'. After the download is complete navigate to the Fortran source directory:
 		\begin{verbatim}
-			$ cd $QDD_ROOT/code/source_F90
+			$ cd $QDD_ROOT/src/qdd
 		\end{verbatim}
 		
 		\subsection{Compilation}
-			To get everything up and running as easy and fast as possible we will compile the QDD package with the default `\texttt{makefile}'. This means QDD will be using:
+			To get everything up and running as easy and fast as possible we will compile the QDD package with the default `\texttt{Makefile}'. This means QDD will be using:
 		\begin{itemize}
 			\item Fast Fourier transforms from the \textit{Netlib FFTPACK}
 			\item The \textit{GNU Fortran} compiler \texttt{gfortran}, that can be downloaded here:\\ \url{https://gcc.gnu.org/wiki/GFortran}
@@ -54,9 +57,9 @@
 		\begin{verbatim}
 			$ make
 		\end{verbatim}
-		After the build process is finished the executable `\texttt{qdd}' will be in the parent directory
+		After the build process is finished the executable `\texttt{qdd}' will be in the ``bin''-directory
 		\begin{verbatim}
-			$ $QDD_ROOT/code/qdd
+			$ $QDD_ROOT/bin/qdd
 		\end{verbatim}
 
 	\section{Basic I/O structure of a ground state calculation}
@@ -64,7 +67,7 @@
 		\subsection{Input files \& input parameters}
 		Each calculation will have its own directory and in it its own set of input files where all the details and the initial conditions of the system to be calculated are set. While the calculation is running, screen output and output files are generated that give information about the current state of the system while it is running and also about the final state when the calculation is finished. There are a minimum of 3 files required to start a calculation. They are listed in Table~\ref{tab:input-files}.
 		
-		\begin{table}[h]
+		\begin{table}[t]
 			\caption{Minimum set of input files.}\label{tab:input-files}
 			\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 				\hline
@@ -95,7 +98,7 @@
 			\item[\circled{5}] is start spin for initialisation at ion-core $n$
 		\end{itemize}\newpage
 
-		For example, an input file for H$_2$O could look like
+		For example, an ion input file for H$_2$O (\emph{say} \texttt{for005ion.H2O}) could look like
 
 		\tikz[baseline]{\node[fill=blue!20,anchor=base]
 			{\texttt{0.22835~~0.00000~~0.00000}};
@@ -145,7 +148,7 @@
 			{\texttt{-1}};
 		}		
 
-		\begin{table}[h]
+		\begin{table}[t]
 			\caption{System choice definitions in the `GLOBAL' namelist in \texttt{for005.<name>}}\label{tab:input-params-sys-choice}
 			\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 				\hline
@@ -200,7 +203,7 @@
 			\end{tabular}
 		\end{table}
 
-		\begin{table}[h]
+		\begin{table}[t]
 			\caption{Wave function initialisation in the GLOBAL namelist in \texttt{for005.<name>}}\label{tab:input-params-wfs}
 			\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 				\hline
@@ -229,7 +232,7 @@
 			\end{tabular}
 		\end{table}
 
-		\begin{table}[h]
+		\begin{table}[t]
 			\caption{Convergence parameters in the GLOBAL namelist in \texttt{for005.<name>}}\label{tab:input-params-conv}
 			\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 				\hline
@@ -246,11 +249,11 @@
 			\end{tabular}
 		\end{table}
 		
-		Examples of these input files can be found in `\texttt{\$QDD\_ROOT/samples/}'. In the following set of example calculations there will be always two representative cases: the H$_2$O molecule and the Na$_{10}$ metallic cluster.
+		Examples of these input files can be found in `\texttt{\$QDD\_ROOT/examples/}'. In the following sections, example calculations of the covalent molecule water will be treated in ever increasing complexity.
 			
 		\subsection{Output files}
-			During the calculation, output files are generated and stored in the same directory as where the 
-			\begin{table}[h!]
+			During a calculation output files are generated and stored in the same directory as where the \texttt{qdd} binary is executed. For a ground state calculation the output files are listed in Table~\ref{tab:static-output-files}.
+			\begin{table}[t]
 				\caption{Output files generated during a \emph{static} calculation}\label{tab:static-output-files}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -269,18 +272,8 @@
 				\end{tabular}
 			\end{table}
 		
-		\subsection{Results and observables}
-			Other than the terminal output there are also a number of other files created during and when the calculation is finished.
-			\subsubsection{Total binding energy}
-			\subsubsection{Ionisation potential}
-			\subsubsection{Eigen energies of the single electron orbitals}
-			\subsubsection{Monopole-, dipole- and quadrupole moments}
-			\subsubsection{H.O.M.O-L.U.M.O. gap}
-			\subsubsection{Potentials and electron density}
-			\subsubsection{Structure information}
-
-	\section{Illustrative ground state calculations}
-		\subsection{Covalent molecules: H$_\mathsf{2}$O}
+	\section{An illustrative ground state calculation: H$_\mathsf{2}$O}
+			
 		The input files for the water molecule can be found in 
 		\begin{verbatim}
 			$QDD_ROOT/samples/H2O/
@@ -288,7 +281,7 @@
 		As discussed in the previous section the 3 files that you will find here are `\texttt{for005}', `\texttt{for005.h2o}' and `\texttt{for005ion.h2o}' respectively. You can either copy these files to a location of your choosing, or simply run the `\texttt{qdd}' executable in each directory by executing
 		\begin{verbatim}
 			$ cd /path/to/the/for005*/files
-			$ $QDD_ROOT/code/qdd > terminal.out 2> error.out
+			$ $QDD_ROOT/bin/qdd > terminal.out 2> error.out
 		\end{verbatim}
 		This will save the terminal output on the screen to the file `\texttt{terminal.out}' and any errors that might be generated during the calculation to `\texttt{error.out}'. Depending on the speed of your machine, after a few minutes you should have a file listing similar to this
 		\begin{verbatim}
@@ -342,15 +335,26 @@
 			omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
 		\end{verbatim}
 		
-		\subsection{Metal clusters: Na$_\mathsf{8}$}
-			One would expect on purely classical grounds that the lowest energy configuration will be an equilateral triangle. As the calculation will show, this is not the case; the triangle is slightly more opened. This shows that one needs to included  quantum effects to explain the final structure.
+		\subsection{Results and observables}
+			Other than the terminal output there are also a number of other files created during and when the calculation is finished.
+			\subsubsection{Total binding energy}
+			\subsubsection{Ionisation potential}
+			\subsubsection{Eigen energies of the single electron orbitals}
+			\subsubsection{Monopole-, dipole- and quadrupole moments}
+			\subsubsection{H.O.M.O-L.U.M.O. gap}
+			\subsubsection{Potentials and electron density}
+			\subsubsection{Structure information}
+
+		
+%		\subsection{Metal clusters: Na$_\mathsf{8}$}
+%			One would expect on purely classical grounds that the lowest energy configuration will be an equilateral triangle. As the calculation will show, this is not the case; the triangle is slightly more opened. This shows that one needs to included  quantum effects to explain the final structure.
 			
 		\subsection{Relaxation of the ion-cores positions using pseudo-dynamics}
 
 	\section{Basic I/O structure of dynamic calculations}
 		\subsection{Input parameters in the \texttt{DYNAMIC} namelist}
 		
-			\begin{table}[h]
+			\begin{table}[t]
 				\caption{Dynamical paramaters in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-general}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -427,7 +431,7 @@
 				\end{tabular}
 			\end{table}
 
-			\begin{table}[h]
+			\begin{table}[t]
 				\caption{Dynamical paramaters in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-excitation}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -499,7 +503,7 @@
 			\end{table}
 
 
-			\begin{table}[h]
+			\begin{table}[t]
 				\caption{Parameters that control observables and output in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-observables}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -547,7 +551,7 @@
 			\end{table}
 
 		\subsection{Output files}
-			\begin{table}[h!]
+			\begin{table}[t]
 				\caption{Output files generated during a \emph{dynamic} calculation}\label{tab:dynamic-output-files}
 				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline
@@ -613,7 +617,7 @@
 	\section{Electronic relaxation with RTA}
 		\subsection{Additional \texttt{DYNAMIC} input parameters concerning RTA}
 
-			\begin{table}[h]
+			\begin{table}[t]
 				\caption{Parameters that control RTA in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-rta}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -643,7 +647,7 @@
 			\end{table}
 
 		\subsection{Output files}
-			\begin{table}[h!]
+			\begin{table}[t]
 				\caption{Output files that are specific to a RTA-enabled calculation}\label{tab:dynamic-output-files-rta}
 				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline

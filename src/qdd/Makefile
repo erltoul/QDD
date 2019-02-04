@@ -52,7 +52,7 @@ MKL_THREADS = NO
 # Default value:
 #MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 #for CCC
-MKL_WRAPPERS = $(HOME)/code/fftw3xf
+MKL_WRAPPERS = $(HOME)/Developer/fftw3xf
 
 FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3-icc/lib
 
@@ -821,9 +821,6 @@ parallele.o: parallele.F90 kinetic.mod
 
 rta.o: rta.F90 kinetic.mod params.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
-
-#mini.o: afterburn.F90 params.mod
-#	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 zdiag.o: zdiag.f
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
