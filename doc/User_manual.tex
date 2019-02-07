@@ -5,7 +5,7 @@
 \input{User_manual.preamble.tex}
 
 \title{\fontsize{50}{60}\selectfont{Quantum Dissipative Dynamics}\\\vspace{7ex}\fontsize{50}{60}\selectfont{\textsf{User manual}}\vspace{8ex}}
-\author{F.M.G.J. Coppens\\P.-G. Reinhard\\M. Vincendon\\M. Seve Dinh\\E. Suraud}
+\author{F.M.G.J. Coppens\\P.-G. Reinhard\\M. Seve Dinh\\E. Suraud\\M. Vincendon}
 
 \begin{document}
 	\maketitle
@@ -257,7 +257,7 @@
 				\caption{Output files generated during a \emph{static} calculation}\label{tab:static-output-files}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
-					\texttt{dx}& grid spacing in units of Bohr. \uppercase{not sure about this. the value in this file seems to conflict with the value set in the input file} \\
+					\texttt{dx}& grid spacing in units of Bohr.\\
 					\hline
 					\texttt{nx}& this file contains a suggested value for \texttt{kxbox} when \texttt{dx} is set to a negative value\\
 					\hline
@@ -272,89 +272,122 @@
 				\end{tabular}
 			\end{table}
 		
-	\section{An illustrative ground state calculation: H$_\mathsf{2}$O}
+	\section{An example static calculation for H$_\mathsf{2}$O}
 			
 		The input files for the water molecule can be found in 
 		\begin{verbatim}
-			$QDD_ROOT/samples/H2O/
+			$QDD_ROOT/examples/H2O/
 		\end{verbatim}
-		As discussed in the previous section the 3 files that you will find here are `\texttt{for005}', `\texttt{for005.h2o}' and `\texttt{for005ion.h2o}' respectively. You can either copy these files to a location of your choosing, or simply run the `\texttt{qdd}' executable in each directory by executing
+		The first and simplest calculation is a ground state calculation with no ionic relaxation. The ion-cores are fixed in position while the electronic density relaxes around then. You will find the files for this calculation in
+		\begin{verbatim}
+			$QDD_ROOT/examples/H2O/static-no_ionmd/
+		\end{verbatim}
+		As discussed in the previous section the 3 input files that you will find here are `\texttt{for005}', `\texttt{for005.H2O}' and `\texttt{for005ion.H2O}'. One can either copy these files to any desired location of, or run the `\texttt{qdd}' executable directly inside this directory, by executing
 		\begin{verbatim}
 			$ cd /path/to/the/for005*/files
 			$ $QDD_ROOT/bin/qdd > terminal.out 2> error.out
 		\end{verbatim}
 		This will save the terminal output on the screen to the file `\texttt{terminal.out}' and any errors that might be generated during the calculation to `\texttt{error.out}'. Depending on the speed of your machine, after a few minutes you should have a file listing similar to this
-		\begin{verbatim}
-			-rw------- 1 coppens   25 Feb  1 11:55 dx
-			-rw------- 1 coppens   34 Feb  1 11:57 error.out
-			-rw------- 1 coppens    4 Feb  1 11:52 for005
-			-rw------- 1 coppens 1.2K Feb  1 11:53 for005.H2O
-			-rw------- 1 coppens  160 Nov 28 11:12 for005ion.H2O
-			-rw------- 1 coppens  46K Feb  1 11:57 for006.0H2O
-			-rw------- 1 coppens 2.0K Feb  1 11:57 infosp.H2O
-			-rw------- 1 coppens   13 Feb  1 11:55 nx
-			-rw------- 1 coppens 1.3K Feb  1 11:55 poptions.H2O
-			-rw------- 1 coppens 2.3K Feb  1 11:57 pstat.H2O
-			-rw------- 1 coppens  41M Feb  1 11:57 rsave.H2O
-			-rw------- 1 coppens 138K Feb  1 11:57 terminal.out
-		\end{verbatim}
-		In the file `\texttt{pstat.H2O}' you will find  
-		\begin{verbatim}
-			final protocol of static for IFSICP=  2
-			level:  1  spin,occup,ekin,esp,variance =  1  1.00000  1.31912 -2.33723  5.8472E-10
-			level:  2  spin,occup,ekin,esp,variance =  1  1.00000  2.51534 -1.59199  5.3699E-10
-			level:  3  spin,occup,ekin,esp,variance =  1  1.00000  2.46317 -1.25959  5.3194E-10
-			level:  4  spin,occup,ekin,esp,variance =  1  1.00000  2.74713 -1.11479  5.7191E-10
-			level:  5  spin,occup,ekin,esp,variance =  1  0.00000  0.71328 -0.42203  7.7313E-07
-			level:  6  spin,occup,ekin,esp,variance =  1  0.00000  0.73195 -0.26481  2.9550E-03
-			level:  7  spin,occup,ekin,esp,variance =  1  0.00000  0.30830 -0.21468  5.6298E-03
-			level:  8  spin,occup,ekin,esp,variance =  1  0.00000  0.31976 -0.21151  6.3903E-03
-			level:  9  spin,occup,ekin,esp,variance =  1  0.00000  0.35431 -0.15832  7.9917E-03
-			level: 10  spin,occup,ekin,esp,variance =  1  0.00000  0.20732 -0.12894  1.4731E-03
-			level: 11  spin,occup,ekin,esp,variance = -1  1.00000  1.31912 -2.33723  5.8472E-10
-			level: 12  spin,occup,ekin,esp,variance = -1  1.00000  2.51534 -1.59199  5.3699E-10
-			level: 13  spin,occup,ekin,esp,variance = -1  1.00000  2.46317 -1.25959  5.3194E-10
-			level: 14  spin,occup,ekin,esp,variance = -1  1.00000  2.74713 -1.11479  5.7191E-10
-			level: 15  spin,occup,ekin,esp,variance = -1  0.00000  0.71328 -0.42203  7.7313E-07
-			level: 16  spin,occup,ekin,esp,variance = -1  0.00000  0.73195 -0.26481  2.9550E-03
-			level: 17  spin,occup,ekin,esp,variance = -1  0.00000  0.30830 -0.21468  5.6298E-03
-			level: 18  spin,occup,ekin,esp,variance = -1  0.00000  0.31976 -0.21151  6.3903E-03
-			level: 19  spin,occup,ekin,esp,variance = -1  0.00000  0.35431 -0.15832  7.9917E-03
-			level: 20  spin,occup,ekin,esp,variance = -1  0.00000  0.20732 -0.12894  1.4731E-03
-			binding energy  =  -32.6355092
-			total variance  =  5.5684E-10
-			sp pot, sp kin, rearr, nonlocal=  -30.69673   18.08954   -1.06211    0.00000
-			e_coul: i-i , e-i , e-e , total=   13.54907  -97.56193   39.39447  -44.61839
-			mon.:   8.00
-			dip.in  :    0.00000    0.00000    0.00000
-			dip.out :   -0.06362    0.00000    0.00000
-			quadrupole moments:
-			xx,yy,zz:     0.9037     0.9913     0.7949
-			xy,zx,zy:     0.0000     0.0000     0.0000
-			spindip.:    -0.0000     0.0000    -0.0000
-			omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
-		\end{verbatim}
-		
+\vspace{1ex}		
+\begin{Verbatim}[frame=single,label=Example directory listing]
+-rw------- 1 coppens   25 Feb  1 11:55 dx
+-rw------- 1 coppens   34 Feb  1 11:57 error.out
+-rw------- 1 coppens    4 Feb  1 11:52 for005
+-rw------- 1 coppens 1.2K Feb  1 11:53 for005.H2O
+-rw------- 1 coppens  160 Nov 28 11:12 for005ion.H2O
+-rw------- 1 coppens  46K Feb  1 11:57 for006.0H2O
+-rw------- 1 coppens 2.0K Feb  1 11:57 infosp.H2O
+-rw------- 1 coppens   13 Feb  1 11:55 nx
+-rw------- 1 coppens 1.3K Feb  1 11:55 poptions.H2O
+-rw------- 1 coppens 2.3K Feb  1 11:57 pstat.H2O
+-rw------- 1 coppens  41M Feb  1 11:57 rsave.H2O
+-rw------- 1 coppens 138K Feb  1 11:57 terminal.out
+\end{Verbatim}
+		For this calculation, the relevant observables are all in the file `\texttt{pstat.H2O}':
+\begin{Verbatim}[frame=single,label=pstat.H2O,fontsize=\footnotesize]
+final protocol of static for IFSICP=  2
+level:  1  spin,occup,ekin,esp,variance =  1  1.00000  1.47822 -2.32460  5.4639E-10
+level:  2  spin,occup,ekin,esp,variance =  1  1.00000  2.96866 -1.46691  1.0425E-09
+level:  3  spin,occup,ekin,esp,variance =  1  1.00000  3.03747 -1.18004  5.8210E-10
+level:  4  spin,occup,ekin,esp,variance =  1  1.00000  3.36471 -1.02293  2.8506E-10
+level:  5  spin,occup,ekin,esp,variance =  1  0.00000  0.80152 -0.43357  1.0256E-03
+level:  6  spin,occup,ekin,esp,variance = -1  1.00000  1.47822 -2.32460  5.4639E-10
+level:  7  spin,occup,ekin,esp,variance = -1  1.00000  2.96866 -1.46691  1.0425E-09
+level:  8  spin,occup,ekin,esp,variance = -1  1.00000  3.03747 -1.18004  5.8210E-10
+level:  9  spin,occup,ekin,esp,variance = -1  1.00000  3.36471 -1.02293  2.8506E-10
+level: 10  spin,occup,ekin,esp,variance = -1  0.00000  0.80152 -0.43357  1.0256E-03
+binding energy  =  -33.5155334
+total variance  =  6.7185E-10
+sp pot, sp kin, rearr, nonlocal=  -33.68712   21.69813   -1.10795    0.00000
+e_coul: i-i , e-i , e-e , total=   13.79125 -105.00801   41.43268  -49.78408
+mon.:   8.00
+dip.in  :    0.00000    0.00000    0.00000
+dip.out :   -0.05972    0.00000    0.00000
+quadrupole moments:
+xx,yy,zz:     0.8554     0.9404     0.7523
+xy,zx,zy:     0.0000    -0.0000    -0.0000
+spindip.:     0.0000     0.0000    -0.0000
+omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
+\end{Verbatim}
+		The most important information in this file will be discussed in the next section. 
 		\subsection{Results and observables}
-			Other than the terminal output there are also a number of other files created during and when the calculation is finished.
-			\subsubsection{Total binding energy}
-			\subsubsection{Ionisation potential}
-			\subsubsection{Eigen energies of the single electron orbitals}
-			\subsubsection{Monopole-, dipole- and quadrupole moments}
-			\subsubsection{H.O.M.O-L.U.M.O. gap}
-			\subsubsection{Potentials and electron density}
-			\subsubsection{Structure information}
-
-		
-%		\subsection{Metal clusters: Na$_\mathsf{8}$}
-%			One would expect on purely classical grounds that the lowest energy configuration will be an equilateral triangle. As the calculation will show, this is not the case; the triangle is slightly more opened. This shows that one needs to included  quantum effects to explain the final structure.
+			From the file contents above we can immediately read off the following observables
+			\paragraph{Energies} The most relevant energies can be readily read from the file. They are the total binding energy: \texttt{binding energy}; the energies of the electronic orbitals (kinetic and eigen energy): \texttt{ekin, esp}; the total energy of all the occupied s.p. orbitals \texttt{sp pot}; the kinetic energy of all the occupied s.p. orbitals \texttt{sp kin} and the different types of Coulomb interaction (ion-ion, electron-ion and electron-electron) \texttt{e\_coul: i-i, e-i, e-e, total}
 			
-		\subsection{Relaxation of the ion-cores positions using pseudo-dynamics}
+			\paragraph{Ionisation potential} From the list of occupied and unoccupied orbitals one can immediately read-off the ionisation-potential energy
+			
+			\paragraph{HOMO–LUMO gap} this can be easily obtained from the s.p. orbital list by finding the highest occupied state and the lowest unoccupied state and taking the difference. 
+			
+			\paragraph{Multipole moments} The monopole-, dipole- and quadrupole are labeled \texttt{mon., dip-in, dip-out} and \texttt{quadrupole moments} respectively.
+			
+		\subsection{Ion-core relaxation using pseudo-dynamics}
+			To allow the ion cores to move and relax into their equilibrium position we need to start a pseudo-dynamical calculation. During this calculation the ion-cores will move due to a dynamic force generated by the electron-ion potential.
+			
+			Starting a calculation like this, we need to make a few modifications to out input files. A set of example files for H$_2$O is available in
+			\begin{verbatim}
+				$QDD_ROOT/examples/H2O/static-ionmd/
+			\end{verbatim}
+			In this example the oxygen and two hydrogen ion cores are placed along he $y$-axis and the hydrogen cores at a slightly too small distance away from the oxygen core. So both the angle and the distances are wrong.
+			
+			Make sure that in the \texttt{GLOBAL} namelist in \texttt{for005.H2O}
+			\begin{verbatim}
+				imob = 1
+			\end{verbatim}
+			and that in the \texttt{DYNAMIC} namelist the following parameters are present and set to
+			\begin{verbatim}
+				ionmdtyp = 1
+				icooltyp = 1
+				ifredmas = 1
+				nabsorb = 0, jesc = 0
+				itmax = 25000
+				jpos = 10
+				jvel = 10	
+			\end{verbatim}
+			Make sure \texttt{ipsptype}$\neq$\texttt{0} and that \texttt{itmax} is set to a high enough value for the relaxation to finish. In this case the relaxation takes less than 1~fs. In this case $1\,\mathrm{fs}/(\hbar\times 0.0125\,\mathrm{Ry}^{-1})$=1654~iterations would be enough. Also it is better not to use any absorbing points (\texttt{nabsorb=0}, this automaticall implies \texttt{jesc=0}), and use reduced masses for the ions in the dynamics (\texttt{ifredmas=1}). You can monitor the progress of this minimisation by investigating \texttt{pposion.H2O} and \texttt{pvelion.H2O}.
+
+			\begin{figure}[!htbp]
+				\centering
+				\includegraphics[width=\linewidth]{ionmd_pos}
+				\caption{Shows the kinetic energy of the ion cores of oxygen and the two hydrogen atoms respectively as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-pos}
+			\end{figure}
+
+			\begin{figure}[!htbp]
+				\centering
+				\includegraphics[width=\linewidth]{ionmd_vel}
+				\caption{Shows the distance of the ion cores of oxygen and the two hydrogen atoms to the origin of the calculation box as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-vel}
+			\end{figure}
+			
+			You can control the interval in number of iterations that the current position and velocity of the ions are printed to these files with \texttt{jpos} and \texttt{jvel}. \figs{fig:ionmd-pos}~and~\ref{fig:ionmd-vel} shows the positions and kinetic energy of the ions during relaxation.
+			
+			For more detailed information on the dynamic input parameters used here see \tabs{tab:dyn-input-params-general}~and~\ref{tab:dyn-input-params-observables}.
 
 	\section{Basic I/O structure of dynamic calculations}
-		\subsection{Input parameters in the \texttt{DYNAMIC} namelist}
+		In this section the major input parameters will be listed and briefly explained as well as listing of all the generated output files. 
 		
-			\begin{table}[t]
+		\subsection{Input parameters in the \texttt{DYNAMIC} namelist}
+			A list of all the input parameters in the \texttt{DYNAMIC} namelist can be found in \tabs{tab:dyn-input-params-general},~\ref{tab:dyn-input-params-excitation}~and~\ref{tab:dyn-input-params-observables}.
+			
+			\begin{table}[!htbp]
 				\caption{Dynamical paramaters in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-general}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -431,7 +464,7 @@
 				\end{tabular}
 			\end{table}
 
-			\begin{table}[t]
+			\begin{table}[!htbp]
 				\caption{Dynamical paramaters in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-excitation}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -503,7 +536,7 @@
 			\end{table}
 
 
-			\begin{table}[t]
+			\begin{table}[!htbp]
 				\caption{Parameters that control observables and output in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-observables}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -551,8 +584,11 @@
 			\end{table}
 
 		\subsection{Output files}
-			\begin{table}[t]
-				\caption{Output files generated during a \emph{dynamic} calculation}\label{tab:dynamic-output-files}
+		
+			A list of all the output files and their description can be found in \tabs{tab:dynamic-output-files}~and~\ref{tab:dynamic-output-files-cont}.
+			
+			\begin{table}[!htbp]
+				\caption{Output files generated during a dynamic calculation}\label{tab:dynamic-output-files}
 				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline
 					\texttt{energies.<name>} & historical, contains only the binding energy\\
@@ -578,6 +614,13 @@
 					\texttt{pkinenion.<name>} & kinetic energy of the cluster in the x,y,z directions and total, versus time, at intervals commanded by the input parameter jpos\\
 					\hline
 					\texttt{pPES.<name>} & unused in this version\\
+					\hline
+				\end{tabular}
+			\end{table}
+
+			\begin{table}[!htbp]
+				\caption{Output files generated during a dynamic calculation (\emph{continued})}\label{tab:dynamic-output-files-cont}
+				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline
 					\texttt{pposion.<name>} & positions of the individual ions in x,y,z, and distance to center, versus time, at intervals commanded by the input parameter jpos\\
 					\hline
@@ -608,16 +651,44 @@
 				\end{tabular}
 			\end{table}
 
-		\subsection{Results and observables}
+	\section{An example dynamic calculation for H$_\mathsf{2}$O}
+
+		\subsection{Excitation by applying a LASER pulse}
+			In this example we will excite the water molecule by applying a resonant and off-resonant LASER pulse. The example input files can be found in
+			\begin{verbatim}
+				$QDD_ROOT/examples/H2O/dynamic/
+			\end{verbatim}
+			The most important parameters that control the laser excitation are the following		
+			\begin{verbatim}
+				itft = 3
+				deltat = 36.0
+				e1x = 0.0
+				e1y = 0.0
+				e1z = 1.0
+				omega = 0.79
+				e0 = 0.08
+			\end{verbatim}
+			The be on-resonance we need an \texttt{omega} of 0.79~Ry which corresponds to 10.7~eV. In this case the pulse shape is a $\cos^2$, the pulse length is 36~fs and the pulse polarisation is in the $z$-direction. A list of all the excitation parameters can be found in \tab{tab:dyn-input-params-excitation}.
 			
-	\section{Example dynamic calculations}
-		\subsection{Exciting plasmon modes by applying a LASER boost}
-		\subsection{Excite electrons with a laser pulse}
+			To calculate the off-resonant case, simply change the value of \texttt{omega} to another value, e.g. 0.691~Ry, or 9.4~eV.
+		
+		\subsection{Results and observables}	
+			Three basic observables, the ionisation, absorption and dipole moment are shown in \figs{fig:h2o-onres}~and~\ref{fig:h2o-offres} (the green curves). \fig{fig:h2o-onres} shows the time evolution of the three key observables considered in the present study. The dipole signal (lower panel) starts like an off resonant response where laser pulse and dipole signal follow the same pattern. At about 15~fs, we see a sudden increase in response and the dipole signal quickly deviates from the laser pulse, a typical pattern of resonant excitation.
 	
 	\section{Electronic relaxation with RTA}
+	
 		\subsection{Additional \texttt{DYNAMIC} input parameters concerning RTA}
+			One can simply use the input files from the previous section at
+			\begin{verbatim}
+				$QDD_ROOT/example/H2O/dynamic/
+			\end{verbatim}
+			 and enable the RTA procedure by choosing an iteration interval for an RTA step to happen. If want an RTA-step to happen every 1000 iteration set
+			\begin{verbatim}
+				jrtaint = 1000
+			\end{verbatim}
+			A list of all the input parameters in the \texttt{DYNAMIC} namelist related to RTA can be found in \tab{tab:dyn-input-params-rta}.
 
-			\begin{table}[t]
+			\begin{table}[!htbp]
 				\caption{Parameters that control RTA in the DYNAMIC namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-rta}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
@@ -647,7 +718,9 @@
 			\end{table}
 
 		\subsection{Output files}
-			\begin{table}[t]
+			A list of all the output files and their description can be found in \tab{tab:dynamic-output-files-rta}.
+			
+			\begin{table}[!htbp]
 				\caption{Output files that are specific to a RTA-enabled calculation}\label{tab:dynamic-output-files-rta}
 				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline
@@ -662,6 +735,27 @@
 				\end{tabular}
 			\end{table}
 			
+		\subsection{The effect of dissipation on resonant and off-resonant excitation of H$_\mathsf{2}$O}
+			Of particular interest is the performance of RTA as compared to LDA. In \fig{fig:h2o-onres} for the first 15~fs there is practically no difference between LDA and RTA. Dissipation depends strongly on internal excitation energy and is thus inactive in the early stages, where not yet enough energy has been absorbed (middle panel). Later on, the difference grows dramatic. Dipole oscillations last very long after the pulse in the case of LDA, while RTA produces considerable attenuation.
+			
+			Dissipation produces also a different evolution of energy absorption (middle panel) to the extent that more energy can flow into the system. The mechanism is a suppression of induced emission. If a system undergoes dipole oscillations in resonance with the laser field photon emission is coherently amplified and at a certain stage more energy is emitted than absorbed. This is the mechanism known as Rabi oscillations in simple two-level systems, and it leads to the observed oscillations in $E_\mathrm{abs}$. Unlike in two-level systems, the photon couples here to several dipole modes which reduces the amplitude of the Rabi oscillations. Dissipation, furthermore, transfers energy out of the resonant dipole channel into intrinsic excitation as seen from the then smaller dipole amplitude (lower panel). This reduces induced emission and thus gives the system new capacity to swallow more energy. It is a question of subtle energy balance in the system how this surplus on energy is distributed.
+			
+			The upper panel of \fig{fig:h2o-onres} shows the time evolution of ionisation. Dissipation in RTA distracts electrons from their way to direct emission and redirects them to the system enhancing its intrinsic energy. Thus ionisation is with RTA systematically lower than with LDA. Another difference is seen in the long-time behaviour. In RTA, ionisation levels off after the pulse is over while it carries on in LDA. The latter is related to the long lasting dipole oscillations which continue to feed the emission channel.
+			
+			\fig{fig:h2o-offres} shows time evolution for off-resonant excitation of H$_2$O. In fact, we see that the case shows traces of resonance response in the very early stages. But later on, the dipole signal (lower panel) follows in the average the pulse envelope and, most important, it nearly disappears with the pulse dying out. Being not perfectly off-resonant, the system’s modes remain somewhat excited as one can see from energy absorption (middle panel) not fully returning to zero. It is much smaller than in the resonant case, but it is not returning fully back to zero which indicates some energy transfer away from the coherent dipole oscillations into other systems modes. The energy thus absorbed is distributed into continuum modes which leads to direct ionisation (see upper panel) and into bound modes which leaves eventually some final intrinsic excitation.
+			
+			\begin{figure}[!htbp]
+				\centering
+				\includegraphics[width=0.75\linewidth]{h2o-onres}
+				\caption{Comparison of LDA and RTA time evolution of three basic observables for H$_2$O: dipole moment perpendicular to molecular plane (lower), energy absorbed from laser field (middle), and net ionisation (upper). In the lower panel, the pulse envelope is indicated in addition to the dipole moments. The system was excited by a laser pulse with frequency $\omega_\mathrm{las}=10.7$~eV, intensity $I=5.6\times10^{13}$~W/cm$^2$, and total pulse length $T_\mathrm{pulse}=36$~fs.\\{\sffamily\itshape Image from Phys.~Plasmas~\textbf{25},~031905~(2018).}}\label{fig:h2o-onres}
+			\end{figure}
+
+			\begin{figure}[!htbp]
+				\centering
+				\includegraphics[width=0.75\linewidth]{h2o-offres}
+				\caption{Same as \fig{fig:h2o-onres} but off-resonance at $\omega_\mathrm{las}=9.4$~eV. \\{\sffamily\itshape Image from Phys.~Plasmas~\textbf{25},~031905~(2018).}}\label{fig:h2o-offres}
+			\end{figure}
+			
 			
 			
 								
@@ -674,32 +768,4 @@
 %		\item The carbon chains C$_3$, C$_5$ and C$_7$: they all exhibit both organic- and metallic properties and have well defined plasmon modes. Furthermore, since these are all 1D and planar molecules, they can be calculated in a 1D or 2D box which makes the calculation much faster.
 %		\item Na$_{93}$, : This is a magic number too.
 %	\end{itemize}
-	
-%	\newpage
-%	Document default font size set to 12~pt.\\
-%	\tiny{tiny (\showfontsize)}\\
-%	\scriptsize{scriptsize (\showfontsize)}\\
-%	\footnotesize{footnotesize (\showfontsize)}\\
-%	\small{small (\showfontsize)}\\
-%	default (\showfontsize) (no size option)\\
-%	\normalsize{normalsize (\showfontsize)}\\
-%	\large{large (\showfontsize)}\\
-%	\Large{Large (\showfontsize)}\\
-%	\LARGE{LARGE (\showfontsize)}\\
-%	\huge{huge (\showfontsize)}\\
-%	\Huge{Huge (\showfontsize)}\\
-%
-%	\tiny{\sffamily tiny (\showfontsize)}\\
-%	\scriptsize{\sffamily scriptsize (\showfontsize)}\\
-%	\footnotesize{\sffamily footnotesize (\showfontsize)}\\
-%	\small{\sffamily small (\showfontsize)}\\
-%	\textsf{default} (\showfontsize) (in absence of a size option)\\
-%	\normalsize{\sffamily normalsize (\showfontsize)}\\
-%	\large{\sffamily large (\showfontsize)}\\
-%	\Large{\sffamily Large (\showfontsize)}\\
-%	\LARGE{\sffamily LARGE (\showfontsize)}\\
-%	\huge{\sffamily huge (\showfontsize)}\\
-%	\Huge{\sffamily Huge (\showfontsize)}\\
-
-
-\end{document}
+	\end{document}
