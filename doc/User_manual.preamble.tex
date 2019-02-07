@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% PLEASE COMPILE WITH XELATEX TO GET THE FONT SIZES RIGHT
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% PLEASE COMPILE WITH XELATEX TO GET THE FONTS RIGHT %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[xetex]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{xcolor}
@@ -11,7 +11,7 @@
 \usepackage{hypertoc}
 \usepackage{enumitem}
 \usepackage{fancyvrb}
-%\usepackage{mathspec} % Use no explicit math shapes (CMU is used)
+\usepackage{mathspec}
 \usepackage{titlesec,titletoc}
 \usepackage[singlelinecheck=false]{caption}
 \usepackage{tikz}
@@ -21,8 +21,8 @@
 
 %\setmathfont(Latin){Minion Pro}
 %\setmathrm{Minion Pro}
-%\setmathsf{Myriad Pro Light}
-%\exchangeforms{phi}
+%\setmathsf{Myriad Pro Light} %% Make this match the headline font
+%\exchangeforms{phi}			 %%   to get math in the headings right
 %\defaultfontfeatures{
 %	Ligatures={Required,Common,Contextual,Rare,Historic,TeX},
 %	Style=Swash,
@@ -65,6 +65,7 @@
 %]
 %\setsansfont{Myriad Pro}
 %\newfontfamily\headlinefont{Myriad Pro Light}
+\newfontfamily\headlinefont{Latin Modern Sans}
 
 %\linespread{1.3} % Only touch if the linespacing is insufficient
 
@@ -77,77 +78,39 @@
 	citecolor=activeColor,
 }\urlstyle{same}
 
-%\titleformat{\section}[hang]
-%	{\headlinefont\LARGE}
-%	{\thesection}
-%	{12pt}
-%	{\color{activeColor}}
-%\titlespacing{\section}{0em}{4ex}{1ex}
-%\titleformat{\subsection}[hang]
-%	{\headlinefont\large}
-%	{\thesubsection}
-%	{12pt}
-%	{\color{activeColor}}
-%\titlespacing{\subsection}{0em}{4ex}{1ex}
-%\titleformat{\subsubsection}[hang]
-%	{\headlinefont\itshape}
-%	{\thesubsubsection}
-%	{12pt}
-%	{\color{activeColor}}
-%\titlespacing{\subsubsection}{0em}{4ex}{1ex}
-%
-%\titlecontents{section}[0em]
-%	{\addvspace{2ex}\headlinefont\large}
-%	{\hspace*{1.5em}{\contentslabel{1.5em}}}
-%	{\hspace*{1.5em}{\contentslabel{1.5em}}}
-%	{\titlerule*[0.7em]{.}\contentspage}
-%	[]
-%\titlecontents{subsection}[2.025em]
-%	{\addvspace{1ex}\headlinefont\normalsize}
-%	{\hspace*{2em}{\contentslabel{2em}}\color{activeColor}}
-%	{\hspace*{2em}{\contentslabel{2em}}\color{activeColor}}
-%	{\titlerule*[0.7em]{.}\contentspage}
-%	[]
-%\titlecontents{subsubsection}[4.24em]
-%	{\headlinefont\itshape\small}
-%	{\hspace*{3em}{\contentslabel{3em}}}
-%	{\hspace*{3em}{\contentslabel{3em}}}
-%	{\titlerule*[0.7em]{.}\contentspage}
-%	[]
-
 \titleformat{\section}[hang]
-	{\sffamily\LARGE}
+	{\headlinefont\LARGE}
 	{\thesection}
 	{12pt}
 	{\color{activeColor}}
 \titlespacing{\section}{0em}{4ex}{1ex}
 \titleformat{\subsection}[hang]
-	{\sffamily\large}
+	{\headlinefont\large}
 	{\thesubsection}
 	{12pt}
 	{\color{activeColor}}
 \titlespacing{\subsection}{0em}{4ex}{1ex}
 \titleformat{\subsubsection}[hang]
-	{\sffamily\itshape}
+	{\headlinefont\itshape}
 	{\thesubsubsection}
 	{12pt}
 	{\color{activeColor}}
 \titlespacing{\subsubsection}{0em}{4ex}{1ex}
 
 \titlecontents{section}[0em]
-	{\addvspace{2ex}\sffamily\large}
+	{\addvspace{2ex}\headlinefont\large}
 	{\hspace*{1.5em}{\contentslabel{1.5em}}}
 	{\hspace*{1.5em}{\contentslabel{1.5em}}}
 	{\titlerule*[0.7em]{.}\contentspage}
 	[]
 \titlecontents{subsection}[2.025em]
-	{\addvspace{1ex}\sffamily\normalsize}
+	{\addvspace{1ex}\headlinefont\normalsize}
 	{\hspace*{2em}{\contentslabel{2em}}\color{activeColor}}
 	{\hspace*{2em}{\contentslabel{2em}}\color{activeColor}}
 	{\titlerule*[0.7em]{.}\contentspage}
 	[]
 \titlecontents{subsubsection}[4.24em]
-	{\sffamily\itshape\small}
+	{\headlinefont\itshape\small}
 	{\hspace*{3em}{\contentslabel{3em}}}
 	{\hspace*{3em}{\contentslabel{3em}}}
 	{\titlerule*[0.7em]{.}\contentspage}
@@ -175,3 +138,10 @@
 \newcommand{\rfs}[1]{~Refs.$\!$\citen{#1}} % \rfs{label} --> ~Refs. [11,15,21-23]
 \newcommand{\tab}[1]{Table~\ref{#1}}		   % \tab{label} --> Table 2.4
 \newcommand{\tabs}[1]{Tables~\ref{#1}}	   % \tabs{label},~{label} --> Tables 2.4, 1.3
+
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.66}
