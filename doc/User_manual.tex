@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% PLEASE COMPILE WITH XELATEX TO GET THE FONT SIZES RIGHT
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% PLEASE COMPILE WITH XELATEX TO GET THE FONTS RIGHT %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[11pt,a4paper]{article}
 \input{User_manual.preamble.tex}
 
@@ -254,7 +254,7 @@
 		\subsection{Output files}
 			During a calculation output files are generated and stored in the same directory as where the \texttt{qdd} binary is executed. For a ground state calculation the output files are listed in Table~\ref{tab:static-output-files}.
 			\begin{table}[t]
-				\caption{Output files generated during a \emph{static} calculation}\label{tab:static-output-files}
+				\caption{Output files generated during a static calculation}\label{tab:static-output-files}
 				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
 					\hline
 					\texttt{dx}& grid spacing in units of Bohr.\\
@@ -365,16 +365,16 @@ omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
 			\end{verbatim}
 			Make sure \texttt{ipsptype}$\neq$\texttt{0} and that \texttt{itmax} is set to a high enough value for the relaxation to finish. In this case the relaxation takes less than 1~fs. In this case $1\,\mathrm{fs}/(\hbar\times 0.0125\,\mathrm{Ry}^{-1})$=1654~iterations would be enough. Also it is better not to use any absorbing points (\texttt{nabsorb=0}, this automaticall implies \texttt{jesc=0}), and use reduced masses for the ions in the dynamics (\texttt{ifredmas=1}). You can monitor the progress of this minimisation by investigating \texttt{pposion.H2O} and \texttt{pvelion.H2O}.
 
-			\begin{figure}[!htbp]
-				\centering
-				\includegraphics[width=\linewidth]{ionmd_pos}
-				\caption{Shows the kinetic energy of the ion cores of oxygen and the two hydrogen atoms respectively as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-pos}
-			\end{figure}
-
-			\begin{figure}[!htbp]
+			\begin{figure}[t]%[!htbp]
 				\centering
 				\includegraphics[width=\linewidth]{ionmd_vel}
-				\caption{Shows the distance of the ion cores of oxygen and the two hydrogen atoms to the origin of the calculation box as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-vel}
+				\caption{Shows the kinetic energy of the ion cores of oxygen and the two hydrogen atoms respectively as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-vel}
+			\end{figure}
+
+			\begin{figure}[t]%[!htbp]
+				\centering
+				\includegraphics[width=\linewidth]{ionmd_pos}
+				\caption{Shows the distance of the ion cores of oxygen and the two hydrogen atoms to the origin of the calculation box as a function of time. After about 0.65~fs the ion cores have reached their equilibrium positions.}\label{fig:ionmd-pos}
 			\end{figure}
 			
 			You can control the interval in number of iterations that the current position and velocity of the ions are printed to these files with \texttt{jpos} and \texttt{jvel}. \figs{fig:ionmd-pos}~and~\ref{fig:ionmd-vel} shows the positions and kinetic energy of the ions during relaxation.
@@ -720,7 +720,7 @@ omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
 		\subsection{Output files}
 			A list of all the output files and their description can be found in \tab{tab:dynamic-output-files-rta}.
 			
-			\begin{table}[!htbp]
+			\begin{table}[t]%[!htbp]
 				\caption{Output files that are specific to a RTA-enabled calculation}\label{tab:dynamic-output-files-rta}
 				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
 					\hline
