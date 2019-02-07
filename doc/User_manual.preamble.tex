@@ -10,12 +10,14 @@
 \usepackage[xetex]{hyperref}
 \usepackage{hypertoc}
 \usepackage{enumitem}
+\usepackage{fancyvrb}
 %\usepackage{mathspec} % Use no explicit math shapes (CMU is used)
 \usepackage{titlesec,titletoc}
 \usepackage[singlelinecheck=false]{caption}
 \usepackage{tikz}
 
 \geometry{top=1in,bottom=1in,left=1in,right=1.375in}
+\graphicspath{{User_manual.figures/}}
 
 %\setmathfont(Latin){Minion Pro}
 %\setmathrm{Minion Pro}
@@ -152,7 +154,7 @@
 	[]
 
 \captionsetup[table]{labelfont={sc,color=activeColor},name=Table}
-\captionsetup[figure]{labelfont={color=activeColor},name=Figure}
+\captionsetup[figure]{labelfont={sc,color=activeColor},name=Figure}
 
 \renewcommand{\texttt}[1]{{\bfseries\ttfamily #1}}
 \usetikzlibrary{shapes}
@@ -164,3 +166,12 @@
 \makeatletter
 	\newcommand{\showfontsize}{\f@size{} pt}
 \makeatother
+\newcommand{\cmnt}[1]{\color{red}\uppercase{#1}}
+\newcommand{\eq}[1]{Equation~(\ref{#1})}	   % \eq{label}  --> Equation (3)
+\newcommand{\scn}[1]{Section~\ref{#1}}	   % \scn{label} --> Section 1.2
+\newcommand{\fig}[1]{Figure~\ref{#1}}	   % \fig{label} --> Figure 1.3
+\newcommand{\figs}[1]{Figures~\ref{#1}}	   % \fig{label} --> Figure 1.3
+\newcommand{\rf}[1]{~Ref.$\!$\citen{#1}}	   % \rf{label}  --> ~Ref. [11]
+\newcommand{\rfs}[1]{~Refs.$\!$\citen{#1}} % \rfs{label} --> ~Refs. [11,15,21-23]
+\newcommand{\tab}[1]{Table~\ref{#1}}		   % \tab{label} --> Table 2.4
+\newcommand{\tabs}[1]{Tables~\ref{#1}}	   % \tabs{label},~{label} --> Tables 2.4, 1.3
