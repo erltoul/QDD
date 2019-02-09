@@ -240,7 +240,7 @@ LOGICAL,PARAMETER :: ttestrho=.TRUE.
 
 
 #if(twostsic)
-  IF(ifsicp==8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
+  IF(ifsicp .GE. 8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
 #endif
 
 
@@ -725,7 +725,7 @@ DEALLOCATE(q1)
 DEALLOCATE(q2)
 
 #if(twostsic)
-IF(tnearest .AND. ifsicp==8) THEN
+IF(tnearest .AND. ifsicp.GE.8) THEN
   ALLOCATE(qwork(kdfull2,kstate))
   qwork=q0
   CALL eval_unitrot(q0,qwork)
@@ -850,7 +850,7 @@ ELSE IF(ifsicp >= 7)THEN
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
 !JM     2 state SIC
-  ELSE IF(ifsicp == 8) THEN
+  ELSE IF(ifsicp .GE. 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
 #endif
@@ -1449,7 +1449,7 @@ END IF
 IF(ttest) WRITE(*,*) ' in CALC_EPOT 2'
 !JM : subtract SIC potential for state NB
 #if(twostsic)
-IF(ifsicp == 8) THEN
+IF(ifsicp .GE. 8) THEN
   is=ispin(nrel2abs(nb))
   DO na=1,ndims(is)
     nbe = nb - (is-1)*ndims(1)

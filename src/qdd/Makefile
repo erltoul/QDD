@@ -90,8 +90,8 @@ COUDOUB = YES
 # Switch to 3D FFTW in Coulomb solver (preliminary option)
 COUDOUB3D = NO
 # Full SIC and localized SIC
-TWOSTSIC = NO
-CMPLXSIC = NO
+TWOSTSIC = YES
+CMPLXSIC = YES
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 
@@ -238,7 +238,7 @@ endif
 # endif
 
 ifeq "$(CF90)" "GFORT"
-	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -mcmodel=large
 	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
 #	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse
@@ -653,7 +653,7 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        parallele.o expevol.o 2stUT.o \
        pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o attachement.o rta.o\
-       HEeigensystem.o mini.o zdiag.o afterburn.o
+       HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -748,16 +748,16 @@ $(OBJS_LOCALIZE_RAD): localize_rad.mod
 $(OBJS_TWOSTSIC):     twost.mod
 $(OBJS_TWOSTSIC_R):   twostr.mod
 
-localize_rad.o localize_rad.mod: localize_rad.F90 kinetic.mod
+localize_rad.o localize_rad.mod: localize_rad.F90 kinetic.mod orthmat.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o localize_rad.o -c $<
 
-2stUTc.o twost.mod: 2stUT.F90 kinetic.mod twostr.mod
+2stUTc.o twost.mod: 2stUT.F90 kinetic.mod twostr.mod 
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o 2stUTc.o -c $<
 
 2stUT.o twostr.mod: 2stUT.F90 kinetic.mod localize_rad.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2stUT.o -c $<
 else
-2stUT.o: 2stUT.F90 kinetic.mod
+2stUT.o: 2stUT.F90 kinetic.mod orthmat.o
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
 endif
 
@@ -821,6 +821,9 @@ parallele.o: parallele.F90 kinetic.mod
 
 rta.o: rta.F90 kinetic.mod params.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+orthmat.o: orthmat.F90
+	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
 zdiag.o: zdiag.f
 	$(COMPILER) $(COMPILERFLAGS3) -c $<

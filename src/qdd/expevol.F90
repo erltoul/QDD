@@ -87,7 +87,7 @@ IF(ifsicp==5) psisavex = q0
 
 IF(.NOT.timagtime) THEN
   cdtact = CMPLX(dt1/2D0,0D0,DP)
-  IF(tnorotate .OR. ifsicp .NE. 8) THEN
+  IF(tnorotate .OR. ifsicp < 8) THEN
 !    WRITE(*,*) 'EXPEVOL: half step, dt=',cdtact
     DO nb=1,nstate
       qwork(:,nb) = q0(:,nb)
@@ -103,7 +103,7 @@ IF(.NOT.timagtime) THEN
   END IF
 
 #if(twostsic)
-  IF(tnearest .AND. ifsicp==8) CALL eval_unitrot(qwork,q0)
+  IF(tnearest .AND. ifsicp.GE.8) CALL eval_unitrot(qwork,q0)
 #endif
 
 !     compute mean field at half time step
@@ -122,7 +122,7 @@ END IF
 
 nterms = 4
 ! itpri = MOD(it,ipasinf) + 1    ?? FL
-IF(tnorotate .OR. ifsicp .NE. 8) THEN
+IF(tnorotate .OR. ifsicp < 8) THEN
 !    WRITE(*,*) 'EXPEVOL: full step, dt=',cdtact
   DO nb=1,nstate
     CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
@@ -135,7 +135,7 @@ CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
 END IF
 
 #if(twostsic)
-IF(tnearest .AND. ifsicp==8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
+IF(tnearest .AND. ifsicp.GE.8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
 #endif
 
 
@@ -538,7 +538,7 @@ END IF
 
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
-IF(ifsicp == 8) THEN
+IF(ifsicp.GE. 8) THEN
   
   is=ispin(nrel2abs(nbe))
   DO na=1,nstate

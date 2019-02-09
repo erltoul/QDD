@@ -117,9 +117,9 @@ USE kinetic
 IMPLICIT NONE
 
 INTEGER :: i, j, is, na
-#if(cmplxsic)
-INTEGER :: ifcmplxin, ni, nim, nip
-#endif
+!#if(cmplxsic)
+INTEGER :: ifcmplxin, ni, nim, nip        ! oly used in complex SIC
+!#endif
 COMPLEX(DP) :: ccr,csi
 
 !INCLUDE "twost.inc"
@@ -189,12 +189,12 @@ IF(istat==0) THEN
     DO i=1,ndims(is)
       DO j=1,ndims(is)
         IF(i == j) THEN
-#if(cmplxsic)
+!#if(cmplxsic)
 !          vecsr(i,j,is) = CMPLX(0D0,1D0)
           vecsr(i,j,is) = 1D0
-#else
-          vecsr(i,j,is) = 1D0
-#endif
+!#else
+!          vecsr(i,j,is) = 1D0
+!#endif
         ELSE
           vecsr(i,j,is) = 0D0
         END IF
@@ -336,116 +336,6 @@ END SUBROUTINE end_fsic
 
 !     ******************************
 
-#ifdef REALSWITCH
-SUBROUTINE calc_fullsicr(q0,qsic)
-#else
-SUBROUTINE calc_fullsic(q0,qsic)
-#endif
-
-!     ******************************
-
-!     full SIC:
-!       input is set of wavefunctions on 'q0'
-!       output are SIC s.p. wavefunctions on 'qsic'
-
-USE params
-USE kinetic
-IMPLICIT NONE
-
-#ifdef REALSWITCH
-#if(cmplxsic)
-COMPLEX(DP) :: q0(kdfull2,kstate)
-COMPLEX(DP) :: qsic(kdfull2,kstate)
-#else
-REAL(DP) :: q0(kdfull2,kstate)
-REAL(DP) :: qsic(kdfull2,kstate)
-#endif
-#else
-COMPLEX(DP) :: q0(kdfull2,kstate)
-COMPLEX(DP) :: qsic(kdfull2,kstate)
-#endif
-
-INTEGER :: ind, idx, ishift,  nb
-REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
-!       workspaces
-
-REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
-
-LOGICAL,PARAMETER :: ttest=.false.
-
-IF(numspin.NE.2) STOP "CALC_FULLSIC requires full spin"
-
-!mb
-enrearsave=enrear
-enerpwsave=enerpw
-enrear1=0D0
-enrear2=0D0
-enpw1  = 0D0
-enpw2  = 0D0
-encadd = 0D0
-!mb/
-
-
-
-!------------------------------------------------------------------
-
-!     compute action of SIC potential
-ALLOCATE(usicsp(2*kdfull2),rhosp(2*kdfull2))
-
-DO nb=1,nstate
-  IF(occup(nb) > small) THEN
-    ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-#ifdef REALSWITCH
-#if(cmplxsic)
-    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
-#else
-    CALL calc_sicspr(rhosp,usicsp,q0(1,nb),nb)
-#endif
-#else
-    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
-#endif
-    
-    IF (ispin(nrel2abs(nb)) == 1) THEN
-      enrear1=enrear1+enrear*occup(nb)
-      IF(directenergy) THEN
-        enpw1=enpw1+enerpw*occup(nb)
-      END IF
-    ELSE
-      enrear2=enrear2+enrear*occup(nb)
-      IF(directenergy) THEN
-        enpw2=enpw2+enerpw*occup(nb)
-      END IF
-    END IF
-    IF(directenergy) THEN
-      encadd=encadd+encoulsp*occup(nb)
-    END IF
-    
-    IF (ispin(nrel2abs(nb)) == 1) THEN
-      DO ind=1,nxyz
-        qsic(ind,nb) = usicsp(ind)*q0(ind,nb)
-      END DO
-    ELSE
-      DO ind=1,nxyz
-        idx = ind+nxyz
-        qsic(ind,nb) = usicsp(idx)*q0(ind,nb)
-      END DO
-    END IF
-  END IF
-END DO
-!encadd=encadd/2.0
-enrear   = enrearsave-enrear1-enrear2
-IF(directenergy) THEN
-  enerpw   = enerpwsave-enpw1-enpw2-encadd
-END IF
-DEALLOCATE(usicsp,rhosp)
-
-RETURN
-#ifdef REALSWITCH
-END SUBROUTINE calc_fullsicr
-#else
-END SUBROUTINE calc_fullsic
-#endif
-
 
 #ifdef COMPLEXSWITCH
 !-----init_vecs-------------------------------------------------
@@ -466,13 +356,13 @@ WRITE (6,'(3f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV
 
 DO i=1,kstate
   DO j=1,kstate
-#if(cmplxsic)
+!#if(cmplxsic)
     vecs(i,j,1) = vecsr(i,j,1)
     vecs(i,j,2) = vecsr(i,j,2)
-#else
-    vecs(i,j,1) = CMPLX(vecsr(i,j,1),0D0,DP)
-    vecs(i,j,2) = CMPLX(vecsr(i,j,2),0D0,DP)
-#endif
+!#else
+!    vecs(i,j,1) = CMPLX(vecsr(i,j,1),0D0,DP)
+!    vecs(i,j,2) = CMPLX(vecsr(i,j,2),0D0,DP)
+!#endif
   END DO
 END DO
 
@@ -519,11 +409,9 @@ IF(ifsicp == 7) THEN       ! Generalized Slater pot
   ifsicp=7
 !          write(*,*) ' CALC_SICR over'
 ELSE IF(ifsicp == 8) THEN   !    DSIC
-#if(cmplxsic)
   CALL calc_fullsicr(psirut,qnewr)
-#else
-  CALL calc_fullsicr(psirut,qnewr)
-#endif
+ELSE IF(ifsicp == 9) THEN   !    DSIC
+  CALL calc_fullsic(psirut,qnewr)
 END IF
 
 RETURN
@@ -561,7 +449,7 @@ CALL spmomsmatrix(psir,1)       !!! to print the total variance
 WRITE(6,'(a)') 'LOCALIZED STATES :'
 CALL spmomsmatrix(psirut,1)
 
-IF(ifsicp == 8) THEN   !!! to calculate the total
+IF(ifsicp .GE. 8) THEN   !!! to calculate the total
   DO is=1,2                       !!! violation of symmetry condition
     acc = 0D0
     DO na=1,nstate
@@ -659,7 +547,7 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
   
 END DO
 
-ifsicp=8
+!ifsicp=8
 
 WRITE(6,*) 'DIAGONAL STATES :'
 CALL spmomsmatrix(psir,1)  !!! to print the total variance
@@ -686,7 +574,7 @@ INTEGER, INTENT(IN) :: nbe
 INTEGER :: is, na, nb, nae
 !----------------------------------------------------------------
 
-IF(ifsicp /= 8) RETURN
+IF(ifsicp < 8) RETURN
 
 is=ispin(nbe)
 nb = nbe - (is-1)*ndims(1)
@@ -1133,15 +1021,15 @@ DO iter=1,itmax2
      actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
     CALL FLUSH(353)
   ELSE
-#if(cmplxsic)
-    WRITE(6,'(i4,5(1pg13.5))')   &
-       iter,matdorth_cmplxsic(vecsr(:,:,is),kdim,ndims(is)),&
-       norm, ERR_r,ener_2st(is)-enold_2st,actstep
-#else
+!#if(cmplxsic)
+!    WRITE(6,'(i4,5(1pg13.5))')   &
+!       iter,matdorth_cmplxsic(vecsr(:,:,is),kdim,ndims(is)),&
+!       norm, ERR_r,ener_2st(is)-enold_2st,actstep
+!#else
     WRITE(6,'(i4,5(1pg13.5))')   &
        iter,matdorth(vecsr(:,:,is),kdim,ndims(is)),&
        norm, ERR_r,ener_2st(is)-enold_2st,actstep
-#endif
+!#endif
     CALL FLUSH(6)
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
@@ -1923,5 +1811,120 @@ RETURN
 END SUBROUTINE ccc 
 #endif
 
+#endif
+
+
+#  outside module to avoid cyclic referencing across modules
+
+#ifdef REALSWITCH
+SUBROUTINE calc_fullsicr(q0,qsic)
+#else
+SUBROUTINE calc_fullsic(q0,qsic)
+#endif
+
+!     ******************************
+
+!     full SIC:
+!       input is set of wavefunctions on 'q0'
+!       output are SIC s.p. wavefunctions on 'qsic'
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+#ifdef REALSWITCH
+#if(cmplxsic)
+COMPLEX(DP) :: q0(kdfull2,kstate)
+COMPLEX(DP) :: qsic(kdfull2,kstate)
+#else
+REAL(DP) :: q0(kdfull2,kstate)
+REAL(DP) :: qsic(kdfull2,kstate)
+#endif
+#else
+COMPLEX(DP) :: q0(kdfull2,kstate)
+COMPLEX(DP) :: qsic(kdfull2,kstate)
+#endif
+
+INTEGER :: ind, idx, ishift,  nb
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
+!       workspaces
+
+REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
+
+LOGICAL,PARAMETER :: ttest=.false.
+
+IF(numspin.NE.2) STOP "CALC_FULLSIC requires full spin"
+
+!mb
+enrearsave=enrear
+enerpwsave=enerpw
+enrear1=0D0
+enrear2=0D0
+enpw1  = 0D0
+enpw2  = 0D0
+encadd = 0D0
+!mb/
+
+
+
+!------------------------------------------------------------------
+
+!     compute action of SIC potential
+ALLOCATE(usicsp(2*kdfull2),rhosp(2*kdfull2))
+
+DO nb=1,nstate
+  IF(occup(nb) > small) THEN
+    ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
+#ifdef REALSWITCH
+  IF(ifsicp==9) THEN
+    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
+  ELSE IF(ifsicp==8) THEN
+    CALL calc_sicspr(rhosp,usicsp,q0(1,nb),nb)
+  ELSE
+    STOP "invalid IFSICP in CALC_FULLSIC"
+  END IF
+#else
+    CALL calc_sicsp(rhosp,usicsp,q0(1,nb),nb)
+#endif
+    
+    IF (ispin(nrel2abs(nb)) == 1) THEN
+      enrear1=enrear1+enrear*occup(nb)
+      IF(directenergy) THEN
+        enpw1=enpw1+enerpw*occup(nb)
+      END IF
+    ELSE
+      enrear2=enrear2+enrear*occup(nb)
+      IF(directenergy) THEN
+        enpw2=enpw2+enerpw*occup(nb)
+      END IF
+    END IF
+    IF(directenergy) THEN
+      encadd=encadd+encoulsp*occup(nb)
+    END IF
+    
+    IF (ispin(nrel2abs(nb)) == 1) THEN
+      DO ind=1,nxyz
+        qsic(ind,nb) = usicsp(ind)*q0(ind,nb)
+      END DO
+    ELSE
+      DO ind=1,nxyz
+        idx = ind+nxyz
+        qsic(ind,nb) = usicsp(idx)*q0(ind,nb)
+      END DO
+    END IF
+  END IF
+END DO
+!encadd=encadd/2.0
+enrear   = enrearsave-enrear1-enrear2
+IF(directenergy) THEN
+  enerpw   = enerpwsave-enpw1-enpw2-encadd
+END IF
+DEALLOCATE(usicsp,rhosp)
+
+RETURN
+#ifdef REALSWITCH
+END SUBROUTINE calc_fullsicr
+#else
+END SUBROUTINE calc_fullsic
 #endif
 

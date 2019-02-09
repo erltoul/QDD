@@ -8,7 +8,7 @@ USE params
 !USE kinetic
 !USE util, ONLY: stimer,timer,safeopen,testcurrent,rhointxy,rhointyz,rhointxz
 #if(twostsic)
-USE twost, ONLY:tnearest
+USE twost, ONLY:tnearest,init_fsic,init_vecs,end_fsic,expdabvol_rotate_init
 #endif
 IMPLICIT NONE
 
@@ -34,7 +34,7 @@ INTEGER  :: it,ion
  ALLOCATE(psi(kdfull2,kstate))
 #if(twostsic)
  IF(ifsicp >= 7 .AND. nclust > 0 )  CALL init_fsic()
- IF(ifsicp == 8) CALL expdabvol_rotate_init
+ IF(ifsicp >= 8) CALL expdabvol_rotate_init
 #endif
  CALL restart2(psi,outnam,.true.)     ! read static wf's
 #if(twostsic)

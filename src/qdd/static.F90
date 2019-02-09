@@ -134,7 +134,7 @@ IF(myn == 0)THEN
 END IF
 
 #if(twostsic)
-if(ifsicp.eq.8) then
+if(ifsicp.GE.8) then
   do is=1,2 !MV initialise ExpDabOld                                        
 !    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
     rExpDabOld(1:ndims(is),1:ndims(is),is)=0D0
@@ -170,7 +170,7 @@ DO iter1=1,ismax
     END IF
   END IF
 
-  IF(ifsicpsav == 8 .OR. ifsicpsav == 7) THEN      ! switch safe pre-iterations for SIC
+  IF(ifsicpsav > 6) THEN      ! switch safe pre-iterations for SIC
     IF(iter1 <= 2*istinf) THEN
       ifsicp = 2
     ELSE
@@ -248,7 +248,7 @@ END IF
 !     diagonalize Lagrange parameters
 
 #if(!cmplxsic)
-IF(ifsicp > 8) THEN
+IF(ifsicp > 9) THEN                  !  ??????????
   CALL diag_lagr(psir)
 !        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
 END IF
@@ -375,7 +375,7 @@ END IF
 #endif
 
 #if(twostsic)
-if(ifsicp.eq.8) then
+if(ifsicp.GE.8) then
   write(6,*) 'avant pricm'!MV                                               
   write (6,'(3f12.3)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV             
 endif
@@ -447,7 +447,7 @@ IF(ifsicp > 0 .AND.ifsicp < 6) THEN
 #if(twostsic)
 ELSE IF(ifsicp == 7) THEN
    CALL calc_locsic(psir,psiaux)
-ELSE IF(ifsicp ==8 .AND. iter1 > 0) THEN
+ELSE IF(ifsicp.GE.8 .AND. iter1 > 0) THEN
    CALL static_sicfield(rho,aloc,psir,iter1)
 #endif
 END IF
@@ -639,7 +639,7 @@ DO nbe=1,nstate
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
   espbef = wfovlp(q0(:,nbe),q1)
-  IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
+  IF(ifsicp .GE. 8) CALL subtr_sicpot(q1,nbe)
   espaft = wfovlp(q0(:,nbe),q1)
 #endif
 !JM
@@ -808,7 +808,7 @@ DO nbe=1,nstate
 !JM : subtract SIC potential for state NBE
 #if(twostsic)
   espbef = wfovlp(q0(:,nbe),q1)
-  IF(ifsicp == 8) CALL subtr_sicpot(q1,nbe)
+  IF(ifsicp .GE. 8) CALL subtr_sicpot(q1,nbe)
   espaft = wfovlp(q0(:,nbe),q1)
 #endif
 !JM
@@ -1026,7 +1026,7 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
         (heigen(nbe),nbe=1,nstsp(iactsp))
 #if(twostsic)
-   IF(ifsicp==8) THEN
+   IF(ifsicp .GE. 8) THEN
      ni = ndims(iactsp)
      if(ni .NE. nstsp(iactsp)) THEN
        WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
@@ -1427,11 +1427,10 @@ IF(myn == 0) THEN
         ', pre-iterations with Slater=',itersicp6
   ELSE IF(ifsicp == 8) THEN
     WRITE(42,'(a,i3,a,i5)') 'final protocol of static for IFSICP=',ifsicp
-#if(cmplxsic)
-    WRITE(42,'(a)') ' complex SIC'
-#else
     WRITE(42,'(a)') ' real SIC'
-#endif
+  ELSE IF(ifsicp == 9) THEN
+    WRITE(42,'(a,i3,a,i5)') 'final protocol of static for IFSICP=',ifsicp
+    WRITE(42,'(a)') ' complex SIC'
 #if(twostsic)
     WRITE(42,'(a)') &
       'symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep'

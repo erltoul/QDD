@@ -420,15 +420,18 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
 
 
 IF(directenergy .AND.  &
-   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8)  &
-    STOP ' directenergy=1 only for Slater, KLI, or 2st-SIC'
+   ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8 &
+   .AND. ifsicp/=9) STOP ' directenergy=1 only for Slater, KLI, or 2st-SIC'
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
 #if(cmplxsic)
+  IF(ifsicp==8) STOP 'IFSICP=8 cannot run with CMPLXSIC'
 #if(!twostsic) 
   STOP 'CMPLXSIC requires TWOSTSIC=1'
 #endif
+#else
+  IF(ifsicp==9) STOP 'IFSICP=9 cannot run without CMPLXSIC'
 #endif
 
 #if(twostsic)
@@ -436,13 +439,13 @@ IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
 #endif
 #if(parayes)
-STOP ' TWOSTSIC cannot yet run in MPI parallel code'
+IF(ifsicp>7) STOP ' TWOSTSIC cannot yet run in MPI parallel code'
 #endif
-IF(ifsicp==8 .AND. .NOT.directenergy) &
-   STOP 'full SIC (IFSICP=8) requires DIRECTENERGY=.TRUE.'
+IF(ifsicp>7 .AND. .NOT.directenergy) &
+   STOP 'full SIC (IFSICP=8&9) requires DIRECTENERGY=.TRUE.'
 #endif
 
-IF(ifsicp.NE.8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for SIC'
+IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for SIC'
 
 IF(isitmax>0 .AND. ifexpevol== 0) &
     STOP ' imaginary-time step only for exponential evolution'
@@ -665,7 +668,9 @@ ELSE IF(ifsicp == 7)  THEN
   STOP " IFSICP=7 not possible in parallel code"
 #endif
 ELSE IF(ifsicp == 8)  THEN
-  WRITE(iu,'(a)') 'sic activated: double-set SIC'
+  WRITE(iu,'(a)') 'sic activated: double-set SIC - real'
+ELSE IF(ifsicp == 9)  THEN
+  WRITE(iu,'(a)') 'sic activated: double-set SIC - complex'
 #else
 ELSE IF(ifsicp == 7)  THEN
   STOP ' code not compiled for localized SIC'
