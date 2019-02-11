@@ -443,7 +443,7 @@ USE params
 USE kinetic
 !#ifdef REALSWITCH
 #if(twostsic)
-USE twostr, ONLY: vecsr,ndims
+USE twostr, ONLY: vecsr,vecsc,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
 #endif
 !#endif
@@ -677,7 +677,16 @@ END IF
     
 #if(twostsic)
 #ifdef REALSWITCH
-    IF(ifsicp >= 6) THEN
+    IF(ifsicp ==9) THEN
+      WRITE(ifile) vecsc(1:kstate,1:kstate,1:2),ndims(1:2)
+      WRITE(*,*) 'vecsr written'
+      DO n=1,ndims(1)
+        WRITE(*,'(10f10.5)') vecsc(1:ndims(1),n,1)
+      END DO
+      DO n=1,ndims(2)
+        WRITE(*,'(10f10.5)') vecsc(1:ndims(2),n,2)
+      END DO
+    ELSE IF(ifsicp >= 6) THEN
       WRITE(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
       DO n=1,ndims(1)

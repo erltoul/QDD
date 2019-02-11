@@ -91,7 +91,6 @@ COUDOUB = YES
 COUDOUB3D = NO
 # Full SIC and localized SIC
 TWOSTSIC = YES
-CMPLXSIC = YES
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 

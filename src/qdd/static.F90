@@ -134,11 +134,17 @@ IF(myn == 0)THEN
 END IF
 
 #if(twostsic)
-if(ifsicp.GE.8) then
+if(ifsicp==8) then
   do is=1,2 !MV initialise ExpDabOld                                        
 !    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
     rExpDabOld(1:ndims(is),1:ndims(is),is)=0D0
     do i=1,ndims(is);rExpDabOld(i,i,is)=1D0;enddo
+  enddo
+else if(ifsicp==9) then
+  do is=1,2 !MV initialise ExpDabOld                                        
+!    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
+    rExpDabOldc(1:ndims(is),1:ndims(is),is)=0D0
+    do i=1,ndims(is);rExpDabOldc(i,i,is)=1D0;enddo
   enddo
 endif
 #endif
@@ -242,18 +248,6 @@ IF(iflocaliz == 1) THEN
   STOP ' LOCALIZER (switch IFLOCALIZ) should not be invoked in parallele code'   ! cPW
 #endif
 END IF
-
-#if(twostsic)
-
-!     diagonalize Lagrange parameters
-
-#if(!cmplxsic)
-IF(ifsicp > 9) THEN                  !  ??????????
-  CALL diag_lagr(psir)
-!        itut=iter1         !!! for TD switch MaxLoc/SymCond   ???
-END IF
-#endif
-#endif
 
 
 !     final protocol on file 'pstat.<name>''
@@ -375,9 +369,12 @@ END IF
 #endif
 
 #if(twostsic)
-if(ifsicp.GE.8) then
+if(ifsicp==8) then
   write(6,*) 'avant pricm'!MV                                               
   write (6,'(3f12.3)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV             
+else if(ifsicp==8) then
+  write(6,*) 'avant pricm'!MV                                               
+  write (6,'(6f12.3)') ((vecsc(ii,jj,1), ii=1,3),jj=1,3)!MV             
 endif
 #endif
 
@@ -1032,7 +1029,10 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
        WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
        STOP ' SSTEP: spin sub-matrices do not match'
      END IF
-     vecsr(1:ni,1:ni,iactsp) = MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
+     IF(ifsicp==8) vecsr(1:ni,1:ni,iactsp) = &
+              MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsr(1:ni,1:ni,iactsp))
+     IF(ifsicp==9) vecsc(1:ni,1:ni,iactsp) = &
+              MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsc(1:ni,1:ni,iactsp))
      WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
    END IF
 #endif

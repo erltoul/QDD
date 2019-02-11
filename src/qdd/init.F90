@@ -425,14 +425,6 @@ IF(directenergy .AND.  &
 
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
-#if(cmplxsic)
-  IF(ifsicp==8) STOP 'IFSICP=8 cannot run with CMPLXSIC'
-#if(!twostsic) 
-  STOP 'CMPLXSIC requires TWOSTSIC=1'
-#endif
-#else
-  IF(ifsicp==9) STOP 'IFSICP=9 cannot run without CMPLXSIC'
-#endif
 
 #if(twostsic)
 #if(locsic)

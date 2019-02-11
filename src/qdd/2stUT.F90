@@ -41,13 +41,17 @@ END INTERFACE dalphabeta
 
 LOGICAL,PARAMETER :: tconv=.true.       ! to print convergence
 
-#if(cmplxsic)
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: qnewr(:,:)
-COMPLEX(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
-#else
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: qnewc(:,:)
+COMPLEX(DP),PRIVATE,ALLOCATABLE :: psicut(:,:)
+COMPLEX(DP),ALLOCATABLE :: rExpDABoldc(:,:,:)
+COMPLEX(DP),ALLOCATABLE,SAVE :: vecsc(:,:,:)    ! searched eigenvectors
+
 REAL(DP),PRIVATE,ALLOCATABLE :: qnewr(:,:)
 REAL(DP),PRIVATE,ALLOCATABLE :: psirut(:,:)
-#endif
+REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
+REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
+
+!
 REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
@@ -61,13 +65,6 @@ LOGICAL :: toptsicstep=.true.       ! switch to optimized step
 INTEGER,PRIVATE :: kdim
 !     matrices of radial moments
 
-#if(cmplxsic)
-COMPLEX(DP),ALLOCATABLE :: rExpDABold(:,:,:)
-COMPLEX(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
-#else
-REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
-REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
-#endif
 
 #endif
 
@@ -117,9 +114,7 @@ USE kinetic
 IMPLICIT NONE
 
 INTEGER :: i, j, is, na
-!#if(cmplxsic)
 INTEGER :: ifcmplxin, ni, nim, nip        ! oly used in complex SIC
-!#endif
 COMPLEX(DP) :: ccr,csi
 
 !INCLUDE "twost.inc"
@@ -175,55 +170,67 @@ WRITE(6,'(a,2i5)') ' dimension of sub-matrices:',ndims
 #if(symmcond)
 ALLOCATE(usicall(kdfull2,kstate))
 #endif
-ALLOCATE(qnewr(kdfull2,kstate))
-ALLOCATE(psirut(kdfull2,kstate))
+IF(ifsicp==8) THEN
+  ALLOCATE(qnewr(kdfull2,kstate))
+  ALLOCATE(psirut(kdfull2,kstate))
+  ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
+  ALLOCATE(vecsr(kstate,kstate,2))   ! searched eigenvectors
+ELSE IF(ifsicp==9) THEN
+  ALLOCATE(qnewc(kdfull2,kstate))
+  ALLOCATE(psicut(kdfull2,kstate))
+  ALLOCATE(rExpDABoldc(kstate, kstate, 2))!MV added
+  ALLOCATE(vecsc(kstate,kstate,2))   ! searched eigenvectors
+END IF
 
 kdim=kstate
-ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
-ALLOCATE(vecsr(kstate,kstate,2))   ! searched eigenvectors
 
 !     initialize unitary matrix
 
 IF(istat==0) THEN
   DO is=1,2
-    DO i=1,ndims(is)
-      DO j=1,ndims(is)
-        IF(i == j) THEN
-!#if(cmplxsic)
-!          vecsr(i,j,is) = CMPLX(0D0,1D0)
-          vecsr(i,j,is) = 1D0
-!#else
-!          vecsr(i,j,is) = 1D0
-!#endif
-        ELSE
-          vecsr(i,j,is) = 0D0
-        END IF
+    IF(ifsicp==7 .OR. ifsicp==8) THEN     ! do we want localized SIC?
+      DO i=1,ndims(is)
+        DO j=1,ndims(is)
+          IF(i == j) THEN
+            vecsr(i,j,is) = 1D0
+          ELSE
+            vecsr(i,j,is) = 0D0
+          END IF
+        END DO
       END DO
-    END DO
-#if(cmplxsic)
-    ifcmplxin=2
-    IF(ifcmplxin==1) THEN
+    ELSE IF(ifsicp==9) THEN
+      DO i=1,ndims(is)
+        DO j=1,ndims(is)
+          IF(i == j) THEN
+            vecsc(i,j,is) = CMPLX(1D0,0D0)
+          ELSE
+            vecsc(i,j,is) = 0D0
+          END IF
+        END DO
+      END DO
+      ifcmplxin=2
+      IF(ifcmplxin==1) THEN
 !      phiini=PI*1D-3
-      ni=ndims(is)
-      nim=ni-1      
-      vecsr(ni,ni,is)=CMPLX(COS(phiini),0D0,DP)
-      vecsr(nim,nim,is)=vecsr(ni,ni,is)
-      vecsr(ni,nim,is)=CMPLX(0D0,SIN(phiini),DP)
-      vecsr(nim,ni,is)=CMPLX(0D0,-SIN(phiini),DP)
-    ELSE IF(ifcmplxin==2) THEN
-      csi = CMPLX(0D0,SIN(phiini)/SQRT(2D0),DP)
-      ccr = CMPLX(SQRT(1D0-2D0*ABS(csi)**2),0D0,DP)
-      DO ni=1,ndims(is)
-        vecsr(ni,ni,is) = ccr
-        nip=MOD(ni,ndims(is))+1
-        vecsr(ni,nip,is) = csi
-        nim=ni-1
-        if(nim==0) nim=ndims(is)
-        vecsr(ni,nim,is) = -csi
-      END DO
-      CALL orthnorm(vecsr(:,:,is),ndims(is),kdim)
+        ni=ndims(is)
+        nim=ni-1      
+        vecsc(ni,ni,is)=CMPLX(COS(phiini),0D0,DP)
+        vecsc(nim,nim,is)=vecsr(ni,ni,is)
+        vecsc(ni,nim,is)=CMPLX(0D0,SIN(phiini),DP)
+        vecsc(nim,ni,is)=CMPLX(0D0,-SIN(phiini),DP)
+      ELSE IF(ifcmplxin==2) THEN
+        csi = CMPLX(0D0,SIN(phiini)/SQRT(2D0),DP)
+        ccr = CMPLX(SQRT(1D0-2D0*ABS(csi)**2),0D0,DP)
+        DO ni=1,ndims(is)
+          vecsc(ni,ni,is) = ccr
+          nip=MOD(ni,ndims(is))+1
+          vecsc(ni,nip,is) = csi
+          nim=ni-1
+          if(nim==0) nim=ndims(is)
+          vecsc(ni,nim,is) = -csi
+        END DO
+        CALL orthnorm(vecsc(:,:,is),ndims(is),kdim)
+      END IF
     END IF
-#endif    
   END DO
 END IF
 
@@ -252,9 +259,17 @@ IMPLICIT NONE
 
 !   frees workspace for static SIC
 
-DEALLOCATE(rExpDABold)!MV added
-DEALLOCATE(vecsr)   ! searched eigenvectors
-
+IF(ifsicp==8) THEN
+  DEALLOCATE(rExpDABold)!MV added
+  DEALLOCATE(vecsr)   ! searched eigenvectors
+  DEALLOCATE(qnewr)!MV added
+  DEALLOCATE(psirut)   ! searched eigenvectors
+ELSE IF(ifsicp==9) THEN
+  DEALLOCATE(rExpDABoldc)!MV added
+  DEALLOCATE(vecsc)   ! searched eigenvectors
+  DEALLOCATE(qnewc)!MV added
+  DEALLOCATE(psicut)   ! searched eigenvectors
+END IF
 
 RETURN
 END SUBROUTINE end_fsicr
@@ -352,17 +367,12 @@ INTEGER :: i, ii, j, jj
 !----------------------------------------------------------------
 
 WRITE(6,*) 'vecsr initvecs'!MV
-WRITE (6,'(3f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV
+WRITE (6,'(6f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV
 
 DO i=1,kstate
   DO j=1,kstate
-!#if(cmplxsic)
     vecs(i,j,1) = vecsr(i,j,1)
     vecs(i,j,2) = vecsr(i,j,2)
-!#else
-!    vecs(i,j,1) = CMPLX(vecsr(i,j,1),0D0,DP)
-!    vecs(i,j,2) = CMPLX(vecsr(i,j,2),0D0,DP)
-!#endif
   END DO
 END DO
 
@@ -401,7 +411,12 @@ IF(ifsicp < 7) RETURN
 
 !     computation of the mean fields
 
-CALL calc_utwfr(psir,psirut,iter1)
+IF(ifsicp == 8) THEN   !    DSIC
+  CALL calc_utwfr(psir,psirut,iter1)
+ELSE IF(ifsicp == 9) THEN   !    DSIC
+  CALL calc_utwfrc(psir,psicut,iter1)
+END IF
+
 !        write(*,*) ' UTWFR over. usew1=',usew1
 IF(ifsicp == 7) THEN       ! Generalized Slater pot
   ifsicp=3
@@ -411,7 +426,7 @@ IF(ifsicp == 7) THEN       ! Generalized Slater pot
 ELSE IF(ifsicp == 8) THEN   !    DSIC
   CALL calc_fullsicr(psirut,qnewr)
 ELSE IF(ifsicp == 9) THEN   !    DSIC
-  CALL calc_fullsic(psirut,qnewr)
+  CALL calc_fullsic(psicut,qnewc)
 END IF
 
 RETURN
@@ -432,11 +447,9 @@ IMPLICIT NONE
 REAL(DP),INTENT(IN) :: psir(kdfull2,kstate)
 
 INTEGER :: is, na, nb
-#if(cmplxsic)
-COMPLEX(DP) :: acc
-#else
+COMPLEX(DP) :: cacc
 REAL(DP) :: acc
-#endif
+
 
 !----------------------------------------------------------------
 
@@ -446,10 +459,10 @@ IF(ifsicp < 7) RETURN
 
 WRITE(6,'(a)') 'DIAGONAL STATES :'
 CALL spmomsmatrix(psir,1)       !!! to print the total variance
-WRITE(6,'(a)') 'LOCALIZED STATES :'
-CALL spmomsmatrix(psirut,1)
 
-IF(ifsicp .GE. 8) THEN   !!! to calculate the total
+IF(ifsicp == 8) THEN   !!! to calculate the total
+  WRITE(6,'(a)') 'LOCALIZED STATES :'
+  CALL spmomsmatrix(psirut,1)
   DO is=1,2                       !!! violation of symmetry condition
     acc = 0D0
     DO na=1,nstate
@@ -465,14 +478,29 @@ IF(ifsicp .GE. 8) THEN   !!! to calculate the total
     WRITE(6,'(a,i3,a,2(1pg12.4))')  &
         'For spin',is,'  Total violation of SymCond',SQRT(acc)
   END DO
+ELSE IF(ifsicp == 9) THEN   !!! to calculate the total
+  WRITE(6,'(a)') 'LOCALIZED STATES :'
+  CALL spmomsmatrix(psicut,1)
+  DO is=1,2                       !!! violation of symmetry condition
+    cacc = 0D0
+    DO na=1,nstate
+      IF(ispin(na) == is)THEN
+        DO nb=1,nstate
+          IF(ispin(nb) == is)THEN
+            cacc = ( wfovlp(psicut(:,na),qnewc(:,nb)) -  &
+                wfovlp(psicut(:,nb),qnewc(:,na)) )**2 + cacc
+          END IF
+        END DO
+      END IF
+    END DO
+    WRITE(6,'(a,i3,a,2(1pg12.4))')  &
+        'For spin',is,'  Total violation of SymCond',SQRT(cacc)
+  END DO
 END IF
 
 RETURN
 END SUBROUTINE infor_sic
 
-
-#if(twostsic)
-#if(!cmplxsic)
 !-----diag_lagr------------------------------------------------
 
 SUBROUTINE diag_lagr(psir)
@@ -556,8 +584,6 @@ CALL spmomsmatrix(psirut,1)
 
 RETURN
 END SUBROUTINE diag_lagr
-#endif
-#endif
 
 !-----subtr_sicpot------------------------------------------------
 
@@ -578,19 +604,23 @@ IF(ifsicp < 8) RETURN
 
 is=ispin(nbe)
 nb = nbe - (is-1)*ndims(1)
-DO na=1,ndims(is)
-  nae = na + (is-1)*ndims(1)
-#if(cmplxsic)
-  q1(:) =q1(:)-qnewr(:,nae)*CONJG(vecsr(nb,na,is))
-#else
-  q1(:) =q1(:)-qnewr(:,nae)*vecsr(nb,na,is)
-#endif
-END DO
-
+IF(ifsicp==8) THEN
+  DO na=1,ndims(is)
+    nae = na + (is-1)*ndims(1)
+    q1(:) =q1(:)-qnewr(:,nae)*vecsr(nb,na,is)
+  END DO
+ELSE IF(ifsicp==9) THEN
+  DO na=1,ndims(is)
+    nae = na + (is-1)*ndims(1)
+    q1(:) =q1(:)-qnewc(:,nae)*CONJG(vecsc(nb,na,is))
+  END DO
+END IF
 RETURN
 END SUBROUTINE subtr_sicpot
 
 #endif
+
+
 #ifdef COMPLEXSWITCH
 !-----calc_utwfc--------------------------------------------------!MV
 
@@ -645,9 +675,9 @@ END SUBROUTINE calc_utwfc
 
 #ifdef REALSWITCH
 SUBROUTINE calc_utwfr(q0,q0ut,iter1)
-#else
-SUBROUTINE calc_utwf(q0,q0ut,iter1)
-#endif
+!#else
+!SUBROUTINE calc_utwf(q0,q0ut,iter1)
+!#endif
 
 
 !     computes localized wavefunctions
@@ -664,17 +694,9 @@ IMPLICIT NONE
 INTEGER :: is, nb, nbeff
 !     basic arrays and workspace
 
-#ifdef REALSWITCH
+!#ifdef REALSWITCH
 REAL(DP) :: q0(kdfull2,kstate)
-#if(cmplxsic)
-COMPLEX(DP) :: q0ut(kdfull2,kstate)
-#else
 REAL(DP) :: q0ut(kdfull2,kstate)
-#endif
-#else
-COMPLEX(DP) :: q0(kdfull2,kstate)
-COMPLEX(DP) :: q0ut(kdfull2,kstate)
-#endif
 INTEGER,INTENT(IN) :: iter1
 
 !------------------------------------------------------------------
@@ -686,29 +708,61 @@ INTEGER,INTENT(IN) :: iter1
 
 DO is=1,2
   IF(ndims(is) > 1)THEN
-#ifdef REALSWITCH
     CALL utgradstepr(is,0,q0,iter1)   !!!!! new vecs (gradient method)
-#else
-    CALL utgradstepc(is,0,q0,iter1)   !!!!! new vecs (gradient method)
-#endif
   END IF
 END DO
 
 DO nb=1,nstate
   is = ispin(nrel2abs(nb))
   nbeff = nb - (is-1)*ndims(1)
-#ifdef REALSWITCH
   CALL superpose_state(q0ut(:,nb),vecsr(:,nbeff,is),q0,is)
-#else
-  CALL superpose_state(q0ut(:,nb),vecs(:,nbeff,is),q0,is)
-#endif
 END DO
 
 RETURN
-#ifdef REALSWITCH
 END SUBROUTINE calc_utwfr
-#else
-END SUBROUTINE calc_utwf
+
+
+SUBROUTINE calc_utwfrc(q0,q0ut,iter1)
+
+!     computes localized wavefunctions
+!       input is set of wavefunctions on 'q0'
+!       output are localized wavefunctions 'q0UT'
+!       the array 'qnewUT' is used as workspace
+
+USE params
+USE kinetic
+USE localize_rad, ONLY: superpose_state
+
+IMPLICIT NONE
+
+INTEGER :: is, nb, nbeff
+!     basic arrays and workspace
+
+REAL(DP) :: q0(kdfull2,kstate)
+COMPLEX(DP) :: q0ut(kdfull2,kstate)
+INTEGER,INTENT(IN) :: iter1
+
+!------------------------------------------------------------------
+
+!     Compute matrix of radial moments and determine
+!     optimally localizing transformation.
+!     Results is unitary matrix 'vecs' communicated via
+!     common /radmatrix/.
+
+DO is=1,2
+  IF(ndims(is) > 1)THEN
+    CALL utgradsteprc(is,0,q0,iter1)   !!!!! new vecs (gradient method)
+  END IF
+END DO
+
+DO nb=1,nstate
+  is = ispin(nrel2abs(nb))
+  nbeff = nb - (is-1)*ndims(1)
+  CALL superpose_state(q0ut(:,nb),vecsc(:,nbeff,is),q0,is)
+END DO
+
+RETURN
+END SUBROUTINE calc_utwfrc
 #endif
 
 !-----utgradstepc------------------------------------------------------------------------
@@ -870,13 +924,8 @@ USE kinetic
 IMPLICIT NONE
 
 REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
-#if(cmplxsic)
-COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
-COMPLEX(DP) :: dabsto(kdim,kdim)
-#else
 REAL(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
 REAL(DP) :: dabsto(kdim,kdim)
-#endif
 INTEGER,INTENT(IN) :: is,iprint,iter1
 
 INTEGER :: i, iter, itmax2, jj,  ni
@@ -994,26 +1043,14 @@ DO iter=1,itmax2
       END IF
     END IF    
   END IF
-#if(cmplxsic)
-  norm=SQRT(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))))  ! rmatnorme(dab,kdim,ni)
-#else
   norm=SQRT(SUM(dab(1:ni,1:ni)**2))  ! rmatnorme(dab,kdim,ni)
-#endif
   dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
   CALL  matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
   rexpdabold(1:ni,1:ni,is) = MATMUL(rexpdabold(1:ni,1:ni,is),expdab(1:ni,1:ni))
   vecsr(1:ni,1:ni,is) = MATMUL(vecsr(1:ni,1:ni,is),expdab(1:ni,1:ni))
-#if(cmplxsic)
-  dab(1:ni,1:ni) = CONJG(rexpdabold(1:ni,1:ni,is))
-#else
   dab(1:ni,1:ni) = rexpdabold(1:ni,1:ni,is)
-#endif
   dabsto(1:ni,1:ni) = MATMUL(rexpdabold(1:ni,1:ni,is),dab(1:ni,1:ni))
-#if(cmplxsic)
-  ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))-ndims(is))))
-#else
   ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)**2)-ndims(is))) 
-#endif
   IF(tconv) THEN
     WRITE(353,'(i4,8(1pg13.5))')   &
      iter,matdorth(vecsr(:,:,is),kdim,ndims(is)),&
@@ -1021,15 +1058,9 @@ DO iter=1,itmax2
      actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
     CALL FLUSH(353)
   ELSE
-!#if(cmplxsic)
-!    WRITE(6,'(i4,5(1pg13.5))')   &
-!       iter,matdorth_cmplxsic(vecsr(:,:,is),kdim,ndims(is)),&
-!       norm, ERR_r,ener_2st(is)-enold_2st,actstep
-!#else
     WRITE(6,'(i4,5(1pg13.5))')   &
        iter,matdorth(vecsr(:,:,is),kdim,ndims(is)),&
        norm, ERR_r,ener_2st(is)-enold_2st,actstep
-!#endif
     CALL FLUSH(6)
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
@@ -1064,8 +1095,194 @@ IF(iprint >= 0) THEN
 END IF
 RETURN
 END SUBROUTINE utgradstepr
+SUBROUTINE utgradsteprc(is,iprint,q0,iter1)
 
-#if(!cmplxsic)
+!c     Nonlinear gradient iteration to optmially localized states:
+!c      'vecs'    system of eigen-vectors to be determined
+!c      'is'      isospin
+!c      'iprint'  print level: <0 --> no print at all
+!c                             0  --> only final result
+!c                             >0 --> print modulus
+! version for complex SIC
+
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)
+COMPLEX(DP) :: dabsto(kdim,kdim)
+INTEGER,INTENT(IN) :: is,iprint,iter1
+
+INTEGER :: i, iter, itmax2, jj,  ni
+LOGICAL,PARAMETER :: ttest=.false.
+
+REAL(DP) :: e1der, e1old, e2der, ERR_r, enorm, norm
+
+!REAL(DP) :: variance,variance2  ! variance of step  ??
+!REAL(DP) :: radmax              ! max. squared radius
+REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
+!REAL(DP) :: varstate(kdim),averstate(kdim)
+REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
+
+! The optimized step computes a quadratic from for the SIC energy
+! from the previous three iterations and extrapolates this form
+! to the maximum.
+! The step size is limited from above by the parameter 'steplim'
+! and from below by 'steplow'.
+! If a negative step size emerges, the initial step size is used.
+!
+
+!-------------------------------------------------------
+
+! tentative change of step size during iteration
+IF(iter1 < 100000) THEN               
+   itmax2=symutbegin 
+ELSE
+   itmax2=1
+!   step=epswf
+END IF
+
+ni=ndims(is)
+
+IF(ttest) THEN
+  write(6,*) 'entree utgradstepr: is=',is
+  DO jj=1,ni  
+    write (6,'(6(1pg13.5))') vecsc(:,jj,is)
+  END DO
+END IF
+
+
+! update unitary transformation 'vecs' with previous exponentional
+!dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
+!vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
+actstep = step  ! radmaxsym obsolete, set to 1D0
+actprecis = max(precis,precisfact*sumvar2)
+!actprecis = precis
+!WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
+IF(tconv) THEN
+  IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
+  IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
+  WRITE(353,*) '# convergence symmetry condition. iter1,is=',iter1,is
+  WRITE(353,'(a)') '# Ortho , variance, erreur , actstep, Spin'
+  IF(ttest) THEN
+    WRITE(353,*) ' vecsr before: is=',is
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') vecsc(1:ni,i,is)
+    END DO
+    WRITE(353,*) ' rexpdabold before: is=',is
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') rexpdaboldc(1:ni,i,is)
+    END DO
+    WRITE(353,'(a,i4,1pg13.5)') &
+      ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
+  END IF
+  CALL FLUSH(353)
+END IF
+WRITE(6,'(a,i4,1pg13.5)') &
+ ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
+
+!CALL test_symmcond(is,vecsr(1,1,is),q0)
+
+enold_2st=0D0
+DO iter=1,itmax2
+
+  CALL dalphabeta(is, dab, vecsc, q0) !new DAB
+  IF(iter==1) THEN
+    WRITE(353,*) ' dab before: is=',is
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') dab(1:ni,i)
+    END DO
+  END IF
+  IF(toptsicstep) THEN
+    IF(iter.LE.3) THEN
+      enstore(iter)=ener_2st(is)
+      IF(iter==1) THEN
+         stepstore(1)=0D0
+      ELSE
+         stepstore(iter) = stepstore(iter-1)+actstep
+      END IF
+    ELSE
+      enstore(1) = enstore(2)
+      enstore(2) = enstore(3)
+      enstore(3) = ener_2st(is)
+      stepstore(1) = stepstore(2)
+      stepstore(2) = stepstore(3)
+      stepstore(3) = stepstore(3)+actstep
+      e1der= (enstore(3)-enstore(2))/(stepstore(3)-stepstore(2))
+      e1old= (enstore(2)-enstore(1))/(stepstore(2)-stepstore(1))
+      e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
+      stepnew = -dampopt*e1der/e2der
+      IF(stepnew < 0D0) stepnew=step
+!      stepnew = stepnew/actstep
+!      actstep = stepnew*actstep
+!      IF(stepnew > steplim) stepnew=steplim
+!      IF(stepnew < steplow) stepnew=steplow
+      actstep = max(steplow,min(stepnew,steplim))
+!      WRITE(*,'(i52(1pg13.5))') ' is,stepnew,actstep=',is,stepnew,actstep
+      IF(ttest) THEN
+        WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
+        WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
+        WRITE(*,'(a,30(1pg15.7))') '  stepstore=',stepstore
+        WRITE(6,'(a,3(1pg15.7))') 'e1d,e1o,e2d=',e1der,e1old,e2der
+        WRITE(6,'(a,2(1pg15.7))') 'act/newstep=',actstep,stepnew
+      END IF
+    END IF    
+  END IF
+  norm=SQRT(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))))  ! rmatnorme(dab,kdim,ni)
+  dab(1:ni,1:ni) = -actstep*dab(1:ni,1:ni)
+  CALL  matexp(dab,expdab,kdim,ni)            ! MV exp in ExpDab
+  rexpdaboldc(1:ni,1:ni,is) = MATMUL(rexpdaboldc(1:ni,1:ni,is),expdab(1:ni,1:ni))
+  vecsc(1:ni,1:ni,is) = MATMUL(vecsc(1:ni,1:ni,is),expdab(1:ni,1:ni))
+  dab(1:ni,1:ni) = CONJG(rexpdaboldc(1:ni,1:ni,is))
+  dabsto(1:ni,1:ni) = MATMUL(rexpdaboldc(1:ni,1:ni,is),dab(1:ni,1:ni))
+  ERR_r=SQRT(ABS(SUM(dab(1:ni,1:ni)*CONJG(dab(1:ni,1:ni))-ndims(is))))
+  IF(tconv) THEN
+    WRITE(353,'(i4,8(1pg13.5))')   &
+     iter,matdorth(vecsc(:,:,is),kdim,ndims(is)),&
+     norm, ERR_r,ener_2st(is)-enold_2st,actstep,&
+     actstep*norm**2/(ener_2st(is)-enold_2st),ener_2st(is)
+    CALL FLUSH(353)
+  ELSE
+    WRITE(6,'(i4,5(1pg13.5))')   &
+       iter,matdorth(vecsc(:,:,is),kdim,ndims(is)),&
+       norm, ERR_r,ener_2st(is)-enold_2st,actstep
+    CALL FLUSH(6)
+  END IF
+  IF(iter.GE.1) enold_2st=ener_2st(is)
+
+  IF(iter>0 .AND. ABS(norm) < actprecis) EXIT
+  
+END DO
+
+!CALL test_symmcond(is,vecsr(1,1,is),q0)
+
+IF(tconv) THEN
+  IF(ttest) THEN
+    WRITE(353,*) '  after: vecsr='
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') vecsc(1:ni,i,is)
+    END DO
+    WRITE(353,*) '  after: rexpdabold='
+    DO i=1,ni
+      WRITE(353,'(20(1pg13.5))') rexpdaboldc(1:ni,i,is)
+    END DO
+  END IF
+  WRITE(353,'(1x/1x)') 
+  CLOSE(353)
+END IF
+! write(6,*) 'sortie de utgradstepr'!MV
+! write (6,'(4f12.5)')
+!     & ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
+
+IF(iprint >= 0) THEN
+  WRITE(6,'(2(a,i4),a,1pg12.4)') 'UT cv is reached at it nr.',iter,  &
+      ' for spin =',is,' with variance=',norm
+END IF
+RETURN
+END SUBROUTINE utgradsteprc
+
 SUBROUTINE test_symmcond(is,vecact,q0)
 
 USE params
@@ -1118,7 +1335,6 @@ DEALLOCATE(vecsav,dabstep,dab,expdab)
 
 
 END SUBROUTINE test_symmcond
-#endif
 #endif
 
 #ifdef REALSWITCH
@@ -1814,7 +2030,7 @@ END SUBROUTINE ccc
 #endif
 
 
-#  outside module to avoid cyclic referencing across modules
+!  outside module to avoid cyclic referencing across modules
 
 #ifdef REALSWITCH
 SUBROUTINE calc_fullsicr(q0,qsic)
@@ -1833,13 +2049,8 @@ USE kinetic
 IMPLICIT NONE
 
 #ifdef REALSWITCH
-#if(cmplxsic)
-COMPLEX(DP) :: q0(kdfull2,kstate)
-COMPLEX(DP) :: qsic(kdfull2,kstate)
-#else
 REAL(DP) :: q0(kdfull2,kstate)
 REAL(DP) :: qsic(kdfull2,kstate)
-#endif
 #else
 COMPLEX(DP) :: q0(kdfull2,kstate)
 COMPLEX(DP) :: qsic(kdfull2,kstate)
