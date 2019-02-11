@@ -426,18 +426,13 @@ IF(directenergy .AND.  &
 IF(numspin.NE.2 .AND. ifsicp >= 3) STOP 'IFSICP>2 requires fullspin code'
 
 
-#if(twostsic)
-#if(locsic)
-STOP ' TWOSTSIC and LOCSIC cannot run simultaneously'
-#endif
 #if(parayes)
 IF(ifsicp>7) STOP ' TWOSTSIC cannot yet run in MPI parallel code'
 #endif
 IF(ifsicp>7 .AND. .NOT.directenergy) &
    STOP 'full SIC (IFSICP=8&9) requires DIRECTENERGY=.TRUE.'
-#endif
 
-IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for SIC'
+IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for full SIC'
 
 IF(isitmax>0 .AND. ifexpevol== 0) &
     STOP ' imaginary-time step only for exponential evolution'
@@ -642,8 +637,6 @@ END IF
 
 IF(ifsicp == 0) THEN
   WRITE(iu,'(a)') 'no sic'
-ELSE IF(ifsicp == 1)  THEN
-  WRITE(iu,'(a)') 'sic activated: GAM'
 ELSE IF(ifsicp == 2)  THEN
   WRITE(iu,'(a)') 'sic activated: ADSIC'
 ELSE IF(ifsicp == 3)  THEN
@@ -652,23 +645,10 @@ ELSE IF(ifsicp == 4)  THEN
   WRITE(iu,'(a)') 'sic activated: KLI'
 ELSE IF(ifsicp == 5) THEN
   WRITE(iu,'(a)') 'sic activated: exact exchange'
-IF(ifsicp == 6)  STOP ' IFSICP=6 presently not provided'
-#if(twostsic)
-ELSE IF(ifsicp == 7)  THEN
-  WRITE(iu,'(a)') 'sic activated: localized SIC'
-#if(parayes)
-  STOP " IFSICP=7 not possible in parallel code"
-#endif
 ELSE IF(ifsicp == 8)  THEN
   WRITE(iu,'(a)') 'sic activated: double-set SIC - real'
 ELSE IF(ifsicp == 9)  THEN
   WRITE(iu,'(a)') 'sic activated: double-set SIC - complex'
-#else
-ELSE IF(ifsicp == 7)  THEN
-  STOP ' code not compiled for localized SIC'
-ELSE IF(ifsicp == 8)  THEN
-  STOP ' code not compiled for double-set SIC'
-#endif
 ELSE
   WRITE(iu,'(a)') 'this version of SIC not available'
 END IF
@@ -3369,9 +3349,6 @@ STOP ' parallele computing not active with finite differences'
 IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
-#if(symmcond)
-IF(ifsicp==4) STOP ' propagated symm.cond. and KLI not compatible'
-#endif
 IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
 IF(directenergy .AND. idenfunc.NE.1) STOP ' directenergy=.true. requires Perdew&Wang functional '
 IF(directenergy .AND. ifsicp==5) &
@@ -3385,12 +3362,6 @@ IF(isurf/=0) STOP " set isurf=0 or use raregas=1"
 IF(isurf==0) STOP " set isurf=1 when using raregas"
 #endif
 
-#if(twostsic)
-!IF(ifhamdiag>0 .AND. ifsicp==8) &
-!  STOP "Hamiltonian diagonalization presently not compatible with full SIC"
-IF(ifhamdiag>0 .AND. ifsicp==7) &
-  STOP "Hamiltonian diagonalization presently not compatible with localized SIC"
-#endif
 
 RETURN
 END SUBROUTINE checkoptions

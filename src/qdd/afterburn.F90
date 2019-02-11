@@ -7,9 +7,8 @@ SUBROUTINE afterburn(psir,rho,aloc)
 USE params
 !USE kinetic
 !USE util, ONLY: stimer,timer,safeopen,testcurrent,rhointxy,rhointyz,rhointxz
-#if(twostsic)
 USE twost, ONLY:tnearest,init_fsic,init_vecs,end_fsic,expdabvol_rotate_init
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                  :: psir(kdfull2,kstate)
@@ -32,17 +31,13 @@ INTEGER  :: it,ion
  WRITE(*,*) ' start afterburn. isitmax=',isitmax
  CALL flush(6)
  ALLOCATE(psi(kdfull2,kstate))
-#if(twostsic)
- IF(ifsicp >= 7 .AND. nclust > 0 )  CALL init_fsic()
+ IF(ifsicp > 7 .AND. nclust > 0 )  CALL init_fsic()
  IF(ifsicp >= 8) CALL expdabvol_rotate_init
-#endif
  CALL restart2(psi,outnam,.true.)     ! read static wf's
-#if(twostsic)
- IF(ifsicp>=7) CALL init_vecs()
-#endif
+ IF(ifsicp > 7) CALL init_vecs()
  CALL calcpseudo()
  CALL calclocal(rho,aloc)                          !  ??
- IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)    ! Not pure LDA : use some type of SIC (SIC-GAM, ADSIC, SIC-Slater, SIC-KLI ...)
+ IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)    ! use some type of SIC 
  IF(ipsptyp == 1) THEN ! full Goedecker pseudopotentials require projectors
   DO ion=1,nion
     IF (iswitch_interpol==1) THEN
@@ -78,9 +73,7 @@ INTEGER  :: it,ion
  CALL info(psi,rho,aloc,-1)
  CALL SAVE(psi,-1,outnam)
  DEALLOCATE(psi)
-#if(twostsic)
- IF(nclust>0 .AND. ifsicp>=7) CALL end_fsic()
-#endif
+ IF(nclust>0 .AND. ifsicp>7) CALL end_fsic()
  IF(itmax <= 0) STOP ' terminate with afterburn '
 
 RETURN

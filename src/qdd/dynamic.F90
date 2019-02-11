@@ -25,9 +25,8 @@ SUBROUTINE dyn_propag(psi,rho,aloc)
 USE params
 USE kinetic
 USE util, ONLY: stimer,timer,safeopen,testcurrent,rhointxy,rhointyz,rhointxz
-#if(twostsic)
 USE twost, ONLY:tnearest
-#endif
+
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
@@ -222,10 +221,9 @@ SUBROUTINE init_dynwf(psi)
 !------------------------------------------------------------
 USE params
 USE util, ONLY:phstate,stateoverl,dipole_qp,prifld,testcurrent
-#if(twostsic)
 USE twost
 USE orthmat
-#endif
+
 IMPLICIT NONE
 
 !     initializes dynamical wavefunctions from static solution
@@ -239,10 +237,7 @@ LOGICAL,PARAMETER :: ttestrho=.TRUE.
 !----------------------------------------------------
 
 
-#if(twostsic)
-  IF(ifsicp .GE. 8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
-#endif
-
+IF(ifsicp .GE. 8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
 
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
    STOP ' exact exchange requires exponential evolution'
@@ -307,11 +302,6 @@ END IF
 
 rvectmp(1)=1D0             ! ??? what for ?
 
-!JM
-#if(twostsic)
-!IF(ifsicp>=7 .AND. isitmax==0) CALL init_vecs()
-#endif
-!JM
 
 !     optional initial excitations
 
@@ -572,9 +562,8 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 USE params
 USE kinetic
-#if(twostsic)
 USE twost, ONLY:tnearest
-#endif
+
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
@@ -583,9 +572,7 @@ REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 INTEGER, INTENT(IN)                      :: it
 
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
-#if(twostsic)
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: qwork
-#endif
 
 LOGICAL :: tenerg
 INTEGER :: ind, ishift, ithr, itsub,  nb, nlocact, nup
@@ -724,14 +711,13 @@ END IF
 DEALLOCATE(q1)
 DEALLOCATE(q2)
 
-#if(twostsic)
 IF(tnearest .AND. ifsicp.GE.8) THEN
   ALLOCATE(qwork(kdfull2,kstate))
   qwork=q0
   CALL eval_unitrot(q0,qwork)
   DEALLOCATE(qwork)
 END IF
-#endif
+
 
 
 !     new density and local potential
@@ -810,9 +796,8 @@ SUBROUTINE dyn_mfield(rho,aloc,psi,dt,it)
 !      aloc   = local mean-field potential
 
 USE params
-#if(twostsic)
 USE twost
-#endif
+
 IMPLICIT NONE
 
 
@@ -840,7 +825,6 @@ CALL calclocal(rho,aloc)          ! LDA part of the potential
 IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
   CALL calc_sic(rho,aloc,psi)
 !JM :  Generalized Slater and FSIC
-#if(twostsic)
 ELSE IF(ifsicp >= 7)THEN
 !  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
   CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))           !MV
@@ -853,7 +837,6 @@ ELSE IF(ifsicp >= 7)THEN
   ELSE IF(ifsicp .GE. 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
-#endif
 !JM
 ELSE IF(ifsicp == 6) THEN
   STOP ' that kind of SIC not valid for dynamics'
@@ -1399,10 +1382,9 @@ SUBROUTINE calc_epot(psin,alocact,enonlocout,nb)
 
 USE params
 USE util, ONLY:wfovlp
-#if(twostsic)
 USE twost
 USE twostr, ONLY: ndims
-#endif
+
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
@@ -1413,10 +1395,9 @@ INTEGER, INTENT(IN)                          :: nb
 INTEGER :: i
 REAl(DP) :: sumnon
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2,qex
-#if(twostsic)
 INTEGER :: is, na, nbe, nae
 COMPLEX(DP) :: cf
-#endif
+
 LOGICAL,PARAMETER :: ttest=.false.
 
 !------------------------------------------------------------------
@@ -1448,7 +1429,6 @@ END IF
 
 IF(ttest) WRITE(*,*) ' in CALC_EPOT 2'
 !JM : subtract SIC potential for state NB
-#if(twostsic)
 IF(ifsicp .GE. 8) THEN
   is=ispin(nrel2abs(nb))
   DO na=1,ndims(is)
@@ -1462,7 +1442,7 @@ IF(ifsicp .GE. 8) THEN
     END DO
   END DO
 END IF
-#endif
+
 !JM
 
 IF(ifsicp==5) THEN

@@ -55,9 +55,7 @@ IF (ifreezekspot == 1 .AND. tfs > 0) RETURN
 
 
 
-IF(ifsicp == 1) THEN
-  CALL calc_sicgamr(rho,aloc,q0)
-ELSE IF(ifsicp == 2) THEN
+IF(ifsicp == 2) THEN
   CALL calc_adsicr(rho,aloc,q0)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slaterr(rho,aloc,q0)
@@ -67,9 +65,7 @@ ELSE
   RETURN
 END IF
 #else
-IF(ifsicp == 1) THEN
-  CALL calc_sicgam(rho,aloc,q0)
-ELSE IF(ifsicp == 2) THEN
+IF(ifsicp == 2) THEN
   CALL calc_adsic(rho,aloc,q0)
 ELSE IF(ifsicp == 3) THEN
   CALL calc_slater(rho,aloc,q0)
@@ -87,188 +83,6 @@ END SUBROUTINE calc_sic
 #endif
 
 
-
-
-
-!     ******************************
-
-#ifdef REALSWITCH
-SUBROUTINE calc_sicgamr(rho,aloc,q0)
-#else
-SUBROUTINE calc_sicgam(rho,aloc,q0)
-#endif
-
-!     ******************************
-
-!     computes local part of SIC-GAM Hamiltonian
-!     'time' <= 0  signal static iteration i.e. without laser field
-
-
-USE params
-USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-IMPLICIT REAL(DP) (A-H,O-Z)
-REAL(DP),PARAMETER :: sgnkli=-1D0
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-#ifdef REALSWITCH
-REAL(DP), INTENT(IN) :: q0(kdfull2,kstate)
-#else
-COMPLEX(DP), INTENT(IN) :: q0(kdfull2,kstate)
-#endif
-REAL(DP), INTENT(IN OUT) :: aloc(*),rho(*)
-
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
-LOGICAL,PARAMETER :: testprint=.false.
-INTEGER,PARAMETER :: itmaxkli=200
-
-CALL act_part_num(npartup,npartdw,npartto)
-
-ALLOCATE(chpdftsp(2*kdfull2))
-ALLOCATE(rhosp(2*kdfull2))
-ALLOCATE(rho1(kdfull2))
-
-
-
-enrearsave=enrear
-enerpwsave=enerpw
-enrear1=0D0
-enrear2=0D0
-enpw1  = 0D0
-enpw2  = 0D0
-encadd = 0D0
-
-!   first block:  Slater or non-Coulomb part of GAM
-
-IF(ifsicp == 1 .OR. ifsicp >= 3) THEN
-  DO nb=1,nstate
-    IF(occup(nb) > small) THEN
-      ishift = (ispin(nrel2abs(nb))-1)*nxyz ! store spin=2 in upper block
-      
-!         density for s.p. state
-      
-      DO ind=1,nxyz
-#ifdef REALSWITCH
-        rhosp(ind)       = q0(ind,nb)*q0(ind,nb)
-#else
-        rhosp(ind)       = REAL(CONJG(q0(ind,nb))*q0(ind,nb))
-#endif
-        rhosp(ind+nxyz) =  3-2*ispin(nrel2abs(nb)) ! M : 1 if spinup -1 if spin down
-        rho1(ind)        = rhosp(ind)
-      END DO
-      
-!         DFT for s.p. state
-      
-      CALL calc_lda(rhosp,chpdftsp)
-      
-      IF (ispin(nrel2abs(nb)) == 1) THEN
-        enrear1=enrear1+enrear*occup(nb)
-        enpw1=enpw1+enerpw*occup(nb)
-      ELSE
-        enrear2=enrear2+enrear*occup(nb)
-        IF(directenergy) THEN
-          enpw2=enpw2+enerpw*occup(nb)
-        END IF
-      END IF
-      IF(ifsicp == 1) THEN
-        
-!           GAM: subtract with global weight from pure LDA potential
-        
-        IF(ishift == 0) THEN
-          fac = occup(nb)/(npartup*1.0)
-        ELSE
-          fac = occup(nb)/(1.0*npartdw)
-        END IF
-        DO ind=1,nxyz
-          idx = ind+ishift
-          aloc(idx) = aloc(idx) - fac*chpdftsp(idx)
-        END DO
-      ELSE
-      END IF
-    END IF
-  END DO
-  encadd=encadd/2.0
-  enrear   = enrearsave-enrear1-enrear2
-  IF(directenergy) THEN
-    enerpw   = enerpwsave-enpw1-enpw2-encadd
-  END IF
-!        write(6,'(a,1pg13.5)') ' ensic=',enpw1+enpw2
-ELSE
-  STOP ' CALC_SICGAMlled with wrong option IFSICP'
-END IF
-
-DEALLOCATE(chpdftsp)
-DEALLOCATE(rhosp)
-
-!     correct Coulomb potential by 1/N
-
-IF(numspin==2) THEN
-  ALLOCATE(coulsum(kdfull2))
-  ALLOCATE(couldif(kdfull2))
-  ALLOCATE(rho2(kdfull2))
-
-!       compute Coulomb
-
-  DO ind=1,nxyz
-    rho2(ind)=  rho(ind)
-    rho1(ind)=  rho(ind)*rho(ind+nxyz)
-  END DO
-#if(gridfft)
-  CALL falr(rho1(1),couldif,nx2,ny2,nz2,kdfull2)
-!                 new computation of total Coul not needed - check
-!      call falr(rho2(1),coulsum,nx2,ny2,nz2,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_fft(rho1(1),couldif,dx,dy,dz)
-!      call solv_FFT(rho2(1),coulsum,dx,dy,dz)
-#endif
-  facup = 1.0/npartup
-  facdw = 1.0/npartdw
-
-
-  DO ind=1,nxyz
-!        coulup    = 0.5*(coulsum(ind)+couldif(ind))
-!        couldw    = 0.5*(coulsum(ind)-couldif(ind))
-    coulup    = 0.5*(chpcoul(ind)+couldif(ind))    ! reuse total Coul
-    couldw    = 0.5*(chpcoul(ind)-couldif(ind))
-    aloc(ind) = aloc(ind) - coulup*facup
-    idx       = ind + nxyz
-    aloc(idx) = aloc(idx) - facdw*couldw
-  END DO
-  DEALLOCATE(coulsum)
-  DEALLOCATE(couldif)
-  DEALLOCATE(rho2)
-
-ELSE
-
-!     recalculate Coulomb part for jellium
-
-#if(gridfft)
-  IF(nion2 == 0) CALL falr(rho(1),chpcoul,nx2,ny2,nz2,kdfull2)
-#endif
-#if(findiff|numerov)
-  STOP ' SIC-GAM not yet ready for nospin and finite diff.'
-#endif
-
-  fac = 1.0/npartto
-  DO ind=1,nxyz
-    aloc(ind) = aloc(ind) - fac*chpcoul(ind)
-  END DO
-
-END IF
-
-RETURN
-#ifdef REALSWITCH
-END SUBROUTINE calc_sicgamr
-#else
-END SUBROUTINE calc_sicgam
-#endif
 
 
 

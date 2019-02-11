@@ -17,8 +17,6 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#if(twostsic)
-
 #ifdef REALSWITCH
 MODULE twostr
 USE params
@@ -52,7 +50,7 @@ REAL(DP),ALLOCATABLE :: rExpDABold(:,:,:)!MV added
 REAL(DP),ALLOCATABLE,SAVE :: vecsr(:,:,:)    ! searched eigenvectors
 
 !
-REAL(DP),ALLOCATABLE :: usicall(:,:)
+!REAL(DP),ALLOCATABLE :: usicall(:,:)
 !COMMON /twost/ qnewr,qnew,psirut,psiut
 
 REAL(DP) :: step=0.1D0,precis=1D-6,precisfact=1D-3,phiini=0D0
@@ -167,9 +165,6 @@ WRITE(6,'(a,2i5)') ' dimension of sub-matrices:',ndims
 
 
 ! initialize work space
-#if(symmcond)
-ALLOCATE(usicall(kdfull2,kstate))
-#endif
 IF(ifsicp==8) THEN
   ALLOCATE(qnewr(kdfull2,kstate))
   ALLOCATE(psirut(kdfull2,kstate))
@@ -188,7 +183,7 @@ kdim=kstate
 
 IF(istat==0) THEN
   DO is=1,2
-    IF(ifsicp==7 .OR. ifsicp==8) THEN     ! do we want localized SIC?
+    IF(ifsicp==8) THEN
       DO i=1,ndims(is)
         DO j=1,ndims(is)
           IF(i == j) THEN
@@ -418,12 +413,7 @@ ELSE IF(ifsicp == 9) THEN   !    DSIC
 END IF
 
 !        write(*,*) ' UTWFR over. usew1=',usew1
-IF(ifsicp == 7) THEN       ! Generalized Slater pot
-  ifsicp=3
-  CALL calc_sicr(rho,aloc,psirut)
-  ifsicp=7
-!          write(*,*) ' CALC_SICR over'
-ELSE IF(ifsicp == 8) THEN   !    DSIC
+IF(ifsicp == 8) THEN   !    DSIC
   CALL calc_fullsicr(psirut,qnewr)
 ELSE IF(ifsicp == 9) THEN   !    DSIC
   CALL calc_fullsic(psicut,qnewc)
@@ -2007,27 +1997,6 @@ END MODULE twostr
 END MODULE twost
 #endif
 
-#else
-#ifdef REALSWITCH
-!-----init_fsic------------------------------------------------
-
-SUBROUTINE init_fsic()
-STOP ' code not compiled for GSlat or double-set SIC'
-RETURN
-END SUBROUTINE init_fsic
-!-----init_fsic------------------------------------------------
-
-SUBROUTINE init_fsicr()
-STOP ' code not compiled for GSlat or double-set SIC'
-RETURN
-END SUBROUTINE init_fsicr
-#else
-SUBROUTINE ccc  ! a dummy subroutine so that the compilation does not abort IF twostsic=0
-RETURN
-END SUBROUTINE ccc 
-#endif
-
-#endif
 
 
 !  outside module to avoid cyclic referencing across modules

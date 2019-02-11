@@ -35,9 +35,8 @@ SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork,timagtime)
 
 
 USE params
-#if(twostsic)
 USE twost, ONLY:tnearest
-#endif
+
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)              :: q0(kdfull2,kstate)
@@ -94,17 +93,11 @@ IF(.NOT.timagtime) THEN
       CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
     END DO
   ELSE
-#if(twostsic)
     qwork = q0
     CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
-#else
-    STOP " IFSICP==8 requires compilation with option twostsic"
-#endif
   END IF
 
-#if(twostsic)
   IF(tnearest .AND. ifsicp.GE.8) CALL eval_unitrot(qwork,q0)
-#endif
 
 !     compute mean field at half time step
   CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0,it)
@@ -128,15 +121,12 @@ IF(tnorotate .OR. ifsicp < 8) THEN
     CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
 ELSE
-#if(twostsic)
-qwork = q0
-CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
-#endif
+  qwork = q0
+  CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
 END IF
 
-#if(twostsic)
 IF(tnearest .AND. ifsicp.GE.8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
-#endif
+
 
 
 
@@ -235,7 +225,6 @@ END DO
 RETURN
 END SUBROUTINE exp_evol
 
-#if(twostsic)
 !-----exp_evolp-------------------------------------------------------------
 
 SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
@@ -413,7 +402,6 @@ END DO
 
 END SUBROUTINE eval_unitrot
 
-#endif
 
 !-----hpsi  -------------------------------------------------------------
 
@@ -431,9 +419,8 @@ SUBROUTINE hpsi(qact,aloc,nbe,itpri)
 USE params
 USE util, ONLY:wfovlp
 USE kinetic
-#if(twostsic)
 USE twost
-#endif
+
 IMPLICIT NONE
 
 
@@ -453,9 +440,7 @@ LOGICAL :: tpri
 LOGICAL,PARAMETER :: tsubmean=.TRUE.
 LOGICAL,PARAMETER :: ttest=.FALSE.
 INTEGER :: i, is, na
-#if(twostsic)
 COMPLEX(DP) :: cf
-#endif
 
 
 !----------------------------------------------------------------------
@@ -537,9 +522,7 @@ END IF
 
 
 !JM : subtract SIC potential for state NBE
-#if(twostsic)
 IF(ifsicp.GE. 8) THEN
-  
   is=ispin(nrel2abs(nbe))
   DO na=1,nstate
     IF(ispin(nrel2abs(na)) == is)THEN
@@ -551,7 +534,6 @@ IF(ifsicp.GE. 8) THEN
   END DO
   
 END IF
-#endif
 !JM
 
 
@@ -615,9 +597,8 @@ INTEGER, INTENT(IN)                  :: nbe
 !                                   workspaces
 COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
 
-#if(twostsic)
 COMPLEX(DP) :: cf
-#endif
+
 
 
 !----------------------------------------------------------------------

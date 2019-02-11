@@ -343,12 +343,10 @@ REAL(DP) :: etot,ekionold,qold2,qold3,qold4
 REAL(DP) :: ekmat=0D0,engg,enii,enig,ecrhoimage=0D0
 REAL(DP),ALLOCATABLE :: ekinsp(:),evarsp(:),evarsp2(:),epotsp(:)
 INTEGER :: jekion,iquery4
-#if(twostsic)  
 REAL(DP),ALLOCATABLE :: hmatrix(:,:)
 COMPLEX(DP),ALLOCATABLE :: expmatrix(:,:)
 REAL(DP) :: symcon
 INTEGER :: ndims(2)
-#endif
 
 
 ! dynamic variables of ionic motion
@@ -547,9 +545,7 @@ evarsp=0D0
 evarsp2=0D0
 epotsp=0D0
 
-#if(twostsic)  
-ALLOCATE(hmatrix(kstate,kstate))
-#endif
+IF(ifsicp>7) ALLOCATE(hmatrix(kstate,kstate))
 
 !                                       fields for PsP projectors
 IF(ipsptyp /=0) THEN

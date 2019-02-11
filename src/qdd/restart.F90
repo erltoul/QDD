@@ -43,10 +43,8 @@ SUBROUTINE restart2(psi,outna,tstatin)
 USE params
 USE kinetic
 !#ifdef REALSWITCH
-#if(twostsic)
 USE twostr, ONLY: vecsr,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
-#endif
 !#endif
 IMPLICIT NONE
 
@@ -361,7 +359,6 @@ END IF
 #endif
 
 
-#if(twostsic)
 IF(ifsicp >= 6) THEN
 #ifdef REALSWITCH
   READ(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
@@ -387,7 +384,6 @@ IF(ifsicp >= 6) THEN
   END DO
 #endif
 END IF
-#endif
 
 #ifdef COMPLEXSWITCH
   IF(mynact==0) THEN
@@ -442,10 +438,8 @@ SUBROUTINE SAVE(psi,isa,outna)
 USE params
 USE kinetic
 !#ifdef REALSWITCH
-#if(twostsic)
 USE twostr, ONLY: vecsr,vecsc,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
-#endif
 !#endif
 IMPLICIT NONE
 
@@ -466,10 +460,7 @@ INTEGER :: nbe
 #endif
 LOGICAL,PARAMETER :: ttest = .TRUE.
 LOGICAL :: trealin
-
-#if(twostsic)
 INTEGER :: n
-#endif
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -675,7 +666,6 @@ IF(mynact==0) THEN
     END IF
 END IF    
     
-#if(twostsic)
 #ifdef REALSWITCH
     IF(ifsicp ==9) THEN
       WRITE(ifile) vecsc(1:kstate,1:kstate,1:2),ndims(1:2)
@@ -711,7 +701,6 @@ END IF
         WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
       END DO
     END IF
-#endif
 #endif
 
 #ifdef COMPLEXSWITCH

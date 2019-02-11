@@ -40,10 +40,7 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 
   USE params
   USE util
-
-#if(twostsic)
   USE twost, ONLY:tnearest
-#endif
 
   IMPLICIT NONE
 

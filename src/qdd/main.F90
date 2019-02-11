@@ -38,12 +38,10 @@ USE util
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-#if(twostsic)
 USE twostr
 USE twost
 USE localize_rad
 USE orthmat
-#endif
 IMPLICIT NONE
 
 !     non symmetrical dynamic fields
@@ -115,9 +113,6 @@ CALL init_grid()    ! init coulomb solver, kinetic energy, grid properties
 
 CALL init_fields()  ! allocate params arrays
 
-#if(twostsic)
-IF(numspin==2) CALL init_radmatrix()   ! initialize matrices of radial moments
-#endif
 
 ALLOCATE(psir(kdfull2,kstate))
 psir=0D0

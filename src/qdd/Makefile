@@ -89,8 +89,6 @@ COUFOU = NO
 COUDOUB = YES
 # Switch to 3D FFTW in Coulomb solver (preliminary option)
 COUDOUB3D = NO
-# Full SIC and localized SIC
-TWOSTSIC = YES
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 

@@ -30,35 +30,27 @@ USE coulsolv, ONLY:falr
 #else
 USE coulsolv, ONLY:solv_poisson
 #endif
-#if(twostsic)
 USE twostr
 USE localize_rad
-#endif
 IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
-#endif
-#if(twostsic)
-INTEGER :: is
 #endif
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 
+
 LOGICAL,PARAMETER :: tcpu=.true.
 LOGICAL,PARAMETER :: tp_prints=.false.
+INTEGER :: is
 INTEGER :: i, ifsicpsav, iter1, j, nbe, nbeabs
-
-#if(twostsic)
 INTEGER :: ii, jj
-#endif
 
 REAL(DP) :: time_init
 REAL(DP) :: xcm, ycm, zcm
-REAL(DP),ALLOCATABLE :: qaux(:,:)
+!REAL(DP),ALLOCATABLE :: qaux(:,:)
 
-IF(ifsicp==7) ALLOCATE(qaux(kdfull2,kstate))
-! test Coulomb
 
 
 CALL calcrhor(rho,psir)
@@ -87,7 +79,7 @@ IF(istat == 1) THEN
 !        CALL sstep(psir,akv,aloc,0)    ! also for GSlat, DSIC
   CALL resume(psir,outnam)
   CALL calcpseudo()                 ! initialize pseudo-potentials
-  CALL static_mfield(rho,aloc,psir,qaux,0)
+  CALL static_mfield(rho,aloc,psir,0)
   CALL pricm(rho)
   CALL infor(rho,0)
 END IF
@@ -100,7 +92,7 @@ END IF
 
 !      call priCM_state(psir)
 CALL calcpseudo()                 ! initialize pseudo-potentials
-CALL static_mfield(rho,aloc,psir,qaux,0)
+CALL static_mfield(rho,aloc,psir,0)
 CALL pricm(rho)
 
 
@@ -109,10 +101,7 @@ IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
 
 
 CALL infor(rho,0)
-#if(twostsic)
 IF(ifsicp >= 7) CALL infor_sic(psir)
-#endif
-
 
 IF(myn == 0)THEN
   CALL prifld(rho,'density    ')
@@ -133,7 +122,6 @@ IF(myn == 0)THEN
   WRITE(6,*) 'ismax=',ismax
 END IF
 
-#if(twostsic)
 if(ifsicp==8) then
   do is=1,2 !MV initialise ExpDabOld                                        
 !    call rMatUnite(rExpDabOld(1,1,is), kstate,ndims(is))  
@@ -147,7 +135,6 @@ else if(ifsicp==9) then
     do i=1,ndims(is);rExpDabOldc(i,i,is)=1D0;enddo
   enddo
 endif
-#endif
 
 !     the static iteration starts here
 
@@ -184,19 +171,8 @@ DO iter1=1,ismax
     END IF
   END IF
   
-  IF(ifsicp /= 7) THEN
-    
-     CALL sstep(psir,aloc,iter1)
-     
-     
-#if(twostsic)
-  ELSE
-    CALL sstep_lsic(psir,akv,aloc,iter1,qaux)
-!    CALL sicstep_gen(psir,qaux,aloc,iter1)
-#endif
-  END IF
-  
-  CALL static_mfield(rho,aloc,psir,qaux,iter1)
+  CALL sstep(psir,aloc,iter1)
+  CALL static_mfield(rho,aloc,psir,iter1)
   CALL pricm(rho)
   IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
       rvectmp(1),rvectmp(2),rvectmp(3)
@@ -204,9 +180,7 @@ DO iter1=1,ismax
   IF(MOD(iter1,istinf) == 0) THEN
 !test          call prifld(aloc,'KS-potential')
     CALL infor(rho,iter1)
-#if(twostsic)
-    IF(ifsicp >= 7) CALL infor_sic(psir)
-#endif
+    IF(ifsicp > 7) CALL infor_sic(psir)
     
     IF(myn == 0)THEN
       WRITE(7,'(a,i5)') 'iter= ',iter1
@@ -368,15 +342,13 @@ IF (isurf /= 0) THEN
 END IF
 #endif
 
-#if(twostsic)
 if(ifsicp==8) then
   write(6,*) 'avant pricm'!MV                                               
   write (6,'(3f12.3)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV             
-else if(ifsicp==8) then
+else if(ifsicp==9) then
   write(6,*) 'avant pricm'!MV                                               
   write (6,'(6f12.3)') ((vecsc(ii,jj,1), ii=1,3),jj=1,3)!MV             
 endif
-#endif
 
 
 CALL pricm(rho)
@@ -395,7 +367,7 @@ RETURN
 END SUBROUTINE statit
 !-----static_mfield------------------------------------------------
 
-SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
+SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 
 !     The Coulomb part of the mean field.
 
@@ -408,16 +380,15 @@ SUBROUTINE static_mfield(rho,aloc,psir,psiaux,iter1)
   USE params
 
   
-#if(twostsic)
 USE twostr
 USE localize_rad
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
+!REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
 INTEGER, INTENT(IN)                  :: iter1
 
 
@@ -441,12 +412,8 @@ CALL calclocal(rho,aloc)          ! LDA part of the potential
 
 IF(ifsicp > 0 .AND.ifsicp < 6) THEN
   CALL calc_sicr(rho,aloc,psir)
-#if(twostsic)
-ELSE IF(ifsicp == 7) THEN
-   CALL calc_locsic(psir,psiaux)
 ELSE IF(ifsicp.GE.8 .AND. iter1 > 0) THEN
    CALL static_sicfield(rho,aloc,psir,iter1)
-#endif
 END IF
 RETURN
 END SUBROUTINE static_mfield
@@ -476,10 +443,9 @@ SUBROUTINE sstep(q0,aloc,iter)
 USE params
 USE util, ONLY:wfovlp,project
 USE kinetic
-#if(twostsic)
 USE twostr
 USE localize_rad
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
@@ -512,12 +478,11 @@ INTEGER :: ntridig(2),nstsp(2)
 LOGICAL, PARAMETER :: tprham=.false.
 !#endif
 
-#if(twostsic)
 REAL(DP):: espbef, espaft
 #if(parano)
 INTEGER :: ni
 #endif
-#endif
+
 
 #if(parano)
 DATA tocc,tcpu/.TRUE.,.true./
@@ -634,11 +599,9 @@ DO nbe=1,nstate
   
 
 !JM : subtract SIC potential for state NBE
-#if(twostsic)
   espbef = wfovlp(q0(:,nbe),q1)
   IF(ifsicp .GE. 8) CALL subtr_sicpot(q1,nbe)
   espaft = wfovlp(q0(:,nbe),q1)
-#endif
 !JM
   
   
@@ -720,18 +683,16 @@ ALLOCATE(psipr(kdfull2))
           hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
-#if(twostsic)  
-          hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
-#endif
+          IF(ifsicp>7) hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
               hmatr(ntridig(iactsp),iactsp)
         END IF
       END DO
-#if(twostsic)  
-      DO nbc=nbe+1,nstate
-        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
-      END DO
-#endif
+      IF(ifsicp>7) THEN
+        DO nbc=nbe+1,nstate
+          IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
+        END DO
+      END IF
     END IF
 
   END IF
@@ -803,11 +764,9 @@ DO nbe=1,nstate
   
 
 !JM : subtract SIC potential for state NBE
-#if(twostsic)
   espbef = wfovlp(q0(:,nbe),q1)
-  IF(ifsicp .GE. 8) CALL subtr_sicpot(q1,nbe)
+  IF(ifsicp > 7) CALL subtr_sicpot(q1,nbe)
   espaft = wfovlp(q0(:,nbe),q1)
-#endif
 !JM
   
   
@@ -898,18 +857,16 @@ DO nbe=1,nstate
           hmatr(ntridig(iactsp),iactsp) = wfovlp(q0(:,nbc),q1)
           IF(nbc == nbe) hmatr(ntridig(iactsp),iactsp) =  &
               hmatr(ntridig(iactsp),iactsp) + amoy(nbe)
-#if(twostsic)  
-          hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
-#endif
+          IF(ifsicp>7) hmatrix(nbc,nbe) = hmatr(ntridig(iactsp),iactsp)
           IF(tprham) WRITE(6,'(a,2i5,1pg13.5)') ' nbe,nbc,hmatr=',nbe,nbc,  &
               hmatr(ntridig(iactsp),iactsp)
         END IF
       END DO
-#if(twostsic)  
-      DO nbc=nbe+1,nstate
-        IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
-      END DO
-#endif
+      IF(ifsicp>7) THEN
+        DO nbc=nbe+1,nstate
+          IF(iactsp == ispin(nbc)) hmatrix(nbc,nbe) = wfovlp(q0(:,nbc),q1)
+        END DO
+      END IF
     END IF
 
   END IF
@@ -986,21 +943,22 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 
 
 !  symmetrize Hamiltonian matrix
-#if(twostsic)  
-  DO iactsp=1,2
-    ntridig(iactsp) = 0
-    DO nbe=1,nstate
-    IF(iactsp == ispin(nbe)) THEN
-      DO nbc=1,nbe
-        IF(iactsp == ispin(nbc)) THEN
-          ntridig(iactsp) = 1+ntridig(iactsp)
-          hmatr(ntridig(iactsp),iactsp) = (hmatrix(nbc,nbe)+hmatrix(nbe,nbc))/2D0
+  IF(ifsicp>7) THEN
+    DO iactsp=1,2
+      ntridig(iactsp) = 0
+      DO nbe=1,nstate
+        IF(iactsp == ispin(nbe)) THEN
+          DO nbc=1,nbe
+            IF(iactsp == ispin(nbc)) THEN
+              ntridig(iactsp) = 1+ntridig(iactsp)
+              hmatr(ntridig(iactsp),iactsp) = &
+                  (hmatrix(nbc,nbe)+hmatrix(nbe,nbc))/2D0
+            END IF
+          END DO
         END IF
       END DO
-    END IF
     END DO
-  END DO
-#endif
+  END IF
 
 !     diagonalize mean-field Hamiltonianx
 !     and transform occupied states correspondingly
@@ -1022,8 +980,7 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
     CALL givens(hmatr(1,iactsp),heigen,vect, nstsp(iactsp),nstsp(iactsp),kstate)
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' eigenvalues:',  &
         (heigen(nbe),nbe=1,nstsp(iactsp))
-#if(twostsic)
-   IF(ifsicp .GE. 8) THEN
+   IF(ifsicp > 7) THEN
      ni = ndims(iactsp)
      if(ni .NE. nstsp(iactsp)) THEN
        WRITE(*,*) ' spin sub-matrices do not match:',ni, nstsp(iactsp)
@@ -1035,7 +992,6 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
               MATMUL(TRANSPOSE(vect(1:ni,1:ni)),vecsc(1:ni,1:ni,iactsp))
      WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
    END IF
-#endif
 #if(paropenmp)
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(ii,psistate,nbes,nbe,nbcs,nbc)
     ALLOCATE(psistate(kstate))
@@ -1128,9 +1084,8 @@ SUBROUTINE infor(rho,i)
 
 USE params
 USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
-#if(twostsic)
 USE localize_rad
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(INOUT)                     :: rho(2*kdfull2)
@@ -1387,9 +1342,7 @@ USE util, ONLY:omega_mieplasmon
 #if(netlib_fft|fftw_cpu)
 USE coulsolv
 #endif
-#if(twostsic)
 USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep
-#endif
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
@@ -1431,12 +1384,12 @@ IF(myn == 0) THEN
   ELSE IF(ifsicp == 9) THEN
     WRITE(42,'(a,i3,a,i5)') 'final protocol of static for IFSICP=',ifsicp
     WRITE(42,'(a)') ' complex SIC'
-#if(twostsic)
-    WRITE(42,'(a)') &
-      'symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep'
-    WRITE(42,'(i4,7(1pg12.4),l7)') symutbegin,step,precis,precisfact, &
+    IF(ifsicp>7) THEN
+      WRITE(42,'(a)') &
+        'symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep'
+      WRITE(42,'(i4,7(1pg12.4),l7)') symutbegin,step,precis,precisfact, &
                dampopt,steplow,steplim,phiini,toptsicstep
-#endif
+    END IF
   ELSE
     WRITE(42,'(a,i3)') 'final protocol of static for IFSICP=',ifsicp
   END IF
