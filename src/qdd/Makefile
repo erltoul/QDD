@@ -764,7 +764,7 @@ endif
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 
 #  ifneq "$(TYPE_FFT)" "cuFFT"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 findiff-sinft.F90 kinetic.mod $(FFT_OBJ)
+coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 kinetic.mod $(FFT_OBJ)
 #  endif
 static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 
