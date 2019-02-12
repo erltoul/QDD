@@ -22,7 +22,7 @@ USE, intrinsic :: iso_c_binding
 USE FFTW
 USE kinetic, ONLY: FFTW_planflag
 #endif
-USE params, ONLY: DP,PI,numthr,e2,zero
+USE params, ONLY: DP,PI,numthr,e2,zero,nx2,ny2,nz2
 IMPLICIT NONE
 
 SAVE

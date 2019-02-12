@@ -797,6 +797,7 @@ SUBROUTINE dyn_mfield(rho,aloc,psi,dt,it)
 
 USE params
 USE twost
+!USE twost_util, ONLY: calc_fullsic,calc_fullsicr
 
 IMPLICIT NONE
 

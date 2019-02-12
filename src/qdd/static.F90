@@ -31,7 +31,7 @@ USE coulsolv, ONLY:falr
 USE coulsolv, ONLY:solv_poisson
 #endif
 USE twostr
-USE localize_rad
+USE twost_util
 IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -381,7 +381,7 @@ SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 
   
 USE twostr
-USE localize_rad
+USE twost_util
 
 IMPLICIT NONE
 
@@ -444,7 +444,7 @@ USE params
 USE util, ONLY:wfovlp,project
 USE kinetic
 USE twostr
-USE localize_rad
+USE twost_util
 
 IMPLICIT NONE
 
@@ -1084,7 +1084,7 @@ SUBROUTINE infor(rho,i)
 
 USE params
 USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
-USE localize_rad
+USE twost_util
 
 IMPLICIT NONE
 

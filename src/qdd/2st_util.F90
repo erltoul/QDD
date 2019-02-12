@@ -21,7 +21,7 @@
 !  presently only static version of 'sstep_lsic'
 #ifdef REALSWITCH
 
-MODULE localize_rad
+MODULE twost_util
 
 USE params
 USE kinetic
@@ -132,7 +132,9 @@ END DO
 
 RETURN
 END SUBROUTINE superpose_state_rc
-END MODULE localize_rad
+
+
+END MODULE twost_util
 
 #endif
 

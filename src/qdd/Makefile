@@ -27,7 +27,7 @@ OMP_THREADS = NO
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = NETLIB
+TYPE_FFT = FFTW
 
 # DEBUG: enable debugging
 # Available options:
@@ -668,8 +668,8 @@ ifeq ($(calls_FFTW), YES)
 endif
 # Sic-conditional objects:
 ifneq ($(twostsic_value), 0)
-  OBJINT  += localize_rad.o 2stUTc.o
-  MODLIST += localize_rad.mod twostr.mod twost.mod
+  OBJINT  += 2st_util.o 2stUTc.o
+  MODLIST += 2st_util.mod twostr.mod twost.mod
 endif
 
 OBJS = $(OBJINT) $(FFT_OBJ)
@@ -737,21 +737,21 @@ $(EXEC): initial_checks $(OBJS)
 # Additions for twostsic:
 ifneq ($(twostsic_value), 0)
 
-OBJS_LOCALIZE_RAD = main.o static.o
+OBJS_2ST_UTIL = main.o static.o
 OBJS_TWOSTSIC     = dynamic.F90 expevol.F90 main.o
 OBJS_TWOSTSIC_R   = dynamic.o main.o restart.o static.o
 
-$(OBJS_LOCALIZE_RAD): localize_rad.mod
+$(OBJS_2ST_UTIL): 2st_util.mod
 $(OBJS_TWOSTSIC):     twost.mod
 $(OBJS_TWOSTSIC_R):   twostr.mod
 
-localize_rad.o localize_rad.mod: localize_rad.F90 kinetic.mod orthmat.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o localize_rad.o -c $<
+2st_util.o 2st_util.mod: 2st_util.F90 kinetic.mod orthmat.o
+	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2st_util.o -c $<
 
 2stUTc.o twost.mod: 2stUT.F90 kinetic.mod twostr.mod 
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o 2stUTc.o -c $<
 
-2stUT.o twostr.mod: 2stUT.F90 kinetic.mod localize_rad.mod
+2stUT.o twostr.mod: 2stUT.F90 kinetic.mod 2st_util.mod
 	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2stUT.o -c $<
 else
 2stUT.o: 2stUT.F90 kinetic.mod orthmat.o

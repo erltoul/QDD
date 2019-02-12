@@ -434,8 +434,8 @@ IF(ifsicp>7 .AND. .NOT.directenergy) &
 
 IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for full SIC'
 
-IF(isitmax>0 .AND. ifexpevol== 0) &
-    STOP ' imaginary-time step only for exponential evolution'
+!IF(isitmax>0 .AND. ifexpevol== 0) &
+!    STOP ' imaginary-time step only for exponential evolution'
 
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?

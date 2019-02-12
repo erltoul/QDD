@@ -40,7 +40,7 @@ USE coulsolv
 #endif
 USE twostr
 USE twost
-USE localize_rad
+USE twost_util
 USE orthmat
 IMPLICIT NONE
 
@@ -176,7 +176,7 @@ CALL timer(1)
 !       *******************************************
 !SIC: Self Interaction Correction
 !                                     initialize parameters for FSIC
-IF(nclust > 0 .AND. ifsicp >= 7) THEN
+IF(nclust > 0 .AND. ifsicp > 7) THEN
   CALL init_fsicr()
 END IF
 
@@ -204,6 +204,7 @@ outnam=outname
 !       ****************************************************
 
 IF(imaginary_time .AND. isitmax>0 .AND. ismax>0) THEN
+  ifexpevol = 1
   CALL afterburn(psir,rho,aloc)
 END IF
 

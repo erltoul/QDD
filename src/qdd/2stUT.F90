@@ -21,7 +21,7 @@
 MODULE twostr
 USE params
 USE kinetic
-USE localize_rad
+USE twost_util
 USE orthmat
 IMPLICIT NONE
 
@@ -500,7 +500,7 @@ SUBROUTINE diag_lagr(psir)
 
 USE params
 USE kinetic
-USE localize_rad, ONLY:superpose_state
+!USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
 REAL(DP),INTENT(IN OUT) :: psir(kdfull2,kstate)
@@ -628,7 +628,7 @@ SUBROUTINE calc_utwfc(q0,q0ut,iter1)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE localize_rad, ONLY:superpose_state
+USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
@@ -677,7 +677,7 @@ SUBROUTINE calc_utwfr(q0,q0ut,iter1)
 
 USE params
 USE kinetic
-USE localize_rad, ONLY: superpose_state
+USE twost_util, ONLY: superpose_state
 
 IMPLICIT NONE
 
@@ -721,7 +721,7 @@ SUBROUTINE calc_utwfrc(q0,q0ut,iter1)
 
 USE params
 USE kinetic
-USE localize_rad, ONLY: superpose_state
+USE twost_util, ONLY: superpose_state
 
 IMPLICIT NONE
 
@@ -1333,7 +1333,7 @@ SUBROUTINE dalphabeta_rc(is,dab,vec,q0)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE localize_rad, ONLY:superpose_state
+USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: is
@@ -1421,7 +1421,7 @@ SUBROUTINE dalphabeta_r(is,dab,vec,q0)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE localize_rad, ONLY:superpose_state
+USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
 INTEGER,INTENT(IN) :: is
@@ -1520,7 +1520,7 @@ SUBROUTINE dalphabeta_c(is,dab,vec,q0)
 USE params
 USE kinetic
 USE util, ONLY:wfovlp
-USE localize_rad, ONLY:superpose_state
+USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
 INTEGER, INTENT(IN) :: is
@@ -1999,7 +1999,6 @@ END MODULE twost
 
 
 
-!  outside module to avoid cyclic referencing across modules
 
 #ifdef REALSWITCH
 SUBROUTINE calc_fullsicr(q0,qsic)
@@ -2107,4 +2106,5 @@ END SUBROUTINE calc_fullsicr
 #else
 END SUBROUTINE calc_fullsic
 #endif
+
 

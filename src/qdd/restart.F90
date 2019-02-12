@@ -369,7 +369,14 @@ IF(ifsicp >= 6) THEN
 #endif
 #ifdef COMPLEXSWITCH
   WRITE(*,*) ' before reading VECS'
-  READ(ifile) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  IF(ifsicp==8) THEN
+!    ALLOCATE(vecsr(kstate,kstate,2))
+    READ(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
+    vecs(1:kstate,1:kstate,1:2)=CMPLX(vecsr(1:kstate,1:kstate,1:2),0D0)
+!    DEALLOCATE(vecsr)
+  ELSE
+    READ(ifile) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
+  END IF
   WRITE(*,*) vecs(1,1,1)
   IF(.NOT.tstatin) THEN
     READ(ifile) ExpDABold(1:kstate,1:kstate,1:2)
@@ -676,7 +683,7 @@ END IF
       DO n=1,ndims(2)
         WRITE(*,'(10f10.5)') vecsc(1:ndims(2),n,2)
       END DO
-    ELSE IF(ifsicp >= 6) THEN
+    ELSE IF(ifsicp > 7) THEN
       WRITE(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(*,*) 'vecsr written'
       DO n=1,ndims(1)
@@ -688,7 +695,7 @@ END IF
     END IF
 #endif
 #ifdef COMPLEXSWITCH
-    IF(ifsicp >= 6) THEN
+    IF(ifsicp > 7) THEN
       WRITE(ifile) vecs(1:kstate,1:kstate,1:2),ndims(1:2)
       WRITE(ifile) expdabold(1:kstate,1:kstate,1:2)
       WRITE(ifile) wfrotate(1:kstate,1:kstate,1:2)
