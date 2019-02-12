@@ -29,12 +29,8 @@ SUBROUTINE coul_mfield(rho)
 !      Coulomb field via 'chpcoul' in common
 
 USE params
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-#if(findiff|numerov)
 USE coulsolv,ONLY:solv_poisson
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
@@ -63,12 +59,7 @@ END IF
 
 ! Coulomb of the electronic density
 
-#if(gridfft)
-CALL falr(rho,chpcoul,kdfull2)
-#endif
-#if(findiff|numerov)
 CALL solv_poisson(rho,chpcoul,kdfull2)
-#endif
 
 !WRITE(6,'(/2a)') 'along x:  x  rho rho_image  coul'
 !ind = 0
@@ -101,12 +92,7 @@ IF(idielec == 1) THEN
   
   CALL addimage(rho,0)
   
-#if(gridfft)
-  CALL falr(rho,chpcoul,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_fft(rho,chpcoul,dx,dy,dz)
-#endif
+  CALL solv_poisson(rho,chpcoul,kdfull2)   ! probably to be corrected
   
 
 !WRITE(6,'(/2a)') 'along x:  x  rho_image coul_imag'

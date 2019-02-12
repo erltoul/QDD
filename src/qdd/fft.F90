@@ -38,11 +38,12 @@ INTEGER, PRIVATE :: kxmax,kymax,kzmax
 INTEGER, PRIVATE :: iret
 
 
-#if(netlib_fft)
 REAL(DP),ALLOCATABLE :: akv(:)
 COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:) !DB
 COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
 COMPLEX(DP),ALLOCATABLE :: ak(:)
+
+#if(netlib_fft)
 REAl(DP), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftb(:,:)   ! Complexes stored in real arrays for NETLIB FFT library
 REAL(DP), PRIVATE, ALLOCATABLE :: wrkx(:),wrky(:),wrkz(:)
 REAL(DP), PRIVATE, ALLOCATABLE :: wsavex(:),wsavey(:),wsavez(:)
@@ -50,16 +51,13 @@ INTEGER, PRIVATE, ALLOCATABLE :: ifacx(:),ifacy(:),ifacz(:)
 #endif
 #if(fftw_cpu)
 INTEGER,PUBLIC,SAVE :: FFTW_planflag
-REAL(DP),ALLOCATABLE :: akv(:)
-COMPLEX(DP), ALLOCATABLE :: akx(:),aky(:),akz(:) !DB
-COMPLEX(DP),ALLOCATABLE :: akpropx(:),akpropy(:),akpropz(:),akprop(:,:,:)
-COMPLEX(DP),ALLOCATABLE :: ak(:)
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: fftax(:),fftay(:),fftaz(:),fftb(:,:)
 COMPLEX(C_DOUBLE_COMPLEX), PRIVATE, ALLOCATABLE :: ffta(:,:,:,:)
 type(C_PTR), PRIVATE :: pforwx,pforwy,pforwz,pforwz1,pbackx,pbacky,pbackz,pbackz1
 type(C_PTR), PRIVATE,ALLOCATABLE :: pforw(:),pback(:)
 INTEGER(C_INT), PRIVATE :: wisdomtest
 #endif
+
 #if(paropenmp)
 INTEGER,PRIVATE,SAVE :: nacthr
 #endif
@@ -445,14 +443,11 @@ USE params
 #if(fftw_cpu)
 USE FFTW
 #endif
+
 IMPLICIT NONE
 
 COMPLEX(DP), INTENT(IN OUT)                  :: q1(kdfull2)
 COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
-!COMPLEX(DP) ::ffftax(nx2,0:3),ffftay(ny2,0:3),ffftb(nz2,nx2,0:3)
-#if(fftw_cpu && !oldkinprop)
-INTEGER :: ithr
-#endif
 
 #if(netlib_fft)
 INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0 ! flag for initialization
@@ -460,20 +455,26 @@ REAL(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:) ! Complexes st
 INTEGER:: i1, i2, i3, i1m, i2m, i3m, ind 
 INTEGER :: ic,ir        ! Index for real and complex components when stored in ffttax, fftay...
 COMPLEX(DP) :: cmplxfac
-
 #endif
 #if(fftw_cpu)
 COMPLEX(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:)
-#endif
-#if(fftw_cpu)
 REAL(DP)::facnr
+INTEGER :: ithr
 #endif
 REAL(DP):: tnorm, xfnorm, yfnorm, zfnorm
 
+!
+! switch to fast(?)  propagation, using 3D FFT if possible
+!
+IF(iffastpropag == 1) THEN
+
 tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
+!
 !  here version using 3D FFTW
-#if(fftw_cpu && !oldkinprop)
+!
+
+#if(fftw_cpu)
 #if(paropenmp && dynopenmp)
   ithr = OMP_GET_THREAD_NUM()
   IF(ithr>nacthr) THEN
@@ -499,7 +500,6 @@ CALL secopy3dto1d(ffta(:,:,:,ithr),q1,facnr,nx2,ny2,nz2)
 #else
 
 !       check initialization
-#if(netlib_fft|fftw_cpu)
 #if(netlib_fft)
 IF(nxini == 0) THEN
   CALL dcfti1 (nx2,wsavex,ifacx)
@@ -714,15 +714,68 @@ END DO
 
 DEALLOCATE(ffttax,ffttay,ffttaz,ffttb)
 
-!netlib/fftw switch
-#endif 
-
-
-
 #endif
+
+!
+! iffastpropag==0 switch
+!
+ELSE
+
+#if(netlib_fft|fftw_cpu)
+    CALL fftf(q1,q2)
+    WRITE(*,*) ak(1),q2(1)
+    q2(1:kdfull2) = ak*q2(1:kdfull2)
+    CALL fftback(q2,q1)
+#endif
+
+END IF
+
 
 RETURN
 END SUBROUTINE  kinprop
+
+SUBROUTINE calc_ekin(psin,ekinout)
+
+!     calculates kinetic energy for single particle state with
+!     complex wavefunction 'psin'.
+
+USE params
+IMPLICIT NONE
+
+
+COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
+!REAL(DP), INTENT(IN)                         :: akv(kdfull2)
+REAL(DP), INTENT(OUT)                        :: ekinout
+
+REAL(DP) :: sum0
+REAl(DP) :: sumk, sum0ex
+INTEGER ::ii
+REAL(DP) :: vol
+COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
+!COMPLEX(DP) :: psi2(kdfull2)
+!EQUIVALENCE(psi2(1),w1(1))
+
+!------------------------------------------------------------------
+
+ALLOCATE(psi2(kdfull2))
+
+CALL fftf(psin,psi2)
+sum0 = 0D0
+sumk = 0D0
+DO ii=1,kdfull2
+  vol   = REAL(psi2(ii),DP)*REAL(psi2(ii),DP) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
+  sum0  = vol + sum0
+  sumk  = vol*akv(ii) + sumk
+END DO
+sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
+ekinout = sumk/sum0ex
+!WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
+
+
+DEALLOCATE(psi2)
+
+RETURN
+END SUBROUTINE calc_ekin
 
 
 ! ******************************

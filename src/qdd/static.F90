@@ -25,11 +25,8 @@ SUBROUTINE statit(psir,rho,aloc)
 
 USE params
 USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
-#if(netlib_fft|fftw_cpu)
-USE coulsolv, ONLY:falr
-#else
 USE coulsolv, ONLY:solv_poisson
-#endif
+
 USE twostr
 USE twost_util
 IMPLICIT NONE
@@ -55,14 +52,9 @@ REAL(DP) :: xcm, ycm, zcm
 
 CALL calcrhor(rho,psir)
 
-
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 
-#if(netlib_fft|fftw_cpu)
-CALL falr(rho,chpcoul,kdfull2)
-#else
 CALL solv_poisson(rho,chpcoul,kdfull2)
-#endif
 
 CALL prifld(chpcoul,'coulomb pot')
 
@@ -495,22 +487,18 @@ DATA tocc,tcpu/.false.,.true./     ! no reoccupation in parallel
 LOGICAL,PARAMETER :: tproj=.false.
 !       workspaces
 
+
+REAL(DP)::vol
+REAL(DP),ALLOCATABLE :: qex(:,:)
 #if(netlib_fft|fftw_cpu)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,w4
 #endif
-
-REAL(DP),ALLOCATABLE :: qex(:,:)
-
 #if(gridfft)
-REAL(DP)::vol
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
-
-
 #else
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q1,q2
 #endif
-
 #if(findiff|numerov)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: psipr
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w4

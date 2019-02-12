@@ -21,6 +21,55 @@ USE params
 IMPLICIT NONE
 
 CONTAINS
+SUBROUTINE kinprop(q0,q1)
+!
+! interface to finite-difference propagator
+!
+USE params
+COMPLEX(DP), INTENT(IN OUT)  :: q1(kdfull2)
+COMPLEX(DP), INTENT(OUT)     :: q2(kdfull2) ! workspace, obsolete here
+
+  CALL d3mixpropag (q1, dt1)
+
+END SUBROUTINE kinprop
+
+
+SUBROUTINE calc_ekin(psin,ekinout)
+
+!     calculates kinetic energy for single particle state with
+!     complex wavefunction 'psin'.
+
+USE params
+USE util, ONLY:wfovlp
+IMPLICIT NONE
+
+
+COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
+REAL(DP), INTENT(OUT)                        :: ekinout
+INTEGER :: ii
+REAL(DP) :: sum0,sumk
+
+COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
+
+!------------------------------------------------------------------
+
+ALLOCATE(psi2(kdfull2))
+
+!     exp.value of kinetic energy
+
+CALL ckin3d(psin,psi2)
+!sum0 = 0D0
+!sumk = 0D0
+!DO ii=1,nxyz
+!  sumk = REAL(psin(ii),DP)*REAL(psi2(ii),DP) + AIMAG(psin(ii))*AIMAG(psi2(ii))  &
+!      + sumk
+!  sum0 = REAL(psin(ii),DP)*REAL(psin(ii),DP) + AIMAG(psin(ii))*AIMAG(psin(ii))  &
+!      + sum0
+!END DO
+ekinout = REAL(wfovlp(psin,psi2),DP)
+
+END SUBROUTINE calc_ekin
+
 #if(findiff)
 
 !-----RKIN3D_3R------------------------------------------------------------

@@ -32,7 +32,7 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-#if(gridfft)
+
 INTEGER :: i, is, ishift
 REAL(DP) :: denominator, counter, xlambda, ylambda, zlambda
 !       workspaces
@@ -45,7 +45,7 @@ REAL(DP), ALLOCATABLE :: potwork(:)
 
 !-----------------------------------------------------------------------------
 
-
+IF(.NOT.ALLOCATED(akv)) STOP "ZEROFORCE requires FFT"
 !     check workspace
 
 !      if(usew1) stop ' in SSTEP: workspace W1 already active '
@@ -170,9 +170,6 @@ DO is=1,numspin
     
   END DO
   DEALLOCATE(potk,dervk,potwork)
-#else
-  STOP "ZERO-FORCE not yet implemented for finites differences"
-#endif
   
   RETURN
 END SUBROUTINE zeroforce
@@ -190,7 +187,6 @@ IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
-#if(gridfft)
 
 INTEGER :: is, ishift
 REAL(DP) :: zforcex, zforcey, zforcez
@@ -199,6 +195,8 @@ REAL(DP) :: zforcex, zforcey, zforcez
 
 COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
 REAL(DP), ALLOCATABLE :: potwork(:)
+
+IF(.NOT.ALLOCATED(akv)) STOP "ZEROFORCE requires FFT"
 
 ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
 
@@ -307,174 +305,7 @@ DO is=1,numspin
       zforcex,zforcey,zforcez
   
   WRITE(500,'(1f17.5,3e17.7)') tfs,zforcex,zforcey,zforcez
-#else
-  STOP "ZERO-FORCE not yet implemented for finites differences"
-#endif
-  
 
   
   RETURN
 END SUBROUTINE checkzeroforce
-!------------------------------------------------------------
-
-!!$
-!!$!------------------------------------------------------------
-!!$
-!!$SUBROUTINE getgradfield(fieldfrom,fieldto,ishift,icoor)
-!!$!------------------------------------------------------------
-!!$USE params
-!!$USE kinetic
-!!$IMPLICIT NONE
-!!$
-!!$INTEGER :: ii
-!!$#if(gridfft)
-!!$
-!!$
-!!$REAL(DP), INTENT(IN OUT)                     :: fieldfrom(2*kdfull2)
-!!$REAL(DP), INTENT(OUT)                        :: fieldto(kdfull2)
-!!$INTEGER, INTENT(IN OUT)                  :: ishift
-!!$INTEGER, INTENT(IN)                      :: icoor
-!!$
-!!$
-!!$
-!!$COMPLEX(DP), ALLOCATABLE :: potk(:),dervk(:)     ! for Fourier transformed potentials
-!!$REAL(DP), ALLOCATABLE :: potwork(:)
-!!$
-!!$ALLOCATE(potk(kdfull2),dervk(kdfull2),potwork(kdfull2))
-!!$
-!!$
-!!$!       Fourier transformation
-!!$#if(netlib_fft|fftw_cpu)
-!!$CALL rftf(fieldfrom(1+ishift*kdfull2),potk)
-!!$#endif
-!!$#if(fftw_gpu)
-!!$CALL rftf(fieldfrom(1+ishift*kdfull2),potk,ffta,gpu_ffta)
-!!$#endif
-!!$
-!!$IF (icoor == 1) THEN
-!!$  
-!!$!       x-derivative
-!!$  
-!!$#if(netlib_fft|fftw_cpu)
-!!$!    ind=0
-!!$!    DO i3=1,nz2
-!!$!      DO i2=1,ny2
-!!$!        DO i1=1,nx2
-!!$!          IF(i1 >= (nx+1)) THEN
-!!$!            zkx=(i1-nx2-1)*dkx
-!!$!          ELSE
-!!$!            zkx=(i1-1)*dkx
-!!$!          END IF
-!!$!!MB:
-!!$!          IF(i1 >= (nx+1)) THEN
-!!$!            zkx=(i1-nx2-1)*dkx
-!!$!          ELSE
-!!$!            zkx=(i1-1)*dkx
-!!$!          END IF
-!!$!!MB/
-!!$!          ind=ind+1
-!!$!          dervk(ind) = eye*zkx*potk(ind)
-!!$          dervk = -akx*potk
-!!$!        END DO
-!!$!      END DO
-!!$!    END DO
-!!$    CALL rfftback(dervk,potwork)
-!!$#endif
-!!$#if(fftw_gpu)
-!!$!    dervk = -akx*potk
-!!$    CALL multiply_rak2(gpu_ffta,gpu_akxfft,kdfull2)
-!!$    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-!!$#endif
-!!$  
-!!$ELSE IF (icoor == 2) THEN
-!!$  
-!!$  
-!!$!       y-derivative
-!!$  
-!!$#if(netlib_fft|fftw_cpu)
-!!$!    ind=0
-!!$!    DO i3=1,nz2
-!!$!      DO i2=1,ny2
-!!$!        IF(i2 >= (ny+1)) THEN
-!!$!          zky=(i2-ny2-1)*dky
-!!$!        ELSE
-!!$!          zky=(i2-1)*dky
-!!$!        END IF
-!!$!        DO i1=1,nx2
-!!$!!MB:
-!!$!          IF(i1 >= (nx+1)) THEN
-!!$!            zkx=(i1-nx2-1)*dkx
-!!$!          ELSE
-!!$!            zkx=(i1-1)*dkx
-!!$!          END IF
-!!$!!MB/
-!!$!          ind=ind+1
-!!$!          dervk(ind) = eye*zky*potk(ind)
-!!$          dervk = -aky*potk
-!!$!        END DO
-!!$!      END DO
-!!$!    END DO
-!!$    CALL rfftback(dervk,potwork)
-!!$#endif
-!!$#if(fftw_gpu)
-!!$!    dervk = -aky*potk
-!!$    CALL multiply_rak2(gpu_ffta,gpu_akyfft,kdfull2)
-!!$    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-!!$#endif
-!!$  
-!!$ELSE IF (icoor == 3) THEN
-!!$  
-!!$  
-!!$!       z-derivative
-!!$  
-!!$#if(netlib_fft|fftw_cpu)
-!!$!    ind=0
-!!$!    DO i3=1,nz2
-!!$!      IF(i3 >= (nz+1)) THEN
-!!$!        zkz=(i3-nz2-1)*dkz
-!!$!      ELSE
-!!$!        zkz=(i3-1)*dkz
-!!$!      END IF
-!!$!      DO i2=1,ny2
-!!$!        DO i1=1,nx2
-!!$!!MB:
-!!$!          IF(i1 >= (nx+1)) THEN
-!!$!            zkx=(i1-nx2-1)*dkx
-!!$!          ELSE
-!!$!            zkx=(i1-1)*dkx
-!!$!          END IF
-!!$!!MB/
-!!$!          ind=ind+1
-!!$!          dervk(ind) = eye*zkz*potk(ind)
-!!$          dervk = -akz*potk
-!!$!        END DO
-!!$!      END DO
-!!$!    END DO
-!!$    CALL rfftback(dervk,potwork)
-!!$#endif
-!!$#if(fftw_gpu)
-!!$!    dervk = -akz*potk
-!!$    CALL multiply_rak2(gpu_ffta,gpu_akzfft,kdfull2)
-!!$    CALL rfftback(dervk,potwork,ffta,gpu_ffta)
-!!$#endif
-!!$  
-!!$ELSE
-!!$  STOP 'Error in getGradField'
-!!$  
-!!$END IF
-!!$
-!!$
-!!$#else
-!!$STOP "not yet implemented for finite differences"
-!!$#endif
-!!$
-!!$
-!!$DO ii=1,kdfull2
-!!$  fieldto(ii) = potwork(ii)
-!!$END DO
-!!$DEALLOCATE(potk,dervk,potwork)
-!!$
-!!$
-!!$RETURN
-!!$END SUBROUTINE getgradfield
-!!$!------------------------------------------------------------

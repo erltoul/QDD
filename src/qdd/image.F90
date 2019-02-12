@@ -328,12 +328,7 @@ IF(ipseudo == 1)THEN
   IF(isurf /= 0) CALL pseudosoft_substrate(pseudorho,potsave)
 #endif
   
-#if(gridfft)
-  CALL falr(pseudorho,potion,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_fft(pseudorho,potion,dx,dy,dz)
-#endif
+  CALL solv_poisson(pseudorho,potion,kdfull2)
   
 #if(raregas)  
   IF (isurf /= 0 .AND. ivdw /= 2) THEN
@@ -666,12 +661,7 @@ IF(ipseudo == 1) THEN
   END IF
   
   
-#if(gridfft)
-  CALL falr(pseudorho,potion,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_fft(pseudorho,potion,dx,dy,dz)
-#endif
+  CALL solv_poisson(pseudorho,potion,kdfull2)
   
   IF (isurf /= 0 .AND. ivdw /= 2) THEN
     CALL addshortrepulsivepotonsubgrid(potshort,1)
@@ -1196,12 +1186,7 @@ DO ii=1,2*kdfull2
   IF(iindtmp(1) > nint(xdielec/dx)+nxsh) rho(ii)=rho(ii)-rhotmp(ii)
 END DO
 
-#if(gridfft)
-CALL falr(rho,chpcoulimage,kdfull2)
-#endif
-#if(findiff|numerov)
-CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
-#endif
+CALL solv_poisson(rho,chpcoulimage,kdfull2)
 
 DO ii=1,2*kdfull2
   rho(ii)=rhotmp(ii)
@@ -1217,14 +1202,7 @@ DO ii=1,2*kdfull2
   IF(iindtmp(1) < nint(xdielec/dx)+nxsh) rho(ii)=rho(ii)-rhotmp(ii)
 END DO
 
-#if(gridfft)
-CALL falr(rho,chpcoulimage,kdfull2)
-#endif
-#if(findiff|numerov)
-CALL solv_fft(rho,chpcoulimage,dx,dy,dz)
-#endif
-!test       call prifld(chpcoul,'Dielec.Coul.')
-
+CALL solv_poisson(rho,chpcoulimage,kdfull2)
 
 DO ii=1,kdfull2
   CALL conv1to3(ii)

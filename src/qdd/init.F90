@@ -414,10 +414,6 @@ IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
 !IF(istat /= 0) STOP ' static restart not possible in parallele code'
 #endif
 
-#if(findiff|numerov)
-!IF(ifhamdiag>0) STOP ' step with H diagonalization not yet for fin.diff.'
-#endif
-
 
 IF(directenergy .AND.  &
    ifsicp /= 3 .AND. ifsicp /= 4 .AND. ifsicp /= 0 .AND. ifsicp /= 8 &
@@ -526,14 +522,11 @@ ELSE
   WRITE(iu,'(a)') ' static step: Hamiltonian in subspace not diagonalized'
 END IF
 ! fft:
-#if(gridfft)
-WRITE(iu,'(a)') 'Fourier propagation'
 #if(netlib_fft)
-WRITE(iu,'(a)') 'using netlib ffts'
+WRITE(iu,'(a)') 'Fourier propagation using NETLIB FFT'
 #endif
 #if(fftw_cpu)
-WRITE(iu,'(a)') 'using fftw@cpu'
-#endif
+WRITE(iu,'(a)') 'Fourier propagation using FFTW3 library'
 #endif
 #if(coufou)
 WRITE(iu,'(a)') 'falr coulomb solver'
@@ -3343,9 +3336,6 @@ IMPLICIT NONE
 !------------------------------------------------------------------
 
 #if(parayes)
-#if(findiff|numerov)
-STOP ' parallele computing not active with finite differences'
-#endif
 IF(ifsicp==5) STOP ' exact exchange not compatible with parallele code'
 #endif
 
@@ -3463,7 +3453,7 @@ IF(level>=1) THEN
   nx=nx2/2;ny=ny2/2;nz=nz2/2
   nxfine=kxbox;nyfine=kybox;nzfine=kzbox
   END IF
-!#if(gridfft)
+
 ! bounds of loops
   minx=1;maxx=nx2
   miny=1;maxy=ny2
@@ -3474,27 +3464,6 @@ IF(level>=1) THEN
   nbnz=2;nbxz=nz2-1
 ! mid-point for x,y,z-values
   nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
-
-!#endif
-!!$#if(tfindiff|tnumerov)
-!!$! bounds of loops
-!!$  minx=-nx;maxx=nx
-!!$  miny=-ny;maxy=ny
-!!$  minz=-nz;maxz=nz
-!!$! bounds of esc. el.
-!!$  nbnx=-nx+1;nbxx=nx-1
-!!$  nbny=-ny+1;nbxy=ny-1
-!!$  nbnz=-nz+1;nbxz=nz-1
-!!$! offset for x,y,z-values   ???
-!!$  nxsh=0;nysh=0;nzsh=0
-!!$
-!!$#endif
-
-
-
-
-
- 
 
 ALLOCATE(xval(nx2),yval(ny2),zval(nz2))        !  grid coordinates
 ALLOCATE(xt2(nx2),yt2(ny2),zt2(nz2))           !  coordinates**2
@@ -3553,18 +3522,16 @@ CALL inv5p_ini(dt1)
 #endif
 #if(gridfft)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
-#endif
-
-!     init Coulomb solver
-
-!!$#if(findiff|numerov)
-!!$CALL d3sinfinit (dx,dy,dz)
-!!$#else
-#if(gridfft)
 #if(coufou || coudoub)
 CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
 #endif
 #endif
+! check active FFT for parallel computing
+#if(parayes)
+IF(.NOT.ALLOCATED(akv)) &
+   STOP ' parallele computing not active with finite differences'
+#endif
+
 
 
 RETURN

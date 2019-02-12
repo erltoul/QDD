@@ -102,12 +102,7 @@ SUBROUTINE calc_adsic(rho,aloc)
 
 USE params
 USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-#if(findiff|numerov)
 USE coulsolv,ONLY:solv_poisson
-#endif
 
 IMPLICIT NONE
 
@@ -136,6 +131,8 @@ INTEGER :: nod
 #endif
 
 !-------------------------------------------------------------------------
+
+IF(.NOT.ALLOCATED(akv)) STOP ' ADSIC requires FFT'
 
 IF(ifsicp /= 2) THEN
   STOP ' CALC_SIC called with wrong option IFSICP'
@@ -354,18 +351,12 @@ IF(numspin==2) THEN
 !        SUM(rho2(1:size)),SUM(rho1(1:size))
 !  END IF
 
-#if(gridfft)
-  CALL falr(rho1,couldif,kdfull2)
+  CALL solv_poisson(rho1,couldif,kdfull2)
   IF(idielec == 0 .AND. nion2 > 0) THEN
     coulsum = chpcoul
   ELSE
-    CALL falr(rho2,coulsum,kdfull2)
+    CALL solv_poisson(rho2,coulsum,kdfull2)
   END IF
-#endif
-#if(findiff|numerov)
-  CALL solv_poisson(rho1(1),couldif,kdfull2)
-  CALL solv_poisson(rho2(1),coulsum,kdfull2)
-#endif
   facup = 1D0/npartup
 
 #if(parayes)
@@ -425,14 +416,9 @@ ELSE
 
 !     recalculate Coulomb part for jellium
 
-#if(gridfft)
   IF(nion2 == 0) THEN
-    CALL falr(rho(1:kdfull2),chpcoul,kdfull2)
+    CALL solv_poisson(rho(1:kdfull2),chpcoul,kdfull2)
   END IF
-#endif
-#if(findiff|numerov)
-  STOP ' ADSIC not yet ready for nospin and finite diff.'
-#endif
 
   fac = 1D0/npartto
 #if(parayes)
@@ -998,12 +984,7 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 USE params
 USE util, ONLY:prifld2
 USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-#if(findiff|numerov)
 USE coulsolv,ONLY:solv_poisson
-#endif
 
 
 IMPLICIT NONE
@@ -1078,12 +1059,8 @@ IF(occup(nb) > small) THEN
   DO ind=1,nxyz
     rho1(ind) = rhosp(ind)
   END DO
-#if(gridfft)
-  CALL falr(rho1,couldif,kdfull2)
-#endif
-#if(findiff|numerov)
-  CALL solv_poisson(rho1(1),couldif,kdfull2)
-#endif
+  CALL solv_poisson(rho1,couldif,kdfull2)
+
   IF(testprint) THEN
     WRITE(11,'(a)') '     ','     '
     WRITE(11,'(a,i3)') '# NB=',nb
@@ -1152,12 +1129,7 @@ SUBROUTINE exchg(q0,qex,nbe)
 !            in case of complex wavefunctions
 
 USE params
-#if(netlib_fft|fftw_cpu)
-USE coulsolv
-#endif
-#if(findiff|numerov)
 USE coulsolv,ONLY:solv_poisson
-#endif
 
 IMPLICIT NONE
 
@@ -1226,17 +1198,9 @@ DO nbe=1,nstate
 !       the Coulomb potential for the transition density
 !         (warning : counet inserts the esquar factor)
       
-#if(gridfft)
-      CALL falr(rh,acl,kdfull2)
-#ifdef COMPLEXSWITCH
-      CALL falr(rhi,acli,kdfull2)
-#endif
-#endif
-#if(findiff|numerov)
       CALL solv_poisson(rh,acl,kdfull2)
 #ifdef COMPLEXSWITCH
       CALL solv_poisson(rhi,acli,kdfull2)
-#endif
 #endif
       
 !       accumulate on wavefunction

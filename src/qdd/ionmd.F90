@@ -1284,7 +1284,6 @@ WRITE(6,*)' l .......',rlx,rly,rlz
 
 RETURN
 END SUBROUTINE conslw
-#if(gridfft)
 
 !     *******************
 
@@ -1395,11 +1394,6 @@ COMPLEX(DP) :: test
 REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
 
-
-
-
-
-
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
@@ -1407,6 +1401,8 @@ REAL(DP), ALLOCATABLE :: aj(:)
 ALLOCATE(aj(kdfull2))
 #endif
 
+
+IF(.NOT.ALLOCATED(akx)) STOP "ELTHERM requires FFT"
 ALLOCATE(p(kdfull2),q2(kdfull2))
 ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
 
@@ -1677,4 +1673,3 @@ RETURN
 END SUBROUTINE write_density
 
 
-#endif

@@ -17,7 +17,6 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
  
-#if(gridfft)
 ! ---localize-----------------------------------------------------------
 
 #ifdef REALSWITCH
@@ -77,6 +76,10 @@ dkz=pi/(dz*REAL(nz,DP))
 
 !   scaling factor for Thomas-Fermi energy
 tf_fac = 0.6D0*(6.0D0*pi**2)**(2D0/3D0)
+
+
+! check availability of FFT
+IF(.NOT.ALLOCATED(akv)) STOP "LOCALIZE requires FFT"
 
 !   compute the currents, gradient of density and kinetic density
 
@@ -411,45 +414,6 @@ END SUBROUTINE localize
 
 
 
-#else
-!----localize-----------------------------------------------------------
-#ifdef COMPLEXSWITCH
-SUBROUTINE localize(rho,psi,it)
-
-!  dummy
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN) :: it
-
-!-----------------------------------------------------------------------
-
-RETURN
-
-END SUBROUTINE localize
-!----localizer-----------------------------------------------------------
-#else
-SUBROUTINE localizer(rho,psi,it)
-
-!  dummy
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN) :: it
-
-!-----------------------------------------------------------------------
-
-RETURN
-
-END SUBROUTINE localizer
-#endif
-#endif
 
 
 

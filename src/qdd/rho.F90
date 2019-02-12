@@ -120,11 +120,9 @@ CALL emoms(rho)                    ! moments for the whole system (in qe)
 IF(eproj/=0) CALL projmoms(rho,q0) ! moments for the projectile and the target, (in qeproj and qetarget)
 
 
-#if(gridfft)
 IF(istream == 1)  THEN
   CALL stream(rho)
 END IF
-#endif
 
 
 RETURN
@@ -136,7 +134,6 @@ END SUBROUTINE calcrho
 
 #ifdef COMPLEXSWITCH 
 !-----calc_current------------------------------------------------------
-#if(gridfft)
 SUBROUTINE calc_current(current,q0)
 
 !  current 'current' for set of complex wavefunctions 'q0'
@@ -157,6 +154,7 @@ STOP "CALC_CURRENT presently not suited for parallel computing"              ! c
 
 !-----------------------------------------------------------------
 
+IF(.NOT.ALLOCATED(akv)) STOP "CALC_CURRENT requires FFT"
 ALLOCATE(dq0(kdfull2))
 
 ! reset 
@@ -178,7 +176,6 @@ DEALLOCATE(dq0)
 RETURN
 
 END SUBROUTINE calc_current
-#endif
 #endif
 !-----spmoms------------------------------------------------------------
 

@@ -455,7 +455,7 @@ q1=(0D0,0D0)
 q2=(0D0,0D0)
 !     action of kinetic energy
 
-! #if(gridfft)
+
 #if(netlib_fft|fftw_cpu)
 CALL fftf(qact,q1)
 DO  i=1,nxyz
@@ -602,7 +602,10 @@ COMPLEX(DP) :: cf
 
 
 !----------------------------------------------------------------------
-#if(gridfft)
+
+
+! check availability of FFT
+IF(.NOT.ALLOCATED(akv)) STOP "HPSI_BOOSTINVARIANT requires FFT"
 ALLOCATE(q1(kdfull2),q2(kdfull2))
 
 q1=qact
@@ -634,9 +637,6 @@ qact = qact + h2m* &
 WRITE(*,*) ' HPSI_BOOSTINV: E_coll=',dvol*h2m*SUM(rho(:)* &
  (current(:,1)**2+current(:,2)**2+current(:,3)**2))
 
-#else
-WRITE(6,*)'HPSI_BOOSTINV NOT YET FOR FINITES DIFFERENCES'
-#endif
 
 RETURN
 END SUBROUTINE hpsi_boostinv

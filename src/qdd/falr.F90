@@ -149,7 +149,8 @@ CALL coucor
 RETURN
 END SUBROUTINE init_coul
 
-SUBROUTINE falr(rhoinp,chpfalr,kdf)
+!SUBROUTINE falr(rhoinp,chpfalr,kdf)
+SUBROUTINE solv_poisson(rhoinp,chpfalr,kdf)
 
 IMPLICIT NONE
 
@@ -171,7 +172,8 @@ CALL coufou2
 !     and maybe some other things to an output file or the screen.
 CALL result(chpfalr,kdf)
 
-END SUBROUTINE falr
+END SUBROUTINE solv_poisson
+!END SUBROUTINE falr
 
 
 !-----rhofld------------------------------------------------------------

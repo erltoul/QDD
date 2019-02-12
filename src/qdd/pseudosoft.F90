@@ -120,12 +120,8 @@ SUBROUTINE pseudosoft()
 
 USE params
 USE kinetic
-#if(netlib_fft|fftw_cpu)
-USE coulsolv, ONLY: falr
-#endif
-#if(findiff|numerov)
 USE coulsolv, ONLY:solv_poisson
-#endif
+
 IMPLICIT NONE
 
 !    size of subgrid in units of mesh size
@@ -214,13 +210,7 @@ IF(ipseudo == 1)THEN
   IF(isurf /= 0) CALL pseudosoft_substrate(pseudorho,potsave)
 #endif
 
-#if(gridfft)
-  CALL falr(pseudorho,potion,kdfull2)
-#endif
-#if(findiff|numerov)
   CALL solv_poisson(pseudorho,potion,kdfull2)
-#endif
-
   
 #if(raregas)
   IF (isurf /= 0 .AND. ivdw /= 2) THEN

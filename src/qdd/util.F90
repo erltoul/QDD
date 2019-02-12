@@ -2354,7 +2354,6 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along x:',comment
 ind = 0
-#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2364,18 +2363,6 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-#endif
-#if(tfindiff)
-DO jz=minz,maxz
-  DO jy=miny,maxy
-    DO jx=minx,maxx
-      ind    = 1 + ind
-      IF(jz == 0 .AND. jy == 0)  &
-             WRITE(6,'(1x,f6.2,g13.5)') (jx)*dx,field(ind)
-    END DO
-  END DO
-END DO
-#endif
 
 RETURN
 END SUBROUTINE prifld
@@ -2399,7 +2386,6 @@ DATA tnopri/.false./
 IF(tnopri) RETURN
 WRITE(6,'(/2a)') 'field along z:',comment
 ind = 0
-#if(gridfft)
 DO jz=minz,maxz
   DO jy=miny,maxy
     DO jx=minx,maxx
@@ -2409,18 +2395,6 @@ DO jz=minz,maxz
     END DO
   END DO
 END DO
-#endif
-#if(tfindiff)
-DO jz=minz,maxz
-  DO jy=miny,maxy
-    DO jx=minx,maxx
-      ind    = 1 + ind
-      IF(jx == 0 .AND. jy == 0)  &
-             WRITE(6,'(1x,f6.2,g13.5)') (jz)*dz,field(ind)
-    END DO
-  END DO
-END DO
-#endif
 
 RETURN
 END SUBROUTINE prifldz
@@ -4169,7 +4143,8 @@ INTEGER :: ind
 REAL(DP) :: dkx, dky, dkz
 COMPLEX(DP),ALLOCATABLE ::  q1(:)
 
-#if(gridfft)
+
+IF(.NOT.ALLOCATED(akv)) STOP "SHIFTSMALL requires FFT"
 ALLOCATE(q1(kdfull2))
 
 CALL fftf(q0,q1)
@@ -4220,11 +4195,6 @@ ENDDO
 CALL fftback(q1,q0)
 
 DEALLOCATE(q1)
-
-#else
-  STOP ' small shift in x-y-z not possible with finite differences'
-#endif
-
 
 RETURN
 END SUBROUTINE shiftsmall
@@ -4327,7 +4297,7 @@ DEALLOCATE(curr0)
 END SUBROUTINE testcurrent
 
 ! ******************************
-#if(gridfft)
+
 SUBROUTINE testgradient(wfin)
 
 ! ******************************
@@ -4347,6 +4317,7 @@ COMPLEX(DP), ALLOCATABLE :: wftest(:)
 
 REAL(DP) :: ekintestx,ekintesty,ekintestz,ekintot
 
+IF(.NOT.ALLOCATED(akv)) STOP "TESTGRADIENT requires FFT"
 ALLOCATE(wftest(kdfull2))
 
 CALL xgradient_rspace(wfin,wftest)
@@ -4377,7 +4348,7 @@ WRITE(7,'(a,5(1pg13.5))') ' test gradients:', &
 DEALLOCATE(wftest)
 
 END SUBROUTINE testgradient
-#endif
+
 
 COMPLEX(DP) FUNCTION determinant(a,n,np)
 ! Determinant of a complex matrix 'a'. This function is merely an interface for cludcmp.

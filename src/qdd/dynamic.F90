@@ -652,24 +652,15 @@ DO nb=1,nstate
 !  WRITE(*,*) ' actual thread:',ithr
 !  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
 #endif 
-#if(gridfft)
-  IF(iffastpropag == 1) THEN
+!  IF(iffastpropag == 1) THEN
     CALL kinprop(q0(1,nb),q1(1,ithr))
-  ELSE
-#if(netlib_fft|fftw_cpu)
-    CALL fftf(q0(1,nb),q1(1,ithr))
-!    CALL cmult3d(q1,ak)
-    WRITE(*,*) ak(1),q1(1,ithr)
-    q1(1:kdfull2,ithr) = ak*q1(1:kdfull2,ithr)
-    CALL fftback(q1(1,ithr),q0(1,nb))
-#endif
-  END IF
-#endif
-#if(findiff|numerov)
-
-  !CALL d3mixpropag (q0(:,nb),dt1)
-! STOP'TEST D3MIXPROPAG'
-#endif
+!  ELSE
+!    CALL fftf(q0(1,nb),q1(1,ithr))
+!!    CALL cmult3d(q1,ak)
+!    WRITE(*,*) ak(1),q1(1,ithr)
+!    q1(1:kdfull2,ithr) = ak*q1(1:kdfull2,ithr)
+!    CALL fftback(q1(1,ithr),q0(1,nb))
+!  END IF
 !#if(paropenmp)
 !WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
 !WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
@@ -908,6 +899,7 @@ SUBROUTINE info(psi,rho,aloc,it)
 !     kinetic energy, total energy, ionic energy, ...
 
 USE params
+USE kinetic, ONLY: akv,calc_ekin
 USE util, ONLY:wfovlp,safeopen,project
 IMPLICIT NONE
 
@@ -1049,10 +1041,7 @@ IF(tstinf) then
 ENDIF
 
 IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
-#if(findiff|numerov)
-  WRITE(6,*) "jstboostinv NOT YET FOR FINITE DIFFERENCE"
-  STOP
-#else
+  IF(.NOT.ALLOCATED(akv)) STOP "jstboostinv NOT YET FOR FINITE DIFFERENCE"
   ALLOCATE(current(kdfull2,3))
   ALLOCATE(qtmp(kdfull2))
   CALL calc_current(current,psi)
@@ -1073,7 +1062,6 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
   WRITE(92,'(1f15.6,500f12.6)') tfs,(spvariancebi(nb),nb=1,nstate)
   CLOSE(92)
   DEALLOCATE(current,qtmp)
-#endif
 END IF
 
 #if(parayes)
@@ -1296,80 +1284,6 @@ CLOSE(2743)
 RETURN
 END SUBROUTINE info
 
-!-----calc_ekin------------------------------------------------------------
-
-SUBROUTINE calc_ekin(psin,ekinout)
-
-!     calculates kinetic energy for single particle state with
-!     complex wavefunction 'psin'.
-
-USE params
-USE kinetic
-USE util, ONLY:wfovlp
-IMPLICIT NONE
-
-
-COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
-!REAL(DP), INTENT(IN)                         :: akv(kdfull2)
-REAL(DP), INTENT(OUT)                        :: ekinout
-
-REAL(DP) :: sum0
-#if(gridfft)
-REAl(DP) :: sumk, sum0ex
-#if(netlib_fft|fftw_cpu)
-INTEGER ::ii
-REAL(DP) :: vol
-#endif
-#endif
-#if(findiff|numerov)
-REAL(DP)::acc
-INTEGER:: i
-#endif
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psi2(kdfull2)
-!EQUIVALENCE(psi2(1),w1(1))
-
-!------------------------------------------------------------------
-
-ALLOCATE(psi2(kdfull2))
-
-#if(gridfft)
-#if(netlib_fft|fftw_cpu)
-CALL fftf(psin,psi2)
-#endif
-sum0 = 0D0
-sumk = 0D0
-#if(netlib_fft|fftw_cpu)
-DO ii=1,kdfull2
-  vol   = REAL(psi2(ii),DP)*REAL(psi2(ii),DP) +AIMAG(psi2(ii))*AIMAG(psi2(ii))
-  sum0  = vol + sum0
-  sumk  = vol*akv(ii) + sumk
-END DO
-#endif
-sum0ex = 1D0/((2D0*PI)**3*dx*dy*dz)
-ekinout = sumk/sum0ex
-!WRITE(6,*) ' sum0,sum0ex=',sum0,sum0ex
-#endif
-#if(findiff|numerov)
-
-!     exp.value of kinetic energy
-
-CALL ckin3d(psin,psi2)
-sum0 = 0D0
-acc = 0D0
-DO i=1,nxyz
-  acc = REAL(psin(i),DP)*REAL(psi2(i),DP) + AIMAG(psin(i))*AIMAG(psi2(i))  &
-      + acc
-  sum0 = REAL(psin(i),DP)*REAL(psin(i),DP) + AIMAG(psin(i))*AIMAG(psin(i))  &
-      + sum0
-END DO
-ekinout = REAL(wfovlp(psin,psi2),DP)
-#endif
-
-DEALLOCATE(psi2)
-
-RETURN
-END SUBROUTINE calc_ekin
 
 
 !-----calc_epot------------------------------------------------------------

@@ -176,7 +176,8 @@ IF(tcoultest) THEN
   END DO; END DO; END DO
   charge = SUM(rhotest)*(dx*dy*dz)
   WRITE(*,*) '# test Coulomb for point charge:',charge
-  CALL falr(rhotest,ctest,kdum)
+!  CALL falr(rhotest,ctest,kdum)
+  CALL solv_poisson(rhotest,ctest,kdum)
   ii = 0
   DO i3=1,nz;  DO i2=1,ny;  DO i1=1,nx
     ii=ii+1
@@ -355,7 +356,8 @@ END SUBROUTINE fftinp
 #if(coudoub3D && fftw_cpu)
 !-------------------------------------------------------------------
 
-SUBROUTINE falr(rhoinp,chpfalr,kdum)
+!SUBROUTINE falr(rhoinp,chpfalr,kdum)
+SUBROUTINE solv_poisson(rhoinp,chpfalr,kdum)
 IMPLICIT NONE
 
 ! Coulomb solver using FFTW
@@ -405,11 +407,15 @@ DO i3=1,nz
 END DO
 
 
-END SUBROUTINE falr
+END SUBROUTINE solv_poisson
+!END SUBROUTINE falr
+
 #else
+
 !-------------------------------------------------------------------
 
-SUBROUTINE falr(rhoinp,chpfalr,kdum)
+!SUBROUTINE falr(rhoinp,chpfalr,kdum)
+SUBROUTINE solv_poisson(rhoinp,chpfalr,kdum)
 
 IMPLICIT NONE
 
@@ -447,7 +453,8 @@ DEALLOCATE(rhokr,rhoki)
 
 
 
-END SUBROUTINE falr
+END SUBROUTINE solv_poisson
+!END SUBROUTINE falr
 
 !-----rhofld------------------------------------------------------------
 

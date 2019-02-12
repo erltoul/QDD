@@ -29,12 +29,8 @@ SUBROUTINE calclocal(rho,aloc)
 
 USE params
 USE util, ONLY:laserp,projectp,prifld
-#if(netlib_fft|fftw_cpu)
 USE coulsolv
-#endif
-#if(findiff|numerov)
-USE coulsolv
-#endif
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
@@ -70,13 +66,7 @@ END IF
 !     the Coulombic part
 !     warning : counet inserts the esquar factor
 
-
-#if(gridfft)
-IF (nion2 == 0) CALL falr(rhon,chpcoul,kdfull2)
-#endif
-#if(findiff|numerov)
 IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
-#endif
 
 !     the lda part
 

@@ -99,7 +99,6 @@ INTEGER :: nxfine, nyfine, nzfine
 !INTEGER,PARAMETER :: nxy1=nx1*ny1    !?
 !INTEGER,PARAMETER :: ksmax=nx+1,kdfull=(nx+1)*(ny+1)*(nz+1)    !?
 INTEGER :: knodem     ! =knode-1
-#if(gridfft)
 ! bounds of loops
 INTEGER :: minx=1,maxx
 INTEGER :: miny=1,maxy
@@ -109,20 +108,7 @@ INTEGER :: nbnx=2,nbxx
 INTEGER :: nbny=2,nbxy
 INTEGER :: nbnz=2,nbxz
 ! mid-point for x,y,z-values
-INTEGER :: nxsh,nysh,nzsh
-#endif
-#if(findiff|numerov)
-! bounds of loops
-INTEGER :: minx,maxx
-INTEGER :: miny,maxy
-INTEGER :: minz,maxz
-! bounds of escaped electron
-INTEGER :: nbnx,nbxx
-INTEGER :: nbny,nbxy
-INTEGER :: nbnz,nbxz
-! offset for x,y,z-values   ???
 INTEGER :: nxsh=0,nysh=0,nzsh=0
-#endif
 
 
 REAL(DP) :: dx=0D0,dy=0D0,dz=0D0,dvol                  !  mesh spacing, volume
@@ -457,7 +443,7 @@ nthr=numthr-1
  ksttot = knode*kstate    ! final value
  
  knodem=knode-1
-!#if(gridfft)
+
 ! bounds of loops
  minx=1;maxx=nx2
  miny=1;maxy=ny2
@@ -468,20 +454,7 @@ nthr=numthr-1
  nbnz=2;nbxz=nz2-1
 ! mid-point for x,y,z-values
  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
-!#endif
-!!$#if(tfindiff|tnumerov)
-!!$! bounds of loops
-!!$ minx=-nx+1;maxx=nx
-!!$ miny=-ny+1;maxy=ny
-!!$ minz=-nz+1;maxz=nz
-!!$! bounds of esc. el.
-!!$ nbnx=-nx+1+1;nbxx=nx-1
-!!$ nbny=-ny+1+1;nbxy=ny-1
-!!$ nbnz=-nz+1+1;nbxz=nz-1
-!!$! offset for x,y,z-values   ???
-!!$ !nxsh=0;nysh=0;nzsh=0
-!!$  nxsh=nx2/2;nysh=ny2/2;nzsh=nz2/2
-!!$#endif
+
 
 ! max. nr. of ions
 ng=nion
