@@ -17,7 +17,7 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#if(gridfft)
+#if(netlib_fft|fftw_cpu)
 #include "fft.F90"
 #endif 
 

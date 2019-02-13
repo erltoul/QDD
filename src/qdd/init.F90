@@ -3520,7 +3520,7 @@ CALL inv3p_ini(dt1)
 #if(numerov)
 CALL inv5p_ini(dt1)
 #endif
-#if(gridfft)
+#if(netlib_fft|fftw_cpu)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #if(coufou || coudoub)
 CALL init_coul(dx,dy,dz,nx2,ny2,nz2)

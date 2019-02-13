@@ -98,13 +98,15 @@ dz=dz0
 ALLOCATE(xt2(kxmax),yt2(kymax),zt2(kzmax))
 
 #if(netlib_fft)
-! Complex stored in real array for NETLIB FFT library : doubles the size of the array
+! NETLIB: Complex stored in real array: double the size of the array
 ALLOCATE(fftax(2*kxmax),fftay(2*kymax),fftb(2*kzmax,kxmax))
+ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
+ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
+ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
 #endif
 #if(fftw_cpu)
 ALLOCATE(fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax))
 #endif
-
 #if(coudoub3D && fftw_cpu)
 ALLOCATE(ffta(kxmax,kymax,kzmax),akv2(kxmax,kymax,kzmax))
 ALLOCATE(rffta(kxmax,kymax,kzmax))
@@ -112,11 +114,6 @@ ALLOCATE(rffta(kxmax,kymax,kzmax))
 ALLOCATE(akv2r(kdred),akv2i(kdred))
 #endif
 ALLOCATE(ikm(kxmax,kymax))
-#if(netlib_fft)
-ALLOCATE(wrkx(kfft2),wrky(kfft2),wrkz(kfft2))
-ALLOCATE(wsavex(kfft2),wsavey(kfft2),wsavez(kfft2))
-ALLOCATE(ifacx(kfft2),ifacy(kfft2),ifacz(kfft2))
-#endif
 
 #if(coudoub3D && fftw_cpu)
 #if(paropenmp)

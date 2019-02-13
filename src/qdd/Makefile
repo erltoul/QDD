@@ -81,7 +81,6 @@ MKLINCLUDE = $(MKLROOT)/include/fftw
 # Code version
 CODE_VERSION = 74
 # grid: FFT or finite difference
-GRIDFFT = YES
 FINDIFF = NO
 NUMEROV = NO
 # Coulomb solver  (set all to 0 for 'findiff' or 'numerov')
@@ -93,9 +92,6 @@ COUDOUB3D = NO
 RAREGAS = NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
-ifeq ($(GRIDFFT),YES)
-	CODE_OPTIONS += -Dgridfft
-endif
 ifeq ($(FINDIFF),YES)
     CODE_OPTIONS += -Dfindiff
 endif
@@ -110,12 +106,6 @@ ifeq ($(COUDOUB),YES)
 endif
 ifeq ($(COUDOUB3D),YES)
     CODE_OPTIONS += -Dcoudoub3D
-endif
-ifeq ($(TWOSTSIC),YES)
-    CODE_OPTIONS += -Dtwostsic
-endif
-ifeq ($(CMPLXSIC),YES)
-    CODE_OPTIONS += -Dcmplxsic
 endif
 ifeq ($(RAREGAS),YES)
     CODE_OPTIONS += -Draregas
@@ -508,15 +498,12 @@ valid_OMP_THREADS := DYN YES NO
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
-#gridfft_value  :=$(shell echo -e "\\n\#if(gridfft)  \\ngridfft  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#twostsic_value :=$(shell echo -e "\\n\#if(twostsic) \\ntwostsic \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#lda_gpu_value  :=$(shell echo -e "\\n\#if(lda_gpu)  \\nlda_gpu  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
 initial_checks: makefile
 	@echo "#######################################################"
@@ -524,15 +511,12 @@ initial_checks: makefile
 	@echo "#######################################################"
 	@echo  Parameters defined in define.h:
 	@echo "--------------------------------------------"
-	@echo "gridfft       $(GRIDFFT)"
 	@echo "findiff       $(FINDIFF)"
 	@echo "numerov       $(NUMEROV)"
 	@echo "coufou        $(COUFOU)"
 	@echo "coudoub       $(COUDOUB)"
 	@echo "coudoub3D     $(COUDOUB3D)"
-	@echo "twostsic      $(TWOSTSIC)"
 	@echo "raregas       $(RAREGAS)"
-#	@echo "lda_gpu       $(lda_gpu_value)"
 	@echo "#######################################################"
 	@echo  Parameters defined in makefile / define.mk:
 	@echo "--------------------------------------------"
@@ -587,28 +571,6 @@ ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
 endif
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 	$(error ERROR: Unknown $(strip MKL         value) in makefile / define.mk ($(MKL)))
-endif
-
-# gridfft, findiff, numerov: only one can be enabled.
-ifneq ($(GRIDFFT),NO)
-  ifneq ($(FINDIFF),NO)
-	$(error ERROR: gridfft and findiff cannot be enabled simultaneously in define.h)
-  endif
-  ifneq ($(NUMEROV),NO)
-	$(error ERROR: gridfft and numerov cannot be enabled simultaneously in define.h)
-  endif
-else
-	$(warning WARNING: gridfft disabled, so TYPE_FFT=$(TYPE_FFT) will be disregarded)
-  ifeq ($(FINDIFF),NO)
-    ifeq ($(NUMEROV),NO)
-	$(error ERROR: gridfft, findiff and numerov cannot be simultaneously disabled in define.h)
-    endif
-  endif
-#  ifneq ($(findiff_value), 0)
-#    ifneq ($(numerov_value), 0)
-#	$(error ERROR: findiff and numerov cannot be enabled simultaneously in define.h)
-#    endif
-#  endif
 endif
 
 # coufou, coudoub: only one can be enabled.
@@ -666,11 +628,9 @@ ifeq ($(calls_FFTW), YES)
   FFT_OBJ = fftw.o
   MODLIST += fftw.mod
 endif
-# Sic-conditional objects:
-ifneq ($(twostsic_value), 0)
-  OBJINT  += 2st_util.o 2stUTc.o
-  MODLIST += 2st_util.mod twostr.mod twost.mod
-endif
+# Sic objects:
+OBJINT  += 2st_util.o 2stUTc.o
+MODLIST += 2st_util.mod twostr.mod twost.mod
 
 OBJS = $(OBJINT) $(FFT_OBJ)
 
