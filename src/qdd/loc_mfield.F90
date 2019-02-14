@@ -29,7 +29,7 @@ SUBROUTINE coul_mfield(rho)
 !      Coulomb field via 'chpcoul' in common
 
 USE params
-USE coulsolv,ONLY:solv_poisson
+USE coulsolv, ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 IMPLICIT NONE
 
@@ -59,7 +59,12 @@ END IF
 
 ! Coulomb of the electronic density
 
-CALL solv_poisson(rho,chpcoul,kdfull2)
+IF(tcoulfalr) THEN
+  CALL solv_poisson_f(rho,chpcoul,kdfull2)
+ELSE
+  CALL solv_poisson_e(rho,chpcoul,kdfull2)
+END IF
+!CALL solv_poisson(rho,chpcoul,kdfull2)
 
 !WRITE(6,'(/2a)') 'along x:  x  rho rho_image  coul'
 !ind = 0

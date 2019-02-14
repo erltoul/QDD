@@ -27,7 +27,7 @@ SUBROUTINE initnamelists
 !------------------------------------------------------------
 USE params
 USE kinetic
-
+USE coulsolv, ONLY: tcoulfalr
 IMPLICIT NONE
 
 CHARACTER (LEN=80) :: title
@@ -55,6 +55,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
     epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
+    tcoulfalr, &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
@@ -482,6 +483,7 @@ SUBROUTINE ocoption(iu)
 !     output of compiled and of read-in options
 
 USE params
+USE coulsolv, ONLY: tcoulfalr
 IMPLICIT NONE
 INTEGER :: iu
 !----------------------------------------------------------------
@@ -528,12 +530,12 @@ WRITE(iu,'(a)') 'Fourier propagation using NETLIB FFT'
 #if(fftw_cpu)
 WRITE(iu,'(a)') 'Fourier propagation using FFTW3 library'
 #endif
-#if(coufou)
-WRITE(iu,'(a)') 'falr coulomb solver'
-#endif
-#if(coudoub)
-WRITE(iu,'(a)') 'exact coulomb solver'
-#endif
+IF(tcoulfalr) THEN
+  WRITE(iu,'(a)') 'falr coulomb solver'
+ELSE
+  WRITE(iu,'(a)') 'exact coulomb solver'
+END IF
+
 IF(iffastpropag == 1) WRITE(iu,'(a)') 'faster TV propagator'
 
 IF(ifexpevol == 1) THEN
@@ -3522,9 +3524,8 @@ CALL inv5p_ini(dt1)
 #endif
 #if(netlib_fft|fftw_cpu)
 CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
-#if(coufou || coudoub)
+#else
 CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
-#endif
 #endif
 ! check active FFT for parallel computing
 #if(parayes)

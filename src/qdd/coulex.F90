@@ -16,7 +16,10 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
-MODULE coulsolv
+! set this preprocessor parameter to activate 3D FFTW in Coulomb solver
+#define coudoub3D 0
+
+MODULE coulsolv_e
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 USE FFTW
@@ -68,7 +71,7 @@ REAL(DP), PRIVATE, ALLOCATABLE :: rffta(:,:,:)
 
 CONTAINS
 
-SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
+SUBROUTINE init_coul_e(dx0,dy0,dz0,nx0,ny0,nz0)
 
 REAL(DP),INTENT(IN)::dx0,dy0,dz0
 INTEGER,INTENT(IN)::nx0,ny0,nz0
@@ -186,7 +189,7 @@ IF(tcoultest) THEN
 END IF
 
 RETURN
-END SUBROUTINE init_coul
+END SUBROUTINE init_coul_e
 
 !-----fftinp------------------------------------------------------------
 
@@ -354,15 +357,15 @@ END SUBROUTINE fftinp
 !-------------------------------------------------------------------
 
 !SUBROUTINE falr(rhoinp,chpfalr,kdum)
-SUBROUTINE solv_poisson(rhoinp,chpfalr,kdum)
+SUBROUTINE solv_poisson_e(rhoinp,chpfalr,kdum)
 IMPLICIT NONE
 
 ! Coulomb solver using FFTW
 
 
-REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
-REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: kdum   ! dummy variable, exist only to match the number of arguments of other version of farl.
+REAL(DP), INTENT(IN)   :: rhoinp(*) !rhoinp(kdfull)
+REAL(DP), INTENT(OUT)  :: chpfalr(*) !chpfalr(kdfull)
+INTEGER, INTENT(IN)    :: kdum   ! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3
 REAL(DP) ::factor
@@ -404,7 +407,7 @@ DO i3=1,nz
 END DO
 
 
-END SUBROUTINE solv_poisson
+END SUBROUTINE solv_poisson_e
 !END SUBROUTINE falr
 
 #else
@@ -412,7 +415,7 @@ END SUBROUTINE solv_poisson
 !-------------------------------------------------------------------
 
 !SUBROUTINE falr(rhoinp,chpfalr,kdum)
-SUBROUTINE solv_poisson(rhoinp,chpfalr,kdum)
+SUBROUTINE solv_poisson_e(rhoinp,chpfalr,kdum)
 
 IMPLICIT NONE
 
@@ -450,7 +453,7 @@ DEALLOCATE(rhokr,rhoki)
 
 
 
-END SUBROUTINE solv_poisson
+END SUBROUTINE solv_poisson_e
 !END SUBROUTINE falr
 
 !-----rhofld------------------------------------------------------------
@@ -1466,4 +1469,4 @@ RETURN
 END SUBROUTINE coulsolv_end
 #endif
 
-END MODULE coulsolv
+END MODULE coulsolv_e

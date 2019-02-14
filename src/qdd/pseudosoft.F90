@@ -120,7 +120,7 @@ SUBROUTINE pseudosoft()
 
 USE params
 USE kinetic
-USE coulsolv, ONLY:solv_poisson
+USE coulsolv, ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 IMPLICIT NONE
 
@@ -210,7 +210,12 @@ IF(ipseudo == 1)THEN
   IF(isurf /= 0) CALL pseudosoft_substrate(pseudorho,potsave)
 #endif
 
-  CALL solv_poisson(pseudorho,potion,kdfull2)
+IF(tcoulfalr) THEN
+  CALL solv_poisson_f(pseudorho,potion,kdfull2)
+ELSE
+  CALL solv_poisson_e(pseudorho,potion,kdfull2)
+END IF
+!  CALL solv_poisson(pseudorho,potion,kdfull2)
   
 #if(raregas)
   IF (isurf /= 0 .AND. ivdw /= 2) THEN

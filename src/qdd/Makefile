@@ -80,14 +80,9 @@ MKLINCLUDE = $(MKLROOT)/include/fftw
 
 # Code version
 CODE_VERSION = 74
-# grid: FFT or finite difference
+# grid: FFT or finite difference (FFT options must be NO for finite differences)
 FINDIFF = NO
 NUMEROV = NO
-# Coulomb solver  (set all to 0 for 'findiff' or 'numerov')
-COUFOU = NO
-COUDOUB = YES
-# Switch to 3D FFTW in Coulomb solver (preliminary option)
-COUDOUB3D = NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 
@@ -98,15 +93,9 @@ endif
 ifeq ($(NUMEROV),YES)
     CODE_OPTIONS += -Dnumerov
 endif
-ifeq ($(COUFOU),YES)
-    CODE_OPTIONS += -Dcoufou
-endif
-ifeq ($(COUDOUB),YES)
-    CODE_OPTIONS += -Dcoudoub
-endif
-ifeq ($(COUDOUB3D),YES)
-    CODE_OPTIONS += -Dcoudoub3D
-endif
+#ifeq ($(COUDOUB3D),YES)
+#    CODE_OPTIONS += -Dcoudoub3D
+#endif
 ifeq ($(RAREGAS),YES)
     CODE_OPTIONS += -Draregas
 endif
@@ -574,11 +563,11 @@ ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 endif
 
 # coufou, coudoub: only one can be enabled.
-ifneq ($(COUFOU),NO)
-  ifneq ($(COUDOUB),NO)
-	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
-  endif
-endif
+#ifneq ($(COUFOU),NO)
+#  ifneq ($(COUDOUB),NO)
+#	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
+#  endif
+#endif
 
 # coudoub3D is only enabled when using FFTW calls.
 ifneq ($(COUDOUB3D),NO)
@@ -724,7 +713,7 @@ endif
 kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
 
 #  ifneq "$(TYPE_FFT)" "cuFFT"
-coulsolv.o: coulsolv.F90 falr.F90 coulex.F90 kinetic.mod $(FFT_OBJ)
+coulsolv.o: coulsolv.F90 falr.o coulex.o kinetic.mod $(FFT_OBJ)
 #  endif
 static.o: pseudosoft.F90 $(DEPS_KINCOUL)
 

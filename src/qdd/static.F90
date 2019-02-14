@@ -25,7 +25,8 @@ SUBROUTINE statit(psir,rho,aloc)
 
 USE params
 USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
-USE coulsolv, ONLY:solv_poisson
+USE coulsolv, ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
+!USE coulsolv_e, ONLY:solv_poisson
 
 USE twostr
 USE twost_util
@@ -54,7 +55,11 @@ CALL calcrhor(rho,psir)
 
 WRITE(*,*) 'for charge=',SUM(rho)*dvol
 
-CALL solv_poisson(rho,chpcoul,kdfull2)
+IF(tcoulfalr) THEN
+  CALL solv_poisson_f(rho,chpcoul,kdfull2)
+ELSE
+  CALL solv_poisson_e(rho,chpcoul,kdfull2)
+END IF
 
 CALL prifld(chpcoul,'coulomb pot')
 
@@ -1539,10 +1544,12 @@ INTEGER :: is(mpi_status_size)
 #if(parano)
 INTEGER :: nb
 #endif
-#if(coufou)
-REAL(DP) :: p00,p10,p11r,p11i,p20,p21r,p21i,p22r,p22i,p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
-    p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2
-#endif
+!#if(coufou)
+!              for FALR Coulomb solver
+REAL(DP) :: p00,p10,p11r,p11i,p20,p21r,p21i,p22r,p22i,&
+            p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
+            p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2
+!#endif
 omegam = omega_mieplasmon(rho)
 
 !      eshell=0.0
@@ -1583,11 +1590,11 @@ IF(myn == 0) THEN
 END IF
 #endif
 
-#if(coufou)
-CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
+!#if(coufou)
+IF(tcoulfalr) CALL mulmws(rho,p00,p10,p11r,p11i,p20,p21r,p21i,  &
     p22r,p22i,p30,p31r,p31i,p32r,p32i,p33r,p33i,  &
     p40,p41r,p41i,p42r,p42i,p43r,p43i,p44r,p44i, pr2,mumpri)
-#endif
+!#endif
 
 
 #if(parano)
@@ -1639,11 +1646,11 @@ IF(myn == 0) THEN
   WRITE(42,'(a,3f11.4)')  'xx,yy,zz:',qe(5),qe(6),qe(7)
   WRITE(42,'(a,3f11.4)')  'xy,zx,zy:',qe(8),qe(9),qe(10)
   rms = SQRT(qe(5)+qe(6)+qe(7))
-#if(coufou)
-  WRITE(42,'(a,3f11.4)')  'q20,30,4:',p20,p30,p40
-  WRITE(42,'(a,3f11.4)')  'renorm. :',  &
-      p20/(qe(1)*rms**2),p30/(qe(1)*rms**3),p40/(qe(1)*rms**4)
-#endif
+  IF(tcoulfalr) THEN
+    WRITE(42,'(a,3f11.4)')  'q20,30,4:',p20,p30,p40
+    WRITE(42,'(a,3f11.4)')  'renorm. :',  &
+        p20/(qe(1)*rms**2),p30/(qe(1)*rms**3),p40/(qe(1)*rms**4)
+  END IF
   WRITE(42,'(a,3f11.4)')  'spindip.:',se(1),se(2),se(3)
   WRITE(42,'(a,4f11.4)') 'omegam,rhops,N_el,rhomix:',  &
       omegam,rhopss,apnum,rhomix

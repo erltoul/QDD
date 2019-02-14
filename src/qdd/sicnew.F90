@@ -102,7 +102,7 @@ SUBROUTINE calc_adsic(rho,aloc)
 
 USE params
 USE kinetic
-USE coulsolv,ONLY:solv_poisson
+USE coulsolv,ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 IMPLICIT NONE
 
@@ -351,11 +351,20 @@ IF(numspin==2) THEN
 !        SUM(rho2(1:size)),SUM(rho1(1:size))
 !  END IF
 
-  CALL solv_poisson(rho1,couldif,kdfull2)
+  IF(tcoulfalr) THEN
+    CALL solv_poisson_f(rho1,couldif,kdfull2)
+  ELSE
+    CALL solv_poisson_e(rho1,couldif,kdfull2)
+  END IF
   IF(idielec == 0 .AND. nion2 > 0) THEN
     coulsum = chpcoul
   ELSE
-    CALL solv_poisson(rho2,coulsum,kdfull2)
+  IF(tcoulfalr) THEN
+    CALL solv_poisson_f(rho2,coulsum,kdfull2)
+  ELSE
+    CALL solv_poisson_e(rho2,coulsum,kdfull2)
+  END IF
+!    CALL solv_poisson(rho2,coulsum,kdfull2)
   END IF
   facup = 1D0/npartup
 
@@ -417,7 +426,12 @@ ELSE
 !     recalculate Coulomb part for jellium
 
   IF(nion2 == 0) THEN
-    CALL solv_poisson(rho(1:kdfull2),chpcoul,kdfull2)
+    IF(tcoulfalr) THEN
+      CALL solv_poisson_f(rho(1:kdfull2),chpcoul,kdfull2)
+    ELSE
+      CALL solv_poisson_e(rho(1:kdfull2),chpcoul,kdfull2)
+    END IF
+!    CALL solv_poisson(rho(1:kdfull2),chpcoul,kdfull2)
   END IF
 
   fac = 1D0/npartto
@@ -984,7 +998,7 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 USE params
 USE util, ONLY:prifld2
 USE kinetic
-USE coulsolv,ONLY:solv_poisson
+USE coulsolv,ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 
 IMPLICIT NONE
@@ -1059,7 +1073,12 @@ IF(occup(nb) > small) THEN
   DO ind=1,nxyz
     rho1(ind) = rhosp(ind)
   END DO
-  CALL solv_poisson(rho1,couldif,kdfull2)
+  IF(tcoulfalr) THEN
+    CALL solv_poisson_f(rho1,couldif,kdfull2)
+  ELSE
+    CALL solv_poisson_e(rho1,couldif,kdfull2)
+  END IF
+!  CALL solv_poisson(rho1,couldif,kdfull2)
 
   IF(testprint) THEN
     WRITE(11,'(a)') '     ','     '
@@ -1129,7 +1148,7 @@ SUBROUTINE exchg(q0,qex,nbe)
 !            in case of complex wavefunctions
 
 USE params
-USE coulsolv,ONLY:solv_poisson
+USE coulsolv,ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 IMPLICIT NONE
 
@@ -1198,11 +1217,17 @@ DO nbe=1,nstate
 !       the Coulomb potential for the transition density
 !         (warning : counet inserts the esquar factor)
       
-      CALL solv_poisson(rh,acl,kdfull2)
+      IF(tcoulfalr) THEN
+        CALL solv_poisson_f(rh,acl,kdfull2)
 #ifdef COMPLEXSWITCH
-      CALL solv_poisson(rhi,acli,kdfull2)
+        CALL solv_poisson_f(rhi,acli,kdfull2)
 #endif
-      
+      ELSE
+        CALL solv_poisson_e(rh,acl,kdfull2)
+#ifdef COMPLEXSWITCH
+        CALL solv_poisson_e(rhi,acli,kdfull2)
+#endif
+      END IF      
 !       accumulate on wavefunction
       
 #ifdef REALSWITCH

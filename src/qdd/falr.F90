@@ -18,7 +18,7 @@
 
 !------falr Coulomb solver-------------------------------------------------
 
-MODULE coulsolv
+MODULE coulsolv_f
 #if(fftw_cpu)
 USE FFTW
 USE, intrinsic :: iso_c_binding
@@ -73,18 +73,12 @@ CONTAINS
 
 
 !-------------------------------------------------------------------
-SUBROUTINE init_coul(dx0,dy0,dz0,nx0,ny0,nz0)
+SUBROUTINE init_coul_f(dx0,dy0,dz0,nx0,ny0,nz0)
 IMPLICIT NONE
-!     this is an example for how to use the falr Coulomb solver
-!     read readme.fcs first!
 
 !-----------------------------------------------------------------------
 INTEGER,INTENT(IN) :: nx0, ny0, nz0
 REAL(DP),INTENT(IN):: dx0, dy0, dz0
-!~ INTEGER :: ii,i1,i2,i3, kdum
-!~ LOGICAL,PARAMETER :: tcoultest=.true.
-!~ REAL(DP) :: charge
-!~ REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 ! compute array parameters
 kxmax=nx0;kymax=ny0;kzmax=nz0
@@ -147,10 +141,10 @@ CALL coucor
 
 
 RETURN
-END SUBROUTINE init_coul
+END SUBROUTINE init_coul_f
 
 !SUBROUTINE falr(rhoinp,chpfalr,kdf)
-SUBROUTINE solv_poisson(rhoinp,chpfalr,kdf)
+SUBROUTINE solv_poisson_f(rhoinp,chpfalr,kdf)
 
 IMPLICIT NONE
 
@@ -172,7 +166,7 @@ CALL coufou2
 !     and maybe some other things to an output file or the screen.
 CALL result(chpfalr,kdf)
 
-END SUBROUTINE solv_poisson
+END SUBROUTINE solv_poisson_f
 !END SUBROUTINE falr
 
 
@@ -2356,4 +2350,4 @@ RETURN
 END SUBROUTINE coulsolv_end
 #endif
 
-END MODULE coulsolv
+END MODULE coulsolv_f
