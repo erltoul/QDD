@@ -83,6 +83,8 @@ CODE_VERSION = 74
 # grid: FFT or finite difference (FFT options must be NO for finite differences)
 FINDIFF = NO
 NUMEROV = NO
+COUDOUB=YES
+COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 
@@ -93,9 +95,12 @@ endif
 ifeq ($(NUMEROV),YES)
     CODE_OPTIONS += -Dnumerov
 endif
-#ifeq ($(COUDOUB3D),YES)
-#    CODE_OPTIONS += -Dcoudoub3D
-#endif
+ifeq ($(COUDOUB),YES)
+    CODE_OPTIONS += -Dcoudoub
+endif
+ifeq ($(COUDOUB3D),YES)
+    CODE_OPTIONS += -Dcoudoub3D
+endif
 ifeq ($(RAREGAS),YES)
     CODE_OPTIONS += -Draregas
 endif

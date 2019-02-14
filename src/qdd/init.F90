@@ -3523,10 +3523,9 @@ CALL inv3p_ini(dt1)
 CALL inv5p_ini(dt1)
 #endif
 #if(netlib_fft|fftw_cpu)
-CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
-#else
-CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
+  CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #endif
+CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
 ! check active FFT for parallel computing
 #if(parayes)
 IF(.NOT.ALLOCATED(akv)) &

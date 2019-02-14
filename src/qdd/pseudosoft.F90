@@ -211,9 +211,13 @@ IF(ipseudo == 1)THEN
 #endif
 
 IF(tcoulfalr) THEN
+  WRITE(*,*) 'in PSEUDOSOFT FALR switch'
   CALL solv_poisson_f(pseudorho,potion,kdfull2)
+  WRITE(*,*) 'in PSEUDOSOFT after FALR switch'
 ELSE
+  WRITE(*,*) 'in PSEUDOSOFT COULEX switch'
   CALL solv_poisson_e(pseudorho,potion,kdfull2)
+  WRITE(*,*) 'in PSEUDOSOFT after COULEX switch'
 END IF
 !  CALL solv_poisson(pseudorho,potion,kdfull2)
   
