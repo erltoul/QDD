@@ -17,7 +17,7 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 ! set this preprocessor parameter to activate 3D FFTW in Coulomb solver
-!#define coudoub3D 0
+#define coudoub3D 1
 
 MODULE coulsolv_e
 #if(fftw_cpu)

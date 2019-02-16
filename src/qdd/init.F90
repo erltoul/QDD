@@ -3918,3 +3918,64 @@ STOP 'too many iterations in jacobi'
 
 RETURN
 END SUBROUTINE jacobi
+
+
+SUBROUTINE mergetabs
+
+USE params
+IMPLICIT NONE
+
+INTEGER :: i, ia, ion, ifinsp, ja, ka, nfin, nfinsp, nfinfinesp
+INTEGER,ALLOCATABLE :: ialltabfine(:)
+
+ALLOCATE(ialltabfine(kdfull2fine))
+
+ialltabfine=0
+
+DO ion=1,nion
+  nfin=ifinfine(ion)
+  DO i=1,nfin   
+    ialltabfine(icountfine(i,ion))=1
+  END DO
+END DO
+
+
+ifinsp=0
+DO i=1,kdfull2fine
+  IF(ialltabfine(i).ne.0) THEN
+    ifinsp=ifinsp+1
+    IF(ifinsp.gt.(ng*knl)) STOP 'increase KNL'
+    icountfinesp(ifinsp)=i
+  ENDIF
+END DO
+nfinfinesp=ifinsp
+!write(6,*) 'nfinfinesp',nfinfinesp
+
+ialltabfine=0
+DO ion=1,nion
+  nfin=ifin(ion)
+  DO i=1,nfin   
+    ialltabfine(icount(i,ion))=1
+  END DO
+END DO
+
+
+ifinsp=0
+DO i=1,kdfull2
+  IF(ialltabfine(i).ne.0) THEN
+    ifinsp=ifinsp+1
+    IF(ifinsp.gt.(ng*knl)) STOP 'increase KNL'
+    icountsp(ifinsp)=i
+    ia=i/(nx2*ny2)
+    ja=(i-ia*nx2*ny2)/ny2
+    ka=i-ia*nx2*ny2-ja*ny2
+    END IF
+END DO
+nfinsp=ifinsp
+
+DEALLOCATE(ialltabfine)
+RETURN
+END SUBROUTINE mergetabs
+
+
+

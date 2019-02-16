@@ -1,27 +1,24 @@
-1) makefile & define.h:
-      these files contain the option for an actual compilation;
-      we have to write documentation which options exist, how
-      to enter them, and where to enter them. Presently an
-      older version of that exsists in 'doc/explain.pdf'.
-      This needs update and a summary in the header of
-      'makefile' or 'make.sh'.
+1) Preprocessor options:
+     Now all in 'Makefile' and reduced to a minimum.
 
-2) entry of options:
-      trhough 'define.h' as well as through 'makefile'
-      try to have only one channel
-      possibly write a batch file with interactive entry of options
-      (see 'make.sh')
+2) option 'coudoub3D':
+     This option has been moved to a '#define' inside the Coulomb
+     package such that it can be chanegd onyl by nerds.
 
-3) redundant compile-time options: 
-      redunant options gridfft <-->  netlib_fft & fftw_cpu; 
-      try to deduce gridfft from both others
+3) finite differences:
+     Has been seperated as far as possible. Will be skipped in
+     public version while being kept in an archive version.
+     Requires more testing.
 
-4) option 'coudoub3D':
-      check performance on various platforms and decide for one option
+4) raregas:
+     This option will be skipped in public version.
 
-5) finite differences:
-      this seems to be installed, but requires more testing;
-      before spending time on that, run benchmarks.
+5) 'calc_projFine':
+     This version presently only for electronic part, not yet
+     in ionic force. Should we put it there also?
 
-6) raregas:
-      this option has not been used for long, need testing.
+6) preprocessor option 'simpar':
+     Could be removed. 
+
+7) Subroutine 'mergetabs':
+     What is this routine doing?
