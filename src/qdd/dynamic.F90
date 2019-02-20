@@ -56,11 +56,8 @@ tfs=0
 DO it=irest,itmax   ! time-loop
 
   ijel=it
-#if(paraworld)
-  tfs=tfs+dt1*0.0484D0
-#else
   tfs=it*dt1*0.0484D0 !/(2.0*ame)
-#endif
+
   CALL print_densdiff(rho,it)       ! right place here ???
   
 !         if(nclust.gt.0) call savings(psi,it)
@@ -150,11 +147,7 @@ endif
   
   IF(it > irest) THEN
     IF(myn == 0) THEN
-#if(paraworld)
-!     tfs=tfs+dt1*0.0484D0
-#else
       tfs=it*dt1*0.0484D0
-#endif
       IF(nion2 > 0) CALL analyze_ions(it)
       IF(isurf > 0) CALL analyze_surf(it)
     END IF
@@ -905,7 +898,7 @@ USE kinetic, ONLY: akv,calc_ekin
 USE util, ONLY:wfovlp,safeopen,project
 IMPLICIT NONE
 
-#if(parayes||paraworld)
+#if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 REAL(DP) :: enonlcp, esh1p, eshellp
@@ -945,7 +938,7 @@ INTEGER :: ico
 
 OPEN(2743,FILE='energies.'//outnam)
 
-#if(parayes||paraworld)
+#if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #else
 myn = 0

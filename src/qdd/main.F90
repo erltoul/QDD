@@ -169,9 +169,7 @@ IF(icooltyp == 3) THEN
 END IF
 
 DEALLOCATE(psir)
-#if(paraworld)
-outnam=outname
-#endif
+!outnam=outname
 
 !          imaginary-time iteration (to improve statics)
 IF(imaginary_time .AND. isitmax>0 .AND. ismax>0) THEN
@@ -257,7 +255,7 @@ DEALLOCATE(psi)
 DEALLOCATE(psitophi)!MV
 
 
-#if(parayes||paraworld)
+#if(parayes)
 CALL mpi_finalize(mpi_ierror)
 #endif
 #if(simpara)
@@ -399,8 +397,6 @@ IF(nclust > 0) THEN
     IF(ifsicp > 0) CALL calc_sic(rho,aloc,psi)
     IF(ipsptyp == 1) THEN
       DO ion=1,nion
-#if(paraworld)
-#else
         IF (iswitch_interpol==1) THEN
           CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
           CALL mergetabs
@@ -408,7 +404,6 @@ IF(nclust > 0) THEN
           CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
         END IF
       END DO
-#endif
     END IF
   END IF
   CALL dyn_mfield(rho,aloc,psi,0D0,0)
@@ -428,9 +423,6 @@ IF(nclust > 0) THEN
   END IF
   
   time = irest*dt1*0.0484D0/(2D0*ame)
-#if(paraworld)
-  time = time+dt1*0.0484D0/(2D0*ame)
-#endif
 #if(!simpara)
   IF(myn == 0 .OR. knode == 1) THEN
 #endif

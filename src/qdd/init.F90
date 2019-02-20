@@ -287,7 +287,7 @@ write(6,*) outnam, "**************************************"
   IF(nion2 == 0) iemomsrel=0    ! relat. to center of box for jellium
 
 
-#if(parayes||paraworld)
+#if(parayes)
   CALL comm_inputparams()
 #endif
   
@@ -1838,9 +1838,6 @@ WRITE (6,*) 'Entering initions()'
 #if(parayes)
 CALL comm_ionconfig()
 #endif
-#if(paraworld)
-knode = 1
-#endif
 
 
 !        check consistency of ions  (obsolete?)
@@ -2006,10 +2003,6 @@ IMPLICIT NONE
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
-#if(paraworld)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
@@ -2144,10 +2137,6 @@ IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
-#endif
-#if(paraworld)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size),isa
 #endif
 
 INTEGER, INTENT(IN)                      :: nelect
@@ -2448,7 +2437,7 @@ DEALLOCATE(ph)
 !stop'rarararara'
 
 
-#if(parano||paraworld)
+#if(parano)
 DO i=1,nstate
   nrel2abs(i)=i
   nabs2rel(i)=i
@@ -2848,10 +2837,6 @@ USE params
 IMPLICIT NONE
 
 #if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size),isa
-#endif
-#if(paraworld)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size),isa
 #endif
@@ -3410,7 +3395,7 @@ USE coulsolv
 #endif
 IMPLICIT NONE
 
-#if(paraworld||parayes)
+#if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
@@ -3423,10 +3408,6 @@ INTEGER :: ix, iy, iz
 REAL(DP) :: dxfine, dyfine, dzfine, dvolfine
 REAL(DP) :: x1,y1,z1
 !------------------------------------------------------------------
-#if(paraworld)
-
-CALL  mpi_comm_rank(mpi_comm_world,nrank,mpi_ierror)
-#endif
 
 level=nrank
 

@@ -26,13 +26,10 @@ SUBROUTINE init_parallele()
 
 USE params
 IMPLICIT NONE
-#if(parayes||simpara||paraworld)
+#if(parayes||simpara)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 INTEGER :: nb
-#if(paraworld)
-INTEGER :: level,mpi_world_dup, new_comm, nrank
-#endif
 #endif
 INTEGER :: nprocs, numprocs, numprocm
 
@@ -40,34 +37,19 @@ INTEGER :: nprocs, numprocs, numprocm
 
 myn=0
 
-#if(parayes||simpara||paraworld)
+#if(parayes||simpara)
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(mpi_ierror)
 WRITE(*,*) ' before mpi_comm_size'
 CALL  mpi_comm_size(mpi_comm_world,nprocs,mpi_ierror)
 WRITE(*,*) nprocs,knode
-#if(paraworld)
-CALL  mpi_comm_rank(mpi_comm_world,nrank,mpi_ierror)
-ifile=60+1000*nrank
-level=nrank/2
-!call MPI_Comm_split(MPI_COMM_WORLD, level, nrank, new_comm,mpi_ierror)
-!call mpi_comm_dup(mpi_comm_world,mpi_world_dup,mpi_ierror)
-write(6,*) 'split done'
-#endif
 
 
-#if(parayes||paraworld)
+#if(parayes)
 !#if(parayes)
 !IF(nprocs /= knode) STOP
 knode = nprocs
 !IF(knode /= kstate) STOP "knode must be equal to kstate !"
-#else
-#if(parano)
-#if(!paraworld)
-!knode = 1
-!nprocs= 1         
-#endif
-#endif
 #endif
 WRITE(*,*) ' before mpi_comm_rank'
 CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
@@ -100,7 +82,7 @@ RETURN
 END SUBROUTINE init_parallele
 
 
-#if(parayes||paraworld)
+#if(parayes)
 !-----comm_inputparams-------------------------------------------------
 
 SUBROUTINE comm_inputparams()
@@ -833,7 +815,7 @@ RETURN
 END SUBROUTINE comm_simann
 #endif
 
-#if(parayes||paraworld)
+#if(parayes)
 
 
 !       *****************************

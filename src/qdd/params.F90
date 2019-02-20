@@ -31,9 +31,8 @@ INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 INTEGER :: knode=4
 !we should get it from mpi_comm_size
 #endif
-#if(paraworld||parano)
+#if(parano)
 INTEGER :: knode=1
-!to be improved and gotten from the size of the communicator in the paraworld case
 #endif
 ! max. nr. electron states per node
 !fix! INTEGER,PARAMETER :: kstate=20
@@ -86,9 +85,7 @@ INTEGER :: kxbox=0,kybox=0,kzbox=0
 ! deduced grid parameters
 INTEGER :: kxmax,kymax,kzmax
 INTEGER :: nx2,ny2,nz2
-!~ #if(paraworld)
 INTEGER :: nx2fine,ny2fine,nxyfine
-!~ #endif
 !INTEGER,PARAMETER :: nxyzf=nx2*ny2*nz2                 !?
 INTEGER :: nxyz,nyf,nxyf
 INTEGER :: kdfull2,kdfull2fine
@@ -134,7 +131,7 @@ INTEGER,ALLOCATABLE :: nrel2abs_other(:,:)      !  pointer to wfs
 INTEGER,ALLOCATABLE :: nhome(:)                 !  home node of wf
 
 
-#if(parayes||simpara||paraworld)
+#if(parayes||simpara)
 INTEGER,ALLOCATABLE ::  nstate_node(:)   ! number of active states in a node
 INTEGER,ALLOCATABLE ::  nstart_node(:)   ! offset address for counting in a node
 INTEGER,ALLOCATABLE ::  ispin_node(:,:)

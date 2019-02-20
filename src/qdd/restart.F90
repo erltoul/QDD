@@ -102,7 +102,7 @@ END DO
 
 #endif
 
-#if(simpara||paraworld)
+#if(simpara)
 mynact = 0
 #else
 mynact = myn
@@ -503,7 +503,7 @@ CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 #endif
 
-#if(simpara||paraworld)
+#if(simpara)
   mynact = 0
 #else
   mynact = myn
