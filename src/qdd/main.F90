@@ -45,7 +45,7 @@ IMPLICIT NONE
 !              the trial ionic propagation
 !     rhojel = jellium density
 
-#if(parayes||simpara)
+#if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
@@ -188,11 +188,6 @@ CALL  init_dynamic
 
 CALL dyn_propag(psi,rho,aloc)
 
-
-#if(simpara)
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-#endif
-
 CLOSE(805)
 
 #if(raregas)
@@ -258,12 +253,6 @@ DEALLOCATE(psitophi)!MV
 #if(parayes)
 CALL mpi_finalize(mpi_ierror)
 #endif
-#if(simpara)
-WRITE(7,*) ' before final barrier. myn=',myn
-CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-WRITE(7,*) ' after final barrier. myn=',myn
-CALL mpi_finalize(mpi_ierror)
-#endif
 
 IF(myn==0) THEN
 CALL cpu_time(time_absfin)
@@ -309,11 +298,7 @@ IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 !     initialize protocol files
 IF(nclust > 0 .AND. nabsorb > 0) CALL init_absbc(rho)
 IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
-#if(simpara)
-CALL init_dynprotocol(rho,aloc,psi)
-#else
 IF(myn == 0 .OR. knode == 1) CALL init_dynprotocol(rho,aloc,psi)
-#endif
 
 #if(raregas)
 IF (surftemp > 0) CALL init_surftemp()
@@ -407,11 +392,6 @@ IF(nclust > 0) THEN
     END IF
   END IF
   CALL dyn_mfield(rho,aloc,psi,0D0,0)
-#if(simpara)
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-#endif
-  
-  
   
 ! intialize protocols  
   IF(irest == 0) CALL info(psi,rho,aloc,0)
@@ -423,9 +403,7 @@ IF(nclust > 0) THEN
   END IF
   
   time = irest*dt1*0.0484D0/(2D0*ame)
-#if(!simpara)
   IF(myn == 0 .OR. knode == 1) THEN
-#endif
     WRITE(7,'(a,i6,a,f12.6,a,f16.5)')  &
         'iter=',irest,' tfs=',time,' total energy=',etot
     WRITE(7,'(a,f8.4,a,f7.2,a,3f9.2)') 't=',time,' moments: monop.=',qe(1),  &
@@ -434,9 +412,7 @@ IF(nclust > 0) THEN
         'iter=',irest,' tfs=',time,' total energy=',etot
     WRITE(6,'(a,f8.4,a,f7.2,a,3f9.2)') 't=',time,' moments: monop.=',qe(1),  &
         ' dip.: ',qe(2),qe(3),qe(4)
-#if(!simpara)
   END IF
-#endif
 
   IF(myn == 0 .OR. knode == 1) CALL open_protok_el(0)
  

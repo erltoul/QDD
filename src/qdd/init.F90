@@ -40,15 +40,6 @@ INTEGER:: iu, nnx2, maxnum
 CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
-#if(simpara)
-CHARACTER (LEN=10) :: fname(0:kparall)
-!      data fname/'for005.001','for005.010','for005.011',
-!     &           'for005.100','for005.101','for005.110'/
-DATA fname/'for005.001','for005.010','for005.011',  &
-    'for005.100','for005.101','for005.110',  &
-    'forjel.001','forjel.010','forjel.011',  &
-    'forjel.100','forjel.101','forjel.110'/
-#endif
 
 NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
@@ -191,21 +182,10 @@ ELSE
 END IF
 outname=trim(num)//trim(outnam)
 
-#if(simpara)
-IF(myn >= 0 .AND. myn <= kparall) THEN
-  WRITE(*,*) ' open for005: myn=',myn,fname(myn)
-  iu = 7+myn
-  WRITE(iu,*) ' open for005: myn=',myn,fname(myn)
-  OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE=fname(myn))
-  !OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
-  WRITE(6,*) ' for005 opened: myn=',myn
-  WRITE(iu,*) ' for005 opened: myn=',myn
-#else
   IF(myn == 0)THEN
     OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE='for005')
 !    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     iu=7
-#endif
     WRITE(*,*) ' enter title (=qualifier) for that run:'
     READ(5,*)  title
     outnam = title(1:13)
@@ -270,10 +250,6 @@ write(6,*) outnam, "**************************************"
     ENDIF
 
 
-#if(simpara)
-  ELSE IF(myn > 5) THEN
-    STOP ' this node not  active'
-#endif
   END IF
   
   IF (ionmdtyp==0) THEN
@@ -2097,16 +2073,11 @@ END IF
 
 !     optional shift of wavefunctions
 
-#if(simpara)
-WRITE(7,*) ' SHIFTFIELD overridden'
-#else
 IF(ABS(shiftwfx)+ABS(shiftwfy)+ABS(shiftwfz) > 1D-20) THEN
   DO nbe=1,nstate
     CALL shiftfield(psir(:,nbe),shiftwfx,shiftwfy,shiftwfz)
  END DO
 END IF
-#endif
-
 
 !     final ortho-normalization to clean up
 

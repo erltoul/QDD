@@ -131,7 +131,7 @@ INTEGER,ALLOCATABLE :: nrel2abs_other(:,:)      !  pointer to wfs
 INTEGER,ALLOCATABLE :: nhome(:)                 !  home node of wf
 
 
-#if(parayes||simpara)
+#if(parayes)
 INTEGER,ALLOCATABLE ::  nstate_node(:)   ! number of active states in a node
 INTEGER,ALLOCATABLE ::  nstart_node(:)   ! offset address for counting in a node
 INTEGER,ALLOCATABLE ::  ispin_node(:,:)
@@ -414,7 +414,7 @@ INTEGER,ALLOCATABLE :: lengnod(:),displ(:)
 #endif
 !                          these includes should be shifted to own modules
 #if(raregas)
-#include "surf.F90"
+#include "QMMM/surf.F90"
 #endif
 
 #include "pseudo.F90"

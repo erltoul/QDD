@@ -11,7 +11,6 @@ CF90 = GFORT
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
 #   * YES
-#   * SIM: simulate parallelization (simultaneous mono jobs)
 #   * NO
 MPI_PARALLEL = NO
 
@@ -333,10 +332,6 @@ ifeq ($(MPI_PARALLEL), YES)
 else
 	MPIADD = -Dparano
 	parano_value := 1
-  ifeq ($(MPI_PARALLEL), SIM)
-	MPIADD += -Dsimpara
-	simpara_value := 1
-  endif
 endif
 
 ifeq ($(OMP), YES)
@@ -443,14 +438,10 @@ DATE =$(shell date +%d.%m.%y)
 ifeq ($(MPI_PARALLEL), YES)
 	MPI_NAME = MPI
 else
-  ifeq ($(MPI_PARALLEL), SIM)
-	MPI_NAME = SIM
-  else
-    ifeq ($(OMP), YES)
+  ifeq ($(OMP), YES)
 	MPI_NAME = OMP
-    else
+  else
 	MPI_NAME = Mono
-    endif
   endif
 endif
 
@@ -484,7 +475,7 @@ makefile: ;
 valid_CF90 := GFORT GFORT1 IFORT IFORT1 MPIF90 XLF_R
 
 # List of valid MPI_PARALLEL:
-valid_MPI_PARALLEL := YES SIM NO
+valid_MPI_PARALLEL := YES NO
 
 # List of valid OMP_THREADS:
 valid_OMP_THREADS := DYN YES NO
@@ -529,7 +520,6 @@ initial_checks: makefile
 	@echo "--------------------------------------------"
 	@echo "parayes       $(parayes_value)"
 	@echo "parano        $(parano_value)"
-	@echo "simpara       $(simpara_value)"
 	@echo "netlib_fft    $(netlib_fft_value)"
 	@echo "fftw_cpu      $(fftw_cpu_value)"
 	@echo "fftw_gpu      $(fftw_gpu_value)"
@@ -599,13 +589,13 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        generlcgo.o multi_exp.o\
        static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
-       carlo.o localize.o localizer.o subgrids.o analyse.o\
+       carlo.o localize.o localizer.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o loc_mfield.o givens.o\
        parallele.o expevol.o 2stUT.o attachement.o rta.o\
        HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o
+       short.o image.o lattice.o subgrids.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -805,5 +795,8 @@ image.o: QMMM/image.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
 lattice.o: QMMM/lattice.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+subgrids.o: QMMM/subgrids.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 

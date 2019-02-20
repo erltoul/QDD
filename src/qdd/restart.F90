@@ -102,13 +102,7 @@ END DO
 
 #endif
 
-#if(simpara)
-mynact = 0
-#else
 mynact = myn
-#endif
-
-
 
 !tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
 
@@ -503,11 +497,7 @@ CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 
 #endif
 
-#if(simpara)
-  mynact = 0
-#else
   mynact = myn
-#endif
 
 IF(ttest) WRITE(*,*) ' SAVE-BEFORE: myn=',myn
   

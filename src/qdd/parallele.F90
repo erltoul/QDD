@@ -26,7 +26,7 @@ SUBROUTINE init_parallele()
 
 USE params
 IMPLICIT NONE
-#if(parayes||simpara)
+#if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 INTEGER :: nb
@@ -37,7 +37,7 @@ INTEGER :: nprocs, numprocs, numprocm
 
 myn=0
 
-#if(parayes||simpara)
+#if(parayes)
 WRITE(*,*) ' before mpi_init'
 CALL mpi_init(mpi_ierror)
 WRITE(*,*) ' before mpi_comm_size'

@@ -65,7 +65,7 @@ SUBROUTINE cranknicolson_exp(q0,aloc,rho,it)
 
   LOGICAL,PARAMETER :: tnorotate=.true.
 
-#if(parayes||simpara)
+#if(parayes)
   INCLUDE 'mpif.h'
   INTEGER :: is(mpi_status_size)
 #endif

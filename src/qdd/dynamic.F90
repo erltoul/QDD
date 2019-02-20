@@ -187,13 +187,6 @@ endif
     IF(nclust > 0) CALL savings(psi,it)
   END IF
 
-#if(simpara)
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  WRITE(7,*) ' After barrier. myn,it=',myn,it
-#endif
-  
-
- 
 END DO
 
 !  ********************  end of dynamic loop ****************************
@@ -2018,11 +2011,7 @@ REAl(DP),EXTERNAL :: getzval
 
 IF(irest <= 0) THEN                    !  write file headers
 
-#if(simpara)
-  IF(jdip /= 0 .AND. eproj /=0 ) THEN
-#else
   IF(myn == 0 .AND. jdip /= 0 .AND. eproj/=0 ) THEN
-#endif
     OPEN(88,STATUS='unknown',FORM='formatted',FILE='pprojdip.'//outnam)
     WRITE(88,'(a)') ' & '
     WRITE(88,'(a)') 'x:time'
@@ -2035,11 +2024,7 @@ IF(irest <= 0) THEN                    !  write file headers
   END IF
 
   
-#if(simpara)
-  IF(jdip /= 0) THEN
-#else
   IF(myn == 0 .AND. jdip /= 0) THEN
-#endif
     OPEN(8,STATUS='unknown',FORM='formatted',FILE='pdip.'//outnam)
     WRITE(8,'(a)') ' & '
     WRITE(8,'(a)') 'x:time'
@@ -2050,11 +2035,7 @@ IF(irest <= 0) THEN                    !  write file headers
     CLOSE(8)
   END IF
   
-#if(simpara)
-  IF(jdiporb /= 0) THEN
-#else
   IF(myn == 0 .AND. jdiporb /= 0) THEN
-#endif
     OPEN(810,STATUS='unknown',FORM='formatted',FILE='pdiporb.x.'//outnam)
     WRITE(810,'(a)') 'protocol of s.p. moments: time,x-dipole of orbitals'
     CLOSE(810)
@@ -2066,11 +2047,7 @@ IF(irest <= 0) THEN                    !  write file headers
     CLOSE(812)
   END IF
 
-#if(simpara)
-  IF(jmp /= 0) THEN
-#else
   IF(jmp /= 0 .AND. myn == 0) THEN
-#endif
     OPEN(803,STATUS='unknown',FILE='pMP.'//outnam)
     WRITE(803,'(a)') '# nr. of meas.points, nr. of state'
     WRITE(803,'(a,2i6)') '# ',nmps,nstate_all
@@ -2573,11 +2550,7 @@ IF (e0 /= 0) CALL safeopen(38,0,1,'plaser')
 CALL safeopen(163,it,jenergy,'penergies')
 CALL safeopen(323,it,jcharges,'pcharges')
 
-#if(simpara)
-IF(nclust > 0)THEN
-#else
 IF(nclust > 0 .AND. myn == 0)THEN
-#endif
   
   CALL safeopen(8,it,jdip,'pdip')
   CALL safeopen(88,it,jdip,'pprojdip')
@@ -3081,11 +3054,6 @@ SUBROUTINE savings(psi,it)
 USE params
 IMPLICIT NONE
 
-#if(simpara||parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
 INTEGER, INTENT(IN)                      :: it
 
@@ -3135,9 +3103,6 @@ END IF                                                                    ! cPW
 !     if program has received user message to shut down program, make it so!
 IF (ishutdown /= 0) THEN
   CALL SAVE(psi,it,outnam)
-#if(simpara)
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-#endif
   STOP 'Terminated by user message.'
 END IF
 
