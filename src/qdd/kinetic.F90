@@ -22,6 +22,6 @@
 #endif 
 
 #if(findiff|numerov)
-#include "findiff.F90"
+#include "findiff/findiff.F90"
 #endif
 

@@ -601,12 +601,11 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o subgrids.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
-       schmid.o zeroforce.o functions.o\
-       loc_mfield.o givens.o\
-       parallele.o expevol.o 2stUT.o \
-       pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o attachement.o rta.o\
+       schmid.o zeroforce.o loc_mfield.o givens.o\
+       parallele.o expevol.o 2stUT.o attachement.o rta.o\
        HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
+OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
+       short.o image.o lattice.o
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -715,7 +714,7 @@ endif
 # Particular rules
 # (complex dependencies, REAL/COMPLEX switch, non-default COMPILERFLAGS).
 
-kinetic.o : kinetic.F90 fft.F90 findiff.F90 $(FFT_OBJ)
+kinetic.o : kinetic.F90 fft.F90 findiff/findiff.F90 $(FFT_OBJ)
 
 #  ifneq "$(TYPE_FFT)" "cuFFT"
 coulsolv.o: coulsolv.F90 falr.o coulex.o kinetic.mod $(FFT_OBJ)
@@ -784,4 +783,27 @@ mini.o: mini.f
 
 HEeigensystem.o: HEeigensystem.f
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
+
+# QM/MM routines
+
+forces_substrate.o: QMMM/forces_substrate.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+functions.o: QMMM/functions.F90 params.mod 
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+pot_substrate.o: QMMM/pot_substrate.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+md_substrate.o: QMMM/md_substrate.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+short.o: QMMM/short.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+image.o: QMMM/image.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+lattice.o: QMMM/lattice.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
