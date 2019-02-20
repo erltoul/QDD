@@ -8,17 +8,37 @@
 3) finite differences:
      Has been seperated as far as possible. Will be skipped in
      public version while being kept in an archive version.
-     Requires more testing.
+     The 'findiff.F90' has been moved to an own subdirectory to
+     disentangle mainstream from secondary options.
+     Finite difference requires new testing in case they are revived.
 
 4) raregas:
-     This option will be skipped in public version.
-
+     This option will be skipped in public version. All specific
+     subroutines have been moved  to subdirectory 'QMMM' to
+     disentangle them from the mainstream routines.
+ 
 5) 'calc_projFine':
      This version presently only for electronic part, not yet
      in ionic force. Should we put it there also?
 
-6) preprocessor option 'simpar':
-     Could be removed. 
+6) preprocessor options 'simpar' and 'paraworld':
+     Have been removed. 
 
 7) Subroutine 'mergetabs':
      What is this routine doing?
+
+
+
+
+*****************************************************************
+
+Code cleaning:
+
+
+Cleaned:
+   main.F90
+
+Subroutines commented:
+   static.F90
+   schmid.F90
+   util.F90

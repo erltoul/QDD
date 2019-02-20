@@ -27,12 +27,15 @@ SUBROUTINE schmidt(q0)
 !     ******************************
 
 
-!     serial version of Schmidt orthogonalization
+!     Serial and OpenMP version of Schmidt orthogonalization.
+!
+!     Input/Output:
+!       q0   = set of real s.p. wavefunctions to be ortho-normalized
 
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
 
 
 INTEGER :: i, imin, isav, n, nbe, nbes, ncc, ncs
@@ -123,8 +126,11 @@ SUBROUTINE schmidt(q0)
 
 !     ******************************
 
+!     MPI parallele version of Schmidt orthogonalization.
+!
+!     Input/Output:
+!       q0   = set of real s.p. wavefunctions to be ortho-normalized
 
-!     parallel version of Schmidt orthogonalization
 
 USE params
 IMPLICIT NONE
@@ -345,7 +351,10 @@ SUBROUTINE cschmidt(q0)
 !     ******************************
 
 
-!     serial version of Schmidt orthogonalization for complex wf's
+!     Serial version of Schmidt orthogonalization for complex wfs.
+!
+!     Input/Output:
+!       q0   = set of complex s.p. wavefunctions to be ortho-normalized
 
 USE params
 IMPLICIT NONE

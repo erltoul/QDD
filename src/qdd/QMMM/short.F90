@@ -1424,3 +1424,131 @@ funkderfermi=-a*b*EXP(b*(r-c))/(1D0+EXP(b*(r-c)))**2D0
 RETURN
 END FUNCTION funkderfermi
 !------------------------------------------------------------
+!------------------------------------------------------------
+
+SUBROUTINE checkstability(rho)
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+
+
+REAL(DP), INTENT(IN OUT)                     :: rho(kdfull2*2)
+
+INTEGER :: i
+REAL(DP) :: dmaxfxc,dmaxfyc,dmaxfzc,dmaxfxe,dmaxfye,dmaxfze,dmaxfxk,dmaxfyk,dmaxfzk,dmaxfxn,dmaxfyn,dmaxfzn
+
+COMPLEX(DP) :: psidummy(1)             !! bugfix for force
+
+!          the 'psidummy' trick works only for local Gaussian PsP
+IF(ipsptyp == 1) STOP  ' CHECKSTABILITY must not be used with Goedecker PsP' 
+
+
+CALL getforces(rho,psidummy,-1,0)
+
+dmaxfxc=0D0
+dmaxfyc=0D0
+dmaxfzc=0D0
+dmaxfxe=0D0
+dmaxfye=0D0
+dmaxfze=0D0
+dmaxfxk=0D0
+dmaxfyk=0D0
+dmaxfzk=0D0
+dmaxfxn=0D0
+dmaxfyn=0D0
+dmaxfzn=0D0
+
+#if(raregas)
+DO i=1,nc
+  IF (imobc(i) == 1) THEN
+    IF (ABS(fxc(i)) > ABS(dmaxfxc)) dmaxfxc=fxc(i)
+    IF (ABS(fyc(i)) > ABS(dmaxfyc)) dmaxfyc=fyc(i)
+    IF (ABS(fzc(i)) > ABS(dmaxfzc)) dmaxfzc=fzc(i)
+  END IF
+END DO
+
+DO i=1,NE
+  IF (imobe(i) == 1) THEN
+    IF (ABS(fxe(i)) > ABS(dmaxfxe)) dmaxfxe=fxe(i)
+    IF (ABS(fye(i)) > ABS(dmaxfye)) dmaxfye=fye(i)
+    IF (ABS(fze(i)) > ABS(dmaxfze)) dmaxfze=fze(i)
+  END IF
+END DO
+
+DO i=1,nk
+  IF (imobk(i) == 1) THEN
+    IF (ABS(fxk(i)) > ABS(dmaxfxk)) dmaxfxk=fxk(i)
+    IF (ABS(fyk(i)) > ABS(dmaxfyk)) dmaxfyk=fyk(i)
+    IF (ABS(fzk(i)) > ABS(dmaxfzk)) dmaxfzk=fzk(i)
+  END IF
+END DO
+#endif
+
+DO i=1,nion
+  IF (ABS(fx(i)) > ABS(dmaxfxn)) dmaxfxn=fx(i)
+  IF (ABS(fy(i)) > ABS(dmaxfyn)) dmaxfyn=fy(i)
+  IF (ABS(fz(i)) > ABS(dmaxfzn)) dmaxfzn=fz(i)
+END DO
+
+WRITE(6,*) '##############################################'
+#if(raregas)
+WRITE(6,'(a,3e17.7)') 'max fc: ',dmaxfxc,dmaxfyc,dmaxfzc
+WRITE(6,'(a,3e17.7)') 'max fe: ',dmaxfxe,dmaxfye,dmaxfze
+WRITE(6,'(a,3e17.7)') 'max fk: ',dmaxfxk,dmaxfyk,dmaxfzk
+#endif
+WRITE(6,'(a,3e17.7)') 'max fN: ',dmaxfxn,dmaxfyn,dmaxfzn
+WRITE(6,*) '##############################################'
+
+
+RETURN
+END SUBROUTINE checkstability
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+
+SUBROUTINE checkespot(x,y,iunit)
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+
+INTEGER,INTENT(IN) ::iunit
+REAL(DP),INTENT(IN) ::x
+REAL(DP),INTENT(IN) ::y
+
+#if(raregas)
+
+INTEGER :: i,iz
+REAL(DP) :: potex, z
+REAL(DP) :: rr, xr, yr, zr
+REAL(DP),EXTERNAL :: v_soft
+
+
+DO iz=1,1000
+  z=-10D0*0.1D0
+  
+  potex = 0D0
+  
+  DO i=1,nc+NE+nk
+    CALL getparas(i)
+    
+    xr = x-rvectmp(1)
+    yr = y-rvectmp(2)
+    zr = z-rvectmp(3)
+    
+!         write(6,*) sigTmp,chgTmp
+    
+    rr = SQRT(xr*xr+yr*yr+zr*zr)
+    rr = MAX(rr,small)
+    
+    potex = e2*chgtmp*v_soft(rr,sigtmp)+potex
+    
+  END DO
+  
+  WRITE(iunit,'(1f15.4,1e17.7)') z,potex
+  
+END DO
+#endif
+
+RETURN
+END SUBROUTINE checkespot
+!------------------------------------------------------------

@@ -46,13 +46,22 @@ SUBROUTINE shiftfield(q0,shix,shiy,shiz)
 USE params
 IMPLICIT NONE
 
-! shifts array by shix,shiy,shiz along grid
-!     shix,shiy,shiz should be positive
+!  Shifts array 'q0' by shix,shiy,shiz along grid points. Shift values
+!  shix,shiy,shiz must be positive
+!  
+!  Input/Output:
+!    q0   = real array for one spatial wavefunction to be shifted
+!  Input:
+!    shix = shift distance along x direction, nearest multiple of 
+!           grid spacing is actually taken; must be > 0.
+!    shiy = as shix, but for y-direction
+!    shiz = as shix, but for y-direction
 
-REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2)
-REAL(DP), INTENT(IN)                         :: shix
-REAL(DP), INTENT(IN)                         :: shiy
-REAL(DP), INTENT(IN)                         :: shiz
+REAL(DP), INTENT(IN OUT) :: q0(kdfull2)
+REAL(DP), INTENT(IN)     :: shix
+REAL(DP), INTENT(IN)     :: shiy
+REAL(DP), INTENT(IN)     :: shiz
+
 REAL(DP),ALLOCATABLE ::  q1(:)
 
 INTEGER :: ind, ind1, ix, iy, iz , ix1, iy1, iz1, nshift
@@ -178,6 +187,9 @@ END SUBROUTINE shiftfield
 !------------------------------------------------------------
 CHARACTER*9 FUNCTION inttostring(inumber)
 !------------------------------------------------------------
+
+! translates integer number to corresponding character variable
+
 IMPLICIT NONE
 INTEGER, INTENT(IN)                      :: inumber
 
@@ -195,15 +207,25 @@ END FUNCTION inttostring
 !------------------------------------------------------------
 SUBROUTINE pm3dcut(iunit,iax1,iax2,value,field)
 !------------------------------------------------------------
+
+! Prepares 3D plotting with 'pm3d' in 'gnuplot.
+!
+! Input:
+!   iunit      = write unit number-
+!   iax1,iax2  = choices of the two axes (from 1..3) along which is plotted.
+!   value      = coordinate on third axis (complement of iax1,iax2) along
+!                which field is plotted.
+!   field      = 3D array from which 2D cut is retrieved.
+
 USE params
 IMPLICIT NONE
 
 
-INTEGER, INTENT(IN)                      :: iunit
-INTEGER, INTENT(IN)                      :: iax1
-INTEGER, INTENT(IN)                      :: iax2
-REAL(DP), INTENT(IN)                         :: value
-REAL(DP), INTENT(IN OUT)                     :: field(kdfull2)
+INTEGER, INTENT(IN)   :: iunit
+INTEGER, INTENT(IN)   :: iax1
+INTEGER, INTENT(IN)   :: iax2
+REAL(DP), INTENT(IN)  :: value
+REAL(DP), INTENT(IN)  :: field(kdfull2)
 
 INTEGER :: ind, ix, iy, iz, x1, y1, z1
 
@@ -301,11 +323,12 @@ USE params
 
 IMPLICIT NONE
 
-!     returns \int\d^3r q_1^* q_2
+!  Overlap <q1|q2> = \int\d^3r q_1^* q_2 between the two complex
+!  wavefunctions q1 and q2.
 
 
-COMPLEX(DP), INTENT(IN)                  :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN)                  :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN) :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN) :: q2(kdfull2)
 
 INTEGER :: ind
 REAL(DP) :: sumr, sumi
@@ -389,6 +412,10 @@ END FUNCTION realovsubgrid
 !------------------------------------------------------------
 SUBROUTINE gettemperature(iflag)
 !------------------------------------------------------------
+
+! Compute ionic kinetic energy and print corresponding ionic temperature 
+! on unit 175.
+
 USE params
 IMPLICIT NONE
 
@@ -480,160 +507,12 @@ RETURN
 END SUBROUTINE gettemperature
 !------------------------------------------------------------
 
-!------------------------------------------------------------
-! SUBROUTINE checkformessages
-! !------------------------------------------------------------
-! USE params
-! IMPLICIT REAL(DP) (A-H,O-Z)
-! 
-! ! check if message file exists
-! 
-! INTEGER*4  ACCESS, STATUS
-! 
-! STATUS = ACCESS ( 'for005msg.'//outnam, ' ' )    ! blank mode
-! 
-! IF ( STATUS == 0 ) THEN !  "file exists"
-!   CALL getmessages
-! ELSE ! "file does not exist"
-!   RETURN
-! END IF
-! 
-! RETURN
-! END SUBROUTINE checkformessages
-! !------------------------------------------------------------
-
-
-! !------------------------------------------------------------
-! 
-! SUBROUTINE getmessages
-! !------------------------------------------------------------
-! USE params
-! IMPLICIT REAL(DP) (A-H,O-Z)
-! 
-! CHARACTER (LEN=80) :: title
-! CHARACTER (LEN=80) :: zeile
-! 
-! NAMELIST /messages/   nclust,nion,charge,nspdw,  &
-!     temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
-!     init_lcao,nxin,nyin,nzin,dx,dy,dz,  &
-!     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
-!     epswf,e0dmp,epsoro,iomax,dpolx,dpoly,dpolz,  &
-!     bcol1,bcol2,dbcol,ntheta,nphi,betacol,chgcol, iappendtounit,scaleclust,  &
-!     scaleclustx,scaleclusty,scaleclustz,
-! shiftclustx,shiftclusty,shiftclustz,   &
-!    iemomsrel,  & 
-!    rotclustx,rotclusty,rotclustz,irotorder,imob,  &
-!    idebug,ishiftcmtoorigin,iaddcluster, nion2,nc,nk,nabsorb,  &
-!    ifsicp,ionmdtyp,ifredmas,icooltyp,ipsptyp,  &
-!    ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
-!    centfx,centfy,centfz,ispidi,iforce,iexcit,  &
-!    irotat,phirot,i3dz,i3dx,i3dstate,istream,  &
-!    modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
-!    jdip,jquad,jang,jspdp,jinfo,jenergy,ivdw,jposcm,  &
-!    mxforce,myforce,mzforce,jgeomel, tempion,idenspl,ekmat,nfix,  &
-!    itft,tnode,deltat,tpeak,omega,e0, e1x,e1y,e1z,e2x,e2y,e2z,phi,  &
-!    izforcecorr,iclassicmd, dinmargin,  &
-!     iextfield,ntref,iangabso,ipes,nangtheta,nangphi,  &
-!     delomega,angthetal,angthetah,angphil,angphih,  &
-!     ifreezekspot,xango,yango,zango,bcrad,ispherabso,  &
-!     ekin0pp,vxn0,vyn0,vzn0,jescmask,itof, trequest,timefrac,  &
-!     ipotstatic,iprifixed,surftemp,ipotfixed,  &
-!     sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0,  &
-!     cspr,mion,me,mkat,isrtyp,isrtypall,  &
-!     shiftx,shifty,shiftz,scaledist,scaledistx,scaledisty,  &
-!     scaledistz,iprintonlyifmob, iaxis,distlayers,disttolerance,  &
-!     nunflayc,nunflaye,nunflayk, runfrowc,runfrowe,runfrowk,  &
-!     fermia,fermib,fermic, fermiac,fermibc,fermicc,  &
-!     fermiae,fermibe,fermice, fermiak,fermibk,fermick,  &
-!     fermia2c,fermib2c,fermic2c, fermia2e,fermib2e,fermic2e,  &
-!     fermia2k,fermib2k,fermic2k, sigkv,bkv,ckv,  &
-!     sigvv,bvv,cvv, sigkk,bkk,ckk,  &
-!     sigcv,bcv,ccv, sigck,bck,cck,  &
-!     sigcc,bcc,ccc, sigcn,bcn,ccn,  &
-!     sigkn,bkn,ckn, ccn2,ccn3,ccn4,ccn4,ccn5,ccn6,ccn7,ccn8,ccnd,dcn,  &
-!     ccn9,ccn10,ccncu2,ccncu3,ccncu4,ccncu5,ccncu6,ccncu7,  &
-!     ccncu8,ccncu9,ccncu10,ccncud,  &
-!     ccncul2,ccncul3,ccncul4,ccncul5,ccncul6,ccncul7,  &
-!     ccncul8,ccncul9,ccncul10,ccnculd,  &
-!     ckn2,ckn3,ckn4,ckn4,ckn5,ckn6,ckn7,ckn8,cknd,dkn,  &
-!     ckn9,ckn10,ckncu2,ckncu3,ckncu4,ckncu5,ckncu6,ckncu7,  &
-!     ckncu8,ckncu9,ckncu10,ckncud,  &
-!     ckncul2,ckncul3,ckncul4,ckncul5,ckncul6,ckncul7,  &
-!     ckncul8,ckncul9,ckncul10,cknculd, ccel6,ccel8,ccel10,  &
-!     ckel6,ckel8,ckel10, ecn,fcn,ekn,fkn,  &
-!     iunfixall,ifixall,unfixclateralrad, unfixelateralrad,unfixklateralrad,  &
-!     fixcbelow,fixebelow,fixkbelow, unfixcrad,unfixerad,unfixkrad,  &
-!     iusecell,iuselast,ibh,cbh, enerinfty,ishutdown,icheckformessages,  &
-!     jcheckformessages,rheatclust,igeneratesurffile
-! 
-! 
-! ishutdown=0
-! phiold=phi
-! trequestold=trequest
-! rheatclust=0D0
-! igeneratesurffile=0
-! 
-! 
-! OPEN(5,STATUS='old',FORM='formatted',FILE='for005msg.'//outnam)
-! OPEN(561,POSITION='append',FILE='pmessages.'//outnam)
-! READ(5,messages,END=99998,ERR=99998)
-! 99998    CLOSE(5)
-! 
-! OPEN(5,STATUS='old',FILE='for005msg.'//outnam)
-! WRITE(561,*) 'Received message at time tfs = ',tfs
-! DO i=1,9999
-!   READ(5,*,END=99997,ERR=99997) zeile
-!   WRITE(561,*) zeile
-! END DO
-! 99997    CLOSE(5)
-! WRITE(561,*) '*****End Message*******************'
-! CLOSE(561)
-! 
-! 
-! 
-! 
-! IF (phiold /= phi) phi=phi*2*pi
-! IF (trequestold /= trequest) trequest=trequest*60D0
-! 
-! ! delete messages now
-! !         open(561,status='unknown',file='for005msg.'//outnam)
-! !           write(561,*) '&MESSAGES'
-! !           write(561,*) '&END'
-! !         close(561)
-! CALL system('rm for005msg.'//outnam)
-! 
-! IF (rheatclust /= 0D0) THEN
-!   CALL givetemperature(cpx,cpy,cpz, nion,rheatclust,amu(np(1))*1836*ame,4)
-! END IF
-! 
-! #if(raregas)
-! IF (igeneratesurffile /= 0) THEN
-!   OPEN(666,STATUS='unknown',FILE='for005surf.runtime')
-!   
-!   WRITE(666,*) '# nc,nk = ',nc,nk
-!   
-!   DO i=1,nc
-!     WRITE(666,'(6e17.7,2i4)') xc(i),yc(i),zc(i),xe(i),  &
-!         ye(i),ze(i),imobc(i),imobe(i)
-!   END DO
-!   
-!   DO i=1,nk
-!     WRITE(666,'(3e17.7,i4)')xk(i),yk(i),zk(i),imobk(i)
-!   END DO
-!   
-!   CLOSE(666)
-!   
-! END IF
-! #endif
-! 
-! RETURN
-! END SUBROUTINE getmessages
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
 SUBROUTINE densbelow(field)
 !------------------------------------------------------------
+
+! Integrate 'field' ober x-y plane, accumulate along z axis and print
+! on unit 650.
+
 USE params
 IMPLICIT NONE
 
@@ -677,7 +556,7 @@ IMPLICIT NONE
 !     calculates center of density rho
 !     returns result on rVecTmp(1:3) via module params
 
-REAL(DP), INTENT(IN)                         :: rho(kdfull2)
+REAL(DP), INTENT(IN)  :: rho(kdfull2)
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: acc, xcm, ycm, zcm, x1, y1, z1
@@ -732,7 +611,7 @@ IMPLICIT NONE
 !     calculates center of density for states in wavefunctions 'psir'
 !     and prints results on standard output
 
-REAL(DP), INTENT(IN)                         :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN)  :: psir(kdfull2,kstate)
 
 INTEGER :: i1, i2, i3, ind, nbr
 REAL(DP) :: xx, yy, zz
@@ -908,6 +787,10 @@ END SUBROUTINE cparr
 
 SUBROUTINE makexbsfile(ionlymob,iwithsh)
 !------------------------------------------------------------
+
+! Prepares input for plotting ionic configuration with the chemical
+! grafical freeware 'xbs'.
+
 USE params
 IMPLICIT NONE
 
@@ -967,147 +850,19 @@ END SUBROUTINE makexbsfile
 !------------------------------------------------------------
 
 
-!------------------------------------------------------------
-
-SUBROUTINE checkstability(rho)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-
-
-REAL(DP), INTENT(IN OUT)                     :: rho(kdfull2*2)
-
-INTEGER :: i
-REAL(DP) :: dmaxfxc,dmaxfyc,dmaxfzc,dmaxfxe,dmaxfye,dmaxfze,dmaxfxk,dmaxfyk,dmaxfzk,dmaxfxn,dmaxfyn,dmaxfzn
-
-COMPLEX(DP) :: psidummy(1)             !! bugfix for force
-
-!          the 'psidummy' trick works only for local Gaussian PsP
-IF(ipsptyp == 1) STOP  ' CHECKSTABILITY must not be used with Goedecker PsP' 
-
-
-CALL getforces(rho,psidummy,-1,0)
-
-dmaxfxc=0D0
-dmaxfyc=0D0
-dmaxfzc=0D0
-dmaxfxe=0D0
-dmaxfye=0D0
-dmaxfze=0D0
-dmaxfxk=0D0
-dmaxfyk=0D0
-dmaxfzk=0D0
-dmaxfxn=0D0
-dmaxfyn=0D0
-dmaxfzn=0D0
-
-#if(raregas)
-DO i=1,nc
-  IF (imobc(i) == 1) THEN
-    IF (ABS(fxc(i)) > ABS(dmaxfxc)) dmaxfxc=fxc(i)
-    IF (ABS(fyc(i)) > ABS(dmaxfyc)) dmaxfyc=fyc(i)
-    IF (ABS(fzc(i)) > ABS(dmaxfzc)) dmaxfzc=fzc(i)
-  END IF
-END DO
-
-DO i=1,NE
-  IF (imobe(i) == 1) THEN
-    IF (ABS(fxe(i)) > ABS(dmaxfxe)) dmaxfxe=fxe(i)
-    IF (ABS(fye(i)) > ABS(dmaxfye)) dmaxfye=fye(i)
-    IF (ABS(fze(i)) > ABS(dmaxfze)) dmaxfze=fze(i)
-  END IF
-END DO
-
-DO i=1,nk
-  IF (imobk(i) == 1) THEN
-    IF (ABS(fxk(i)) > ABS(dmaxfxk)) dmaxfxk=fxk(i)
-    IF (ABS(fyk(i)) > ABS(dmaxfyk)) dmaxfyk=fyk(i)
-    IF (ABS(fzk(i)) > ABS(dmaxfzk)) dmaxfzk=fzk(i)
-  END IF
-END DO
-#endif
-
-DO i=1,nion
-  IF (ABS(fx(i)) > ABS(dmaxfxn)) dmaxfxn=fx(i)
-  IF (ABS(fy(i)) > ABS(dmaxfyn)) dmaxfyn=fy(i)
-  IF (ABS(fz(i)) > ABS(dmaxfzn)) dmaxfzn=fz(i)
-END DO
-
-WRITE(6,*) '##############################################'
-#if(raregas)
-WRITE(6,'(a,3e17.7)') 'max fc: ',dmaxfxc,dmaxfyc,dmaxfzc
-WRITE(6,'(a,3e17.7)') 'max fe: ',dmaxfxe,dmaxfye,dmaxfze
-WRITE(6,'(a,3e17.7)') 'max fk: ',dmaxfxk,dmaxfyk,dmaxfzk
-#endif
-WRITE(6,'(a,3e17.7)') 'max fN: ',dmaxfxn,dmaxfyn,dmaxfzn
-WRITE(6,*) '##############################################'
-
-
-RETURN
-END SUBROUTINE checkstability
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
-SUBROUTINE checkespot(x,y,iunit)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-
-INTEGER,INTENT(IN) ::iunit
-REAL(DP),INTENT(IN) ::x
-REAL(DP),INTENT(IN) ::y
-
-#if(raregas)
-
-INTEGER :: i,iz
-REAL(DP) :: potex, z
-REAL(DP) :: rr, xr, yr, zr
-REAL(DP),EXTERNAL :: v_soft
-
-
-DO iz=1,1000
-  z=-10D0*0.1D0
-  
-  potex = 0D0
-  
-  DO i=1,nc+NE+nk
-    CALL getparas(i)
-    
-    xr = x-rvectmp(1)
-    yr = y-rvectmp(2)
-    zr = z-rvectmp(3)
-    
-!         write(6,*) sigTmp,chgTmp
-    
-    rr = SQRT(xr*xr+yr*yr+zr*zr)
-    rr = MAX(rr,small)
-    
-    potex = e2*chgtmp*v_soft(rr,sigtmp)+potex
-    
-  END DO
-  
-  WRITE(iunit,'(1f15.4,1e17.7)') z,potex
-  
-END DO
-#endif
-
-RETURN
-END SUBROUTINE checkespot
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-
 SUBROUTINE printfieldx(iunit,field,y,z)
 !------------------------------------------------------------
+
+! Print 'field' along x-axis for grid points y and z.
+
 USE params
 IMPLICIT NONE
 
 
-INTEGER, INTENT(IN)                          :: iunit
-REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), INTENT(IN)                         :: y
-REAL(DP), INTENT(IN)                         :: z
+INTEGER, INTENT(IN)     :: iunit
+REAL(DP), INTENT(IN)    :: field(kdfull2)
+REAL(DP), INTENT(IN)    :: y
+REAL(DP), INTENT(IN)    :: z
 
 INTEGER :: ind, ix
 REAL(DP) :: x 
@@ -1130,14 +885,17 @@ END SUBROUTINE printfieldx
 
 SUBROUTINE printfieldy(iunit,field,x,z)
 !------------------------------------------------------------
+
+! Print 'field' along y-axis for grid points x and z.
+
 USE params
 IMPLICIT NONE
 
 
-INTEGER, INTENT(IN)                          :: iunit
-REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), INTENT(IN)                         :: x
-REAL(DP), INTENT(IN)                         :: z
+INTEGER, INTENT(IN)     :: iunit
+REAL(DP), INTENT(IN)    :: field(kdfull2)
+REAL(DP), INTENT(IN)    :: x
+REAL(DP), INTENT(IN)    :: z
 
 INTEGER :: ind, iy
 REAL(DP) :: y 
@@ -1161,14 +919,17 @@ END SUBROUTINE printfieldy
 
 SUBROUTINE printfieldz(iunit,field,x,y)
 !------------------------------------------------------------
+
+! Print 'field' along z-axis for grid points x and y.
+
 USE params
 IMPLICIT NONE
 
 
-INTEGER, INTENT(IN)                          :: iunit
-REAL(DP), INTENT(IN)                         :: field(kdfull2)
-REAL(DP), INTENT(IN)                         :: x
-REAL(DP), INTENT(IN)                         :: y
+INTEGER, INTENT(IN)     :: iunit
+REAL(DP), INTENT(IN)    :: field(kdfull2)
+REAL(DP), INTENT(IN)    :: x
+REAL(DP), INTENT(IN)    :: y
 
 
 INTEGER :: ind, iz
@@ -1195,6 +956,9 @@ END SUBROUTINE printfieldz
 
 SUBROUTINE printfield(iunit,field,comment)
 !------------------------------------------------------------
+
+! Print full 3D field with associated coordinates
+
 USE params
 IMPLICIT NONE
 
@@ -1237,6 +1001,9 @@ END SUBROUTINE printfield
 
 SUBROUTINE printfield2(iunit,field1,field2)
 !------------------------------------------------------------
+
+! Print two full 3D fields with associated coordinates
+
 USE params
 IMPLICIT NONE
 
@@ -1277,6 +1044,9 @@ END SUBROUTINE printfield2
 
 SUBROUTINE printforces(iflag,iterat)
 !------------------------------------------------------------
+
+! Print forces on ions
+
 USE params
 IMPLICIT NONE
 
@@ -1319,13 +1089,15 @@ END SUBROUTINE printforces
 
 SUBROUTINE getcm(iflag,iflagc,iflagk)
 !------------------------------------------------------------
+
+!    Calculates the center of mass and stores it in the vector 
+!    rVecTmp(1:3) which is communicated via module 'params'.
+
 USE params
 IMPLICIT NONE
 INTEGER,INTENT(IN)::iflag
 INTEGER,INTENT(IN)::iflagc
 INTEGER,INTENT(IN)::iflagk
-!    calculates the center of mass and stores it in the
-!     common vector rVecTmp(1:3)
 
 INTEGER :: i
 REAL(DP) :: summ, sumx, sumy, sumz
@@ -1377,12 +1149,15 @@ END SUBROUTINE getcm
 
 !-----emoms-------------------------------------------------------emoms
 
+!  Various multipole moments for the given electronic distribution 
+!  'rho'. Result is array of moments 'qe' communicated via module 'params'.
+
 SUBROUTINE emoms(rho)
 USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)  :: rho(2*kdfull2)
 
 INTEGER :: ind, ix, iy, iz, k
 REAL(DP) :: updens, dodens
@@ -1533,222 +1308,6 @@ RETURN
 END SUBROUTINE emoms
 
 
-
-!-----projmoms-------------------------------------------------------projmoms
-! REAL version
-!-----------------------------------------------------------------------
-SUBROUTINE r_projmoms(rho,psi)
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN) :: rho(2*kdfull2)
-REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget
-REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
-
-#if(parano)
-INTEGER :: ik, ikk
-#else
-INTEGER :: kk,nbe,nbee
-REAL(DP) :: sprojec
-#endif
-!----------------------------------------------------------------------
-nrmom=35
-IF(nrmom > kmom) STOP ' too many moments in projmoms'
-
-DO k=1,nrmom
-  qetarget(k)=0D0
-  qeproj(k)=0D0
-END DO
-
-!     switch for calculating moments relative to center of mass (1)
-!     or center of box (0)
-rvectmp = 0D0
-IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
-
-
-ind=0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  z1t=z1-rvectmp(3)
-  z1p=z1-cz(nproj)
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    y1t=y1-rvectmp(2)
-    y1p=y1-cy(nproj)
-    DO ix=minx,maxx
-      ind=ind+1
-      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
-        x1=(ix-nxsh)*dx
-        x1t=x1-rvectmp(1)
-        x1p=x1-cx(nproj)
-        sproj=0D0
-#if(parano)
-        DO ik=1,nproj_states
-          ikk=proj_states(ik)
-          sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
-        END DO
-#else
-        sprojec=0D0 
-        DO nbe=1,nstate
-          nbee=nrel2abs(nbe)
-          DO kk=1,nproj_states
-            IF (nbee == proj_states(kk)) THEN
-              sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
-            END IF
-          END DO
-        END DO
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-                mpi_sum,mpi_comm_world,mpi_ierror)
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-#endif
-        starget=rho(ind)-sproj
-!                                                     monopole
-        qetarget(1)=qetarget(1)+starget
-        qeproj(1)=qeproj(1)+sproj
-!                                                     dipole
-        qetarget(2)=qetarget(2)+starget*x1t
-        qetarget(3)=qetarget(3)+starget*y1t
-        qetarget(4)=qetarget(4)+starget*z1t
-
-        qeproj(2)=qeproj(2)+sproj*x1p
-        qeproj(3)=qeproj(3)+sproj*y1p
-        qeproj(4)=qeproj(4)+sproj*z1p
-      END IF
-    END DO
-  END DO
-END DO
-
-DO k=1,nrmom
-  qetarget(k)=qetarget(k)*dvol
-  qeproj(k)=qeproj(k)*dvol
-END DO
-
-DO k=2,nrmom
-  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
-  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
-END DO
-
-RETURN
-END SUBROUTINE r_projmoms
-
-!-----------------------------------------------------------------------
-! COMPLEX version
-!-----------------------------------------------------------------------
-SUBROUTINE c_projmoms(rho,psi)
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget
-REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
-
-#if(parano)
-INTEGER :: ik, ikk
-#else
-INTEGER :: kk, nbe, nbee
-REAL(DP) :: sprojec
-#endif
-!----------------------------------------------------------------------
-nrmom=35
-IF(nrmom > kmom) STOP ' too many moments in projmoms'
-
-DO k=1,nrmom
-  qetarget(k)=0D0
-  qeproj(k)=0D0
-END DO
-
-!     switch for calculating moments relative to center of mass (1)
-!     or center of box (0)
-rvectmp = 0D0
-IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
-
-ind=0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  z1t=z1-rvectmp(3)
-  z1p=z1-cz(nproj)
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    y1t=y1-rvectmp(2)
-    y1p=y1-cy(nproj)
-    DO ix=minx,maxx
-      ind=ind+1
-      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
-        x1=(ix-nxsh)*dx
-        x1t=x1-rvectmp(1)
-        x1p=x1-cx(nproj)
-        sproj=0D0
-#if(parano)
-        DO ik=1,nproj_states
-          ikk=proj_states(ik)
-          sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk),DP)
-        END DO
-#else
-        sprojec=0D0 
-        DO nbe=1,nstate
-          nbee=nrel2abs(nbe)
-          DO kk=1,nproj_states
-            IF (nbee == proj_states(kk)) THEN
-              sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe),DP)
-            END IF
-          END DO
-        END DO
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-          mpi_sum,mpi_comm_world,mpi_ierror)
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-#endif
-        starget=rho(ind)-sproj
-!                                                     monopole
-        qetarget(1)=qetarget(1)+starget
-        qeproj(1)=qeproj(1)+sproj
-!                                                     dipole
-        qetarget(2)=qetarget(2)+starget*x1t
-        qetarget(3)=qetarget(3)+starget*y1t
-        qetarget(4)=qetarget(4)+starget*z1t
-
-        qeproj(2)=qeproj(2)+sproj*x1p
-        qeproj(3)=qeproj(3)+sproj*y1p
-        qeproj(4)=qeproj(4)+sproj*z1p
-      END IF
-    END DO
-  END DO
-END DO
-
-DO k=1,nrmom
-  qetarget(k)=qetarget(k)*dvol
-  qeproj(k)=qeproj(k)*dvol
-END DO
-
-DO k=2,nrmom
-  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
-  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
-END DO
-
-RETURN
-END SUBROUTINE c_projmoms
-
-
-
-
-
-
-
 !       *********************
 
 SUBROUTINE laserp(vlaser,rho)
@@ -1819,8 +1378,8 @@ SUBROUTINE laserp(vlaser,rho)
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: vlaser(kdfull2)
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)  :: vlaser(kdfull2)
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: ascal,acc1,acc2, ppower
@@ -1984,8 +1543,8 @@ END SUBROUTINE laserp
 
 SUBROUTINE projectp(Vproj)
 
-! Calculates the potential from the point charge projectile on the 
-! valence electrons
+! Calculates the potential 'Vproj' from the point charge projectile
+! on the valence electrons.
 
 USE params
 IMPLICIT NONE
@@ -2031,8 +1590,9 @@ END SUBROUTINE projectp
 !     **************************
 
 REAL(DP) FUNCTION c_wfnorm(psi)
-!       COMPLEX psi version
-!     *************************
+
+!  Norm of wavefunction 'psi'.     COMPLEX psi version
+
 USE params
 IMPLICIT NONE
 COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2)
@@ -2050,8 +1610,9 @@ END FUNCTION c_wfnorm
 !     **************************
 
 REAL(DP) FUNCTION r_wfnorm(psi1)
-!         REAL psi version
-!     *************************
+
+!  Norm of wavefunction 'psi'.     REAL psi version
+
 USE params
 IMPLICIT NONE
 REAL(DP), INTENT(IN)                         :: psi1(kdfull2)
@@ -2069,52 +1630,13 @@ END FUNCTION r_wfnorm
 
 !     **************************
 
-REAL(DP) FUNCTION wfnorm_r(psi1,psi2)
-
-!     *************************
-
-USE params
-IMPLICIT NONE
-COMPLEX(DP), INTENT(IN OUT)                  :: psi1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
-
-INTEGER :: ii
-REAL(DP) :: acc
-
-acc = 0D0
-DO ii=1,nxyz
-  acc = REAL(psi1(ii),DP)*REAL(psi2(ii),DP) + AIMAG(psi1(ii))*AIMAG(psi2(ii)) + acc
-END DO
-wfnorm_r = acc*dvol
-RETURN
-END FUNCTION wfnorm_r
-!     **************************
-
-REAL(DP) FUNCTION wfnorm_i(psi1,psi2)
-
-!     *************************
-USE params
-IMPLICIT NONE
-COMPLEX(DP), INTENT(IN OUT)                  :: psi1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi2(kdfull2)
-
-INTEGER :: ii 
-REAL(DP) :: acc
-acc = 0D0
-DO ii=1,nxyz
-  acc = -REAL(psi1(ii),DP)*AIMAG(psi2(ii)) +AIMAG(psi1(ii))*REAL(psi2(ii),DP) + acc
-END DO
-wfnorm_i = acc*dvol
-RETURN
-END FUNCTION wfnorm_i
-!     **************************
-
 COMPLEX(DP) FUNCTION c_wfovlp(psi1,psi2)
 
 !     *************************
 
 !      Overlap   <psi1|psi2>
 !         COMPLEX version
+
 USE params
 IMPLICIT NONE
 
@@ -2139,6 +1661,7 @@ REAL(DP) FUNCTION r_wfovlp(psi1,psi2)
 
 !      Overlap   <psi1|psi2>
 !         REAL version
+
 USE params
 IMPLICIT NONE
 
@@ -2158,21 +1681,6 @@ RETURN
 END FUNCTION r_wfovlp
 
 
-!--------------------------------------------------------------------
-
-!SUBROUTINE flush(iwunit)  !  flush
-!RETURN                    !  flush
-!END                       !  flush
-!      subroutine flush(iwunit)  !  flush
-!      do i=1,9999               !  flush
-!         read(iwunit,'(1x)',err=99,end=99) !  flush
-!      enddo                     !  flush
-! 99   continue                  !  flush
-!      return                    !  flush
-!      end                       !  flush
-
-!       *********************
-
 SUBROUTINE rhointxy(rho,itime)
 
 !       **********************
@@ -2186,8 +1694,8 @@ SUBROUTINE rhointxy(rho,itime)
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
-INTEGER, INTENT(IN)         :: itime
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
+INTEGER, INTENT(IN)    :: itime
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) ::acc
@@ -2239,8 +1747,8 @@ SUBROUTINE rhointyz(rho,itime)
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
-INTEGER, INTENT(IN)         :: itime
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
+INTEGER, INTENT(IN)    :: itime
 
 
 
@@ -2336,7 +1844,7 @@ END SUBROUTINE rhointxz
 
 SUBROUTINE prifld(field,comment)
 
-!       *************************
+! Print 'field' along x-axis for y=0 and z=0.
 
 USE params
 IMPLICIT NONE
@@ -2369,7 +1877,7 @@ END SUBROUTINE prifld
 
 SUBROUTINE prifldz(field,comment)
 
-!       *************************
+! Print 'field' along z-axis for x=0 and y=0.
 
 USE params
 IMPLICIT NONE
@@ -2405,7 +1913,8 @@ END SUBROUTINE prifldz
 
 SUBROUTINE prifld2(iunit,field,comment)
 
-!       *************************
+! Print 'field' along y-axis for z=0 and y=0.
+! 'iunit' is the file unti at which output is written.
 
 USE params
 IMPLICIT NONE
@@ -2443,7 +1952,7 @@ END SUBROUTINE prifld2
 
 SUBROUTINE mtv_fld(field,i)
 
-!       *************************
+! Prepares plotting of 'field' with MTV software.
 
 USE params
 IMPLICIT NONE
@@ -2496,7 +2005,7 @@ END SUBROUTINE mtv_fld
 
 SUBROUTINE fmtv_fld(psi,field,i)
 
-!     ****************************
+! Prepares plotting of 'psi**2' with MTV software.
 
 USE params
 IMPLICIT NONE
@@ -2672,7 +2181,7 @@ END SUBROUTINE fmtv_fld
 
 SUBROUTINE mtv_3dfld(rho,iframe)
 
-! **************************************************
+! Prepares 3D plotting of 'rho' with MTV software.
 
 USE params
 
@@ -2814,7 +2323,9 @@ END FUNCTION ran1
 
 !------------------------------------------------------------
 REAL(DP) FUNCTION gasdev(idum)
-!------------------------------------------------------------
+
+! Random Gaussian distribution
+
 USE params, ONLY: DP
 IMPLICIT NONE
 
@@ -2849,6 +2360,9 @@ END FUNCTION gasdev
 !------------------------------------------------------------
 SUBROUTINE givetemperature(pxt,pyt,pzt,nteil,temperat,masse, ipflag)
 !------------------------------------------------------------
+
+! Produces thermal distribution of ionic velocities.
+
 USE params
 IMPLICIT NONE
 
@@ -2975,6 +2489,8 @@ END SUBROUTINE givetemperature
 
 SUBROUTINE safeopen(iunit,iact,icond,filename)
 
+! Opens file unit 'iunit' and asks for status before.
+
 USE params
 IMPLICIT NONE
 
@@ -3000,6 +2516,9 @@ END SUBROUTINE safeopen
 
 !     ******************************
 SUBROUTINE cleanfile(iunit)
+
+! Closes file unit 'iunit' if it was open.
+
 IMPLICIT NONE
 
 INTEGER,INTENT(IN) :: iunit
@@ -3864,7 +3383,9 @@ END SUBROUTINE stimer
 
 SUBROUTINE probab(psitmp)
 
-! Calculates the charge state probabilities
+! Calculates the probabilities to find a certain charge stae from
+! the distribution of loss of norms of the s.p. wavefunctions
+! given set of wavefunctions in input array 'psitmp'.
 
 USE params
 IMPLICIT NONE
@@ -4153,40 +3674,6 @@ CALL fftf(q0,q1)
 dkx=pi/(dx*REAL(nx,DP))
 dky=pi/(dy*REAL(ny,DP))
 dkz=pi/(dz*REAL(nz,DP))
-!      eye=CMPLX(0.0,1.0,DP)
-!      nxyf=nx2*ny2
-!      nyf=nx2
-
-!ind=0
-!DO i3=1,nz2
-!  IF(i3 >= (nz+1)) THEN
-!    zkz=(i3-nz2-1)*dkz
-!  ELSE
-!    zkz=(i3-1)*dkz
-!  END IF
-!  
-!  DO i2=1,ny2
-!    IF(i2 >= (ny+1)) THEN
-!      zky=(i2-ny2-1)*dky
-!    ELSE
-!      zky=(i2-1)*dky
-!    END IF
-!    
-!    DO i1=1,nx2
-!      IF(i1 >= (nx+1)) THEN
-!        zkx=(i1-nx2-1)*dkx
-!      ELSE
-!        zkx=(i1-1)*dkx
-!      END IF
-!      
-!      ind=ind+1
-!      akx=-zkx*eye
-!      aky=-zky*eye
-!      akz=-zkz*eye
-!      q1(ind) = q1(ind)*EXP((shix*akx+shiy*aky+shiz*akz))
-!    END DO
-!  END DO
-!END DO
 
 DO ind=1,kdfull2
   q1(ind) = q1(ind)*EXP((shix*akx(ind)+shiy*aky(ind)+shiz*akz(ind)))
@@ -4269,7 +3756,7 @@ SUBROUTINE testcurrent(wfin,iteract)
 ! ******************************
 
 
-!  Compute currents and print.
+!  Compute currents and prints them on standard output.
 !  
 
 USE params

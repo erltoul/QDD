@@ -366,12 +366,13 @@ END SUBROUTINE statit
 
 SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 
-!     The Coulomb part of the mean field.
+!     The Kohn-Sham mean field potential for given set of s.p. wavefunctions.
 
 !     Input:
-!      rho    = electron density
 !      psir   = real wavefunctions
+!      iter1  = nr. of static itzeration
 !     Output:
+!      rho    = electron density
 !      aloc   = local mean-field potential
 
   USE params
@@ -382,11 +383,10 @@ USE twost_util
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-!REAL(DP), INTENT(IN OUT)                     :: psiaux(kdfull2,kstate)
-INTEGER, INTENT(IN)                  :: iter1
+REAL(DP), INTENT(OUT      :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN)      :: psir(kdfull2,kstate)
+INTEGER, INTENT(IN)       :: iter1
 
 
 !----------------------------------------------------------------
@@ -413,6 +413,7 @@ ELSE IF(ifsicp.GE.8 .AND. iter1 > 0) THEN
    CALL static_sicfield(rho,aloc,psir,iter1)
 END IF
 RETURN
+
 END SUBROUTINE static_mfield
 
 
@@ -428,16 +429,16 @@ SUBROUTINE sstep(q0,aloc,iter)
 !     The step involves: action of H->psi, some analysis, and damping.
 
 !     Optionally the mean field Hamiltonian is diagonalized in the
-!     space of occupied states.
+!     space of given s.p. states.
 
-!     Input is the old real wavefunction 'q0'
-!              the kinetic energy on 'akv'
-!              the local mean field on 'aloc'
-!              the iteration number 'iter' (for switching analysis)
-!                 (only analysis, no stepping for 'iter=0') 
-!     Output is new new real wavefunction 'q0'
-
-!     This part for the serial version.
+!     Input/Output:
+!        q0    = set of s.p. wavefunctions to be iterated
+!     Input:
+!        aloc  = local Kohn-Sham field    
+!        (akv  = kinetic energy in momentum space, via module 'kinetic')
+!        iter  = iteration number
+!
+!     This version for FFT.
 
 USE params
 USE util, ONLY:wfovlp,project
@@ -447,9 +448,9 @@ USE twost_util
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                      :: iter
+REAL(DP), INTENT(IN OUT)   :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN)       :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)        :: iter
 
 
 #if(parayes)
@@ -849,16 +850,16 @@ SUBROUTINE sstep(q0,aloc,iter)
 !     The step involves: action of H->psi, some analysis, and damping.
 
 !     Optionally the mean field Hamiltonian is diagonalized in the
-!     space of occupied states.
+!     space of given s.p. states.
 
-!     Input is the old real wavefunction 'q0'
-!              the kinetic energy on 'akv'
-!              the local mean field on 'aloc'
-!              the iteration number 'iter' (for switching analysis)
-!                 (only analysis, no stepping for 'iter=0') 
-!     Output is new new real wavefunction 'q0'
-
-!     This part for the serial version.
+!     Input/Output:
+!        q0    = set of s.p. wavefunctions to be iterated
+!     Input:
+!        aloc  = local Kohn-Sham field    
+!        (akv  = kinetic energy in momentum space, via module 'kinetic')
+!        iter  = iteration number
+!
+!     This version for finite differences.
 
 USE params
 USE util, ONLY:wfovlp,project
@@ -868,9 +869,9 @@ USE twost_util
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                      :: iter
+REAL(DP), INTENT(IN OUT)  :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN)      :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)       :: iter
 
 
 #if(parayes)
@@ -1266,8 +1267,12 @@ END SUBROUTINE sstep
 
 SUBROUTINE infor(rho,i)
 
-!     Computes observables (energies, radii, ...)
-!     and prints to standard output.
+!     Information subroutine for static steps. 
+!     Computes observables (energies, radii, ...) and prints to standard output.
+!
+!     Input:
+!        rho   = local density
+!        i     = iteration number
 
 USE params
 USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
@@ -1275,8 +1280,8 @@ USE twost_util
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(INOUT)                     :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: i
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
+INTEGER, INTENT(IN)    :: i
 
 INTEGER :: ind, nb
 REAL(DP) :: eshell, enonlc, ensav, ekin, ehilf
@@ -1521,7 +1526,11 @@ END SUBROUTINE infor
 
 SUBROUTINE pri_pstat(psi,rho)
 
-!     print short protocol on file 'pstat.*'
+!     Print short protocol of final static state on file 'pstat.*'
+!    
+!     Input:
+!       psi    = set of static s.p. wavefunctions
+!       rho    = local density
 
 
 USE params
@@ -1532,8 +1541,8 @@ USE coulsolv
 USE twostr, ONLY: symutbegin,step,precis,precisfact,dampopt,steplow,steplim,phiini,toptsicstep
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)             :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)             :: rho(kdfull2)
+REAL(DP), INTENT(IN)  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)  :: rho(kdfull2)
 
 LOGICAL,PARAMETER :: mumpri=.false.
 REAL(DP) :: enonlc, omegam, rms
@@ -1672,6 +1681,12 @@ END SUBROUTINE pri_pstat
 
 SUBROUTINE transel(psir)
 
+!   Dipole transition matrix elements between all actual s.p. states.
+!   Result is printed on file 'mte_xyz'.
+!
+!   Input:
+!     psir   = set of stationary s.p. wavefunctions
+
 USE params
 IMPLICIT NONE
 
@@ -1736,7 +1751,7 @@ SUBROUTINE reocc()
 
 
 !     Readjust occupations numbers to actual s.p. energies.
-!     
+!     I/O through modeul 'params'.     
 
 USE params
 USE util, ONLY:pair
