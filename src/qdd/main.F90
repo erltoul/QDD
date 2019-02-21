@@ -334,7 +334,6 @@ IF(nclust > 0) THEN
     IF (iscatterelectron /=0) CALL init_scattel(psi)
     outnam=outname                                     ! ???
     CALL restart2(psi,outnam,.false.)
-    IF (iaddcluster /= 0) CALL addcluster(psi,outnam)
     WRITE(7,'(a,i3)') 'restart irest=',irest
   END IF
 

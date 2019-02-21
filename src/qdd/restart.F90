@@ -27,7 +27,7 @@ SUBROUTINE restart2(psi,outna,tstatin)
 
 !     **************************
 
-!     Reads data on wavefunctions, ions, and fields.
+!     Reads data of wavefunctions, ions, and fields.
 !     'resume' is the version for real wavefunctions (static).
 !     The variant 'restart2' produces complex wavefunctions,
 !     for 'trealin=.false.' from saved complex wavefunctions and
@@ -38,29 +38,33 @@ SUBROUTINE restart2(psi,outna,tstatin)
 !     dynamic input.
 !     All the data are saved in one file called '(r)save', also in the 
 !     parallel case.
-
+!
+!     Input:
+!       outna    = qualifier for (r)save files
+!       tstatin  = .TRUE. signals input of static wavefunctions
+!     Output:
+!       psi      = set of s.p. wavefunctions read from (r)save.outna
+!       ionic coordinates etc, communicated via 'params.F90'
 
 USE params
 USE kinetic
-!#ifdef REALSWITCH
 USE twostr, ONLY: vecsr,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
-!#endif
 IMPLICIT NONE
 
 
 #ifdef REALSWITCH
-REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-LOGICAL,PARAMETER                       :: tstatin=.false.
+REAL(DP), INTENT(OUT)          :: psi(kdfull2,kstate)
+LOGICAL,PARAMETER              :: tstatin=.false.
 #else
-COMPLEX(DP), INTENT(IN OUT)               :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(OUT)       :: psi(kdfull2,kstate)
 #if(parayes)
-REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
+REAL(DP), ALLOCATABLE          :: rhoabsoorb_all(:,:)
 #endif
-LOGICAL, INTENT(IN)                       :: tstatin
+LOGICAL, INTENT(IN)            :: tstatin
 #endif
 
-CHARACTER (LEN=13), INTENT(IN)            :: outna
+CHARACTER (LEN=13), INTENT(IN) :: outna
 
 INTEGER ::  iact, nstate_test, mynact, n, nb
 REAL(DP) :: dummy
@@ -107,12 +111,9 @@ mynact = myn
 !tstatin = trealin .OR. (isitmax>0.AND.ismax>0)
 
 #ifdef REALSWITCH
-
   IF(mynact==0)  &
     OPEN(UNIT=ifile,STATUS='old',FORM='unformatted', FILE='rsave.'//outna)  
-
 #else
-
   IF(mynact==0) THEN
     IF(tstatin) THEN
       INQUIRE(ifile,OPENED=topenf)
@@ -127,7 +128,6 @@ mynact = myn
       OPEN(UNIT=ifile,STATUS='old',FORM='unformatted', FILE='save.'//outna) 
     END IF
   END IF
-
 #endif
 
 
@@ -209,10 +209,7 @@ IF(nclust > 0)THEN
   IF(myn == 0) READ(ifile) amoya(1:nstate_all),epotspa(1:nstate_all), &
                         ekinspa(1:nstate_all)
 
-
-
   CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-
 
   DO nod=0,knode-1
     nstnod = nstate_node(nod)
@@ -223,7 +220,6 @@ IF(nclust > 0)THEN
       ekinsps(nb) = ekinspa(nba)
     END DO
 
-
     CALL send_and_receive(amoys,amoy,nstnod,0,nod)
     CALL send_and_receive(epotsps,epotsp,nstnod,0,nod)
     CALL send_and_receive(ekinsps,ekinsp,nstnod,0,nod)
@@ -233,14 +229,7 @@ END IF
 #endif
 IF(trealin) DEALLOCATE(psiauxr)
 
-    
-
-
 IF(mynact==0) THEN
-
-!  DO i=1,ksttot
-!    READ(ifile) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
-!  END DO
 
 !  read protonic coordinates and momenta
   IF(nion > 0) THEN
@@ -352,7 +341,6 @@ END IF
 #endif
 #endif
 
-
 IF(ifsicp >= 6) THEN
 #ifdef REALSWITCH
   READ(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
@@ -433,8 +421,17 @@ SUBROUTINE SAVE(psi,isa,outna)
 
 !     **************************
 
-!  writes out the data if mod(iter,isave)=0
-!  all the data is saved in the same file called 'save.outna' or 'rsave.outna', even in the parallel case
+!  Writes actual status of wavefunctions, ionic coordinates and related
+!  observables to save storage, in case that mod(iter,isave)=0.
+!  All data are saved on the same file 'save.outna' (dynamic case) or 
+!  'rsave.outna' (static case).
+!     Input:
+!       psi      = set of s.p. wavefunctions 
+!       isa      = switch to static/dynamic output, isa<0 writes 
+!                  'rsave.outna' and isa>0 writes 'save.outna'
+!       outna    = qualifier for (r)save files
+!       ionic coordinates etc are communicated via 'params.F90'
+
 
 USE params
 USE kinetic
@@ -445,16 +442,16 @@ USE twost, ONLY: vecs,expdabold,wfrotate
 IMPLICIT NONE
 
 #ifdef REALSWITCH
-REAL(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)           :: psi(kdfull2,kstate)
 #else
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)        :: psi(kdfull2,kstate)
 #if(parayes)
-REAL(DP), ALLOCATABLE                     :: rhoabsoorb_all(:,:)
+REAL(DP), ALLOCATABLE          :: rhoabsoorb_all(:,:)
 #endif
 #endif
 
-INTEGER, INTENT(IN)                     :: isa
-CHARACTER (LEN=13), INTENT(IN)       :: outna
+INTEGER, INTENT(IN)            :: isa
+CHARACTER (LEN=13), INTENT(IN) :: outna
 INTEGER :: iact, mynact, nstate_test, nb
 #ifdef COMPLEXSWITCH
 INTEGER :: nbe
@@ -607,12 +604,6 @@ END IF
 #endif
     
 IF(mynact==0) THEN
-!  DO i=1,ksttot
-!    WRITE(ifile) ispin(i),nrel2abs(i),nabs2rel(i),nhome(i)
-!  END DO
-    
-    
-    
     
 !  write protonic coordinates and momenta:
   IF(nion > 0) &
@@ -717,12 +708,6 @@ IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=ifile,STATUS='keep')
 #endif
   
   
-!  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
-!     WRITE(17,'(a,i6,a)') '** data saved at ',isa,' iterations**'  ! garbage file ?
-!  END IF
-
-!  CLOSE(ifile)
-  
   RETURN
 #ifdef REALSWITCH
 END SUBROUTINE RSAVE
@@ -731,154 +716,6 @@ END SUBROUTINE SAVE
 #endif
 
 
-
-#ifdef REALSWITCH
-
-!     **************************
-
-SUBROUTINE restherm()
-
-!     **************************
-
-USE params
-USE kinetic
-IMPLICIT NONE
-INTEGER :: iact,ion
-
-OPEN(UNIT=20,STATUS='unknown',FORM='unformatted',FILE='therm')
-!     nxyz=nx2*ny2*nz2
-READ(20) iact
-IF(iact /= irest) THEN
-  WRITE(7,*) 'iact=',iact
-  STOP 'bad irest in for005dyn !'
-END IF
-DO ion=1,nion
-  READ(20) cx(ion),cy(ion),cz(ion)
-  READ(20) cpx(ion),cpy(ion),cpz(ion)
-END DO
-CLOSE(UNIT=20,STATUS='keep')
-RETURN
-END SUBROUTINE restherm
-
-
-
-
-
-
-!     **************************
-
-SUBROUTINE addcluster(psi,outna)
-
-!     **************************
-
-USE params
-USE kinetic
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
-CHARACTER (LEN=13), INTENT(IN OUT)       :: outna
-
-INTEGER :: i,iact,idum,ii,ion,k,nb,nclustt,niont,nspdwt,nstatet
-OPEN(UNIT=ifile,STATUS='unknown',FORM='unformatted', FILE='save.'//outna)
-
-
-!  read the iteration where the data has been saved last:
-
-
-READ(ifile) iact,nstatet,nclustt,niont,nspdwt
-DO i=1,nstatet
-  READ(ifile) occup(i+nstate)
-END DO
-
-
-irest=iact
-
-
-!  read wavefunctions:
-IF(nclustt > 0)THEN
-  DO nb=1,nstatet
-    DO i=1,nxyz
-      READ(ifile) psi(i,nb+nstate)
-    END DO
-  END DO
-END IF
-
-DO i=1,ksttot
-  IF (i <= nstatet) THEN
-    READ(ifile) ispin(i+nstate), nrel2abs(i+nstate),nabs2rel(i+nstate)
-  ELSE
-    READ(ifile) idum,idum,idum
-  END IF
-END DO
-
-
-
-
-!  read protonic coordinates and momenta
-WRITE(6,*) nion,niont
-DO ion=1,niont
-  READ(ifile) cx(ion+nion),cy(ion+nion),cz(ion+nion), np(ion+nion)
-  READ(ifile) cpx(ion+nion),cpy(ion+nion),cpz(ion+nion), np(ion+nion)
-END DO
-
-
-#if(raregas)
-IF (isurf /= 0) THEN
-
-  DO i=1,nc
-    READ(ifile) imobc(i)
-    READ(ifile) xc(i),yc(i),zc(i)
-    READ(ifile) pxc(i),pyc(i),pzc(i)
-  END DO
-  DO i=1,NE
-    READ(ifile) imobe(i)
-    READ(ifile) xe(i),ye(i),ze(i)
-    READ(ifile) pxe(i),pye(i),pze(i)
-  END DO
-  DO i=1,nk
-    READ(ifile) imobk(i)
-    READ(ifile) xk(i),yk(i),zk(i)
-    READ(ifile) pxk(i),pyk(i),pzk(i)
-  END DO
-  
-  DO i=1,kdfull2
-    READ(ifile) potfixedion(i)
-  END DO
-  
-END IF
-#endif
-
-
-IF(nclustt > 0)THEN
-  DO k=1,kmom
-    READ(ifile) qe(k)
-  END DO
-  DO i=1,3
-    READ(ifile) se(i)
-  END DO
-END IF
-
-
-IF (nabsorb > 0) THEN
-  DO ii=1,kdfull2
-    READ(ifile) rhoabso(ii)
-  END DO
-END IF
-
-
-CLOSE(UNIT=ifile,STATUS='keep')
-
-nstate=nstate+nstatet
-nclust=nclust+nclustt
-nion=nion+niont
-nspdw=nspdw+nspdwt
-nion2=nion
-
-
-RETURN
-END SUBROUTINE addcluster
-
-#endif
 
 #if(parayes)
 #ifdef REALSWITCH

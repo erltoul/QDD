@@ -50,7 +50,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
-    idebug,ishiftcmtoorigin,iaddcluster,  &
+    idebug,ishiftcmtoorigin,  &
     iswforce,iplotorbitals,ievaluate,ehom0,ihome,  &
     ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
     nproj_states, epsdi,idielec,xdielec

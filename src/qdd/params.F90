@@ -23,7 +23,8 @@ SAVE
 INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 
 !
-! general settings for dimensions, part.numbers etc
+! General settings for dimensions and basic arrays.
+! Main communicator for dynamical variables, options, and various fields.
 !
 
 ! number of nodes (=1 for serial version)
@@ -35,7 +36,6 @@ INTEGER :: knode=4
 INTEGER :: knode=1
 #endif
 ! max. nr. electron states per node
-!fix! INTEGER,PARAMETER :: kstate=20
 INTEGER :: kstate=20
 ! max. total nr. electron  states
 INTEGER :: ksttot
@@ -198,7 +198,7 @@ REAL(DP) :: totintegprob
 REAL(DP) :: aver_estar,emin_target,emax_target
 INTEGER  :: nstate_target,nmatch
 
-INTEGER :: iaddcluster=0,iswforce=0,iplotorbitals=0, ievaluate=0
+INTEGER :: iswforce=0,iplotorbitals=0, ievaluate=0
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
 INTEGER :: nproj=1,nproj_states=0
@@ -423,6 +423,9 @@ CONTAINS
 
 SUBROUTINE init_baseparams()
 
+! Initializes those parameters which are derived from the basic
+! parameters.
+
 nthr=numthr-1
 ! deduced grid parameters
  kxmax=kxbox/2+1;kymax=kybox/2+1;kzmax=kzbox/2+1
@@ -469,6 +472,9 @@ END SUBROUTINE init_baseparams
 
 
 SUBROUTINE init_fields()
+
+! Allocates basic fields and initializes them if needed.
+! Sets defaults for many input parameters.
 
 
 ALLOCATE(nq(3,ksttot))                         !  nodes of init. states
@@ -574,6 +580,9 @@ END SUBROUTINE init_fields
 #if(raregas)
 
 SUBROUTINE init_raregas()
+
+! Default settings for QM/MM part
+
 ipotfixed=0
 ifmdshort=1
 ifadiadip=0
@@ -584,7 +593,8 @@ chgk0=2D0
 
 iararlj=1
 scaledist=1D0
-fermia=0D0  ! serves in addition as a switch: if isrtyp(i,j)=3 for any i,j then fermia must be given explicitly
+fermia=0D0  ! serves in addition as a switch: 
+            ! if isrtyp(i,j)=3 for any i,j then fermia must be given explicitly
 fermib=1D0
 fermic=1D0
 fermiac=0D0

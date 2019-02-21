@@ -29,7 +29,14 @@ SUBROUTINE calc_sic(rho,aloc,q0)
 
 !     ******************************
 
-!     switchboard for the various brands of SIC
+!     Switchboard for the various brands of SIC.
+!     Cases are selected according to 'ifsicp' which is
+!     communicated via module 'params'.
+!
+!     List parameters (handed through to calling routines):
+!       rho  = local density
+!       aloc = local KS potential
+!       q0   = set of s.p. wavefunctions
 
 USE params
 USE kinetic
@@ -94,11 +101,12 @@ SUBROUTINE calc_adsicr(rho,aloc)
 SUBROUTINE calc_adsic(rho,aloc)
 #endif
 
-!     ******************************
-
-!     computes local part of Hamiltonian
-!     'time' <= 0  signal static iteration i.e. without laser field
-
+!  Computes and adds ADSIC to local KS potential.
+!
+!  Input:
+!    rho    = local density
+!  Input/Output:
+!    aloc   = local KS potential (to be modified by ADSIC)
 
 USE params
 USE kinetic
@@ -106,14 +114,21 @@ USE coulsolv,ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 
 IMPLICIT NONE
 
+REAL(DP),INTENT(IN OUT) :: aloc(2*kdfull2)
+REAL(DP),INTENT(IN)     :: rho(2*kdfull2)
+
+
 REAL(DP),PARAMETER :: sgnkli=-1D0
 
 #if(parayes)
 INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
+REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,rhonod2,rhotp
+REAL(DP),DIMENSION(:),ALLOCATABLE :: tp1,tp2
+REAL(DP),DIMENSION(:),ALLOCATABLE :: aloc1,aloc2
+INTEGER :: nod
 #endif
 
-REAL(DP) :: aloc(2*kdfull2),rho(2*kdfull2)
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhosp,chpdftsp,coulsum,couldif
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rho1,rho2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhospu,rhospd,chpdftspu,chpdftspd
@@ -121,14 +136,6 @@ INTEGER :: ind, idx, npartdw, npartup, npartto, size
 INTEGER :: indpri
 REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
 REAL(DP) :: couldw, coulup, fac, facdw, facup, facdwh, facuph, factotal
-!LOGICAL,PARAMETER :: ttest=.TRUE.
-!INTEGER,EXTERNAL :: getnearestgridpoint
-#if(parayes)
-REAL(DP),DIMENSION(:),ALLOCATABLE :: rhonod1,rhonod2,rhotp
-REAL(DP),DIMENSION(:),ALLOCATABLE :: tp1,tp2
-REAL(DP),DIMENSION(:),ALLOCATABLE :: aloc1,aloc2
-INTEGER :: nod
-#endif
 
 !-------------------------------------------------------------------------
 
@@ -152,8 +159,6 @@ ALLOCATE(tp2(size))
 #else
 size=nxyz
 #endif
-
-
 
 enrearsave=enrear
 enerpwsave=enerpw
@@ -477,8 +482,14 @@ SUBROUTINE calc_slater(rho,aloc,q0)
 
 !     ******************************
 
-!     computes local part of Hamiltonian
-!     'time' <= 0  signal static iteration i.e. without laser field
+!  Computes SIC-Slater corrective potentials (one for each s.p.state)
+
+!  Input:
+!    rho    = local density
+!    aloc   = local KS potential
+!    q0     = set of s.p. wavefunctions
+!  Output:
+!    set of s.p. corrective potential 'usicsp' via module 'params'
 
 
 USE params
@@ -615,11 +626,13 @@ SUBROUTINE calc_sicklir(rho,aloc,q0)
 SUBROUTINE calc_sickli(rho,aloc,q0)
 #endif
 
-!     ******************************
+!  Computes SIC-KLI correctiion to KS potential
 
-!     computes local part of Hamiltonian
-!     'time' <= 0  signal static iteration i.e. without laser field
-
+!  Input:
+!    rho    = local density
+!    q0     = set of s.p. wavefunctions
+!  Input/Output:
+!    aloc   = local KS potential
 
 USE params
 USE util, ONLY:prifld
@@ -917,9 +930,14 @@ END SUBROUTINE calc_sickli
 
 SUBROUTINE act_part_num(npartup,npartdw,npartto)
 
-!     ******************************
-
-!     computes actual particle number for spin-up and spin-down.
+!  Computes actual particle number for spin-up and spin-down.
+!
+!  Input:
+!    occup  = array of occupation numbers via module 'params'
+!  Output:
+!    npartup  = nr. of spin up particles
+!    npartdw  = nr. of spin down particles
+!    npartto  = total nr. of particles
 
 USE params
 USE kinetic
@@ -991,7 +1009,7 @@ SUBROUTINE calc_sicsp(rhosp,usicsp,q0state,nb)
 !       nb        = number of state
 !     output is
 !       usicsp   = the s.p. SIC potential
-!     output via common
+!     output via module 'params'
 !       enrear,enerpw   = rearrangement energies for 'nb'
 !       encoulsp        = Coulomb energy for 'nb'
 

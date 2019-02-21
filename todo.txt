@@ -39,6 +39,11 @@ Cleaned:
    main.F90
 
 Subroutines commented:
-   static.F90
-   schmid.F90
+   zeroforce.F90
    util.F90
+   static.F90
+   sicnew.F90
+   schmid.F90
+   restart.F90
+   params.F90
+
