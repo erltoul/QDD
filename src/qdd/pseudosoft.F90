@@ -21,8 +21,9 @@
 
 SUBROUTINE calcpseudo()
 
-!     ***********************
-!     Call the appropriate routine for the calculation of pseudopotentials (PsP)
+! Driver routine for local part of pseudopotentials (PsP).
+! Switches between soft Gaussian and Goedecker depending on
+! 'ipsptyp' communicated via module 'params'.
 
 USE params
 USE kinetic
@@ -44,10 +45,10 @@ END IF
 SELECT CASE(ipsptyp)
   CASE(0)   ! soft local PsP
     IF(idielec == 0) THEN
-      CALL pseudosoft()         ! Psp, nothing special
+      CALL pseudosoft()         ! soft Gaussian Psp
 #if(raregas)
     ELSE
-      CALL pseudosoft_dielec()  ! PsP with dielectric support
+      CALL pseudosoft_dielec()  ! Gaussian PsP with dielectric support
 #endif
     END IF
     
@@ -88,7 +89,7 @@ END SUBROUTINE calcpseudo
 SUBROUTINE pseudo_external()
 
 
-!     In this routine we read the PsP from a file
+!     In this routine we read the PsP from file 'potion.dat'
 
 USE params
 IMPLICIT NONE
@@ -99,24 +100,13 @@ IMPLICIT NONE
 
 RETURN
 END SUBROUTINE pseudo_external
+
 !------pseudosoft----------------------------------------------
 
 SUBROUTINE pseudosoft()
 
-
-!     In this routine we calculate ONLY the PsP from
-!     the cluster cores.
-!     Potentials from substrate ions are included by a call
-!     to a separate subroutine. The case of dielectric layer
-!     is dealt with in a different routine.
-
-!--------------------------------------------------------------
-!     ATTENTION: the definition of Gaussians
-!                used in the code:
-!                sgm() is the width of a Gaussian defined like
-!                      exp(-r**2/(2*sgm**2))
-
-!--------------------------------------------------------------
+!  Local pseudopotentials as sum of two Gaussians.
+!  I/O is handled via module 'params.
 
 USE params
 USE kinetic
@@ -159,17 +149,11 @@ IF(ipseudo == 1)THEN
 
   DO ist=1,nion
     
-!    radpsp = sgm1(np(ist))/0.8493218
-!    nzsgp = nsubgridpsp*NINT(radpsp/dz)
-!    nysgp = nsubgridpsp*NINT(radpsp/dy)
-!    nxsgp = nsubgridpsp*NINT(radpsp/dx)
-    
     IF (isoutofbox(cx(ist),cy(ist),cz(ist)) == 0) THEN
       
       ind = getnearestgridpoint(cx(ist),cy(ist),cz(ist))
       
       CALL conv1to3(ind)
-!      WRITE(*,*) ' PsD: ion,ind,iindtmp=',ion,ind,iindtmp
       
       cfac1 = chg1(np(ist))/(pi**1.5D0*2D0**1.5D0*sgm1(np(ist))**3.D0)
       cfac2 = chg2(np(ist))/(pi**1.5D0*2D0**1.5D0*sgm2(np(ist))**3.D0)
@@ -191,8 +175,6 @@ IF(ipseudo == 1)THEN
           END DO
         END DO
       END DO
-!  CALL prifld(pseudorho,'pseudo-dens')
-      
       
     ELSE ! isOutOfBox not equal 0
       
@@ -274,13 +256,41 @@ RETURN
 END SUBROUTINE pseudosoft
 
 
-!     ***********************
+
+
+
+
+
+
+!-----V_soft------------------------------------------------------------
+
+REAL(DP) FUNCTION v_soft(r,sigma)
+USE params, ONLY: DP,PI
+IMPLICIT NONE
+
+!  Soft Coulomb potential from Gaussian density,
+!  Input:
+!     r     =  distance at which potential is computed
+!     sigma =  width parameter of underlying Gaussian
+
+REAL(DP), INTENT(IN)  :: r
+REAL(DP), INTENT(IN)  :: sigma
+
+REAl(DP) :: rabs
+!------------------------------------------------------------------------
+
+rabs = ABS(r)
+v_soft = erf(rabs/sigma)/rabs
+
+RETURN
+END FUNCTION v_soft
+
+!-------------------------------------------------------------------------
 
 REAL(DP) FUNCTION dvsdr(r,sigma)
 
-!     ***********************
+!  First derivative of V_soft
 
-!     derivation of V_soft
 USE params, ONLY: DP,pi
 IMPLICIT NONE
 
@@ -300,18 +310,12 @@ dvsdr = fac*EXP(-rabs*rabs/(sigma*sigma))-v_soft(rabs,sigma)/rabs
 RETURN
 END FUNCTION dvsdr
 
-!-------------------------------------------------------------------------
-
-
-!     ***********************
 
 REAL(DP) FUNCTION d2vsdr2(r,sigma)
 USE params, ONLY: DP,pi
 IMPLICIT NONE
 
-!     ***********************
-
-!     second derivation of V_soft
+!  Second derivative of V_soft
 
 REAL(DP), INTENT(IN OUT)                        :: r
 REAL(DP), INTENT(IN)                         :: sigma
@@ -328,55 +332,6 @@ d2vsdr2 = fac*EXP(-r*r/(sigma*sigma))*(r**(-2D0)+2*sigma**(-2D0))  &
 
 RETURN
 END FUNCTION d2vsdr2
-
-
-
-
-
-
-
-
-!-----V_soft------------------------------------------------------------
-
-REAL(DP) FUNCTION v_soft(r,sigma)
-USE params, ONLY: DP,PI
-IMPLICIT NONE
-
-!     soft Coulomb potential from Gaussian density,
-!     uses error function from Chebyshev approximation.
-!       r     =  distance at which potential is computed
-!       sigma =  width parameter of underlying Gaussian
-
-REAL(DP), INTENT(IN)                         :: r
-REAL(DP), INTENT(IN)                         :: sigma
-
-REAl(DP) :: rabs
-!------------------------------------------------------------------------
-rabs = ABS(r)
-v_soft = erf(rabs/sigma)/rabs
-
-RETURN
-END FUNCTION v_soft
-!-------------------------------------------------------------------------
-
-!old        Archaic pre-f95 way to approach erf(z),  simple precision
-!old            Left here as a witness of oldest times. 
-!old c
-!old c       ******************************
-!old c
-!old         function f(x)
-!old c
-!old c       ******************************
-!old c
-!old       z=abs(x)
-!old       t=1./(1.+0.5*z)
-!old       erfcc=t*exp(-z*z-1.26551223+t*(1.00002368+t*(.37409196+t*
-!old      *(.09678418+t*(-.18628806+t*(.27886807+t*(-1.13520398+t*
-!old      *(1.48851587+t*(-.82215223+t*.17087277)))))))))
-!old       if (x.lt.0.) erfcc=2.-erfcc
-!old       f=1.0-erfcc
-!old       return
-!old       end
 
 
 !-----V_ion_ion------------------------------------------------------------
@@ -447,7 +402,7 @@ END FUNCTION v_ion_ion
 !------------------------------------------------------------
 
 REAL(DP) FUNCTION dv_softdr(r,s)
-!------------------------------------------------------------
+  
 ! returns the derivative of erf(r/s)/r by finite differences
 
 USE params, ONLY: DP

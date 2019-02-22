@@ -1,33 +1,26 @@
-!This file is a part of PW-TELEMAN project.
-!PW-TELEMAN is a Time-Dependent Electronic Dynamics in Molecules And Nanosystems library.
-!Copyright (C) 2011-2015  Paul-Gerhard Reinhard, Eric Suraud, Florent Calvayrac,
-!Phuong Mai Dinh, David Brusson, Philipp Wopperer, José María Escartín Esteban.
-!
-!PW-Teleman is free software: you can redistribute it and/or modify
-!it under the terms of the GNU General Public License as published by
-!the Free Software Foundation, either version 3 of the License, or
-!(at your option) any later version.
-!
-!PW-Teleman is distributed in the hope that it will be useful,
-!but WITHOUT ANY WARRANTY; without even the implied warranty of
-!MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!GNU General Public License for more details.
-!
-!You should have received a copy of the GNU General Public License
-!along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
+!  This file is part of 'params.F90'. It contains arrays and settings
+!  for the PsP of a selection of elements.
 
-!     the "periodic table"
-!       (negative numbers stand for the local electron cloud of an element)
+#if(raregas)
+!  Negative numbers stand for the local electron cloud of an element.
+INTEGER,PARAMETER :: kpsp=99,kpspm=-99
+#else
+INTEGER,PARAMETER :: kpsp=99,kpspm=0
+#endif
 
-REAL(DP) :: ch(-99:99)=0D0,amu(-99:99)=0D0,cc1(-99:99)=0D0,cc2(-99:99)=0D0
-REAL(DP) :: crloc(-99:99)=0D0,crs(-99:99)=0D0,chs(-99:99)=0D0,chg1(-99:99)=0D0,chg2(-99:99)=0D0
-REAL(DP) :: sgm1(-99:99)=0D0,sgm2(-99:99)=0D0
-REAL(DP) :: dr1(-99:99),dr2(-99:99)
-REAL(DP) :: prho1(-99:99),prho2(-99:99)
-REAL(DP) :: r0g(-99:99)=0D0,r1g(-99:99)=0D0,r2g(-99:99)=0D0,h0_11g(-99:99)=0D0,h0_22g(-99:99)=0D0
-REAL(DP) :: h0_33g(-99:99)=0D0,h1_11g(-99:99)=0D0,h1_22g(-99:99)=0D0
-REAL(DP) :: h2_11g(-99:99)=0D0,radiong(-99:99)=0D0
-REAL(DP) :: h0_12g(-99:99)=-1D20               ! default signal "automatic"
+REAL(DP) :: ch(kpspm:kpsp)=0D0,amu(kpspm:kpsp)=0D0,&
+            cc1(kpspm:kpsp)=0D0,cc2(kpspm:kpsp)=0D0
+REAL(DP) :: crloc(kpspm:kpsp)=0D0,crs(kpspm:kpsp)=0D0,chs(kpspm:kpsp)=0D0,&
+            chg1(kpspm:kpsp)=0D0,chg2(kpspm:kpsp)=0D0
+REAL(DP) :: sgm1(kpspm:kpsp)=0D0,sgm2(kpspm:kpsp)=0D0
+REAL(DP) :: dr1(kpspm:kpsp),dr2(kpspm:kpsp)
+REAL(DP) :: prho1(kpspm:kpsp),prho2(kpspm:kpsp)
+REAL(DP) :: r0g(kpspm:kpsp)=0D0,r1g(kpspm:kpsp)=0D0,r2g(kpspm:kpsp)=0D0,&
+            h0_11g(kpspm:kpsp)=0D0,h0_22g(kpspm:kpsp)=0D0
+REAL(DP) :: h0_33g(kpspm:kpsp)=0D0,h1_11g(kpspm:kpsp)=0D0,&
+            h1_22g(kpspm:kpsp)=0D0
+REAL(DP) :: h2_11g(kpspm:kpsp)=0D0,radiong(kpspm:kpsp)=0D0
+REAL(DP) :: h0_12g(kpspm:kpsp)=-1D20            ! default signal "automatic"
 
 INTEGER,PARAMETER :: knl=18000       ! storage for PsP projectors
 

@@ -22,7 +22,8 @@
 
 SUBROUTINE pseudogoed()
 
-!     ***********************
+! Local part of Goedecker pseudo-potentials.
+! I/O handled through module 'params'.
 
 USE params
 IMPLICIT NONE
@@ -93,7 +94,15 @@ END SUBROUTINE pseudogoed
 
 REAL(DP) FUNCTION v_ion_el_lgoed(rr,rloc,c1,c2,zion)
 
-!     ***********************
+! Function delivering the local Goedecker pseudo-potential.
+!
+! Input:
+!  rr      = distance at which potential is evaluated.
+!  rloc    = radius parameter of PsP
+!  c1,c2   = parameters for short range parts
+!  zion    = ionic charge (long range Coulomb)
+
+
 USE params
 IMPLICIT NONE
 REAL(DP),INTENT(IN):: rr
@@ -163,7 +172,13 @@ END SUBROUTINE calc_proj
 
 SUBROUTINE calpr2(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP, case of 2 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
 
 USE params
 IMPLICIT NONE
@@ -288,7 +303,14 @@ END SUBROUTINE calpr2
 
 SUBROUTINE calpr3(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP, case of 3 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
+
 
 USE params
 IMPLICIT NONE
@@ -418,7 +440,14 @@ END SUBROUTINE calpr3
 
 SUBROUTINE calpr4(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP, case of 4 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
+
 
 USE params
 IMPLICIT NONE
@@ -552,11 +581,6 @@ DO i3=0,icrsz
   END DO
 END DO
 
-!xnorm = 1D0/SQRT(dvol*SUM(p0_1(:,ion)**2)/(4D0*pi))
-!!p0_1(:,ion) = xnorm*p0_1(:,ion)
-!WRITE(6,'(a,1pg13.5)') ' norm of 1s projector:',xnorm**(-2)
-!CALL FLUSH(6)
-
 !     end of counter-array:
 
 ifin(ion) = ind
@@ -567,7 +591,7 @@ END SUBROUTINE calpr4
 
 SUBROUTINE checkproj(ion)
 
-!     ********************
+! Test projectors.
 
 USE params
 IMPLICIT NONE
@@ -687,6 +711,7 @@ SUBROUTINE calc_projFine(cxa,cya,cza,cxg,cyg,czg,ion)
 !     define the reference point for the center of the
 !     subgrid. These two vector are usually the same,
 !     but differ when computing forces.
+! This version with interpolation on a finer mesh.
 
 USE params
 IMPLICIT NONE
@@ -726,7 +751,15 @@ END SUBROUTINE calc_projFine
 !!     ****************************************
 SUBROUTINE calpr2Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP with interpolation on
+!  a finer mesh, case of 2 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
+
 
 USE params
 IMPLICIT NONE
@@ -868,7 +901,14 @@ END SUBROUTINE calpr2Fine
 !     ********************
 SUBROUTINE calpr3Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP with interpolation on
+!  a finer mesh, case of 3 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
 
 USE params
 IMPLICIT NONE
@@ -999,7 +1039,15 @@ END SUBROUTINE calpr3Fine
 !     ********************
 SUBROUTINE calpr4Fine(cxact,cyact,czact,cxg,cyg,czg,ion)
 
-!     ****************************************
+!  Non-local part of Goedecker PsP with interpolation on
+!  a finer mesh, case of 4 projectors.
+!  
+!  Input:
+!    cxact,cyact,czact  = position of ionic core
+!    cxg,cyg,czg        = reference for center of sub-grid
+!    ion                = actial ion number
+!  Other I/O handled via module 'params'.
+
 
 USE params
 IMPLICIT NONE
@@ -1148,4 +1196,4 @@ ifinfine(ion) = ind
 RETURN
 END SUBROUTINE calpr4Fine
 
-!     ********************
+

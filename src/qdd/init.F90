@@ -557,9 +557,9 @@ ELSE IF(ipsptyp == 1) THEN
 ELSE IF(ipsptyp == 2) THEN
   WRITE(iu,'(a)') 'local Goedecker pseudopotentials'
 ELSE IF(ipsptyp == 3) THEN
-  WRITE(iu,'(a)') 'full Goedecker pseudopotentials form file goed.asci'
+  WRITE(iu,'(a)') 'full Goedecker pseudopotentials from file goed.asci'
 ELSE IF(ipsptyp == 4) THEN
-  WRITE(iu,'(a)') 'full semicore Goedecker pseudopotentials form file goed.asci'
+  WRITE(iu,'(a)') 'full semicore Goedecker pseudopotentials from file goed.asci'
 ELSE
   STOP ' this type IPSPTYP not yet implemented'
 END IF

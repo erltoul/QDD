@@ -27,7 +27,10 @@
 7) Subroutine 'mergetabs':
      What is this routine doing?
 
-
+8) Pseudo-potentials:
+    a) The two pieces 'pseudogead.F90' and 'pseudosoft.F90' should
+       be combined to a module 'pseudo' with 'pseudo.F90' as header.
+    b) Interpolation to finer mesh should be checked carefully.
 
 
 *****************************************************************
@@ -44,6 +47,10 @@ Subroutines commented:
    static.F90
    sicnew.F90
    schmid.F90
+   rho.F90
    restart.F90
+   pseudo.F90
+   pseudosoft.F90
+   pseudogoed.F90
    params.F90
 

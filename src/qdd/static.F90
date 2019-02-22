@@ -375,15 +375,14 @@ SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 !      rho    = electron density
 !      aloc   = local mean-field potential
 
-  USE params
-
-  
+USE params
+ 
 USE twostr
 USE twost_util
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT      :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)      :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN)      :: psir(kdfull2,kstate)
 INTEGER, INTENT(IN)       :: iter1
