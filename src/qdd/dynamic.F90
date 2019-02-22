@@ -86,12 +86,12 @@ endif
       IF(ifexpevol == 1) THEN
         CALL tstep_exp(psi,aloc,rho,it,psiw,.FALSE.)
       ELSE
-        IF(ifcnevol == 1) THEN
-          WRITE(*,*) 'Crank call '
-          CALL CrankNicolson_exp(psi,aloc,rho,it)
-        ELSE
-          CALL tstep(psi,aloc,rho,it)
-        END IF
+!        IF(ifcnevol == 1) THEN
+!          WRITE(*,*) 'Crank call '
+!          CALL CrankNicolson_exp(psi,aloc,rho,it)    ! yet experimental
+!        ELSE
+          CALL tstep(psi,aloc,rho,it)           ! T-V splitting
+!        END IF
       END IF
       IF(nabsorb > 0) CALL  absbc(psi,rho) ! Existence of absorbing poins on boundary
       

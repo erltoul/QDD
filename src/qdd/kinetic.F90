@@ -17,6 +17,8 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 
+! This file serves just to associate the correct gridding routines.
+
 #if(netlib_fft|fftw_cpu)
 #include "fft.F90"
 #endif 

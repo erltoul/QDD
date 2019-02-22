@@ -26,7 +26,7 @@ SUBROUTINE coul_mfield(rho)
 !     Input:
 !      rho    = electron density
 !     Output:
-!      Coulomb field via 'chpcoul' in common
+!      Coulomb field via 'chpcoul' in module 'params'
 
 USE params
 USE coulsolv, ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
@@ -64,27 +64,11 @@ IF(tcoulfalr) THEN
 ELSE
   CALL solv_poisson_e(rho,chpcoul,kdfull2)
 END IF
-!CALL solv_poisson(rho,chpcoul,kdfull2)
-
-!WRITE(6,'(/2a)') 'along x:  x  rho rho_image  coul'
-!ind = 0
-!DO jz=minz,maxz
-!  DO jy=miny,maxy
-!    DO jx=minx,maxx
-!      ind    = 1 + ind
-!      IF(jz == nzsh .AND. jy == nysh)  &
-!          WRITE(6,'(1x,f6.2,3(1pg13.5))') (jx-nxsh)*dx,rhotmp(ind), &
-!           rho(ind),chpcoul(ind)   
-!    END DO
-!  END DO
-!END DO
 
 ! computation of the Coulomb potential from the electronic density
 ! before adjustdip or vstep for pseudodensity description
-
 !     restore electron density, save Coulomb fields,
 !     add images and solve Coulomb next round
-
 #if(raregas)
 IF(idielec == 1) THEN
   
@@ -98,20 +82,6 @@ IF(idielec == 1) THEN
   CALL addimage(rho,0)
   
   CALL solv_poisson(rho,chpcoul,kdfull2)   ! probably to be corrected
-  
-
-!WRITE(6,'(/2a)') 'along x:  x  rho_image coul_imag'
-!ind = 0
-!DO jz=minz,maxz
-!  DO jy=miny,maxy
-!    DO jx=minx,maxx
-!      ind    = 1 + ind
-!      IF(jz == nzsh .AND. jy == nysh)  &
-!          WRITE(6,'(1x,f6.2,3(1pg13.5))') (jx-nxsh)*dx, &
-!           rho(ind),chpcoul(ind)   
-!    END DO
-!  END DO
-!END DO
   
   DO ii=1,kdfull2
     CALL conv1to3(ii)
@@ -130,68 +100,6 @@ END IF
 RETURN
 END SUBROUTINE coul_mfield
 
-!-----valence_step---------------------------------------------
-
-SUBROUTINE valence_step(rho,dt,it,tdyn)
-
-!     Propagates the substrates valence electron cloud.
-!     Input:
-!      rho    = electron density
-!      dt     = stepsize (in case of dynamics)
-!      it     = current iteration
-!      tdyn   = switch to dynamic case
-!     Output:
-!      valence positions via common
-
-!     This routine can still be used in statics as well as
-!     in dynamics (see the switch 'tdyn'). It is presently
-!     only called in dynamics.
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN)                     :: dt
-INTEGER,INTENT(IN)                       :: it
-LOGICAL, INTENT(IN)                      :: tdyn
-
-#if(raregas)
-COMPLEX(DP) :: psidummy(1)
-#endif
-LOGICAL,PARAMETER :: tspinprint=.true.
-
-
-!---------------------------------------------------------------
-
-#if(raregas)
-IF (isurf /= 0 .AND. nc+NE+nk > 0) THEN    ! check condition ??
-  
-  IF(ifadiadip ==1) THEN 
-!            instantaneous adjustment of substrate dipoles
-    CALL adjustdip(rho,it)
-  ELSE
-!            dynamic propagation of substrate dipoles
-    IF(tdyn) THEN
-      IF(ipsptyp == 1) STOP ' VSTEP must not be used with Goedecker PsP'  ! ???
-      IF(ionmdtyp==1) CALL vstep(rho,psidummy,it,dt)
-      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,it,dt)
-    ELSE
-      CALL adjustdip(rho,it)
-    END IF
-  END IF
-  
-!     update of the subgrids   ? here or outside substrate loop ?
-  
-  IF(.NOT.tdyn .AND. ipseudo == 1) CALL updatesubgrids  ! probably done in vstep
-  CALL calcpseudo()                 !! ????????
-  
-  IF(nc > 0 .AND. ivdw == 1) CALL calc_frho(rho)
-  
-END IF
-#endif
-
-RETURN
-END SUBROUTINE valence_step
 
 !-----ldapsp_mfield------------------------------------------------
 

@@ -89,7 +89,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
-    jstboostinv,ifspemoms,iftransme,ifexpevol,ifcnevol, &
+    jstboostinv,ifspemoms,iftransme,ifexpevol, &
     tempion,idenspl,ekmat,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &

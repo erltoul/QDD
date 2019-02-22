@@ -232,10 +232,12 @@ INTEGER :: istinf=10        ! modulus for printing information in static iterati
 INTEGER :: ipasinf=1        ! modulus for printing information on observables
 
 
-INTEGER :: iffastpropag=1 !accelerated time step in TV splitting
+INTEGER :: iffastpropag=1     !  accelerated(?) time step in TV splitting
 
 INTEGER :: iswitch_interpol=0 
-INTEGER :: ifexpevol=0,ifcnevol=0 ! expe=exponential, cn = Crank Nicolson multigrid
+INTEGER :: ifexpevol=0        ! switch to exponential evolution
+!INTEGER :: ifcnevol=0        ! switch to Crank Nicolson multigrid (testing)
+                              ! to be set at compile time
 
 INTEGER :: irest=0,istat=0    ! switch to restart/read dynamics from file ’save’
 INTEGER :: isave=0            ! saves results after every ’isave’ steps

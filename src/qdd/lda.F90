@@ -21,10 +21,14 @@
 
 SUBROUTINE calclocal(rho,aloc)
 
-!       ******************************
-
-!       computes local part of Hamiltonian
-!       'tfs' <= 0  signal static iteration i.e. without laser field
+!  Computes local part of Hamiltonian (KS potential).
+!
+!  Input:
+!    rho    = local density (spin-up and spin-down)
+!    other parameters communicated via module 'params', e.g.
+!    'tfs' <= 0  signals static iteration i.e. without laser field
+!  Output:
+!    aloc   = local KS potential (for spin-up and spin-down)
 
 
 USE params
@@ -33,8 +37,8 @@ USE coulsolv
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-REAL(DP), INTENT(OUT)                        :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)   :: aloc(2*kdfull2)
 
 INTEGER :: ind, jx, jy, jz 
 REAL(DP) :: add, addx, addy, addz
@@ -42,12 +46,10 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rhon,chpdft,vlaser,Vproj
 
 IF (ifreezekspot == 1 .AND. tfs > 0D0) RETURN
 
-!     check workspace
-
 ALLOCATE(rhon(kdfull2))
 ALLOCATE(chpdft(2*kdfull2))
 
-!       first, the netto charge density
+!       first, the net charge density
 
 DO ind=1,nxyz
   IF(nion2 == 0) THEN
@@ -64,7 +66,6 @@ END IF
 #endif
 
 !     the Coulombic part
-!     warning : counet inserts the esquar factor
 
 IF (nion2 == 0) CALL solv_poisson(rhon,chpcoul,kdfull2)
 
@@ -77,10 +78,7 @@ ELSE
 END IF
 
 
-
-
 !     the laser part
-
 
 IF(tfs > 0D0) THEN
   ALLOCATE(vlaser(kdfull2))
@@ -89,8 +87,7 @@ IF(tfs > 0D0) THEN
   CALL projectp(Vproj)
 END IF
 
-
-!       the sum
+!    adding it up
 
 DO ind=1,nxyz
   IF(nion2 /= 0) THEN
@@ -121,7 +118,7 @@ IF(tfs > 0D0)  THEN
 ENDIF
 
 
-!      optionally static dipole potential
+!      optionally static external dipole potential 
 
 IF(tdipolxyz) THEN
   
@@ -141,11 +138,8 @@ IF(tdipolxyz) THEN
   END DO
 END IF
 
-!usew1 = .false.
-!      usew4 = .false.
 DEALLOCATE(rhon)
 DEALLOCATE(chpdft)
-!DEALLOCATE(vlaser)
 
 
 IF (izforcecorr == 1) CALL zeroforce(aloc,rho)
@@ -153,23 +147,23 @@ IF (izforcecorr == 1) CALL zeroforce(aloc,rho)
 
 RETURN
 END SUBROUTINE calclocal
-!#if(gunnar)
+
 
 !     ******************************
 
 SUBROUTINE calc_lda_gunnar(rho,chpdft)
 
-!     ******************************
-
-
-!    computes the lsda potential and the rear.energ.
-!    with the Gunnarsson & Lundqvist functional 1976
-
+!  Computes the LSDA potential and the rearrangement energy
+!  with the Gunnarsson & Lundqvist functional 1976
+!
+!  Input:
+!    rho    = local density (spin-up and spin-down)
+!    chpdft = resulting xc potential
 
 USE params
 IMPLICIT NONE
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)  :: chpdft(2*kdfull2)
 
 
 #if(parayes)
@@ -191,15 +185,10 @@ REAL(DP),PARAMETER ::  trd4pi = 3D0/(4D0*pi), onetrd = (1D0/3D0)
 !#if(exonly)
 !DATA cppar,rppar,expar /0D0,11.400D0,0.916D0/
 !DATA cfpar,rfpar,exfpar/0D0,15.900D0,1.154D0/
-!#else
-!DATA cppar,rppar,expar /0.0666D0,11.400D0,0.916D0/
-!DATA cfpar,rfpar,exfpar/0.0406D0,15.900D0,1.154D0/
 !#endif
 REAL(DP) :: cppar=0.0666D0,rppar=11.400D0,expar=0.916D0
 REAL(DP) :: cfpar=0.0406D0,rfpar=15.900D0,exfpar=1.154D0
 
-
-!     check workspace
 
 #if(parayes)
 ALLOCATE(p1(kdfull2))
@@ -213,25 +202,24 @@ IF(idenfunc==3) THEN
   cfpar = 0D0
 END IF
 
-!        nxyz=nx2*ny2*nz2
-
 enrear = 0D0
 expot  = 4D0*expar/3D0
 exfpot = 4D0*exfpar/3D0
-e2fac  = e2          ! *0.5
+e2fac  = e2  
 ii     = 0
 ec=0D0
 ec1=0D0
+
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 #endif
 #if(parano)
 myn=0
 #endif
+
 ntranche=nxyz/knode
 mini = (myn)*ntranche+1
 maxi =(myn+1)*ntranche
-
 DO ii=mini,maxi
   rp     = rho(ii)+1D-20
   rspinv = (MAX(small,rp)/trd4pi)**onetrd
@@ -266,7 +254,6 @@ DO ii=mini,maxi
   ubase  = (1D0+fofxi)*upotp-fofxi*upotf
   ebase  = (excp-excf)*fpofxi
   chpdft(ii) = 0.5D0*(ubase+ebase*xim)*e2fac
-!old        chpdfu(ii) = 0.5D0*(ubase-ebase*xip)*e2fac
   chpdft(ii+nxyz) = 0.5D0*(ubase-ebase*xip)*e2fac
   exx1   = rp*(excp+(excp-excf)*fofxi)*0.5D0*e2fac
   exx    = exx1-0.25D0*rp*(chpdft(ii)*xip+chpdft(ii+nxyz)*xim)
@@ -285,20 +272,10 @@ CALL pi_allreduce(ec,e,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror
 CALL pi_allreduce(ec1,e1,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
 DO i=1,nxyz
   chpdft(i)=p1(i)
-!mb if number of down spin electrons is 0, then print 0
-!        if (neldw.gt.0) then
   chpdft(i+nxyz)=p2(i)
-!        else
-!           chpdft(i+nxyz)=0.0
-!        endif
 END DO
 #endif
 
-!old#if(parano)
-!old      do i=1,nxyz
-!old        chpdft(i+nxyz)=chpdfu(i)
-!old      enddo
-!old#endif
 IF(nion == 1) THEN
   enrear=0D0
   enrea1=0D0
@@ -307,7 +284,6 @@ ELSE
   enrea1=e1*dvol    !total xc-energy
 END IF
 
-!old      usew1 = .false.
 #if(parayes)
 DEALLOCATE(p1)
 DEALLOCATE(p2)
@@ -315,10 +291,6 @@ DEALLOCATE(p2)
 
 RETURN
 END SUBROUTINE calc_lda_gunnar
-!#endif
-
-
-!#if(pw92)
 
 !     ******************************
 
@@ -327,18 +299,19 @@ SUBROUTINE calc_lda_pw92(rho,chpdft)
 !     ******************************
 
 
-!    computes the lsda potential and the rear.energ.
-!    with the Perdew-Wang functional
-!    attention: the rearrangement energy for e-tot has to be computed
-!               the same way as for Gunnarsson & Lundqvist
-!               the mean-field part is o.k.!!!!!
+!  Computes the LSDA potential and the rearrangement energy
+!  with the Perdew & Wang functional 
+!
+!  Input:
+!    rho    = local density (spin-up and spin-down)
+!    chpdft = resulting xc potential
 
 USE params
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
 REAL(DP), INTENT(OUT)                        :: chpdft(2*kdfull2)
-!~ REAL(DP), SAVE                               :: et
+
 INTEGER :: mysize
 
 #if(parayes)
@@ -354,14 +327,11 @@ REAL(DP) :: ec, rp, xi
 REAL(DP) :: a0, a1, a2, a3, da0, da1, da2, da3
 REAL(DP) :: b1, b2, b3, b4, db1, db2, db3, db4
 REAl(DP) :: t, t1, t2, t3, t4, t5, t6, t7, t8, t10, t11, t12, t13, t15, t17, &
-          & t22, t23, t24, t25, t26, t28, t29, t34, t35, t36, t37, t42, t44, t48, &
-          & t53, t58, t63, t64, t65, t68, t70, t71, t72, t77, t82,  t83, t88, t93, t98, t102, t109, t135
-!        parameter (pi=3.141592654)
+          t22, t23, t24, t25, t26, t28, t29, t34, t35, t36, t37, t42, t44, &
+          t48, t53, t58, t63, t64, t65, t68, t70, t71, t72, t77, t82,  t83, &
+          t88, t93, t98, t102, t109, t135
 
 ! Pade' approximant to Perdew-Wang 92 density functional
-
-
-!!!!!      icount = 0
 
 DATA a0  /0.458165293D0 /
 DATA da0 /0.119086804D0 /
@@ -393,10 +363,6 @@ IF(directenergy) THEN
 END IF
 ec=0D0
 
-!write(6,*)rho(1),rho(1+nxyz)
-!write(6,*)chpdft(1)
-
-!CALL cpu_time(time_start)
 
 #if(parayes)
 CALL mpi_comm_rank(mpi_comm_world,nod,mpi_ierror)
@@ -475,20 +441,11 @@ DO ii=1,mysize
       /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4D0)
   
   
-  
-  
-  
 #if(parayes)  
   chpdftnod1(ii)      = -t135  * e2
 #else
   chpdft(ii)      = -t135  * e2
 #endif
-  
-  
-!      if (neldw.gt.0) then
-  
-  
-  
   
   
   t77 = 4D0/3D0*t6*(-t3-t72)+4D0/3D0*t10*(t3+t72)
@@ -506,22 +463,13 @@ DO ii=1,mysize
       /16D0*db4*t77*t17*t82*t64-t63*t25*t28*t26*t71/4D0)
   
   
-  
-  
-  
 #if(parayes)  
   chpdftnod2(ii)      = -t135  * e2
 #else
   chpdft(ii+nxyz) = -t135  * e2
 #endif
 
-!      else
-!         chpdft(ii+nxyz) = 0.0
-!      endif
-  
-  
-  
-  
+
   t1=rp
   t4 = xi
   t6 = (1D0+t4)**(1D0/3D0)
@@ -559,7 +507,7 @@ DO ii=1,mysize
 #if(parayes)
   t5= chpdftnod1(ii)*t3+chpdftnod2(ii)*t4
 #else
- t5= chpdft(ii)*t3+chpdft(ii+nxyz)*t4
+  t5= chpdft(ii)*t3+chpdft(ii+nxyz)*t4
 #endif
   
   IF(directenergy) THEN
@@ -568,7 +516,6 @@ DO ii=1,mysize
   
   
   ec = (-t70*e2 - 0.5D0*t5) + ec
-!old        ec=-t70/2.0*e2+ec
 
 END DO
 !!!!$OMP END PARALLEL DO
@@ -585,14 +532,8 @@ ec=e
 enerpw=ep
 #endif
 
+
 enrear=ec*dvol
-!  CALL cpu_time(time_end)
-!  write (6,*)ec
-!  et=et+time_end-time_start
-!  write(6,*)"Time lda:",et
-!  STOP
-
-
 IF(directenergy) THEN
   enerpw = enerpw*dvol
 END IF
@@ -600,7 +541,7 @@ END IF
 
 RETURN
 END SUBROUTINE calc_lda_pw92
-!#endif
+
 
 
 

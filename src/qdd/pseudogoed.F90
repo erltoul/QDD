@@ -1196,4 +1196,3 @@ ifinfine(ion) = ind
 RETURN
 END SUBROUTINE calpr4Fine
 
-

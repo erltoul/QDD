@@ -192,3 +192,26 @@ RETURN
 END SUBROUTINE addcluster
 
 
+!  From 'orthmat' package
+
+!-------------------------------------------------------
+! cmplxsic version
+!-------------------------------------------------------
+
+REAL(DP) FUNCTION matdorth_cmplxsic(aa,n,ndim)
+
+COMPLEX(DP), INTENT(IN)  :: aa(n,n)
+INTEGER, INTENT(IN)      :: n
+INTEGER, INTENT(IN)      :: ndim
+INTEGER                  :: i,j
+matdorth_cmplxsic=0D0
+DO i=1,ndim
+  DO j=i,ndim
+    IF(i==j) THEN
+      matdorth_cmplxsic=matdorth_cmplxsic+SUM(aa(i,1:ndim)*aa(j,1:ndim))-1D0
+    ELSE
+      matdorth_cmplxsic=matdorth_cmplxsic+SUM(aa(i,1:ndim)*aa(j,1:ndim))
+    END IF
+  END DO
+END DO
+END FUNCTION matdorth_cmplxsic

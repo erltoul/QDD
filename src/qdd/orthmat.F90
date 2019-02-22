@@ -18,8 +18,10 @@
 
 MODULE orthmat
 
-! Subroutines and functions for matrices and vectors overlaps, and matrices orthonormalization 
-! Most procedures exist in real AND complex version, depending on the type of their arguments
+! Subroutines and functions for matrices and vectors overlaps, as well 
+! as their orthonormalization.
+! Most procedures exist in real AND complex version, depending on the 
+! type of their arguments (regulated by INTERFACE).
 USE params
 IMPLICIT NONE
 
@@ -54,15 +56,17 @@ END INTERFACE ovlpmatrix
 
 CONTAINS
 
-!_________________________________________Mat Orth__________________________________________________
-!                                     sigma(Vi*cjg(Vj))
+!_________________________MatdOrth___________________________
+!                   
+! Matrix norm:  Sum_ij [A(i,:)*A(j,:)-delta_ij]
+
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
 REAL(DP) FUNCTION matdorth_r(aa,n,ndim)
 
-REAL(DP), INTENT(IN)     :: aa(n,n)
-INTEGER, INTENT(IN OUT) :: n
+REAL(DP), INTENT(IN)    :: aa(n,n)
+INTEGER, INTENT(IN)     :: n
 INTEGER, INTENT(IN)     :: ndim
 INTEGER                 :: i,j
 matdorth_r=0D0
@@ -83,9 +87,9 @@ END FUNCTION matdorth_r
 REAL(DP) FUNCTION matdorth_c(aa,n,ndim)
 
 COMPLEX(DP), INTENT(IN)  :: aa(n,n)
-INTEGER, INTENT(IN)     :: n
-INTEGER, INTENT(IN)     :: ndim
-INTEGER                 :: i,j
+INTEGER, INTENT(IN)      :: n
+INTEGER, INTENT(IN)      :: ndim
+INTEGER                  :: i,j
 matdorth_c=0D0
 DO i=1,ndim
   DO j=i,ndim
@@ -97,30 +101,11 @@ DO i=1,ndim
   END DO
 END DO
 END FUNCTION matdorth_c
-!-------------------------------------------------------
-! cmplxsic version
-!-------------------------------------------------------
 
-REAL(DP) FUNCTION matdorth_cmplxsic(aa,n,ndim)
-
-COMPLEX(DP), INTENT(IN)  :: aa(n,n)
-INTEGER, INTENT(IN OUT) :: n
-INTEGER, INTENT(IN)     :: ndim
-INTEGER                 :: i,j
-matdorth_cmplxsic=0D0
-DO i=1,ndim
-  DO j=i,ndim
-    IF(i==j) THEN
-      matdorth_cmplxsic=matdorth_cmplxsic+SUM(aa(i,1:ndim)*aa(j,1:ndim))-1D0
-    ELSE
-      matdorth_cmplxsic=matdorth_cmplxsic+SUM(aa(i,1:ndim)*aa(j,1:ndim))
-    END IF
-  END DO
-END DO
-END FUNCTION matdorth_cmplxsic
-
-!_________________________________________rMat Unite__________________________________________________
-!                                         AA=II
+!____________________________rMat Unite______________________________
+!  
+!  Set matrix to unit matrix:       AA_ij=delta_ij
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
@@ -153,8 +138,10 @@ END DO
 
 END SUBROUTINE matunite_c
 
-!_________________________________________rMat Exp__________________________________________________
-!                                         BB=Exp(AA)
+!__________________________rMat Exp_____________________________
+!
+!  Matrix exponential:      BB=Exp(AA)
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
@@ -162,8 +149,8 @@ SUBROUTINE matexp_r(aa,bb,n,ndim)
 
 REAL(DP), INTENT(IN OUT) :: aa(n,n)
 REAL(DP), INTENT(IN OUT) :: bb(n,n)
-INTEGER, INTENT(IN)     :: n
-INTEGER, INTENT(IN OUT) :: ndim
+INTEGER, INTENT(IN)      :: n
+INTEGER, INTENT(IN)      :: ndim
 REAL(DP) cc(n,n), dd(n,n)
 
 REAL(DP) eps, delta,rn
@@ -184,7 +171,7 @@ END DO
 END SUBROUTINE matexp_r
 
 !-------------------------------------------------------
-! REAL version
+! COMPLEX version
 !-------------------------------------------------------
 SUBROUTINE matexp_c(aa,bb,n,ndim)
 
@@ -194,8 +181,6 @@ INTEGER, INTENT(IN)         :: n
 INTEGER, INTENT(IN OUT)     :: ndim
 
 COMPLEX(DP) :: cc(n,n), dd(n,n)
-
-!REAL(DP) matnorme
 REAL(DP) eps, delta,rn
 
 eps=1D-20
@@ -203,38 +188,33 @@ CALL matunite(bb,n,ndim)
 CALL matunite(cc,n,ndim)
 rn=CMPLX(1D0,0D0,DP)
 delta= 1D0
-!        call matprint('AAds exp',AA,N,Ndim)
-!        call matprint('BB ds exp',BB,N,Ndim)
 
 DO WHILE (delta > eps)
-!  CALL matmult(aa,cc,dd,n,ndim)
-!        call matprint('CC ds exp avant const',CC,N,Ndim)
-!  CALL matconst(dd,cc, 1D0/rn,n,ndim)
   dd(1:ndim,1:ndim) = MATMUL(aa(1:ndim,1:ndim),cc(1:ndim,1:ndim))
   cc(1:ndim,1:ndim) =  dd(1:ndim,1:ndim)/rn
-!        call matprint('CC ds exp',CC,N,Ndim)
-!  delta= matnorme(cc, n, ndim)
   delta = SQRT(SUM(cc(1:ndim,1:ndim)*CONJG(cc(1:ndim,1:ndim))))
-!  CALL matadd(bb,cc,bb,n,ndim)
   bb(1:ndim,1:ndim) =  cc(1:ndim,1:ndim) + bb(1:ndim,1:ndim)
   rn=rn+1
 END DO
 END SUBROUTINE matexp_c
 
-!_________________________________________OrthNorm__________________________________________________
-!     ortho-normalizes system of vectors 'vecs' with
-!     dimension 'ndim'.
+!________________________OrthNorm__________________________
+!
+!  Ortho-normalizes system of vectors 'vecs' with actual
+!  dimension 'ndim' ('kdim' is dimension in calling routine).
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
 SUBROUTINE orthnorm_r(vecs,ndim,kdim)
 USE params, ONLY: DP
 
+REAL(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 INTEGER,INTENT(IN) :: ndim,kdim
+
 INTEGER :: i,j
 REAL(DP) :: acc2
 REAL(DP) :: acc
-REAL(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 
 !-------------------------------------------------------
 DO i=1,ndim
@@ -254,11 +234,12 @@ END SUBROUTINE orthnorm_r
 SUBROUTINE orthnorm_c(vecs,ndim,kdim)
 USE params, ONLY: DP
 
+COMPLEX(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 INTEGER,INTENT(IN) :: ndim,kdim
+
 INTEGER :: i,j
 REAL(DP) :: acc2
 COMPLEX(DP) :: acc
-COMPLEX(DP),INTENT(IN OUT) :: vecs(kdim,kdim)
 
 !-------------------------------------------------------
 DO i=1,ndim
@@ -274,8 +255,10 @@ RETURN
 END SUBROUTINE orthnorm_c
 
 
-!_________________________________________vecovlp__________________________________________________
-!     Overlap 'vec1' with 'vec2' having dimension 'ndim'.
+!___________________vecovlp__________________________________
+!
+!  Overlap 'vec1' with 'vec2' having active dimension 'ndim'.
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
@@ -303,9 +286,10 @@ vecovlp_c= SUM(CONJG( vec1(1:ndim))*vec2(1:ndim))
 RETURN
 END FUNCTION vecovlp_c
 
-!_________________________________________vecnorm__________________________________________________
-!     Calculates norm of vector 'vec' with
-!     dimension 'ndim'.
+!_______________________vecnorm__________________________
+!
+!  Norm of vector 'vec' with active dimension 'ndim'.
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
@@ -333,17 +317,18 @@ RETURN
 END FUNCTION vecnorm_c
 
 
-!_________________________________________ovlpmatrix__________________________________________________
-!     Matrix element of matrix 'a'
-!     with respect to states 'vec1' and 'vec2'
-!     having actual length 'ndim' and dimension 'kdim'.
+!_____________________ovlpmatrix_________________________
+!
+!  Transition matrix elmenent <vec1|A|vec2> for matrix A
+!  and vectors vec1 and vec2.
+!
 !-------------------------------------------------------
 ! REAL version
 !-------------------------------------------------------
 REAL(DP) FUNCTION ovlpmatrix_r(a,vec1,vec2,ndim,kdim)
 USE params, ONLY: DP
 
-implicit none
+IMPLICIT NONE
 
 INTEGER,INTENT(IN)    :: ndim
 INTEGER,INTENT(IN)    :: kdim

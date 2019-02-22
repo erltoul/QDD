@@ -52,10 +52,6 @@ INTEGER  :: it,ion
  CALL info(psi,rho,aloc,-1)
  
  IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
- IF(ifcnevol == 1) THEN
-  WRITE(6,*) 'allocate space for CN propagation'
-  ALLOCATE(psiw(kdfull2,kstate))
- ENDIF
    
  ! Start imaginary time iterations
  DO it=1,isitmax

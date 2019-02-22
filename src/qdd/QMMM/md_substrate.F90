@@ -16,6 +16,68 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
+#if(raregas)
+!-----valence_step---------------------------------------------
+
+SUBROUTINE valence_step(rho,dt,it,tdyn)
+
+!     Propagates the substrates valence electron cloud.
+!     Input:
+!      rho    = electron density
+!      dt     = stepsize (in case of dynamics)
+!      it     = current iteration
+!      tdyn   = switch to dynamic case
+!     Output:
+!      valence positions via common
+
+!     This routine can still be used in statics as well as
+!     in dynamics (see the switch 'tdyn'). It is presently
+!     only called in dynamics.
+
+USE params
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: dt
+INTEGER,INTENT(IN)                       :: it
+LOGICAL, INTENT(IN)                      :: tdyn
+
+#if(raregas)
+COMPLEX(DP) :: psidummy(1)
+#endif
+LOGICAL,PARAMETER :: tspinprint=.true.
+
+
+!---------------------------------------------------------------
+
+IF (isurf /= 0 .AND. nc+NE+nk > 0) THEN    ! check condition ??
+  
+  IF(ifadiadip ==1) THEN 
+!            instantaneous adjustment of substrate dipoles
+    CALL adjustdip(rho,it)
+  ELSE
+!            dynamic propagation of substrate dipoles
+    IF(tdyn) THEN
+      IF(ipsptyp == 1) STOP ' VSTEP must not be used with Goedecker PsP'  ! ???
+      IF(ionmdtyp==1) CALL vstep(rho,psidummy,it,dt)
+      IF(ionmdtyp==2) CALL vstepv(rho,psidummy,it,dt)
+    ELSE
+      CALL adjustdip(rho,it)
+    END IF
+  END IF
+  
+!     update of the subgrids   ? here or outside substrate loop ?
+  
+  IF(.NOT.tdyn .AND. ipseudo == 1) CALL updatesubgrids  ! probably done in vstep
+  CALL calcpseudo()                 !! ????????
+  
+  IF(nc > 0 .AND. ivdw == 1) CALL calc_frho(rho)
+  
+END IF
+
+RETURN
+END SUBROUTINE valence_step
+#endif
 
 
 !------------------------------------------------------------

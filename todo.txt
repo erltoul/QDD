@@ -28,9 +28,16 @@
      What is this routine doing?
 
 8) Pseudo-potentials:
-    a) The two pieces 'pseudogead.F90' and 'pseudosoft.F90' should
+    a) The 'pseudogead.F90', 'pseudosoft.F90', and 'nonloc.DF90' should
        be combined to a module 'pseudo' with 'pseudo.F90' as header.
+       Implementation of 'nonloc.F90' may raise difficulties due to
+       REAL and COMPLEX versions.
     b) Interpolation to finer mesh should be checked carefully.
+
+9) Gile 'localize.F90':
+    a) Array 'rho' not used. Check and remove.
+    b) Check dynamical case.
+
 
 
 *****************************************************************
@@ -53,4 +60,10 @@ Subroutines commented:
    pseudosoft.F90
    pseudogoed.F90
    params.F90
-
+   parallele.F90
+   orthmat.F90
+   nonloc.F90
+   loc_mfield.F90
+   localize.F90
+   lda.F90
+   kineti.F90   

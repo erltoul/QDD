@@ -21,8 +21,8 @@
 
 SUBROUTINE init_parallele()
 
-!     Initializes parallele computing determines actual 'myn'.
-!     The actual node 'myn' is communicated via common.
+!     Initializes parallele computing and determines actual node
+!     number 'myn'. The actual 'myn' is communicated via module 'params'.
 
 USE params
 IMPLICIT NONE
@@ -43,14 +43,7 @@ CALL mpi_init(mpi_ierror)
 WRITE(*,*) ' before mpi_comm_size'
 CALL  mpi_comm_size(mpi_comm_world,nprocs,mpi_ierror)
 WRITE(*,*) nprocs,knode
-
-
-#if(parayes)
-!#if(parayes)
-!IF(nprocs /= knode) STOP
 knode = nprocs
-!IF(knode /= kstate) STOP "knode must be equal to kstate !"
-#endif
 WRITE(*,*) ' before mpi_comm_rank'
 CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 nb=myn
@@ -573,10 +566,6 @@ END IF
 RETURN
 END SUBROUTINE comm_inputparams
 
-#endif
-
-
-#if(parayes)
 !-----comm_ionconfig-------------------------------------------------
 
 SUBROUTINE comm_ionconfig()
@@ -664,7 +653,7 @@ END SUBROUTINE comm_ionconfig
 
 SUBROUTINE comm_periodic()
 
-!     Communicates periodic table from node "0" to other nodes.
+!     Communicates table of PsP from node "0" to other nodes.
 
 USE params
 IMPLICIT NONE
@@ -729,16 +718,13 @@ END IF
 
 RETURN
 END SUBROUTINE comm_periodic
-#endif
 
 
-
-#if(parayes)
 !-----comm_siman-------------------------------------------------
 
 SUBROUTINE comm_simann()
 
-!     Communicates parameters for simulated annealing  (??)
+!     Communicates parameters for simulated annealing 
 
 USE params
 IMPLICIT NONE
@@ -812,9 +798,6 @@ END IF
 
 RETURN
 END SUBROUTINE comm_simann
-#endif
-
-#if(parayes)
 
 
 !       *****************************
@@ -1028,12 +1011,7 @@ END IF
 END SUBROUTINE i_scatter
 
 
-#endif
 
-
-
-
-#if(parayes)
 !-----prispe_parallele-------------------------------------------------
 
 SUBROUTINE prispe_parallele(iunit,it)
@@ -1127,9 +1105,7 @@ END IF
 RETURN
 END SUBROUTINE prispe_parallele
 
-#endif
 
-#if(parayes)
 !-----init_boxpara-------------------------------------------------
 
 SUBROUTINE init_boxpara()
@@ -1166,10 +1142,8 @@ CALL mpi_bcast(displ,nprocs,mpi_integer,0,mpi_comm_world,mpi_ierror)
 
 RETURN
 END SUBROUTINE init_boxpara
-#endif
 
 
-#if(parayes)
 !-----pi_scatterv-------------------------------------------------
 
 SUBROUTINE pi_scatterv(sendbuf,N,recvbuf,sizenod,ic)
@@ -1201,9 +1175,8 @@ CALL mpi_scatterv(sendbuf,lengnod,displ,mpi_double_precision,&
      recvbuf,sizenod,mpi_double_precision,0,mpi_comm_world,ic)
 RETURN
 END SUBROUTINE pi_scatterv
-#endif
 
-#if(parayes)
+
 !-----pi_allgatherv-------------------------------------------------
 
 SUBROUTINE pi_allgatherv(sendbuf,sizenod,recvbuf,N,ic)

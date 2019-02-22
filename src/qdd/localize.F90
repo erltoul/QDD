@@ -25,23 +25,29 @@ SUBROUTINE localizer(rho,psi,it)
 SUBROUTINE localize(rho,psi,it)
 #endif
 
-!  computes localization criterion of Becke et al
-!  dynamical version - not up to date !!!!!!!!!!!!
+!  Computes and prints localization criterion of Becke et al.
+!  Dynamical version possibly not up to date -- check!
+!
+!  Input:
+!    rho   = local density  (obsolete ?)
+!    psi   = set of s.p.wavefunctions
+!    it    = nr. of iteration or time step in calling routuine
+!    further variables communciated through module 'params'
 
 USE params
 USE util, ONLY:safeopen
 USE kinetic
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
+INTEGER,INTENT(IN)       :: it
+REAL(DP), INTENT(IN)     :: rho(2*kdfull2)       !!   obsolete??
 #ifdef REALSWITCH
-REAL(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)     :: psi(kdfull2,kstate)
 REAL(DP) :: p(kdfull2)
 #else
-COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)  :: psi(kdfull2,kstate)
 COMPLEX(DP) :: p(kdfull2)
 #endif
-INTEGER,INTENT(IN)                        :: it
 
 INTEGER :: i, idirection, ind, indadd, is, ix, iy, iz, midx, midy, midz, nb
 REAL(DP) :: dkx, dky, dkz, ocfac, rp, sign, sumpart, tf_fac, x1, y1, z1
