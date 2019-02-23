@@ -84,7 +84,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iforce,iexcit,iangmo,  &
-    irotat,phirot,i3dz,i3dx,i3dstate,istream,iflocaliz,  &
+    irotat,phirot,i3dz,i3dx,i3dstate,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &

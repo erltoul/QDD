@@ -124,10 +124,7 @@ CALL emoms(rho)                    ! moments for the whole system (in qe)
 IF(eproj/=0) CALL projmoms(rho,q0) ! moments forprojectile and target,
                                    ! (in qeproj and qetarget)
 
-IF(istream == 1)  THEN
-  CALL stream(rho)
-END IF
-
+!IF(istream == 1)  CALL stream(rho)
 
 RETURN
 #ifdef REALSWITCH

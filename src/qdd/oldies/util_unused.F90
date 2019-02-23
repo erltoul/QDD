@@ -215,3 +215,381 @@ DO i=1,ndim
   END DO
 END DO
 END FUNCTION matdorth_cmplxsic
+
+
+
+! From 'ionmd.F90'
+
+!     *******************
+
+SUBROUTINE stream(rho)
+
+!     *******************
+
+USE params
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+
+INTEGER :: i
+REAL(DP) :: query2, query3, query4
+REAL(DP), ALLOCATABLE :: rhos(:),drho(:)
+
+ALLOCATE(rhos(kdfull2),drho(kdfull2))
+
+
+query2=qe(2)*qold2
+qold2=qe(2)
+query3=qe(3)*qold3
+qold3=qe(3)
+query4=qe(4)*qold4
+qold4=qe(4)
+!test
+query2=1.0D0
+query3=1.0D0
+!test
+IF(tfs == 0D0) THEN
+  iquery4=0
+  WRITE(6,*) 'iquery4=',iquery4
+  DO i=1,nxyz
+    rhos(i)=0D0
+  END DO
+END IF
+IF(tfs > 0D0) THEN
+  IF(query2 < 0D0) THEN
+    iquery4=iquery4+1
+    WRITE(6,*) 'iquery4=',iquery4
+    IF(MOD(iquery4,10) == 0) THEN
+      DO i=1,nxyz
+        drho(i)=rho(i)-rhos(i)
+      END DO
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
+!           stop 'calculated a derivative of density after x-stimulation'
+    END IF
+  END IF
+  IF(query3 < 0D0) THEN
+    iquery4=iquery4+1
+    WRITE(6,*) 'iquery4=',iquery4
+    IF(MOD(iquery4,10) == 0) THEN
+      DO i=1,nxyz
+        drho(i)=rho(i)-rhos(i)
+      END DO
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
+!           stop 'calculated a derivative of density after y-stimulation'
+    END IF
+  END IF
+  IF(query4 < 0D0) THEN
+    iquery4=iquery4+1
+    WRITE(6,*) 'iquery4=',iquery4
+    IF(MOD(iquery4,10) == 0) THEN
+      DO i=1,nxyz
+        drho(i)=rho(i)-rhos(i)
+      END DO
+      CALL write_density(rhos,'sdensi')
+      CALL write_density(drho,'sderiv')
+!           stop 'calculated a derivative of density after z-stimulation'
+    END IF
+  END IF
+END IF
+rhos = rho
+
+DEALLOCATE(rhos,drho)
+
+RETURN
+END SUBROUTINE stream
+
+
+
+! ---eltherm----------------------------------------------eltherm-------
+
+SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth)
+
+!  Computes electronic thermal energy as variance of
+!  electronic s.p. velicities
+!      e_th = sum_i int[d^3r 0.5D0*rho_i*(v_av - v_i)**2]
+!
+!  Input:
+!    rho     = local electron density
+!    psi     = set of s.p. wavefunctions
+!  Output:
+!    expjx,...  = variances along x,y,z
+!    eeth       = total thermal energy
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN)     :: psi(kdfull2,kstate)
+REAL(DP), INTENT(OUT)       :: expjx
+REAL(DP), INTENT(OUT)       :: expjy
+REAL(DP), INTENT(OUT)       :: expjz
+REAL(DP), INTENT(OUT)       :: eeth
+
+INTEGER :: i, ind, n, nb
+REAL(DP) :: ajalpha, rhoalpha
+REAL(DP) :: dkx, dky, dkz, q1, tel
+REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
+#if(parayes)
+REAL(DP) :: ex, ey, ez
+#endif
+COMPLEX(DP) :: test
+
+REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
+COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
+
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+REAL(DP), ALLOCATABLE :: aj(:)
+ALLOCATE(aj(kdfull2))
+#endif
+
+
+IF(.NOT.ALLOCATED(akx)) STOP "ELTHERM requires FFT"
+ALLOCATE(p(kdfull2),q2(kdfull2))
+ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
+
+!   init derivative
+
+dkx=pi/(dx*REAL(nx,DP))
+dky=pi/(dy*REAL(ny,DP))
+dkz=pi/(dz*REAL(nz,DP))
+
+
+!   compute the currents for each direction: ajtx/y/z
+!   and their expectation values: exjx/y/z
+
+q1=0D0
+tel=0D0
+DO i=1,kdfull2
+  ajtx(i)=0D0
+  ajty(i)=0D0
+  ajtz(i)=0D0
+END DO
+
+DO nb=1,nstate
+  
+  exjx(nb)=0D0
+  exjy(nb)=0D0
+  exjz(nb)=0D0
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*akx(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    exjx(nb)=exjx(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
+    ajtx(ind)=ajtx(ind)+ajalpha
+  END DO
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*aky(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    exjy(nb)=exjy(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
+    ajty(ind)=ajty(ind)+ajalpha
+  END DO
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*akz(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    exjz(nb)=exjz(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
+    ajtz(ind)=ajtz(ind)+ajalpha
+  END DO
+  
+END DO                     !loop over states
+
+!  compute sum of current expectation values in either direction:
+
+expjx=0D0
+expjy=0D0
+expjz=0D0
+DO n=1,nstate
+  expjx=expjx+exjx(n)
+  expjy=expjy+exjy(n)
+  expjz=expjz+exjz(n)
+END DO
+expjx=expjx*dvol
+expjy=expjy*dvol
+expjz=expjz*dvol
+#if(parayes)
+DO ind=1,kdfull2
+  aj(ind)=ajtx(ind)
+END DO
+CALL pi_allreduce(aj,ajtx,kdfull2,mpi_double_precision,mpi_sum,  &
+    mpi_comm_world,mpi_ierror)
+DO ind=1,kdfull2
+  aj(ind)=ajty(ind)
+END DO
+CALL pi_allreduce(aj,ajty,kdfull2,mpi_double_precision,mpi_sum,  &
+    mpi_comm_world,mpi_ierror)
+DO ind=1,kdfull2
+  aj(ind)=ajtz(ind)
+END DO
+CALL pi_allreduce(aj,ajtz,kdfull2,mpi_double_precision,mpi_sum,  &
+    mpi_comm_world,mpi_ierror)
+
+CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
+CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
+CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
+expjx=ex
+expjy=ey
+expjz=ez
+#endif
+
+!  compute average velocities from currents:
+
+DO ind=1,kdfull2
+  ajtx(ind)=ajtx(ind)/rho(ind)
+  ajty(ind)=ajty(ind)/rho(ind)
+  ajtz(ind)=ajtz(ind)/rho(ind)
+END DO
+
+
+! finally compute thermal energy:
+! e_th = sum_i int[d^3r 0.5D0*rho_i*(v_av - v_i)**2]
+
+tel=0D0
+DO nb=1,nstate
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*akx(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
+    ajalpha=ajalpha/rhoalpha
+    tel=tel+0.5D0*rhoalpha*(ajalpha-ajtx(ind))**2
+  END DO
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*aky(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
+    ajalpha=ajalpha/rhoalpha
+    tel=tel+0.5D0*rhoalpha*(ajalpha-ajty(ind))**2
+  END DO
+  
+#if(netlib_fft|fftw_cpu)
+  CALL fftf(psi(1,nb),q2)
+
+  DO ind=1,kdfull2
+    q2(ind)=q2(ind)*akz(ind)
+  END DO
+
+  CALL fftback(q2,p)
+#endif
+
+
+  DO ind=1,kdfull2
+    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
+    ajalpha=test
+    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
+    ajalpha=ajalpha/rhoalpha
+    tel=tel+0.5D0*rhoalpha*(ajalpha-ajtz(ind))**2
+  END DO
+  
+END DO                     !loop over states
+
+eeth=tel*dvol*0.5D0*hbar*hbar/2D0/ame !atomic units (h/2m)**2
+#if(parayes)
+tel=eeth
+CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
+#endif
+
+WRITE(6,'(a,f12.5)') ' electronic thermal energy: ',eeth
+!      write(17,'(a,f12.5)') 'electronic thermal energy: ',eeth
+
+!DEALLOCATE(akkx)
+!DEALLOCATE(akky)
+!DEALLOCATE(akkz)
+DEALLOCATE(p,q2)
+DEALLOCATE(ajtx,ajty,ajtz)
+#if(parayes)
+DEALLOCATE(aj)
+#endif
+
+RETURN
+END SUBROUTINE eltherm
+
+!     **************************
+
+SUBROUTINE write_density(drho,filename)
+!  write density or derivative of density
+!
+!     **************************
+USE params
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
+CHARACTER (LEN=6), INTENT(IN) :: filename
+CHARACTER (LEN=4) :: ext
+INTEGER :: i
+
+WRITE(ext,'(a,i3.3)') ".", iquery4/10    ! e.g:  iquery4 = 1234  --->  ext = ".123"
+                                         !       iquery4 = 568   --->  ext = ".056"
+OPEN(UNIT=60,STATUS='unknown',FORM='unformatted',FILE= filename//'1'//ext)
+
+
+DO i=1,nxyz
+  WRITE(60) drho(i)
+END DO
+
+CLOSE(UNIT=60,STATUS='keep')
+
+RETURN
+END SUBROUTINE write_density
+
+

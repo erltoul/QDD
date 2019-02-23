@@ -27,8 +27,8 @@ REAL(DP),INTENT(IN):: totemp
 !     This routine heats up the cluster.
 !     The momenta of the cluster ions
 !     are reset to values such that the kinetic energy
-!     corresponds to an instantaneous "thermal" energy toTemp.
-!     toTemp is in Kelvin!!
+!     corresponds to an instantaneous "thermal" energy 'toTemp'.
+!     'toTemp' is in Kelvin!!
 
 
 
@@ -43,7 +43,7 @@ END SUBROUTINE heatcluster
 
 SUBROUTINE reset_ions()
 
-!     Resets all ionic momento to zero, is used in cooling.
+!     Resets all ionic momenta to zero, is used in cooling.
 
 USE params
 IMPLICIT NONE
@@ -178,7 +178,6 @@ IF(ipsptyp == 0) THEN
         dist2  = (cx(ion)-cx(ion1))**2+(cy(ion)-cy(ion1))**2  &
             +(cz(ion)-cz(ion1))**2
         dist   = SQRT(dist2)
-        
         sumion = sumion + v_ion_ion(dist,ion,ion1)
       END DO
     END DO
@@ -192,8 +191,6 @@ ELSE IF(ipsptyp >= 1) THEN
             +(cz(ion1)-cz(ion2))**2
         dist = SQRT(dist2)
         sumion = sumion + e2*ch(np(ion1))*ch(np(ion2))/dist
-        
-        
       END DO
     END DO
     
@@ -227,8 +224,6 @@ IF(idielec /= 0) THEN
           dist = SQRT(dist2)
           sumion = sumion - (epsdi-1)/(epsdi+1)*  &
               e2*ch(np(ion1))*ch(np(ion2))/dist
-          
-          
         END DO
       END DO
       
@@ -237,14 +232,9 @@ IF(idielec /= 0) THEN
     STOP 'this sort of PsP not yet implemented'
   END IF
   
-  
-  
 END IF
 
-
 enii=sumion
-            !WRITE(*,*) ' IONS: sumion=',sumion,enii
-
 
 #if(raregas)
 !     now the ion-GSM energy
@@ -400,9 +390,6 @@ END IF ! isurf eq 0
 #endif
 
 engg = sumion - enii - enig
-
-          !WRITE(*,*) ' sumion,enii,enig=',sumion,enii,enig
-
 energ_ions = sumion
 
 RETURN
@@ -414,15 +401,21 @@ END FUNCTION energ_ions
 
 SUBROUTINE itstep(rho,it,psi)
 
-!     ionic time step, propagates all heavy particles (not valence cloud)
-
+!  Ionic time step, propagates ionic cores.
+!
+!  Input:
+!    rho     = local electron density
+!    psi     = set of s.p. wavefunctions
+!    it      = time step number in calling routine
+!    ionic positions and velocities communicated via module 'params'
 
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)      :: rho(2*kdfull2)
+INTEGER, INTENT(IN)       :: it
+COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
+
 REAL(DP),ALLOCATABLE :: xm(:)       ! array for actual particle mass
 REAL(DP),ALLOCATABLE :: tfac(:)     ! array acceleration factors
 
@@ -432,13 +425,9 @@ REAL(DP) :: dtaccel, xcmion, ycmion, zcmion
 #if(raregas)
 REAL(DP) :: pxcmion, pycmion, pzcmion
 #endif
-!INTEGER, PARAMETER :: mm=ng
-!REAL(DP) :: px(ng),py(ng),pz(ng)
-
 
 ! what time is it ?
 tfs = it*dt1*0.0484D0/(2D0*ame)
-!WRITE(*,*) ' ITSTEP entered. tfs=',tfs
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -449,13 +438,6 @@ IF (isurf /= 0) THEN
       pzc(i)=0D0
     END IF
   END DO
-!val         do i=1,ne
-!val            if (imobe(i).eq.0) then
-!val               pxe(i)=0.0
-!val               pye(i)=0.0
-!val               pze(i)=0.0
-!val            endif
-!val         enddo
   DO i=1,nk
     IF (imobk(i) == 0) THEN
       pxk(i)=0D0
@@ -465,8 +447,6 @@ IF (isurf /= 0) THEN
   END DO
 END IF
 #endif
-
-
 
 !     PROPAGATION OF POSITIONS
 
@@ -497,7 +477,6 @@ IF (nk > 0) THEN
 END IF
 #endif
 
-
 IF (nion > 0 .AND.imob /= 0) THEN
 
 ! compute c.m. of ions
@@ -514,8 +493,9 @@ IF (nion > 0 .AND.imob /= 0) THEN
      xm(i)=amu(np(i))*1836D0*ame
   END DO
 !  xm(:)=amu(np(:))*1836D0*ame
-  CALL leapfr(cx(1:nion),cy(1:nion),cz(1:nion), cpx(1:nion),cpy(1:nion),cpz(1:nion),  &
-      dt1,xm,nion,4)
+  CALL leapfr(cx(1:nion),cy(1:nion),cz(1:nion), &
+              cpx(1:nion),cpy(1:nion),cpz(1:nion),  &
+              dt1,xm,nion,4)
   DEALLOCATE(xm)
 
 ! correct ionic c.m. to restore value before step
@@ -528,15 +508,7 @@ IF (nion > 0 .AND.imob /= 0) THEN
      cz = cz+zcmion
    END IF
 
-  
 END IF
-
-
-!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho,it)
-
-! for pure rare gas cluster in uniform translation,
-! the cloud must be adjust before computation of forces
-
 
 
 !     PROPAGATION OF MOMENTA
@@ -547,13 +519,9 @@ IF(ipseudo == 1)THEN
 END IF
 
 
-!mb      if(nc+ne+nk.gt.0 .and. isurf.ne.0)then
-
 !     compute forces on rare gas cores with new positions
-!WRITE(*,*) ' before GETFORCES, time=',time
 CALL getforces(rho,psi,it,0)
   IF(tfs < taccel-1D-6) THEN
-!    WRITE(*,*) 'FZ:',fz(1:nion)
     ALLOCATE(tfac(1:nion))
     tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
     IF(tsmooth) THEN
@@ -570,14 +538,10 @@ CALL getforces(rho,psi,it,0)
       fy(1:nion-1)=fy(1:nion-1)-vpy*tfac(1:nion-1)/(nion-1)
       fz(1:nion-1)=fz(1:nion-1)-vpz*tfac(1:nion-1)/(nion-1)
     END IF
-!    WRITE(*,*) 'FZ:',fz(1:nion)
     DEALLOCATE(tfac)
   END IF
 
 
-!mb      endif
-
-!mb      call calcforce(rho,it,psi,3)
 !     compute forces on cluster ions with new positions
 
 #if(raregas)
@@ -587,7 +551,8 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nc))
     xm = 1D0               ! setting for propagation of momenta
-    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1,xm,nc,1)
+    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), &
+                fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1,xm,nc,1)
     DEALLOCATE(xm)
   END IF
   
@@ -595,7 +560,8 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nk))
     xm = 1D0               ! setting for propagation of momenta
-    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk), fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1,xm,nk,3)
+    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk), &
+                fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1,xm,nk,3)
     DEALLOCATE(xm)
   END IF
 END IF
@@ -607,12 +573,10 @@ IF (nion > 0 .AND. imob /= 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm = 1D0               ! setting for propagation of momenta
-  CALL leapfr(cpx(1:nion),cpy(1:nion),cpz(1:nion),fx(1:nion),fy(1:nion),fz(1:nion),dt1,xm,nion,4)
+  CALL leapfr(cpx(1:nion),cpy(1:nion),cpz(1:nion), &
+              fx(1:nion),fy(1:nion),fz(1:nion),dt1,xm,nion,4)
   DEALLOCATE(xm)
 END IF
-
-!WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)
-!WRITE(6,'(a,3f15.6)') 'pix,piy,piz',cpx(1),cpy(1),cpz(1)
 
 RETURN
 END SUBROUTINE itstep
@@ -622,29 +586,28 @@ END SUBROUTINE itstep
 
 SUBROUTINE leapfr(x,y,z,xprop,yprop,zprop,ddt,xm,n,ityp)
 
-!     ****************************************************
+!   Computes one leap frog step for 'n' particles of masses 'xm'
+!   Propagation of positions and momenta are separate
+!    if x,y,z are positions, then xprop,... are momenta : ddt=dt, xm=mass
+!    if x,y,z are momenta, then xprop,... are forces : ddt=dt, xm=1.
+!  ityp    = type of ions/atoms (here only active for 'ityp==4')
 
 USE params
 IMPLICIT NONE
 
-!INTEGER, PARAMETER :: mm=maxpar
-INTEGER, INTENT(IN)                      :: n
-REAL(DP), INTENT(OUT)                    :: x(n)
-REAL(DP), INTENT(OUT)                    :: y(n)
-REAL(DP), INTENT(OUT)                    :: z(n)
-REAL(DP), INTENT(IN)                     :: xprop(n)
-REAL(DP), INTENT(IN)                     :: yprop(n)
-REAL(DP), INTENT(IN)                     :: zprop(n)
-REAL(DP), INTENT(IN)                     :: ddt
-REAL(DP), INTENT(IN)                     ::  xm(1:n)   
-INTEGER, INTENT(IN)                      :: ityp
+INTEGER, INTENT(IN)       :: n
+REAL(DP), INTENT(OUT)     :: x(n)
+REAL(DP), INTENT(OUT)     :: y(n)
+REAL(DP), INTENT(OUT)     :: z(n)
+REAL(DP), INTENT(IN)      :: xprop(n)
+REAL(DP), INTENT(IN)      :: yprop(n)
+REAL(DP), INTENT(IN)      :: zprop(n)
+REAL(DP), INTENT(IN)      :: ddt
+REAL(DP), INTENT(IN)      ::  xm(1:n)   
+INTEGER, INTENT(IN)       :: ityp
 
 INTEGER :: i
 
-!   computes a leap frog step for n particles of masses xm
-!   propagation of positions and momenta are separate
-!   if x,y,z are positions, then xprop,... are momenta : ddt=dt, xm=mass
-!   if x,y,z are momenta, then xprop,... are forces : ddt=dt, xm=1.
 
 
 #if(raregas)
@@ -677,15 +640,19 @@ END SUBROUTINE leapfr
 
 SUBROUTINE itstepv(rho,it,psi)
 
-!  ionic time step, propagates all heavy particles (not valence cloud)
-!  by velocity Verlet
+!  Ionic time step with velocity Verlet.
+!  Input:
+!    rho     = local electron density
+!    psi     = set of s.p. wavefunctions
+!    it      = time step number in calling routine
+!    ionic positions and velocities communicated via module 'params'
 
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: it
-COMPLEX(DP), INTENT(IN OUT)              :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)       :: rho(2*kdfull2)
+INTEGER, INTENT(IN)        :: it
+COMPLEX(DP), INTENT(IN)    :: psi(kdfull2,kstate)
 
 REAL(DP),ALLOCATABLE :: xm(:)          ! array for particle masses
 REAL(DP),ALLOCATABLE :: tfac(:)        ! acceleration factors
@@ -766,7 +733,8 @@ IF (nion > 0 .AND.imob /= 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm(:)=amu(np(:))*1836D0*ame
-  CALL velverlet1(cx(1:nion),cy(1:nion),cz(1:nion), cpx(1:nion),cpy(1:nion),cpz(1:nion), &
+  CALL velverlet1(cx(1:nion),cy(1:nion),cz(1:nion), &
+                  cpx(1:nion),cpy(1:nion),cpz(1:nion), &
                   fx(1:nion),fy(1:nion),fz(1:nion),dt1*modionstep,xm,nion,4)
   DEALLOCATE(xm)
 
@@ -784,25 +752,17 @@ IF (nion > 0 .AND.imob /= 0) THEN
 END IF
 
 
-!MB      if(nclust.eq.0 .and. isurf.ne.0) call adjustdip(rho,it)
-
-! for pure rare gas cluster in uniform translation,
-! the cloud must be adjust before computation of forces
-
-
 !     update forces
-
 
 IF(ipseudo == 1)THEN
   CALL updatesubgrids
 END IF
 
 
-!     compute forces on rare gas cores with new positions
+!     compute forces with new positions
 CALL getforces(rho,psi,it,0)
-!WRITE(*,*) ' ITSTEPV: after GETFORCES'
+
   IF(tfs < taccel-1D-6) THEN
-!    WRITE(*,*) 'FZ:',fz(1:nion)
     ALLOCATE(tfac(1:nion))
     tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
     IF(tsmooth) THEN
@@ -820,12 +780,10 @@ CALL getforces(rho,psi,it,0)
       fz(1:nion-1)=-vpz*tfac(1:nion-1)/(nion-1)
     END IF
     DEALLOCATE(tfac)
-!    WRITE(*,*) 'FZ:',fz(1:nion)
   END IF
 
 
 !     second half of propagation of momenta
-
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -866,7 +824,7 @@ SUBROUTINE velverlet1(x,y,z,px,py,pz,fox,foy,foz,ddt,xm,n,ityp)
 !  ddt           = size of time step
 !  xm            = ionic mass
 !  n             = number of ions
-!  ityp          = type of ions/atoms
+!  ityp          = type of ions/atoms (here only for 'ityp==4')
 !
 !  note that momenta are only stepped by a half step,
 !  waiting for a second half step after computing the new
@@ -976,20 +934,21 @@ END SUBROUTINE velverlet2
 
 SUBROUTINE lffirststep(rho,psi)
 
-!     *******************************
+! Preparation of leap-frog steps by a few short Euler steps.
+!  Input:
+!    rho     = local electron density
+!    psi     = set of s.p. wavefunctions
+
+
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)          :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN)       :: psi(kdfull2,kstate)
 
 REAL(DP),ALLOCATABLE :: xm(:)
 
 REAL(DP),EXTERNAL :: enerkin_ions
-
-#if(raregas)
-  
-#endif
 
 tfs = 0D0
 
@@ -997,12 +956,7 @@ IF(ipseudo == 1)THEN
   CALL updatesubgrids
 END IF
 
-
-
-
-!GB      if(nc+ne+nk.gt.0 .and. isurf.ne.0)then
 CALL getforces(rho,psi,-1,0)
-!GB      endif
 
 #if(raregas)
 IF (isurf /= 0) THEN
@@ -1011,13 +965,15 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nc))
     xm = 1D0
-    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1/2D0,xm,nc,1)
+    CALL leapfr(pxc(1:nc),pyc(1:nc),pzc(1:nc), &
+                fxc(1:nc),fyc(1:nc),fzc(1:nc),dt1/2D0,xm,nc,1)
     DEALLOCATE(xm)
 !     propagation of clouds
     IF(ifadiadip /= 1) THEN
       ALLOCATE(xm(1:ne))    ! possible buf with gfortran = debian64
       xm = 1D0
-      CALL leapfr(pxe(1:ne),pye(1:ne),pze(1:ne), fxe(1:ne),fye(1:ne),fze(1:ne),dt1/4D0,xm,ne,2)
+      CALL leapfr(pxe(1:ne),pye(1:ne),pze(1:ne), &
+                  fxe(1:ne),fye(1:ne),fze(1:ne),dt1/4D0,xm,ne,2)
       DEALLOCATE(xm)
     END IF
   END IF
@@ -1026,7 +982,8 @@ IF (isurf /= 0) THEN
     IF(ALLOCATED(xm)) DEALLOCATE(xm)
     ALLOCATE(xm(1:nk))
     xm = 1D0
-    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk),fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1/2D0,xm,nk,3)
+    CALL leapfr(pxk(1:nk),pyk(1:nk),pzk(1:nk), &
+                fxk(1:nk),fyk(1:nk),fzk(1:nk),dt1/2D0,xm,nk,3)
     DEALLOCATE(xm)
   END IF
   
@@ -1050,36 +1007,36 @@ ekion =  enerkin_ions()
 RETURN
 END SUBROUTINE lffirststep
 
-!GB
-
-
 
 !     ******************************
 
 SUBROUTINE spheric(r,x,y,z,n)
+
+!  Samples stichastically a spherical distribution of n particles  on
+!  a sphere of radius r.
+!
+!  Input:
+!    r      = radius of sampling sphere
+!    n      = number of particles
+!  Output:
+!    x,y,z  = arrays of ionic coordinates
+
+
 USE params, ONLY: DP, Pi
 IMPLICIT NONE
 
 !     ******************************
 
-INTEGER, PARAMETER :: mm=50000
-REAL(DP), INTENT(IN)                         :: r
-REAL(DP), INTENT(OUT)                        :: x(mm)
-REAL(DP), INTENT(OUT)                        :: y(mm)
-REAL(DP), INTENT(OUT)                        :: z(mm)
-INTEGER, INTENT(IN)                      :: n
+!INTEGER, PARAMETER :: mm=50000
+INTEGER, INTENT(IN)      :: n
+REAL(DP), INTENT(IN)     :: r
+REAL(DP), INTENT(OUT)    :: x(n)
+REAL(DP), INTENT(OUT)    :: y(n)
+REAL(DP), INTENT(OUT)    :: z(n)
 
 INTEGER :: i, ia, ic, im, jran
 REAL(DP) :: cth, sth, cosp, sinp, phi, rr,  xx 
 
-IF(n > mm) THEN
-  WRITE(6,*)'warning !! number of particles exceeds array s size'
-  WRITE(6,*)'in routine spheric'
-  RETURN
-END IF
-
-!   samples a spherical distribution of n particles  on
-!   a sphere of radius r. results are x(i), y(i),z(i)
 
 DATA im,ia,ic/259200,7141,54773/
 jran = 12345
@@ -1109,7 +1066,13 @@ SUBROUTINE conslw(x,y,z,px,py,pz,n)
 USE params, ONLY: DP
 IMPLICIT NONE
 
-!     ************************************
+!  Renormalization of c.o.m, of momentum and of angular momentum
+!
+!  Input:
+!    n        = number of particles
+!  Input/Output:
+!    x,y,z    = arrays of ionic coordinates
+!    px,py,pz = arrays of ionic momenta
 
 !INTEGER, PARAMETER :: mm=50000
 INTEGER, INTENT(IN)                      :: n
@@ -1126,7 +1089,6 @@ REAL(DP) :: rixx, riyy, rizz, rixy, rixz, riyz
 REAL(DP) :: rkx, rky , rkz, rx, ry, rz, rx2, ry2, rz2 
 REAL(DP) :: rlxcm, rlycm, rlzcm , xcm, ycm, zcm, xkcm, ykcm, zkcm, xxkcm, yykcm, zzkcm,  xxcm, yycm, zzcm
 REAL(DP) :: det, wx, wy, wz
-!    renormalization of c.o.m, of momentum and of angular momentum
 
 xcm = 0D0
 ycm = 0D0
@@ -1284,392 +1246,4 @@ WRITE(6,*)' l .......',rlx,rly,rlz
 
 RETURN
 END SUBROUTINE conslw
-
-!     *******************
-
-SUBROUTINE stream(rho)
-
-!     *******************
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-
-INTEGER :: i
-REAL(DP) :: query2, query3, query4
-REAL(DP), ALLOCATABLE :: rhos(:),drho(:)
-
-ALLOCATE(rhos(kdfull2),drho(kdfull2))
-
-
-query2=qe(2)*qold2
-qold2=qe(2)
-query3=qe(3)*qold3
-qold3=qe(3)
-query4=qe(4)*qold4
-qold4=qe(4)
-!test
-query2=1.0D0
-query3=1.0D0
-!test
-IF(tfs == 0D0) THEN
-  iquery4=0
-  WRITE(6,*) 'iquery4=',iquery4
-  DO i=1,nxyz
-    rhos(i)=0D0
-  END DO
-END IF
-IF(tfs > 0D0) THEN
-  IF(query2 < 0D0) THEN
-    iquery4=iquery4+1
-    WRITE(6,*) 'iquery4=',iquery4
-    IF(MOD(iquery4,10) == 0) THEN
-      DO i=1,nxyz
-        drho(i)=rho(i)-rhos(i)
-      END DO
-      CALL write_density(rhos,'sdensi')
-      CALL write_density(drho,'sderiv')
-!           stop 'calculated a derivative of density after x-stimulation'
-    END IF
-  END IF
-  IF(query3 < 0D0) THEN
-    iquery4=iquery4+1
-    WRITE(6,*) 'iquery4=',iquery4
-    IF(MOD(iquery4,10) == 0) THEN
-      DO i=1,nxyz
-        drho(i)=rho(i)-rhos(i)
-      END DO
-      CALL write_density(rhos,'sdensi')
-      CALL write_density(drho,'sderiv')
-!           stop 'calculated a derivative of density after y-stimulation'
-    END IF
-  END IF
-  IF(query4 < 0D0) THEN
-    iquery4=iquery4+1
-    WRITE(6,*) 'iquery4=',iquery4
-    IF(MOD(iquery4,10) == 0) THEN
-      DO i=1,nxyz
-        drho(i)=rho(i)-rhos(i)
-      END DO
-      CALL write_density(rhos,'sdensi')
-      CALL write_density(drho,'sderiv')
-!           stop 'calculated a derivative of density after z-stimulation'
-    END IF
-  END IF
-END IF
-rhos = rho
-
-DEALLOCATE(rhos,drho)
-
-RETURN
-END SUBROUTINE stream
-! ---eltherm----------------------------------------------eltherm-------
-
-SUBROUTINE eltherm(rho,psi,expjx,expjy,expjz,eeth)
-
-!  computes electronic thermal energy via the expectation value of the
-!  the current operator to check electronic thermalization
-
-USE params
-USE kinetic
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN)                      :: psi(kdfull2,kstate)
-REAL(DP), INTENT(OUT)                        :: expjx
-REAL(DP), INTENT(OUT)                        :: expjy
-REAL(DP), INTENT(OUT)                        :: expjz
-REAL(DP), INTENT(OUT)                        :: eeth
-
-INTEGER :: i, ind, n, nb
-REAL(DP) :: ajalpha, rhoalpha
-REAL(DP) :: dkx, dky, dkz, q1, tel
-REAL(DP) :: exjx(ksttot),exjy(ksttot),exjz(ksttot)
-#if(parayes)
-REAL(DP) :: ex, ey, ez
-#endif
-COMPLEX(DP) :: test
-
-REAL(DP),DIMENSION(:),ALLOCATABLE :: ajtx,ajty,ajtz
-COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: p,q2
-
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-REAL(DP), ALLOCATABLE :: aj(:)
-ALLOCATE(aj(kdfull2))
-#endif
-
-
-IF(.NOT.ALLOCATED(akx)) STOP "ELTHERM requires FFT"
-ALLOCATE(p(kdfull2),q2(kdfull2))
-ALLOCATE(ajtx(kdfull2),ajty(kdfull2),ajtz(kdfull2))
-
-!   init derivative
-
-dkx=pi/(dx*REAL(nx,DP))
-dky=pi/(dy*REAL(ny,DP))
-dkz=pi/(dz*REAL(nz,DP))
-
-!ind=0
-!DO i3=1,nz2
-!  IF(i3 >= (nz+1)) THEN
-!    zkz=(i3-nz2-1)*dkz
-!  ELSE
-!    zkz=(i3-1)*dkz
-!  END IF
-!  DO i2=1,ny2
-!    IF(i2 >= (ny+1)) THEN
-!      zky=(i2-ny2-1)*dky
-!    ELSE
-!      zky=(i2-1)*dky
-!    END IF
-!    DO i1=1,nx2
-!      IF(i1 >= (nx+1)) THEN
-!        zkx=(i1-nx2-1)*dkx
-!      ELSE
-!        zkx=(i1-1)*dkx
-!      END IF
-!      ind=ind+1
-!      akkx(ind)=-zkx
-!      akky(ind)=-zky
-!      akkz(ind)=-zkz
-!    END DO
-!  END DO
-!END DO
-
-!   compute the currents for each direction: ajtx/y/z
-!   and their expectation values: exjx/y/z
-
-q1=0D0
-tel=0D0
-DO i=1,kdfull2
-  ajtx(i)=0D0
-  ajty(i)=0D0
-  ajtz(i)=0D0
-END DO
-
-DO nb=1,nstate
-  
-  exjx(nb)=0D0
-  exjy(nb)=0D0
-  exjz(nb)=0D0
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akx(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    exjx(nb)=exjx(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
-    ajtx(ind)=ajtx(ind)+ajalpha
-  END DO
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*aky(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    exjy(nb)=exjy(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
-    ajty(ind)=ajty(ind)+ajalpha
-  END DO
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akz(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    exjz(nb)=exjz(nb)+ajalpha*CONJG(psi(ind,nb))*psi(ind,nb)
-    ajtz(ind)=ajtz(ind)+ajalpha
-  END DO
-  
-END DO                     !loop over states
-
-!  compute sum of current expectation values in either direction:
-
-expjx=0D0
-expjy=0D0
-expjz=0D0
-DO n=1,nstate
-  expjx=expjx+exjx(n)
-  expjy=expjy+exjy(n)
-  expjz=expjz+exjz(n)
-END DO
-expjx=expjx*dvol
-expjy=expjy*dvol
-expjz=expjz*dvol
-#if(parayes)
-DO ind=1,kdfull2
-  aj(ind)=ajtx(ind)
-END DO
-CALL pi_allreduce(aj,ajtx,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,mpi_ierror)
-DO ind=1,kdfull2
-  aj(ind)=ajty(ind)
-END DO
-CALL pi_allreduce(aj,ajty,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,mpi_ierror)
-DO ind=1,kdfull2
-  aj(ind)=ajtz(ind)
-END DO
-CALL pi_allreduce(aj,ajtz,kdfull2,mpi_double_precision,mpi_sum,  &
-    mpi_comm_world,mpi_ierror)
-
-CALL pi_allreduce(expjx,ex,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
-CALL pi_allreduce(expjy,ey,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
-CALL pi_allreduce(expjz,ez,1,mpi_double_precision,mpi_sum, mpi_comm_world,mpi_ierror)
-expjx=ex
-expjy=ey
-expjz=ez
-#endif
-
-!  compute average velocities from currents:
-
-DO ind=1,kdfull2
-  ajtx(ind)=ajtx(ind)/rho(ind)
-  ajty(ind)=ajty(ind)/rho(ind)
-  ajtz(ind)=ajtz(ind)/rho(ind)
-END DO
-
-
-! finally compute thermal energy:
-! e_th = sum_i int[d^3r 0.5D0*rho_i*(v_av - v_i)**2]
-
-tel=0D0
-DO nb=1,nstate
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akx(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
-    ajalpha=ajalpha/rhoalpha
-    tel=tel+0.5D0*rhoalpha*(ajalpha-ajtx(ind))**2
-  END DO
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*aky(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
-    ajalpha=ajalpha/rhoalpha
-    tel=tel+0.5D0*rhoalpha*(ajalpha-ajty(ind))**2
-  END DO
-  
-#if(netlib_fft|fftw_cpu)
-  CALL fftf(psi(1,nb),q2)
-
-  DO ind=1,kdfull2
-    q2(ind)=q2(ind)*akz(ind)
-  END DO
-
-  CALL fftback(q2,p)
-#endif
-
-
-  DO ind=1,kdfull2
-    test=eye/2D0*(CONJG(psi(ind,nb))*p(ind) -psi(ind,nb)*CONJG(p(ind)))
-    ajalpha=test
-    rhoalpha=CONJG(psi(ind,nb))*psi(ind,nb)
-    ajalpha=ajalpha/rhoalpha
-    tel=tel+0.5D0*rhoalpha*(ajalpha-ajtz(ind))**2
-  END DO
-  
-END DO                     !loop over states
-
-eeth=tel*dvol*0.5D0*hbar*hbar/2D0/ame !atomic units (h/2m)**2
-#if(parayes)
-tel=eeth
-CALL pi_allreduce(tel,eeth,1,mpi_double_precision, mpi_sum,mpi_comm_world,mpi_ierror)
-#endif
-
-WRITE(6,'(a,f12.5)') ' electronic thermal energy: ',eeth
-!      write(17,'(a,f12.5)') 'electronic thermal energy: ',eeth
-
-!DEALLOCATE(akkx)
-!DEALLOCATE(akky)
-!DEALLOCATE(akkz)
-DEALLOCATE(p,q2)
-DEALLOCATE(ajtx,ajty,ajtz)
-#if(parayes)
-DEALLOCATE(aj)
-#endif
-
-RETURN
-END SUBROUTINE eltherm
-
-!     **************************
-
-SUBROUTINE write_density(drho,filename)
-!  write density or derivative of density
-!
-!     **************************
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)                     :: drho(kdfull2)
-CHARACTER (LEN=6), INTENT(IN) :: filename
-CHARACTER (LEN=4) :: ext
-INTEGER :: i
-
-WRITE(ext,'(a,i3.3)') ".", iquery4/10    ! e.g:  iquery4 = 1234  --->  ext = ".123"
-                                         !       iquery4 = 568   --->  ext = ".056"
-OPEN(UNIT=60,STATUS='unknown',FORM='unformatted',FILE= filename//'1'//ext)
-
-
-DO i=1,nxyz
-  WRITE(60) drho(i)
-END DO
-
-CLOSE(UNIT=60,STATUS='keep')
-
-RETURN
-END SUBROUTINE write_density
-
 

@@ -34,11 +34,12 @@
        REAL and COMPLEX versions.
     b) Interpolation to finer mesh should be checked carefully.
 
-9) Gile 'localize.F90':
+9) File 'localize.F90':
     a) Array 'rho' not used. Check and remove.
     b) Check dynamical case.
 
-
+10) Routine 'leapfr' in 'ionmd.F90':
+     List variable 'ityp' obsolete without QMMM. Skip or what?
 
 *****************************************************************
 
@@ -66,4 +67,5 @@ Subroutines commented:
    loc_mfield.F90
    localize.F90
    lda.F90
-   kineti.F90   
+   kinetic.F90   
+   ionmd.F90

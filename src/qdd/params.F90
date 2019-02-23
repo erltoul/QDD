@@ -248,7 +248,7 @@ INTEGER :: idenspl=0  ! print densities integrated over x, y and z in 3 separate
                       !  (at the end in static, every 'idenspl' steps in dynamic)
 INTEGER :: ifrhoint_time=0 ! print densities integrated over xy, xz, yz in 3 separated files
 
-INTEGER :: i3dz=0,i3dx=0,i3dstate=0,istream=0,modrho=999999
+INTEGER :: i3dz=0,i3dx=0,i3dstate=0,modrho=999999
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
 INTEGER :: jinfo=10,jdip=-9999,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0
