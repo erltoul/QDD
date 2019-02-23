@@ -41,6 +41,15 @@
 10) Routine 'leapfr' in 'ionmd.F90':
      List variable 'ityp' obsolete without QMMM. Skip or what?
 
+11) Ionic motion:
+     Do want have both leap-frog and velocity Verlet?
+
+12) In 'init.F90':
+     a) Initialization of local PsP for Ar etc to be checked. Skip if
+        not precise enough.
+     b) 'init_homfield' seems to do the same as 'dipx,dipy,dipz'?
+       Check and remove one if found doubling.
+
 *****************************************************************
 
 Code cleaning:

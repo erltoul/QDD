@@ -151,7 +151,6 @@ REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
 REAL(DP) :: b2occ=0.4D0,gamocc=10D0,deocc=0D0,osfac=1D0 !  h.o.initalization
 REAL(DP) :: temp=0D0,occmix=0.5D0,epsoro=1D-6        !  electron temperature
-INTEGER :: isurf=0
 REAL(DP) :: endcon=1D-5,radjel=4D0,surjel=1D0     !  jellium params
 INTEGER :: itback=200                            !  jellium params
 REAL(DP) :: betatj,gammtj,bet4tj                 !      "      "
@@ -258,7 +257,7 @@ INTEGER :: jstinf=10
 INTEGER :: jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
-INTEGER :: init_lcao=0,ipsptyp=0,ivdw=0,idenfunc=1
+INTEGER :: init_lcao=0,ipsptyp=0,idenfunc=1
 INTEGER :: izforcecorr=-1,icooltimes=0, ntref=0
 INTEGER :: jheatmod=0         ! modulus for re-heating the system
 INTEGER :: iangmo=0,ifspemoms=0,iftransme=0

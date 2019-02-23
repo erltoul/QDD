@@ -30,6 +30,10 @@ INTEGER :: maxpar
 INTEGER,PARAMETER :: maxnlayers=3
 INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
 
+! switches
+INTEGER :: ivdw=0,isurf=0
+
+
 ! sub-grid for V_elArcore
     
 INTEGER :: nsg_arelcore,imobtmp

@@ -23,6 +23,8 @@ SUBROUTINE initnamelists
 
 !     Sets defaults for input variables
 !     and then reads input variables through namelist.
+!     Parameters are communicated via module 'params'.
+!     For meaning of the parameters see documentation.
 
 !------------------------------------------------------------
 USE params
@@ -31,18 +33,18 @@ USE coulsolv, ONLY: tcoulfalr
 IMPLICIT NONE
 
 CHARACTER (LEN=80) :: title
-!      character*10 fname(0:3)
-!      data fname/'for005.011',
-!     &           'for005.100','for005.101','for005.110'/
 
-INTEGER,PARAMETER :: kparall=11
+!INTEGER,PARAMETER :: kparall=11
 INTEGER:: iu, nnx2, maxnum
 CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
 
 NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
-    temp,occmix,isurf,b2occ,gamocc,deocc,osfac,  &
+#if(raregas)
+    isurf, &
+#endif
+    temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
     epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
@@ -56,30 +58,10 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     nproj_states, epsdi,idielec,xdielec
 
 
-!*************************************************************
-
-!k use of parameters for dynamics:
-
-!  use of discrete ions via pseudopotentials:      nion2 not=0
-!  use of homogeneous background via jellium:       nion2=0
-
-!  iforce=0
-!  polarized clusters (e.g. polar. isomer of na_12)   iforce=1
-
-!  dipoleboost or spindipoleboost      iexcit=0:
-!    boost of electronic density by centfx/y/z       ispidi=0
-!    boost of spinup density by +0.5*centfx/y/z     ispidi=1
-!             spindown density by -0.5*centfx/y/z   ispidi=1
-!  dipoleshift (iexcit=0) by shiftinix/y/z
-
-
-!  scissor mode excitation             iexcit=1:
-!    chose axis of rotation by 'irotat'
-!    chose angle of rotation by 'phirot'
-
-!*************************************************************
-
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
+#if(raregas)
+    ivdw, &
+#endif
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
@@ -87,7 +69,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     irotat,phirot,i3dz,i3dx,i3dstate,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
-    jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,ivdw,  &
+    jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
     tempion,idenspl,ekmat,  &
@@ -152,9 +134,7 @@ NAMELIST /surface/  &
 
 WRITE(6,*) 'Reading for005.// ...'
 
-
 !     initialize the variables with default values
-
 
 
 delomega=(angthetah-angthetal)/4D0/nangtheta
@@ -166,9 +146,7 @@ scatterelectronz=nzsh*dz-4D0*scatterelectronw
 CALL init_raregas()
 #endif
 
-
 !     open input files
-
 
 IF(myn < 10) THEN 
   WRITE(num,'(i1)') myn
@@ -184,7 +162,6 @@ outname=trim(num)//trim(outnam)
 
   IF(myn == 0)THEN
     OPEN(UNIT=5,STATUS='old',FORM='formatted',FILE='for005')
-!    OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)
     iu=7
     WRITE(*,*) ' enter title (=qualifier) for that run:'
     READ(5,*)  title
@@ -194,7 +171,7 @@ outname=trim(num)//trim(outnam)
     WRITE(6,*) ' title is now: '//outnam
     WRITE(iu,*) ' title is now: '//outnam
     CLOSE(5)
-write(6,*) outnam, "**************************************"
+    WRITE(6,*) outnam, "**************************************"
     OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
     
     
@@ -269,7 +246,6 @@ write(6,*) outnam, "**************************************"
   
   tdipolxyz = dpolx*dpolx+dpoly*dpoly+dpolz*dpolz .GT. 0D0
   
-!      write(*,*) ' INIT: nion2=',nion2
   RETURN
   
 END SUBROUTINE initnamelists
@@ -280,13 +256,14 @@ END SUBROUTINE initnamelists
 
 SUBROUTINE changeperio
 
-!     Reads pseudo potential parameters from namelist
+! Reads pseudo potential parameters from namelist thus over-riding
+! default settings.
 
 USE params
 IMPLICIT NONE
 
 INTEGER :: info
-!      namelist /perio/ ch(-99:99),amu(-99:99),
+
 NAMELIST /perio/ ch,amu, cc1,cc2,crloc,  &
     h0_11g,h0_12g,h0_22g,h0_33g, h1_11g,h1_22g,h2_11g,  &
     dr1,dr2,prho1,prho2, r0g,r1g,r2g,radiong
@@ -295,7 +272,6 @@ OPEN(5,STATUS='old',FORM='formatted',FILE='for005.'//outnam)
 READ(5,perio, IOSTAT=info)
 IF(IS_IOSTAT_END(info)) WRITE(6,*) 'End of file reached while reading for perio'
 CLOSE(5)
-!test         write(iu,*) ' changeperio done. myn=',myn
 
 #if(parayes)
 CALL comm_periodic()
@@ -308,7 +284,7 @@ END SUBROUTINE changeperio
 
 SUBROUTINE iparams()
 
-!     check consistency of input parameters, do some initializations
+!  Check consistency of input parameters, do some initializations
 
 USE params
 IMPLICIT NONE
@@ -381,14 +357,8 @@ IF(nion2 == 2 .AND. ifsicp >= 3)  &
 IF(nc+ne+nk.gt.ngpar) STOP ' not enough NGPAR for substrate'
 #endif
 
-!#if(hamdiag&parayes)
-!IF(MOD(kstate,2) == 1) STOP ' KSTATE must be even'
-!#endif
-
 #if(parayes)
 IF(ifhamdiag == 1) STOP ' step with H diagonalization only on serial code'
-!IF(jmp /=0) STOP ' evaluation of PES not possible in parallele code'     cPW
-!IF(istat /= 0) STOP ' static restart not possible in parallele code'
 #endif
 
 
@@ -407,23 +377,13 @@ IF(ifsicp>7 .AND. .NOT.directenergy) &
 
 IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for full SIC'
 
-!IF(isitmax>0 .AND. ifexpevol== 0) &
-!    STOP ' imaginary-time step only for exponential evolution'
-
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?
 
 if(nabsorb == 0 .AND. jesc .NE. 0) &
     STOP ' JESC must be zero for NABSORB=0'
 
-!#if(selpara)
-!      if(idielec.ne.0 .or. isurf.ne.0)
-!     &  stop 'option SELPARA not compatible with substrates'
-!#endif
-
 #if(parayes)
-!  IF(jstinf /= 0) &
-!   STOP ' print of s.p.energies & variances not for parallel version'
   IF(jgeomel /= 0) &
    STOP ' print electronic geometry not for parallel version'
 #endif
@@ -456,7 +416,7 @@ END SUBROUTINE iparams
 
 SUBROUTINE ocoption(iu)
 
-!     output of compiled and of read-in options
+!   Protocol of options (default and read) on 'poptions.<name>'.
 
 USE params
 USE coulsolv, ONLY: tcoulfalr
@@ -624,9 +584,6 @@ ELSE
   WRITE(iu,'(a)') 'this version of SIC not available'
 END IF
 
-!IF(.NOT.(ifexpevol==1) .AND. itmax > 0 .AND. ifsicp >= 6) STOP  &
-!    ' full TDSIC requires exponential evolution'
-
 
 !     dynamical options
 
@@ -675,7 +632,7 @@ END SUBROUTINE ocoption
 
 SUBROUTINE init_output()
 
-!     write headers of output files
+!  Initializes output files and writes headers
 
 USE params
 IMPLICIT NONE
@@ -696,8 +653,6 @@ ELSE
   maxnum=3
 END IF
 outname=trim(num)//trim(outnam)
-! OPEN(UNIT=7,STATUS='unknown', FILE='for006.'//num(1:maxnum)//outnam)   ! MOVED
-! TO INITNAMELISTS BY FRANCOIS COPPENS ON 24/01/2019
 
 
 !     output grid properties
@@ -726,8 +681,6 @@ END IF
 
 WRITE(6,'(a,3i5,i8,g12.4)') ' INIT: nx,ny,nz,nxyz,dvol=',  &
     nx,ny,nz,nxyz,dvol
-
-
 
 
 !       output static parameters (traditional sodium case)
@@ -769,21 +722,8 @@ WRITE(7,'(a,f4.2,3x,a,f5.0)') 'bbeta=',bbeta,'gamma=',gamma
 WRITE(7,'(//)')
 
 
-RETURN
+!RETURN      !????
 
-
-!  301 format('/t2 * * * * * parameter   ksmax   too small  * * * * *')
-!  302 format('/t2 * * * * * parameter   kdfull  too small  * * * * *')
-!  304 format('/t2 * * * * * parameter   ktax    too small  * * * * *')
-!  305 format('/t2 * * * * * parameter   ktay    too small  * * * * *')
-!  306 format('/t2 * * * * * parameter   ktaz    too small  * * * * *')
-!  307 format('/t2 * * * * * parameter   kstsq   too small  * * * * *')
-!  308 format('/t2 * * * * * parameter   kstate  too small  * * * * *')
-!  309 format('/t2 * * * * * parameter   krun    too small  * * * * *')
-!  310 format('/t2 * * * * * parameter   kxmax   too small  * * * * *')
-!  311 format('/t2 * * * * * parameter   kymax   too small  * * * * *')
-!  312 format('/t2 * * * * * parameter   kzmax   too small  * * * * *')
-!  320 format('/t2 --> kstate greater initialisation of quantum numbers')
 
 
 WRITE(7,*)'_______________________________________________'
@@ -885,21 +825,19 @@ END SUBROUTINE init_output
 
 SUBROUTINE iperio
 
-!     initializes the "periodic table" :
-!      masses of implemented elements, charges
-!      and parameters for the pseudo-potentials
+! Initializes the default PsP parameters.
+! Parameters are communicated via module 'params'.
 
 USE params
 IMPLICIT NONE
-!      dimension dr1(-ng:ng),dr2(-ng:ng) ! bugBF
-!      dimension prho1(-ng:ng),prho2(-ng:ng) ! bugBF
+
 INTEGER :: i,iel,natom,icountt,inew,iskip
 INTEGER :: l,nactual,nval
 REAL(DP) :: amfac,c1,c2,c3,c4,crr,h11,h22,h33,rloc
 REAL(DP) :: scpx,scpy,scpz
-character (len=3) ::  naml
-character (len=2)  ::  namc,symb(99)
-character(len=80) ::  a
+CHARACTER (len=3) ::  naml
+CHARACTER (len=2) ::  namc,symb(99)
+CHARACTER(len=80) ::  a
 
 !----------------------------------------------------------------
 
@@ -975,6 +913,7 @@ IF(ipsptyp == 0) THEN
   WRITE(6,*) 'ch(18)=',ch(18)
   WRITE(6,*) 'total charge of PspAr_core=',chg1(18)+chg2(18)
   
+#if(raregas)
 !       Argon , negative valence cloud (inert)
   
   amu(-18)  = 4.38D0/1836.0D0
@@ -990,6 +929,7 @@ IF(ipsptyp == 0) THEN
 !  c_dipmod  = 3.378  !  ch(-18)**2*e2/11.08
   WRITE(6,*) 'ch(-18)=',ch(-18)
   WRITE(6,*) 'total charge of PspAr_el=',chg1(-18)+chg2(-18)
+#endif
   
 !       potassium
   
@@ -1281,18 +1221,18 @@ ELSE IF(ipsptyp == 2) THEN
   cc2(11)  = 0D0
   crloc(11)= 0.9D0
 !  nrow(11) = 3
-!        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
   
 !       Ar (approximate local pseudo built on Goedecker local part)
   
   amu(18)  = 39.95D0
   ch(18)   = 8D0
+!  variants ith different radii:
 !        cc1(18)  = 60.37    ! 13.375   !  2.5034  ! 2.482
 !        cc2(18)  = -8.972   ! -3.4762  ! -1.4664  ! -1.4526
 !        crloc(18)= 0.4      ! 0.6      ! 0.9      ! 0.9
   
-  cc1(18)  =   2.482D0   ! 2.5034  !
-  cc2(18)  =  -1.4526D0  ! -1.4664  !
+  cc1(18)  =   2.482D0  
+  cc2(18)  =  -1.4526D0 
   crloc(18)=  0.9D0
   
   
@@ -1302,8 +1242,7 @@ ELSE IF(ipsptyp == 2) THEN
 !09        cc1(18)  = 3.85
 !09        cc2(18)  = -2.44
 !09        crloc(18)= 0.9
-!  nrow(18) = 3
-!        write(6,*)'params pseudo, c1,c2',cc1(18),cc2(18),crloc(18)
+
 ELSE IF((ipsptyp == 3).OR.(ipsptyp ==4)) THEN
 !Goedecker read from two files, with valence electrons only
   do iel=1,92
@@ -1331,7 +1270,7 @@ ELSE IF((ipsptyp == 3).OR.(ipsptyp ==4)) THEN
 !       start of loop
 
 open(unit=19,status='scratch')
-!~ 50	continue
+
 icountt=0
 ch(0)=0D0
 crloc(0)=0D0
@@ -1362,10 +1301,7 @@ do ! infinite loop
     rewind 19
     read(19,'(a3,i2,5(f10.6))') naml,nval,rloc,c1,c2,c3,c4
     if(naml(3:3).eq.'1') then  ! new element is a semi-core
-!   write(6,*) 'semi-core'
-!   write(6,103) naml(1:3),' ',nval,rloc,c1,c2,c3,c4
-!103   format(2A,i2,5(f10.6))
-      isave=icountt-1 ! semi-core not counted as en element: remember previous element 
+    isave=icountt-1 ! semi-core not counted as en element: remember previous element 
       icountt=99 
       iskip=99
 
@@ -1380,7 +1316,6 @@ do ! infinite loop
       iskip=icountt
       rewind 19
       read(19,'(a2,i2,5(f10.6))') namc,nval,rloc,c1,c2,c3,c4
-  !    write(6,103) namc(1:2),' ',nval,rloc,c1,c2,c3,c4
     endif
     ! stores properties of new element with index 'icountt'
     ch(icountt)=nval
@@ -1433,7 +1368,7 @@ do ! infinite loop
 
 !       go back to read a new line
   if(icountt.eq.99) icountt=isave  ! if it was a skiped Semi-core, continue from the previous element
-end do !next line !
+end do 
 
 1000 write(6,*) 'all parameters have been read in file goed.asci'
 
@@ -1445,10 +1380,8 @@ END IF
 
 !     reset ionic masses if asked for
 
-
-WRITE(6,*) 'resettig ionic masses...'
+WRITE(6,*) 'resetting ionic masses...'
 IF(ifredmas == 1) THEN
-!  WRITE(6,*) 'in progress...'
   IF (ipsptyp == 0) THEN
      DO i=-92,92
         !           amu(i)=0.0484
@@ -1461,11 +1394,6 @@ IF(ifredmas == 1) THEN
         amu(i)=0.5D0
      ENDDO
   ENDIF
-!         do i=-92,92
-!            amu(i) = amu(i)*0.5/amu(11)
-!mb            amu(i)=amu(i)*0.5/amu(18)
-!         enddo
-!mb         write(6,*)'Argon core mass is reduced to half of hydrogen'
   WRITE(6,*)'Na mass is reduced to half of hydrogen'
   WRITE(6,*) 'reduced mass is a half of hydrogen'
   scpx=0D0
@@ -1485,7 +1413,7 @@ END SUBROUTINE iperio
 
 SUBROUTINE initions()
 
-!     read ionic positions and initialize ion-related parameters
+!   Read ionic positions and initialize ion-related parameters
 
 USE params
 USE util, ONLY:getcm,givetemperature,rotatevec3D
@@ -1509,18 +1437,11 @@ END IF
 
 WRITE (6,*) 'Entering initions()'
 
-
-
-!     readings and basic transformation are only done for node "0"
-! why ? (fc)
-
 #if(parayes)
 !IF(myn == 0)THEN
 #endif
   
-  
   OPEN(UNIT=9,STATUS='old',FORM='formatted', FILE='for005ion.'//outnam)
-  
   
   WRITE(6,*) 'Reading positions...'
   distmax=0D0
@@ -1589,7 +1510,6 @@ WRITE (6,*) 'Entering initions()'
   END IF
 
   
-  
 !       re-scale cluster if desired
   
   
@@ -1626,8 +1546,6 @@ WRITE (6,*) 'Entering initions()'
   END IF
   
 !       re-scaling done.
-  
-  
   
   
 !       shift cluster in space if desired
@@ -1670,7 +1588,6 @@ WRITE (6,*) 'Entering initions()'
 
   IF(abs(rotclustx)+abs(rotclusty)+abs(rotclustz)>0D0) THEN
     
-    !WRITE(*,*) ' rotate ions by anglex,y,z=',rotclustx,rotclusty,rotclustz
     vecalpha(1)=rotclustx/180D0*pi
     vecalpha(2)=rotclusty/180D0*pi
     vecalpha(3)=rotclustz/180D0*pi
@@ -1704,10 +1621,6 @@ WRITE (6,*) 'Entering initions()'
     cy=cy+ctmpy
     cz=cz+ctmpz
 
-    !WRITE(*,*) 'ionic positions now:'
-    !DO ion=1,nion
-    !  WRITE(*,*) cx(ion),cy(ion),cz(ion)
-    !END DO
     
   END IF
 !     rotation completed
@@ -1801,6 +1714,7 @@ WRITE (6,*) 'Entering initions()'
            write(120,*) inx
            close(120)
   
+! optionally set ionic velocities to simulate given temperature
   IF (tempion > 0D0 .AND.imob /= 0) THEN
     CALL givetemperature(cpx,cpy,cpz,nion,tempion, amu(np(1))*1836.0D0*ame,4)
   END IF
@@ -1816,26 +1730,15 @@ CALL comm_ionconfig()
 #endif
 
 
-!        check consistency of ions  (obsolete?)
-
-
-!     check consistency 'nrow' <--> nr. of projectors
-
-
-
 !       np(0) for use in Monte-Carlo
-
 
 IF(icooltyp == 3)  CALL cenmass()
 np(0) = np(1)
 dt12=dt1
 
 
-
-
 !       initialize pseudopotential background
 
-!g         call calcpseudo(rho)
 
 IF(ipsptyp == 1) THEN
   DO ion=1,nion
@@ -1851,17 +1754,17 @@ END IF
 
 WRITE(6,*) 'Calculating ionic energy ...'
 
-sumion = energ_ions()     !  ???
+sumion = energ_ions()  
 WRITE(7,'(a,f17.4)') 'sumion=',sumion
 WRITE(6,'(a,f17.4)') 'sumion=',sumion
 WRITE(7,*)
 WRITE(6,*)
-!k
-ecorr=sumion           !analytical case   ??
-!k
+
+ecorr=sumion        
 
 
-!     initialize common velocity
+
+!     initialize common velocity  ("ionic boost")
 
 IF (ekin0pp > 0D0) THEN
   v0 = SQRT(2D0*ekin0pp/(amu(np(nion))*1836.0D0*ame))
@@ -1923,7 +1826,7 @@ END SUBROUTINE initions
 
 SUBROUTINE init_jellium()
 
-!     initialize jellium background
+! Initialize jellium background
 
 USE params
 IMPLICIT NONE
@@ -1970,7 +1873,7 @@ END SUBROUTINE init_jellium
 
 SUBROUTINE initwf(psir)
 
-!     master routine to initialize the electronic wavefunctions
+!  Master routine to initialize the electronic wavefunctions
 
 USE params
 USE util, ONLY:shiftfield
@@ -1982,8 +1885,6 @@ INTEGER :: is(mpi_status_size)
 
 REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
 
-
-
 INTEGER ::i,nr,nbe,nbr
 REAL(DP)::en
 
@@ -1994,12 +1895,9 @@ IF(myn == 0)THEN
   IF(nspdw > nclust/2) STOP 'nspdw must be less or equal nclust/2'
 END IF
 
-
 !     prepare book-keeping for wavefunctions
 
 omeg=0.25D0*h2m
-!      if(nclust.gt.0)
-!     &    call ininqb(nclust,deocc,b2occ,gamocc*pi/180D0)
 
 IF(ifhamdiag>0 .AND. nstate>nclust) THEN
   WRITE(6,'(2a,2i5)')  ' IFHAMDIAG>0 only allowed for NSTATE=NCLUST', &
@@ -2022,10 +1920,6 @@ IF(init_lcao /= 1) THEN
    CALL initho(psir)
 
    
-!       remove symmetry restrictions
-  
-!  IF(init_lcao /= 1) CALL rem_sym(psir)
-!  CALL rem_sym(psir)
   WRITE(7,'(a)')'after ordering:'
   WRITE(7,'(a,2i3)') 'nstate,nclust',nstate,nclust
   WRITE(6,'(a)')'after ordering:'
@@ -2035,17 +1929,14 @@ IF(init_lcao /= 1) THEN
   WRITE(7,'(a)') 'after oscillator initialization:'
   DO i=1,nstate
     nr=nrel2abs(i)
-!    IF (myn == 0) THEN
       WRITE(7,'(a,i3,a,f12.4,a,i2,a,3i3)')'wf ',i,  &
           ' occ',occup(i),' sp',ispin(nr), ' knots:',nq(1,nr),nq(2,nr),nq(3,nr)
-!    END IF
   END DO
 
 ELSE
 
 !       optionally LCGO initialization
   
-!  CALL ininodes()
   occup=1D0
 #if(parano) 
   nstate_all=nclust
@@ -2055,11 +1946,6 @@ ELSE
   WRITE(6,'(a)') 'after LCAO initialization:'
   WRITE(7,'(a)') 'after LCAO initialization:'
   DO nbr=1,nstate
-!    en=0D0
-!    DO i=1,kdfull2
-!      en=en+psir(i,nbr)*psir(i,nbr)
-!    END DO
-!    en=en*dx*dy*dz
     en=SUM(psir(:,nbr)**2)*dx*dy*dz
     WRITE(6,'(2(a,i5),3(a,1pg13.5))') 'node=',myn,', state=',nbr,  &
         ', en=',en,', occ=',occup(nbr),', spin=',ispin(nbr)
@@ -2067,7 +1953,6 @@ ELSE
         ', en=',en,', occ=',occup(nbr),', spin=',ispin(nbr)
   END DO
 END IF
-
 
 
 
@@ -2102,6 +1987,23 @@ END SUBROUTINE initwf
 !-----ininqb-------------------------------------------------------
 
 SUBROUTINE ininqb(nelect,deoccin,betain,gamin)
+
+!     Initialization of book-keeping arrays of states nq, ispin.
+
+!     Estimates Fermi energy from particle number and considers
+!     all states up "Fermi-energy plus deoccin" in the ordering
+!     of a deformed harmonic oscillator for given deformation.
+!     The input parameters are:
+!       nelect  = number of electrons
+!       deoccin   = number of osc. shells above Fermi shell
+!       betain  = quadrupole deformation of jellium background
+!       gamin   = triaxiality angle of jellium background
+!       temp    = (via 'params') temperature, temp=0 cuts to occupied only
+
+!     The output goes on the occupation fields 'nq' and 'ispin' 
+!     via module 'params'.
+
+
 USE params
 USE util, ONLY:pair
 IMPLICIT NONE
@@ -2110,35 +2012,17 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-INTEGER, INTENT(IN)                      :: nelect
-REAL(DP), INTENT(IN)                         :: deoccin
-REAL(DP), INTENT(IN)                         :: betain
-REAL(DP), INTENT(IN)                     :: gamin
+INTEGER, INTENT(IN)      :: nelect
+REAL(DP), INTENT(IN)     :: deoccin
+REAL(DP), INTENT(IN)     :: betain
+REAL(DP), INTENT(IN)     :: gamin
 
-!     initialization of book-keeping arrays of states nq, ispin.
 
-!     estimates Fermi energy from particle number and considers
-!     all states up "Fermi-energy plus deoccin" in the ordering
-!     of a deformed harmonic oscillator for given deformation.
-!     the input parameters are:
-!       nelect  = number of electrons
-!       deoccin   = number of osc. shells above Fermi shell
-!       betain  = quadrupole deformation of jellium background
-!       gamin   = triaxiality angle of jellium background
-!       temp    = (via common) temperature, temp=0 cuts to occupied only
-
-!     the output goes on the occupation fields nq and ispin on
-!     common /option/ .
-
-!INTEGER, PARAMETER :: kmxsav=kdfull/3
 REAL(DP) :: esp(ksttot)           ! storage for s.p. energies
 REAL(DP) :: efacto                ! factor to get energies from h.o.
-!~ REAL(DP) :: efermi                ! estimate for fermi shell
 REAL(DP) :: q20fac                ! sqrt(5/16pi)
 REAL(DP) :: cosfac,sinfac         ! weightes deduced from 'gamin'
-!     real      xfac,yfac,zfac        ! effective osc. energies in x,y,z
 REAL(DP) :: speact                ! actual s.p. energy in loop
-!~ INTEGER :: noscmx                ! maximum oscillator number
 INTEGER :: n                     ! nr. of state
 INTEGER :: noscx,noscy,noscz     ! osc. nr. in each direction
 INTEGER :: nomxup, nomxdw, nmaxdiff, mspindw
@@ -2215,8 +2099,6 @@ sinfac = q20fac*SQRT(2D0)*SIN(gamin)
 xfac   = efacto/(1D0-betain*(cosfac-sinfac))
 yfac   = efacto/(1D0-betain*(cosfac+sinfac))
 zfac   = efacto/(1D0+2D0*betain*cosfac)
-!      write(*,*) ' efacto,efrmup,ecutup,deoccin=',
-!     &   efacto,efrmup,ecutup,deoccin
 
 !     loop over all possible osc. triplets, determine s.p. energy
 !     and keep if below ecut
@@ -2232,20 +2114,13 @@ lb1: DO noscz=0,nomxup
      DO noscy=0,nomxup
      DO noscx=0,nomxup
       speact = noscz*zfac+noscy*yfac+noscx*xfac
-!        write(*,*) ' noscx,noscy,noscz,speact=',noscx,noscy,noscz,speact
       IF(speact < ecutup) THEN
         n     = 1+n
-!          write(*,*) 'n=',n
-!$$$          if(n.gt.ksttot)
-!$$$     &      stop ' deoccin or part.number to large for given ksttot'
         nq(1,n)  = noscx
         nq(2,n)  = noscy
         nq(3,n)  = noscz
         ispin(n) = 1
         esp(n)   = speact
-!test
-!          write(6,*) 'n,nelup,ksttot',n,nelup,ksttot
-!test
         IF(n <= nelup) THEN
           occu(n) = 1D0
         ELSE
@@ -2255,9 +2130,6 @@ lb1: DO noscz=0,nomxup
         IF(n > ksttot)  &
             STOP ' deoccin or part.number to large for given ksttot'
         
-!          write(6,*)
-!         write(6,*) 'speact',speact,'n',n,'isp',ispin(n)
-!old?        IF(n >= (nelup+nmaxdiff)) THEN
         IF(n > (nelup+nmaxdiff)) THEN
           WRITE(6,*) 'n=',n,' greater than nelup+dnmax=',nelup+nmaxdiff
           n=n-1                              ! new from MD
@@ -2269,10 +2141,9 @@ lb1: DO noscz=0,nomxup
      END DO
      END DO
      END DO lb1
-!19   continue
-!test
+
 WRITE(6,*) 'n(nelup)',n
-!test
+
 IF(n < nelup) STOP ' not enough states to reach (spin-up) particle number'
 IF(numspin==2) THEN
 
@@ -2301,11 +2172,10 @@ IF(numspin==2) THEN
         
           IF(n > ksttot) STOP ' deocc or part.number to large for given ksttot'
         
-!old?        IF(mspindw >= (neldw+nmaxdiff)) THEN
           IF(mspindw > (neldw+nmaxdiff)) THEN
              WRITE(6,*) 'mspindw=',mspindw,&
                 ' greater than neldw+dnmax=',neldw+nmaxdiff
-            mspindw=mspindw-1                                   ! new by MD
+            mspindw=mspindw-1                                
             EXIT lb2
           ENDIF
           WRITE(6,'(a,3i5,3f10.3)') 'check spin down:', &
@@ -2317,10 +2187,10 @@ IF(numspin==2) THEN
        END DO
        END DO
        END DO lb2
-!test
-WRITE(6,*) 'mspindw',mspindw
-WRITE(6,*) 'neldw',neldw
-!test
+
+   WRITE(6,*) 'mspindw',mspindw
+   WRITE(6,*) 'neldw',neldw
+
   IF(mspindw < neldw)  &
       STOP ' not enough states to reach spin-down particle number'
 END IF
@@ -2330,18 +2200,6 @@ WRITE(7,*) 'nstate ininqb',nstate
 !      if(iforce.eq.1) ispin(nstate) = ispin(nstate-1)
 IF(iforce == 1) STOP "option IFORCE obsolete"
 
-!    preliminary occupation numbers from estimated s.p. energies
-!  DO j=i+1,nstate
-!      eferm  = 0.0         ! restart search of eferm from scratch    IF(ispin(j).NE.is) CYCLE  DO j=i+1,nstate
-!      epstmp = 1.e-8    IF(occu(j) > occu(i)) THEN
-!      nnumb = 0      sav      = occu(i)
-!      nph   = ph(1)      occu(i) = occu(j)
-!      do i=1,nstate      occu(j) = sav
-!        occu(i)=1.0      sav    = esp(i)
-!        nnumb = nph + nnumb      esp(i) = esp(j)
-!        write(7,'(t2, 3i2, tr5, f9.3, tr3, i2)')
-!     &      (nq(k,i), k=1,3), occu(i), ispin(i)
-!      enddo
 
 IF(tocc .AND. nstate > nelect)  &
     CALL pair(esp,occu,ph,nclust,nstate,gp,eferm,temp,partnm,  &
@@ -2403,11 +2261,6 @@ DEALLOCATE(ph)
 !          -> always 1.0 in the present code
 
 
-!write(6,*) nstate,size(nhome),size(occup),size(occu),nstate
-!call mpi_finalize(icooltyp)
-!stop'rarararara'
-
-
 #if(parano)
 DO i=1,nstate
   nrel2abs(i)=i
@@ -2425,32 +2278,6 @@ nstate_all = nstate
 
 #if(parayes)
 CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
-!old      nsttest=0
-!old      nloc=0
-!old      do ipr=0,knode-1
-!old         nprov=0
-!old         do ifull=1,kstate
-!old            nsttest=nsttest!old            if(nsttest.le.nstate) nprov=ifull
-!old            if(myn.eq.ipr)  nloc=nprov
-!old            write(30+myn,*)
-!old     &           'ipr',ipr,'ifull',ifull,'nprov',nprov,'nloc',nloc
-!old         enddo
-!old      enddo
-!old      nstate=nloc
-!old      write(6,*) 'changing  on  proc',myn,'nstate to',nstate
-!old      write(7,*) 'changing  on  proc',myn,'nstate to',nstate
-!old      do i=1,kstate
-!old        nrel2abs(i)=i+myn*kstate
-!old      enddo
-!old      do i=1,ksttot
-!old        nabs2rel(i)=mod(i-1,kstate)+1
-!old        nhome(i)=(i-1)/kstate
-!old      enddo
-!old      do i=1,nstate
-!old        occup(i)=occu(nrel2abs(i))
-!old      enddo
-!old      write(7,'(8i1)') (ispin(nrel2abs(i)),i=1,nstate)
-!old      write(7,'(8i1)')   (nhome(i),i=1,ksttot)
 
 !     compute equidistribution of wfs on nodes
 
@@ -2509,31 +2336,37 @@ END SUBROUTINE ininqb
 
 SUBROUTINE jelbak(partn,alphel,betael,hexel,sqr,iturn)
 
-USE params
-USE util, ONLY:rotatevec3D
-IMPLICIT NONE
-
 !     computes the jellium background such that the radius is
 !     given by 'radjel'*part.numb.**1/3, the surface by
 !     'surjel', and the deformation is adjusted to the
 !     electron deformation given on 'alphel' and 'betael'
 
-!     y40 is expressed in terms of y20_effective to turn it automatically
-!     into the principal axes.
+!     The y40 is expressed in terms of y20_effective to align it 
+!     automatically with the principal axes.
 
-!     this version allows three-dimensional rotation of the
-!     jellium background if iturn is one. this happens as an excitation
+!     This version allows three-dimensional rotation of the
+!     jellium background if 'iturn' is one. This serves as an excitation
 !     mechanism shortly before the dynamics is started.
 
+!     Input:
+!       partn    = charge of background
+!       alphel   = axial deformation alpha_20
+!       betael   = triaxial deformation alpha_22
+!       hexel    = axial hexadecapole deformation alpha_40
+!       iturn    = initial rotation
+!     Output:
+!       sqr      = jellium radius
 
+USE params
+USE util, ONLY:rotatevec3D
+IMPLICIT NONE
 
-
-REAL(DP), INTENT(IN)                         :: partn
-REAL(DP), INTENT(IN OUT)                     :: alphel
-REAL(DP), INTENT(IN OUT)                     :: betael
-REAL(DP), INTENT(IN)                         :: hexel
-REAL(DP), INTENT(OUT)                        :: sqr
-INTEGER, INTENT(IN)                      :: iturn
+INTEGER, INTENT(IN)    :: iturn
+REAL(DP), INTENT(IN)   :: partn
+REAL(DP), INTENT(IN)   :: alphel
+REAL(DP), INTENT(IN)   :: betael
+REAL(DP), INTENT(IN)   :: hexel
+REAL(DP), INTENT(OUT)  :: sqr
 
 INTEGER :: i1,i2,i3,ii,iter
 REAL(DP) :: vecin(3),vecout(3),vecalpha(3),vecalp(3)
@@ -2802,7 +2635,7 @@ END SUBROUTINE jelbak
 
 SUBROUTINE initho(psir)
 
-!     initializes harmonic oscillator wavefunctions
+!  Initializes harmonic oscillator wavefunctions
 
 USE params
 IMPLICIT NONE
@@ -2927,18 +2760,20 @@ END SUBROUTINE initho
 SUBROUTINE clust(in,b,z,x,val,n1)
 
 
-!     initializes one part (x-,y- or z-direction) of a factorised
-!     wave-function
-!     input:  in    number of knots
-!             b     inverse width of harmonic oscillator solution
-!             z     location of the nucleus resp. cluster (see initho)
-!             x     value of grid-point
-!             n1    number of grid-points
-!     output: val   part of the factorised wave-function
+!   Initializes 1D oscillator wavefunction
 
-!     the function is
+!     Input:
+!       in    number of knots
+!       b     inverse width of harmonic oscillator solution
+!       z     location of the nucleus resp. cluster (see initho)
+!       x     value of grid-point
+!       n1    number of grid-points
+!     Output: 
+!       val   1D wave-function
+
+!     The function is
 !                sqrt(2)^n*h(sqrt(2)*x)
-!     where h(x) is the Hermite polynomial as explained in Rottmann, p.1
+!     where h(x) is the Hermite polynomial.
 
 USE params
 IMPLICIT NONE
@@ -3004,7 +2839,7 @@ END SUBROUTINE clust
 
 SUBROUTINE rotxyz(xin,yin,zin,xout,yout,zout,anglex,angley,anglez)
 
-!     rotation in three dimensions in three separate steps,
+!     Rotation in three dimensions in three separate steps,
 !      first, a rotation by an angle 'anglex' about the x-axis,
 !      second, a rotation by an angle 'angley' about the y-axis, and
 !      third, a rotation by an angle 'anglez' about the z-axis.
@@ -3061,14 +2896,14 @@ END SUBROUTINE rotxyz
 
 SUBROUTINE spinsep(psir)
 
-!     to induce local spin current by shifting spin-up and down in
-!     different directions
+!    To induce local spin current by shifting spin-up and down in
+!    different directions
 
 USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(OUT)                        :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)    :: psir(kdfull2,kstate)
 
 INTEGER :: ii,ix,iy,iz,nb
 REAL(DP) :: sgeps,x1,y1,z1
@@ -3096,189 +2931,6 @@ END IF
 RETURN
 END SUBROUTINE spinsep
 
-!~ !-----fixion------------------------------------------------------------
-
-!~ SUBROUTINE fixion
-
-!~ !     to fix two layers along y and z of an argon cluster (only cores)
-!~ !     to simulate the bulk
-!~ !     the input file must have already the positions of the bulk
-
-!~ USE params
-!~ IMPLICIT NONE
-
-!~ INTEGER :: ind, ind1, ind2, ion
-!~ INTEGER :: icy(nion),icz(nion)
-!~ INTEGER :: nfixedyu(nion),nfixedyd(nion)
-!~ INTEGER :: nfixedzu(nion),nfixedzd(nion)
-
-!~ ! two layers along y and z are fixed
-!~ ! first layer
-!~ ind = 0
-!~ nfixedyu(1) = 1
-!~ nfixedyd(1) = 1
-!~ nfixedzu(1) = 1
-!~ nfixedzd(1) = 1
-!~ icy(1) = cy(1)
-!~ IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) < 0D0) icy(1) = icy(1) - 1
-!~ IF(ABS(cy(1)-icy(1)) > 0.5D0 .AND. cy(1) > 0D0) icy(1) = icy(1) + 1
-!~ icz(1) = cz(1)
-!~ IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) < 0D0) icz(1) = icz(1) - 1
-!~ IF(ABS(cz(1)-icz(1)) > 0.5D0 .AND. cz(1) > 0D0) icz(1) = icz(1) + 1
-!~ DO ion=2,nrare
-!~   icy(ion) = cy(ion)
-!~   IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) < 0D0) icy(ion) = icy(ion) - 1
-!~   IF(ABS(cy(ion)-icy(ion)) > 0.5D0 .AND. cy(ion) > 0D0) icy(ion) = icy(ion) + 1
-!~   DO ind1=1,ion-1
-!~     IF(nfixedyu(ind1) > 0)THEN
-!~       IF(icy(ion) > icy(ind1))THEN
-!~         nfixedyu(ion) = ion
-!~         nfixedyu(ind1) = 0
-!~       ELSE IF(icy(ion) == icy(ind1))THEN
-!~         nfixedyu(ion) = ion
-!~       ELSE
-!~         nfixedyu(ion) = 0
-!~       END IF
-!~     END IF
-!~     IF(nfixedyd(ind1) > 0)THEN
-!~       IF(icy(ion) < icy(ind1))THEN
-!~         nfixedyd(ion) = ion
-!~         nfixedyd(ind1) = 0
-!~       ELSE IF(icy(ion) == icy(ind1))THEN
-!~         nfixedyd(ion) = ion
-!~       ELSE
-!~         nfixedyd(ion) = 0
-!~       END IF
-!~     END IF
-!~   END DO
-!~ END DO
-!~ DO ion=2,nrare
-!~   icz(ion) = cz(ion)
-!~   IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) < 0D0) icz(ion) = icz(ion) - 1
-!~   IF(ABS(cz(ion)-icz(ion)) > 0.5D0 .AND. cz(ion) > 0D0) icz(ion) = icz(ion) + 1
-!~   DO ind1=1,ion-1
-!~     IF(nfixedzu(ind1) > 0)THEN
-!~       IF(icz(ion) > icz(ind1))THEN
-!~         nfixedzu(ion) = ion
-!~         nfixedzu(ind1) = 0
-!~       ELSE IF(icz(ion) == icz(ind1))THEN
-!~         nfixedzu(ion) = ion
-!~       ELSE
-!~         nfixedzu(ion) = 0
-!~       END IF
-!~     END IF
-!~     IF(nfixedzd(ind1) > 0)THEN
-!~       IF(icz(ion) < icz(ind1))THEN
-!~         nfixedzd(ion) = ion
-!~         nfixedzd(ind1) = 0
-!~       ELSE IF(icz(ion) == icz(ind1))THEN
-!~         nfixedzd(ion) = ion
-!~       ELSE
-!~         nfixedzd(ion) = 0
-!~       END IF
-!~     END IF
-!~   END DO
-!~ END DO
-!~ DO ion=1,nion
-!~   IF(ion <= nrare)THEN
-!~     IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
-!~           .OR. nfixedzd(ion) > 0)THEN
-!~       nfixed(ion) = ion
-!~       ind = ind +1
-!~     ELSE
-!~       nfixed(ion) = 0
-!~     END IF
-!~   ELSE
-!~     nfixed(ion) = 0
-!~   END IF
-!~ END DO
-
-!~ ! second layer
-!~ ind2 = 1
-!~ DO WHILE(nfixed(ind2) > 0)
-!~   ind2 = ind2 + 1
-!~ END DO
-!~ nfixedyu(ind2) = ind2
-!~ nfixedyd(ind2) = ind2
-!~ nfixedzu(ind2) = ind2
-!~ nfixedzd(ind2) = ind2
-!~ DO ion=ind2+1,nrare
-!~   IF(ion /= nfixed(ion))THEN
-!~     DO ind1=ind2,ion-1
-!~       IF(ind1 /= nfixed(ind1))THEN
-!~         IF(nfixedyu(ind1) > 0)THEN
-!~           IF(icy(ion) > icy(ind1))THEN
-!~             nfixedyu(ion) = ion
-!~             nfixedyu(ind1) = 0
-!~           ELSE IF(icy(ion) == icy(ind1))THEN
-!~             nfixedyu(ion) = ion
-!~           ELSE
-!~             nfixedyu(ion) = 0
-!~           END IF
-!~         END IF
-!~         IF(nfixedyd(ind1) > 0)THEN
-!~           IF(icy(ion) < icy(ind1))THEN
-!~             nfixedyd(ion) = ion
-!~             nfixedyd(ind1) = 0
-!~           ELSE IF(icy(ion) == icy(ind1))THEN
-!~             nfixedyd(ion) = ion
-!~           ELSE
-!~             nfixedyd(ion) = 0
-!~           END IF
-!~         END IF
-!~       END IF
-!~     END DO
-!~   END IF
-!~ END DO
-!~ DO ion=ind2+1,nrare
-!~   IF(ion /= nfixed(ion))THEN
-!~     DO ind1=ind2,ion-1
-!~       IF(ind1 /= nfixed(ind1))THEN
-!~         IF(nfixedzu(ind1) > 0)THEN
-!~           IF(icz(ion) > icz(ind1))THEN
-!~             nfixedzu(ion) = ion
-!~             nfixedzu(ind1) = 0
-!~           ELSE IF(icz(ion) == icz(ind1))THEN
-!~             nfixedzu(ion) = ion
-!~           ELSE
-!~             nfixedzu(ion) = 0
-!~           END IF
-!~         END IF
-!~         IF(nfixedzd(ind1) > 0)THEN
-!~           IF(icz(ion) < icz(ind1))THEN
-!~             nfixedzd(ion) = ion
-!~             nfixedzd(ind1) = 0
-!~           ELSE IF(icz(ion) == icz(ind1))THEN
-!~             nfixedzd(ion) = ion
-!~           ELSE
-!~             nfixedzd(ion) = 0
-!~           END IF
-!~         END IF
-!~       END IF
-!~     END DO
-!~   END IF
-!~ END DO
-!~ DO ion=1,nion
-!~   IF(nfixed(ion) == 0)THEN
-!~     IF(ion <= nrare)THEN
-!~       IF(nfixedyu(ion) > 0 .OR. nfixedyd(ion) > 0 .OR. nfixedzu(ion) > 0  &
-!~             .OR. nfixedzd(ion) > 0)THEN
-!~         nfixed(ion) = ion
-!~         ind = ind +1
-!~       ELSE
-!~         nfixed(ion) = 0
-!~       END IF
-!~     ELSE
-!~       nfixed(ion) = 0
-!~     END IF
-!~   END IF
-!~ END DO
-!~ WRITE(6,*)'number of atoms fixed:',ind
-
-!~ RETURN
-!~ END SUBROUTINE fixion
-
-
 
 
 !-----checkoptions-------------------------------------------------
@@ -3286,7 +2938,7 @@ END SUBROUTINE spinsep
 
 SUBROUTINE checkoptions()
 
-!     to check consistency of compile-time options
+!   Check consistency of compile-time options
 
 USE params
 IMPLICIT NONE
@@ -3301,10 +2953,6 @@ IF(.NOT.directenergy .AND. ifsicp==4) STOP " KLI requires directenergy=.true."
 IF(directenergy .AND. idenfunc.NE.1) STOP ' directenergy=.true. requires Perdew&Wang functional '
 IF(directenergy .AND. ifsicp==5) &
    STOP ' directenergy=.true. not yet prepared for exact exchange '
-#if(!raregas)
-IF(ivdw /=0) STOP " set raregas=1 when using VdW"
-IF(isurf/=0) STOP " set isurf=0 or use raregas=1"
-#endif
 
 #if(raregas)
 IF(isurf==0) STOP " set isurf=1 when using raregas"
@@ -3319,8 +2967,8 @@ END SUBROUTINE checkoptions
 
 SUBROUTINE init_homfield()
 
-!     initialize a homogeneous electrical field and
-!     adds it to the background field 'potFixedIon'.
+!   Initialize a homogeneous electrical field and
+!   adds it to the background field 'potFixedIon'.
 
 USE params
 IMPLICIT NONE
@@ -3356,8 +3004,7 @@ END SUBROUTINE init_homfield
 
 SUBROUTINE init_grid()
 
-!     initialize Coulomb solver, kinetic energy and other
-!     grid properties
+!   Unitialize Coulomb solver, kinetic energy and other grid properties
 
 USE params
 USE kinetic
@@ -3391,7 +3038,6 @@ IF(level>=1) THEN
   kybox=kybox/coeff
   kzbox=kzbox/coeff
   WRITE(6,*) 'level',level,dx,kxbox
-!    write(outnam,*) level 
 
   nx2=kxbox
   ny2=kybox
@@ -3433,13 +3079,6 @@ IF(myn == 0)THEN
   IF(kstate == 0) STOP ' you must specify the maximum nr. of states KSTATE'
   IF(nabsorb > MIN(kxbox,kybox,kzbox)/4) STOP " NABSO too large"
 END IF
-!old      if(kxmax.lt.nx1) then
-!tab         stop ' error in parameter'
-!tab      elseif(kymax.lt.ny1) then
-!tab         stop ' error in parameter'
-!tab      elseif(kzmax.lt.nzi) then
-!tab         stop ' error in parameter'
-!tab      endif
 
 dvol=dx*dy*dz
 dxfine=dx/2D0
@@ -3478,6 +3117,7 @@ CALL inv5p_ini(dt1)
   CALL init_grid_fft(dx,dy,dz,nx2,ny2,nz2,dt1,h2m)
 #endif
 CALL init_coul(dx,dy,dz,nx2,ny2,nz2)
+
 ! check active FFT for parallel computing
 #if(parayes)
 IF(.NOT.ALLOCATED(akv)) &
@@ -3497,8 +3137,8 @@ END SUBROUTINE init_grid
 
 SUBROUTINE ithion
 
-!       initial thermalization of the ions (only executed if needed)
-!       we assign 0.5*kb*t per degree of freedom
+!   Initial thermalization of the ions (only executed if needed)
+!   we assign 0.5*kb*t per degree of freedom
 
 USE params
 IMPLICIT NONE
@@ -3567,7 +3207,7 @@ END SUBROUTINE ithion
 
 SUBROUTINE transf
 
-!     transform ions to the main axis of inertia
+!   Transform ions to the main axis of inertia
 
 USE params
 IMPLICIT NONE
@@ -3757,23 +3397,21 @@ END SUBROUTINE transf
 
 !---------------------------------------------------------------------
 
-!     adapted from numerical recipes (p. 456):
-!     compute eigenvalues (d) and eigenvectors of a symmetrical matrix
-!     a(n x n)and returns the matrix v(n x n), whose columns contain
-!     the normalized eigenvectors of a
-
-!---------------------------------------------------------------------
-
 SUBROUTINE jacobi(a,n,np,d,v,nrot)
 USE params, ONLY: DP
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: a(np,np)
-INTEGER, INTENT(IN)                      :: n
-INTEGER, INTENT(IN)                      :: np
-REAL(DP), INTENT(OUT)                        :: d(np)
-REAL(DP), INTENT(OUT)                        :: v(np,np)
-INTEGER, INTENT(OUT)                     :: nrot
+!     Compute eigenvalues 'd' and eigenvectors of a symmetric matrix
+!     'a' and returns the matrix 'v'  whose columns contain the 
+!     normalized eigenvectors of 'a'
+!     Adapted from numerical recipes (p. 456):
+
+REAL(DP), INTENT(IN OUT)   :: a(np,np)
+INTEGER, INTENT(IN)        :: n
+INTEGER, INTENT(IN)        :: np
+REAL(DP), INTENT(OUT)      :: d(np)
+REAL(DP), INTENT(OUT)      :: v(np,np)
+INTEGER, INTENT(OUT)       :: nrot
 
 
 INTEGER, PARAMETER :: nmax=500
@@ -3874,6 +3512,8 @@ END SUBROUTINE jacobi
 
 SUBROUTINE mergetabs
 
+!  ???
+
 USE params
 IMPLICIT NONE
 
@@ -3901,7 +3541,6 @@ DO i=1,kdfull2fine
   ENDIF
 END DO
 nfinfinesp=ifinsp
-!write(6,*) 'nfinfinesp',nfinfinesp
 
 ialltabfine=0
 DO ion=1,nion
@@ -3929,5 +3568,197 @@ DEALLOCATE(ialltabfine)
 RETURN
 END SUBROUTINE mergetabs
 
+ 
+SUBROUTINE genermowf(psiom,nmxst)
 
+! Generates orbital molecular wave function.
+!
+! Output:
+!   psiom  = wavefunctions
+!   nmxst  = maximum quantum state for an atom
+!   other parameters via module 'params'
+
+
+USE params
+IMPLICIT NONE
+#if(parayes)
+INCLUDE 'mpif.h'
+INTEGER :: is(mpi_status_size)
+#endif
+
+
+REAL(DP), INTENT(OUT)     :: psiom(kdfull2,kstate)
+INTEGER, INTENT(OUT)      :: nmxst(1:ng)       ! maximum nr. for each atom
+
+INTEGER :: i, ind, ion, ix, iy, iz
+INTEGER :: nadd, nadded, natlevel,  nbr, ncy, ncycle, ndiff, nmaxval, nstx, nsty, nstz, numstate, numlocstate
+REAL(DP) :: x1, y1, z1 
+INTEGER,ALLOCATABLE :: nactst(:)       ! keep track of actual atomic state
+INTEGER,ALLOCATABLE :: ncount(:)       ! keep track of actual atomic state
+INTEGER :: nnodes(1:3,1:10)
+DATA nnodes/0,0,0,   1,0,0,  0,1,0,   0,0,1,   2,0,0,  &
+    1,1,0,   0,2,0,  1,0,1,   0,1,1,   0,0,2/
+
+!---------------------------------------------------------------------
+
+!      reset wavefunctions 'psiom'
+
+ALLOCATE(nactst(1:ng))
+ALLOCATE(ncount(0:knode))
+nactst=0
+ncount=0
+
+WRITE(6,*) ' GENERLCGO entered. NION,NSTATE=',nion,nstate
+WRITE(6,*) ' CH(ion):',(ch(np(ion)),ion=1,nion)
+CALL flush(6)
+
+DO nbr=1,nstate
+  DO i=1,kdfull2
+    psiom(i,nbr)=0D0
+  END DO
+END DO
+
+!      book-keeping of number of states
+
+nmaxval = 0
+DO ion=1,nion
+  nmxst(ion) = ch(np(ion))
+  nmaxval = nmaxval + ch(np(ion))
+END DO
+ndiff = nmaxval - nclust
+ncycle = ndiff/nion+1
+IF(ndiff > 0) THEN
+  nadd = +1
+ELSE
+  nadd = -1
+END IF
+!nadd=0     !  ?? check the initialization
+IF(ndiff /= 0) THEN
+  nadded = 0
+  cycleloop:DO ncy=1,ncycle
+    DO ion=nion,1,-1
+      nmxst(ion) = nmxst(ion)-nadd
+      nadded = nadded + nadd
+      IF(nadded == ndiff) exit cycleloop
+    END DO
+  END DO cycleloop
+END IF
+WRITE(6,'(a,5i5)')  &
+    ' ndiff,nmaxval,nstate,ncycle,nadd=',ndiff,nmaxval,nstate, ncycle,nadd
+WRITE(6,'(a,100i3)') ' nmxst:',(nmxst(ion),ion=1,nion)
+WRITE(6,'(a,100i3)') '  ipol:',(ipol(ion),ion=1,nion)
+WRITE(6,*) '  ipolcheck:',(ipol(ion),ion=1,nion)
+
+!     loop through ions and fill electron states successively
+
+!nmaxact = nstate/nion+1                ! max. states per atom
+
+
+
+numstate = 0
+numlocstate = 0 ! in case of parallelism
+ionloop:DO ion=1,nion
+  DO natlevel=1,nmxst(ion)
+    IF(numstate == ksttot) then
+           write(6,*) 'numstate = ksttot, increase kstate or nproc'
+           write(7,*) 'numstate = ksttot, increase kstate or nproc'
+           EXIT ionloop
+    endif
+    numstate = 1 + numstate
+    ncount(nhome(numstate))=ncount(nhome(numstate))+1
+    IF(numspin==2) THEN
+       ispin(numstate) = 2-MOD(numstate,2)
+       IF (ipol(ion).eq.-1) ispin(numstate) = 2-mod(numstate+1,2)
+       nactst(ion) = nactst(ion)+MOD(natlevel,2)
+    ELSE
+        nactst(ion) = nactst(ion)+1
+    END IF
+#if(parayes)
+        ispin_node(ncount(nhome(numstate)),nhome(numstate)) = ispin(numstate)
+#endif
+    if(nhome(numstate)==myn) then
+       numlocstate=numlocstate+1
+
+
+         write(6,*) 'ion,natlev,numst,ispin', &
+                  ion,natlevel,numstate,ispin(numstate)
+         write(7,*) 'ksttot,nstate,ion,natlev,numst,ispin', &
+                  ksttot,nstate,ion,natlevel,numstate,ispin(numstate)
+       IF(nactst(ion) > 10) STOP 'GENERMOWF: too high atomic level'
+       IF(numlocstate > nstate) then
+           write(6,*) 'numlocstate > nstate, increase kstate or nproc'
+           write(7,*) 'numlocstate > nstate, increase kstate or nproc'
+           EXIT ionloop
+       endif
+!                                                 select nodes
+    nstx = nnodes(initord(1,ion),nactst(ion))
+    nsty = nnodes(initord(2,ion),nactst(ion))
+    nstz = nnodes(initord(3,ion),nactst(ion))
+!                                                 compute raw wf
+    ind=0
+    DO iz=1,nz2
+      z1=((iz-nzsh)*dz-cz(ion))/radini(ion)
+      DO iy=1,ny2
+        y1=((iy-nysh)*dy-cy(ion))/radini(ion)
+        DO ix=1,nx2
+          x1=((ix-nxsh)*dx-cx(ion))/radini(ion)
+          ind = ind+1
+          psiom(ind,numlocstate) = (x1**nstx-0.5D0*MAX(0,nstx-1))  &
+              *(y1**nsty-0.5D0*MAX(0,nsty-1)) *(z1**nstz-0.5D0*MAX(0,nstz-1))  &
+              *EXP(-(x1*x1+y1*y1+z1*z1)*0.5D0)
+        END DO
+      END DO
+    END DO
+
+    WRITE(6,'(a,i3,a,a,5i3,1pg13.5)')  &
+        ' electron state nr.',numstate,': ',  &
+        ' ion,nstx,nsty,nstz=',ion,nstx,nsty,nstz,ispin(numstate), &
+         SUM(psiom(:,numlocstate)**2)*dvol
+    endif
+  END DO
+END DO ionloop
+
+DEALLOCATE(nactst)
+
+
+!nstate=numlocstate
+
+!     Schmidt ortho-normalisation
+
+!CALL schmidt(psiom)
+
+
+!DO nbe=1,nstate
+!  
+!  DO in=1,nbe
+!    IF((ispin(nbe) == ispin(in))) THEN
+!      sum=0D0
+!      DO i=1,nxyz
+!        sum=sum+psiom(i,nbe)*psiom(i,in)
+!      END DO
+!      sum=sum*dvol
+!      cs = SUM(psiom(:,nbe)*psiom(:,in))*dvol      
+!      IF(in == nbe) THEN
+!        cs = 1D0/SQRT(cs)
+!        DO i=1,nxyz
+!          psiom(:,nbe)=psiom(:,nbe)*cs
+!        END DO
+!      ELSE
+!        DO  i=1,nxyz
+!          psiom(:,nbe)=psiom(:,nbe)-cs*psiom(:,in)
+!        END DO
+!      END IF
+!    END IF
+!  END DO
+!END DO
+
+!DO n=1,numstate
+!   WRITE(*,*) ' INITLCGO after Schmidt: state nr. norm=', &
+!   n,SUM(psiom(:,n)**2)*dvol
+!END DO
+CALL flush(6)
+
+
+RETURN
+END SUBROUTINE genermowf
 

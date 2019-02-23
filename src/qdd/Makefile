@@ -586,7 +586,7 @@ endif
 #####################################################################
 
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
-       generlcgo.o static.o dynamic.o lda.o util.o abso_bc.o\
+       static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\

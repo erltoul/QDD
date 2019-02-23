@@ -149,7 +149,9 @@ endif
     IF(myn == 0) THEN
       tfs=it*dt1*0.0484D0
       IF(nion2 > 0) CALL analyze_ions(it)
+#if(raregas)
       IF(isurf > 0) CALL analyze_surf(it)
+#endif
     END IF
     IF(nclust > 0) THEN
       CALL analyze_elect(psi,rho,aloc,it)
@@ -2237,6 +2239,7 @@ IF(irest <= 0) THEN                    !  write file headers
           CLOSE(621)
         END IF
         
+#if(raregas)
 ! Positions of GSM cores, clouds and cations
         IF(isurf /= 0) THEN
           OPEN(24,STATUS='unknown',FORM='formatted', FILE='pposcore.'//outnam)
@@ -2249,6 +2252,7 @@ IF(irest <= 0) THEN                    !  write file headers
           WRITE(125,'(a)') ' & '
           CLOSE(125)
         END IF
+#endif
         
         OPEN(424,STATUS='unknown',FORM='formatted', FILE='penerSurf.'//outnam)
         WRITE(424,'(a)') ' & '
