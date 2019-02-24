@@ -17,6 +17,10 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE kinetic
+
+! This module provides basic variables and arrays for FFT definition
+! of kinetic energand Coulomb solver. Valid for FFTw3 as well as NETLIB.
+
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 #endif
@@ -24,10 +28,10 @@ USE params, ONLY: DP,numthr,PI
 IMPLICIT NONE
 
 SAVE
-!     arrays for kinetic energy and electronic propagation
-!       kinetic energy coefficients in strange ordered Fourier space
-!     akv  = Fourier-field for 0.5*k^2
-!     ak   = Fourier-field for exp(i*dt*(h^2/2m)*k^2)
+!     Arrays for kinetic energy and electronic propagation.
+!     Kinetic energy coefficients in strange ordered Fourier space
+!       akv  = Fourier-field for 0.5*k^2
+!       ak   = Fourier-field for exp(i*dt*(h^2/2m)*k^2)
 
 INTEGER,PRIVATE,ALLOCATABLE :: modx(:),mody(:),modz(:)
 COMPLEX(DP),PARAMETER,PRIVATE :: eye=(0D0,1D0)
@@ -67,7 +71,13 @@ CONTAINS
 
 SUBROUTINE init_grid_fft(dx0,dy0,dz0,nx0,ny0,nz0,dt1,h2m)
 
-!     initialize details for FFT
+!  Initialize details for FFT, plans for FFTW3.
+!
+!  Input:
+!    dx0,dy0,dz0  =  grid spacing
+!    nx0,ny0,nz0  =  nr. of grid points
+!    dt1          =  electronic time step
+!    h2m          =  electronic hbar*+2/2m
 
 #if(fftw_cpu)
 USE FFTW
@@ -75,9 +85,7 @@ USE FFTW
 #if(parayes)
 USE params, only : myn,numthr,nthr,mpi_ierror
 INCLUDE 'mpif.h'
-
 REAL(DP) :: is(mpi_status_size)
-
 #endif
 
 REAL(DP),INTENT(IN):: dx0, dy0, dz0
@@ -242,7 +250,7 @@ IF (nini==0) THEN
       WRITE(*,*) 'wisdom from system'
     END IF
   END IF
-!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
+
 !      initialitze 3D plans, take care for independence in OpenMP
   DO i=0,nacthr
     pforw(i)=fftw_plan_dft_3d(nz2,ny2,nx2,ffta(:,:,:,i),ffta(:,:,:,i),FFTW_FORWARD,FFTW_planflag)
@@ -410,7 +418,6 @@ ELSE IF(nzini /= nz2) THEN
   STOP ' nz2 in four3d not as initialized!'
 END IF
 #endif
-!#endif
 
 #endif
 
@@ -427,7 +434,6 @@ DO i3=1,nz2
   modz(i3)=MOD(i3+nz,nz2)+1
 END DO
 
-!WRITE(*,*) ' end: fftay:',fftay
 
 END SUBROUTINE init_grid_fft
 
@@ -437,7 +443,11 @@ SUBROUTINE kinprop(q1,q2)
 
 ! ******************************
 
-!       propagation with exp(-i*dt*e_kin)
+!  Propagation with kinetic energy exp(-i*dt*e_kin).
+!
+!  Input/Output:
+!    q1     = coordinate-space array for propagated wavefunction 
+!    q2     = complex wavefunction array as workspace
 
 USE params
 #if(fftw_cpu)
@@ -453,7 +463,7 @@ COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
 INTEGER, SAVE ::  nxini=0,nyini=0,nzini=0 ! flag for initialization
 REAL(DP), ALLOCATABLE :: ffttax(:),ffttay(:),ffttaz(:),ffttb(:,:) ! Complexes stored in real arrays for NETLIB FFT library
 INTEGER:: i1, i2, i3, i1m, i2m, i3m, ind 
-INTEGER :: ic,ir        ! Index for real and complex components when stored in ffttax, fftay...
+INTEGER :: ic,ir   ! Index for real and complex components when stored in ffttax, fftay...
 COMPLEX(DP) :: cmplxfac
 #endif
 #if(fftw_cpu)
@@ -736,24 +746,21 @@ END SUBROUTINE  kinprop
 
 SUBROUTINE calc_ekin(psin,ekinout)
 
-!     calculates kinetic energy for single particle state with
-!     complex wavefunction 'psin'.
+! Calculates kinetic energy for single particle state with
+!  complex wavefunction 'psin'.
 
 USE params
 IMPLICIT NONE
 
 
-COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
-!REAL(DP), INTENT(IN)                         :: akv(kdfull2)
-REAL(DP), INTENT(OUT)                        :: ekinout
+COMPLEX(DP), INTENT(IN)    :: psin(kdfull2)
+REAL(DP), INTENT(OUT)      :: ekinout
 
 REAL(DP) :: sum0
 REAl(DP) :: sumk, sum0ex
 INTEGER ::ii
 REAL(DP) :: vol
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psi2
-!COMPLEX(DP) :: psi2(kdfull2)
-!EQUIVALENCE(psi2(1),w1(1))
 
 !------------------------------------------------------------------
 
@@ -782,11 +789,8 @@ END SUBROUTINE calc_ekin
 
 SUBROUTINE  gradient(fin,gradfout,idirec)
 
-! ******************************
-
-
-!  The gradient of complex field 'fin' in direction
-!  'idirec' (x =1, y=2, z=3).
+!  The gradient of complex field 'fin' in direction 'idirec'
+!    (x =1, y=2, z=3).
 !  The fields are given in Fourier space and the gradient is
 !   applied as product with 'kx', 'ky', 'kz'.
 !
@@ -794,9 +798,9 @@ SUBROUTINE  gradient(fin,gradfout,idirec)
 USE params
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT)                      :: fin(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
-INTEGER, INTENT(IN)                          :: idirec
+COMPLEX(DP), INTENT(IN)    :: fin(kdfull2)
+COMPLEX(DP), INTENT(OUT)   :: gradfout(kdfull2)
+INTEGER, INTENT(IN)        :: idirec
 
 
 ! ************************************************************
@@ -805,64 +809,13 @@ INTEGER, INTENT(IN)                          :: idirec
 #if(netlib_fft|fftw_cpu)
   IF(idirec == 1) THEN
 !       x-derivative
-
-!    dkx=pi/(dx*REAL(nx,DP))
-!    ind=0
-!    DO i3=1,nz2
-!      DO i2=1,ny2
-!        DO i1=1,nx2
-!          IF(i1 >= (nx+1)) THEN
-!            zkx=(i1-nx2-1)*dkx
-!          ELSE
-!            zkx=(i1-1)*dkx
-!          END IF
-!          ind=ind+1
-!          gradfout(ind) = eye*zkx*fin(ind)
           gradfout = -akx*fin
-!        END DO
-!      END DO
-!    END DO
-
   ELSEIF(idirec == 2) THEN
 !       y-derivative
-
-!    dky=pi/(dy*REAL(ny,DP))
-!    ind=0
-!    DO i3=1,nz2
-!      DO i2=1,ny2
-!        IF(i2 >= (ny+1)) THEN
-!          zky=(i2-ny2-1)*dky
-!        ELSE
-!          zky=(i2-1)*dky
-!        END IF
-!        DO i1=1,nx2
-!          ind=ind+1
-!          gradfout(ind) = eye*zky*fin(ind)
           gradfout = -aky*fin
-!        END DO
-!      END DO
-!    END DO
-
   ELSEIF(idirec == 3) THEN
 !       z-derivative
-
-!    ind=0
-!    dkz=pi/(dz*REAL(nz,DP))
-!    DO i3=1,nz2
-!      IF(i3 >= (nz+1)) THEN
-!        zkz=(i3-nz2-1)*dkz
-!      ELSE
-!        zkz=(i3-1)*dkz
-!      END IF
-!      DO i2=1,ny2
-!        DO i1=1,nx2
-!          ind=ind+1
-!          gradfout(ind) = eye*zkz*fin(ind)
           gradfout = -akz*fin
-!        END DO
-!      END DO
-!    END DO
-
   ELSE
     STOP ' RGRADIENT called with invalid IDIREC'
   ENDIF
@@ -876,8 +829,6 @@ END SUBROUTINE  gradient
 
 SUBROUTINE  xgradient_rspace(fin,gradfout)
 
-! ******************************
-
 !  The gradient of the complex field 'fin' in x-direction.
 !  The fields are given in coordinate space. The gradient is
 !  evaluated in k_x space.
@@ -889,8 +840,9 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+COMPLEX(DP), INTENT(IN)   :: fin(kdfull2)
+COMPLEX(DP), INTENT(OUT)  :: gradfout(kdfull2)
+
 INTEGER:: i1, i2, i3, ind 
 #if(netlib_fft)
 INTEGER:: ic, ir
@@ -965,12 +917,8 @@ RETURN
 END SUBROUTINE  xgradient_rspace
 
 
-! ******************************
 
 SUBROUTINE  ygradient_rspace(fin,gradfout)
-
-! ******************************
-
 
 !  The gradient of the complex field 'fin' in y-direction.
 !  The fields are given in coordinate space. The gradient is
@@ -983,8 +931,9 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+COMPLEX(DP), INTENT(IN)       :: fin(kdfull2)
+COMPLEX(DP), INTENT(OUT)   :: gradfout(kdfull2)
+
 #if(netlib_fft)
 INTEGER:: ic, ir
 #endif
@@ -1026,7 +975,7 @@ DO i3=1,nz2
 #if(netlib_fft)
       ic=2*i2
       ir=ic-1
-      fftay(ir) = -fftay(ic)*zky      ! *eye*zky
+      fftay(ir) = -fftay(ic)*zky  
       fftay(ic) =  fftay(ir)*zky
 #endif
 #if(fftw_cpu)
@@ -1059,12 +1008,7 @@ RETURN
 END SUBROUTINE  ygradient_rspace
 
 
-! ******************************
-
 SUBROUTINE  zgradient_rspace(fin,gradfout)
-
-! ******************************
-
 
 !  The gradient of the complex field 'fin' in z-direction.
 !  The fields are given in coordinate space. The gradient is
@@ -1077,8 +1021,9 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                         :: fin(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                     :: gradfout(kdfull2)
+COMPLEX(DP), INTENT(IN)    :: fin(kdfull2)
+COMPLEX(DP), INTENT(OUT)   :: gradfout(kdfull2)
+
 #if(netlib_fft)
 INTEGER:: ic, ir
 #endif
@@ -1173,11 +1118,11 @@ END SUBROUTINE  zgradient_rspace
 
 ! ******************************
 
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 SUBROUTINE  fftf(q1,q2)
-#endif
+!#endif
 
-! ******************************
+! Forward 3D FFT from 'q1' in r-space to 'q2' in k-space.
 
 USE params
 #if(fftw_cpu)
@@ -1185,20 +1130,14 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
-COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
+COMPLEX(DP), INTENT(IN)      :: q1(kdfull2)
+COMPLEX(DP), INTENT(OUT)     :: q2(kdfull2)
+
 #if(netlib_fft)
 INTEGER:: i1, i2, i3, i3m, ind 
 INTEGER:: ic, ir
 #endif
 REAL(DP):: tnorm
-!INTEGER, PARAMETER :: kfft=2*kxmax
-!INTEGER, PARAMETER :: kfft2=kfft*2+1
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /mfftini/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax),  &
-!    wrkx(kfft2),wrky(kfft2),wrkz(kfft2),  &
-!    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
-!    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
 
 #if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
@@ -1209,9 +1148,6 @@ tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 #if(netlib_fft)
 !     check initialization
 
-! nx=nx2/2
-! ny=ny2/2
-! nz=nz2/2
 IF(nxini == 0) THEN
   CALL dcfti1 (nx2,wsavex,ifacx)
   nxini  = nx2
@@ -1236,8 +1172,6 @@ END IF
 
 !     transformation in x-direction
 
-! nxyf=nx2*ny2
-!       nyf=nx2
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
@@ -1278,22 +1212,6 @@ DO i3=1,nz2
   END DO
 END DO
 
-!oldc
-!oldc     transformation in z-direction
-!oldc
-!old      do i2=1,ny2
-!old        do i1=1,nx2
-!old          do i3=1,nz2
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            ffta(mod(i3+nz,nz2)+1) = q2(ind)
-!old          enddo
-!old          call dcftf1 (nz2,ffta,wrkz,wsavez,ifacz)
-!old          do i3=1,nz2
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            q2(ind)= ffta(i3)*tnorm
-!old          enddo
-!old        enddo
-!old      enddo
 
 !     transformation in z-direction
 
@@ -1335,13 +1253,12 @@ CALL copy3dto1d(ffta(:,:,:,0),q2,tnorm,nx2,ny2,nz2)
 RETURN
 END SUBROUTINE  fftf
 
-! ******************************
 
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 SUBROUTINE  fftback(q1,q2)
-#endif
+!#endif
 
-! ******************************
+! Backward 3D FFT from 'q1' in k-space to 'q2' in r-space.
 
 USE params
 #if(fftw_cpu)
@@ -1356,25 +1273,11 @@ INTEGER:: i1, i2, i3, i3m, ind
 INTEGER:: ic, ir
 #endif
 REAL(DP):: facnr
-!INTEGER, PARAMETER :: kfft=2*kxmax
-!INTEGER, PARAMETER :: kfft2=kfft*2+1
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /mfftini/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax),  &
-!    wrkx(kfft2),wrky(kfft2),wrkz(kfft2),  &
-!    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
-!    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
-
-! nxyf=nx2*ny2
-!      nyf=nx2
-!      nx=nx2/2
-! ny=ny2/2
-! nz=nz2/2
 
 facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
 
 #if(netlib_fft)
 !     transformation in z-direction
-
 DO i2=1,ny2
   DO i3=1,nz2
     ic=2*i3
@@ -1456,15 +1359,13 @@ RETURN
 END SUBROUTINE  fftback
 
 
-! 1 "fft.f"
 
-! ******************************
 
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 SUBROUTINE  rftf(q1,q2)
-#endif
+!#endif
 
-! ******************************
+! Forward 3D FFT from real r-space array 'q1' to complex k-space 'q2'.
 
 USE params
 #if(fftw_cpu)
@@ -1472,15 +1373,8 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                     :: q1(kdfull2)
-COMPLEX(DP), INTENT(OUT)                     :: q2(kdfull2)
-!INTEGER, PARAMETER :: kfft=2*kxmax
-!INTEGER, PARAMETER :: kfft2=kfft*2+1
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /mfftini/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax),  &
-!    wrkx(kfft2),wrky(kfft2),wrkz(kfft2),  &
-!    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
-!    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
+REAL(DP), INTENT(IN)       :: q1(kdfull2)
+COMPLEX(DP), INTENT(OUT)   :: q2(kdfull2)
 
 #if(netlib_fft)
 INTEGER,SAVE :: nxini=0,nyini=0,nzini=0     ! flag for initialization
@@ -1493,10 +1387,6 @@ tnorm=1D0/SQRT(8D0*pi*pi*pi*REAL(nx2*ny2*nz2,DP))
 
 #if(netlib_fft)
 !     check initialization
-! nx=nx2/2
-! ny=ny2/2
-! nz=nz2/2
-
 IF(nxini == 0) THEN
   CALL dcfti1 (nx2,wsavex,ifacx)
   nxini  = nx2
@@ -1521,8 +1411,6 @@ END IF
 
 !     transformation in x-direction
 
-! nxyf=nx2*ny2
-!      nyf=nx2
 DO i3=1,nz2
   DO i2=1,ny2
     DO i1=1,nx2
@@ -1563,26 +1451,6 @@ DO i3=1,nz2
   END DO
 END DO
 
-!oldc
-!oldc     transformation in z-direction
-!oldc
-!old      do i2=1,ny2
-!old        do i3=1,nz2
-!old          do i1=1,nx2
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            fftb(mod(i3+nz,nz2)+1,i1) = q2(ind)
-!old          enddo
-!old        enddo
-!old        do i1=1,nx2
-!old          call dcftf1 (nz2,fftb(1,i1),wrkz,wsavez,ifacz)
-!old        enddo
-!old        do i3=1,nz2
-!old          do i1=1,nx2
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            q2(ind)= fftb(i3,i1)*tnorm
-!old          enddo
-!old        enddo
-!old      enddo
 
 !     transformation in z-direction
 
@@ -1622,14 +1490,13 @@ CALL copy3dto1d(ffta(:,:,:,0),q2,tnorm,nx2,ny2,nz2)
 RETURN
 END SUBROUTINE  rftf
 
-! ******************************
 
-#if(netlib_fft|fftw_cpu)
+!#if(netlib_fft|fftw_cpu)
 SUBROUTINE  rfftback(q1,q3)
 !SUBROUTINE  rfftback(q1,q2)
-#endif
+!#endif
 
-! ******************************
+! Backward 3D FFT from complex k-space 'q1' to real r-space array 'q3'.
 
 USE params
 #if(fftw_cpu)
@@ -1637,16 +1504,8 @@ USE FFTW
 #endif
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                      :: q1(kdfull2)
-!REAL(DP), INTENT(OUT)                        :: q2(kdfull2)
-REAL(DP), INTENT(OUT)                        :: q3(kdfull2)
-!INTEGER, PARAMETER :: kfft=2*kxmax
-!INTEGER, PARAMETER :: kfft2=kfft*2+1
-!COMPLEX(DP) :: fftax,fftay,fftb
-!COMMON /mfftini/fftax(kxmax),fftay(kymax),fftb(kzmax,kxmax),  &
-!    wrkx(kfft2),wrky(kfft2),wrkz(kfft2),  &
-!    wsavex(kfft2),wsavey(kfft2),wsavez(kfft2),  &
-!    ifacx(kfft2),ifacy(kfft2),ifacz(kfft2)
+COMPLEX(DP), INTENT(IN)    :: q1(kdfull2)
+REAL(DP), INTENT(OUT)      :: q3(kdfull2)
 
 #if(netlib_fft)
 COMPLEX(DP),ALLOCATABLE :: q2(:)
@@ -1665,22 +1524,6 @@ REAL(DP):: facnr
 facnr =SQRT(8D0*pi*pi*pi)/SQRT(REAL(nx2*ny2*nz2,DP))
 
 #if(netlib_fft)
-!oldc
-!oldc     transformation in z-direction
-!oldc
-!old      do i2=1,ny2
-!old        do i1=1,nx2
-!old          do i3=1,nz2
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            ffta(i3) = q1(ind)*facnr
-!old          enddo
-!old          call dcftb1 (nz2,ffta,wrkz,wsavez,ifacz)    ! basic fft
-!old          do i3=1,nz2                  ! copy back
-!old            ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-!old            q2(ind)= ffta(mod(i3+nz,nz2)+1)
-!old          enddo
-!old        enddo
-!old      enddo
 
 ALLOCATE(q2(kdfull2))
 
@@ -1766,21 +1609,25 @@ CALL copyr3dto1d(ffta(:,:,:,0),q3,facnr,nx2,ny2,nz2)
 
 RETURN
 END SUBROUTINE  rfftback
-!INCLUDE 'fftpack.F90'
-!INCLUDE 'fftpack2.F90'
 
 #if(fftw_cpu)
 
 SUBROUTINE copy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
-! ******************************
+! Copies 3D array from linear storage to 3D storage (both complex).
+! 
+! Input:
+!   vec1d           = array in linear storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec3d           =  array in 3D storage
 
 USE params
 IMPLICIT NONE
 
-INTEGER,INTENT(IN)                           :: nbx2
-INTEGER,INTENT(IN)                           :: nby2
-INTEGER,INTENT(IN)                           :: nbz2
+INTEGER,INTENT(IN)      :: nbx2
+INTEGER,INTENT(IN)      :: nby2
+INTEGER,INTENT(IN)      :: nbz2
 COMPLEX(DP), INTENT(IN)                      :: vec1d(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)       :: vec3d(nbx2,nby2,nbz2)
 
@@ -1792,8 +1639,6 @@ DO i3=1,nbz2
     DO i1=1,nbx2
       ind=ind+1
       vec3d(i1,i2,i3)=vec1d(ind)
-      !ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      !vec3d(modx(i1),mody(i2),modz(i3))=vec1d(ind)
     END DO
   END DO
 END DO
@@ -1805,14 +1650,20 @@ END SUBROUTINE copy1dto3d
 
 SUBROUTINE copyr1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
-! ******************************
+! Copies 3D array from real & linear storage to complex & 3D storage.
+! 
+! Input:
+!   vec1d           = array in linear storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec3d           =  array in 3D storage
 
 USE params
 IMPLICIT NONE
 
-INTEGER,INTENT(IN)                           :: nbx2
-INTEGER,INTENT(IN)                           :: nby2
-INTEGER,INTENT(IN)                           :: nbz2
+INTEGER,INTENT(IN)        :: nbx2
+INTEGER,INTENT(IN)        :: nby2
+INTEGER,INTENT(IN)        :: nbz2
 REAL(DP), INTENT(IN)                      :: vec1d(kdfull2)
 COMPLEX(C_DOUBLE_COMPLEX), INTENT(OUT)    :: vec3d(nbx2,nby2,nbz2)
 INTEGER:: i1, i2, i3, ind
@@ -1823,8 +1674,6 @@ DO i3=1,nbz2
     DO i1=1,nbx2
       ind=ind+1
       vec3d(i1,i2,i3)=CMPLX(vec1d(ind),0D0,DP) 
-      !ind=(i3-1)*nxyf+(i2-1)*nyf+i1
-      !vec3d(modx(i1),mody(i2),modz(i3))=CMPLX(vec1d(ind),0D0,DP) 
     END DO
   END DO
 END DO
@@ -1836,7 +1685,15 @@ END SUBROUTINE copyr1dto3d
 
 SUBROUTINE secopy1dto3d(vec1d,vec3d,nbx2,nby2,nbz2)
 
-! ******************************
+! Copies 3D array from linear storage to 3D storage (both complex).
+! 
+! Input:
+!   vec1d           = array in linear storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec3d           =  array in 3D storage
+!
+! Does the same as 'copy1dto3d' but with faster (?) index computation.
 
 USE params
 IMPLICIT NONE
@@ -1867,7 +1724,14 @@ SUBROUTINE copy3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
 SUBROUTINE copy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 #endif
 
-! ******************************
+! Copies 3D array from 3D storage to linear storage (both complex).
+! 
+! Input:
+!   vec3d           = array in 3D storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec1d           =  array in linear storage
+!
 
 USE params
 IMPLICIT NONE
@@ -1905,19 +1769,28 @@ SUBROUTINE copyr3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
 #else
 SUBROUTINE copyr3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 #endif
-! ******************************
+
+! Copies 3D array from 3D storage to linear storage.
+! 
+! Input:
+!   vec3d           = complex array in 3D storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec1d           = real array in linear storage
+!
 
 USE params
 IMPLICIT NONE
 
 #if(fftw_cpu)
-REAL(DP),INTENT(IN)                          ::coef
+REAL(DP),INTENT(IN)                     ::coef
 #endif
-INTEGER,INTENT(IN)                           :: nbx2
-INTEGER,INTENT(IN)                           :: nby2
-INTEGER,INTENT(IN)                           :: nbz2
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)     :: vec3d(nbx2,nby2,nbz2)
-REAL(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+INTEGER,INTENT(IN)                      :: nbx2
+INTEGER,INTENT(IN)                      :: nby2
+INTEGER,INTENT(IN)                      :: nbz2
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)   :: vec3d(nbx2,nby2,nbz2)
+REAL(DP), INTENT(OUT)                   :: vec1d(kdfull2)
+
 INTEGER:: i1, i2, i3, ind
 
 ind=0
@@ -1948,19 +1821,29 @@ SUBROUTINE secopy3dto1d(vec3d,vec1d,coef,nbx2,nby2,nbz2)
 SUBROUTINE secopy3dto1d(vec3d,vec1d,nbx2,nby2,nbz2)
 #endif
 
-! ******************************
+! Copies 3D array from 3D storage to linear storage (both complex).
+! 
+! Input:
+!   vec3d           = array in 3D storage
+!   nbx2,nby2,nbz2  = dimensions of 3D array
+! Output:
+!   vec1d           =  array in linear storage
+!
+! Does the same as 'copy1dto3d' but with faster (?) index computation.
+
 
 USE params
 IMPLICIT NONE
 
 #if(fftw_cpu)
-REAL(DP),INTENT(IN)                          ::coef
+REAL(DP),INTENT(IN)                     ::coef
 #endif
-INTEGER,INTENT(IN)                           :: nbx2
-INTEGER,INTENT(IN)                           :: nby2
-INTEGER,INTENT(IN)                           :: nbz2
-COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)        :: vec3d(nbx2,nby2,nbz2)
-COMPLEX(DP), INTENT(OUT)                     :: vec1d(kdfull2)
+INTEGER,INTENT(IN)                      :: nbx2
+INTEGER,INTENT(IN)                      :: nby2
+INTEGER,INTENT(IN)                      :: nbz2
+COMPLEX(C_DOUBLE_COMPLEX), INTENT(IN)   :: vec3d(nbx2,nby2,nbz2)
+COMPLEX(DP), INTENT(OUT)                :: vec1d(kdfull2)
+
 INTEGER:: i1, i2, i3, ind
 
 ind=0 
@@ -1987,7 +1870,9 @@ END SUBROUTINE secopy3dto1d
 
 SUBROUTINE fft_end()
 
-! ******************************
+! FFTW epilogue.
+
+
 #if(fftw_cpu)
 USE FFTW
 IMPLICIT NONE

@@ -17,6 +17,7 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE FFTW
+!  This short module links to the FFTW3 package.
 use, intrinsic :: iso_c_binding
 include 'fftw3.f03'
 END MODULE FFTW

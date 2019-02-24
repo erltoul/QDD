@@ -19,6 +19,17 @@
 !------falr Coulomb solver-------------------------------------------------
 
 MODULE coulsolv_f
+
+! Package for the FALR Couloomb solver (G. Lauritsch et al,
+! Int. J. Mod. Phys. C 5 (1994) 65).
+! A model density which reproduces the first multipole moments
+! of the given charge density is subtracted. The Coulomb problem
+! for the remaining density yields a short-range Coulomb potential
+! which is obtained by FFT forward and backward.
+! The FALR method is faster then the exact Coulomb solver on a
+! doubled grid (see 'coulex.F90'). But looses precision if too
+! much density comes close to the bounds of the box.
+
 #if(fftw_cpu)
 USE FFTW
 USE, intrinsic :: iso_c_binding
@@ -74,9 +85,15 @@ CONTAINS
 
 !-------------------------------------------------------------------
 SUBROUTINE init_coul_f(dx0,dy0,dz0,nx0,ny0,nz0)
+
+! Initializes basic arrays.
+!
+! Input:
+!   dx0,dy0,dz0  = grid spacings
+!   nx0,ny0,nz0  = box sizes
+
 IMPLICIT NONE
 
-!-----------------------------------------------------------------------
 INTEGER,INTENT(IN) :: nx0, ny0, nz0
 REAL(DP),INTENT(IN):: dx0, dy0, dz0
 
@@ -143,14 +160,21 @@ CALL coucor
 RETURN
 END SUBROUTINE init_coul_f
 
-!SUBROUTINE falr(rhoinp,chpfalr,kdf)
 SUBROUTINE solv_poisson_f(rhoinp,chpfalr,kdf)
+
+! Driver for the solution of the Poisson equation.
+!
+! Input:
+!   rhoinp  = charge density
+!   kdf     = linear dimension of 3D array
+! Output:
+!   chpfalr = resulting Coulomb potential
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                     :: rhoinp(kdf)
-REAL(DP), INTENT(IN OUT)                     :: chpfalr(kdf)
-INTEGER, INTENT(IN)                  :: kdf
+REAL(DP), INTENT(IN)      :: rhoinp(kdf)
+REAL(DP), INTENT(OUT)     :: chpfalr(kdf)
+INTEGER, INTENT(IN)       :: kdf
 
 
 !     call a routine written by you which writes your density field
@@ -209,6 +233,10 @@ END SUBROUTINE result
 !-----cofows------------------------------------------------------------
 
 SUBROUTINE coufou2
+
+! The FALR solver. I/O had been prepared in the driver 
+! routine 'solv_poisson_f' and is communicated via module
+! variables.
 
 IMPLICIT NONE
 INTEGER ::  i, i1, i2, i3, icase, ik, ikzero, j
@@ -514,9 +542,12 @@ END SUBROUTINE coufou2
 
 REAL(DP) FUNCTION fx1(x)
 
+! Model function for FALR solver.
+
 IMPLICIT NONE
 
-REAL(DP),INTENT(IN)                         :: x
+REAL(DP),INTENT(IN) :: x
+
 REAL(DP),PARAMETER :: eighty=80.0D0
 REAL(DP) :: expa, x2
 !------------------------------------------------------------------------------
@@ -752,7 +783,6 @@ DO l=0,4
           t1 = t1/(rad**(2*l+1))
         END IF
         radpow = one
-!        CALL qgaus(fx1,rad,binup,t2)
         CALL qgaus_fx1(rad,binup,t2)
         gfc = 4D0*pi/(2D0*l+1D0)*qg*(t1+t2)
         
@@ -796,7 +826,6 @@ END DO
 
 IF(refmom) THEN
   
-!      write(6,'(a)') 'y00 density:'
   WRITE(7,'(a)') 'y00 density:'
   CALL expand(rokall(1,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -804,7 +833,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(1) = q00
   
-!      write(6,'(a)') 'y10 density:'
   WRITE(7,'(a)') 'y10 density:'
   CALL expand(rokall(2,:),potc,1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -812,7 +840,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(2) = q10
   
-!      write(6,'(a)') 'y11r density:'
   WRITE(7,'(a)') 'y11r density:'
   CALL expand(rokall(3,:),potc,-1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -820,7 +847,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(3) = q11r
   
-!      write(6,'(a)') 'y11i density:'
   WRITE(7,'(a)') 'y11i density:'
   CALL expand(rokall(4,:),potc,1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -828,7 +854,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(4) = q11i
   
-!      write(6,'(a)') 'y20 density:'
   WRITE(7,'(a)') 'y20 density:'
   CALL expand(rokall(5,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -836,7 +861,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(5) = q20
   
-!      write(6,'(a)') 'y21r density:'
   WRITE(7,'(a)') 'y21r density:'
   CALL expand(rokall(6,:),potc,-1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -844,7 +868,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(6) = q21r
   
-!      write(6,'(a)') 'y21i density:'
   WRITE(7,'(a)') 'y21i density:'
   CALL expand(rokall(7,:),potc,1,-1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -852,7 +875,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(7) = q21i
   
-!      write(6,'(a)') 'y22r density:'
   WRITE(7,'(a)') 'y22r density:'
   CALL expand(rokall(8,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -860,7 +882,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(8) = q22r
   
-!      write(6,'(a)') 'y22i density:'
   WRITE(7,'(a)') 'y22i density:'
   CALL expand(rokall(9,:),potc,-1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -868,7 +889,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(9) = q22i
   
-!      write(6,'(a)') 'y30 density:'
   WRITE(7,'(a)') 'y30 density:'
   CALL expand(rokall(10,:),potc,1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -876,7 +896,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(10) = q30
   
-!      write(6,'(a)') 'y31r density:'
   WRITE(7,'(a)') 'y31r density:'
   CALL expand(rokall(11,:),potc,-1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -884,7 +903,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(11) = q31r
   
-!      write(6,'(a)') 'y31i density:'
   WRITE(7,'(a)') 'y31i density:'
   CALL expand(rokall(12,:),potc,1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -892,7 +910,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(12) = q31i
   
-!      write(6,'(a)') 'y32r density:'
   WRITE(7,'(a)') 'y32r density:'
   CALL expand(rokall(13,:),potc,1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -900,7 +917,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(13) = q32r
   
-!      write(6,'(a)') 'y32i density:'
   WRITE(7,'(a)') 'y32i density:'
   CALL expand(rokall(14,:),potc,-1,-1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -908,7 +924,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(14) = q32i
   
-!      write(6,'(a)') 'y33r density:'
   WRITE(7,'(a)') 'y33r density:'
   CALL expand(rokall(15,:),potc,-1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -916,7 +931,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(15) = q33r
   
-!      write(6,'(a)') 'y33i density:'
   WRITE(7,'(a)') 'y33i density:'
   CALL expand(rokall(16,:),potc,1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -925,7 +939,6 @@ IF(refmom) THEN
   qlcows(16) = q33i
   
   
-!      write(6,'(a)') 'y40 density:'
   WRITE(7,'(a)') 'y40 density:'
   CALL expand(rokall(17,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -933,7 +946,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(17) = q40
   
-!      write(6,'(a)') 'y41r density:'
   WRITE(7,'(a)') 'y41r density:'
   CALL expand(rokall(18,:),potc,-1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -941,7 +953,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(18) = q41r
   
-!      write(6,'(a)') 'y41i density:'
   WRITE(7,'(a)') 'y41i density:'
   CALL expand(rokall(19,:),potc,1,-1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -949,7 +960,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(19) = q41i
   
-!      write(6,'(a)') 'y42r density:'
   WRITE(7,'(a)') 'y42r density:'
   CALL expand(rokall(20,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -957,7 +967,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(20) = q42r
   
-!      write(6,'(a)') 'y42i density:'
   WRITE(7,'(a)') 'y42i density:'
   CALL expand(rokall(21,:),potc,-1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -965,7 +974,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(21) = q42i
   
-!      write(6,'(a)') 'y43r density:'
   WRITE(7,'(a)') 'y43r density:'
   CALL expand(rokall(22,:),potc,-1,1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -973,7 +981,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(22) = q43r
   
-!      write(6,'(a)') 'y43i density:'
   WRITE(7,'(a)') 'y43i density:'
   CALL expand(rokall(23,:),potc,1,-1,-1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -981,7 +988,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(23) = q43i
   
-!      write(6,'(a)') 'y44r density:'
   WRITE(7,'(a)') 'y44r density:'
   CALL expand(rokall(24,:),potc,1,1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -989,7 +995,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(24) = q44r
   
-!      write(6,'(a)') 'y44i density:'
   WRITE(7,'(a)') 'y44i density:'
   CALL expand(rokall(25,:),potc,-1,-1,1)
   CALL mulmws(potc,q00,q10,q11r,q11i,q20,q21r,q21i,  &
@@ -997,8 +1002,6 @@ IF(refmom) THEN
       q40,q41r,q41i,q42r,q42i,q43r,q43i,q44r,q44i, qr2,mumpri)
   qlcows(25) = q44i
 
-!WRITE(*,'(a,5(/5g13.4))') 'qlcows:',qlcows  
-  
 ELSE
   
   qlcows(1) = 1D0/pfy00
@@ -1029,7 +1032,6 @@ ELSE
   
 END IF
 
-!      write(7,'(a)') 'end coucor'
 WRITE(7,'(a,10(/1x,5g12.4))') 'qlcor:',qlcows
 
 RETURN
@@ -1098,34 +1100,34 @@ SUBROUTINE mulmws(rhomul,q00,q10,q11r,q11i,q20,q21r,q21i,  &
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                         :: rhomul(kdfull)
-REAL(DP), INTENT(OUT)                        :: q00
-REAL(DP), INTENT(OUT)                        :: q10
-REAL(DP), INTENT(OUT)                        :: q11r
-REAL(DP), INTENT(OUT)                        :: q11i
-REAL(DP), INTENT(OUT)                        :: q20
-REAL(DP), INTENT(OUT)                        :: q21r
-REAL(DP), INTENT(OUT)                        :: q21i
-REAL(DP), INTENT(OUT)                        :: q22r
-REAL(DP), INTENT(OUT)                        :: q22i
-REAL(DP), INTENT(OUT)                        :: q30
-REAL(DP), INTENT(OUT)                        :: q31r
-REAL(DP), INTENT(OUT)                        :: q31i
-REAL(DP), INTENT(OUT)                        :: q32r
-REAL(DP), INTENT(OUT)                        :: q32i
-REAL(DP), INTENT(OUT)                        :: q33r
-REAL(DP), INTENT(OUT)                        :: q33i
-REAL(DP), INTENT(OUT)                        :: q40
-REAL(DP), INTENT(OUT)                        :: q41r
-REAL(DP), INTENT(OUT)                        :: q41i
-REAL(DP), INTENT(OUT)                        :: q42r
-REAL(DP), INTENT(OUT)                        :: q42i
-REAL(DP), INTENT(OUT)                        :: q43r
-REAL(DP), INTENT(OUT)                        :: q43i
-REAL(DP), INTENT(OUT)                        :: q44r
-REAL(DP), INTENT(OUT)                        :: q44i
-REAL(DP), INTENT(OUT)                        :: qr2
-LOGICAL, INTENT(IN)                      :: mumpri
+REAL(DP), INTENT(IN)     :: rhomul(kdfull)
+REAL(DP), INTENT(OUT)    :: q00
+REAL(DP), INTENT(OUT)    :: q10
+REAL(DP), INTENT(OUT)    :: q11r
+REAL(DP), INTENT(OUT)    :: q11i
+REAL(DP), INTENT(OUT)    :: q20
+REAL(DP), INTENT(OUT)    :: q21r
+REAL(DP), INTENT(OUT)    :: q21i
+REAL(DP), INTENT(OUT)    :: q22r
+REAL(DP), INTENT(OUT)    :: q22i
+REAL(DP), INTENT(OUT)    :: q30
+REAL(DP), INTENT(OUT)    :: q31r
+REAL(DP), INTENT(OUT)    :: q31i
+REAL(DP), INTENT(OUT)    :: q32r
+REAL(DP), INTENT(OUT)    :: q32i
+REAL(DP), INTENT(OUT)    :: q33r
+REAL(DP), INTENT(OUT)    :: q33i
+REAL(DP), INTENT(OUT)    :: q40
+REAL(DP), INTENT(OUT)    :: q41r
+REAL(DP), INTENT(OUT)    :: q41i
+REAL(DP), INTENT(OUT)    :: q42r
+REAL(DP), INTENT(OUT)    :: q42i
+REAL(DP), INTENT(OUT)    :: q43r
+REAL(DP), INTENT(OUT)    :: q43i
+REAL(DP), INTENT(OUT)    :: q44r
+REAL(DP), INTENT(OUT)    :: q44i
+REAL(DP), INTENT(OUT)    :: qr2
+LOGICAL, INTENT(IN)  ::   mumpri
 
 INTEGER :: i1,i2,i3,ii
 REAL(DP) ::rhp,rr,x,y,z,xx,yy,zz
@@ -1269,10 +1271,10 @@ END SUBROUTINE mulmws
 
 SUBROUTINE expand(rhoin,rhoout,ipx,ipy,ipz)
 
-!     expands a compressed field into full 3d
-!       rhoin   = input field in upper octant
-!       rhoout  = output field in full 3d box
-!       ipx,y,z = parities in x,y,z
+!   Expands a compressed field into full 3d
+!      rhoin   = input field in upper octant
+!      rhoout  = output field in full 3d box
+!      ipx,y,z = parities in x,y,z
 
 
 IMPLICIT NONE
@@ -1345,8 +1347,8 @@ END SUBROUTINE expand
 
 !----qgaus-------------------------------------------------------------
 
-!     numerical recipes routine qgaus (20 point)
-! gauss quadrature
+! Gauss quadrature adapted from numerical recipes routine qgaus (20 point)
+! 
 SUBROUTINE qgaus_fx1(a,b,ss)
 IMPLICIT NONE
 
@@ -1357,13 +1359,6 @@ REAL(DP) :: x(10),w(10)
 
 INTEGER :: j
 REAL(DP) :: xm, xr
-!EXTERNAL func
-!INTERFACE
-!  REAL(DP) FUNCTION func(x)
-!  USE params, ONLY: DP
-!  REAL(DP),INTENT(in) :: x
-!  END FUNCTION func
-!END INTERFACE
 
 DATA x/.076526521133497D0, .227785851141645D0, .373706088715419D0,  &
     .510867001950827D0, .636053680726515D0, .746331906460150D0,  &
@@ -1380,7 +1375,6 @@ ss = 0.0D0
 DO j=1,10
   dx = xr*x(j)
   ss = ss+w(j) * (fx1(xm+dx) + fx1(xm-dx))
-!s = ss+w(j) * (func(xm+dx) + func(xm-dx))
 END DO
 ss = xr*ss
 
@@ -1392,11 +1386,7 @@ END SUBROUTINE qgaus_fx1
 SUBROUTINE fftinp
 IMPLICIT NONE
 
-!     does some of the work normally done by input in jel3d.f
-!     for details on the grid also see readme.fcs, chapter 4.
-
-!     grid parameters nx,ny,nz,dx,dy,dz,ecut must have been read or
-!     initialized before !
+! Initializes parameters for Coulomb solver (mostly for FFT).
 
 !-----------------------------------------------------------------------
 
@@ -1542,29 +1532,29 @@ END SUBROUTINE fftinp
 SUBROUTINE fourf(psx,pskr,pski,ipar)
 IMPLICIT NONE
 
+!  Fourier forward transformation
+!
+!  Input:  
+!     psx    input wave-function
+!     ipar   parity in x- and y-direction
+!  Output: 
+!     pskr   real part of the wave-function
+!     pski   imaginary part of the wave-function
 
-REAL(DP), INTENT(IN OUT)                         :: psx(kdfull)
-REAL(DP), INTENT(OUT)                        :: pskr(kdred)
-REAL(DP), INTENT(OUT)                        :: pski(kdred)
-INTEGER, INTENT(IN)                      :: ipar(3)
+REAL(DP), INTENT(IN out)  :: psx(kdfull)
+REAL(DP), INTENT(OUT)     :: pskr(kdred)
+REAL(DP), INTENT(OUT)     :: pski(kdred)
+INTEGER, INTENT(IN)       :: ipar(3)
 
 INTEGER ::  i1, i
 REAL(DP) ::  a(kdfull)
 REAL(DP) :: mxini,myini,mzini
 REAL(DP) :: nzzh, nyyh, sqh, tnorm, xp, yp, zp
 
-!     Fourier forward transformation
-!     input:  psx    input wave-function
-!             ipar   parity in x- and y-direction
-!     output: pskr   real part of the wave-function
-!             pski   imaginary part of the wave-function
 
 DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
-!INTEGER wisdomtest
 
 !----------------------------------------------------------------------
-
-
 
 !     check initialization
 #if(netlib_fft)
@@ -1664,28 +1654,34 @@ END DO
 
 RETURN
 END SUBROUTINE fourf
+
+
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(psx,pskr,pski,ipar)
+
+!  Fourier backward transformation
+!
+!  Input:  
+!     pskr   real part of the wave-function
+!     pski   imaginary part of the wave-function
+!     ipar   parity in x- and y-direction
+!  Output: 
+!     psx    input wave-function
+
+
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(OUT)                        :: psx(kdfull)
-REAL(DP), INTENT(IN)                         :: pskr(kdred)
-REAL(DP), INTENT(IN)                         :: pski(kdred)
-INTEGER, INTENT(IN)                      :: ipar(3)
+REAL(DP), INTENT(OUT)    :: psx(kdfull)
+REAL(DP), INTENT(IN)     :: pskr(kdred)
+REAL(DP), INTENT(IN)     :: pski(kdred)
+INTEGER, INTENT(IN)      :: ipar(3)
 
 INTEGER :: i,i1
 REAL(DP) :: nzzh, nyyh, sq2, tnorm, xp, yp, zp
 REAL(DP) ::  a(kdfull)
 
-
-
-!     Fourier backward transformation
-!     input:  pskr   real part of the wave-function
-!             pski   imaginary part of the wave-function
-!             ipar   parity in x- and y-direction
-!     output: psx    output wave-function
 !----------------------------------------------------------------------
 
 nzzh=(nzi-1)*nxy1
@@ -1702,7 +1698,6 @@ DO i1=1,nkxyz
   i=indfc(i1)
   psx(i1)=0D0
   a(i1)=0D0
-!        if(i.le.0) goto 10
   IF(i > 0) THEN
     psx(i1)=tnorm*pskr(i)
     a(i1)=tnorm*pski(i)
@@ -1721,6 +1716,12 @@ END SUBROUTINE fourb
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
+
+!  Performs the Fourier-transformation in x-direction.
+!  The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function.
+
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)                     :: psxr(kdfull)
@@ -1730,9 +1731,6 @@ INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
 #endif
 INTEGER :: i0, i1, i2, i3, i30, ii, nx11
 
-!     performs the Fourier-transformation in x-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
 !----------------------------------------------------------------------
 
 #if(netlib_fft)
@@ -1836,6 +1834,11 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
+
+!  Performs the Fourier-transformation in y-direction.
+!  The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
@@ -1844,9 +1847,6 @@ REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftay
 #endif
 INTEGER :: i0,i1,i2,i3,i30,ii,ny11
-!     performs the Fourier-transformation in y-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 #if(netlib_fft)
@@ -1959,9 +1959,14 @@ END DO
 
 RETURN
 END SUBROUTINE ffty
-!-----fftz-------------------------------------------------------------
 
+!-----fftz-------------------------------------------------------------
 SUBROUTINE fftz(psxr,psxi)
+
+!  Performs the Fourier-transformation in z-direction.
+!  The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
@@ -1973,9 +1978,6 @@ INTEGER :: nzh
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
 INTEGER :: i1,i2,i3,i3m, ind
-!     performs the Fourier-transformation in z-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 nxyf = kfftx*kffty
@@ -2034,13 +2036,18 @@ END DO
 #endif
 RETURN
 END SUBROUTINE fftz
-!-----ffbz-------------------------------------------------------------
 
+!-----ffbz-------------------------------------------------------------
 SUBROUTINE ffbz(psxr,psxi)
+
+!  Performs the Fourier-backtransformation in z-direction.
+!  The input/output-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function
+
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
-REAL(DP), INTENT(IN OUT)                     :: psxi(kdfull)
+REAL(DP), INTENT(OUT)        :: psxr(kdfull)
+REAL(DP), INTENT(IN OUT)     :: psxi(kdfull)
 INTEGER :: nxyf 
 INTEGER :: nyf  
 INTEGER :: nzh  
@@ -2105,9 +2112,14 @@ END DO
 RETURN
 
 END SUBROUTINE ffbz
-!-----ffby-------------------------------------------------------------
 
+!-----ffby-------------------------------------------------------------
 SUBROUTINE ffby(psxr,psxi)
+
+!  Performs the Fourier-backtransformation in y-direction.
+!  The input/output-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
@@ -2218,9 +2230,14 @@ END DO
 #endif
 RETURN
 END SUBROUTINE ffby
-!-----ffbx-------------------------------------------------------------
 
+!-----ffbx-------------------------------------------------------------
 SUBROUTINE ffbx(psxr,psxi)
+
+!  Performs the Fourier-backtransformation in x-direction.
+!  The input/output-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!  is overwritten by the Fourier-transformed wave-function
+
 IMPLICIT NONE
 
 REAL(DP), INTENT(OUT)                        :: psxr(kdfull)
@@ -2329,6 +2346,8 @@ END SUBROUTINE ffbx
 
 #if(fftw_cpu)
 SUBROUTINE coulsolv_end()
+
+! Epilogie for FFTW3
 
 CALL fftw_destroy_plan(pforwx)
 CALL fftw_destroy_plan(pforwy)

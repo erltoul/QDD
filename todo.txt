@@ -55,6 +55,14 @@
      already computed in he electronic routine. 
      ==> Doubling with danger of inconcsistence. Unify!
 
+14) Routine 'kinprop' in 'fft.F90':
+     3D propagator involves copies 1D <--> 3D storage. Can that be
+     avoided by equivalencing via TARGET attribute?
+
+15) Copy routines in 'fft.F90':
+     Two versions 'copy...' and 'secopy...' differ by index
+     computation. Check speed and maintain the faster version.
+
 *****************************************************************
 
 Code cleaning:
@@ -63,7 +71,7 @@ Code cleaning:
 Cleaned:
    main.F90
 
-Subroutines commented:
+Subroutines checked and commented:
    zeroforce.F90
    util.F90
    static.F90
@@ -86,3 +94,6 @@ Subroutines commented:
    ionmd.F90
    init.F90
    givens.F90
+   fft.F90
+   fftpack*.F90
+   falr.F90
