@@ -16,54 +16,6 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
- 
-!------------------------------------------------------------
-!
-REAL(DP) FUNCTION gauss(r,s)
-!------------------------------------------------------------
-USE params, ONLY:DP
-IMPLICIT NONE
-REAL(DP),INTENT(IN) :: r
-REAL(DP),INTENT(IN) :: s
-REAL(DP)::rs
-!     tabulated version of the Gauss function; it is
-!     correct up to second order
-!      double precision r,s
-rs = r/s
-!      rc=10.0d0
-!      if (r-rc.lt.0.0d0) then
-!         rr= r/drtab
-!         if (rr-0.5d0 .le.0.0d0) then
-!            ir = 1+ int(rr)
-!         else
-!            ir = 2 + int(rr)
-!         endif
-!         rn = (ir-1)*drtab
-!         delr = r-rn
-!         gauss = gaussian(ir) + delr*gaussian1(ir)+0.5*gaussian2(ir)
-!      else
-gauss = EXP(-rs*rs)
-!      endif
-RETURN
-END FUNCTION gauss
-!------------------------------------------------------------
-
-!------------------------------------------------------------
-!
-REAL(DP) FUNCTION dgaussdr(r,s)
-!------------------------------------------------------------
-!     derivation of a Gaussian
-USE params, ONLY: DP
-IMPLICIT NONE
-
-REAL(DP),INTENT(IN)  :: r
-REAL(DP),INTENT(IN)  :: s
-REAL(DP)::ra
-
-ra = r/s
-dgaussdr = - 2D0*ra*EXP(-(ra*ra))/s
-RETURN
-END FUNCTION dgaussdr
 
 #if(raregas)
 !     This file contains tabulated versions of some common

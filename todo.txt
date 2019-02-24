@@ -50,6 +50,11 @@
      b) 'init_homfield' seems to do the same as 'dipx,dipy,dipz'?
        Check and remove one if found doubling.
 
+13) Routine 'laserf' in 'forces.F90':
+     This routine re-evaluates the actual field strength which was
+     already computed in he electronic routine. 
+     ==> Doubling with danger of inconcsistence. Unify!
+
 *****************************************************************
 
 Code cleaning:
@@ -62,6 +67,7 @@ Subroutines commented:
    zeroforce.F90
    util.F90
    static.F90
+   subgrids.F90
    sicnew.F90
    schmid.F90
    rho.F90
@@ -78,3 +84,5 @@ Subroutines commented:
    lda.F90
    kinetic.F90   
    ionmd.F90
+   init.F90
+   givens.F90

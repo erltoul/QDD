@@ -17,7 +17,8 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 
-! This file serves just to associate the correct gridding routines.
+! This file includes FFT or finite differences version of
+! MODULE kinetic
 
 #if(netlib_fft|fftw_cpu)
 #include "fft.F90"

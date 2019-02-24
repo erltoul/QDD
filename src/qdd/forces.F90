@@ -64,7 +64,6 @@ WRITE(6,*) 'Entering getforces: ipsptyp=',ipsptyp
 !     In case of Goedecker PsP, switch to the corresponding routine
 !     in the old force.F file
 
-
 IF(ipsptyp == 1 .AND. tnonlocany) THEN
   CALL calcf_goenonl(rho,it,psi)
   CALL laserf(rho)
@@ -77,9 +76,6 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
   ENDDO
   CALL flush(772)
   CLOSE(772)
-
-
-
   RETURN
 ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   CALL calcf_goeloc(rho,it)
@@ -95,7 +91,6 @@ ELSE IF((ipsptyp==1  .AND. .NOT.tnonlocany) .OR. ipsptyp == 2) THEN
   RETURN
 END IF
 
-!WRITE(*,*) ' GETFORCES: iflag,taccel,vpx,vpy,vpz=',iflag,taccel,vpx,vpy,vpz
 IF (iflag == 0) THEN
   fx(1:nion)=0D0;fy(1:nion)=0D0;fz(1:nion)=0D0
 #if(raregas)
@@ -126,7 +121,7 @@ IF (iflag == 0) THEN
   
   IF (nclust > 0) CALL getforceelna(rho)
   
-  CALL getforcenana(rho)
+  CALL getforcenana()
   
 END IF
 
@@ -152,36 +147,23 @@ IF (isurf /= 0) THEN
   IF (ivdw == 1) THEN
     CALL getvdwforce(rho)
   END IF  ! if ivdw.eq.2 vdw is done implicitely by vArElCore
-
   
 END IF
 #endif
+
+
 OPEN(772,FILE='forces.'//outnam)
 DO i=1,nion
   WRITE(772,*) fx(i)
   WRITE(772,*) fy(i)
   WRITE(772,*) fz(i)
 ENDDO
-!#if(raregas)         
-! DO i=1,nk
-!           write(*,*) 'k: ',fxk(i),fyk(i),fzk(i)
-!        write(772,'(a),(6e17.7)') 'cv: ',fxk(i),fyk(i),fzk(i)
-!        write(6,*) 'cv: ',fxk(i),fyk(i),fzk(i)
-!        write(7,*) 'cv: ',fxk(i),fyk(i),fzk(i)
-!ENDDO
-!#endif         
-         CALL flush(772)
-         CLOSE(772)
+CLOSE(772)
 
-
-
-!         if (tfs.gt.0)
 
 CALL laserf(rho)
 
 
-
-!test      write(6,*) 'Leaving getforces'
 
 !      stop
 RETURN
@@ -190,69 +172,18 @@ END SUBROUTINE getforces
 
 
 
-!~ !------------------------------------------------------------
-
-!~ SUBROUTINE friction(ifl,iflc,ifle,iflk)
-!~ !------------------------------------------------------------
-!~ USE params
-!~ IMPLICIT NONE
-
-!~ INTEGER,INTENT(IN) :: ifl
-!~ INTEGER,INTENT(IN) :: iflc
-!~ INTEGER,INTENT(IN) :: ifle
-!~ INTEGER,INTENT(IN) :: iflk
-
-!~ !     simple damping force for test equilibration
-
-!~ IF (itindex <= icoolsteps .AND. icool == 2) THEN
-  
-!~   IF (ifl /= 0) THEN
-!~     DO i=1,nion
-!~       fx(i)=fx(i)-0.003D0*cpx(i)
-!~       fy(i)=fy(i)-0.003D0*cpy(i)
-!~       fz(i)=fz(i)-0.003D0*cpz(i)
-!~     END DO
-!~   END IF
-!~ #if(raregas)
-!~   IF (iflc /= 0) THEN
-!~     DO i=1,nc
-!~       fxc(i)=fxc(i)-0.003D0*pxc(i)
-!~       fyc(i)=fyc(i)-0.003D0*pyc(i)
-!~       fzc(i)=fzc(i)-0.003D0*pzc(i)
-!~     END DO
-!~   END IF
-!~   IF (ifle /= 0) THEN
-!~     DO i=1,NE
-!~       fxe(i)=fxe(i)-0.003D0*pxe(i)
-!~       fye(i)=fye(i)-0.003D0*pye(i)
-!~       fze(i)=fze(i)-0.003D0*pze(i)
-!~     END DO
-!~   END IF
-!~   IF (iflk /= 0) THEN
-!~     DO i=1,nk
-!~       fxk(i)=fxk(i)-0.003D0*pxk(i)
-!~       fyk(i)=fyk(i)-0.003D0*pyk(i)
-!~       fzk(i)=fzk(i)-0.003D0*pzk(i)
-!~     END DO
-!~   END IF
-!~ #endif
-  
-!~ END IF
-
-!~ RETURN
-!~ END SUBROUTINE friction
-!~ !------------------------------------------------------------
-
-
 !------------------------------------------------------------
 
-SUBROUTINE getforcenana(rho)
-!------------------------------------------------------------
+SUBROUTINE getforcenana()
+
+! Force between ionic cores
+! Input and output communicated via module 'params'
+
 USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
+!REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
 
 INTEGER :: ii, jj
 REAL(DP) :: dist, dist2, radfor, forcex, forcey, forcez
@@ -265,8 +196,6 @@ DO ii=1,nion-1
   xi = cx(ii)
   yi = cy(ii)
   zi = cz(ii)
-!         ccc1 = chg1(np(ii))
-!         ccc2 = chg2(np(ii))
   
   DO jj=ii+1,nion
     
@@ -291,7 +220,7 @@ DO ii=1,nion-1
     fy(jj) = fy(jj) + forcey
     fz(jj) = fz(jj) + forcez
     
-    CALL getshortforce(4,4,ii,jj,rho,0)
+!    CALL getshortforce(4,4,ii,jj,rho,0)
     
     
   END DO
@@ -300,8 +229,9 @@ DO ii=1,nion-1
   
 END DO
 
-!     Na(core)-Na(core)image forces
 
+#if(raregas)
+!     Na(core)-Na(core)image forces
 IF(idielec /= 0) THEN
   DO ii=1,nion
     xi = cx(ii)
@@ -331,6 +261,7 @@ IF(idielec /= 0) THEN
   END DO
   
 END IF
+#endif
 
 RETURN
 END SUBROUTINE getforcenana
@@ -339,17 +270,25 @@ END SUBROUTINE getforcenana
 !------------------------------------------------------------
 
 SUBROUTINE getforceelna(rho)
-!------------------------------------------------------------
+
+! Force from electron cloud on ions.
+!
+! Input:
+!   rho   = electronic local density
+!   Other I/O is communicated via module 'params'
+
 USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)   :: rho(2*kdfull2)
 
 
 INTEGER :: ii, ind
 REAL(DP) :: prefac
+#if(raregas)
 REAL(DP),ALLOCATABLE ::  rhotmp(:)
+#endif
 
 EXTERNAL v_soft,gauss
 EXTERNAL dgaussdr
@@ -371,8 +310,6 @@ DO ii=1,nion
     END IF
 #endif    
     CALL foldgradfunc(rho,v_soft,cx(ii),cy(ii),cz(ii), sgm1(np(ii))*sq2)
-!               call dIntFieldFunc(rho,dVsdr,cx(ii),cy(ii),cz(ii),
-!     &                    sgm1(np(ii))*SQ2)
 ! contribution from first gaussian
 ! the plus sign in the forces is really a plus because
 ! rho is positive but the electronic charge is -rho
@@ -384,14 +321,13 @@ DO ii=1,nion
     
     
     CALL foldgradfunc(rho,v_soft,cx(ii),cy(ii),cz(ii), sgm2(np(ii))*sq2)
-!               call dIntFieldFunc(rho,dVsdr,cx(ii),cy(ii),cz(ii),
-!     &                    sgm2(np(ii))*SQ2)
 ! contribution from second gaussian
     
     fx(ii) = fx(ii) + e2*chg2(np(ii))*rvectmp(1)
     fy(ii) = fy(ii) + e2*chg2(np(ii))*rvectmp(2)
     fz(ii) = fz(ii) + e2*chg2(np(ii))*rvectmp(3)
     
+#if(rearegas)
     IF(idielec == 1) THEN
       
       DO ind=1,2*kdfull2
@@ -400,18 +336,15 @@ DO ii=1,nion
       DEALLOCATE(rhotmp)
 
     END IF
+#endif
     
   ELSE  ! ipseudo = 1
     
     CALL foldgradfunconsubgrid(chpcoul,gauss,cx(ii),  &
         cy(ii),cz(ii),sgm1(np(ii))*sq2)
-!               call dIntFieldFuncOnSubGrid(chpcoul,dgaussdr,cx(ii),
-!     &              cy(ii),cz(ii),sgm1(np(ii))*SQ2)
     
     prefac = chg1(np(ii))/(2D0*pi*sgm1(np(ii))**2)**1.5D0
-! no factor e2, because it is already in the
-! field chpcoul()
-    
+! no factor e2, because it is already in the field chpcoul()
     
     fx(ii) = fx(ii) + prefac*rvectmp(1)
     fy(ii) = fy(ii) + prefac*rvectmp(2)
@@ -419,12 +352,9 @@ DO ii=1,nion
     
     CALL foldgradfunconsubgrid(chpcoul,gauss,cx(ii),  &
         cy(ii),cz(ii),sgm2(np(ii))*sq2)
-!               call dIntFieldFuncOnSubGrid(chpcoul,dgaussdr,cx(ii),
-!     &              cy(ii),cz(ii),sgm2(np(ii))*SQ2)
     
     prefac = chg2(np(ii))/(2*pi*sgm2(np(ii))**2)**1.5D0
-! no factor e2, because it is already in the
-! field chpcoul()
+! no factor e2, because it is already in the field chpcoul()
     
     fx(ii) = fx(ii) + prefac*rvectmp(1)
     fy(ii) = fy(ii) + prefac*rvectmp(2)
@@ -432,8 +362,9 @@ DO ii=1,nion
     
   END IF
   
+#if(raregas)
   CALL getshortforce(4,5,ii,0,rho,0)
-  
+#endif
   
 END DO
 
@@ -443,30 +374,32 @@ END SUBROUTINE getforceelna
 
 
 
-
 !     ******************************
 
 SUBROUTINE calcf_goeloc(rho,it)
 
-!     ******************************
+! Force from local part of Goedecketr PsP on ions
+! Input:
+!   rho   = electronic local density
+!   it    = time step nr. in calling routine
+!   Other I/O is communicated via module 'params'
 
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                  :: it
+REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
+INTEGER, INTENT(IN)     :: it
 
 CHARACTER (LEN=1) :: ext
 INTEGER :: ind, ion, ion1, is, ix, iy, iz
 REAL(DP) :: c1, c2, chpddr, dist2, dist3, pch
-REAL(DP) :: r2, rder, rdn, rloc, zion
+REAL(DP) :: r2, rdn, rloc, zion
 REAL(DP) :: rr, rr3,  rx, ry, rz, x1, y1, z1
 
 REAL(DP),EXTERNAL :: v_ion_el_lgoed
 
-DATA rder/1D-1/                    ! for finite difference
+REAL(DP),PARAMETER :: rder=1D-1    ! radius step for finite difference
 
-!$$$      tfs=it*dt1*0.0484/2.0/ame
 
 DO ion=1,nion
   fx(ion)=0D0
@@ -553,13 +486,14 @@ END IF
 RETURN
 END SUBROUTINE calcf_goeloc
 
-!ccccccc    wzp added the force from projectile  cccccccccccccccc
-
-!    ****************************
 
 SUBROUTINE forceproject()
 
-! forces of point charge projectile on ionic cores
+! Force from colliding projectile (if any).
+! Input:
+!   rho   = electronic local density
+!   Other I/O is communicated via module 'params'
+
 
 USE params
 IMPLICIT NONE
@@ -596,13 +530,11 @@ RETURN
 
 END SUBROUTINE forceproject
 
-!cccc  here is the subroutine of force of laser!!!!!!!!!
-
-!       *********************
 
 SUBROUTINE laserf(rho)
 
-!       **********************
+! Force from external laser pulse on ionic cores.
+
 USE params
 USE util, ONLY:laserp
 IMPLICIT NONE
@@ -615,12 +547,9 @@ REAL(DP) :: tstart, tend, tvend, tmax, try
 REAL(DP) :: snorm, sx, sy, sz
 
 
-!ccccccccccc  add here to be sure !
-IF (ABS(e0) <= 1D-7) THEN
+IF (ABS(e0) <= 1D-12) THEN
   RETURN
 END IF
-!cccccccccccccc
-
 
 
 ascal=e1x*e2x+e1y*e2y+e1z*e2z
@@ -644,9 +573,6 @@ IF(itft == 1) THEN
   tvend  = tend   + tpeak
   
   IF(tfs <= tnode.OR.tfs >= tvend) foft = 0D0
-!mb         if(tfs.gt.tnode.and.tfs.le.tstart)
-!mb     &        foft = sin (.5 * pi * tfs / tpeak)
-!mb it should rather be:
   IF(tfs > tnode.AND.tfs <= tstart) foft = SIN(0.5D0*pi*(tfs-tnode)/tpeak)
   IF(tfs > tstart.AND.tfs <= tend) foft = 1D0
   IF(tfs > tend.AND.tfs < tvend) foft = SIN (0.5D0 * pi * (tfs-tend) / tpeak)
@@ -662,11 +588,8 @@ END IF
 IF(itft == 3) THEN
   tvend = tnode + 2D0*tpeak + deltat
   IF(tfs <= tnode.OR.tfs >= tvend) THEN
-!         if(time.le.tnode.or.time.ge.tvend) then
     foft = 0D0
   ELSE
-!            foft = cos((tfs-0.5D0*tvend)*pi/tvend)**2
-!mb            foft = cos((time-0.5D0*tvend)*pi/tvend)**2
     foft = COS((-0.5D0+(tfs-tnode)/(2*tpeak+deltat))*pi)**2
   END IF
 END IF
@@ -676,7 +599,6 @@ IF(itft == 4) THEN
   IF(tfs <= tnode.OR.tfs >= tvend) THEN
     foft = 0.
   ELSE
-!mb            foft = cos((tfs-0.5D0*tvend)*pi/tvend)**4
     foft = COS((-0.5D0+(tfs-tnode)/(2*tpeak+deltat))*pi)**4
   END IF
 END IF
@@ -690,13 +612,8 @@ power=e0*e0*foft*foft
 !     calculate force of the laser field
 
 
-!      write(6,*) 'time = ',time
-
-!mb      time = tfs/0.0484 ! dangerous!!! time is global and conflicts somewhere
 try = tfs/0.0484D0
 
-
-!wzp       open(8887,position='append',file='laserforce')
 DO ind=1,nion
   flx(ind) = - e0*e1x*COS(omega*try+phi)*e2*ch(np(ind))*foft
   fly(ind) = - e0*e1y*COS(omega*try+phi)*e2*ch(np(ind))*foft
@@ -736,7 +653,10 @@ END SUBROUTINE laserf
 
 SUBROUTINE calcf_goenonl(rho,it,psi)
 
-!     ********************************
+! Force from non-local Goedecker PsP on ionic cores.
+! Input:
+!   rho   = electronic local density
+!   Other I/O is communicated via module 'params'
 
 USE params
 USE util, ONLY:realoverlap, realovsubgrid
@@ -754,7 +674,9 @@ COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
 INTEGER :: i, ion, ion1, nb
 REAL(DP) :: dist2, dist3, forceloc, forcenonl, pch
 REAL(DP) :: sumfor,sumfulp, sumfulm,  sumslp, sumslm
-REAL(DP) :: xshift, yshift, zshift, xion, yion, zion , xshinv, yshinv, zshinv
+REAL(DP) :: xion, yion, zion 
+REAL(DP) :: zshift=0.001D0,yshift=0.001D0,xshift=0.001D0
+REAL(DP) :: zshinv=1D3,yshinv=1D3,xshinv=1D3
 COMPLEX(DP),ALLOCATABLE :: q1(:)
 REAL(DP),ALLOCATABLE :: rhoslp(:),rhoslm(:)
 REAL(DP),ALLOCATABLE :: fxnl(:),fynl(:),fznl(:)
@@ -763,15 +685,11 @@ REAL(DP),ALLOCATABLE :: ftemp(:)
 #endif
 
 CHARACTER (LEN=1) :: ext
-DATA zshift,yshift,xshift /0.001D0,0.001D0,0.001D0/
-DATA zshinv,yshinv,xshinv /1000D0,1000D0,1000D0/
 
 ALLOCATE(q1(kdfull2),rhoslp(kdfull2),rhoslm(kdfull2))
 ALLOCATE(fxnl(nion),fynl(nion),fznl(nion))
 
 !     force on the ions
-
-!      tfs=it*dt1*0.0484   !/2.0/ame
 
 DO ion=1,nion
   fx(ion)=0D0
@@ -812,12 +730,9 @@ DO ion = 1,nion
         sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
       END DO
 
-!WRITE(*,*) ' myn,ion,fznl=',myn,ion,fznl(ion),(sumslm - sumslp) * zshinv
       fznl(ion) = (sumslm - sumslp) * zshinv
-!      sumfor = sumfor + sudiff
     END IF
     
-!    fz(ion) = sumfor * zshinv
   ELSE
     fz(ion) = 0D0
     fznl(ion) = 0D0
@@ -848,10 +763,8 @@ DO ion = 1,nion
       END DO
     
       fynl(ion) = (sumslm - sumslp) * yshinv
-!      sumfor = sumfor + sudiff
     END IF
     
-!    fy(ion) = sumfor * yshinv
   ELSE
     fy(ion) = 0D0
     fynl(ion) = 0D0
@@ -915,17 +828,8 @@ DO ion = 1,nion
   END IF
   
 !      restore  projectors for original ionic positions
-  
-  
   CALL calc_proj(xion,yion,zion,xion,yion,zion,ion)
-!  WRITE(*,*) ' projectors restored'
-!  IF(nrow(np(1)) == 2) CALL calpr2(xion,yion,zion,ion)
-!  IF(nrow(np(1)) == 3) CALL calpr3(xion,yion,zion,ion)
-!  IF(nrow(np(1)) == 4) CALL calpr4(xion,yion,zion,ion)
-  
-!        write(6,'(a6,g15.6,a1,i1)') 'fx_ei=',fx(ion),' ',ion
-!        write(6,'(a6,g15.6,a1,i1)') 'fy_ei=',fy(ion),' ',ion
-!        write(6,'(a6,g15.6,a1,i1)') 'fz_ei=',fz(ion),' ',ion
+
 END DO
 
 ! compose total force
@@ -962,12 +866,6 @@ DO ion=1,nion
           +(cz(ion1)-cz(ion))**2
       dist3=-SQRT(dist2)*dist2
       pch=e2*ch(np(ion))*ch(np(ion1))
-!            write(6,'(a6,g15.6,a1,i1)') 'fx_ii=',
-!     &           -pch*(cx(ion)-cx(ion1))/dist3,' ',ion
-!            write(6,'(a6,g15.6,a1,i1)') 'fy_ii=',
-!     &           -pch*(cy(ion)-cy(ion1))/dist3,' ',ion
-!            write(6,'(a6,g15.6,a1,i1)') 'fz_ii=',
-!     &           -pch*(cz(ion)-cz(ion1))/dist3,' ',ion
       fx(ion)=fx(ion)-pch*(cx(ion)-cx(ion1))/dist3
       fy(ion)=fy(ion)-pch*(cy(ion)-cy(ion1))/dist3
       fz(ion)=fz(ion)-pch*(cz(ion)-cz(ion1))/dist3
@@ -993,18 +891,23 @@ END SUBROUTINE calcf_goenonl
 
 SUBROUTINE rhopsg(cxact,cyact,czact,rhopsp,is)
 
-!     **********************************************
+! Pseudo-density of ion 'is' related to a local PsP.
+!
+! Input:
+!   cxact,cyact,czact = coordinates of ion
+!   is                = nr. of ion
+! Output:
+!   rhopsp            = emerging pseudo-density
 
 USE params
 IMPLICIT NONE
 
 
-
-REAL(DP), INTENT(IN)                         :: cxact
-REAL(DP), INTENT(IN)                         :: cyact
-REAL(DP), INTENT(IN)                         :: czact
-REAL(DP), INTENT(OUT)                        :: rhopsp(kdfull2)
-INTEGER, INTENT(IN)                          :: is
+INTEGER, INTENT(IN)    :: is
+REAL(DP), INTENT(IN)   :: cxact
+REAL(DP), INTENT(IN)   :: cyact
+REAL(DP), INTENT(IN)   :: czact
+REAL(DP), INTENT(OUT)  :: rhopsp(kdfull2)
 
 INTEGER :: ind, ix, iy, iz
 REAL(DP) :: c1, c2, f1, f2, pt1, pt2, rloc, zion
@@ -1066,14 +969,6 @@ ELSE IF(ipsptyp >= 1) THEN
         rr=SQRT(rx*rx+ry*ry+rz*rz)
         rr=rr+1D-6             ! avoid zero
         rhopsp(ind)=rhopsp(ind)+v_ion_el_lgoed(rr,rloc,c1,c2,zion)
-!        IF(rr <= 4.0) THEN
-!          f1=-zion*(v_soft(rr,SQRT(2D0)*rloc))
-!          f2=EXP(-0.5D0*((rr/rloc)**2D0))
-!          f3=c1+c2*((rr/rloc)**2D0)
-!          rhopsp(ind)=rhopsp(ind)-e2*(f1+(f2*f3))
-!        ELSE
-!          rhopsp(ind)=rhopsp(ind)+e2*zion/rr
-!        END IF
       END DO
     END DO
   END DO
@@ -1086,19 +981,16 @@ RETURN
 END SUBROUTINE rhopsg
 
 
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
 REAL(DP) FUNCTION vgian(r)
 USE params, ONLY: DP
 IMPLICIT NONE
-
-REAL(DP), INTENT(IN)             :: r
 
 ! returns the Gianozzi hydrogen PP in Rydberg units.
 ! Reference: F. Gygi, PRB 48, 11692 (1993).
 ! This PP was used for the calculations in
 ! K"ummel, Kronik, Perdew, PRL 93, 213002 (2004)
 
+REAL(DP), INTENT(IN)     :: r
 
 REAL(DP), PARAMETER :: rc1=0.25D0
 REAL(DP), PARAMETER :: rc2=0.284D0
@@ -1108,7 +1000,38 @@ REAL(DP), PARAMETER :: b=0.3374D0*2D0
 vgian=-2.d0*erf(r/rc1)/r + (a+b*r**2)*EXP(-(r/rc2)**2)
 
 END FUNCTION vgian
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
+
+ 
+!------------------------------------------------------------
+!
+REAL(DP) FUNCTION gauss(r,s)
+!------------------------------------------------------------
+USE params, ONLY:DP
+IMPLICIT NONE
+REAL(DP),INTENT(IN) :: r
+REAL(DP),INTENT(IN) :: s
+REAL(DP)::rs
+rs = r/s
+gauss = EXP(-rs*rs)
+!      endif
+RETURN
+END FUNCTION gauss
+!------------------------------------------------------------
+
+REAL(DP) FUNCTION dgaussdr(r,s)
+!------------------------------------------------------------
+! Derivative of a Gaussian of width 's' at coordinate 'r'.
+USE params, ONLY: DP
+IMPLICIT NONE
+
+REAL(DP),INTENT(IN)  :: r
+REAL(DP),INTENT(IN)  :: s
+REAL(DP)::ra
+
+ra = r/s
+dgaussdr = - 2D0*ra*EXP(-(ra*ra))/s
+RETURN
+END FUNCTION dgaussdr
 

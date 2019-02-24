@@ -18,79 +18,6 @@
 
 
 !------------------------------------------------------------
-!------------------------------------------------------------
-
-!SUBROUTINE addfields2(field1,field2,factor2)
-!!------------------------------------------------------------
-!USE params
-!IMPLICIT REAL(DP) (A-H,O-Z)
-!
-!
-!
-!REAL(DP), INTENT(IN OUT)                        :: field1(kdfull2)
-!REAL(DP), INTENT(IN)                         :: field2(kdfull2)
-!REAL(DP), INTENT(IN)                         :: factor2
-!
-!
-!DO ind=1,kdfull2
-!  field1(ind)=field1(ind)+factor2*field2(ind)
-!END DO
-!
-!RETURN
-!END SUBROUTINE addfields2
-!------------------------------------------------------------
-
-#if(raregas)
-!------------------------------------------------------------
-
-!SUBROUTINE addfields(field1,field2,isignum)
-!!------------------------------------------------------------
-!USE params
-!IMPLICIT REAL(DP) (A-H,O-Z)
-!
-!
-!
-!REAL(DP), INTENT(IN)                         :: field1(kdfull2)
-!REAL(DP), INTENT(IN)                         :: field2(kdfull2)
-!INTEGER, INTENT(IN)                      :: isignum
-!
-!
-!DO ind=1,kdfull2
-!  rfieldtmp(ind)=field1(ind)+(-1D0)**isignum*field2(ind)
-!END DO
-!
-!RETURN
-!END SUBROUTINE addfields
-
-
-
-
-!------------------------------------------------------------
-
-SUBROUTINE initsubgrids
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-
-INTEGER :: i
-!     give every particle a subgrid which surrounds it
-DO i=1,nc
-  CALL makesubgrid(i,xc(i),yc(i),zc(i))
-!         call debuggrid
-!         stop 'aslkdj'
-END DO
-DO i=1,ne
-  CALL makesubgrid(i+nc,xe(i),ye(i),ze(i))
-END DO
-DO i=1,nk
-  CALL makesubgrid(i+nc+NE,xk(i),yk(i),zk(i))
-END DO
-
-END SUBROUTINE initsubgrids
-!------------------------------------------------------------
-#endif
-
-!------------------------------------------------------------
 
 SUBROUTINE addfunctofield(field,func,x0,y0,z0,fact)
 !------------------------------------------------------------
@@ -144,8 +71,6 @@ END SUBROUTINE addfunctofield
 !------------------------------------------------------------
 
 
-!------------------------------------------------------------
-
 SUBROUTINE addfunctofield1(field,func,x0,y0,z0,fact,para)
 !------------------------------------------------------------
 USE params
@@ -197,9 +122,7 @@ END DO
 
 RETURN
 END SUBROUTINE addfunctofield1
-!------------------------------------------------------------
 
-!------------------------------------------------------------
 
 SUBROUTINE addfunctofield3(field,func,x0,y0,z0,fact,para1,para2, para3)
 !------------------------------------------------------------
@@ -256,8 +179,6 @@ END DO
 
 RETURN
 END SUBROUTINE addfunctofield3
-!------------------------------------------------------------
-
 
 !------------------------------------------------------------
 
@@ -334,8 +255,6 @@ END DO
 
 RETURN
 END SUBROUTINE addfunctofieldonsubgrid
-!------------------------------------------------------------
-
 
 !------------------------------------------------------------
 
@@ -415,7 +334,6 @@ END DO
 
 RETURN
 END SUBROUTINE addfunctofieldonsubgrid1
-!------------------------------------------------------------
 
 !------------------------------------------------------------
 
@@ -502,152 +420,6 @@ END DO
 RETURN
 END SUBROUTINE addfunctofieldonsubgrid3
 !------------------------------------------------------------
-
-#if(raregas)
-!------------------------------------------------------------
-
-SUBROUTINE addtabtofield(field,table,x0,y0,z0,fact)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-!     Adds function f(sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2))
-!     to field(x,y,z).
-!     The function is interpolated from tabulated values
-!     in array 'table'.
-REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
-REAL(DP), INTENT(IN)                     :: table(kfermi)
-REAL(DP), INTENT(IN)                         :: x0
-REAL(DP), INTENT(IN)                         :: y0
-REAL(DP), INTENT(IN)                         :: z0
-REAL(DP), INTENT(IN)                         :: fact
-
-INTEGER :: ind, ir, ix, iy, iz
-REAL(DP) :: deltar, deltarinv, rcon, rrel
-REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
-
-deltar = dx/1733D0
-
-ind = 0
-deltarinv = 1D0/deltar
-
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  rz2=z1-z0
-  rz2=rz2*rz2
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    ry2=y1-y0
-    ry2=ry2*ry2+rz2
-    DO ix=minx,maxx
-      x1=(ix-nxsh)*dx
-      rx=x1-x0
-      rr=SQRT(rx*rx+ry2)
-      
-!                      rr=max(rr,SMALL)
-      
-      rrel = rr*deltarinv
-      ir = INT(rrel)
-      rrel = fact*(rrel-ir)
-      rcon = fact-rrel
-      ir = ir+1
-      
-      ind = ind + 1
-      
-      field(ind) = field(ind) + rcon*table(ir)+rrel*table(ir+1)
-      
-    END DO
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE addtabtofield
-!------------------------------------------------------------
-
-
-!------------------------------------------------------------
-
-SUBROUTINE addtabtofieldonsubgrid(field,table,x0,y0,z0, fact,nsgsize)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-!     same as above routine but with subgrids
-
-
-REAL(DP), INTENT(IN OUT)                         :: field(kdfull2)
-REAL(DP), INTENT(IN)                         :: table(kfermi)
-REAL(DP), INTENT(IN)                         :: x0
-REAL(DP), INTENT(IN)                         :: y0
-REAL(DP), INTENT(IN)                         :: z0
-REAL(DP), INTENT(IN)                         :: fact
-INTEGER, INTENT(IN)                      :: nsgsize
-
-INTEGER :: ind, ir, ix, iy, iz
-REAL(DP) :: deltar, deltarinv, rcon, rrel
-REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
-
-INTEGER :: getnearestgridpoint
-INTEGER :: conv3to1
-
-deltar = dx/1733D0
-deltarinv = 1D0/deltar
-
-
-ind = getnearestgridpoint(x0,y0,z0)
-
-
-CALL conv1to3(ind)
-
-DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
-  IF (iz >= minz .AND. iz <= maxz) THEN
-    z1=(iz-nzsh)*dz
-    rz2=z1-z0
-    rz2=rz2*rz2
-    
-    
-    DO iy=iindtmp(2)-nsgsize,iindtmp(2)+nsgsize
-      IF (iy >= miny .AND. iy <= maxy) THEN
-        y1=(iy-nysh)*dy
-        ry2=y1-y0
-        ry2=ry2*ry2+rz2
-        
-        DO ix=iindtmp(1)-nsgsize,iindtmp(1)+nsgsize
-          
-          IF (ix >= minx .AND. ix <= maxx) THEN
-            
-            x1=(ix-nxsh)*dx
-            rx=x1-x0
-            
-            rr=SQRT(rx*rx+ry2)
-            
-!                      rr=max(rr,SMALL) ! avoid zero
-            
-            rrel = rr*deltarinv
-            ir = INT(rrel)
-            rrel = fact*(rrel-ir)
-            rcon = fact-rrel
-            ir = ir+1
-            
-            ind=conv3to1(ix,iy,iz)
-            
-            
-            
-            field(ind) = field(ind) + rcon*table(ir)+rrel*table(ir+1)
-            
-            
-            
-          END IF
-        END DO
-      END IF
-    END DO
-  END IF
-  
-END DO
-
-
-RETURN
-END SUBROUTINE addtabtofieldonsubgrid
-!------------------------------------------------------------
-#endif
 
 
 !------------------------------------------------------------
@@ -1780,8 +1552,216 @@ RETURN
 END FUNCTION dintfieldtimesgauss
 !------------------------------------------------------------
 
-#if(raregas)
+
 !------------------------------------------------------------
+
+INTEGER FUNCTION isoutofbox(x,y,z)
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+
+!     return values:
+!        0 --> particle is inside of the box
+!        1 --> particle is inside of the box but close to the
+!              border, so that it cannot be described by
+!              pseudodensity formalism
+!        2 --> particle is far out of the box
+
+REAL(DP),INTENT(IN) :: x,y,z
+
+IF (z < (1-nzsh)*dz+dinmargin .OR. z > (nzsh*dz-dinmargin)  &
+    .OR. y < (1-nysh)*dy+dinmargin .OR. y > (nysh*dy-dinmargin)  &
+    .OR.(x < (1-nxsh)*dx+dinmargin .OR. x > (nxsh*dx-dinmargin))) THEN
+  isoutofbox = 1   ! in the box but close to the border
+ELSE
+  isoutofbox = 0   ! in the box
+END IF
+
+! in the box and not close to the border  
+IF (z < (1-nzsh)*dz .OR. z > (nzsh*dz) &
+    .OR. y < (1-nysh)*dy .OR. y > (nysh*dy)  &
+    .OR.(x < (1-nxsh)*dx .OR. x > (nxsh*dx))) THEN
+  isoutofbox = 2
+END IF
+
+
+
+
+
+RETURN
+END FUNCTION isoutofbox
+!------------------------------------------------------------
+
+
+#if(raregas)
+
+!------------------------------------------------------------
+
+SUBROUTINE initsubgrids
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+
+INTEGER :: i
+!     give every particle a subgrid which surrounds it
+DO i=1,nc
+  CALL makesubgrid(i,xc(i),yc(i),zc(i))
+!         call debuggrid
+!         stop 'aslkdj'
+END DO
+DO i=1,ne
+  CALL makesubgrid(i+nc,xe(i),ye(i),ze(i))
+END DO
+DO i=1,nk
+  CALL makesubgrid(i+nc+NE,xk(i),yk(i),zk(i))
+END DO
+
+END SUBROUTINE initsubgrids
+!------------------------------------------------------------
+
+
+SUBROUTINE addtabtofield(field,table,x0,y0,z0,fact)
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+!     Adds function f(sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2))
+!     to field(x,y,z).
+!     The function is interpolated from tabulated values
+!     in array 'table'.
+REAL(DP), INTENT(IN OUT)                        :: field(kdfull2)
+REAL(DP), INTENT(IN)                     :: table(kfermi)
+REAL(DP), INTENT(IN)                         :: x0
+REAL(DP), INTENT(IN)                         :: y0
+REAL(DP), INTENT(IN)                         :: z0
+REAL(DP), INTENT(IN)                         :: fact
+
+INTEGER :: ind, ir, ix, iy, iz
+REAL(DP) :: deltar, deltarinv, rcon, rrel
+REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
+
+deltar = dx/1733D0
+
+ind = 0
+deltarinv = 1D0/deltar
+
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  rz2=z1-z0
+  rz2=rz2*rz2
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    ry2=y1-y0
+    ry2=ry2*ry2+rz2
+    DO ix=minx,maxx
+      x1=(ix-nxsh)*dx
+      rx=x1-x0
+      rr=SQRT(rx*rx+ry2)
+      
+!                      rr=max(rr,SMALL)
+      
+      rrel = rr*deltarinv
+      ir = INT(rrel)
+      rrel = fact*(rrel-ir)
+      rcon = fact-rrel
+      ir = ir+1
+      
+      ind = ind + 1
+      
+      field(ind) = field(ind) + rcon*table(ir)+rrel*table(ir+1)
+      
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE addtabtofield
+!------------------------------------------------------------
+
+
+!------------------------------------------------------------
+
+SUBROUTINE addtabtofieldonsubgrid(field,table,x0,y0,z0, fact,nsgsize)
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+!     same as above routine but with subgrids
+
+
+REAL(DP), INTENT(IN OUT)                         :: field(kdfull2)
+REAL(DP), INTENT(IN)                         :: table(kfermi)
+REAL(DP), INTENT(IN)                         :: x0
+REAL(DP), INTENT(IN)                         :: y0
+REAL(DP), INTENT(IN)                         :: z0
+REAL(DP), INTENT(IN)                         :: fact
+INTEGER, INTENT(IN)                      :: nsgsize
+
+INTEGER :: ind, ir, ix, iy, iz
+REAL(DP) :: deltar, deltarinv, rcon, rrel
+REAL(DP) :: rr, rx, ry, rz, rx2, ry2, rz2, x1, y1, z1
+
+INTEGER :: getnearestgridpoint
+INTEGER :: conv3to1
+
+deltar = dx/1733D0
+deltarinv = 1D0/deltar
+
+
+ind = getnearestgridpoint(x0,y0,z0)
+
+
+CALL conv1to3(ind)
+
+DO iz=iindtmp(3)-nsgsize,iindtmp(3)+nsgsize
+  IF (iz >= minz .AND. iz <= maxz) THEN
+    z1=(iz-nzsh)*dz
+    rz2=z1-z0
+    rz2=rz2*rz2
+    
+    
+    DO iy=iindtmp(2)-nsgsize,iindtmp(2)+nsgsize
+      IF (iy >= miny .AND. iy <= maxy) THEN
+        y1=(iy-nysh)*dy
+        ry2=y1-y0
+        ry2=ry2*ry2+rz2
+        
+        DO ix=iindtmp(1)-nsgsize,iindtmp(1)+nsgsize
+          
+          IF (ix >= minx .AND. ix <= maxx) THEN
+            
+            x1=(ix-nxsh)*dx
+            rx=x1-x0
+            
+            rr=SQRT(rx*rx+ry2)
+            
+!                      rr=max(rr,SMALL) ! avoid zero
+            
+            rrel = rr*deltarinv
+            ir = INT(rrel)
+            rrel = fact*(rrel-ir)
+            rcon = fact-rrel
+            ir = ir+1
+            
+            ind=conv3to1(ix,iy,iz)
+            
+            
+            
+            field(ind) = field(ind) + rcon*table(ir)+rrel*table(ir+1)
+            
+            
+            
+          END IF
+        END DO
+      END IF
+    END DO
+  END IF
+  
+END DO
+
+
+RETURN
+END SUBROUTINE addtabtofieldonsubgrid
+!------------------------------------------------------------
+
 
 INTEGER FUNCTION iptyp(ind)
 !------------------------------------------------------------
@@ -1862,42 +1842,3 @@ RETURN
 END SUBROUTINE getpositionold
 !------------------------------------------------------------
 #endif
-
-!------------------------------------------------------------
-
-INTEGER FUNCTION isoutofbox(x,y,z)
-!------------------------------------------------------------
-USE params
-IMPLICIT NONE
-
-!     return values:
-!        0 --> particle is inside of the box
-!        1 --> particle is inside of the box but close to the
-!              border, so that it cannot be described by
-!              pseudodensity formalism
-!        2 --> particle is far out of the box
-
-REAL(DP),INTENT(IN) :: x,y,z
-
-IF (z < (1-nzsh)*dz+dinmargin .OR. z > (nzsh*dz-dinmargin)  &
-    .OR. y < (1-nysh)*dy+dinmargin .OR. y > (nysh*dy-dinmargin)  &
-    .OR.(x < (1-nxsh)*dx+dinmargin .OR. x > (nxsh*dx-dinmargin))) THEN
-  isoutofbox = 1   ! in the box but close to the border
-ELSE
-  isoutofbox = 0   ! in the box
-END IF
-
-! in the box and not close to the border  
-IF (z < (1-nzsh)*dz .OR. z > (nzsh*dz) &
-    .OR. y < (1-nysh)*dy .OR. y > (nysh*dy)  &
-    .OR.(x < (1-nxsh)*dx .OR. x > (nxsh*dx))) THEN
-  isoutofbox = 2
-END IF
-
-
-
-
-
-RETURN
-END FUNCTION isoutofbox
-!------------------------------------------------------------

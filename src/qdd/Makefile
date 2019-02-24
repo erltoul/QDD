@@ -590,11 +590,13 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
-       schmid.o zeroforce.o loc_mfield.o givens.o\
+       schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
        parallele.o expevol.o 2stUT.o attachement.o rta.o\
        HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
+ifeq ($(raregas), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o subgrids.o
+       short.o image.o lattice.o
+endif
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
@@ -796,6 +798,6 @@ image.o: QMMM/image.F90 params.mod
 lattice.o: QMMM/lattice.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
-subgrids.o: QMMM/subgrids.F90 params.mod
+subgrids.o: subgrids.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 

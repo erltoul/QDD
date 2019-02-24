@@ -56,7 +56,9 @@ REAL(DP) :: r2, rr, xr, yr, zr, x1, y1, z1
 #endif
 
 INTEGER, EXTERNAL :: conv3to1, getnearestgridpoint, iconvshorttolong
-REAL(DP), EXTERNAL :: fbornmayer, fbornmayermod, getdistance2, vararlj, varnashort, varelcore, v_ar_ar
+REAL(DP), EXTERNAL :: fbornmayer, fbornmayermod, getdistance2, vararlj, &
+                      varnashort, varelcore, v_ar_ar
+
 ityp1 = itypi  !Because the result of a function or a scalar expression cannot be intent(out)/intent(in out) arguments. 
 ityp2 = itypj
 ind1=ii   ! Because ii and jj can be do-variables, that should not be modified inside a DO-loop.
@@ -72,61 +74,32 @@ IF (isrtyp(ityp1,ityp2) == 1) THEN ! MgO-case
   
   signum = 1D0
   
-! sort by particle type
-!$$$         if (ityp1.gt.ityp2) then
-!$$$            itmp = ityp1
-!$$$            ityp1 = ityp2
-!$$$            ityp2 = itmp
-!$$$            itmp = ind1
-!$$$            ind1 = ind2
-!$$$            ind2 = itmp
-!$$$            signum = -1.0
-!$$$c            stop 'warning: signum is -1, CHECK!'
-!$$$         endif
-  
 ! determine parameters
   
   
   IF (ityp1 <= 3 .AND. ityp2 <= 3) THEN ! GSM-GSM is of Born-Mayer-type
     
-    
-    
     itmp1 = iconvshorttolong(ityp1,ind1)
     itmp2 = iconvshorttolong(ityp2,ind2)
-    
     
     rr = getdistance2(itmp1,itmp2)
     rr = SQRT(MAX(rr,1D-14))
     
-    
-    
-    
     CALL setbornparas(ityp1,ityp2) ! paras are stored in rVecTmp
-    
-    
-    
     
     radfor = fbornmayer(rr,rvectmp(1),rvectmp(2),rvectmp(3))
     
-    
-    
     CALL getrelvec(itmp1,itmp2,rr) ! direction stored in rVecTmp
-    
-    
     
     forx = radfor * rvectmp(1) * signum
     fory = radfor * rvectmp(2) * signum
     forz = radfor * rvectmp(3) * signum
-    
-    
-    
     
     IF (iflag2 == 0) THEN ! as usual
       CALL addforce(itmp1,-forx,-fory,-forz)
       CALL addforce(itmp2,forx,fory,forz)
     ELSE IF (iflag2 == 1) THEN ! ibh second part
       CALL addforce(itmp1,-forx,-fory,-forz)
-!               call addForce(itmp2,-forx,-fory,-forz)
     ELSE
       CALL addforce(itmp1,forx,fory,forz)
     END IF
@@ -192,14 +165,7 @@ IF (isrtyp(ityp1,ityp2) == 1) THEN ! MgO-case
       
       rr = MAX(SQRT(xr*xr+yr*yr+zr*zr),small)
       
-!               if(BkN2.eq.0D0)then
-      
       radfor = fbornmayermod(rr,bkn,ekn,fkn,sigkn,ckncud, cknd,dkn)
-      
-!               else
-!                radfor = funkderFermi(r,BkN,1D0/sigkN,FkN)+
-!     &                    funkderFermi(r,BkN2,1D0/sigkN2,FkN2)
-!               endif
       
       forx = radfor * xr / rr * signum
       fory = radfor * yr / rr * signum
@@ -221,15 +187,8 @@ IF (isrtyp(ityp1,ityp2) == 1) THEN ! MgO-case
       
       rr = MAX(SQRT(xr*xr+yr*yr+zr*zr),small)
       
-!               if(BkN2.eq.0D0)then
       
       radfor = fbornmayermod(rr,bkn,ekn,fkn,sigkn,ckncud, cknd,dkn)
-      
-!               else
-!                radfor = funkderFermi(r,BkN,1D0/sigkN,FkN)+
-!     &                    funkderFermi(r,BkN2,1D0/sigkN2,FkN2)
-!               endif
-      
       
       forx = radfor * xr / rr * signum
       fory = radfor * yr / rr * signum

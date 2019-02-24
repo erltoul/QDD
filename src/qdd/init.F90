@@ -3721,41 +3721,6 @@ END DO ionloop
 DEALLOCATE(nactst)
 
 
-!nstate=numlocstate
-
-!     Schmidt ortho-normalisation
-
-!CALL schmidt(psiom)
-
-
-!DO nbe=1,nstate
-!  
-!  DO in=1,nbe
-!    IF((ispin(nbe) == ispin(in))) THEN
-!      sum=0D0
-!      DO i=1,nxyz
-!        sum=sum+psiom(i,nbe)*psiom(i,in)
-!      END DO
-!      sum=sum*dvol
-!      cs = SUM(psiom(:,nbe)*psiom(:,in))*dvol      
-!      IF(in == nbe) THEN
-!        cs = 1D0/SQRT(cs)
-!        DO i=1,nxyz
-!          psiom(:,nbe)=psiom(:,nbe)*cs
-!        END DO
-!      ELSE
-!        DO  i=1,nxyz
-!          psiom(:,nbe)=psiom(:,nbe)-cs*psiom(:,in)
-!        END DO
-!      END IF
-!    END IF
-!  END DO
-!END DO
-
-!DO n=1,numstate
-!   WRITE(*,*) ' INITLCGO after Schmidt: state nr. norm=', &
-!   n,SUM(psiom(:,n)**2)*dvol
-!END DO
 CALL flush(6)
 
 
