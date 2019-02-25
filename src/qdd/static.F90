@@ -1286,6 +1286,7 @@ INTEGER :: ind, nb
 REAL(DP) :: eshell, enonlc, ensav, ekin, ehilf
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
+INTEGER,PARAMETER :: idebug=1        ! set to 1 for testprint KS potentials
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -1853,7 +1854,7 @@ INTEGER  :: it,ion
   DO ion=1,nion
     IF (iswitch_interpol==1) THEN
       CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+!      CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)    !???
     ELSE
       CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
     END IF

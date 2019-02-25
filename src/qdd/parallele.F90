@@ -112,21 +112,14 @@ CALL pi_scatter(shiftclustz)
 CALL pi_scatter(rotclustx)
 CALL pi_scatter(rotclusty)
 CALL pi_scatter(rotclustz)
-CALL pi_scatter(ehom0)
-CALL pi_scatter(ehomx)
-CALL pi_scatter(ehomy)
-CALL pi_scatter(ehomz)
 CALL pi_scatter(shiftwfx)
 CALL pi_scatter(shiftwfy)
 CALL pi_scatter(shiftwfz)
 
 CALL i_scatter(ispinsep)
-CALL i_scatter(idebug)
 CALL i_scatter(ishiftcmtoorigin)
-CALL i_scatter(iswforce)
 CALL i_scatter(iplotorbitals)
 CALL i_scatter(ievaluate)
-CALL i_scatter(ihome)
 
 
 CALL i_scatter(iemomsrel)
@@ -236,7 +229,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(centfz,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
     CALL mpi_send(ispidi,1,mpi_integer,nod,1,mpi_comm_world,ic)
-    CALL mpi_send(iforce,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(iexcit,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(irotat,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(phirot,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -403,7 +395,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   
   CALL mpi_recv(ispidi,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(iforce,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(iexcit,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(irotat,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(phirot,1,mpi_double_precision,0,mpi_any_tag,  &

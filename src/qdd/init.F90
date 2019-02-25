@@ -41,9 +41,6 @@ CHARACTER (LEN=3) :: num
 REAL(DP)::dx2
 
 NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
-#if(raregas)
-    isurf, &
-#endif
     temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
@@ -52,10 +49,13 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
-    idebug,ishiftcmtoorigin,  &
-    iswforce,iplotorbitals,ehom0,ihome,  &
-    ehomx,ehomy,ehomz,shiftwfx,shiftwfy,shiftwfz, ispinsep, &
-    nproj_states, epsdi,idielec,xdielec
+    ishiftcmtoorigin,  &
+    iplotorbitals, &
+    shiftwfx,shiftwfy,shiftwfz, ispinsep, &
+    nproj_states, &
+#if(raregas)
+    isurf,epsdi,idielec,xdielec
+#endif
 
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
@@ -65,7 +65,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
-    ispidi,iforce,iexcit,iangmo,  &
+    ispidi,iexcit,iangmo,  &
     irotat,phirot,i3dz,i3dx,i3dstate,iflocaliz,  &
     idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
     modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
@@ -332,16 +332,6 @@ WRITE(6,*) 'jekion=',jekion
 
 IF(numspin.NE.2 .AND. iftransme ==1) STOP ' IFTRANSME needs full spin'
 
-
-#if(raregas)
-DO i=1,5
-  DO j=1,5
-    IF (isrtyp(i,j) == 2 .AND. iswforce == 1)  &
-        STOP 'New force routine not implemented for Ar. Use iswForce=0!'
-  END DO
-END DO
-#endif
-
 IF(nion > ng) STOP " more ions than dimensioned. enhance NG"
 
 IF(myn == 0)THEN
@@ -602,8 +592,8 @@ ELSE
   WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
 ENDIF
-WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iforce,iexcit,irotat,phirot=',  &
-    ispidi,iforce,iexcit,irotat,phirot
+WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iexcit,irotat,phirot=',  &
+    ispidi,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
 WRITE(iu,'(a,3f8.2)') ' shift: shiftinix,y,z=',shiftinix,shiftiniy,shiftiniz
 WRITE(iu,'(a,2i3,f7.3)') ' irest,istat,dt1=',irest,istat,dt1
@@ -732,14 +722,6 @@ WRITE(7,*)'        dynamic parameters have been read :'
 WRITE(7,*)'_______________________________________________'
 WRITE(7,*)
 
-IF(iforce == 0) THEN
-  WRITE(7,*)
-  WRITE(7,*) 'unpolarized clusters (e.g. groundstate of na_12)   '
-END IF
-IF(iforce == 1) THEN
-  WRITE(7,*)
-  WRITE(7,*) 'polarized clusters (e.g. polar. isomer of na_12)   '
-END IF
 IF(nion2 == 0) THEN
 !        write(6,*)
 !       write(6,*) 'jellium code'
@@ -2197,8 +2179,6 @@ END IF
 
 nstate=n
 WRITE(7,*) 'nstate ininqb',nstate
-!      if(iforce.eq.1) ispin(nstate) = ispin(nstate-1)
-IF(iforce == 1) STOP "option IFORCE obsolete"
 
 
 IF(tocc .AND. nstate > nelect)  &
@@ -2963,41 +2943,6 @@ RETURN
 END SUBROUTINE checkoptions
 
 
-!-----init_homfield-------------------------------------------------
-
-SUBROUTINE init_homfield()
-
-!   Initialize a homogeneous electrical field and
-!   adds it to the background field 'potFixedIon'.
-
-USE params
-IMPLICIT NONE
-
-INTEGER :: ind,ix,iy,iz
-REAL(DP) :: sc,vhom,x1,y1,z1
-!------------------------------------------------------------------
-
-sc=ehomx**2+ehomy**2+ehomz**2
-sc=SQRT(sc)
-ehomx=ehomx/sc
-ehomy=ehomy/sc
-ehomz=ehomz/sc
-ind=0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    DO ix=minx,maxx
-      x1=(ix-nxsh)*dx
-      ind = ind + 1
-      vhom = e2*(x1*ehomx+y1*ehomy+z1*ehomz)*ehom0
-      potfixedion(ind)=potfixedion(ind)+vhom
-    END DO
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE init_homfield
 
 
 !-----init_grid-----------------------------------------------------

@@ -145,7 +145,6 @@ LOGICAL :: directenergy=.false.            ! to compute energy directly
 INTEGER :: numspin=2                       ! number of spin components
 REAL(DP) :: omeg,eferm                     !  initial Gaussians
 REAL(DP) :: dInMargin=6D0
-INTEGER :: iforce=0
 INTEGER :: ipseudo=1          ! switch on/off subgrids and pseudo-densities
 REAL(DP) :: xfac,yfac,zfac                       !  initial. auxiliary
 REAL(DP) :: epswf=0.2D0,e0dmp=2D0,epsorc=1D-8        !  convergence
@@ -179,7 +178,7 @@ REAL(DP) :: time_absinit
 REAL(DP) :: phangle=0D0,phphase=0D0         ! angle and phase of ph rotation
 
 INTEGER :: nhstate,npstate
-INTEGER :: idebug=0,ifreezekspot=0
+INTEGER :: ifreezekspot=0
 INTEGER :: itof=0,jescmask=0,ishiftcmtoorigin=0,jescmaskorb=0
 INTEGER :: ishutdown=0
 ! INTEGER :: icheckformessages=1,jcheckformessages=50
@@ -197,7 +196,7 @@ REAL(DP) :: totintegprob
 REAL(DP) :: aver_estar,emin_target,emax_target
 INTEGER  :: nstate_target,nmatch
 
-INTEGER :: iswforce=0,iplotorbitals=0
+INTEGER :: iplotorbitals=0
 !INTEGER ::  ievaluate=0    ! ????
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
 REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
@@ -207,8 +206,6 @@ REAL(DP) :: trequest=0D0,timefrac=0.98D0
 REAL(DP) :: rheatclust
 REAL(DP) :: igeneratesurffile
 !REAL(DP),ALLOCATABLE :: rnormsinit(kstate)
-REAL(DP) :: ehom0=0D0,ehomx=0D0,ehomy=0D0,ehomz=1D0
-INTEGER :: ihome=0
 REAL(DP) :: scatterelectronenergy=0D0,scatterelectronw=1D0
 REAL(DP) :: scatterelectronvxn=0D0,scatterelectronvyn=0D0,scatterelectronvzn=1D0
 REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz=0D0

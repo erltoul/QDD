@@ -593,3 +593,40 @@ RETURN
 END SUBROUTINE write_density
 
 
+!  from 'init.F90'
+
+!-----init_homfield-------------------------------------------------
+
+SUBROUTINE init_homfield()
+
+!   Initialize a homogeneous electrical field and
+!   adds it to the background field 'potFixedIon'.
+
+USE params
+IMPLICIT NONE
+
+INTEGER :: ind,ix,iy,iz
+REAL(DP) :: sc,vhom,x1,y1,z1
+!------------------------------------------------------------------
+
+sc=ehomx**2+ehomy**2+ehomz**2
+sc=SQRT(sc)
+ehomx=ehomx/sc
+ehomy=ehomy/sc
+ehomz=ehomz/sc
+ind=0
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    DO ix=minx,maxx
+      x1=(ix-nxsh)*dx
+      ind = ind + 1
+      vhom = e2*(x1*ehomx+y1*ehomy+z1*ehomz)*ehom0
+      potfixedion(ind)=potfixedion(ind)+vhom
+    END DO
+  END DO
+END DO
+
+RETURN
+END SUBROUTINE init_homfield

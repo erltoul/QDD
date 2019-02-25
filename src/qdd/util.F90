@@ -1701,8 +1701,7 @@ INTEGER :: ind, ix, iy, iz
 REAL(DP) ::acc
 REAL(DP) :: rhoint(minz:maxz)
 LOGICAL :: tfirst=.true.
-!DATA tfirst/.true./
-!      data modrho/10/
+
 IF(modrho == 0) THEN
   STOP 'modrho must be larger than zero'
 END IF
@@ -1759,7 +1758,6 @@ REAL(DP) :: rhoint(minx:maxx)
 
 
 DATA tfirst/.true./
-!      data modrho/10/
 
 IF(MOD(itime,modrho) /= 0) RETURN
 time=itime*dt1
@@ -1811,7 +1809,6 @@ REAl(DP) :: acc
 REAL(DP) :: rhoint(miny:maxy)
 
 DATA tfirst/.true./
-!      data modrho/10/
 
 IF(MOD(itime,modrho) /= 0) RETURN
 time=itime*dt1
@@ -2022,7 +2019,7 @@ REAL(DP), ALLOCATABLE :: rho(:)
 
 ALLOCATE(rho(2*kdfull2))
 
-!     print integrated 3d-field (dimension to integrate on depends of values of i3dx, i3dz)
+!  print integrated 3d-field (dimension to integrate on depends of values of i3dx, i3dz)
 
 xmin1=-nx*dx
 ymin1=-ny*dy

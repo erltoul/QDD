@@ -130,11 +130,11 @@ END IF
 #if(raregas)
 IF (isurf /= 0) THEN
   
-  IF (iswforce == 0) THEN
+!  IF (iswforce == 0) THEN
     CALL getforcegsmgsm(iflag)
-  ELSE
-    CALL getforcegsmgsm1(iflag)
-  END IF
+!  ELSE
+!    CALL getforcegsmgsm1(iflag)                !  ???
+!  END IF
   
   CALL getforcenagsm(iflag)
   
