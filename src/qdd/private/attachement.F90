@@ -19,6 +19,10 @@
 
 !-----init_occ_target--------------------------------------------
 SUBROUTINE init_occ_target()
+
+! Reads the file properties of occupied traget states from
+! file 'occ_eps_target' (which should be in the working directory).
+
 USE params
 
 REAL(DP) :: xxdum,delta_etrgt
@@ -26,29 +30,16 @@ INTEGER  :: iidum
 LOGICAL,PARAMETER :: ttest=.false.
 INTEGER,PARAMETER :: Nmatchmax=500
 
-!------------------------------------------------------------------------
-! Reads the file 'occ_eps_target' that should be in the working directory.
-!------------------------------------------------------------------------
 
 WRITE(6,*) 'opening occ_eps_target file'
 OPEN(UNIT=91,STATUS='unknown',FORM='formatted', FILE='occ_spe_target')
-!IF(istat == 0.AND.irest == 0) THEN
-!   READ(91,*) xxdum,xxdum
-!ELSE IF(istat == 1.AND.irest == 0) THEN
-!IF(istat == 1.AND.irest == 0) THEN
-!   READ(91,*) binerg,xxdum
-!ELSE IF(istat == 0.AND.irest > 0) THEN
-!ELSE IF(istat == 1.AND.irest > 0) THEN
-   READ(91,*) binerg
-!ELSE
-!   STOP ' invalid option in ATTACH_PROB'
-!END IF
+READ(91,*) binerg
 WRITE(*,'(a,2i5,2(1pg15.7))')  &
   ' istat,irest,binerg,reference_energy:',istat,irest,binerg,reference_energy
 
 !      aver_estar  = etot - binerg                                                            
 aver_estar  = reference_energy - binerg
-delta_etrgt = 3.d0*h2m/4.d0/scatterelectronw**2
+delta_etrgt = 3D0*h2m/4D0/scatterelectronw**2
 emin_target = aver_estar - delta_etrgt
 emax_target = aver_estar + delta_etrgt
 WRITE(6,*)'aver_estar,delta_etrgt,emin_target,emax_target',  &
@@ -129,14 +120,14 @@ END SUBROUTINE init_occ_target
 !-----init_psitarget------------------------------------------------                        
 
 SUBROUTINE init_psitarget()
+
+! Reading target wavefunctions from 'wfs_target'.
+
 USE params
 
 INTEGER    :: idum,nstatedum,nclust_target,nion_target,nspdw_target
 REAL(DP)   :: xxdum
 
-!-------------------------------------------------------------------
-! reading of w.f. from wfs_target
-!-------------------------------------------------------------------
 WRITE(*,*) 'enter init_psitarget'
 OPEN(UNIT=90,STATUS='unknown',FORM='unformatted',FILE='../wfs_target')
 
@@ -170,17 +161,17 @@ END SUBROUTINE init_psitarget
 !-----attach_prob------------------------------------------------                        
 
 SUBROUTINE attach_prob(totalprob,totalovlp,psi)
+
+! Computes the attachement probability on the fly.
+
 USE params
 USE util, ONLY:wfovlp,cludcmp
 REAL(DP), INTENT(OUT)           :: totalprob,totalovlp
 COMPLEX(DP), INTENT(IN)         :: psi(kdfull2,kstate)
 
-!COMPLEX(DP),ALLOCATABLE :: psitarget(:,:)
-
 COMPLEX(DP) :: overlaps(kstate,kstate),submatr(kstate,kstate)
 COMPLEX(DP) :: tbelement,det,tbacc,testovlp
 
-!COMPLEX(DP) :: psip(kdfull2),psipp(kdfull2)
 
 INTEGER :: indx(nstate)             ! index field for LU decomp.                
 INTEGER :: index(nstate-2)          ! index field for LU decomp.                
@@ -215,7 +206,6 @@ END DO
 IF(ttest) WRITE(*,*) 'number of active states=',nexpand
 IF(nexpand .NE. nstate) STOP 'mismatch in nr. of active TDHF states'
 
-!ALLOCATE(psitarget(kdfull2,nstate))
 ALLOCATE(ipoint(nstate),ipoi_act(nstate))
 
 ! prepare pointers
@@ -231,7 +221,6 @@ ipoint(nstate)=0
 IF(ttestb) WRITE(*,'(a,200i3)') 'IPOINT:',ipoint
 
 IF(ttestb) WRITE(*,'(a,200i3)') 'ispin_target:',ispin_target(1:nstate_target)
-!WRITE(*,'(200i3)') ispin(1:nstate)
 
 ! Loop over the possible 2p1h transitions
 DO iener=1,nmatch
@@ -327,8 +316,6 @@ DO iener=1,nmatch
                         tbacc = CONJG(temp1)*temp2  + tbacc
                      END DO
                      tbelement=tbacc*dvol*det+tbelement
-!                     add = REAL(ABS(tbacc*dvol*det))
-!IF(add>1D-5) WRITE(*,'(4i5,6(1pg13.5))') i1,i2,j1,j2,REAL(ABS(tbacc)),REAL(ABS(det)),add
                   END IF
                END IF
             END DO

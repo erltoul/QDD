@@ -36,13 +36,16 @@
 
 
 
-
-
 !-----absbc----------------------------------------------------------
 
 SUBROUTINE absbc(psi,rho)
 
-!     apply absorbing bounds, optionally accumulate absorbed density
+!  Apply absorbing bounds, optionally accumulate absorbed density.
+!
+!  Input/Output:
+!    psi     = set of s.p. wavefunctions
+!    rho     = local densities (spin-up, spin-down)
+!  Other I/O is handled through module 'params'.
 
 USE params
 IMPLICIT NONE
@@ -57,7 +60,6 @@ LOGICAL :: firstcall=.true.
 INTEGER :: ind, nbe
 !------------------------------------------------------------
 
-! WRITE(*,*) ' ABSBC first line'
 
 IF(nabsorb <= 0) RETURN
 
@@ -67,17 +69,14 @@ IF(nabsorb <= 0) RETURN
 IF (firstcall) THEN
   IF(ispherabso == 1) THEN
     CALL init_spherabso()
-!    WRITE(*,*) ' ABSBC spherical initialization'
   ELSE IF(ispherabso == 0) THEN
     CALL init_abso()
-!    WRITE(*,*) ' ABSBC Cartesian initialization'
   ELSE IF(ispherabso == 2) THEN
     CALL init_ellipsabso()
   ELSE
     STOP ' this type of absoring boundaries not yet implemented'
   END IF
   firstcall = .false.
-!  WRITE(*,*) ' ABSBC: first call'
 END IF
 
 
@@ -87,16 +86,13 @@ END IF
 
 IF(myn == 0) THEN
   ALLOCATE(w3(kdfull2))
-!  WRITE(*,*) ' ABSBC: after allocate'
   w3 = rho(1:kdfull2)
-!  WRITE(*,*) ' ABSBC: after w3=rho'
 END IF
 
 !     apply mask function (and accumulate absorption per state)
 
 IF(jescmaskorb /=0) THEN
   DO nbe=1,nstate
-!  WRITE(*,*) ' ABSBC-escmascorb: nbe=',nbe
     DO ind=1,kdfull2
       IF(tgridabso(ind)) THEN
         rhoabsoorb(ind,nbe) = rhoabsoorb(ind,nbe) + spherloss(ind)*(  &
@@ -104,21 +100,17 @@ IF(jescmaskorb /=0) THEN
             +AIMAG(psi(ind,nbe))*AIMAG(psi(ind,nbe))  )
       END IF
     END DO
-!  WRITE(*,*) ' ABSBC-escmaskorb: nbe=',nbe
   END DO
 END IF
 
 DO nbe=1,nstate
-!  WRITE(*,*) ' ABSBC: nbe=',nbe
   DO ind=1,kdfull2
     IF(tgridabso(ind)) THEN
       psi(ind,nbe)=sphermask(ind)*psi(ind,nbe)
     END IF
   END DO
-!  WRITE(*,*) ' ABSBC: nbe=',nbe
 END DO
 
-!         call abso(psi)
 
 !     accumulate absorbed density
 
@@ -140,7 +132,7 @@ END SUBROUTINE absbc
 
 SUBROUTINE init_abs_accum()
 
-!     Initializes accumulator for absorbed densities with zero.
+!  Initializes accumulator for absorbed densities with zero.
 
 USE params
 IMPLICIT NONE
@@ -165,13 +157,16 @@ END SUBROUTINE init_abs_accum
 
 SUBROUTINE init_absbc(rho)
 
-!     initializes geometry parameters for absorbing bounds
+!  Initializes geometry parameters for absorbing bounds.
+!
+!  Input:
+!    rho    = local density
 
 USE params
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN)                         :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)  :: rho(2*kdfull2)
 
 INTEGER :: i, ind, iphi, itheta, ix, iy, iz, jj
 REAL(DP) :: pp, rmin, tt, x1, y1, z1, xn, yn, zn 
@@ -232,7 +227,6 @@ ELSE
   zango=0D0
   
 END IF
-! //
 
 IF (iangabso /= 0 .AND. ipes /= 0) THEN
 ! prepare arrays for photo-electron-spectra
@@ -290,7 +284,7 @@ END SUBROUTINE init_absbc
 
 SUBROUTINE init_spherabso()
 
-!     Initializes mask function for spherical boundary conditions
+!  Initializes mask function for spherical boundary conditions.
 
 USE params
 USE util, ONLY:prifld
@@ -325,7 +319,6 @@ IF (DMIN1 < 0D0) STOP 'Error in abso: dmin1<0'
 dmin22=dmin2**2
 dmin12=DMIN1**2
 
-!         sum = 0D0
 ind = 0
 DO iz=minz,maxz
   z1=(iz-nzsh)*dz
@@ -356,11 +349,9 @@ DO iz=minz,maxz
         tgridabso(ind)=.true.
       END IF
       spherloss(ind) = 1D0-sphermask(ind)**2
-!               sum = sum + spherloss(ind)
     END DO
   END DO
 END DO
-!      write(6,'(a,1pg13. 5)') ' summed loss=',sum*dvol
 
 CALL prifld(sphermask,' mask ')
 
@@ -376,7 +367,7 @@ END SUBROUTINE init_spherabso
 
 SUBROUTINE init_abso()
 
-!     Initializes mask for rectangular absorbing boundaries conditions
+!   Initializes mask for rectangular absorbing boundaries conditions.
 
 USE params
 IMPLICIT NONE
@@ -446,7 +437,7 @@ END SUBROUTINE init_abso
 
 SUBROUTINE init_ellipsabso
 
-!     Initializes mask function for ellipsoidal boundary conditions
+!  Initializes mask function for ellipsoidal boundary conditions.
 
 USE params
 USE util, ONLY:printfield
@@ -481,7 +472,6 @@ IF (dmin1x < 0D0 .OR. dmin1y < 0.0D0 .OR. dmin1z < 0.0D0) STOP 'Error in abso: d
 write(6,*) dmin1x,dmin1y,dmin1z
 write(6,*) dmin2x,dmin2y,dmin2z
 write(6,*) dmin2
-!stop
 
 
 ind = 0
@@ -535,7 +525,9 @@ END SUBROUTINE init_ellipsabso
 !------------------------------------------------------------
 
 SUBROUTINE initmeasurepoints
-!------------------------------------------------------------
+
+! Initializes measuring points for collecting PES information.
+
 USE params
 IMPLICIT NONE
 INTEGER :: ik, ith, iph, impsact, impsx, impsy, impsz
@@ -544,14 +536,11 @@ INTEGER,EXTERNAL :: getnearestgridpoint
 
 dmin2 = 1D10
 
-!IF (ABS((minz-nzsh)*dz-zango) < dmin2) dmin2=ABS((minz-nzsh)*dz-zango)
 IF (ABS((maxz-nzsh)*dz-zango) < dmin2) dmin2=ABS((maxz-nzsh)*dz-zango)
-!IF (ABS((miny-nysh)*dy-yango) < dmin2) dmin2=ABS((miny-nysh)*dy-yango)
 IF (ABS((maxy-nysh)*dy-yango) < dmin2) dmin2=ABS((maxy-nysh)*dy-yango)
 IF (ABS((maxx-nxsh)*dx-xango) < dmin2) dmin2=ABS((maxx-nxsh)*dx-xango)
-!IF (ABS((minx-nxsh)*dx-xango) < dmin2) dmin2=ABS((minx-nxsh)*dx-xango)
 
-!r=dmin2-bcrad-dx
+
 bcrad = nabsorb*dx
 r=dmin2-bcrad
 WRITE(*,*) ' analyzing point at r,ir=',r,nint(r/dx)
@@ -583,9 +572,6 @@ DO ith=1,nmptheta+1
   END DO
 END DO
 
-!WRITE(*,*) ' mask in INITMEASUREPOINTS'
-!CALL prifld(sphermask,' mask ')
-
 DO ik=1,nmps                                    
  impsact = imps(ik)
  impsx = mod(impsact-1,nx2)+1
@@ -601,22 +587,24 @@ END DO
 
 RETURN
 END SUBROUTINE initmeasurepoints
-!------------------------------------------------------------
 
 
-!-----escmask---------------------------------------------------------
 
 SUBROUTINE escmask(it)
 
-!     print collected information on escaping electrons
+! Print collected information on escaping electrons.
+!
+! Input:
+!   it   = nr. of time step in calling routine.
 
 USE params
 USE util, ONLY: inttostring,printfield
 IMPLICIT NONE
 
+INTEGER, INTENT(IN)  :: it
+
 INTEGER :: nbe, nbeabs
-INTEGER, INTENT(IN)                      :: it
-!--------------------------------------------------------------------
+
 
 IF (jescmaskorb /=0 .AND. MOD(it,jescmaskorb) == 0) THEN
   DO nbe=1,nstate
@@ -662,7 +650,10 @@ END SUBROUTINE escmask
 !------------------------------------------------------------
 
 SUBROUTINE angabso
-!------------------------------------------------------------
+
+! Collects information on particles lost in nagulaer cones,
+! for later analysis of photo-electron angular distribution (PAD).
+
 USE params
 IMPLICIT NONE
 
@@ -747,15 +738,19 @@ END SUBROUTINE angabso
 
 SUBROUTINE nescape(it,rho)
 
-!     Compute and print total number of escaped electrons
+!   Compute and print total number of escaped electrons (on the fly).
+!
+!   Input:
+!    rho  = electron density
+!    it   = nr. of time step in calling routine 
 
 USE params
 USE util, ONLY:safeopen
 IMPLICIT NONE
 
 
-INTEGER, INTENT(IN)                      :: it
-REAL(DP), INTENT(IN)                         :: rho(kdfull2)
+INTEGER, INTENT(IN)     :: it
+REAL(DP), INTENT(IN)    :: rho(kdfull2)
 
 
 REAL(DP) :: absosum, tinfs
@@ -763,11 +758,6 @@ REAL(DP) :: absosum, tinfs
 
 
 tinfs=it*dt1*0.0484D0/2D0/ame
-!apnum=0D0
-!DO i=1,nxyz
-!  apnum=apnum+rho(i)
-!END DO
-!apnum=apnum*dvol
 apnum = dvol*SUM(rho)
 absosum = dvol*SUM(rhoabso)
 
@@ -782,7 +772,13 @@ END SUBROUTINE nescape
 !------------------------------------------------------------
 
 SUBROUTINE evalmp(iunit,q0)
-!------------------------------------------------------------
+
+! Evaluate and store information for later analysis of PES.
+!
+! Input:
+!  iunit  = wanted output unit
+!  q0     = set of s.p. wavefunctions
+
 USE params
 IMPLICIT NONE
 
@@ -807,8 +803,7 @@ INTEGER :: mynact, nba
 IF(myn==0) THEN
   INQUIRE(803,OPENED=topenf)
   IF(.NOT.topenf) &
-    OPEN(803,POSITION='append',FILE='pMP.'//outnam)                         ! cPW
-!    OPEN(803,POSITION='append',FORM='unformatted',FILE='pMP.'//outnam)
+    OPEN(803,POSITION='append',FILE='pMP.'//outnam)
 END IF
 
 
@@ -830,8 +825,7 @@ DO nbe=1,nstate
     j=j+1
     rp(j)=AIMAG(q0phase)
   END DO
-  WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                       ! cPW: maxmps = 500
-!  WRITE(iunit) tfs,rp(1:2*nmps)                                             ! cPW
+  WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                 
 END DO
 #endif
 
@@ -870,8 +864,7 @@ DO nba=1,nstate_all
                      mpi_comm_world,is,mpi_ierror)
        IF(ttestpar) WRITE(*,*) ' received: nba,from node=',nba,mynact
     END IF
-    WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)                     ! cPW: maxmps = 500
-!    WRITE(iunit) tfs,rp(1:2*nmps)                                           ! cPW
+    WRITE(iunit,'(1f14.5,1000e18.8)') tfs,rp(1:2*nmps)  
   END IF
 END DO
 IF(ttestpar) WRITE(*,*) ' all done. before last barrier'

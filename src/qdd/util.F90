@@ -4167,5 +4167,313 @@ RETURN
 END SUBROUTINE cludcmp
 
 
+!------------------------------------------------------------
+
+SUBROUTINE getclustergeometry
+
+! Compute and print geometry parameters of ionic configuration.
+
+USE params
+IMPLICIT NONE
+!     calculates characteristic observables for describing
+!     the geometry of the cluster ions
+
+INTEGER :: i, ico, ion, j
+REAL(DP) :: dist, rr, sumx, sumy, sumz
+REAL(DP) :: cw(ng,3)
+
+! get center of mass first
+
+sumx=0D0
+sumy=0D0
+sumz=0D0
+
+DO i=1,nion
+  sumx = sumx + cx(i)
+  sumy = sumy + cy(i)
+  sumz = sumz + cz(i)
+END DO
+
+comx = sumx/nion
+comy = sumy/nion
+comz = sumz/nion
+
+! now use center of mass as origin
+
+DO i=1,nion
+  cw(i,1)=cx(i)-comx
+  cw(i,2)=cy(i)-comy
+  cw(i,3)=cz(i)-comz
+END DO
+
+
+!     ! calculate quadrupole tensor of mass distribution
+
+DO i=1,3
+  DO j=i,3
+    qtion(i,j)=0D0
+    DO ion=1,nion
+      qtion(i,j)=qtion(i,j) + 3*cw(ion,i)*cw(ion,j)
+      IF (i == j) THEN
+        rr=cw(ion,1)**2+cw(ion,2)**2+cw(ion,3)**2
+        qtion(i,j)=qtion(i,j)-rr
+      END IF
+    END DO
+    qtion(i,j)=qtion(i,j)/nion
+    qtion(j,i)=qtion(i,j)
+  END DO
+END DO
+
+!      ! calculate root mean square radius
+
+rmsion=0D0
+
+DO ion=1,nion
+  rmsion=rmsion+cw(ion,1)**2+cw(ion,2)**2+cw(ion,3)**2
+END DO
+
+rmsion=SQRT(rmsion/nion)
+
+! determine maximum distance; allows to see if
+! cluster is dissociating
+
+dmdistion=0D0
+DO i=1,nion-1
+  DO j=i+1,nion
+    dist=0D0
+    DO ico=1,3
+      dist = dist + (cw(i,ico)-cw(j,ico))**2
+    END DO
+    IF (dist > dmdistion) dmdistion=dist
+  END DO
+END DO
+
+dmdistion=SQRT(dmdistion)
+
+
+RETURN
+END SUBROUTINE getclustergeometry
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+
+SUBROUTINE getelectrongeometry(q0,nbe)
+
+! Calculates geometry observables of electron orbital density
+! number nbe.
+!
+! Input:
+!   q0   = set of s.p. wavefunctions
+!   nbe  = state which is wanted
+!           for total electronic density, set nbe=0
+!           for total spin-up density, set nbe=-1
+!           for total spin-down density, set nbe=-2
+
+USE params
+IMPLICIT NONE
+
+
+COMPLEX(DP), INTENT(IN)     :: q0(kdfull2,kstate)
+INTEGER, INTENT(IN)         :: nbe
+
+INTEGER :: i, ind, ix, iy, iz, j, k, ncount
+REAL(DP) :: rr, sum,  x1, y1, z1
+REAL(DP) :: xic(3)
+REAL(DP),ALLOCATABLE :: q1(:)
+
+ALLOCATE(q1(kdfull2))
+
+
+
+q1=0D0
+
+IF (nbe == 0) THEN ! total density
+  ncount=nclust
+  DO i=1,nstate
+    DO ind=1,kdfull2
+      q1(ind)=q1(ind)+q0(ind,i)*CONJG(q0(ind,i))
+    END DO
+  END DO
+ELSE IF (nbe == -1) THEN ! total spin-up density
+  ncount=nclust-nspdw
+  STOP 'analyse.F: to be implemented'
+ELSE IF (nbe == -2) THEN   ! total spin-down density
+  ncount=nspdw
+  STOP 'analyse.F: to be implemented'
+ELSE ! single orbital density
+  ncount=1
+  DO ind=1,kdfull2
+    q1(ind)=q1(ind)+q0(ind,nbe)*CONJG(q0(ind,nbe))
+  END DO
+END IF
+
+! get center of density
+
+codx=0D0
+cody=0D0
+codz=0D0
+
+ind=0
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    DO ix=minx,maxx
+      x1=(ix-nxsh)*dx
+      
+      ind=ind+1
+      codx = codx + q1(ind)*x1
+      cody = cody + q1(ind)*y1
+      codz = codz + q1(ind)*z1
+      
+    END DO
+  END DO
+END DO
+
+codx = codx * dvol / ncount
+cody = cody * dvol / ncount
+codz = codz * dvol / ncount
+
+! get quadrupole tensor
+
+DO i=1,3
+  DO j=i,3
+    qtel(i,j)=0D0
+    
+    ind=0
+    DO iz=minz,maxz
+      xic(3)=(iz-nzsh)*dz-codz
+      DO iy=miny,maxy
+        xic(2)=(iy-nysh)*dy-cody
+        DO ix=minx,maxx
+          xic(1)=(ix-nxsh)*dx-codx
+          
+          ind=ind+1
+          sum = 3*xic(i)*xic(j)
+          IF (i == j) THEN
+            rr=0.
+            DO k=1,3
+              rr=xic(k)**2+rr
+            END DO
+            sum=sum-rr
+          END IF
+          
+          qtel(i,j)=qtel(i,j)+sum*q1(ind)
+          
+        END DO
+      END DO
+    END DO
+    
+    qtel(i,j)=qtel(i,j)*dvol/ncount
+    qtel(j,i)=qtel(i,j)
+    
+  END DO
+END DO
+
+
+! get root mean square radius
+
+ind=0
+rmsel=0D0
+DO iz=minz,maxz
+  xic(3)=(iz-nzsh)*dz-codz
+  DO iy=miny,maxy
+    xic(2)=(iy-nysh)*dy-cody
+    DO ix=minx,maxx
+      xic(1)=(ix-nxsh)*dx-codx
+      
+      ind=ind+1
+      rr=0
+      DO k=1,3
+        rr=rr+xic(k)*xic(k)
+      END DO
+      rmsel = rmsel + q1(ind)*rr
+      
+    END DO
+  END DO
+END DO
+
+rmsel = SQRT(rmsel*dvol/ncount)
+
+DEALLOCATE(q1)
+
+
+RETURN
+END SUBROUTINE getelectrongeometry
+!------------------------------------------------------------
+!------------------------------------------------------------
+
+SUBROUTINE calcchargdist(field)
+
+! Computes and prints charge radial charge distribution by 
+! integrating charge up to a given radius.
+! The radii of the analyzing spheres are scanned on an equidstant
+! mesh.
+!
+! Input:
+!   field   = 3D array of (charge-)density 
+!
+! Output:
+!    Array 'chfld' contains integrated charge in equidistant
+!    sequence of radii and is printed to unit 323.
+
+USE params
+!USE util, ONLY:getcm
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN)  :: field(kdfull2)
+
+INTEGER :: ii, ind, ix, iy, iz, n
+REAL(DP) :: chtotal, r, rr, x1, y1, z1
+REAL(DP) :: chfld(100)
+
+
+chtotal = 0.0D0
+DO ii = 1,INT(nzsh*dz/drcharges)
+  chfld(ii)=0.0D0
+END DO
+
+ind = 0
+
+CALL getcm(1,0,0)
+
+DO iz=minz,maxz
+  z1=(iz-nzsh)*dz
+  DO iy=miny,maxy
+    y1=(iy-nysh)*dy
+    DO ix=minx,maxx
+      x1=(ix-nxsh)*dx
+      
+      rr = (x1-rvectmp(1))**2+(y1-rvectmp(2))**2+ (z1-rvectmp(3))**2
+      
+      ind = ind + 1
+      
+      chtotal = chtotal + field(ind)
+      
+      DO ii = 1,INT(nzsh*dz/drcharges)
+        r = ii * drcharges
+        IF (rr <= r*r) THEN
+          chfld(ii)=chfld(ii)+field(ind)
+        END IF
+      END DO
+      
+    END DO
+  END DO
+END DO
+
+DO ii = 1,INT(nzsh*dz/drcharges)
+  chfld(ii)=chfld(ii)*dvol
+END DO
+
+chtotal = chtotal * dvol
+
+WRITE(323,'(f15.5,101e17.7)') tfs, chtotal,  &
+    (chfld(n),n=1,INT(nzsh*dz/drcharges))
+
+
+RETURN
+END SUBROUTINE calcchargdist
+
+
 
 END MODULE util

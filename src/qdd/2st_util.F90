@@ -18,7 +18,6 @@
 
  
 
-!  presently only static version of 'sstep_lsic'
 #ifdef REALSWITCH
 
 MODULE twost_util
@@ -41,17 +40,17 @@ END INTERFACE superpose_state
 CONTAINS
 !     ******************************
 
-!-----superpose_state--------------------------------------------------
-!
+!----------------------------------------------------------------------
+! REAL version
+!----------------------------------------------------------------------
+SUBROUTINE superpose_state_r(wfsup,coeff,q0,is)
+
 !     Superposition to new state:
 !       wfsup     new single-particle state
 !       coeff     superposition coefficients
 !       q0        set of s.p.states to be combined
 !       is        spin of states
-!----------------------------------------------------------------------
-! REAL version
-!----------------------------------------------------------------------
-SUBROUTINE superpose_state_r(wfsup,coeff,q0,is)
+
 USE params
 USE kinetic
 IMPLICIT NONE
@@ -79,6 +78,12 @@ END SUBROUTINE superpose_state_r
 ! COMPLEX version
 !----------------------------------------------------------------------
 SUBROUTINE superpose_state_c(wfsup,coeff,q0,is)
+
+!     Superposition to new state:
+!       wfsup     new single-particle state
+!       coeff     superposition coefficients
+!       q0        set of s.p.states to be combined
+!       is        spin of states
 
 USE params
 USE kinetic
@@ -109,6 +114,12 @@ END SUBROUTINE superpose_state_c
 !----------------------------------------------------------------------
 SUBROUTINE superpose_state_rc(wfsup,coeff,q0,is)
 
+!     Superposition to new state:
+!       wfsup     new single-particle state
+!       coeff     superposition coefficients
+!       q0        set of s.p.states to be combined
+!       is        spin of states
+
 USE params
 USE kinetic
 IMPLICIT NONE
@@ -132,7 +143,7 @@ END DO
 
 RETURN
 END SUBROUTINE superpose_state_rc
-!-----eval_unitrot-------------------------------------------------------------
+
 
 SUBROUTINE eval_unitrot(qact,qold)
 
@@ -146,8 +157,8 @@ USE twost
 USE orthmat, ONLY: matdorth
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
-COMPLEX(DP), INTENT(IN)              :: qold(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: qact(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: qold(kdfull2,kstate)
 
 COMPLEX(DP) :: ovl
 REAL(DP) :: rmo

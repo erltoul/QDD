@@ -105,7 +105,7 @@ CONTAINS
 
 SUBROUTINE init_fsicr()
 
-!     initializes fields for FSIC etc
+! Iinitializes fields for FSIC etc
 
 USE params
 USE kinetic
@@ -115,8 +115,6 @@ INTEGER :: i, j, is, na
 INTEGER :: ifcmplxin, ni, nim, nip        ! oly used in complex SIC
 COMPLEX(DP) :: ccr,csi
 
-!INCLUDE "twost.inc"
-!INCLUDE 'radmatrixr.inc'
 !
 ! Namelist FSIC contains numerical parameters for the solution
 !               of the symmetry condition:
@@ -168,12 +166,12 @@ WRITE(6,'(a,2i5)') ' dimension of sub-matrices:',ndims
 IF(ifsicp==8) THEN
   ALLOCATE(qnewr(kdfull2,kstate))
   ALLOCATE(psirut(kdfull2,kstate))
-  ALLOCATE(rExpDABold(kstate, kstate, 2))!MV added
+  ALLOCATE(rExpDABold(kstate, kstate, 2))
   ALLOCATE(vecsr(kstate,kstate,2))   ! searched eigenvectors
 ELSE IF(ifsicp==9) THEN
   ALLOCATE(qnewc(kdfull2,kstate))
   ALLOCATE(psicut(kdfull2,kstate))
-  ALLOCATE(rExpDABoldc(kstate, kstate, 2))!MV added
+  ALLOCATE(rExpDABoldc(kstate, kstate, 2))
   ALLOCATE(vecsc(kstate,kstate,2))   ! searched eigenvectors
 END IF
 
@@ -205,7 +203,6 @@ IF(istat==0) THEN
       END DO
       ifcmplxin=2
       IF(ifcmplxin==1) THEN
-!      phiini=PI*1D-3
         ni=ndims(is)
         nim=ni-1      
         vecsc(ni,ni,is)=CMPLX(COS(phiini),0D0,DP)
@@ -248,22 +245,23 @@ END SUBROUTINE init_fsicr
 !-----end_fsicr------------------------------------------------
 SUBROUTINE end_fsicr()
 
+! Frees workspace used for static SIC
+
 USE params
 USE kinetic
 IMPLICIT NONE
 
-!   frees workspace for static SIC
 
 IF(ifsicp==8) THEN
-  DEALLOCATE(rExpDABold)!MV added
-  DEALLOCATE(vecsr)   ! searched eigenvectors
-  DEALLOCATE(qnewr)!MV added
-  DEALLOCATE(psirut)   ! searched eigenvectors
+  DEALLOCATE(rExpDABold)
+  DEALLOCATE(vecsr)   
+  DEALLOCATE(qnewr)
+  DEALLOCATE(psirut)  
 ELSE IF(ifsicp==9) THEN
-  DEALLOCATE(rExpDABoldc)!MV added
-  DEALLOCATE(vecsc)   ! searched eigenvectors
-  DEALLOCATE(qnewc)!MV added
-  DEALLOCATE(psicut)   ! searched eigenvectors
+  DEALLOCATE(rExpDABoldc)
+  DEALLOCATE(vecsc)   
+  DEALLOCATE(qnewc)
+  DEALLOCATE(psicut)  
 END IF
 
 RETURN
@@ -278,7 +276,7 @@ END SUBROUTINE end_fsicr
 
 SUBROUTINE init_fsic()
 
-!     initializes fields for FSIC etc
+!  Initializes fields for dynamical FSIC etc
 
 USE params
 USE kinetic
@@ -312,9 +310,12 @@ END SUBROUTINE init_fsic
 !-----ExpDabvol_rotatewf_init----------------------------------
 
 SUBROUTINE expdabvol_rotate_init
+
+! Initializes matrices used later in rotation.
+
 IMPLICIT NONE
 INTEGER::is
-  DO is=1,2   !MV initialise ExpDabOld                              
+  DO is=1,2                        
      CALL MatUnite(ExpDabOld(:,:,is), kstate,ndims(is))
      CALL MatUnite(wfrotate(:,:,is), kstate,ndims(is))
   END DO
@@ -324,15 +325,12 @@ END SUBROUTINE expdabvol_rotate_init
 
 SUBROUTINE end_fsic()
 
-!     terminates fields for FSIC etc
+!  Terminates fields used for FSIC etc
 
 USE params
 USE kinetic
 IMPLICIT NONE
 
-NAMELIST /fsic/step,precis,symutbegin   !!! UT parameters
-
-!----------------------------------------------------------------
 
 kdim=kstate
 DEALLOCATE(ExpDABold,wfrotate,vecs)
@@ -361,8 +359,8 @@ IMPLICIT NONE
 INTEGER :: i, ii, j, jj
 !----------------------------------------------------------------
 
-WRITE(6,*) 'vecsr initvecs'!MV
-WRITE (6,'(6f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)!MV
+WRITE(6,*) 'vecsr initvecs'
+WRITE (6,'(6f12.6)') ((vecsr(ii,jj,1), ii=1,3),jj=1,3)
 
 DO i=1,kstate
   DO j=1,kstate
@@ -371,8 +369,8 @@ DO i=1,kstate
   END DO
 END DO
 
-WRITE(6,*) 'vecs fin initvecs'!MV
-WRITE (6,'(6f12.6)') ((vecs(ii,jj,1), ii=1,3),jj=1,3)!MV
+WRITE(6,*) 'vecs fin initvecs'
+WRITE (6,'(6f12.6)') ((vecs(ii,jj,1), ii=1,3),jj=1,3)
 
 RETURN
 END SUBROUTINE init_vecs
@@ -384,21 +382,22 @@ END SUBROUTINE init_vecs
 
 SUBROUTINE static_sicfield(rho,aloc,psir,iter1)
 
-!     The Coulomb part of the mean field.
-
+!     The Coulomb part of the SIC mean field.
+!
 !     Input:
 !      rho    = electron density
 !      psir   = real wavefunctions
+!      iter1  = nr. of iteration or time steps
 !     Output:
 !      aloc   = local mean-field potential
 
 USE params
 USE kinetic
 IMPLICIT NONE
-REAL(DP) :: rho(2*kdfull2)
-REAL(DP) :: aloc(2*kdfull2)
-REAL(DP) :: psir(kdfull2,kstate)
-INTEGER,INTENT(IN)::iter1
+REAL(DP),INTENT(IN)   :: rho(2*kdfull2)
+REAL(DP),INTENT(OUT)  :: aloc(2*kdfull2)
+REAL(DP),INTENT(IN)   :: psir(kdfull2,kstate)
+INTEGER,INTENT(IN)    :: iter1
 
 !----------------------------------------------------------------
 
@@ -406,16 +405,15 @@ IF(ifsicp < 7) RETURN
 
 !     computation of the mean fields
 
-IF(ifsicp == 8) THEN   !    DSIC
+IF(ifsicp == 8) THEN  
   CALL calc_utwfr(psir,psirut,iter1)
-ELSE IF(ifsicp == 9) THEN   !    DSIC
+ELSE IF(ifsicp == 9) THEN  
   CALL calc_utwfrc(psir,psicut,iter1)
 END IF
 
-!        write(*,*) ' UTWFR over. usew1=',usew1
-IF(ifsicp == 8) THEN   !    DSIC
+IF(ifsicp == 8) THEN  
   CALL calc_fullsicr(psirut,qnewr)
-ELSE IF(ifsicp == 9) THEN   !    DSIC
+ELSE IF(ifsicp == 9) THEN 
   CALL calc_fullsic(psicut,qnewc)
 END IF
 
@@ -427,8 +425,10 @@ END SUBROUTINE static_sicfield
 
 SUBROUTINE infor_sic(psir)
 
-!     Compute and print variances
-
+!  Compute and print variances, static case.
+!
+!  Input:
+!    psir  = set of s.p. wavefunctions
 
 USE params
 USE kinetic
@@ -497,6 +497,9 @@ SUBROUTINE diag_lagr(psir)
 
 !     Diagonalize the matrix of Lagrange parameters and print
 !     information from that step.
+!
+!  Input/Output:
+!    psir  = set of s.p. wavefunctions
 
 USE params
 USE kinetic
@@ -565,7 +568,6 @@ DO is=1,2             !!! Diagonalization on the Lagrange matrix for FSIC
   
 END DO
 
-!ifsicp=8
 
 WRITE(6,*) 'DIAGONAL STATES :'
 CALL spmomsmatrix(psir,1)  !!! to print the total variance
@@ -579,7 +581,13 @@ END SUBROUTINE diag_lagr
 
 SUBROUTINE subtr_sicpot(q1,nbe)
 
-! subtract the SIC potential acting on the acual 'q1'
+! Subtract the SIC potential acting on the actual 'q1'. 
+! Complex version.
+!
+! Input:
+!   nbe   = nr. of state
+! Input/Output:
+!   q1    = wavefunction to be modified
 
 USE params
 USE kinetic
@@ -612,18 +620,18 @@ END SUBROUTINE subtr_sicpot
 
 
 #ifdef COMPLEXSWITCH
-!-----calc_utwfc--------------------------------------------------!MV
+
 
 SUBROUTINE calc_utwfc(q0,q0ut,iter1)
 
+!  Computes localized wavefunctions. Complex version.
+!  
+!  Input:
+!    q0     = set of s.p. wavefunctions 
+!    iter1  = nr. of time step
+!  Output:
+!    q0ut   = set of localized wavefunctions 
 
-!     computes localized wavefunctions
-!       input is set of wavefunctions on 'q0'
-!       output are localized wavefunctions 'q0UT'
-!       the array 'qnewUT' is used as workspace
-
-
-!     basic arrays and workspace
 
 USE params
 USE kinetic
@@ -631,8 +639,8 @@ USE util, ONLY:wfovlp
 USE twost_util, ONLY:superpose_state
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
-COMPLEX(DP), INTENT(IN OUT) :: q0ut(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)  :: q0(kdfull2,kstate)
+COMPLEX(DP), INTENT(OUT) :: q0ut(kdfull2,kstate)
 INTEGER,INTENT(IN) :: iter1
 
 INTEGER :: is, nb, nbeff
@@ -646,7 +654,7 @@ INTEGER :: is, nb, nbeff
 
 DO is=1,2
   IF(ndims(is) > 1)THEN
-    CALL utgradstepc(is,0,q0,iter1)   !!!!! new vecs (gradient method)!MV
+    CALL utgradstepc(is,0,q0,iter1) 
   END IF
 END DO
 
@@ -665,15 +673,14 @@ END SUBROUTINE calc_utwfc
 
 #ifdef REALSWITCH
 SUBROUTINE calc_utwfr(q0,q0ut,iter1)
-!#else
-!SUBROUTINE calc_utwf(q0,q0ut,iter1)
-!#endif
 
-
-!     computes localized wavefunctions
-!       input is set of wavefunctions on 'q0'
-!       output are localized wavefunctions 'q0UT'
-!       the array 'qnewUT' is used as workspace
+!  Computes localized wavefunctions. Real version.
+!  
+!  Input:
+!    q0     = set of s.p. wavefunctions 
+!    iter1  = nr. of time step
+!  Output:
+!    q0ut   = set of localized wavefunctions 
 
 USE params
 USE kinetic
@@ -698,7 +705,7 @@ INTEGER,INTENT(IN) :: iter1
 
 DO is=1,2
   IF(ndims(is) > 1)THEN
-    CALL utgradstepr(is,0,q0,iter1)   !!!!! new vecs (gradient method)
+    CALL utgradstepr(is,0,q0,iter1)  
   END IF
 END DO
 
@@ -714,10 +721,13 @@ END SUBROUTINE calc_utwfr
 
 SUBROUTINE calc_utwfrc(q0,q0ut,iter1)
 
-!     computes localized wavefunctions
-!       input is set of wavefunctions on 'q0'
-!       output are localized wavefunctions 'q0UT'
-!       the array 'qnewUT' is used as workspace
+!  Computes localized wavefunctions. Real/Complex version.
+!  
+!  Input:
+!    q0     = set of s.p. wavefunctions 
+!    iter1  = nr. of time step
+!  Output:
+!    q0ut   = set of localized wavefunctions 
 
 USE params
 USE kinetic
@@ -760,12 +770,16 @@ END SUBROUTINE calc_utwfrc
 #ifdef COMPLEXSWITCH
 SUBROUTINE utgradstepc(is,iprint,q0,iter1)
 
-!     Nonlinear gradient iteration to optimally localized states:
-!      'vecs'    system of eigen-vectors to be determined
-!      'is'      isospin
-!      'iprint'  print level: <0 --> no print at all
+!     Nonlinear gradient iteration to optimally localized states.
+!     Complex version.
+!
+!     Input:
+!       q0     = set of s.p. wavefunctions
+!       is     = isospin
+!       iprint = print level: <0 --> no print at all
 !                             0  --> only final result
 !                             >0 --> print modulus
+!       iter1   = nr. of time step
 
 USE params
 USE kinetic
@@ -782,8 +796,8 @@ INTEGER :: iter
 REAL(DP) :: e1der, e2der, e1old, enold_2st, ERR_c,  stepnew, steplow
 COMPLEX(DP) :: xlambda(kdim,kdim)
 COMPLEX(DP) :: acc
-COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim)           !MV! workspace
-COMPLEX(DP) :: dabsto(kdim,kdim)          !MV! workspace
+COMPLEX(DP) :: dab(kdim,kdim),expdab(kdim,kdim) 
+COMPLEX(DP) :: dabsto(kdim,kdim)      
 
 INTEGER :: itmax2,ni
 LOGICAL,PARAMETER :: ttest=.false.
@@ -799,33 +813,24 @@ itmax2=symutbegin
 ni=ndims(is)
 
 ! update unitary transformation 'vecs' with previous exponentional
-!IF(is==1) WRITE(*,*) ' vecs before:',vecs(1:ni,1:ni,is)
-!IF(is==1) WRITE(*,*) ' wfrotate:',wfrotate(1:ni,1:ni,is)
-
-IF(tnearest)  vecs(1:ni,1:ni,is) = MATMUL(wfrotate(1:ni,1:ni,is),vecs(1:ni,1:ni,is))
-
-!IF(is==1) WRITE(*,*) ' vecs after:',vecs(1:ni,1:ni,is)
+IF(tnearest)  vecs(1:ni,1:ni,is) = &
+             MATMUL(wfrotate(1:ni,1:ni,is),vecs(1:ni,1:ni,is))
 
 IF(texpo) THEN
   vecs(1:ni,1:ni,is) = MATMUL(vecs(1:ni,1:ni,is),expdabold(1:ni,1:ni,is))
 END IF
 
-actstep = step     ! radmaxsym obsolete, set to 1D0
+actstep = step 
 
 IF(tconv) THEN
   IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
   IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
   WRITE(353,*) '# convergence symmetry condition. timestep,is=',iter1,is
-!  WRITE(353,*) 'vecs before:'
-!  DO na=1,ni
-!    WRITE(353,'(3(2(1pg13.5),2x))') vecs(1:ni,na,is)
-!  END DO
   WRITE(353,'(a)') '# iter Ortho , variance, erreur , actstep'
 ELSE
   WRITE(6,'(a)')' iter Ortho , variance, non-linearity, actstep'
 END IF
 
-!WRITE(*,*) ' before: vecs=',vecs(1:ni,1:ni,is)
 
 enold_2st=0D0
 DO iter=1,itmax2
@@ -850,10 +855,6 @@ DO iter=1,itmax2
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
       IF(stepnew < 0D0) stepnew=step
-!      stepnew = stepnew/actstep
-!      actstep = stepnew*actstep
-!      IF(stepnew > steplim) stepnew=steplim
-!      IF(stepnew < steplow) stepnew=steplow
       actstep = max(steplow,min(stepnew,steplim))
       IF(ttest) THEN
         WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
@@ -887,10 +888,8 @@ DO iter=1,itmax2
   END IF
   IF(iter.GE.1) enold_2st=ener_2st(is)
   IF(ABS(norm) < precis) EXIT
-END DO !iter
+END DO 
 
-
-!WRITE(*,*) '  after: vecsr=',vecs(1:ni,1:ni,is)
 
 IF(tconv) close(353)
 RETURN
@@ -900,14 +899,16 @@ END SUBROUTINE utgradstepc
 #ifdef REALSWITCH
 SUBROUTINE utgradstepr(is,iprint,q0,iter1)
 
-!c     Nonlinear gradient iteration to optmially localized states:
-!c      'vecs'    system of eigen-vectors to be determined
-!c      'is'      isospin
-!c      'iprint'  print level: <0 --> no print at all
-!c                             0  --> only final result
-!c                             >0 --> print modulus
-!c     The matrices and dimension are communicated via
-!c     common /radmatrix/.
+!     Nonlinear gradient iteration to optimally localized states.
+!     Real version
+!
+!     Input:
+!       q0     = set of s.p. wavefunctions
+!       is     = isospin
+!       iprint = print level: <0 --> no print at all
+!                             0  --> only final result
+!                             >0 --> print modulus
+!       iter1   = nr. of time step
 
 USE params
 USE kinetic
@@ -923,10 +924,7 @@ LOGICAL,PARAMETER :: ttest=.false.
 
 REAL(DP) :: e1der, e1old, e2der, ERR_r, enorm, norm
 
-!REAL(DP) :: variance,variance2  ! variance of step  ??
-!REAL(DP) :: radmax              ! max. squared radius
-REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
-!REAL(DP) :: varstate(kdim),averstate(kdim)
+REAL(DP) :: actstep,stepnew,enold_2st,actprecis 
 REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
 
 ! The optimized step computes a quadratic from for the SIC energy
@@ -944,7 +942,6 @@ IF(iter1 < 100000) THEN
    itmax2=symutbegin 
 ELSE
    itmax2=1
-!   step=epswf
 END IF
 
 ni=ndims(is)
@@ -958,12 +955,8 @@ END IF
 
 
 ! update unitary transformation 'vecs' with previous exponentional
-!dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
-!vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 actstep = step  ! radmaxsym obsolete, set to 1D0
 actprecis = max(precis,precisfact*sumvar2)
-!actprecis = precis
-!WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
   IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
   IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
@@ -985,8 +978,6 @@ IF(tconv) THEN
 END IF
 WRITE(6,'(a,i4,1pg13.5)') &
  ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
-
-!CALL test_symmcond(is,vecsr(1,1,is),q0)
 
 enold_2st=0D0
 DO iter=1,itmax2
@@ -1018,12 +1009,7 @@ DO iter=1,itmax2
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
       IF(stepnew < 0D0) stepnew=step
-!      stepnew = stepnew/actstep
-!      actstep = stepnew*actstep
-!      IF(stepnew > steplim) stepnew=steplim
-!      IF(stepnew < steplow) stepnew=steplow
       actstep = max(steplow,min(stepnew,steplim))
-!      WRITE(*,'(i52(1pg13.5))') ' is,stepnew,actstep=',is,stepnew,actstep
       IF(ttest) THEN
         WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
         WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
@@ -1059,7 +1045,6 @@ DO iter=1,itmax2
   
 END DO
 
-!CALL test_symmcond(is,vecsr(1,1,is),q0)
 
 IF(tconv) THEN
   IF(ttest) THEN
@@ -1075,9 +1060,6 @@ IF(tconv) THEN
   WRITE(353,'(1x/1x)') 
   CLOSE(353)
 END IF
-! write(6,*) 'sortie de utgradstepr'!MV
-! write (6,'(4f12.5)')
-!     & ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
 
 IF(iprint >= 0) THEN
   WRITE(6,'(2(a,i4),a,1pg12.4)') 'UT cv is reached at it nr.',iter,  &
@@ -1087,13 +1069,16 @@ RETURN
 END SUBROUTINE utgradstepr
 SUBROUTINE utgradsteprc(is,iprint,q0,iter1)
 
-!c     Nonlinear gradient iteration to optmially localized states:
-!c      'vecs'    system of eigen-vectors to be determined
-!c      'is'      isospin
-!c      'iprint'  print level: <0 --> no print at all
-!c                             0  --> only final result
-!c                             >0 --> print modulus
-! version for complex SIC
+!     Nonlinear gradient iteration to optimally localized states.
+!     Real/Complex version
+!
+!     Input:
+!       q0     = set of s.p. wavefunctions
+!       is     = isospin
+!       iprint = print level: <0 --> no print at all
+!                             0  --> only final result
+!                             >0 --> print modulus
+!       iter1   = nr. of time step
 
 
 USE params
@@ -1110,10 +1095,7 @@ LOGICAL,PARAMETER :: ttest=.false.
 
 REAL(DP) :: e1der, e1old, e2der, ERR_r, enorm, norm
 
-!REAL(DP) :: variance,variance2  ! variance of step  ??
-!REAL(DP) :: radmax              ! max. squared radius
-REAL(DP) :: actstep,stepnew,enold_2st,actprecis   !,radvary
-!REAL(DP) :: varstate(kdim),averstate(kdim)
+REAL(DP) :: actstep,stepnew,enold_2st,actprecis 
 REAL(DP) :: enstore(3),stepstore(3)        ! storage for optimized step
 
 ! The optimized step computes a quadratic from for the SIC energy
@@ -1131,7 +1113,6 @@ IF(iter1 < 100000) THEN
    itmax2=symutbegin 
 ELSE
    itmax2=1
-!   step=epswf
 END IF
 
 ni=ndims(is)
@@ -1145,12 +1126,8 @@ END IF
 
 
 ! update unitary transformation 'vecs' with previous exponentional
-!dabsto(1:ni,1:ni) = MATMUL(vecsr(1:ni,1:ni,is),rexpdabold(1:ni,1:ni,is))
-!vecsr(1:ni,1:ni,is) = dabsto(1:ni,1:ni)
 actstep = step  ! radmaxsym obsolete, set to 1D0
 actprecis = max(precis,precisfact*sumvar2)
-!actprecis = precis
-!WRITE(*,*) ' precis,actprecis,sumvar2=',precis,actprecis,sumvar2
 IF(tconv) THEN
   IF(is==1) OPEN(353,file='2st-stat-conv-1.res',POSITION='append')
   IF(is==2) OPEN(353,file='2st-stat-conv-2.res',POSITION='append')
@@ -1173,7 +1150,6 @@ END IF
 WRITE(6,'(a,i4,1pg13.5)') &
  ' Iter,Ortho,variance,erreur,energy. Spin,precis=',is,actprecis
 
-!CALL test_symmcond(is,vecsr(1,1,is),q0)
 
 enold_2st=0D0
 DO iter=1,itmax2
@@ -1205,12 +1181,7 @@ DO iter=1,itmax2
       e2der= (e1der-e1old)*2D0/(stepstore(3)-stepstore(1))
       stepnew = -dampopt*e1der/e2der
       IF(stepnew < 0D0) stepnew=step
-!      stepnew = stepnew/actstep
-!      actstep = stepnew*actstep
-!      IF(stepnew > steplim) stepnew=steplim
-!      IF(stepnew < steplow) stepnew=steplow
       actstep = max(steplow,min(stepnew,steplim))
-!      WRITE(*,'(i52(1pg13.5))') ' is,stepnew,actstep=',is,stepnew,actstep
       IF(ttest) THEN
         WRITE(*,*) ' stepnew,steplim=',stepnew,steplim,actstep
         WRITE(*,'(a,30(1pg15.7))') '    enstore=',enstore
@@ -1246,7 +1217,6 @@ DO iter=1,itmax2
   
 END DO
 
-!CALL test_symmcond(is,vecsr(1,1,is),q0)
 
 IF(tconv) THEN
   IF(ttest) THEN
@@ -1262,9 +1232,6 @@ IF(tconv) THEN
   WRITE(353,'(1x/1x)') 
   CLOSE(353)
 END IF
-! write(6,*) 'sortie de utgradstepr'!MV
-! write (6,'(4f12.5)')
-!     & ((vecsr(ii,jj,is), ii=1,ndims(is)),jj=1,ndims(is))!MV
 
 IF(iprint >= 0) THEN
   WRITE(6,'(2(a,i4),a,1pg12.4)') 'UT cv is reached at it nr.',iter,  &
@@ -1274,6 +1241,13 @@ RETURN
 END SUBROUTINE utgradsteprc
 
 SUBROUTINE test_symmcond(is,vecact,q0)
+
+! Tests the symmetry condition.
+!
+! Input:
+!   is     = spin
+!   vecact = actual transformation vector
+!   q0     = set of s.p. wavefunctions
 
 USE params
 USE kinetic
@@ -1304,7 +1278,6 @@ norm=SQRT(SUM(dab(1:ni,1:ni)**2))
 enold_2st=ener_2st(is)
 
 WRITE(353,'(a,i2)') ' test linearity of unitary transformation for is=',is
-!WRITE(353,'(a,20(1pg13.5))') ' dab:',dab
 WRITE(353,'(a)') ' step-size  energy old-energy  energy-ratio '
 
 
@@ -1329,6 +1302,15 @@ END SUBROUTINE test_symmcond
 
 #ifdef REALSWITCH
 SUBROUTINE dalphabeta_rc(is,dab,vec,q0)
+
+! Compose matrix 'dab=<psi_a|h_a-h_b|psi_b>. Real/complex version.
+!
+! Input:
+!   vec   = actual states in configuration space
+!   q0    = set of s.p. wavefunctions in coordinate space
+!   is    = spin
+! Output:
+!   dab   = matrix of symmetry condition
 
 USE params
 USE kinetic
@@ -1365,18 +1347,16 @@ DO nb=1,nstate
     CALL superpose_state(qsym(:,nb),vec(:,nbeff,is),q0,is)
     save1=enrear      !!! to deactivate cumulation of enrear, enerpw
     save2=enerpw      !!! (else wrong total energy)
-!    WRITE(*,*) ' nb,wfnorm=',nb,wfnorm(qsym(1,nb))
     CALL calc_sicsp(rhosp,usicsp,qsym(1,nb),nb)
-!    WRITE(*,*) ' nb,energs=',nb,encoulsp,enerpw,occup(nb)
     ener_2st(is)=ener_2st(is)+(encoulsp+enerpw)*occup(nb)
     enrear=save1
     enerpw=save2
     
     DO ind=1,nxyz
       uqsym(ind,nb) = usicsp(ind+ishift)*qsym(ind,nb)
-    END DO! nxyz
+    END DO
   END IF
-END DO !nb
+END DO
 
 ! variational result of the UT constraint
 
@@ -1387,12 +1367,11 @@ DO nb=1,nstate
       IF(ispin(nrel2abs(na)) == is)THEN
         naa = na - (is-1)*ndims(1)
         utcond(naa,nbeff) = -wfovlp(qsym(:,na),uqsym(:,nb))
-      END IF !ispin
-    END DO !na
+      END IF 
+    END DO 
   END IF
-END DO !nb
-!WRITE(*,*) ' utcond:',utcond(1:nstate,a:nstate)
-!      call MatPrint ('utCond', utcond, kstate, ndims(is))
+END DO 
+
 DO nb=1,nstate
   IF(ispin(nrel2abs(nb)) == is)THEN
     nbeff = nb - (is-1)*ndims(1)
@@ -1404,7 +1383,6 @@ DO nb=1,nstate
     END DO
   END IF
 END DO
-!      call MatPrint ('DAB', DAB, kstate, ndims(is))
 
 DEALLOCATE(usicsp,rhosp)
 DEALLOCATE(qsym,utcond)
@@ -1414,9 +1392,18 @@ DEALLOCATE(uqsym,symcond)
 RETURN
 END SUBROUTINE dalphabeta_rc
 
-!-----------DAlphaBetar------------------- !MV!!! symmetry condition in antihermitian matrix
+!-----------DAlphaBetar------------------- 
 
 SUBROUTINE dalphabeta_r(is,dab,vec,q0)
+
+! Compose matrix 'dab=<psi_a|h_a-h_b|psi_b>. Real version.
+!
+! Input:
+!   vec   = actual states in configuration space
+!   q0    = set of s.p. wavefunctions in coordinate space
+!   is    = spin
+! Output:
+!   dab   = matrix of symmetry condition
 
 USE params
 USE kinetic
@@ -1513,9 +1500,18 @@ DEALLOCATE(utcond,qsym)
 RETURN
 END SUBROUTINE dalphabeta_r
 
-!-----------DAlphaBeta------------------- !MV!!! symmetry condition in antihermitian matrix
+!-----------DAlphaBeta------------------- 
 
 SUBROUTINE dalphabeta_c(is,dab,vec,q0)
+
+! Compose matrix 'dab=<psi_a|h_a-h_b|psi_b>. Complex version.
+!
+! Input:
+!   vec   = actual states in configuration space
+!   q0    = set of s.p. wavefunctions in coordinate space
+!   is    = spin
+! Output:
+!   dab   = matrix of symmetry condition
 
 USE params
 USE kinetic
@@ -1601,34 +1597,31 @@ DEALLOCATE(uqsym,symcond)
 RETURN
 END SUBROUTINE dalphabeta_c
 
-!-----spmomsmatrix----------------------------------------------
 
-!     Matrix of spatial moments between single-particle states
-!     from real  wf's:
-!      wfr    = set of single particle wavefunctions
-!     The result is stored in common/radmatrix/ for further
-!     use in localization transformation.
 !----------------------------------------------------------------------
 ! REAL version
 !----------------------------------------------------------------------
 SUBROUTINE spmomsmatrix_r(wfr,PRINT)
+
+!     Matrix of spatial moments between single-particle states
+!     from real  wf's:
+!      wfr    = set of single particle wavefunctions
+!      print  = switch to print variance
+!     The result is stored within the module variables.
+
 USE params
 USE kinetic
 IMPLICIT NONE
 
 
-INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
+INTEGER,INTENT(IN) :: PRINT  
 REAL(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 
 INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
 
-
-LOGICAL :: tfirst
+LOGICAL :: tfirst=.TRUE.
 INTEGER :: ind, is, ix, iy, iz, ma, mb, na, nac, nb, noff 
 REAL(DP) :: var, x1, y1, z1, x2, y2, z2
-
-DATA tfirst/.true./
-
 REAL(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
 REAL(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
 REAL(DP),ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
@@ -1650,22 +1643,7 @@ ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 !
 IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
 
-!     check spin of states
-
-!      ndims(1) = 0
-!      ndims(2) = 0
-!      do na=1,nstate
-!        if(ispin(nrel2abs(na)).eq.1) then
-!          if(ndims(2).ne.0) stop ' spins out of order'
-!          ndims(1) = na
-!        else
-!          if(ndims(1).eq.0) stop ' spins out of order'
-!          ndims(2) = na-ndims(1)
-!        endif
-!      enddo
-
 noff = ndims(1)
-
 write(*,'(a,2i5)') 'NDIMS=',ndims
 
 !     compute matrix elements and store
@@ -1749,13 +1727,6 @@ DO na=1,nstate
   END DO
 END DO
 
-!      write(6,'(10(/3i4,6(1pg13.5)))')
-!     &   ((na,nb,is,
-!     &    xmatr(na,nb,is),ymatr(na,nb,is),zmatr(na,nb,is),
-!     &    xxmatr(na,nb,is),yymatr(na,nb,is),
-!     &    zzmatr(na,nb,is),
-!     &    na=1,ndims(is)),nb=1,ndims(is))
-
 !     initialize eigen-vectors
 
 DO is=1,2
@@ -1802,22 +1773,26 @@ END SUBROUTINE spmomsmatrix_r
 
 SUBROUTINE spmomsmatrix_c(wfr,PRINT)
 
+!     Matrix of spatial moments between single-particle states
+!     from complex  wf's:
+!      wfr    = set of single particle wavefunctions
+!      print  = switch to print variance
+!     The result is stored within the module variables.
+
 USE params
 USE kinetic
 IMPLICIT NONE
 
 
-INTEGER,INTENT(IN) :: PRINT    ! print =1 : printing of the total variance
+INTEGER,INTENT(IN) :: PRINT  
+COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
+
 INTEGER,PARAMETER :: iunit=0    ! set zero to disable testprint
 
-LOGICAL :: tfirst
+LOGICAL :: tfirst=.TRUE.
 INTEGER :: ind, is, ix, iy, iz, ma, mb, na, nac, nb, noff 
 REAL(DP) :: var, x1, y1, z1, x2, y2, z2
-
-DATA tfirst/.true./
-
 COMPLEX(DP) :: s,wfmom,xmom,ymom,zmom,xxmom,yymom,zzmom
-COMPLEX(DP),INTENT(IN) :: wfr(kdfull2,kstate)
 COMPLEX(DP),ALLOCATABLE :: rrmatr(:,:,:)  ! matrix of r**2
 COMPLEX(DP),ALLOCATABLE :: xxmatr(:,:,:)  ! matrix of x**2
 COMPLEX(DP),ALLOCATABLE :: yymatr(:,:,:)  ! matrix of y**2
@@ -1838,20 +1813,6 @@ ALLOCATE(ymatr(kdim,kdim,2))   ! matrix of y
 ALLOCATE(zmatr(kdim,kdim,2))   ! matrix of z
 !
 IF(iunit>0) OPEN(iunit,POSITION='append',FILE='pstatmomsmatrix.'//outnam)
-
-!     check spin of states
-
-!      ndims(1) = 0
-!      ndims(2) = 0
-!      do na=1,nstate
-!        if(ispin(nrel2abs(na)).eq.1) then
-!          if(ndims(2).ne.0) stop ' spins out of order'
-!          ndims(1) = na
-!        else
-!          if(ndims(1).eq.0) stop ' spins out of order'
-!          ndims(2) = na-ndims(1)
-!        endif
-!      enddo
 
 noff = ndims(1)
 
@@ -1938,13 +1899,6 @@ DO na=1,nstate
   END DO
 END DO
 
-!      write(6,'(10(/3i4,6(1pg13.5)))')
-!     &   ((na,nb,is,
-!     &    xmatr(na,nb,is),ymatr(na,nb,is),zmatr(na,nb,is),
-!     &    xxmatr(na,nb,is),yymatr(na,nb,is),
-!     &    zzmatr(na,nb,is),
-!     &    na=1,ndims(is)),nb=1,ndims(is))
-
 !     initialize eigen-vectors
 
 DO is=1,2
@@ -2008,33 +1962,32 @@ SUBROUTINE calc_fullsic(q0,qsic)
 
 !     ******************************
 
-!     full SIC:
-!       input is set of wavefunctions on 'q0'
-!       output are SIC s.p. wavefunctions on 'qsic'
+! Full SIC:
+!   input is set of wavefunctions on 'q0'
+!   output are SIC s.p. wavefunctions on 'qsic'
 
 USE params
 USE kinetic
 IMPLICIT NONE
 
 #ifdef REALSWITCH
-REAL(DP) :: q0(kdfull2,kstate)
-REAL(DP) :: qsic(kdfull2,kstate)
+REAL(DP),INTENT(IN) :: q0(kdfull2,kstate)
+REAL(DP),INTENT(OUT) :: qsic(kdfull2,kstate)
 #else
-COMPLEX(DP) :: q0(kdfull2,kstate)
-COMPLEX(DP) :: qsic(kdfull2,kstate)
+COMPLEX(DP),INTENT(IN) :: q0(kdfull2,kstate)
+COMPLEX(DP),INTENT(OUT) :: qsic(kdfull2,kstate)
 #endif
-
-INTEGER :: ind, idx, ishift,  nb
-REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
-!       workspaces
-
-REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
 
 LOGICAL,PARAMETER :: ttest=.false.
 
+INTEGER :: ind, idx, ishift,  nb
+REAL(DP) :: enrearsave, enerpwsave, enrear1, enrear2, enpw1, enpw2, encadd
+
+!       workspaces
+REAL(DP),ALLOCATABLE :: usicsp(:),rhosp(:)
+
 IF(numspin.NE.2) STOP "CALC_FULLSIC requires full spin"
 
-!mb
 enrearsave=enrear
 enerpwsave=enerpw
 enrear1=0D0
@@ -2042,11 +1995,6 @@ enrear2=0D0
 enpw1  = 0D0
 enpw2  = 0D0
 encadd = 0D0
-!mb/
-
-
-
-!------------------------------------------------------------------
 
 !     compute action of SIC potential
 ALLOCATE(usicsp(2*kdfull2),rhosp(2*kdfull2))
@@ -2093,7 +2041,7 @@ DO nb=1,nstate
     END IF
   END IF
 END DO
-!encadd=encadd/2.0
+
 enrear   = enrearsave-enrear1-enrear2
 IF(directenergy) THEN
   enerpw   = enerpwsave-enpw1-enpw2-encadd

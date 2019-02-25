@@ -336,8 +336,7 @@ IF(nclust > 0) THEN
     CALL init_dynwf(psi)
     IF(nabsorb > 0) CALL  init_abs_accum()
   ELSE
-    IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi)
-!                   ??: 'evaluate' should come after 'restart2' ??
+!    IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi)    ! ????
     IF (iscatterelectron /=0) CALL init_scattel(psi)
     outnam=outname                                     ! ???
     CALL restart2(psi,outnam,.false.)

@@ -75,6 +75,10 @@
 18) Routine 'savings'  in 'dynamic.F90':
      Save status before CPU time exceeds bounds. May be skipped?
 
+19) File 'attachement.F90':
+     Option of electron attachement should be removed from the
+     public version.
+
 *****************************************************************
 
 Code cleaning:
@@ -113,3 +117,4 @@ Subroutines checked and commented:
    coulsolv.F90
    coulex.F90
    carlo.F90
+   attachement.F90

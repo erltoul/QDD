@@ -2,25 +2,27 @@
 
 SUBROUTINE afterburn(psir,rho,aloc)
 
-! dynamic propagation for electrons and ions
+! Improving static solution by doing a couple of steps with
+! imaginary-time propatation.
+!
+!     Input/Output:
+!      psir   = real wavefunctions
+!      rho    = electron density
+!      aloc   = local mean-field potential
+
 
 USE params
-!USE kinetic
-!USE util, ONLY: stimer,timer,safeopen,testcurrent,rhointxy,rhointyz,rhointxz
 USE twost, ONLY:tnearest,init_fsic,init_vecs,end_fsic,expdabvol_rotate_init
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                  :: psir(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)   :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)   :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN OUT)   :: rho(2*kdfull2)
 
 COMPLEX(DP),ALLOCATABLE :: psiw(:,:),psi(:,:)
 
 INTEGER  :: it,ion
-!REAL(DP):: totalprob,totalovlp
-!REAL(DP), EXTERNAL:: energ_ions   ! declared in ion_md
-!REAL(DP), EXTERNAL:: enerkin_ions ! declared in ion_md
 
 
 

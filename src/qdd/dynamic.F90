@@ -2374,7 +2374,8 @@ SUBROUTINE analyze_ions(it)
 !     it  = time step in calling routine
 
 USE params
-USE util, ONLY:gettemperature,getcm,safeopen,view3d
+USE util, ONLY:gettemperature,getcm,safeopen,view3d,getclustergeometry
+
 IMPLICIT NONE
 
 INTEGER,INTENT(IN)  :: it
@@ -2492,7 +2493,8 @@ SUBROUTINE analyze_elect(psi,rho,aloc,it)
 !      it     = time step in calling routine
 
 USE params
-USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl
+USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl, &
+               calcchargdist,getelectrongeometry
 IMPLICIT NONE
 
 

@@ -287,3 +287,39 @@ RETURN
 END SUBROUTINE vstepv
 #endif
 
+
+! From former 'analse.F90'
+
+SUBROUTINE getsurfprops
+!------------------------------------------------------------
+USE params
+IMPLICIT NONE
+
+! calculate kinetic energy of surface ions
+#if(raregas)
+INTEGER :: i
+
+ekincsurf=0D0
+ekinesurf=0D0
+ekinksurf=0D0
+ekinsurf=0D0
+
+DO i=1,nc
+  ekincsurf=ekincsurf+(pxc(i)*pxc(i)+pyc(i)*pyc(i)+pzc(i)*pzc(i))/  &
+      2D0/mion/1836D0/ame
+END DO
+DO i=1,NE
+  ekinesurf=ekinesurf+(pxe(i)*pxe(i)+pye(i)*pye(i)+pze(i)*pze(i))/  &
+      2D0/me/1836D0/ame
+END DO
+DO i=1,NE
+  ekinksurf=ekinksurf+(pxk(i)*pxk(i)+pyk(i)*pyk(i)+pzk(i)*pzk(i))/  &
+      2D0/mkat/1836D0/ame
+END DO
+
+ekinsurf = ekincsurf + ekinesurf + ekinksurf
+#endif
+
+RETURN
+END SUBROUTINE getsurfprops
+!------------------------------------------------------------

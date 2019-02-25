@@ -588,11 +588,11 @@ endif
 OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
-       carlo.o localize.o localizer.o analyse.o\
+       carlo.o localize.o localizer.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
        parallele.o 2stUT.o attachement.o rta.o\
-       HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
+       HEeigensystem.o mini.o zdiag.o orthmat.o
 ifeq ($(raregas), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o util_substrate.o
@@ -775,6 +775,9 @@ mini.o: mini.f
 HEeigensystem.o: HEeigensystem.f
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
+
+attachement.o: private/attachement.F90
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 ifeq ($(raregas), YES)
 
