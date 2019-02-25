@@ -591,11 +591,11 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        carlo.o localize.o localizer.o analyse.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
-       parallele.o expevol.o 2stUT.o attachement.o rta.o\
+       parallele.o 2stUT.o attachement.o rta.o\
        HEeigensystem.o mini.o zdiag.o afterburn.o orthmat.o
 ifeq ($(raregas), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o
+       short.o image.o lattice.o util_substrate.o
 endif
 
 # List of modules:
@@ -623,7 +623,7 @@ OBJS_NPAR = $(filter-out params.o, $(OBJS))
 
 # Objects that depend on kinetic.mod and/or coulsolv.mod,
 # with no other special requirements:
-OBJS_KIN  = dynamic.o expevol.o ionmd.o util.o zeroforce.o
+OBJS_KIN  = dynamic.o ionmd.o util.o zeroforce.o
 OBJS_COUL = image.o lda.o loc_mfield.o
 OBJS_KINCOUL = init.o main.o pseudosoft.o
 #  ifneq ($(TYPE_FFT), cuFFT)
@@ -682,7 +682,7 @@ $(EXEC): initial_checks $(OBJS)
 ifneq ($(twostsic_value), 0)
 
 OBJS_2ST_UTIL = main.o static.o
-OBJS_TWOSTSIC     = dynamic.F90 expevol.F90 main.o
+OBJS_TWOSTSIC     = dynamic.F90 main.o
 OBJS_TWOSTSIC_R   = dynamic.o main.o restart.o static.o
 
 $(OBJS_2ST_UTIL): 2st_util.mod
@@ -748,8 +748,8 @@ main.o: main.F90 util.o
 givens.o: givens.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-multi_exp.o: multi_exp.F90 params.mod
-	$(COMPILER) $(COMPILERFLAGS3) -c $<
+#multi_exp.o: multi_exp.F90 params.mod
+#	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 restart.o: restart.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $<
@@ -775,9 +775,15 @@ mini.o: mini.f
 HEeigensystem.o: HEeigensystem.f
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
+
+ifeq ($(raregas), YES)
+
 # QM/MM routines
 
 forces_substrate.o: QMMM/forces_substrate.F90 params.mod
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+util_substrate.o: QMMM/util_substrate.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
 functions.o: QMMM/functions.F90 params.mod 
@@ -800,4 +806,6 @@ lattice.o: QMMM/lattice.F90 params.mod
 
 subgrids.o: subgrids.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
+
+endif
 

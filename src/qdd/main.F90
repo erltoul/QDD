@@ -298,7 +298,14 @@ IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 !     initialize protocol files
 IF(nclust > 0 .AND. nabsorb > 0) CALL init_absbc(rho)
 IF (nclust > 0 .AND. jmp > 0) CALL initmeasurepoints
-IF(myn == 0 .OR. knode == 1) CALL init_dynprotocol(rho,aloc,psi)
+IF(myn == 0 .OR. knode == 1) THEN
+#if(raregas)
+  CALL init_dynprotocol(rho,aloc,psi)
+#else
+  CALL init_dynprotocol()
+#endif
+  IF(nclust==0) CALL getforces(rho,psi,-1,0)  ! initial call, case of only MD
+END IF
 
 #if(raregas)
 IF (surftemp > 0) CALL init_surftemp()

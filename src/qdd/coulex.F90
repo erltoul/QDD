@@ -16,10 +16,15 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
+
 ! set this preprocessor parameter to activate 3D FFTW in Coulomb solver
 #define coudoub3D 1
 
 MODULE coulsolv_e
+
+! Exact Coulomb solver using doubled grid to treat long-range
+! part exactly.
+
 #if(fftw_cpu)
 USE, intrinsic :: iso_c_binding
 USE FFTW
@@ -73,6 +78,13 @@ CONTAINS
 
 SUBROUTINE init_coul_e(dx0,dy0,dz0,nx0,ny0,nz0)
 
+!   Initialize grid parameters, basic arrays,  and FFTW3 plans.
+!
+! Input:
+!   dx0,dy0,dz0  = grid spacings
+!   nx0,ny0,nz0  = box sizes
+! 
+
 REAL(DP),INTENT(IN)::dx0,dy0,dz0
 INTEGER,INTENT(IN)::nx0,ny0,nz0
 !-----------------------------------------------------------------------
@@ -82,8 +94,6 @@ REAL(DP) :: charge
 REAL(DP),ALLOCATABLE :: rhotest(:),ctest(:)
 
 
-!     read grid parameters from file or simply initialize them
-!     note that the Coulomb solver doubles the grid internally
 
 kxmax=2*nx0;kymax=2*ny0;kzmax=2*nz0;ksmax=kxmax
 kdfull=nx0*ny0*nz0
@@ -137,9 +147,6 @@ IF (nini==0) THEN
       WRITE(*,*) 'Coulex: wisdom from system'  
     END IF
   END IF
-!  pforw=fftw_plan_dft_3d(nz2,ny2,nx2,ffta,ffta,FFTW_FORWARD,FFTW_planflag+FFTW_UNALIGNED)
-!  pforw=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
-!  pback=fftw_plan_dft_3d(kxmax,kymax,kzmax,ffta,ffta,FFTW_BACKWARD,FFTW_planflag)
   pforw=fftw_plan_dft_r2c_3d(kzmax,kymax,kxmax,rffta,ffta,FFTW_planflag)
   pback=fftw_plan_dft_c2r_3d(kzmax,kymax,kxmax,ffta,rffta,FFTW_planflag)
   pforwc=fftw_plan_dft_3d(kzmax,kymax,kxmax,ffta,ffta,FFTW_FORWARD,FFTW_planflag)
@@ -196,10 +203,10 @@ END SUBROUTINE init_coul_e
 SUBROUTINE fftinp
 IMPLICIT NONE
 
-!     initializes work tables for FFT
+!  Initializes work tables for FFT
 
-!     grid parameters nx,ny,nz,dx,dy,dz,ecut must have been read or
-!     initialized before !
+!  Grid parameters nx,ny,nz,dx,dy,dz,ecut must have been 
+!  initialized before !
 
 !-----------------------------------------------------------------------
 
@@ -245,9 +252,6 @@ WRITE(*,*) ' dkx,dky,dkz,dksp=',dkx,dky,dkz,dksp
 
 grnorm=SQRT(dxsp/dksp)
 fnorm=1.0D0/SQRT(REAL(nx*ny*nz,DP))
-!test      akmax=sqrt(3*(nx*nx)*dx*dx)+2.0
-!test      nxk=int(akmax/dkx)+1
-!test      if(nxk.gt.nx1) nxk=nx1
 nxk=nx1
 
 !     built Greens function in Fourier space
@@ -308,13 +312,11 @@ DO i3=1,nzi
       xx2=xx1*xx1
       ak2=xx2+xy2+xz2
       ii=ii+1
-!        write(*,*) ' i1,i2,i3,ii=',i1,i2,i3,ii
       IF(ii /= ikzero) THEN
         akv2r(ii) =  1D0/SQRT(ak2)
       ELSE
-!              akv2r(ii) = (6D0*pi/(dx*dy*dz))**(1D0/3D0)  ! spherical approx
-!              akv2r(ii) = 1.19003868*(dx*dy*dz)**(-1D0/3D0)
-        akv2r(ii) = 2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0)  ! empirical
+        ! empirical correction at k==0
+        akv2r(ii) = 2.34D0*1.19003868D0*(dx*dy*dz)**(-1D0/3D0) 
       END IF
       akv2i(ii) = 0D0
     END DO
@@ -329,10 +331,6 @@ akv2=ffta
 #else
 CALL fourf(akv2r(1),akv2i(1))
 #endif
-!  CALL prifld(akv2r,'k**2 for Co')
-!  CALL prifld(akv2i,'k**2 for Co')
-!nxyf=nx2*ny2
-!nyf=nx2
 ind=0 !nz*nxyf+ny*nyf
 #if(coudoub3D && fftw_cpu)
 WRITE(6,*) '1/k**2 along x'
@@ -356,20 +354,24 @@ END SUBROUTINE fftinp
 #if(coudoub3D && fftw_cpu)
 !-------------------------------------------------------------------
 
-!SUBROUTINE falr(rhoinp,chpfalr,kdum)
-SUBROUTINE solv_poisson_e(rhoinp,chpfalr,kdum)
+SUBROUTINE solv_poisson_e(rhoinp,chpfalr,kdf)
 IMPLICIT NONE
 
 ! Coulomb solver using FFTW
+!
+! Input:
+!   rhoinp  = charge density
+!   kdf     = size of array
+! Output:
+!   chpfalr = resulting Coulomb potential
 
 
-REAL(DP), INTENT(IN)   :: rhoinp(*) !rhoinp(kdfull)
-REAL(DP), INTENT(OUT)  :: chpfalr(*) !chpfalr(kdfull)
-INTEGER, INTENT(IN)    :: kdum   ! dummy variable, exist only to match the number of arguments of other version of farl.
+REAL(DP), INTENT(IN)   :: rhoinp(kdf) 
+REAL(DP), INTENT(OUT)  :: chpfalr(kdf) 
+INTEGER, INTENT(IN)    :: kdf
 
 INTEGER :: i0, i1, i2, i3
 REAL(DP) ::factor
-!WRITE(*,*) ' running new Coulomb'
 
 ! map density to 2**3 larger grid, immediately on FFTW3 work space
 
@@ -408,37 +410,28 @@ END DO
 
 
 END SUBROUTINE solv_poisson_e
-!END SUBROUTINE falr
 
 #else
 
 !-------------------------------------------------------------------
 
-!SUBROUTINE falr(rhoinp,chpfalr,kdum)
 SUBROUTINE solv_poisson_e(rhoinp,chpfalr,kdum)
 
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN)                     :: rhoinp(kdfull)
-REAL(DP), INTENT(OUT)                     :: chpfalr(kdfull)
-INTEGER, INTENT(IN)                  :: kdum
+REAL(DP), INTENT(IN)   :: rhoinp(kdfull)
+REAL(DP), INTENT(OUT)  :: chpfalr(kdfull)
+INTEGER, INTENT(IN)    :: kdum    ! dummy to fill list
 
 REAL(DP),ALLOCATABLE :: rhokr(:),rhoki(:)
 
-!WRITE(*,*) ' running old Coulomb'
-
-!     call a routine written by you which writes your density field
-!     on the array rho.
-!     remember not to send your original density array to the fcs.
-!     in this case we have a homogeneously charged sphere .
 
 ALLOCATE(rhokr(kdred),rhoki(kdred))
 rhokr=0D0
 rhoki=0D0
 
 CALL rhofld(rhoinp,rhokr,rhoki)
-
 
 !     call coufou, which contains the fcs procedure.
 
@@ -447,26 +440,27 @@ CALL coufou2(rhokr,rhoki)
 !     call a routine written by you which outputs the results of the fcs
 !     and maybe some other things to an output file or the screen.
 
-CALL result(chpfalr,rhokr,rhoki)
+CALL result(chpfalr,rhokr)
 
 DEALLOCATE(rhokr,rhoki)
 
 
 
 END SUBROUTINE solv_poisson_e
-!END SUBROUTINE falr
+
 
 !-----rhofld------------------------------------------------------------
 
 SUBROUTINE rhofld(rhoinp,rhokr,rhoki)
 IMPLICIT NONE
 
-!     copy density on complex array of double extension in x,y,z
+!  Copy density 'rhoinp' two complex in terms of two real arrays
+!  of double extension in x,y,z.
 
 
-REAL(DP), INTENT(IN)                         :: rhoinp(kdfull)
-REAL(DP), INTENT(OUT)                        :: rhokr(kdred)
-REAL(DP), INTENT(OUT)                        :: rhoki(kdred)
+REAL(DP), INTENT(IN)   :: rhoinp(kdfull)
+REAL(DP), INTENT(OUT)  :: rhokr(kdred)
+REAL(DP), INTENT(OUT)  :: rhoki(kdred)
 
 INTEGER :: i0, i1, i2, i3, ii
 
@@ -491,17 +485,23 @@ END SUBROUTINE rhofld
 
 !-----result------------------------------------------------------------
 
-SUBROUTINE result(chpfalr,rhokr,rhoki)
+SUBROUTINE result(chpfalr,rhokr)
+
+!  Copy Coulomb field back to standard grid.
+!
+!  Input:
+!    rhokr   = communicator for resulting Coulob field on double grid
+!  Output:
+!    chpfalr = resulting Coulomb field on standard grid
 
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: chpfalr(kdfull)
-REAL(DP), INTENT(IN)                         :: rhokr(kdred)
-REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)! dummy variable, exist only to match the number of arguments of other version of farl.
+REAL(DP), INTENT(OUT)     :: chpfalr(kdfull)
+REAL(DP), INTENT(IN)      :: rhokr(kdred)
+!REAL(DP), INTENT(IN OUT)  :: rhoki(kdred)! dummy variable, exist only to match the number of arguments of other version of farl.
 
 INTEGER :: i0, i1, i2, i3, ii
 
-!     copy Coulomb field back to standard grid
 
 ii=0
 i0=0
@@ -525,10 +525,18 @@ END SUBROUTINE result
 
 SUBROUTINE coufou2(rhokr,rhoki)
 
+! Coulomb solver in k-space through FFT.
+!
+! Input:
+!   rhokr   = charge density 
+! Output:
+!   rhokr   = Coulomb field
+! rhoki is work space keeping temporarily the imaginary part.
+
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: rhokr(kdred)
-REAL(DP), INTENT(IN OUT)                     :: rhoki(kdred)
+REAL(DP), INTENT(IN OUT)   :: rhokr(kdred)
+REAL(DP), INTENT(IN OUT)   :: rhoki(kdred)
 
 LOGICAL,PARAMETER :: tprint=.false.
 LOGICAL,PARAMETER :: rqplot=.false.
@@ -560,10 +568,14 @@ END SUBROUTINE coufou2
 #endif
 
 
-
 !-----fourf-------------------------------------------------------fourf
 
 SUBROUTINE fourf(pskr,pski)
+
+!    Fourier forward transformation
+!     I/O: pskr   real part of the wave-function
+!     O:   pski   imaginary part of the wave-function in k-space
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -580,17 +592,13 @@ INCLUDE 'mpif.h'
 REAL(DP) :: is(mpi_status_size)
 #endif
 
-REAL(DP), INTENT(OUT)                        :: pskr(kdred)
-REAL(DP), INTENT(OUT)                        :: pski(kdred)
+REAL(DP), INTENT(IN OUT)   :: pskr(kdred)
+REAL(DP), INTENT(OUT)      :: pski(kdred)
 
 
-!     Fourier forward transformation
-!     I/O: pskr   real part of the wave-function
-!          pski   imaginary part of the wave-function
 INTEGER :: i1, nzzh, nyyh
 REAL(DP) ::  tnorm, time_fin
 INTEGER,SAVE :: mxini=0,myini=0,mzini=0
-!DATA  mxini,myini,mzini/0,0,0/              ! flag for initialization
 LOGICAL,SAVE :: tinifft=.false.
 
 !----------------------------------------------------------------------
@@ -613,8 +621,8 @@ ELSE IF(myini /= kffty) THEN
   STOP ' ny2 in four3d not as initialized!'
 END IF
 IF(mzini == 0) THEN
-  CALL dcfti1 (kfftz,wsavez,ifacz)              !! here was
-  mzini  = kfftz                              !! the bug
+  CALL dcfti1 (kfftz,wsavez,ifacz)        
+  mzini  = kfftz                          
   WRITE(7,'(a)') ' z-fft initialized '
 ELSE IF(mzini /= kfftz) THEN
   STOP ' nz2 in four3d not as initialized!'
@@ -796,16 +804,21 @@ END SUBROUTINE fourf
 !-----fourb------------------------------------------------------------
 
 SUBROUTINE fourb(pskr,pski)
+
+!     Fourier backward transformation
+!     Input/Output: 
+!        pskr =  real part of the wave-function
+!     Input:
+!        pski =  imaginary part of the wave-function in k-space
+!                used temporarily as work space
+
 IMPLICIT NONE
 
-REAL(DP), INTENT(OUT)                        :: pskr(kdred)
-REAL(DP), INTENT(OUT)                        :: pski(kdred)
+REAL(DP), INTENT(IN OUT)   :: pskr(kdred)
+REAL(DP), INTENT(IN OUT)      :: pski(kdred)
 
 INTEGER :: i,nzzh,nyyh
 REAL(DP) :: tnorm
-!     Fourier backward transformation
-!     I/O:  pskr   real part of the wave-function
-!           pski   imaginary part of the wave-function
 !----------------------------------------------------------------------
 
 nzzh=(nzi-1)*nxy1
@@ -830,6 +843,11 @@ END SUBROUTINE fourb
 !-----fftx-------------------------------------------------------------
 
 SUBROUTINE fftx(psxr,psxi)
+
+!     Performs the Fourier-transformation in x-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -841,9 +859,6 @@ REAL(DP), INTENT(IN OUT)                        :: psxi(kdred)
 #if(netlib_fft)
 INTEGER::ir,ic     ! Index for real and complex components when stored in fftax
 #endif
-!     performs the Fourier-transformation in x-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -947,6 +962,11 @@ END SUBROUTINE fftx
 !-----ffty--------------------------------------------------------------
 
 SUBROUTINE ffty(psxr,psxi)
+
+!     Performs the Fourier-transformation in y-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -959,10 +979,6 @@ INTEGER :: i0, i1, i2, i3, i30, ii, ny11
 #if(netlib_fft)
 INTEGER::ir,ic     ! Index for real and complex components when stored in fftay
 #endif
-!     performs the Fourier-transformation in y-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
-!     yp is the parity in y-direction (input!)
 
 !----------------------------------------------------------------------
 
@@ -1069,6 +1085,11 @@ END SUBROUTINE ffty
 !-----fftz-------------------------------------------------------------
 
 SUBROUTINE fftz(psxr,psxi)
+
+!     Performs the Fourier-transformation in z-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -1083,9 +1104,6 @@ INTEGER :: i1, i2, i3, i3m, ind
 #if(netlib_fft)
 INTEGER::ir,ic  ! Index for real and complex components when stored in fftb(:,:) (first dimension)
 #endif
-!     performs the Fourier-transformation in z-direction
-!     the input-wave-function (psxr,psxi) (i.e. real and imaginary part)
-!     is overwritten by the Fourier-transformed wave-function
 
 !----------------------------------------------------------------------
 
@@ -1147,6 +1165,11 @@ END SUBROUTINE fftz
 !-----ffbz-------------------------------------------------------------
 
 SUBROUTINE ffbz(psxr,psxi)
+
+!     Performs the Fourier-backward-transformation in z-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -1221,6 +1244,11 @@ END SUBROUTINE ffbz
 !-----ffby-------------------------------------------------------------
 
 SUBROUTINE ffby(psxr,psxi)
+
+!     Performs the Fourier-backward-transformation in y-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -1340,6 +1368,11 @@ END SUBROUTINE ffby
 !-----ffbx-------------------------------------------------------------
 
 SUBROUTINE ffbx(psxr,psxi)
+
+!     Performs the Fourier-backward-transformation in x-direction.
+!     The input-wave-function (psxr,psxi) (i.e. real and imaginary part)
+!     is overwritten by the Fourier-transformed wave-function.
+
 #if(fftw_cpu)
 USE FFTW
 #endif
@@ -1450,6 +1483,8 @@ END SUBROUTINE ffbx
 
 #if(fftw_cpu)
 SUBROUTINE coulsolv_end()
+
+! Epilogue for Coulomb solver
 
 USE FFTW
 

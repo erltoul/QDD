@@ -17,24 +17,19 @@
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE coulsolv
+
+! Driver for Coulomb solver. Switches to FALR or exact.
+
 USE coulsolv_f
 USE coulsolv_e 
 LOGICAL,PUBLIC :: tcoulfalr=.FALSE.
-!INTEGER,PARAMETER :: DP=KIND(1D0)  ! precision  setting
 
-!INTERFACE
-!  SUBROUTINE solv_poisson_i(rhoinp,chpfalr,kdum)
-!  REAL(8), INTENT(IN)   :: rhoinp(*)
-!  REAL(8), INTENT(OUT)  :: chpfalr(*)
-!  INTEGER, INTENT(IN)    :: kdum   ! dummy variable
-!  END SUBROUTINE solv_poisson_i
-!END INTERFACE
-!PROCEDURE(solv_poisson_i),POINTER :: solv_poisson => NULL()
-!EXTERNAL :: solv_poisson_f,solv_poisson_e
 
 CONTAINS
 
 SUBROUTINE init_coul(dxi,dyi,dzi,nxi,nyi,nzi)
+
+! Switch to actual initialization routine
 
 REAL(DP) :: dxi,dyi,dzi
 INTEGER ::nxi,nyi,nzi
@@ -51,6 +46,9 @@ END SUBROUTINE init_coul
 
 
 SUBROUTINE solv_poisson(rhoinp,chpfalr,kdum)
+
+! Switch to actual solver routine
+
   REAL(8), INTENT(IN)   :: rhoinp(*)
   REAL(8), INTENT(OUT)  :: chpfalr(*)
   INTEGER, INTENT(IN)    :: kdum   ! dummy variable

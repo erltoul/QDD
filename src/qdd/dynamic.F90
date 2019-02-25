@@ -22,7 +22,15 @@
 
 SUBROUTINE dyn_propag(psi,rho,aloc)
 
-! dynamic propagation for electrons and ions
+!
+! Master routine for dynamic propagation of electrons and ions.
+!
+!  Input/Ouput:
+!    psi     = set of s.p. wavefunctions to be propagated
+!    rho     = local density
+!    aloc    = local KS potential
+!    Other variables (e.g. ionic coordinates) are communicated
+!    via module 'params'.
 
 USE params
 USE kinetic
@@ -31,9 +39,9 @@ USE twost, ONLY:tnearest
 
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN OUT)  :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN OUT)     :: rho(2*kdfull2)
 
 COMPLEX(DP),ALLOCATABLE :: psiw(:,:)
 
@@ -60,12 +68,11 @@ DO it=irest,itmax   ! time-loop
 
   CALL print_densdiff(rho,it)       ! right place here ???
   
-!         if(nclust.gt.0) call savings(psi,it)
-if (jrtaint.NE.0) then
-  if (mod(it,jrtaint).eq.0.and.it>0.and.(it>irest)) then!to avoid  rta after a restart
-        call rta(psi,aloc,rho,it)!MV
-   endif
-endif
+  IF (jrtaint.NE.0) then
+    IF (MOD(it,jrtaint).EQ.0.AND.it>0.AND.(it>irest)) THEN ! no rta after restart
+      CALL rta(psi,aloc,rho,it)!MV
+    END IF
+  END IF
   
   IF(jattach/=0 .AND. it==irest) THEN
      CALL init_occ_target()
@@ -76,7 +83,6 @@ endif
 
   IF(it > irest)THEN
     
-    
 !          pure electronic dynamics
     
     IF(nclust > 0) THEN
@@ -84,7 +90,7 @@ endif
 !     propagation of the wfs
       WRITE(*,*) 'propagation of the wfs'
       IF(ifexpevol == 1) THEN
-        CALL tstep_exp(psi,aloc,rho,it,psiw,.FALSE.)
+        CALL tstep_exp(psi,aloc,rho,it,psiw,.FALSE.)  ! expon. evolution
       ELSE
 !        IF(ifcnevol == 1) THEN
 !          WRITE(*,*) 'Crank call '
@@ -93,7 +99,7 @@ endif
           CALL tstep(psi,aloc,rho,it)           ! T-V splitting
 !        END IF
       END IF
-      IF(nabsorb > 0) CALL  absbc(psi,rho) ! Existence of absorbing poins on boundary
+      IF(nabsorb > 0) CALL absbc(psi,rho) 
       
       
 !            protocol of densities
@@ -129,9 +135,11 @@ endif
         IF(ipsptyp == 1) THEN
           DO ion=1,nion
             IF (iswitch_interpol==1) then
-              CALL calc_projFine(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+              CALL calc_projFine(cx(ion),cy(ion),cz(ion),&
+                                 cx(ion),cy(ion),cz(ion),ion)
             ELSE
-              CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
+              CALL calc_proj(cx(ion),cy(ion),cz(ion),&
+                             cx(ion),cy(ion),cz(ion),ion)
             ENDIF
           END DO
         END IF
@@ -208,7 +216,14 @@ END SUBROUTINE dyn_propag
 !------------------------------------------------------------
 
 SUBROUTINE init_dynwf(psi)
-!------------------------------------------------------------
+
+! Initializates for dynamic evolution.
+!
+! Output:
+!   psi    = set of s.p. wavefunctions
+!   Other variables though module 'params'
+
+
 USE params
 USE util, ONLY:phstate,stateoverl,dipole_qp,prifld,testcurrent
 USE twost
@@ -218,8 +233,8 @@ IMPLICIT NONE
 
 !     initializes dynamical wavefunctions from static solution
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-!REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
+COMPLEX(DP), INTENT(OUT)     :: psi(kdfull2,kstate)
+
 INTEGER :: ifreset
 REAL(DP) ::acc, palph, pbeta, phexe, sqtest, xion
 REAL(DP), ALLOCATABLE :: rhosav(:),alocsav(:),rho(:),aloc(:)
@@ -289,9 +304,7 @@ IF(ifreset==1) THEN
 END IF
 
 
-
-rvectmp(1)=1D0             ! ??? what for ?
-
+!rvectmp(1)=1D0             ! ??? what for ?
 
 !     optional initial excitations
 
@@ -340,19 +353,18 @@ END SUBROUTINE init_dynwf
 
 SUBROUTINE init_velocel(psi)
 
-!     Boosts all electronic wavefunctions by the same velocity.
-!     The absolute value is associated with the boost kinetic
-!     energy 'ekin0pp' and the direction is given by
-!     'vxn0', 'vyn0','vzn0'.
-!     This routine is similar to 'boost', but it is used in
-!     connection with ionic initialization to produce a cluster
-!     where electrons and ions move with the same velocity.
+!   Boosts all electronic wavefunctions 'psi' by the same velocity.
+!   The absolute value is associated with the boost kinetic
+!   energy 'ekin0pp' and the direction is given by 'vxn0', 'vyn0','vzn0'.
+!   This routine is similar to 'boost', but it is used in
+!   connection with ionic initialization to produce a cluster
+!   where electrons and ions move with the same velocity.
 
 
 USE params
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
 
 INTEGER :: ind, ix, iy, iz, nbe
 COMPLEX(DP) :: cfac
@@ -393,11 +405,12 @@ END SUBROUTINE init_velocel
 
 SUBROUTINE init_projwf(psi)
 
-!     Boosts the electronic wavefunctions of the projectile 
-!     by the same velocity, which norm is given by 'eproj' and
-!     the direction by 'vpx', 'vpy',and 'vpz'.
-!     This routine is similar to 'init_velocel'.
-
+!  Boosts the electronic wavefunctions of the projectile 
+!  by the same velocity, whose norm is given by 'eproj' and
+!  the direction by 'vpx', 'vpy',and 'vpz'.
+!  This routine is similar to 'init_velocel', but applied
+!  only to projectile wavefunctions, distinguished by an
+!  entry in the array 'proj_states'.
 
 USE params
 IMPLICIT NONE
@@ -462,15 +475,15 @@ END SUBROUTINE init_projwf
 
 SUBROUTINE init_scattel(psi)
 
-!     Adds one electron in scattering state as Gaussian wavepacket
-!     with a certain velocity.
-!     The bookkeeping fields are extended accordingly.
+!  Adds one electron in scattering state as Gaussian wavepacket
+!  with a certain velocity given by 'scatterelectronv...'.
+!  The wavefunctions bookkeeping fields are extended accordingly.
 
 
 USE params
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
 
 
 INTEGER :: i, ind, ix, iy, iz
@@ -534,32 +547,26 @@ END SUBROUTINE init_scattel
 
 SUBROUTINE tstep(q0,aloc,rho,it)
 
-!     one electronic time step by TV splitting method.
-
-!     'itsub' indicates the number of subiteration before
-!     next analyzing step (routine 'info').
-!     'itsub=1' is the first call in a series and
-!     'itsub=ipasinf' is the last call.
-!g     Now, 'ipasinf' gives the step of computation of the electronic force
-!g     on the cluster ion.
-
-!     For pure electronic propagation one has the option to
-!     reduce the number of local unitary steps. The last half-step
-!     is omitted (except in case of the last call 'itsub=ipasinf')
-!     and the first local step is doubled instead (except for the
-!     first call 'itsub=1'). This option is switched on by the
-!     run time switch 'iffastpropag'.
+!   One electronic time step by TV splitting method.
+!
+!   Input:
+!     it    = time step in calling routine
+!   Input/Output:
+!     q0    = set of s.p. wavefunctions
+!     rho   = local density (spin-up and spin-down)
+!     aloc  = local KS potential
 
 USE params
 USE kinetic
 USE twost, ONLY:tnearest
+USE twost_util, ONLY:eval_unitrot
 
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT)                  :: q0(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: it
+COMPLEX(DP), INTENT(IN OUT)  :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN OUT)     :: rho(2*kdfull2)
+INTEGER, INTENT(IN)          :: it
 
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: q1,q2
 COMPLEX(DP),DIMENSION(:,:),ALLOCATABLE :: qwork
@@ -580,14 +587,15 @@ myn = 0
 
 
 
-!WRITE(*,*) ' TSTEP: it,kdfull2,nthr=',it,kdfull2,nthr
 ALLOCATE(q1(2*kdfull2,0:nthr))
 ALLOCATE(q2(kdfull2,0:nthr))
 
 CALL cpu_time(time_init)
 CALL system_clock(ncount_init,ncount_rate,ncount_max)
-IF (ntref > 0 .AND. it > ntref) nabsorb = 0           ! is that the correct place?
+IF (ntref > 0 .AND. it > ntref) nabsorb = 0    ! is that the correct place?
 
+!     'itsub' indicates the number of subiteration before
+!     next analyzing step (routine 'info').
 itsub = MOD(it,ipasinf) + 1
 
 ri = -dt1*0.5D0
@@ -639,33 +647,14 @@ ithr=0
 DO nb=1,nstate
 #if(paropenmp && dynopenmp)
   ithr = OMP_GET_THREAD_NUM()
-!  WRITE(*,*) ' actual thread:',ithr
-!  WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
 #endif 
-!  IF(iffastpropag == 1) THEN
-    CALL kinprop(q0(1,nb),q1(1,ithr))
-!  ELSE
-!    CALL fftf(q0(1,nb),q1(1,ithr))
-!!    CALL cmult3d(q1,ak)
-!    WRITE(*,*) ak(1),q1(1,ithr)
-!    q1(1:kdfull2,ithr) = ak*q1(1:kdfull2,ithr)
-!    CALL fftback(q1(1,ithr),q0(1,nb))
-!  END IF
-!#if(paropenmp)
-!WRITE(*,*) ' norm Q1: ithr,nb,norm=',ithr,nb,SUM(q1(:,ithr)**2)*dvol
-!WRITE(*,*) ' norm Q0: ithr,nb,norm=',ithr,nb,SUM(q0(:,nb)**2)*dvol
-!#endif 
-  
+  CALL kinprop(q0(1,nb),q1(1,ithr))
 END DO
 #if(dynopenmp)
 !$OMP END PARALLEL DO
 #endif
 
-!old       tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
-
-
 CALL flush(7)
-
 
 
 !     half non-local step
@@ -687,8 +676,6 @@ IF(ipsptyp == 1 .AND. tnonlocany) THEN
 #endif
 END IF
 
-
-
 DEALLOCATE(q1)
 DEALLOCATE(q2)
 
@@ -701,14 +688,12 @@ END IF
 
 
 
-!     new density and local potential
-!     (this is already the density at the end of the step,
-!      because it is unchanged by unitary potential step)
-!     propagation of substrate dipoles is done in 'dyn_mfield'.
+! New density and local potential (this is already the density 
+! at the end of the step, because it is unchanged by unitary 
+! potential step) propagation of substrate dipoles is done in 
+! 'dyn_mfield'.
 
 CALL dyn_mfield(rho,aloc,q0,dt,it)
-
-
 
 
 !     re-open workspace
@@ -734,8 +719,6 @@ DEALLOCATE(q1)
 
 !      call manualPES(q0)
 
-
-
 CALL cpu_time(time_fin)
 time_cpu = time_fin-time_init
 CALL system_clock(ncount_fin,ncount_rate,ncount_max)
@@ -749,7 +732,6 @@ END IF
 
 IF (izforcecorr /= -1) THEN
   CALL checkzeroforce(rho,aloc)
-!~   CALL checkzeroforce(rho,chpdft) ! chpdft was nor declared, nor initialized. Whatever this  CALL outputs, it is probably eroneous. F.L.
 END IF
 
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
@@ -765,35 +747,35 @@ END SUBROUTINE tstep
 
 SUBROUTINE dyn_mfield(rho,aloc,psi,dt,it)
 
-!     The Coulomb part of the mean field.
+!   Computation of the mean field.
 
+!     Input/Output:
+!      psi    = set of complex s.p. wavefunctions (changed 
+!                in case of SIC)
 !     Input:
-!      rho    = electron density
-!      psi    = complex wavefunctions
 !      dt     = actual time step
-!               dt=0D0 forces adiabatic computation of substrate dipoles
 !      it     = current iteration
 !     Output:
+!      rho    = electron density
 !      aloc   = local mean-field potential
 
 USE params
 USE twost
-!USE twost_util, ONLY: calc_fullsic,calc_fullsicr
 
 IMPLICIT NONE
 
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN)                         :: dt
-INTEGER, INTENT(IN)                          :: it
+REAL(DP), INTENT(OUT)         :: rho(2*kdfull2)
+REAL(DP), INTENT(OUT)         :: aloc(2*kdfull2)
+COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)          :: dt
+INTEGER, INTENT(IN)           :: it
 
 !----------------------------------------------------------------
 
 CALL calcrho(rho,psi)
 CALL coul_mfield(rho)
-!      if (isurf.ne.0 .and. nc+ne+nk.gt.0)
+
 #if(raregas)
 IF (isurf /= 0 .AND. NE > 0) THEN
   IF(dt == 0D0) THEN
@@ -803,23 +785,22 @@ IF (isurf /= 0 .AND. NE > 0) THEN
   END IF
 END IF
 #endif
-CALL calclocal(rho,aloc)          ! LDA part of the potential
+
+! LDA part of local potential
+CALL calclocal(rho,aloc)     
+
+! SIC
 IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
   CALL calc_sic(rho,aloc,psi)
-!JM :  Generalized Slater and FSIC
 ELSE IF(ifsicp >= 7)THEN
-!  IF(symutbegin < itmax) itut = symutbegin+1  ! force symmetry condition
-  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))           !MV
-!JM     Generalized Slater pot
+  CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))   
   IF(ifsicp == 7)THEN
     ifsicp=3
     CALL calc_sic(rho,aloc,psiut)
     ifsicp=7
-!JM     2 state SIC
   ELSE IF(ifsicp .GE. 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
-!JM
 ELSE IF(ifsicp == 6) THEN
   STOP ' that kind of SIC not valid for dynamics'
 END IF
@@ -829,10 +810,14 @@ END SUBROUTINE dyn_mfield
 
 !-----boost--------------------------------------------------------
 
-SUBROUTINE boost(q0)        ! boost with given 'centfx,y,z'
+SUBROUTINE boost(q0) 
 
-!     boosts electronic wavefunctions by 'centfx', 'centfy',
-!     and 'centfz'.
+!  Boosts electronic wavefunctions 'q0' by 'centfx','centfy','centfz'.
+!
+!  Type of action determined by 'ispindi'.
+!    ispindi==0    --> c.m. boost, the same for all electrons.
+!    ispindi==1    --> spin-dipole boost, spin-up and spin-down
+!                      in opposite directions
 
 USE params
 IMPLICIT NONE
@@ -840,15 +825,12 @@ IMPLICIT NONE
 INTEGER :: ind, ix, iy, iz, nbe
 REAl(DP) :: aspin, actsx, actsy,  actsz
 REAL(DP) :: x1, y1, z1
-COMPLEX(DP), INTENT(OUT)                     :: q0(kdfull2,kstate)
-!, INTENT(IN OUT)                         :: ! boost wi
-!REAL(DP), INTENT(IN OUT)                     :: y
-
+COMPLEX(DP), INTENT(IN OUT)  :: q0(kdfull2,kstate)
 
 !--------------------------------------------------------------------
 
 DO nbe=1,nstate
-!        write(6,*) ' before BOOST: nb,norm=',nbe,wfnorm(q0(1,nbe))
+
   IF(ispidi == 1) THEN
     aspin = 3-2*ispin(nbe)
     actsz = 0.5D0*centfz*aspin
@@ -860,7 +842,6 @@ DO nbe=1,nstate
     actsz = centfz
     actsy = centfy
     actsx = centfx
-!          write(6,*) ' actsxyz=',actsx,actsy,actsz
   END IF
   ind = 0
   DO iz=minz,maxz
@@ -874,7 +855,7 @@ DO nbe=1,nstate
       END DO
     END DO
   END DO
-!        write(6,*) ' after BOOST: nb,norm=',nbe,wfnorm(q0(1,nbe))
+
 END DO
 
 RETURN
@@ -885,8 +866,14 @@ END SUBROUTINE boost
 
 SUBROUTINE info(psi,rho,aloc,it)
 
-!     information on energy observables: single particle energies,
-!     kinetic energy, total energy, ionic energy, ...
+!   Print information on energy observables: single particle energies,
+!   kinetic energy, total energy, ionic energy, ...
+!
+!   Input:
+!      psi    = set of complex s.p. wavefunctions
+!      rho    = electron density
+!      aloc   = local mean-field potential
+!      it     = time step in calling routine
 
 USE params
 USE kinetic, ONLY: akv,calc_ekin
@@ -899,16 +886,14 @@ INTEGER :: is(mpi_status_size)
 REAL(DP) :: enonlcp, esh1p, eshellp
 #endif
 
-COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
-!REAL(DP), INTENT(IN OUT)                 :: akv(kdfull2)
-INTEGER, INTENT(IN)                      :: it
+COMPLEX(DP), INTENT(IN)    :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)       :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)       :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)        :: it
 
 INTEGER :: ind, ion, ishift, iss, nb, nbe
 REAL(DP) :: ekin, ehilf, eshell, enonlc
 REAL(DP) :: ek, tinfs, xm
-REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
 REAL(DP) ::  en(kstate)
 COMPLEX(DP),ALLOCATABLE :: qtmp(:)
 COMPLEX(DP),ALLOCATABLE :: psitmp(:,:)
@@ -922,14 +907,10 @@ LOGICAL,PARAMETER :: ttesthpsi=.FALSE.
 
 REAL(DP),EXTERNAL :: energ_ions
 #if(raregas)
+REAL(DP), PARAMETER :: alpha_ar=10.6D0             !  for VdW
 INTEGER :: ico
 #endif
-!------------------------------------------------------------------
 
-
-!DO nb=1,nstate
-!  CALL testgradient(psi(1,nb))
-!END DO
 
 OPEN(2743,FILE='energies.'//outnam)
 
@@ -948,9 +929,6 @@ ELSE
 END IF
 #endif
 
-!test      call prifld(aloc,'ALOC1       ')
-
-
 !     compute single-particle energies and related quantities
 
 IF(ifsicp==5)  psisavex = psi
@@ -963,7 +941,6 @@ DO nb=1,nstate
   spnorm(nb) = wfovlp(psi(:,nb),psi(:,nb))
   CALL  calc_ekin(psi(:,nb),ekin)
   ishift = (ispin(nrel2abs(nb))-1)*nxyz
-  !WRITE(*,*) ' before CALC_EPOT',nb,it,ishift
   CALL calc_epot(psi(:,nb),aloc(ishift+1),enonlo(nb),nb)
   ekinsp(nb) = ekin
   ehilf= epot
@@ -974,8 +951,7 @@ DO nb=1,nstate
   eshell=eshell+en(nb)
   esh1=esh1+ekin*occup(nb)
   enonlc   = enonlc + enonlo(nb)*occup(nb)
-!  WRITE(6,'(a,i2,4(a,f9.5))') 'level:',nrel2abs(nb), '  ekin='  &
-!      ,ekin,'  epot=',ehilf,'  esp=',amoy(nb) ,'  enonlo=', enonlo(nb)
+
 #if(!parayes)
   WRITE(6,'(2(a,i2),5(a,f9.5))') 'level:',nrel2abs(nb), &
        '  ispin=',ispin(nrel2abs(nb)),' occup=',occup(nb), &
@@ -1004,11 +980,7 @@ IF(tstinf) then
   DO nb=1,nstate
     qtmp = psi(:,nb)
     ishift = (ispin(nrel2abs(nb))-1)*nxyz
-
-    
     CALL hpsi(qtmp,aloc(ishift+1),nb,1)
-
-    
 #if(!parayes)
     CALL project(qtmp,qtmp,ispin(nb),psi)
     spvariancep(nb) = SQRT(REAL(wfovlp(qtmp,qtmp),DP))
@@ -1055,9 +1027,7 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
 END IF
 
 #if(parayes)
-
 CALL  prispe_parallele(6,it)
-
 IF(ttest) WRITE(*,*) ' INFO: before allreduce. myn=',myn
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 CALL mpi_allreduce(eshell,eshellp,1,mpi_double_precision,  &
@@ -1066,31 +1036,21 @@ CALL mpi_allreduce(esh1,esh1p,1,mpi_double_precision,  &
     mpi_sum,mpi_comm_world,mpi_ierror)
 CALL mpi_allreduce(enonlc,enonlcp,1,mpi_double_precision,  &
     mpi_sum,mpi_comm_world,mpi_ierror)
-!DO iss=2,1,-1
-!   CALL mpi_allreduce(estar(iss),estarp(iss),1,mpi_double_precision,  &
-!        mpi_sum,mpi_comm_world,ic)
-!END DO
 CALL mpi_barrier (mpi_comm_world, mpi_ierror)
 IF(ttest) WRITE(*,*) ' INFO: after allreduce. myn=',myn
 esh1=esh1p
 eshell=eshellp
 enonlc=enonlcp
-!DO iss=2,1,-1
-!   estar(iss)=estarp(iss)
-!ENDDO
 #endif
 
 DO iss=2,1,-1
-   CALL calc_estar(psi,iss,estar(iss),estarETF(iss))
+  CALL calc_estar(psi,iss,estar(iss),estarETF(iss))
 END DO
 
 WRITE(7,*) 'ekintot=',esh1
 WRITE(7,*) 'estar(1)=',estar(1),'   estar(2)=',estar(2)
 
-
-
 !     rearrangement and background Coulomb energy
-
 
 ecback=0D0
 ecrho=0D0
@@ -1099,8 +1059,7 @@ IF(nion2 /= 0) THEN
     ecback=ecback-rho(ind)*potion(ind)
     ecrho=ecrho+rho(ind)*(chpcoul(ind)-potion(ind))
   END DO
-!  WRITE(*,*) ' ECBACK loop:',ecback*dvol/2.0
-ELSE ! jellium case
+ELSE                          ! jellium case
   DO ind=1,nxyz
     ecback=ecback-rhojel(ind)*chpcoul(ind)
     ecrho=ecrho+rho(ind)*chpcoul(ind)
@@ -1131,9 +1090,7 @@ END IF
 esh1=esh1
 eshell=eshell/2.0D0  !(=t+v/2)
 
-
 !     ionic contributions to the energy
-
 
 ecorr = energ_ions()
 
@@ -1171,7 +1128,6 @@ IF(ionmdtyp > 0) THEN
   END DO
 #endif
 END IF
-
 
 !     final composition and print
 
@@ -1225,7 +1181,6 @@ END IF
 IF(myn == 0) THEN
 #endif
   WRITE(6,'(a)') ' '
-!mb        write(6,*) 'tot sp energ     = ',eshell*2.-esh1/2.
   WRITE(6,*) 'tot sp energ     = ',eshell*2-esh1
   WRITE(6,*) 'rearge. energ    = ',enrear
   WRITE(6,*) 'e_coul:ion-ion   = ',ecorr
@@ -1280,10 +1235,17 @@ END SUBROUTINE info
 
 SUBROUTINE calc_epot(psin,alocact,enonlocout,nb)
 
-!     Calculates total potential energy 'epotout' and non-local
-!     part of potential energy 'enonlocout' for the
-!     single particle state with complex wavefunction 'psin'.
-!     The local potential comes in through 'alocact'.
+!  Calculates potential energy for state 'nb'.
+
+!  Input:
+!    psi      = wavefunction of state 'nb'
+!    alocact  = local mean-field potential
+!    nb      = nr. of s.p. state
+!
+!  Output:
+!    enonlocout = controbution from non-local part
+!    epot       = contribution from local part,
+!                 via module 'params'
 
 USE params
 USE util, ONLY:wfovlp
@@ -1292,10 +1254,10 @@ USE twostr, ONLY: ndims
 
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2)
-REAL(DP), INTENT(IN)                         :: alocact(2*kdfull2)
-REAL(DP), INTENT(OUT)                        :: enonlocout
-INTEGER, INTENT(IN)                          :: nb
+COMPLEX(DP), INTENT(IN)    :: psin(kdfull2)
+REAL(DP), INTENT(IN)       :: alocact(2*kdfull2)
+REAL(DP), INTENT(OUT)      :: enonlocout
+INTEGER, INTENT(IN)        :: nb
 
 INTEGER :: i
 REAl(DP) :: sumnon
@@ -1312,7 +1274,7 @@ ALLOCATE(psi2(kdfull2))
 epot=0D0
 
 IF(ttest) WRITE(*,*) ' in CALC_EPOT 1. average field=',SUM(alocact(1:nxyz))
-!call prifld(alocact,'ALOC in Epot')
+
 !     non local part of ps
 
 IF(ipsptyp == 1) THEN
@@ -1333,7 +1295,7 @@ ELSE
 END IF
 
 IF(ttest) WRITE(*,*) ' in CALC_EPOT 2'
-!JM : subtract SIC potential for state NB
+! subtract SIC potential for state NB
 IF(ifsicp .GE. 8) THEN
   is=ispin(nrel2abs(nb))
   DO na=1,ndims(is)
@@ -1348,7 +1310,6 @@ IF(ifsicp .GE. 8) THEN
   END DO
 END IF
 
-!JM
 
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
@@ -1370,10 +1331,18 @@ END SUBROUTINE calc_epot
 !-----calc_estar------------------------------------------------
 
 SUBROUTINE calc_estar(psin,iss,excit,excitETF)
-!SUBROUTINE calc_estar(psin,is,excit,ekint)
 
-!     Compute excitation energy as E* = Ekin - Ekin(Thomas-Fermi)
-!     of the whole cluster.
+!  Compute kinetic excitation energy of the electron cloud
+!  as E* = Ekin - Ekin(Thomas-Fermi).
+!
+!  Input:
+!    psin   = set of s.p. wavefunctions to be analyzed
+!    iss    = spin for which analysis is done
+!
+!  Output:
+!    excit     = excitation energy with mere TF subtraction
+!    excitETF  = excitation energy with full ETF subtraction
+
 
 USE params
 USE kinetic
@@ -1383,9 +1352,9 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 #endif
 
-COMPLEX(DP), INTENT(IN)                      :: psin(kdfull2,kstate)
-INTEGER, INTENT(IN)                          :: iss
-REAL(DP), INTENT(OUT)                        :: excit,excitETF
+COMPLEX(DP), INTENT(IN)     :: psin(kdfull2,kstate)
+INTEGER, INTENT(IN)         :: iss
+REAL(DP), INTENT(OUT)       :: excit,excitETF
 
 REAL(DP),DIMENSION(:),ALLOCATABLE            :: arho,gradrho
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE         :: gradrhok
@@ -1396,10 +1365,10 @@ REAL(DP) :: ekintotp
 REAL(DP) :: factgrad
 
 
-LOGICAL,PARAMETER :: extendedTF=.TRUE.
+LOGICAL,PARAMETER :: extendedTF=.TRUE.   ! switch to ETF
 INTEGER :: i, j, nb
 REAL(DP) :: anorm, ekintot
-REAL(DP),PARAMETER :: rholimit=1D-10
+REAL(DP),PARAMETER :: rholimit=1D-10  ! lower limit of density (avoid overflow)
 
 !------------------------------------------------------------
 
@@ -1452,52 +1421,43 @@ IF(extendedTF) THEN
 
   ALLOCATE(gradrho(kdfull2),gradrhok(kdfull2))
   factgrad=dvol*h2m/18.0D0
-!  factgrad=dvol*h2m/36.0D0
+!  factgrad=dvol*h2m/36.0D0    
   excitETF = excit
 
 ! x derivative
   gradrho = log(arho)
-!  CALL rftf(arho,gradrhok)
 #if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,1)
   CALL rfftback(gradrhok,gradrho)
 #endif
   DO i=1,kdfull2
-!    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
       excitETF=excitETF +factgrad*(gradrho(i))**2*arho(i)
-!      excitETF=excitETF +factgrad*(gradrho(i))**2/arho(i)
   END DO
 
 ! y derivative
   gradrho = log(arho)
-!  CALL rftf(arho,gradrhok)
 #if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,2)
   CALL rfftback(gradrhok,gradrho)
 #endif
   DO i=1,kdfull2
-!    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
       excitETF=excitETF +factgrad*(gradrho(i))**2*arho(i)
-!      excitETF=excitETF +factgrad*(gradrho(i))**2/arho(i)
   END DO
 
 ! z derivative
   gradrho = log(arho)
-!  CALL rftf(arho,gradrhok)
 #if(netlib_fft|fftw_cpu)
   CALL rftf(gradrho,gradrhok)
   CALL gradient(gradrhok,gradrhok,3)
   CALL rfftback(gradrhok,gradrho)
 #endif
   DO i=1,kdfull2
-!    IF (arho(i).ne.0D0) 
     IF (arho(i).gt.rholimit) &
       excitETF=excitETF +factgrad*(gradrho(i))**2*arho(i)
-!      excitETF=excitETF +factgrad*(gradrho(i))**2/arho(i)
   END DO
 
 END IF
@@ -1531,13 +1491,13 @@ END SUBROUTINE calc_estar
 
 SUBROUTINE mrote
 
-!      Rotates ionic configuration by 'phirot' around axis 'irotat:
-!        irotat=1 -> rotate around x-axis
-!        irotat=2 -> rotate around y-axis
-!        irotat=3 -> rotate around z-axis
-!        irotat=4 -> rotate around diagonal axis
-!      The angle 'phirot' is to be given in degree.
-!      Configuration and parameters are communicated via 'common'
+!  Rotates ionic configuration by 'phirot' around axis 'irotat:
+!    irotat=1 -> rotate around x-axis
+!    irotat=2 -> rotate around y-axis
+!    irotat=3 -> rotate around z-axis
+!    irotat=4 -> rotate around diagonal axis
+!  The angle 'phirot' is to be given in degree.
+!  Configuration and parameters are communicated via module 'params'
 
 USE params
 USE util, ONLY:rotatevec3D
@@ -1593,136 +1553,23 @@ REAL(DP) :: vecin(3),vecout(3),vecalpha(3)
   RETURN
   END
 
-!  !-----mrote ------------------------------------------------------------
-!  
-!  SUBROUTINE mrote_old
-!  
-!  !      rotates ionic configuration by 'phirot' around axis 'irotat:
-!  !        irotat=1 -> rotate around x-axis
-!  !        irotat=2 -> rotate around y-axis
-!  !        irotat=3 -> rotate around z-axis
-!  !        irotat=4 -> rotate around diagonal axis
-!  !      configuration and parameters are communicated via 'common'
-!  
-!  USE params
-!  USE kinetic
-!
-!  IMPLICIT REAL(DP) (A-H,O-Z)
-!  REAL(DP) :: help(3),trm(3,3)
-!  REAL(DP) :: oldion(20,3)
-!  
-!  !------------------------------------------------------------------
-!  
-!  phir1=phirot * pi / 180D0
-!  
-!  IF(irotat == 3) THEN
-!  !      rotation around z-axis:
-!    WRITE(6,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around z-axis by ',phirot,' degrees'
-!    WRITE(7,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around z-axis by ',phirot,' degrees'
-!    trm(1,1)=COS(phir1)
-!    trm(1,2)=SIN(phir1)
-!    trm(1,3)=0D0
-!    trm(2,1)=-SIN(phir1)
-!    trm(2,2)=COS(phir1)
-!    trm(2,3)=0D0
-!    trm(3,1)=0D0
-!    trm(3,2)=0D0
-!    trm(3,3)=1D0
-!    
-!  ELSE IF(irotat == 2) THEN
-!  !      rotation around y-axis:
-!    WRITE(6,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around y-axis by ',phirot,' degrees'
-!    WRITE(7,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around y-axis by ',phirot,' degrees'
-!    trm(1,1)=COS(phir1)
-!    trm(1,2)=0D0
-!    trm(1,3)=SIN(phir1)
-!    trm(2,1)=0D0
-!    trm(2,2)=1D0
-!    trm(2,3)=0D0
-!    trm(3,1)=-SIN(phir1)
-!    trm(3,2)=0D0
-!    trm(3,3)=COS(phir1)
-!    
-!  ELSE IF(irotat == 1) THEN
-!  !      rotation around x-axis:
-!    WRITE(6,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around x-axis by ',phirot,' degrees'
-!    WRITE(7,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around x-axis by ',phirot,' degrees'
-!    trm(1,1)=1D0
-!    trm(1,2)=0D0
-!    trm(1,3)=0D0
-!    trm(2,1)=0D0
-!    trm(2,2)=COS(phir1)
-!    trm(2,3)=SIN(phir1)
-!    trm(3,1)=0D0
-!    trm(3,2)=-SIN(phir1)
-!    trm(3,3)=COS(phir1)
-!    
-!  ELSE IF(irotat == 4) THEN
-!  !      rotation around diagonal axis:
-!    WRITE(6,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around diag. by ',phirot,' degrees'
-!    WRITE(7,'(a,f7.2,a)')  &
-!        '-> ionic coordinates rotated around diag. by ',phirot,' degrees'
-!    trm(1,1)=0.33333333+0.66666667*(COS(phir1)-SIN(phir1))
-!    trm(1,2)=0.40824829*(1-COS(phir1)+SIN(phir1))
-!    trm(1,3)=0.23570226*(1-COS(phir1)+SIN(phir1))
-!    trm(2,1)=0.40824829*(1-COS(phir1)+SIN(phir1))
-!    trm(2,2)=0.5D0*(1+COS(phir1))
-!    trm(2,3)=0.28867513*(1-COS(phir1)-2*SIN(phir1))
-!    trm(3,1)=0.23570226*(1+SIN(phir1)-COS(phir1))
-!    trm(3,2)=0.28867513*(1-COS(phir1)-2*SIN(phir1))
-!    trm(3,3)=0.16666667*(1+5*COS(phir1)+4*SIN(phir1))
-!  END IF
-!  
-!  DO ion=1,nion
-!    oldion(ion,1) = cx(ion)
-!    oldion(ion,2) = cy(ion)
-!    oldion(ion,3) = cz(ion)
-!  END DO
-!  
-!  OPEN(79,FILE='rotated-config.res')
-!  WRITE(79,'(a)') '  ion     x    y    z'
-!  DO ion=1,nion
-!    DO i=1,3
-!      help(i)=0
-!      DO j=1,3
-!        help(i)=help(i) + trm(i,j)*oldion(ion,j)
-!      END DO
-!      cx(ion)=help(1)
-!      cy(ion)=help(2)
-!      cz(ion)=help(3)
-!    END DO
-!    WRITE(7,'(/a,i4)') 'ion no:',ion
-!    WRITE(7,'(a,f12.4)') 'cxnew=',cx(ion)
-!    WRITE(7,'(a,f12.4)') 'cynew=',cy(ion)
-!    WRITE(7,'(a,f12.4)') 'cznew=',cz(ion)
-!    WRITE(79,'(3f12.4)') cx(ion),cy(ion),cz(ion)
-!  END DO
-!  CLOSE(79)
-!  
-!  RETURN
-!  END SUBROUTINE mrote
-
-
-
 
 !-----instit----------------------------------------------------
 
-SUBROUTINE instit (psi)
+SUBROUTINE instit(psi)
 
-!   calculation of angular momentum
+! Calculation of electronic angular momentum.
+!
+! Input:
+!   psi    = set of s.p. wavefunctions
+!
+! Output 'ajx','ajy','ajz' via module 'params'
 
 USE params
 USE kinetic
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
 
 INTEGER :: i, ind, ix, iy, iz, nb, occ
 REAL(DP) :: ajpx, ajpy, ajpz, dkx, dky, dkz, x1, y1, z1
@@ -1733,56 +1580,17 @@ COMPLEX(DP) :: jalpha
 
 !------------------------------------------------------------------
 
-!ALLOCATE(akx(kdfull2),q2(kdfull2),aky(kdfull2),akz(kdfull2), &
-!         jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 ALLOCATE(q2(kdfull2),jtx(kdfull2),jty(kdfull2),jtz(kdfull2))
 
 dkx=pi/(dx*REAL(nx,DP))
 dky=pi/(dy*REAL(ny,DP))
 dkz=pi/(dz*REAL(nz,DP))
-!      eye=CMPLX(0.0,1.0,DP)
-!      nxyf=nx2*ny2
-!      nyf=nx2
-
-!ind=0
-!DO i3=1,nz2
-!  IF(i3 >= (nz+1)) THEN
-!    zkz=(i3-nz2-1)*dkz
-!  ELSE
-!    zkz=(i3-1)*dkz
-!  END IF
-  
-!  DO i2=1,ny2
-!    IF(i2 >= (ny+1)) THEN
-!      zky=(i2-ny2-1)*dky
-!    ELSE
-!      zky=(i2-1)*dky
-!    END IF
-!    
-!    DO i1=1,nx2
-!      IF(i1 >= (nx+1)) THEN
-!        zkx=(i1-nx2-1)*dkx
-!      ELSE
-!        zkx=(i1-1)*dkx
-!      END IF
-!      
-!      ind=ind+1
-!      akx(ind)=-zkx*eye
-!      aky(ind)=-zky*eye
-!      akz(ind)=-zkz*eye
-!    END DO
-!  END DO
-!END DO
-
-!  we going to calc. jx,jy,jz
-
 
 DO i=1,kdfull2
   jtx(i)=CMPLX(0D0,0D0,DP)
   jty(i)=CMPLX(0D0,0D0,DP)
   jtz(i)=CMPLX(0D0,0D0,DP)
 END DO
-
 
 DO nb=1,nstate
   occ=occup(nb)
@@ -1800,7 +1608,6 @@ DO nb=1,nstate
 
   DO ind=1,kdfull2
     test=eye/2D0*(CONJG(psi(ind,nb))*q2(ind) -psi(ind,nb)*CONJG(q2(ind)))
-    
     jalpha=test
     jtx(ind)=jtx(ind)-occ*jalpha
   END DO
@@ -1844,7 +1651,6 @@ ajx=0D0
 ajy=0D0
 ajz=0D0
 
-
 ind=0
 DO iz=minz,maxz
   z1=(iz-nzsh)*dz
@@ -1868,7 +1674,6 @@ ajz=ajz*dvol
 WRITE(6,'(a,3f12.4)') 'moments',ajx,ajy,ajz
 WRITE(6,*)
 
-!DEALLOCATE(akx,q2,aky,akz,jtx,jty,jtz)
 DEALLOCATE(q2,jtx,jty,jtz)
 
 
@@ -1881,14 +1686,18 @@ END SUBROUTINE instit
 
 SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 
-!     Computes one time step for the non-local potentials
-!     using exponential evolution.
-!     qact     = array for actual wavefunction to be propagated
-!     q1,q2    = auxiliary wavefunction  arrays
+!   Computes one time step for the non-local potentials
+!   using exponential evolution.
+!
+!   Input:
 !     ri       = size of time step
 !     tenerg   = (logical) switch to accumulate non-local energy
 !     nb       = number of state which is propagated
 !     norder   = order of step (up to 6, 4 or 6 recommended)
+!
+!   Input/Output:
+!     qact     = array for actual wavefunction to be propagated
+!     q1,q2    = auxiliary wavefunction  arrays
 !
 !     !! Note: This routine should be replaced by truly exponential
 !              propagation within the non-local plaquettes.
@@ -1896,13 +1705,13 @@ SUBROUTINE nonlocstep(qact,q1,q2,ri,tenerg,nb,norder)
 USE params
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(OUT)                     :: qact(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                      :: q1(kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                      :: q2(kdfull2)
-REAL(DP), INTENT(IN)                         :: ri
-LOGICAL, INTENT(IN)                      :: tenerg
-INTEGER, INTENT(IN)                      :: nb
-INTEGER, INTENT(IN)                      :: norder
+COMPLEX(DP), INTENT(IN OUT)     :: qact(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)     :: q1(kdfull2)
+COMPLEX(DP), INTENT(IN OUT)     :: q2(kdfull2)
+REAL(DP), INTENT(IN)            :: ri
+LOGICAL, INTENT(IN)             :: tenerg
+INTEGER, INTENT(IN)             :: nb
+INTEGER, INTENT(IN)             :: norder
 
 
 INTEGER :: i, ind
@@ -1914,52 +1723,39 @@ COMPLEX(DP) :: rii,cfac
 
 
 CALL nonlocalc(qact,q1,0)
-IF(tenerg) THEN !  add nonloc.pot energy
+IF(tenerg) THEN                     !  add nonloc.pot energy
   sumadd = 0D0
   DO  i=1,nxyz
-    sumadd  = REAL(qact(i),DP)*REAL(q1(i),DP) +AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
+    sumadd  = REAL(qact(i),DP)*REAL(q1(i),DP) +&
+              AIMAG(qact(i))*AIMAG(q1(i))  + sumadd
   END DO
   enonlo(nb) = sumadd*dvol
   epotsp(nb) = sumadd*dvol + epotsp(nb)
 END IF
 
-!test            do ind=1,nxyz
-!test               qact(ind) = qact(ind)
-!test     &              - ri*eye*q1(ind) - ri2*q2(ind)
-!test     &              + ri*ri*ri/6.0*eye*q3(ind) + ri2*ri2/6.0*q4(ind)
-!test     &           -ri2*ri2*ri/30.*eye*q5(ind)-ri2*ri2*ri2/90.*q6(ind)
-!test            enddo
-!rii=ri*eye
 cfac=-ri*eye
 rii=cfac
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) - rii*q1(ind)
   qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 
 CALL nonlocalc(q1,q2,0)
-!ri2=ri*ri/2D0
 rii=rii*cfac/2D0
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) - ri2*q2(ind)
   qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 IF(norder <= 2) RETURN
 
 CALL nonlocalc(q2,q1,0)
-!cfac = ri*ri*ri/6D0*eye
 rii=rii*cfac/3D0
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) + cfac*q1(ind)
   qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 IF(norder <= 3) RETURN
 
 CALL nonlocalc(q1,q2,0)
-!rfac = ri2*ri2/6D0
 rii=rii*cfac/4D0
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) + rfac*q2(ind)
   qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 IF(norder <= 4) RETURN
@@ -1968,16 +1764,13 @@ CALL nonlocalc(q2,q1,0)
 cfac = -ri2*ri2*ri/30D0*eye
 rii=rii*cfac/5D0
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) + cfac*q1(ind)
   qact(ind) = qact(ind) + rii*q1(ind)
 END DO
 IF(norder <= 5) RETURN
 
 CALL nonlocalc(q1,q2,0)
-!rfac = -ri2*ri2*ri2/90D0
 rii=rii*cfac/6D0
 DO ind=1,nxyz
-!  qact(ind) = qact(ind) + rfac*q2(ind)
   qact(ind) = qact(ind) + rii*q2(ind)
 END DO
 
@@ -1988,27 +1781,33 @@ END SUBROUTINE nonlocstep
 
 !-----init_dynprotocol-------------------------------------------------
 
+#if(raregas)
 SUBROUTINE init_dynprotocol(rho,aloc,psi)
+#else
+SUBROUTINE init_dynprotocol()
+#endif
 
-!     initializes file for protocol of dynamics
+! Initializes files for protocol of dynamics.
+!
+! Header lines with 'H:' in first two columns serve as
+! communicators to later off-line spectral analysis.
 
 USE params
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-
-
-LOGICAL :: topenf
-INTEGER :: i
 #if(raregas)
+REAL(DP), INTENT(IN)     :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)     :: aloc(2*kdfull2)
+COMPLEX(DP), INTENT(IN)  :: psi(kdfull2,kstate)
+
 REAL(DP) :: dist
 #endif
+LOGICAL :: topenf
+INTEGER :: i
 REAl(DP),EXTERNAL :: getxval
 REAl(DP),EXTERNAL :: getyval
 REAl(DP),EXTERNAL :: getzval
-!---------------------------------------------------------------------
+
 
 
 IF(irest <= 0) THEN                    !  write file headers
@@ -2019,7 +1818,6 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(88,'(a)') 'x:time'
     WRITE(88,'(a)') 'y:dipole-momenta of projectile'
     WRITE(88,'(a)') 'z:dipole-momenta of target'
-    WRITE(88,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
     WRITE(88,'(a)') 'n: time in fs  dipole-momenta: x   y   z'
     WRITE(88,'(a)') 'H:   X        Yl            Yd           Yq         Zl          Zd          Zq'
     CLOSE(88)
@@ -2031,7 +1829,6 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(8,'(a)') ' & '
     WRITE(8,'(a)') 'x:time'
     WRITE(8,'(a)') 'y:dipole-momenta'
-    WRITE(8,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
     WRITE(8,'(a)') 'n: time in fs  dipole-momenta: x   y   z'
     WRITE(8,'(a)') 'H:   X        Yl              Yd             Yq'
     CLOSE(8)
@@ -2059,14 +1856,6 @@ IF(irest <= 0) THEN                    !  write file headers
           nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
           nint(getzval(imps(i))/dz)
     END DO
-!    OPEN(803,STATUS='unknown',FORM='unformatted',FILE='pMP.'//outnam)    ! cPW
-!    WRITE(803) nmps,nstate_all                                           
-!    DO i=1,nmps                                                          
-!      WRITE(803) i,  &                                                   
-!          getxval(imps(i)),getyval(imps(i)),getzval(imps(i)), &
-!          nint(getxval(imps(i))/dx),nint(getyval(imps(i))/dy), &
-!          nint(getzval(imps(i))/dz)
-!    END DO
     CLOSE(803)
   END IF
   
@@ -2083,13 +1872,13 @@ IF(irest <= 0) THEN                    !  write file headers
     OPEN(38,STATUS='unknown',FILE='plaser.'//outnam)
     WRITE(38,*) ' & '
     WRITE(38,*) ' tfs,Ex,Ey,Ez,power,elaser '
-!    CLOSE(38)
+    CALL flush(38)
   END IF
   
   IF(jgeomel /= 0) THEN
     OPEN(608,STATUS='unknown',FORM='formatted', FILE='pgeomel.'//outnam)
     WRITE(608,*) '&'
-!    CLOSE(608)
+    CALL flush(608)
   END IF
   
   IF(jquad /= 0) THEN
@@ -2097,7 +1886,6 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(9,'(a)') ' & '
     WRITE(9,'(a)') 'x:time'
     WRITE(9,'(a)') 'y:quadrupole-momenta'
-    WRITE(9,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
     WRITE(9,'(a)') 'n: time in fs  dipole-momenta: x   y   z'
     WRITE(9,'(a)') 'H:   X   Y1  Y2  Y3  Y4  Y5  Y6'
     CLOSE(9)
@@ -2115,7 +1903,6 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(78,'(a)') ' & '
     WRITE(78,'(a)') 'x:time'
     WRITE(78,'(a)') 'y:spindipole-momenta'
-    WRITE(78,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
     WRITE(78,'(a)') 'n: time in fs  spindipole-momenta: x   y   z'
     WRITE(78,'(a)') 'H:   X        Yl              Yd            Yq'
     CLOSE(78)
@@ -2126,7 +1913,6 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(68,'(a)') ' & '
     WRITE(68,'(a)') 'x:time'
     WRITE(68,'(a)') 'y:x,y,z-component of angular momentum'
-    WRITE(68,'(a)') 's: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)'
     WRITE(68,'(a)') 'n: time in fs       <l_x>'
     WRITE(68,'(a)') 'n:   x      l_x       l_y        l_z'
     WRITE(68,'(a)') 'H:   X      Yl        Yd         Yq'
@@ -2169,11 +1955,7 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(23,'(a)') ' & '
     CLOSE(23)
     
-    IF (jovlp /= 0) THEN
-      OPEN(805,STATUS='unknown',FILE='povlp.'//outnam)
-    END IF
-    
-!??         endif
+    IF (jovlp /= 0) OPEN(805,STATUS='unknown',FILE='povlp.'//outnam)
     
     IF(jelf /= 0) THEN
       OPEN(33,STATUS='unknown',FORM='formatted', FILE='pelf.'//outnam)
@@ -2423,7 +2205,6 @@ ELSE
     END IF
 #endif
     
-    CALL getforces(rho,psi,-1,0)
     
   END IF
 END IF
@@ -2438,22 +2219,26 @@ END SUBROUTINE init_dynprotocol
 
 SUBROUTINE print_densdiff(rho,it)
 
-!     evaluation and print of density differences
+! Evaluates and prints difference of actual density 'rho'
+! with initial density (retrieved from file 'densdiff'.
+!
+! Input:
+!   rho  = actual local density
+!   it   = time step in calling routine
 
 USE params
 USE util, ONLY:pm3dcut,printfield,inttostring
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                      :: it
+REAL(DP), INTENT(IN)   :: rho(2*kdfull2)
+INTEGER, INTENT(IN)    :: it
+
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w1
 
 INTEGER :: i
 !---------------------------------------------------------------------
 IF (jplotdensitydiff /= 0 .AND. MOD(it,jplotdensitydiff) == 0) THEN
   
-!  IF(usew1) STOP ' in PRINT_DENSDIFF:  W1 already active '
-!  usew1 = .true.
   ALLOCATE(w1(kdfull2))
   OPEN(590,STATUS='unknown',FILE='densdiff')
   DO i=1,kdfull2
@@ -2468,11 +2253,10 @@ IF (jplotdensitydiff /= 0 .AND. MOD(it,jplotdensitydiff) == 0) THEN
       STOP '::too many time steps::'
   END SELECT
 
-!  CALL addfields2(w1,rho,-1D0)
   w1=w1-rho
   CALL printfield(689,w1,'x')
   CLOSE(689)
-!  usew1 = .false.
+
   DEALLOCATE(w1)  
   
 END IF
@@ -2535,18 +2319,21 @@ RETURN
 END SUBROUTINE print_densdiff
 
 
-
 !-----open_protok_el----------------------------------------------
 
 SUBROUTINE open_protok_el(it)
 
-!     open protocol files for electronic properties
+!   Open protocol files for electronic properties.
+!
+!   Input:
+!     it  = time step in calling routine
 
 USE params
 USE util, ONLY:safeopen
 IMPLICIT NONE
 
 INTEGER,INTENT(IN) :: it
+
 !----------------------------------------------------------------
 
 
@@ -2581,13 +2368,18 @@ END SUBROUTINE open_protok_el
 
 SUBROUTINE analyze_ions(it)
 
-!     open protocol files and print properties of ions
+!   Open protocol files and print properties of ions.
+!
+!   Input:
+!     it  = time step in calling routine
 
 USE params
 USE util, ONLY:gettemperature,getcm,safeopen,view3d
 IMPLICIT NONE
 
-INTEGER,INTENT(IN)::it
+INTEGER,INTENT(IN)  :: it
+
+
 INTEGER :: ion
 REAL(DP) :: amfac, ekx, eky, ekz, r2ion, r2iona, sumx, sumy, sumz
 #if(raregas)
@@ -2598,30 +2390,23 @@ REAL(DP), EXTERNAL :: getdistance2
 
 !----------------------------------------------------------------
 
-      tfs=it*dt1*0.0484
+tfs=it*dt1*0.0484
 
 CALL getcm(1,0,0)                  !  c.m. now on 'rvectmp(1:3)'
 IF (jposcm > 0 .AND. MOD(it,jposcm) == 0) THEN
   CALL  safeopen(281,it,jposcm,'pposCM')
-!  OPEN(281,POSITION='append',FILE='pposCM.'//outnam)
   WRITE(281,'(1f15.6,3e17.8)') tfs, rvectmp(1), rvectmp(2),rvectmp(3)
   CLOSE(281)
-!        call flush(281)
 END IF
 
 IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
       .OR.(jvel > 0 .AND. MOD(it,jvel) == 0)  &
       .OR.(jforce /= 0 .AND. MOD(it,jforce) == 0)))THEN
   CALL  safeopen(21,it,jpos,'pposion')
-!         open(21,position='append',file='pposion.'//outnam)
   CALL  safeopen(621,it,jgeomion,'pgeomion')
-!         open(621,position='append',file='pgeomion.'//outnam)
   CALL  safeopen(22,it,jvel,'pvelion')
-!         open(22,position='append',file='pvelion.'//outnam)
   CALL  safeopen(149,it,jvel,'pkinenion')
-!         open(149,position='append',file='pkinenion.'//outnam)
   CALL  safeopen(151,it,jvel,'ptempion')
-!         open(151,position='append',file='ptempion.'//outnam)
 
   r2ion = SQRT(SUM( (cx(1:nion)-rvectmp(1))**2 +(cy(1:nion)-rvectmp(2))**2 &
                    +(cz(1:nion)-rvectmp(3))**2)/nion)
@@ -2659,8 +2444,7 @@ END IF
 !       Kinetic energy in the three directions for cluster and matrix
 !               and total energy (both in penerclu and penermat)
 
-IF(jener > 0 .AND. MOD(it,jener) == 0 .AND. (nion) > 0)THEN
-! cluster
+IF(jener > 0 .AND. MOD(it,jener) == 0 .AND. (nion) > 0) THEN
   ekx = 0D0
   eky = 0D0
   ekz = 0D0
@@ -2674,16 +2458,13 @@ IF(jener > 0 .AND. MOD(it,jener) == 0 .AND. (nion) > 0)THEN
   eky = eky/amfac
   ekz = ekz/amfac
   CALL  safeopen(34,it,jener,'penerclu')
-!         open(34,position='append',file='penerclu.'//outnam)
   WRITE(34,'(5f13.5)')tfs,ekx,eky,ekz,etot
   CALL flush(34)
 END IF
 
 #if(raregas)
 !    ?? not clear what that is doing
-
 IF (jpos> 0 .AND. MOD(it,jpos) == 0 .AND. nclust == 0) THEN
-!???            call info(psi,rho,aloc,akv,it)
   sumnc=0D0
   DO i=1,nc
     dist2 = getdistance2(i,i+nc)
@@ -2696,194 +2477,29 @@ END IF
 RETURN
 END SUBROUTINE analyze_ions
 
-!-----analyze_surf------------------------------------------------
-
-SUBROUTINE analyze_surf(it)
-
-!     open protocol files and print properties of substrate
-
-USE params
-USE util, ONLY: gettemperature,safeopen
-
-IMPLICIT NONE
-
-INTEGER, INTENT(IN) :: it
-
-#if(raregas)
-INTEGER :: i, ii, ion, nimobc, nimobk
-REAL(DP) :: sumcx, sumcy, sumcz, sumkx, sumky, sumkz
-REAL(DP) :: ekx, eky, ekz, ekcx, ekcy, ekcz, ekvx, ekvy, ekvz
-REAL(DP) :: amfac1, amfac2
-REAL(DP) :: rho(2*kdfull2)
-#endif
-
-!----------------------------------------------------------------
-
-!      tfs=it*dt1*0.0484
-#if(raregas)
-IF(nc+NE+nk > 0) THEN
-  CALL safeopen(24,it,jpos,'pposcore')
-  CALL safeopen(157,it,jpos,'ptempsurf')
-  CALL safeopen(25,it,jpos,'pposdip')
-  CALL safeopen(125,it,jpos,'pposkat')
-  CALL safeopen(424,it,jpos,'penerSurf')
-  CALL safeopen(26,it,jvel,'pvelcore')
-  CALL safeopen(126,it,jvel,'pvelkat')
-  IF(ifadiadip /= 1) CALL safeopen(27,it,jvel,'pveldip')
-  CALL safeopen(152,it,jvel,'pkinencore')
-  CALL safeopen(153,it,jvel,'pkinenkat')
-  IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
-        .OR.(jvel > 0 .AND. MOD(it,jvel) == 0)))THEN
-    
-    IF (MOD(it,jpos) == 0) THEN
-      CALL getsurfprops
-      WRITE(424,'(f12.4,4e15.5)') tfs,ekincsurf,ekinesurf, ekinksurf, ekinsurf
-    END IF
-    
-    IF (MOD(it,jsavesurf) == 0) THEN
-      OPEN(464,STATUS='unknown',FILE='for006surf.'//outnam)
-      DO i=1,nc
-        WRITE(464,'(6e17.7,i6)') xc(i),yc(i),zc(i),  &
-            xe(i),ye(i),ze(i),imobc(i),imobe(i)
-      END DO
-      DO i=1,nk
-        WRITE(464,'(3e17.7,i6)') xk(i),yk(i),zk(i),imobk(i)
-      END DO
-      CLOSE(464)
-    END IF
-    
-    
-    sumcx=0D0
-    sumcy=0D0
-    sumcz=0D0
-    nimobc=0
-    DO ion=1,nc
-      IF(MOD(it,jpos) == 0) THEN
-        IF (iprintonlyifmob == 0 .OR. imobc(ion) /= 0)  &
-            WRITE(24,'(1f13.5,3e17.8)') tfs,xc(ion),yc(ion),zc(ion)
-        IF (iprintonlyifmob == 0 .OR. imobe(ion) /= 0)  &
-            WRITE(25,'(1f13.5,3e17.8)') tfs,xe(ion),ye(ion),ze(ion)
-      END IF
-      
-      IF(MOD(it,jvel) == 0) THEN
-        IF (iprintonlyifmob == 0 .OR. imobc(ion) /= 0)  &
-            WRITE(26,'(1f13.5,3e17.8)') tfs,pxc(ion),pyc(ion),pzc(ion)
-        IF(ifadiadip /= 1 .AND. &
-           (iprintonlyifmob == 0 .OR. imobe(ion) /= 0)) THEN
-             WRITE(27,'(1f13.5,3e17.8)') tfs,pxe(ion),pye(ion),pze(ion)
-             nimobc=nimobc+1
-        END IF
-      END IF
-      
-      IF (imobc(ion) /= 0) THEN
-        sumcx = sumcx + (pxc(ion)**2)/mion/1836D0
-        sumcy = sumcy + (pyc(ion)**2)/mion/1836D0
-        sumcz = sumcx + (pzc(ion)**2)/mion/1836D0
-      END IF
-      
-    END DO
-    
-    WRITE(6,*) mion,mkat
-    IF(MOD(it,jvel) == 0) THEN
-      WRITE(152,'(1f13.5,4e17.8,i6)')  &
-          tfs,sumcx,sumcy,sumcz,sumcx+sumcy+sumcz,nimobc
-      CALL gettemperature(1)
-    END IF
-    
-    sumkx=0D0
-    sumky=0D0
-    sumkz=0D0
-    nimobk=0
-    DO ion=1,nk
-      IF(MOD(it,jpos) == 0 .AND.  &
-          (iprintonlyifmob == 0 .OR. imobk(ion) /= 0))  &
-          WRITE(125,'(1f13.5,3e17.8)') tfs,xk(ion),yk(ion),zk(ion)
-      IF(MOD(it,jvel) == 0 .AND.  &
-          (iprintonlyifmob == 0 .OR. imobk(ion) /= 0)) THEN
-      WRITE(126,'(1f13.5,3e17.8)') tfs,pxk(ion),pyk(ion),pzk(ion)
-      nimobk=nimobk+1
-    END IF
-    
-    IF (imobk(ion) /= 0) THEN
-      sumkx = sumkx + (pxk(ion)**2)/mkat/1836D0
-      sumky = sumky + (pyk(ion)**2)/mkat/1836D0
-      sumkz = sumkx + (pzk(ion)**2)/mkat/1836D0
-    END IF
-  END DO
-  
-  IF(MOD(it,jvel) == 0) WRITE(153,'(1f13.5,4e17.8,i6)')  &
-      tfs,sumkx,sumky,sumkz,nimobk
-  
-  CALL flush(24)
-  CALL flush(25)
-  CALL flush(26)
-  IF(ifadiadip /= 1)   CALL flush(27)
-END IF
-END IF
-
-IF(myn == 0 .AND. jener > 0 .AND. MOD(it,jener) == 0 .AND. nrare > 0 )THEN
-! matrix
-  ekcx = 0D0
-  ekcy = 0D0
-  ekcz = 0D0
-  ekvx = 0D0
-  ekvy = 0D0
-  ekvz = 0D0
-  amfac1 = amu(np(1))*1836D0*ame*2D0
-  amfac2 = amu(np(nrare+1))*1836D0*ame*2D0
-  DO ion=1,nrare
-    ekcx = ekcx + pxc(ion)*pxc(ion)
-    ekcy = ekcy + pyc(ion)*pyc(ion)
-    ekcz = ekcz + pzc(ion)*pzc(ion)
-    ekvx = ekvx + pxe(ion)*pxe(ion)
-    ekvy = ekvy + pye(ion)*pye(ion)
-    ekvz = ekvz + pze(ion)*pze(ion)
-  END DO
-  ekx = ekcx/amfac1 + ekvx/amfac2
-  eky = ekcy/amfac1 + ekvy/amfac2
-  ekz = ekcz/amfac1 + ekvz/amfac2
-  CALL safeopen(35,it,jener,'penermat')
-  WRITE(35,'(4f13.5)')tfs,ekx,eky,ekz,etot
-  CALL flush(35)
-END IF
-
-IF(isurf == 1.AND.iforcecl2co /= 0 .AND.MOD(it,iforcecl2co) == 0) THEN
-  
-  CALL getforces_clust2cores(rho,0)
-  
-  OPEN(256,STATUS='unknown',FILE='force_clust2cores.'//outnam)
-  WRITE(256,'(a,f10.5)')'core pos val pos force on cores at t=' ,tfs
-  
-  DO ii=1,nc
-    
-    WRITE(256,'(9e20.10)') xc(ii),yc(ii),zc(ii),xe(ii),ye(ii),  &
-        ze(ii),fxc(ii),fyc(ii),fzc(ii)
-    
-  END DO
-  
-  CLOSE(256)
-END IF
-#endif
-
-RETURN
-END SUBROUTINE analyze_surf
 
 
 !-----analyze_elect-----------------------------------------------
 
 SUBROUTINE analyze_elect(psi,rho,aloc,it)
 
-!     Analysis and print of electronic properties during dynamics.
+!   Analysis and print of electronic properties during dynamics.
+!
+!   Input:
+!      psi    = set of complex s.p. wavefunctions
+!      rho    = electron density
+!      aloc   = local mean-field potential
+!      it     = time step in calling routine
 
 USE params
 USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl
 IMPLICIT NONE
 
 
-COMPLEX(DP), INTENT(IN)                      :: psi(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
-INTEGER, INTENT(IN)                          :: it
+COMPLEX(DP), INTENT(IN)     :: psi(kdfull2,kstate)
+REAL(DP), INTENT(IN)        :: rho(2*kdfull2)
+REAL(DP), INTENT(IN)        :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)         :: it
 
 
 LOGICAL,PARAMETER :: ttest=.FALSE.
@@ -2891,21 +2507,15 @@ INTEGER :: nbe
 
 !----------------------------------------------------------------
 
-!      tfs=it*dt1*0.0484
-
 IF(ABS(phangle) > small) CALL phoverl(psi)
 
 IF(jstateoverlap == 1) THEN
   CALL stateoverl(psi,psisavex)
-!  DEALLOCATE(psisavex)
 END IF
-
-
 
 !     ***** dynamic density plot *****
 
 IF(idenspl > 0 .AND. MOD(it,idenspl) == 0) CALL fmtv_fld(psi,rho,it)
-
 
 !       Number of escaped electrons
 
@@ -2916,8 +2526,6 @@ END IF
 IF (jcharges /= 0 .AND. MOD(it,jcharges) == 0) THEN
   CALL calcchargdist(rho)
 END IF
-
-
 
 !     Time-dependent Electron Localization Function (TD-ELF)
 
@@ -2931,7 +2539,6 @@ END IF
 
 
 !     everything about single particles
-
 
 IF((jstinf > 0 .AND. MOD(it,jstinf) == 0) &
    .OR. (jinfo > 0 .AND. MOD(it,jinfo)==0) &
@@ -2955,28 +2562,15 @@ END IF
 
 IF(jesc > 0 .AND. jnorms>0 .AND. MOD(it,jnorms) == 0) THEN
 #if(!parayes)
-!  DO i=1,nstate
-!    cscal=orbitaloverlap(psi(1,i),psi(1,i))
-!    rtmp(i,1)=REAL(cscal)**2+AIMAG(cscal)**2
-!    rtmp(i,1)=1D0-SQRT(rtmp(i,1))
-!  END DO
-!call info(psi,rho,aloc,it)      !  move print 806 to 'pri_spe...'
   CALL safeopen(806,it,jnorms,'pescOrb')
   WRITE(806,'(500f12.8)') tfs,1D0-spnorm(1:nstate)
   CALL flush(806)
 #endif
 
-!  CALL safeopen(808,it,jnorms,'pproba')
   CALL probab(psi)
-!  CALL flush(808)
 END IF
 
-
-
-
-IF(iangmo==1 .AND. iexcit == 1)  CALL instit (psi) !notes
-
-
+IF(iangmo==1 .AND. iexcit == 1)  CALL instit (psi) 
 
 IF(myn==0) THEN
   IF(MOD(it,100) == 0)THEN
@@ -3053,16 +2647,19 @@ END SUBROUTINE analyze_elect
 
 SUBROUTINE savings(psi,it)
 
-!     Check status and optionally save wavefunctions
+!   Check status of computing resources and optionally save wavefunctions.
+!
+!   Input:
+!      psi    = set of complex s.p. wavefunctions
+!      it     = time step in calling routine
 
 USE params
 IMPLICIT NONE
 
-COMPLEX(DP), INTENT(IN OUT)                  :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN)                      :: it
+COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
+INTEGER, INTENT(IN)       :: it
 
 REAL(DP) :: time_act, time_elapse
-!----------------------------------------------------------------
 
 
 
@@ -3113,122 +2710,488 @@ END IF
 RETURN
 END SUBROUTINE savings
 
+
+
+!-----tstep_exp-------------------------------------------------------------
+
+SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork,timagtime)
+
+!     One electronic time step by exponential evolution, consisting
+!     of a half step to produce an intermediate mean field followed
+!     by a full with using this mean field.
+!
+!      q0          = s.p. wavefunctions to be propagated
+!      aloc        = array for local mean field
+!      rho         = array for local density
+!      it          = nr. of time step
+!      qwork       = work space for s.p. wavefunctions
+!      timagtime   = logical variable, switch to imaginary time step
+
+
+USE params
+USE twost, ONLY:tnearest
+USE twost_util, ONLY:eval_unitrot
+
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN OUT)              :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+!REAL(DP), INTENT(IN OUT)                :: akv(kdfull2)
+REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
+INTEGER, INTENT(IN)                      :: it
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2,kstate)
+LOGICAL, INTENT(IN)                      :: timagtime
+
+INTEGER :: nb, nterms
+COMPLEX(DP) :: q1(kdfull2)
+COMPLEX(DP) :: cdtact
+
+! The parameter 'tnorotate' de-activates the subtraction of the
+! Lagrangian matrix in the SIC step. The version of exponential
+! evolution with subtraction of the Lagrangian matrix is found
+! in 'exp_evolp'. The strategy needs yet testing. It was not
+! really beneficial so far.  (01/2013)
+! 
+!  what is the current status of this issue ?  F.L. (03/2017)
+LOGICAL,PARAMETER :: tnorotate=.true.
+
+
+!----------------------------------------------------------------------
+
+
+#if(parayes)
+STOP 'exponential evolution not yet MPI parallelized'
+#else
+myn = 0
+#endif
+
+!STOP
+
 #if(raregas)
-!-----vstep--------------------------------------------------------
-
-SUBROUTINE vstep(rho,psi,it,dt)
-
-!     propagation of rare gas valence clouds by leapfrog method
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN)              :: it
-REAL(DP), INTENT(IN)             :: dt
-
-
-INTEGER :: i
-REAL(DP),ALLOCATABLE :: xm(:)
-
-
-!------------------------------------------------------------------
-
-!     optionally freeze valence momenta
-
-DO i=1,NE
-  IF (imobe(i) == 0) THEN
-    pxe(i)=0D0
-    pye(i)=0D0
-    pze(i)=0D0
-  END IF
-END DO
-
-
-!     propagation of positions first
-
-!      xm=amu(np(nrare+1))*1836.0*ame
-!      call leapfr(cx(nrare+1),cy(nrare+1),cz(nrare+1),
-!     &     cpx(nrare+1),cpy(nrare+1),cpz(nrare+1),dt,xm,nrare)
-
-ALLOCATE(xm(1:ne))
-xm=amu(-18)*1836.0D0*ame
-CALL leapfr(xe(1),ye(1),ze(1), pxe(1),pye(1),pze(1),dt,xm,ne,2)
-
-!     update subgrids in case of pseudo-densities
-
-IF(ipseudo == 1) THEN
-  CALL updatesubgrids
-END IF
-
-
-!     then propagation of momenta
-
-CALL getforces(rho,psi,it,0) ! forces on valences with new positions
-
-xm = 1D0
-CALL leapfr(pxe(1),pye(1),pze(1), fxe(1),fye(1),fze(1),dt,xm,ne,2)
-DEALLOCATE(xm)
-
-RETURN
-END SUBROUTINE vstep
-!-----vstep--------------------------------------------------------
-
-SUBROUTINE vstepv(rho,psi,it,dt)
-
-!     propagation of rare gas valence clouds by velocity Verlet
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN OUT)         :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN)          :: psi(kdfull2,kstate)
-INTEGER,INTENT(IN)               :: it
-REAL(DP), INTENT(IN)         :: dt
-
-INTEGER :: i
-REAL(DP),ALLOCATABLE :: xm(:)
-
-!------------------------------------------------------------------
-
-!     optionally freeze valence momenta
-
-DO i=1,NE
-  IF (imobe(i) == 0) THEN
-    pxe(i)=0D0
-    pye(i)=0D0
-    pze(i)=0D0
-  END IF
-END DO
-
-
-!     propagation of positions first
-
-!      xm=amu(np(nrare+1))*1836.0*ame
-
-ALLOCATE(xm(1:ne))
-xm=amu(-18)*1836D0*ame
-CALL velverlet1(xe(1),ye(1),ze(1),pxe(1),pye(1),pze(1), &
-                fxe(1),fye(1),fze(1),dt,xm,ne,2)
-DEALLOCATE(xm)
-
-!     update subgrids in case of pseudo-densities
-
-IF(ipseudo == 1) THEN
-  CALL updatesubgrids
-END IF
-
-! forces on valences with new positions
-
-CALL getforces(rho,psi,it,0) 
-
-!     then propagation of momenta
-
-CALL velverlet2(pxe(1),pye(1),pze(1),fxe(1),fye(1),fze(1),dt,ne,2)
-
-RETURN
-END SUBROUTINE vstepv
+IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 #endif
 
 
+!     one half time step to define new mean field
+!     use exponential evolution to second order
+
+IF(ifsicp==5) psisavex = q0
+
+IF(.NOT.timagtime) THEN
+  cdtact = CMPLX(dt1/2D0,0D0,DP)
+  IF(tnorotate .OR. ifsicp < 8) THEN
+!    WRITE(*,*) 'EXPEVOL: half step, dt=',cdtact
+    DO nb=1,nstate
+      qwork(:,nb) = q0(:,nb)
+      CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
+    END DO
+  ELSE
+    qwork = q0
+    CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
+  END IF
+
+  IF(tnearest .AND. ifsicp.GE.8) CALL eval_unitrot(qwork,q0)
+
+!     compute mean field at half time step
+  CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0,it)
+
+END IF
+
+!     full time step to next wavefunctions
+!     use exponential evolution to fourth order
+
+IF(timagtime) THEN
+  cdtact = CMPLX(0D0,-dt1,DP)
+ELSE
+  cdtact = CMPLX(dt1,0D0,DP)
+END IF
+
+nterms = 4
+
+IF(tnorotate .OR. ifsicp < 8) THEN
+  DO nb=1,nstate
+    CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
+  END DO
+ELSE
+  qwork = q0
+  CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
+END IF
+
+IF(tnearest .AND. ifsicp.GE.8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
+
+! switch of absorption after times step 'ntref'
+IF (ntref > 0 .AND. it > ntref) nabsorb = 0
+
+!     compute mean field at new time
+
+CALL dyn_mfield(rho,aloc,q0,dt1,it)
+
+RETURN
+END SUBROUTINE tstep_exp
+
+!-----exp_evol-------------------------------------------------------------
+
+SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
+
+!     Propagation of the wavefunction of state 'nbe' by Taylor 
+!     expanded evolution:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       ak       = kinetic energies in momentum space
+!       nbe      = number of state
+!       norder   = order of expansion (4 recommended for full step))
+!       dtact    = time step
+
+!     Note: The propagation uses the action of the Hamiltonian
+!           where the diagonal element (s.p.energy) is subtracted.
+!           That diagonal element is evaluated in the first order
+!           call 'nterm=1'.
+
+USE params
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)                      :: nbe
+INTEGER, INTENT(IN)                      :: norder
+COMPLEX(DP), INTENT(IN)                  :: dtact
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
+
+
+COMPLEX(DP) :: dti,cfac
+INTEGER :: i, ilocbas, isig, nterm
+
+!----------------------------------------------------------------------
+
+
+IF (ispin(nrel2abs(nbe)) == 1) THEN
+  ilocbas = 1
+ELSE IF (ispin(nrel2abs(nbe)) == 2) THEN
+  ilocbas = nxyz+1
+ELSE
+  STOP " EXPEVOL: spin index must be 1 or 2"
+END IF
+IF(ABS(IMAG(dtact))>1D-10) THEN
+  isig = -1
+ELSE
+  isig = 1
+END IF
+!isig=-1
+dti = dtact*CMPLX(0D0,1D0,DP)
+cfac = CMPLX(1D0,0D0,DP)
+DO  i=1,nxyz
+  qwork(i) = qact(i)
+END DO
+DO nterm=1,norder
+  CALL hpsi(qwork,aloc(ilocbas),nbe,isig*nterm)
+  cfac = -dti/nterm*cfac
+  DO  i=1,nxyz
+    qact(i) = qact(i) + cfac*qwork(i)
+  END DO
+END DO
+RETURN
+END SUBROUTINE exp_evol
+
+!-----exp_evolp-------------------------------------------------------------
+
+SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
+
+!     Propagation of all s.p. wavefuntions by Taylor expanded 
+!     exponential evolution (version needed for SIC):
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       ak       = kinetic energies in momentum space
+!       norder   = order of epxansion (4 recommended for full step))
+!       dtact    = time step
+!       qwork    = work space for complex wavefunction
+!       psi      = set of wavefunctions before the step
+
+!     Note: The propagation uses the action of the Hamiltonian
+!           where the diagonal element (s.p.energy) is subtracted.
+!           That diagonal element is evalutaed in the first order
+!           call 'nterm=1'.
+
+USE params
+USE util, ONLY:wfovlp
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)                 :: aloc(2*kdfull2)
+INTEGER, INTENT(IN)                      :: norder
+COMPLEX(DP), INTENT(IN)                  :: dtact
+COMPLEX(DP), INTENT(OUT)                 :: qwork(kdfull2)
+COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
+
+COMPLEX(DP),ALLOCATABLE :: chmatrix(:,:)
+
+COMPLEX(DP) :: dti,cfac,cacc(kstate)
+INTEGER :: i, ilocbas 
+INTEGER :: na, nbe, ncs, nterm
+
+!----------------------------------------------------------------------
+
+!write(*,*) 'entering EXP_EVOLP'
+
+ALLOCATE(chmatrix(kstate,kstate))
+
+dti = dtact*CMPLX(0D0,1D0,DP)
+
+! compute H-matrix, store h*psi wavefunctions
+
+DO nbe=1,nstate
+  ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
+  CALL hpsi(qact(1,nbe),aloc(ilocbas),nbe,1)
+  DO ncs=1,nstate
+    IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+      chmatrix(ncs,nbe) = wfovlp(psi(:,ncs),qact(:,nbe))
+    ELSE
+      chmatrix(ncs,nbe) = CMPLX(0D0,0D0,DP)
+    END IF
+  END DO
+END DO
+! symmetrize H-matrix
+DO nbe=1,nstate; DO ncs=1,nbe-1
+  chmatrix(ncs,nbe) = (chmatrix(ncs,nbe)+CONJG(chmatrix(nbe,ncs)))/2D0
+  chmatrix(nbe,ncs) = CONJG(chmatrix(ncs,nbe))
+END DO; END DO
+
+! now the Taylor expansion (recycle stored h*psi in first step)
+
+DO nbe=1,nstate
+  ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
+  cfac = CMPLX(1D0,0D0,DP)
+  DO nterm=1,norder
+    ! H*psi and prepare subtraction factors
+    IF(nterm==1) THEN
+      qwork(:) = qact(:,nbe)
+      qact(:,nbe) = psi(:,nbe)    ! restore original wavefunctions
+      cacc(:) = chmatrix(:,nbe)
+    ELSE
+      DO ncs=1,nstate
+        IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+          cacc(ncs) = CMPLX(0D0,0D0,DP)
+          DO na=1,nstate
+            IF(ispin(nrel2abs(na)) == ispin(nrel2abs(ncs))) THEN
+              cacc(ncs) = cacc(ncs) + chmatrix(ncs,na)*wfovlp(psi(:,na),qwork)
+            END IF
+          END DO
+        END IF
+      END DO
+      CALL hpsi(qwork,aloc(ilocbas),nbe,2)
+    END IF
+    ! project H-matrix
+    DO ncs=1,nstate
+      IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
+        qwork(:) = qwork(:) - psi(:,ncs)*cacc(ncs)
+      END IF
+    END DO
+    ! accumulate to Taylor series
+    cfac = -dti/nterm*cfac
+    qact(:,nbe) = qact(:,nbe) + cfac*qwork(:)
+  END DO
+END DO
+
+DEALLOCATE(chmatrix)
+
+
+RETURN
+END SUBROUTINE exp_evolp
+
+
+!-----hpsi  -------------------------------------------------------------
+
+SUBROUTINE hpsi(qact,aloc,nbe,itpri)
+
+!     Action of mean-field Hamiltonian on one s.p. wavefunction:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       ak       = kinetic energies in momentum space
+!       nbe      = number of state
+!       itpri    = switch for computing s.p. energies (for ABVS(itpri)=1)
+!                  <0 switches to subtract mean-value of s.p. energy
+
+
+USE params
+USE util, ONLY:wfovlp
+USE kinetic
+USE twost
+
+IMPLICIT NONE
+
+
+
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
+REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
+!REAL(DP), INTENT(IN)                    :: akv(kdfull2)
+INTEGER, INTENT(IN)                      :: nbe
+INTEGER, INTENT(IN)                      :: itpri
+COMPLEX(DP),ALLOCATABLE :: qex(:)
+
+!                                   workspaces
+COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:),q1fine(:),q2fine(:),qactfine(:)
+COMPLEX(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
+REAL(DP) :: wnorm
+LOGICAL :: tpri
+LOGICAL,PARAMETER :: tsubmean=.TRUE.
+LOGICAL,PARAMETER :: ttest=.FALSE.
+INTEGER :: i, is, na
+COMPLEX(DP) :: cf
+
+
+!----------------------------------------------------------------------
+
+
+tpri =  ABS(itpri)==1
+
+
+ALLOCATE(q1(kdfull2),q2(kdfull2))
+q1=(0D0,0D0)
+q2=(0D0,0D0)
+!     action of kinetic energy
+
+
+#if(netlib_fft|fftw_cpu)
+CALL fftf(qact,q1)
+DO  i=1,nxyz
+  q1(i) = akv(i)*q1(i)
+END DO
+CALL fftback(q1,q2)
+#else
+CALL ckin3d(qact,q1)
+#endif
+
+
+
+!     action of potential and non-local PsP (optionally)
+
+IF(ipsptyp == 1) THEN
+    CALL nonlocalc(qact,q1,0)
+
+  IF(tpri) enonlo(nbe) = wfovlp(qact,q1)
+  DO  i=1,nxyz
+    q1(i)=q1(i)+qact(i)*aloc(i)
+  END DO
+ELSE
+  DO  i=1,nxyz
+    q1(i)=qact(i)*aloc(i)
+  END DO
+END IF
+
+IF(ifsicp==5) THEN
+  ALLOCATE(qex(kdfull2))
+  CALL exchg(qact,qex,nbe)
+  q1 = q1 + qex
+  DEALLOCATE(qex)
+END IF
+
+
+! subtract SIC potential for state NBE
+IF(ifsicp.GE. 8) THEN
+  is=ispin(nrel2abs(nbe))
+  DO na=1,nstate
+    IF(ispin(nrel2abs(na)) == is)THEN
+      cf = wfovlp(psiut(:,na),qact)
+      DO i=1,nxyz
+        q1(i)=q1(i)-qnewut(i,na)*cf
+      END DO
+    END IF
+  END DO
+  
+END IF
+
+
+IF(tpri) THEN
+  epotsp(nbe) = wfovlp(qact,q1)
+  amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
+  q2 = q1+q2
+  spvariance(nbe) = SQRT(MAX(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2,1D-99))
+  is=ispin(nrel2abs(nbe))
+  IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
+   ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
+      ekinsp(nbe),epotsp(nbe),REAL(wfovlp(q2,q2),DP)
+  CALL flush(6)
+ELSE
+  q2 = q1+q2
+END IF
+
+IF(itpri<0) THEN
+  qact = q2-amoy(nbe)*qact
+ELSE
+  qact = q2
+END IF
+
+DEALLOCATE(q1,q2)
+
+
+RETURN
+END SUBROUTINE hpsi
+
+
+
+
+SUBROUTINE hpsi_boostinv(qact,aloc,current,rho,nbe)
+
+!     Action of boost-invariant Hamiltonian on one s.p. wavefunction:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       current  = average local momentum in x,y, and z-direction
+!       nbe      = number of state
+!     The routine requires that 'current' has been accumulated before.
+
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
+REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN)                     :: current(kdfull2,3)
+REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
+INTEGER, INTENT(IN)                  :: nbe
+
+!                                   workspaces
+COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
+
+COMPLEX(DP) :: cf
+
+
+
+!----------------------------------------------------------------------
+
+
+! check availability of FFT
+IF(.NOT.ALLOCATED(akv)) STOP "HPSI_BOOSTINVARIANT requires FFT"
+ALLOCATE(q1(kdfull2),q2(kdfull2))
+
+q1=qact
+CALL hpsi(qact,aloc,nbe,0)
+
+CALL xgradient_rspace(q1,q2)
+qact = qact - h2m*current(:,1)*q2 
+q2 = current(:,1)*q1
+CALL xgradient_rspace(q2,q2)
+qact = qact - h2m*q2 
+
+
+CALL ygradient_rspace(q1,q2)
+qact = qact - h2m*current(:,2)*q2 
+q2 = current(:,2)*q1
+CALL ygradient_rspace(q2,q2)
+qact = qact - h2m*q2 
+
+
+CALL zgradient_rspace(q1,q2)
+qact = qact - eye*h2m*current(:,3)*q2 
+q2 = current(:,3)*q1
+CALL zgradient_rspace(q2,q2)
+qact = qact - eye* h2m*q2 
+
+qact = qact + h2m* &
+ (current(:,1)**2+current(:,2)**2+current(:,3)**2)
+
+WRITE(*,*) ' HPSI_BOOSTINV: E_coll=',dvol*h2m*SUM(rho(:)* &
+ (current(:,1)**2+current(:,2)**2+current(:,3)**2))
+
+
+RETURN
+END SUBROUTINE hpsi_boostinv

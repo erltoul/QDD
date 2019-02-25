@@ -27,9 +27,8 @@ USE params
 IMPLICIT NONE
 !     calculates forces on all particles except DFT-electrons
 
-!      GSM means
-!     a particle described by the Gaussian Shell Model, i.e.
-!     cores, valence shells and kations.
+!     GSM means a particle described by the Gaussian Shell Model, 
+!     i.e. cores, valence shells and kations.
 
 !     - calculation of the GSM-GSM forces
 !     - calculation of the forces between GSM particles and
@@ -48,10 +47,10 @@ IMPLICIT NONE
 
 
 
-REAL(DP), INTENT(IN OUT)                 :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN)                  :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN)                      :: it
-INTEGER, INTENT(IN)                      :: iflag
+REAL(DP), INTENT(IN OUT)   :: rho(2*kdfull2)
+COMPLEX(DP), INTENT(IN)    :: psi(kdfull2,kstate)
+INTEGER, INTENT(IN)        :: it
+INTEGER, INTENT(IN)        :: iflag
 
 INTEGER :: i
 #if(raregas)

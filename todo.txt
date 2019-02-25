@@ -63,6 +63,18 @@
      Two versions 'copy...' and 'secopy...' differ by index
      computation. Check speed and maintain the faster version.
 
+
+16) Routine 'dyn_propag' in 'dynamic.F90':
+     Check te call to 'calclocal' after ionic propagation.
+
+
+17) Routine 'nonlocstep' in 'dynamic.F90':
+     This routine is slow. Consider replacing it by exact exponential
+     in projector sub-space.
+
+18) Routine 'savings'  in 'dynamic.F90':
+     Save status before CPU time exceeds bounds. May be skipped?
+
 *****************************************************************
 
 Code cleaning:
@@ -97,3 +109,7 @@ Subroutines checked and commented:
    fft.F90
    fftpack*.F90
    falr.F90
+   dynamic.F90
+   coulsolv.F90
+   coulex.F90
+   carlo.F90

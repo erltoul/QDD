@@ -132,6 +132,66 @@ END DO
 
 RETURN
 END SUBROUTINE superpose_state_rc
+!-----eval_unitrot-------------------------------------------------------------
+
+SUBROUTINE eval_unitrot(qact,qold)
+
+! Computes the piece of rotation amongst occupied states contained
+! in the tansformation from 'qold' to 'qact'. The resulting unitary
+! transformation is transferred via 'wfrotate'.
+
+USE params
+USE util, ONLY:wfovlp
+USE twost
+USE orthmat, ONLY: matdorth
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
+COMPLEX(DP), INTENT(IN)              :: qold(kdfull2,kstate)
+
+COMPLEX(DP) :: ovl
+REAL(DP) :: rmo
+INTEGER :: is,ni,na,nb,naeff,nbeff
+
+!----------------------------------------------------------------------
+
+wfrotate = 0D0
+DO is=1,2
+  ni = ndims(is)
+
+! evaluate matrix from overlaps
+  DO na=1,nstate
+    IF(ispin(nrel2abs(na))==is) THEN
+      naeff = na - (is-1)*ndims(1)
+      DO nb=1,nstate
+        IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
+          nbeff = nb - (is-1)*ndims(1)
+          wfrotate(naeff,nbeff,is) = wfovlp(qold(:,na),qact(:,nb))
+        END IF
+      END DO
+    END IF
+  END DO
+
+! ortho-normalize
+  DO nb=1,ni
+    DO na=1,nb-1
+      ovl=SUM(CONJG(wfrotate(1:ni,na,is))*wfrotate(1:ni,nb,is))
+      wfrotate(:,nb,is) = wfrotate(:,nb,is)-wfrotate(:,na,is)*ovl
+    END DO
+    ovl=SUM(CONJG(wfrotate(1:ni,nb,is))*wfrotate(1:ni,nb,is))
+    wfrotate(1:ni,nb,is) = wfrotate(1:ni,nb,is)*CMPLX(1D0/SQRT(REAL(ovl,DP)),0D0,DP)
+  END DO
+
+! transpose for further use
+  wfrotate(1:ni,1:ni,is) = CONJG(TRANSPOSE(wfrotate(1:ni,1:ni,is)))
+
+  rmo = matdorth(wfrotate(:,:,is),kstate,ni)
+  WRITE(*,*) 'is,unitarity wfrotate:',is,rmo
+  IF(ABS(rmo)>1D-10) WRITE(*,*) ' WFROTATE:',wfrotate(1:ni,1:ni,is)
+
+END DO
+
+END SUBROUTINE eval_unitrot
 
 
 END MODULE twost_util

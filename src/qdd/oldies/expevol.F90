@@ -76,8 +76,6 @@ myn = 0
 IF(nc+NE+nk > 0) STOP 'TSTEP_EXP not appropriate for rare gas'
 #endif
 
-!      write(*,*) 'entering TSTEP_EXP'
-
 
 !     one half time step to define new mean field
 !     use exponential evolution to second order
@@ -114,9 +112,8 @@ ELSE
 END IF
 
 nterms = 4
-! itpri = MOD(it,ipasinf) + 1    ?? FL
+
 IF(tnorotate .OR. ifsicp < 8) THEN
-!    WRITE(*,*) 'EXPEVOL: full step, dt=',cdtact
   DO nb=1,nstate
     CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
@@ -127,30 +124,8 @@ END IF
 
 IF(tnearest .AND. ifsicp.GE.8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
 
-
-
-
-
-!     possibly absorbing bounds    ?? really here ??
-
-
+! switch of absorption after times step 'ntref'
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0
-!      tfs = tfs + (dt - dt1)*0.0484/(2.*ame)
-
-!      if(itsub.ne.ipasinf) then
-!         if(nabsorb.gt.0) then
-!            iComeFromAbso=0
-!            if (iangabso.ne.0) call calcrho(rho,q0)
-!                                ! necessary for angular distribution
-!            if (ispherAbso.eq.0) then
-!               call abso(q0,it)
-!            else
-!               call spherAbso(q0,it)
-!            endif
-!         endif
-!      endif
-
-
 
 !     compute mean field at new time
 
@@ -163,8 +138,8 @@ END SUBROUTINE tstep_exp
 
 SUBROUTINE exp_evol(qact,aloc,nbe,norder,dtact,qwork)
 
-!     Propagation of a wavefunction by Taylor expanded exponential
-!     evolution:
+!     Propagation of the wavefunction of state 'nbe' by Taylor 
+!     expanded evolution:
 !       qact     = wavefunction on which H acts and resulting w.f.
 !       aloc     = local potential for the actual spin component
 !       ak       = kinetic energies in momentum space
@@ -192,9 +167,6 @@ COMPLEX(DP) :: dti,cfac
 INTEGER :: i, ilocbas, isig, nterm
 
 !----------------------------------------------------------------------
-
-!      write(*,*) 'entering EXP_EVOL'
-
 
 
 IF (ispin(nrel2abs(nbe)) == 1) THEN
@@ -229,8 +201,8 @@ END SUBROUTINE exp_evol
 
 SUBROUTINE exp_evolp(qact,aloc,norder,dtact,qwork,psi)
 
-!     Propagation of a wavefuntion by Taylor expanded exponential
-!     evolution:
+!     Propagation of all s.p. wavefuntions by Taylor expanded 
+!     exponential evolution (version needed for SIC):
 !       qact     = wavefunction on which H acts and resulting w.f.
 !       aloc     = local potential for the actual spin component
 !       ak       = kinetic energies in momentum space
@@ -268,11 +240,6 @@ INTEGER :: na, nbe, ncs, nterm
 ALLOCATE(chmatrix(kstate,kstate))
 
 dti = dtact*CMPLX(0D0,1D0,DP)
-!~ IF(ABS(IMAG(dtact))>1D-10) THEN
-!~   isig = -1
-!~ ELSE
-!~   isig = 1
-!~ END IF
 
 ! compute H-matrix, store h*psi wavefunctions
 
@@ -295,10 +262,6 @@ END DO; END DO
 
 ! now the Taylor expansion (recycle stored h*psi in first step)
 
-!WRITE(*,*) 'CHMATRIX:'
-!DO nbe=1,nstate
-!  WRITE(*,*) chmatrix(:,nbe)
-!END DO
 DO nbe=1,nstate
   ilocbas = 1 + (ispin(nrel2abs(nbe))-1)*nxyz
   cfac = CMPLX(1D0,0D0,DP)
@@ -315,7 +278,6 @@ DO nbe=1,nstate
           DO na=1,nstate
             IF(ispin(nrel2abs(na)) == ispin(nrel2abs(ncs))) THEN
               cacc(ncs) = cacc(ncs) + chmatrix(ncs,na)*wfovlp(psi(:,na),qwork)
-!              WRITE(*,*) ' NBE,NCS,NA,ovlp:',nbe,ncs,na,wfovlp(psi(1,na),qwork)
             END IF
           END DO
         END IF
@@ -323,7 +285,6 @@ DO nbe=1,nstate
       CALL hpsi(qwork,aloc(ilocbas),nbe,2)
     END IF
     ! project H-matrix
-!    WRITE(*,*) ' NBE,cacc:',nbe,cacc(1:nstate)
     DO ncs=1,nstate
       IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(ncs))) THEN
         qwork(:) = qwork(:) - psi(:,ncs)*cacc(ncs)
@@ -337,70 +298,9 @@ END DO
 
 DEALLOCATE(chmatrix)
 
-!write(*,*) 'leave EXP_EVOLP'
 
 RETURN
 END SUBROUTINE exp_evolp
-!-----eval_unitrot-------------------------------------------------------------
-
-SUBROUTINE eval_unitrot(qact,qold)
-
-! Computes the piece of rotation amongst occupied states contained
-! in the tansformation from 'qold' to 'qact'. The resulting unitary
-! transformation is transferred via 'wfrotate'.
-
-USE params
-USE util, ONLY:wfovlp
-USE twost
-USE orthmat, ONLY: matdorth
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(IN)              :: qact(kdfull2,kstate)
-COMPLEX(DP), INTENT(IN)              :: qold(kdfull2,kstate)
-
-COMPLEX(DP) :: ovl
-REAL(DP) :: rmo
-INTEGER :: is,ni,na,nb,naeff,nbeff
-
-!----------------------------------------------------------------------
-
-wfrotate = 0D0
-DO is=1,2
-  ni = ndims(is)
-
-! evaluate matrix from overlaps
-  DO na=1,nstate
-    IF(ispin(nrel2abs(na))==is) THEN
-      naeff = na - (is-1)*ndims(1)
-      DO nb=1,nstate
-        IF(ispin(nrel2abs(nb)) == ispin(nrel2abs(na))) THEN
-          nbeff = nb - (is-1)*ndims(1)
-          wfrotate(naeff,nbeff,is) = wfovlp(qold(:,na),qact(:,nb))
-        END IF
-      END DO
-    END IF
-  END DO
-
-! ortho-normalize
-  DO nb=1,ni
-    DO na=1,nb-1
-      ovl=SUM(CONJG(wfrotate(1:ni,na,is))*wfrotate(1:ni,nb,is))
-      wfrotate(:,nb,is) = wfrotate(:,nb,is)-wfrotate(:,na,is)*ovl
-    END DO
-    ovl=SUM(CONJG(wfrotate(1:ni,nb,is))*wfrotate(1:ni,nb,is))
-    wfrotate(1:ni,nb,is) = wfrotate(1:ni,nb,is)*CMPLX(1D0/SQRT(REAL(ovl,DP)),0D0,DP)
-  END DO
-
-! transpose for further use
-  wfrotate(1:ni,1:ni,is) = CONJG(TRANSPOSE(wfrotate(1:ni,1:ni,is)))
-
-  rmo = matdorth(wfrotate(:,:,is),kstate,ni)
-  WRITE(*,*) 'is,unitarity wfrotate:',is,rmo
-  IF(ABS(rmo)>1D-10) WRITE(*,*) ' WFROTATE:',wfrotate(1:ni,1:ni,is)
-
-END DO
-
-END SUBROUTINE eval_unitrot
 
 
 !-----hpsi  -------------------------------------------------------------
@@ -447,7 +347,6 @@ COMPLEX(DP) :: cf
 
 
 tpri =  ABS(itpri)==1
-!      write(*,*) 'entering HPSI, tpri=',tpri
 
 
 ALLOCATE(q1(kdfull2),q2(kdfull2))
@@ -462,14 +361,9 @@ DO  i=1,nxyz
   q1(i) = akv(i)*q1(i)
 END DO
 CALL fftback(q1,q2)
-!WRITE(*,*) 'FFTW kin'
 #else
 CALL ckin3d(qact,q1)
-!WRITE(*,*) 'CKIN3D'
 #endif
-!q2 = -h2m * q1
-
-!STOP ' HPSI not yet appropriate for finite differences'
 
 
 
@@ -490,20 +384,13 @@ END IF
 
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
-!~   IF(tpri) epotbefore = wfovlp(qact,q1)
   CALL exchg(qact,qex,nbe)
   q1 = q1 + qex
-!  IF(tpri) THEN
-!    epotafter = wfovlp(qact,q1)
-!    WRITE(6,'(a,i4,3(1pg13.5))') ' EXC: nbe,before,after,such=', &
-!         nbe,epotbefore,epotafter,wfovlp(qact,qex)
-!    CALL FLUSH(6)
-!  END IF
   DEALLOCATE(qex)
 END IF
 
 
-!JM : subtract SIC potential for state NBE
+! subtract SIC potential for state NBE
 IF(ifsicp.GE. 8) THEN
   is=ispin(nrel2abs(nbe))
   DO na=1,nstate
@@ -516,21 +403,18 @@ IF(ifsicp.GE. 8) THEN
   END DO
   
 END IF
-!JM
 
 
 IF(tpri) THEN
   epotsp(nbe) = wfovlp(qact,q1)
   amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
   q2 = q1+q2
-!  spvariance(nbe) = SQRT(REAL(wfovlp(q2,q2),DP)-amoy(nbe)**2)
   spvariance(nbe) = SQRT(MAX(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2,1D-99))
   is=ispin(nrel2abs(nbe))
   IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
    ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
       ekinsp(nbe),epotsp(nbe),REAL(wfovlp(q2,q2),DP)
   CALL flush(6)
-!      SQRT(REAL(wfovlp(q2,q2))),ABS(wfovlp(qact,q2))
 ELSE
   q2 = q1+q2
 END IF
@@ -541,11 +425,7 @@ ELSE
   qact = q2
 END IF
 
-!espact =  amoy(nbe)
-
-
 DEALLOCATE(q1,q2)
-
 
 
 RETURN
@@ -567,8 +447,6 @@ SUBROUTINE hpsi_boostinv(qact,aloc,current,rho,nbe)
 USE params
 USE kinetic
 IMPLICIT NONE
-
-
 
 COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
 REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)

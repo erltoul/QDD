@@ -20,7 +20,8 @@
 
 SUBROUTINE init_simann()
 
-!------------------------------------------------------------
+! Initializes variables for simulated annealing.
+
 USE params
 IMPLICIT NONE
 
@@ -94,15 +95,20 @@ END SUBROUTINE init_simann
 
 SUBROUTINE simann(psir,rho,aloc)
 
-!     *************************************
+!  Optimization opf ionic positions by simulated annealing.
+!
+!  Input/Output:
+!    psir    = set of s.p. wavefunctions
+!    rho     = local densities (spin-up and spin-down)
+!    aloc    = local KS potentials
 
 USE params
 USE util, ONLY:fmtv_fld, view3d
 IMPLICIT NONE
 
-REAL(DP), INTENT(IN OUT)                     :: psir(kdfull2,kstate)
-REAL(DP), INTENT(IN OUT)                     :: rho(2*kdfull2)
-REAL(DP), INTENT(IN OUT)                     :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN OUT)   :: psir(kdfull2,kstate)
+REAL(DP), INTENT(IN OUT)   :: rho(2*kdfull2)
+REAL(DP), INTENT(IN OUT)   :: aloc(2*kdfull2)
 
 INTEGER :: ion, jrun
 REAL(DP) :: cptem0, delbin, delps0, ebold, hph2
@@ -133,18 +139,8 @@ DO jrun = 1, nrun
     
 !     reach convergence in Kohn-Sham loop
     
-!g            call calcpseudo(rho)
     CALL calcpseudo()
     
-!old            sumion = 0.0
-!old            do ion1=2,nion
-!old               do ion2=1,ion1-1
-!old                  dist   = (cx(ion1)-cx(ion2))**2+(cy(ion1)-cy(ion2))**2
-!old     &                 +(cz(ion1)-cz(ion2))**2
-!old                  sumion = e2*ch(np(ion1))**2/sqrt(dist) + sumion
-!old               enddo
-!old            enddo
-!old            ecorr=sumion
     ecorr = energ_ions()
     
 !     calculate the projectors around the new ionic positions
@@ -152,9 +148,6 @@ DO jrun = 1, nrun
     IF(ipsptyp == 1) THEN
       DO ion=1,nion
         CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-!        IF(nrow(np(1)) == 2) CALL calpr2(cx(ion),cy(ion),cz(ion),ion)
-!        IF(nrow(np(1)) == 3) CALL calpr3(cx(ion),cy(ion),cz(ion),ion)
-!        IF(nrow(np(1)) == 4) CALL calpr4(cx(ion),cy(ion),cz(ion),ion)
         WRITE(6,'(a,i2,a,3f9.4)') 'ion',ion,'=', cx(ion),cy(ion),cz(ion)
       END DO
       CALL checkproj(ion)
@@ -215,7 +208,7 @@ END SUBROUTINE simann
 
 SUBROUTINE minpos(rho,psimc)
 
-!     *************************************
+! Change ionic positions according to Monte-Carlo estimator
 
 USE params
 IMPLICIT NONE
@@ -257,9 +250,6 @@ DO ion=1,nion
   
   IF(ipsptyp == 1) THEN
     CALL calc_proj(cx(ion),cy(ion),cz(ion),cx(ion),cy(ion),cz(ion),ion)
-!    IF(nrow(np(1)) == 2) CALL calpr2(xion,yion,zion,ion)
-!    IF(nrow(np(1)) == 3) CALL calpr3(xion,yion,zion,ion)
-!    IF(nrow(np(1)) == 4) CALL calpr4(xion,yion,zion,ion)
     enoloc(ion) = 0D0
     DO nb=1,nstate
       CALL nonlocalr(psimc(1,nb),q1)
@@ -466,19 +456,16 @@ END SUBROUTINE minpos
 
 SUBROUTINE move(ionvar,xvar,yvar,zvar,diffen,dii)
 
-!     *************************************************
+!   Computes energy-difference 'diffen' resulting from moving 'ion' 
+!   to (xvar,yvar,zvar).
+!   Prepare energies on fieldindex '0' for a possible swapping
+!   of coordinates after oracle.
+!   Calculate new ion-ion-energy of ion no. 'ionvar' with
+!   all the other ions.
 
 USE params
 IMPLICIT NONE
 
-!     Computes energy-difference 'diffen' resulting from
-!     moving 'ion' to (xvar,yvar,zvar).
-!     Prepare energies on fieldindex '0' for a possible swapping
-!     of coordinates after oracle.
-!     eiinew = vector of inverse distances
-
-!     calculate new ion-ion-energy of ion no. 'ionvar' with
-!     all the other ions
 
 INTEGER :: ion, ionvar
 REAL(DP) :: dieloc, dienl, diffen, dii, dist, eiivar, eionold, etold, etvar, xvar, yvar, zvar
@@ -523,8 +510,8 @@ IMPLICIT NONE
 
 !     *******************
 
-!     numerical recipes function ran0 (p. 270):
-!     creates a random number from input 'idum'
+!  Numerical recipes function ran0 (p. 270):
+!   Creates a random number from input 'idum'
 
 
 INTEGER, INTENT(OUT)                     :: idum
@@ -552,7 +539,7 @@ END FUNCTION ran0
 
 SUBROUTINE metrop(diffen,t,iknowi,ans)
 
-!     **************************************
+!  The Metropolis algorithm
 
 USE params
 IMPLICIT NONE
@@ -610,7 +597,7 @@ END SUBROUTINE metrop
 
 SUBROUTINE cenmass()
 
-!     ********************
+! Move ions globally to shift center-of-mass to origin.
 
 USE params
 IMPLICIT NONE
