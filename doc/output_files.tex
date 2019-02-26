@@ -1,0 +1,95 @@
+\documentclass[11pt]{article}
+
+\usepackage[top=2.6cm,bottom=2.6cm,right=2.1cm,left=2.1cm]{geometry}
+\usepackage{amsmath}
+\usepackage{braket}
+\usepackage{color}
+\usepackage{multirow}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[pdftex,colorlinks,citecolor=blue,breaklinks,pdftitle={}]{hyperref}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+\begin{document}
+For the dynamics without RTA.\\
+\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
+	\hline
+	\texttt{energies.<name>} & historical, contains only the binding energy\\
+	\hline
+	\texttt{forces.<name>} & forces on ions, generated when ion molecular dynamics is active\\
+	\hline
+	\texttt{<name>.bs} & \textcolor{red}{not found}\\
+	\hline
+	\texttt{pdip.<name>} &  dipole moment in x, y, z direction, versus time \\
+	\hline
+	\texttt{penerclu.<name>} & kinetic energy of the cluster in the x,y,z directions and total, versus time, at intervals commanded by the input parameter jener\\
+		\hline
+	\texttt{pescel.<name>} & proportion of electrons remaining, total number of electrons, number of electrons lost, versus time, at intervals commanded by the input parameter jesc\\
+	\hline
+	\texttt{plaser.<name>} & laser parameters Ex, Ey, Ez, power, laser energy, etc as a fonction of time\\
+	\hline
+	\texttt{povlp.<name>} & unused in this version\\
+	\hline
+	\texttt{penergies.<name>} & Various energies, versus time. The 26 detailed entries (single particle energy, rearrangement energy, etc..) are described in the output file itself. The total energy is at location 18. \\
+	\hline
+	\texttt{pescOrb.<name>} & Number of electrons lost per orbital, versus time, at intervals commanded by the input parameter jnorms \\
+	\hline
+	\texttt{pkinenion.<name>} & kinetic energy of the cluster in the x,y,z directions and total, versus time, at intervals commanded by the input parameter jpos\\
+	\hline
+	\texttt{pPES.<name>} & unused in this version\\
+	\hline
+	\texttt{pposion.<name>} & positions of the individual ions in x,y,z, and distance to center, versus time, at intervals commanded by the input parameter jpos\\
+	\hline
+	\texttt{pproba.<name>} & probabilities of charge states versus time, at time intervals commanded by input parameter jnorms\\
+	\hline
+	\texttt{pprojdip.<name>} & x, y, z pos of projectile versus time, at time intervals commanded by input parameter jdip\\
+	\hline
+	\texttt{prhov.<name>} & unused in this version\\
+	\hline
+	\texttt{progstatus} & Only a flag when dynamics are finished\\
+	\hline
+	\texttt{pspenergies.<name>} & single particle energies versus time, at time intervals commanded by input parameter jinfo\\
+	\hline
+	\texttt{pspvariances.<name>} & single particle energy variances versus time, at time intervals commanded by input parameter jinfo\\
+	\hline
+	\texttt{pspvariancesp.<name>} & single particle energy variances versus time (with correction by projection), at time intervals commanded by input parameter jinfo \\
+	\hline
+	\texttt{ptempion.<name>} & ion temperatures during ionic-core relaxation\\
+	\hline
+	\texttt{pvelion.<name>} & ion velocities during ionic-core relaxation, or dynamic calculation with molecular dynamics\\
+	\hline
+	\texttt{rsave.<name>} & This file contains all parameters of a static convergence to allow for a dynamic start without recomputing the statics: to use it set ismax=0 and istat=1  \\
+	\hline
+	\texttt{save.<name>} & This file contains all parameters to allow for a dynamic start at time : to use it set  irest>=0 \\
+	\hline
+	\texttt{Time} & Number of points in the calculation box and used wall time to complete the given number of iterations\\
+	\hline
+\end{tabular}
+
+In this table the files that are generated when RTA is activated. I assume this list will be much shorter.\\
+\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
+	\hline
+	\texttt{convergenceRTA} & \textcolor{red}{ unknown to me, PG?}\\
+	\hline
+	\texttt{peqstate} &  parameters for convergence of the dtmf process: current iteration number, cycles to convergence, variance, residual err. on density, residual err. on current, parameters mu, muj, energy achieved\\
+	\hline
+	\texttt{prta} & prints at each rta  step: time, entropy, laser energy and the mu and temperature of a fermi distribution fitted to the occupation numbers\\
+	\hline
+	\texttt{pspeed.<name>} & prints at each rta step, along x axis, the reference density (spin up and down), achieved density (spin up and down), target x current, achieved x current \\
+	\hline
+\end{tabular}
+\\
+\\
+Notes: 
+\begin{itemize}
+\item I do not know \texttt{<name>.bs}
+\item I do not know convergenceRTA, maybe this has been added by PG
+\item pescel, plaser are for any dynamic problem, not only rta, I moved them
+\item some files are missing, but we have a good start here
+\end{itemize}
+\end{document}
+
+
+

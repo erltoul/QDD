@@ -1,0 +1,192 @@
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname href\endcsname\relax
+  \def\href#1#2{#2} \def\path#1{#1}\fi
+
+\bibitem{Per92}
+J.~P. Perdew, Y.~Wang, Phys. Rev. B 45 (1992) 13244.
+
+\bibitem{Gun76}
+O.~Gunnarsson, B.~I. Lundqvist, Exchange and correlation in atoms, molecules
+  and solids by the spin density functional formalism, Phys. Rev. B 13 (1976)
+  4274.
+
+\bibitem{Kue99}
+S.~K\"ummel, M.~Brack, P.-G. Reinhard, Eur. Phys. J. D 9 (1999) 149.
+
+\bibitem{Goe96}
+S.~Goedecker, M.~Teter, J.~Hutter, Separable dual-space gaussian
+  pseudopotentials, Phys. Rev. B 54 (1996) 1703.
+
+\bibitem{Ash76}
+N.~W. Ashcroft, N.~D. Mermin, {Solid State Physics}, Saunders College,
+  Philadelphia, 1976.
+
+\bibitem{Rub91}
+A.~Rubio, L.~C. Balbas, J.~A. Alonso, Z. Phys. D 19 (1991) 93.
+
+\bibitem{Mon95b}
+B.~Montag, T.~Hirschmann, J.~Meyer, P.-G. Reinhard, M.~Brack, Shape isomerism
+  in sodium clusters with $10\leq z \leq 44$: Jellium model with quadrupole,
+  octupole and hexadecapole deformations, Phys. Rev. B 52 (1995) 4775.
+
+\bibitem{Bra93}
+M.~Brack, Rev. Mod. Phys. 65 (1993) 677.
+
+\bibitem{Cle85}
+K.~Clemenger, Ellipsoidal shell structure in free metal clusters, Phys. Rev. B
+  32 (1985) 1359.
+
+\bibitem{Nil55}
+S.~G. Nilsson, K. Dan. Vidensk. Selsk. Mat. Fys. Medd. 29 (1955) No. 16.
+
+\bibitem{Hee93}
+W.~A. de~Heer, The physics of simple metal clusters: experimental aspects and
+  simple models, Rev. Mod. Phys. 65 (1993) 611.
+
+\bibitem{Jac62}
+J.~D. Jackson, {Classical Electrodynamics}, Wiley, New York, 1962.
+
+\bibitem{Mes95aB}
+A.~Messiah, Quantum Mechanics, Dover, New York, 1995.
+
+\bibitem{Bra92}
+B.~H. Bransden, M.~R.~C. McDowell, {Charge Exchange and Theory of Ion-Atom
+  Collisions}, Clarendon, Oxford, 1992.
+
+\bibitem{Rei98a}
+P.-G. Reinhard, E.~Suraud, C.~A. Ullrich, Eur. Phys. J D 1 (1998) 303.
+
+\bibitem{Koh65}
+W.~Kohn, L.~J. Sham, Phys. Rev. 140 (1965) 1133.
+
+\bibitem{Rei82a}
+P.-G. Reinhard, R.~Y. Cusson, A comparative study of hartree-fock iteration
+  techniques, Nucl. Phys. A 378 (1982) 418.
+
+\bibitem{Blu92}
+V.~Blum, G.~Lauritsch, J.~A. Maruhn, P.-G. Reinhard, J. Comp. Phys 100 (1992)
+  364.
+
+\bibitem{Mar10aB}
+J.~Maruhn, P.-G. Reinhard, E.~Suraud, {Simple models of many-fermions systems},
+  Springer, Berlin, 2010.
+
+\bibitem{Pre92}
+W.~H. Press, S.~A. Teukolsky, W.~T. Vetterling, B.~P. Flannery, {Numerical
+  Recipes}, Cambridge University Press, Cambridge, 1992.
+
+\bibitem{Fei82}
+M.~D. Feit, J.~A. Fleck, A.~Steiger, J. Comp. Phys. 47 (1982) 412.
+
+\bibitem{Ver67}
+L.~Verlet, Phys. Rev. 159 (1967) 98.
+
+\bibitem{Wop14aR}
+P.~Wopperer, P.~M. Dinh, P.-G. Reinhard, E.~Suraud, Phys. Rep. 562 (2015) 1,
+  arXiv:1407.4965.
+\newblock
+  \href{http://www.sciencedirect.com/science/article/pii/S0370157314002373}{[link]}.
+\newline\urlprefix\url{http://www.sciencedirect.com/science/article/pii/S0370157314002373}
+
+\bibitem{Kra92a}
+J.~L. Krause, K.~J. Schafer, K.~C. Kulander, Phys. Rev. A 45 (1992) 4998.
+
+\bibitem{Rei06f}
+P.-G. Reinhard, E.~Suraud, Cluster dynamics in strong laser fields, in:
+  M.~A.~L. Marques, C.~A. Ullrich, F.~Nogueira (Eds.), Time-dependent density
+  functional theory, Vol. 706 of Lecture Notes in Physics, Springer, Berlin,
+  2006, p. 391.
+
+\bibitem{Rei06c}
+P.-G. Reinhard, P.~D. Stevenson, D.~Almehed, J.~A. Maruhn, M.~R. Strayer, Phys.
+  Rev. E 73 (2006) 036709.
+
+\bibitem{Poh04b}
+A.~Pohl, P.-G. Reinhard, E.~Suraud, Phys. Rev. A 70 (2004) 023202.
+
+\bibitem{Leg02}
+C.~Legrand, E.~Suraud, P.-G. Reinhard, J. Phys. B 35 (2002) 1115.
+
+\bibitem{Klu13}
+P.~Kl\"upfel, P.~M. Dinh, P.-G. Reinhard, E.~Suraud, Phys. Rev. A 88 (2013)
+  052501.
+
+\bibitem{Hil53}
+D.~L. Hill, J.~A. Wheeler, Phys. Rev. 89 (1953) 1102.
+
+\bibitem{Lau91}
+G.~Lauritsch, P.-G. Reinhard, J.~Meyer, M.~Brack, Triaxially deformed sodium
+  clusters in a selfconsistent microscopic description, Phys. Lett. A 160
+  (1991) 179.
+
+\bibitem{Rei95b}
+S.~M. Reimann, S.~Frauendorf, M.~Brack, Z. Phys. D 34.
+
+\bibitem{Yan95}
+C.~Yannouleas, U.~Landman, Phys. Rev. B 51.
+
+\bibitem{Cal97b}
+F.~Calvayrac, P.-G. Reinhard, E.~Suraud, Ann. Phys. (N.Y.) 255 (1997) 125.
+
+\bibitem{Rei02d}
+P.-G. Reinhard, E.~Suraud,
+  \href{http://dx.doi.org/10.1140/epjd/e2002-00204-2}{{DFT} studies of ionic
+  vibrations in {Na} clusters}, Eur. Phys. J. D 21 (2002) 315.
+\newline\urlprefix\url{http://dx.doi.org/10.1140/epjd/e2002-00204-2}
+
+\bibitem{Din12c}
+P.~M. Dinh, S.~Vidal, P.-G. Reinhard, E.~Suraud,
+  \href{http://stacks.iop.org/1367-2630/14/063015}{Fingerprints of level
+  depletion in photoelectron spectra of small na clusters in the uv domain},
+  New J. Phys. 14 (2012) 063015.
+\newline\urlprefix\url{http://stacks.iop.org/1367-2630/14/063015}
+
+\bibitem{Poh00}
+A.~Pohl, P.-G. Reinhard, E.~Suraud, Phys. Rev. Lett. 84 (2000) 5090.
+
+\bibitem{Din13a}
+P.~Dinh, P.~Romaniello, P.-G. Reinhard, E.~Suraud, Phys. Rev. A 87 (2013)
+  032514.
+
+\bibitem{Ber88}
+G.~F. Bertsch, S.~{Das Gupta}, Phys. Rep. 160 (1988) 190.
+
+\bibitem{Abe96}
+Y.~Abe, S.~Ayik, P.-G. Reinhard, E.~Suraud, Phys. Rep. 275 (1996) 49.
+
+\bibitem{Rei85f}
+H.~Reinhardt, P.-G. Reinhard, K.~Goeke, Phys. Lett. B 151 (1985) 177.
+
+\bibitem{Goe86a}
+K.~Goeke, P.-G. Reinhard, H.~Reinhardt, Ann. Phys. (N.Y.) 166 (1986) 257.
+
+\bibitem{Pin66}
+D.~Pines, P.~Nozi\`eres, {The Theory of Quantum Liquids}, W A Benjamin, New
+  York, 1966.
+
+\bibitem{Rei15a}
+P.-G. Reinhard, E.~Suraud, Ann. Phys. (N.Y.) 354 (2015) 183.
+\newblock \href{http://dx.doi.org/10.1016/j.aop.2014.12.01}{[link]}.
+\newline\urlprefix\url{http://dx.doi.org/10.1016/j.aop.2014.12.01}
+
+\bibitem{Gue88a}
+K.~G\"utter, P.-G. Reinhard, C.~Toepffer, Phys. Rev. A 38 (1988) 1641.
+
+\bibitem{Rei98aB}
+L.~E. Reichl, A Modern Course in Statistical Physics, Wiley, New York, 1998.
+
+\bibitem{Cal00}
+F.~Calvayrac, P.-G. Reinhard, E.~Suraud, C.~A. Ullrich, Phys. Rep. 337 (2000)
+  493.
+
+\bibitem{Rei04aB}
+P.-G. Reinhard, E.~Suraud, Introduction to Cluster Dynamics, Wiley, New York,
+  2004.
+
+\bibitem{Gig03a}
+E.~Giglio, P.-G. Reinhard, E.~Suraud, Phys. Rev. A 67 (2003) 043202.
+
+\end{thebibliography}

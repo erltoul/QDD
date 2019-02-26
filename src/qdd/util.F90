@@ -1702,15 +1702,15 @@ REAL(DP) ::acc
 REAL(DP) :: rhoint(minz:maxz)
 LOGICAL :: tfirst=.true.
 
-IF(modrho == 0) THEN
-  STOP 'modrho must be larger than zero'
+IF(irhoint == 0) THEN
+  STOP 'irhoint must be larger than zero'
 END IF
-IF(MOD(itime,modrho) /= 0) RETURN
+IF(MOD(itime,irhoint) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=28,FORM='unformatted',FILE='rhointxy')
-  WRITE(28) minz,maxz,nzsh,dz,centfz,dt1,itime,modrho
+  WRITE(28) minz,maxz,nzsh,dz,centfz,dt1,itime,irhoint
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF
@@ -1759,12 +1759,12 @@ REAL(DP) :: rhoint(minx:maxx)
 
 DATA tfirst/.true./
 
-IF(MOD(itime,modrho) /= 0) RETURN
+IF(MOD(itime,irhoint) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=29,FORM='unformatted',FILE='rhointyz')
-  WRITE(29) minx,maxx,nxsh,dx,centfx,dt1,itime,modrho
+  WRITE(29) minx,maxx,nxsh,dx,centfx,dt1,itime,irhoint
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF
@@ -1810,12 +1810,12 @@ REAL(DP) :: rhoint(miny:maxy)
 
 DATA tfirst/.true./
 
-IF(MOD(itime,modrho) /= 0) RETURN
+IF(MOD(itime,irhoint) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=27,FORM='unformatted',FILE='rhointxz')
-  WRITE(27) miny,maxy,nysh,dy,centfy,dt1,itime,modrho
+  WRITE(27) miny,maxy,nysh,dy,centfy,dt1,itime,irhoint
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF

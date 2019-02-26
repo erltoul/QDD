@@ -1,0 +1,212 @@
+\documentclass[final,1p]{elsarticle}
+\usepackage{amssymb}
+\usepackage{stackrel}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{color}
+\usepackage{ulem}
+\usepackage{tikz}
+\usepackage{epic}
+% \usepackage{caption,subcaption}
+%\usepackage{subeqnarray}
+ 
+
+
+\newcommand\encircle[1]{%
+  \tikz[baseline=(X.base)] 
+    \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
+
+\newcommand{\I}{\mathrm{i}}
+
+\newcommand{\PGR}[1]{{\color{blue} #1}}
+\newcommand{\PGRcomm}[1]{{\color{blue}\small PGR2all: #1}}
+\newcommand{\PGRfoot}[1]{{\color{blue}\footnote{\color{blue} #1}}}
+%\newcommand{\ES}[1]{{\color{red} #1}}
+%\newcommand{\ESfoot}[1]{{\color{red}\footnote{\color{red} #1}}}
+\newcommand{\bmu}{{\mbox{\boldmath{$\mu$}}}}
+
+\newcounter{denselistcounter}
+\newenvironment{denselist}[1]
+{ \begin{list}
+  {#1{denselistcounter})}{\usecounter{denselistcounter}
+  \setlength{\topsep}{-0pt}
+  \setlength{\partopsep}{-0pt}
+  \setlength{\itemsep}{-0pt}
+  \setlength{\parsep}{-0pt}
+  \setlength{\labelwidth}{6pt}
+  \setlength{\labelsep}{4pt}
+  \setlength{\leftmargin}{20pt}
+  \setlength{\rightmargin}{20pt}
+  }
+}
+{\end{list}}
+
+\unitlength 1mm
+\thicklines
+
+\begin{document}
+
+
+
+
+
+\begin{figure}
+%\setlength\unitlength{0.91mm}
+\thicklines
+\begin{center}
+%\begin{sideways}
+\fbox{\small%\footnotesize
+%\begin{picture}(130,92)(0,108)
+\begin{picture}(132,175)(-5,-175)
+\put(0,-5){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+$\;$starting point: 
+\\[4pt]
+  $\hat{\rho}(t_0)
+  =
+  \sum_\alpha|\phi_\alpha(t_0)\rangle W_\alpha(t_0)\langle\phi_\alpha(t_0)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(5,-19){\encircle{1}}
+\put(3,-11.5){\vector(0,-1){25}}
+\put(6,-30){\fbox{\tt tstep}}
+\put(7,-25){\mbox{mean-field propagation: 
+$%\begin{array}{l}
+ |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t_1,t_0)|\phi_\alpha(t)\rangle
+\;,\;
+%\\
+ W_\alpha^\mathrm{(mf)}=W_\alpha(t)=\mbox{const.}
+%\end{array}
+$
+}}
+\put(0,-40){\mbox{
+  $ \hat{\rho}_\mathrm{mf} =\hat{\rho}_\mathrm{mf}(t_1) 
+  =
+  \sum_\alpha|\phi_\alpha^\mathrm{(mf)}\rangle 
+  W_\alpha^\mathrm{(mf)}\langle\phi_\alpha^\mathrm{(mf)}|$
+}}
+\put(5,-46){\encircle{2}}
+\put(6,-54.5){\fbox{\tt srhomat}}
+\put(3,-41.5){\vector(0,-1){15}}
+\put(0,-50){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express $\phi$ and $W$ through natural orbitals
+\\[20pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mf}(t_1)
+  =
+  \sum_\alpha|\phi_\alpha^\mathrm{nat}\rangle \tilde{W}_\alpha^\mathrm{nat}
+  \langle\phi_\alpha^\mathrm{nat}|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(44,-63){\vector(4,-1){24}}
+\put(51,-62){\encircle{3}}
+\put(61,-64){\fbox{\tt calcrhotot,calc\_current}}
+\put(69,-70){\mbox{  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1),E_\mathrm{mf}$}}
+
+\put(87,-72){\vector(1,-1){12}}
+%\put(117,-103.5){\vector(0,-1){8}}
+\dottedline{1}(117,-103.5)(117,-110.5)
+\put(117,-110.5){\vector(0,-1){1}}
+\put(85,-77){\encircle{4}}
+\put(97,-79){\fbox{\tt eqstate}}
+\put(67,-87){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+  density-constrained mean field (DCMF) %\\ $\hookrightarrow$ %$\Longrightarrow$
+\\[3pt]
+$\Rightarrow$ 1. 
+$\begin{array}[t]{rcl}
+  \hat{\rho}_{eq}
+  &=&
+  \hat{\rho}_{eq}[\varrho_\mathrm{mf}(\mathbf{r})\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r}),E_\mathrm{mf}]
+\\[3pt]
+  &=&
+  \sum_\alpha|\phi'_\alpha\rangle  W'_\alpha\langle\phi'_\alpha|
+\end{array}$
+\\[4pt]
+$\Rightarrow$ 2. intrinsic excitation energy $E^*_\mathrm{intr}$
+\end{flushleft}
+\end{minipage}
+}}
+%\put(79,-93.5){\vector(-4,-1){33}}
+\dottedline{1}(77,-93.5)(47,-101.5)
+\put(47,-101.5){\vector(-4,-1){1}}
+\put(83,-110){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+relaxation time:
+\\[4pt]
+$\hbar\tau_\mathrm{relax}^{-1}=0.40\,\sigma_{ee}r_s^{-2}\,E^*_\mathrm{intr}/N$
+\end{flushleft}
+\end{minipage}
+}}
+\dottedline{1}(83,-114)(31,-106)
+\put(31,-106){\vector(-4,1){1}}
+\put(4,177){\vector(0,-1){39}}
+\put(0,-96){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}compose with rate $\tau_\mathrm{relax}$:
+\\[4pt]
+$\displaystyle
+\hat{\rho}_\mathrm{mix}
+= 
+\hat{\rho}_\mathrm{mf} -
+\frac{\Delta t}{\tau_\mathrm{relax}}\left[\hat{\rho}_\mathrm{mf}-\hat{\rho}_{eq}\right]
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-104){\vector(0,-1){31}}
+\put(5,-121){\encircle{5}}
+\put(6,-130.5){\fbox{\tt calcrhoeq}}
+\put(0,-126){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express new density through its natural orbitals:
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mix}
+  =
+  \sum_\alpha|\phi_\alpha(t_1)\rangle \tilde{W}_\alpha
+  \langle\phi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-140){\vector(0,-1){21}}
+\put(5,-146.5){\encircle{6}}
+\put(6,-155.5){\fbox{\tt temperature}}
+\put(0,-151){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}final fine-tuning of $W_\alpha$ to reproduce $E_\mathrm{mf}$
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}(t_1)
+  =
+  \sum_\alpha|\phi_\alpha(t_1)\rangle W_\alpha(t_1)\langle\phi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\dottedline{1}(3,-166)(3,-171)(-1.5,-171)(-1.5,-4.2)(0,-4.2)
+\put(0,-4.2){\vector(1,0){1}}
+\end{picture}
+}
+%\end{sideways}
+\end{center}
+\caption{\label{fig:summary} Sketch of the scheme for performing one
+  large time step $t_0\longrightarrow t_1=t_0\!+\!\Delta t$ in solving the RTA
+  equations.  The numbers in open circles indicate the steps as
+  outlined in the text.  }
+\end{figure}
+
+\end{document}

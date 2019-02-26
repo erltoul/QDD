@@ -1,0 +1,684 @@
+\documentclass[12pt]{article}
+\usepackage[latin2]{inputenc}
+%\usepackage{german}
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref} 
+\usepackage{xcolor}
+\definecolor{dark}{rgb}{0.4,0.15,0.15}
+\definecolor{dark-blue}{rgb}{0.15,0.15,0.4}
+\definecolor{medium-blue}{rgb}{0,0,0.5}
+\hypersetup{
+    colorlinks, linkcolor={black},
+    citecolor={dark-blue}, urlcolor={medium-blue}
+}
+
+\textwidth 15.8cm
+\textheight 23cm
+\topmargin -2.5cm
+\oddsidemargin 0.0cm
+\evensidemargin 0.0cm
+\pagestyle{empty}
+%\partopsep -33pt
+\parsep 12pt
+%\topskip -33pt
+\parskip 5pt
+\parindent 0pt
+
+\renewcommand{\baselinestretch}{1.01}
+\newcommand{\onehalf}{\frac{1}{2}}
+\renewcommand{\vec}[1]{\mathbf #1}
+
+\unitlength 1mm
+
+
+\begin{document}
+
+\title{Input parameters for the cluster 3D code}
+\author{The Erlangen--Toulouse collaboratopm}
+\date{Started 26. February 2019}
+\maketitle
+
+\tableofcontents
+\newpage
+
+
+\section{Input files}
+\label{sec:inputs}
+
+The cluster 3D code has the following input files:
+\\[-28pt]
+\begin{center}
+\begin{tabular}{ll}
+\hline
+ {\tt for005} & defines the qualifier {\tt <name>} for 
+                the other {\tt for005...} files\\
+ {\tt for005.<name>} & general input for settings, static and
+ dynamics\\
+ {\tt for005ion.<name>} & ionic configuration of cluster\\
+ {\tt for005surf.<name>} & atomic configuration of substrate (optional)\\
+\hline
+\end{tabular}
+\end{center}
+The input for {\tt for005.<name>} is sorted into namelists.
+They contain:\\
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it choice of system} \\
+\hline
+{\tt kxbox            }& nr. of grid points in $x$ direction\\
+{\tt kybox            }& nr. of grid points in $y$ direction\\
+{\tt kzbox            }& nr. of grid points in $z$ direction\\
+& box sizes must fulfill {\tt kxbox}$\geq${\tt kybox}$\geq$ {\tt kzbox}\\
+{\tt numspin}          & number of spin components (2=full spin treatment)\\
+                       & (1=spin averaged, possible problem for ADSIC)\\
+{\tt kstate           }& maximum nr. of s.p. states which is possible (greater than {\tt nclust})\\
+{\tt nclust           }& number of QM electrons - if set to 0 or a negative value (charge) this \\
+&will be automatically calculated\\
+& {\tt nclust} = $\sum_{i=1}^{nion} Z_{ion} = charge$, where $Z_{ion}$ is charge of each ion\\
+{\tt nion             }& number of cluster ions\\
+{\tt nspdw            }& number of spin down electrons \\
+{\tt nion2            }& selects type of ionic background \\
+                       &  0 $\rightarrow$ jellium background \\
+                       &  1 $\rightarrow$ background from ionic pseudo-potentials\\
+                       &  2 $\rightarrow$ background read in from {\tt potion.dat}\\
+{\tt radjel           }& Wigner-Seitz radius of jellium background\\
+{\tt surjel         }& surface thickness of jellium background\\
+{\tt bbeta         }& quadrupole deformation of jellium background\\
+{\tt gamma         }& triaxiality of jellium background\\
+{\tt dx,dy,dz,        }& grid spacing (in  Bohr) for the 3D numerical grid - if negative this will \\
+&be set to an optimal value and a value will be suggested for KXBOX \\
+&in file NX - the code stops and has to be restarted\\
+&the grid size is defined before compilation in {\tt params.F90}\\
+&it has to be correlant with pseudopotentails\\
+&corresponds to ecut in solid state\\
+{\tt imob          }& global switch to allow ionic motion (if set to 1) \\
+{\tt isurf            }& switch for Ar or MgO surface (isurf=1 activates surface)\\
+{\tt iDielec          }& switch to dielectic support\\
+{\tt xDielec          }& x below which dielectric zone is activated\\
+{\tt epsDi            }& dielectric constant in the dielectric zone\\
+{\tt rotclustx,y,z } & vector fo angle of initial rotation of ions\\
+{\tt temp} &  electronic temperature in static iteration \\
+\hline
+\end{tabular}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it initialization of wave functions} \\
+\hline
+{\tt b2occ            }& deformation for initial harmonic oscillator wf's\\
+{\tt gamocc           }& triaxiality for initial harmonic oscillator wf's\\
+{\tt osfac} & factor on initial oscillator radius  \\
+{\tt deocc            }& nr. of states above Fermi energy (determines nr. of
+states)\\
+{\tt shiftWFx         }& shift of initial wavefunctions in x direction \\
+{\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to origin\\
+{\tt ispinsep         }& initialize wavefunctiosn with some spin asymmetry\\
+{\tt init\_lcao       }& choice of basis for wavefunction initialization \\
+& =0 $\Longrightarrow$ harmonic oscillator functions (center can be
+moved
+  by {\tt shiftWFx})
+\\
+& =1 $\Longrightarrow$ atomic orbitals = WFs centered at ionic sites
+\\
+{\tt itback} &  nr. of iterations for jellium background \\
+\hline
+\multicolumn{2}{c}{\it convergence issues} \\
+\hline
+{\tt e0dmp            }& damping parameter for static solution of Kohn-Sham equations\\
+& (typically about the energy of the lowest bound state)\\
+{\tt epswf            }& step size for static solution of Kohn-Shahm
+equations (of order of 0.5)\\
+{\tt epsoro           }& required variance to terminate static iteration (order of 10$^{-5}$)\\
+{\tt occmix} &  mixing factor: new (thermal) occupation to old \\
+{\tt endcon} &  requires precision variance, termination criterion \\
+\hline
+\end{tabular}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it yet unsorted} \\
+\hline
+{\tt tcoulfalr} & switch to FALR Coulomb solver (else exact solver)  \\
+{\tt dpolx} & add stationary dipole field in x-direction  \\
+{\tt dpoly} & add stationary dipole field in y-direction    \\
+{\tt dpolz} & add stationary dipole field in z-direction    \\
+{\tt scaleclustx} & scaling of cluster configuration along x-axis  \\
+{\tt scaleclusty} & scaling of cluster configuration along y-axis   \\
+{\tt scaleclustz} & scaling of cluster configuration along z-axis   \\
+{\tt scaleclust} & if $\neq 1$: scaling of cluster configuration along x-y-z  \\
+{\tt shiftclustx} & shift of cluster configuration along x-axis  \\
+{\tt shiftclusty} & shift of cluster configuration along y-axis  \\
+{\tt shiftclustz} & shioft of cluster configuration along z-axis  \\
+{\tt iswitch\_interpol} &  switch to interpolated grid for PsP \\
+{\tt iplotorbitals} & switch to print plot-file {\tt pOrbitals} for
+all static states \\
+{\tt nproj\_states} &  nr. of electronic states in projectile \\
+\hline
+\multicolumn{2}{c}{\it QMMM substrate} \\
+\hline
+{\tt idielec } & switch to dielectric background  \\
+{\tt xdielec } & distance of dielectric background to lowest GSM layer \\
+{\tt epsdi } & dielectric constant of  dielectric background \\
+{\tt isurf } & switch to activate  dielectric background  \\
+\hline
+\end{tabular}
+
+\newpage
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt DYNAMIC}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it numerical and physical parameters for statics and dynamics} \\
+\hline
+{\tt dt1              }& time step for propagating electronic wavefunctions,  $\frac{\Delta t}{\Delta x^{2}}\leq 1$\\
+{\tt ismax            }& maximum number of static iterations \\
+{\tt idyniter         }& switch to s.p. energy as E0DMP for 'iter$>$idyniter'\\
+{\tt ifhamdiag} & diagonalization of m.f. Hamiltonian in static step\\
+& (presently limited to fully occupied configurations)\\
+{\tt isitmax          }& nr. of imaginary-time steps to improve static solution\\
+{\tt itmax            }& number of time steps for electronic propagation\\
+{\tt ifexpevol} & exponential evolution 4. order instead of TV splitting\\
+{\tt iffastpropag} & accelerated time step in TV splitting\\
+  & (for pure electron dynamics, interplay with absorbing b.c. ??)\\
+{\tt irest            }& switch to restart dynamics from file 'save'\\
+{\tt istat            }& switch to read wavefunctions from file 'rsave'\\
+{\tt } &\hspace*{1em}it continues static iteration for 'ismax$>$0' \\
+{\tt } &\hspace*{1em}it starts dynamics from these wf's for 'ismax=0' \\
+{\tt idenfunc} & choice of density functional for LDA\\
+               & 1 $\rightarrow$ Perdew \& Wang 1992 (default setting)\\
+               & 2 $\rightarrow$ Gunnarson \& Lundquist\\
+               & 3  $\rightarrow$ only exchange in  LDA \\
+{\tt isave            }& saves results after every 'isave' steps \\
+{\tt                  }& on file 'rsave' in and after static iteration\\
+{\tt                  }& on file 'save' in dynamic propagation\\
+{\tt ipseudo          }& switch for using pseudo-densities to represent substrate\\
+{\tt                  }& atoms \\
+{\tt ipsptype         }& type of pseudopotentials: 0 = soft local (errf);\\
+                       & 1 = full Goedecker; 2 = local Goedecker;\\
+                       & 3 = read from file goed.asci (no need to specify)  ;\\
+                       & 4 = semicore read from file goed.asci\\
+{\tt directenergy}   & {\tt .true.} = direct computation of energy \\
+                       & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
+{\tt ifsicp           }& selects type of self-interaction correction\\
+    &  0 = pure LDA, 1 = SIC-GAM, 2 = ADSIC; 3 = SIC-Slater; \\
+    &  4 = SIC-KLI; 5 = exact exchange; 6 = inactive;\\
+    &  7 = localized SIC;  8 = full SIC (double set).\\
+    & IFSICP=7 or 8 requires switch
+     {\tt twostsic=1} in {\tt define.h}.\\
+    & Option IFSICP=7 needs yet testing.\\
+{\tt icooltyp         }& type of cooling (0=none, 1=pseudo-dynamics,\\
+{\tt                  }& 2=steepest descent, 3=Monte Carlo)\\
+{\tt ifredmas         }& switch to use reduced mass for ions in dynamics\\
+{\tt ionmdtyp         }& ionic propagation
+                         (0=none, 1=leap-frog, 2=velocity Verlet)\\
+{\tt ntref}& nr. time step after which absorbing bounds are deactivated
+\\
+{\tt nabsorb}          & number of absorbing points on boundary (0 switches off) 
+\\
+{\tt powabso}          & power of absorbing boundary conditions
+\\
+{\tt ispherabso}       & switch to spherical mask in absorbing bounds
+\\
+\hline
+\end{tabular}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt DYNAMIC}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it way of excitation} \\
+\hline
+{\tt centfx           }& initial boost of electronic wavefuncftions in x-direction\\
+{\tt centfy           }& initial boost of electronic wavefuncftions in y-direction\\
+{\tt centfz           }& initial boost of electronic wavefuncftions in z-direction\\
+{\tt tempion          }& initial temperature of cluster ions \\
+{\tt ekmat} & initial kinetic energy of substrate atom (boost in $x$, in eV)\\
+{\tt itft   }& choice of shape of laser pulse \\
+&   1 = ramp laser pulse, sine switching on/off\\
+&   2 = gaussian laser pulse \\
+&   3 = cos$^2$ pulse\\
+{\tt tnode  }& time (in fs) at which pulse computation starts\\
+{\tt deltat }& length of ramp pulse ({\tt itft = 1}), in fs\\
+{\tt tpeak  }& time (in fs, relative to {\tt tnode}) at which peak is reached\\
+& (for {\tt itft} = 1 and 2, pulse length becomes 2*{\tt tpeak})\\
+{\tt omega  }& laser frequency (in Ry)\\
+{\tt e0     }& laser field strength in Ry/Bohr\\
+{\tt e1x,e1y,e1z   }& orientation of pulse\\
+{\tt e0\_2  }& field strength of second laser pulse (only {\tt itft=3}) \\
+{\tt phase2 }& phase of second pulse \\
+{\tt omega2 }& frequency of second pulse\\
+{\tt tstart2}& initial ime of second pulse\\
+{\tt tpeak2} & peak time of 2. pulse (pulse length is {\tt 2*tpeak2})\\
+{\tt iexcit} & modus of excitation (0=shifts, 1=rotation)\\
+{\tt iangmo} & switch to compute angular momentum\\
+{\tt irotat} & axis of rotation for excitation (x=1,y=2,z=2,xyz=4)\\
+{\tt phirot} & angle of rotation for excitation (in units of degree)\\
+{\tt phangle}        & angle of ``rotation'' into a $1ph$ state\\
+{\tt phphase}        & phase of ``rotation'' into a $1ph$ state\\
+{\tt nhstate,npstate}& nr. of hole and particle state for $1ph$
+                      excitation\\
+                     & this $1ph$ option can only be run from {\tt istat=1}
+\\
+{\tt eproj}& energy of incoming projectile (= last ion in the list)
+\\
+{\tt vpx,vpy,vpz}& direction of the incoming projectile
+\\
+{\tt taccel}& time span over which the projectile is accelerated to
+             {\tt eproj}
+\\
+& for {\tt taccel=0} one has to use {\tt init\_lcao=1}
+\\
+\hline
+\end{tabular}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt DYNAMIC}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it flags for observables} \\
+\hline
+{\tt iemomsRel        }& calculates multipole momentes of electron density \\
+{\tt                  }& relative to origin (0) or c.m. of cluster (1)\\
+{\tt istinf           }& modulus for printing information in static iteration \\
+{\tt ifspemoms        }& switch to compute and print spatial s.p. moments\\
+{\tt iftransme        }& switch to compute and print transition m.elements\\
+{\tt ifrhoint\_time   }& switch to slices of integrated densities for all times\\
+{\tt jstinf           }& modulus for printing information in dynamic \\
+{\tt jinfo            }& modulus for printing dynamical information on {\tt
+  infosp.<name>} \\
+{\tt jdip             }& modulus for printing dipole moments on {\tt pdip.<name>}\\
+{\tt jquad            }& modulus for printing quadrupole moments on {\tt pquad.<name>}\\
+{\tt jesc            }& modulus for printing ionization {\tt pescel.<name>}\\
+{\tt jdiporb} & modulus for printing dipoles for s.p. states on {\tt pdiporb.xyz} \\
+{\tt jenergy          }& modulus for printing energy information on {\tt penergies.<name>} \\
+{\tt iflocaliz}        & activates computation of Becke's localization
+\\
+{\tt jelf}             & modulus for anaylzing and printing electron
+localization in dynamics
+\\
+ & various files are written of the form {\tt pelf*.<name>}
+\\
+{\tt iflocaliz}             & modulus for anaylzing and printing electron
+localization in statics
+\\
+{\tt jstinf}           & modulus for printing s.p. energies and variances
+\\
+{\tt jpos}           & modulus for printing ionic positions on {\tt pposion.<name>}
+\\
+{\tt jvel}           & modulus for printing ionic velocities on {\tt pvelion.<name>}
+\\
+{\tt jstateoverlap}  & switch to compute overlap of static state
+                       with\\
+                     & the state directly after dynamical
+                       initialization
+\\
+\hline
+\end{tabular}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt DYNAMIC}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it yet unsorted} \\
+\hline
+{\tt phi} & phase of laser pulse ?? inactive for electrons, strange
+for ions ?? \\
+{\tt nproj} & element number of atomic projectile \\
+{\tt nproj\_states} & nr. of eletronic states in atomic projectile \\
+{\tt projcharge} &  charge of ionic projectile \\
+{\tt projvelx} &  x-velocity of ionic point-charge  projectile\\
+{\tt projvely} &  y-velocity of ionic point-charge  projectile  \\
+{\tt projvelz} &  z-velocity of ionic point-charge  projectile  \\
+{\tt projinix} &  initial x-coordinate of ionic point-charge projectile  \\
+{\tt projiniy} &  initial y-coordinate of ionic point-charge  projectile  \\
+{\tt projiniz} &  initial z-coordinate of ionic point-charge  projectile  \\
+{\tt modionstep} & modulus for ion step (nr. of electron steps per ion
+step)\\
+{\tt ipasinf} &  modulus for printing information on general observables\\
+{\tt shiftinix} & initial x-shift of electronic wavefunctions \\
+{\tt shiftiniy} & initial y-shift of electronic wavefunctions  \\
+{\tt shiftiniz} & initial z-shift of electronic wavefunctions  \\
+{\tt ispidi} &  \\
+{\tt iforce} &  \\
+{\tt i3dz} &  \\
+{\tt i3dx} &  \\
+{\tt i3dstate} &  \\
+{\tt modrho} &  \\
+{\tt jener} &  \\
+{\tt jforce} &  \\
+{\tt jgeomion} &  \\
+{\tt jang,jangabso} &  \\
+{\tt jspdp} &  \\
+{\tt jposcm} &  \\
+{\tt mxforce} &  \\
+{\tt myforce} &  \\
+{\tt mzforce} &  \\
+{\tt jgeomel} &  \\
+{\tt jelf} &  \\
+{\tt jstboostinv} &  \\
+{\tt idenspl} &  \\
+{\tt izforcecorr,} &  \\
+{\tt dinmargin} &  \\
+{\tt iangabso} &  \\
+{\tt ipes} &  \\
+{\tt nangtheta} &  \\
+{\tt nangphi} &  \\
+{\tt delomega} &  \\
+{\tt angthetal} &  \\
+{\tt angthetah} &  \\
+{\tt angphil} &  \\
+{\tt angphih} &  \\
+{\tt ifreezekspot} &  \\
+{\tt ifixcmion} &  \\
+{\tt ekin0pp} &  \\
+{\tt vxn0} &  \\
+{\tt vyn0} &  \\
+{\tt vzn0} &  \\
+{\tt jescmask} &  \\
+{\tt itof} &  \\
+{\tt jescmaskorb} &  \\
+{\tt trequest} &  \\
+{\tt timefrac} &  \\
+{\tt nmptheta} &  \\
+{\tt nmpphi} &  \\
+{\tt jmp} &  \\
+{\tt jovlp} &  \\
+{\tt jnorms} &  \\
+{\tt jplotdensitydiff} &  \\
+{\tt jplotdensitydiff2d} &  \\
+{\tt jplotdensity2d} &  \\
+{\tt jcharges} &  \\
+{\tt drcharges} &  \\
+{\tt iscatterelectron} &  \\
+{\tt jattach} &  \\
+{\tt scatterelectronenergy} &  \\
+{\tt scatterelectronvxn} &  \\
+{\tt scatterelectronvyn} &  \\
+{\tt scatterelectronvzn} &  \\
+{\tt scatterelectronx} &  \\
+{\tt scatterelectrony} &  \\
+{\tt scatterelectronz} &  \\
+{\tt scatterelectronw} &  \\
+%!MV: now follow parameters for rta
+{\tt jrtaint} &  \\
+{\tt rtamu} &  \\
+{\tt rtamuj} &  \\
+{\tt rtasumvar2max} &  \\
+{\tt rtaeps} &  \\
+{\tt rtae0dmp} &  \\
+{\tt rtatempinit} &  \\
+{\tt rtaforcetemperature} &  \\
+{\tt rtasigee} &  \\
+{\tt rtar} &  \\
+\hline
+\end{tabular}
+
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt SURFACE}} in {\tt for005.<name>} \\
+\hline
+{\tt ne               }& Number of fixed shells in substrate\\
+{\tt nc               }& number of O cores in MgO(001)\\
+{\tt nk               }& number of Mg cations in MgO(001)\\
+{\tt ivdw} & handling of Van-der-Waals with substrate atoms\\
+    & 0 $\Longrightarrow$ no VdW\\
+    & 1 $\Longrightarrow$ enables full computation of VdW\\
+    & 2 $\Longrightarrow$ enables effective VdW through PsP parameters\\
+{\tt ifadiadip        }& switch to adiabatic treatment of substrate dipoles\\
+{\tt shiftx           }& global shift in $x$ for all substrate atoms\\
+{\tt shifty,shiftz    }& as {\tt shiftx} for $y$ and $z$ direction\\
+{\tt mion             }& mass of surface anion (16 for O in MgO(001))\\
+{\tt mkat             }& mass of surface kation (24.3 for Mg in MgO(001))\\
+{\tt me               }& mass of valence shell\\
+{\tt cspr             }& spring constant for interaction between core and valence shell\\
+{\tt chgc0            }& charge of (anion) core\\
+{\tt chge0            }& charge of valence shell\\
+{\tt chgk0            }& charge of cation\\
+{\tt sigmak           }& gauss width of cation\\
+{\tt sigmac           }& gauss width of core\\
+{\tt sigmav           }& gauss width of valence shell\\
+{\tt iUseCell         }& switch for reading/building lattice of
+                          substrate atoms\\
+   & 0 $\Longrightarrow$ lattice atoms are read in from input file 'for005surf.*'\\
+   & 1 $\Longrightarrow$ lattice is built from replicating unit cell and\\
+   &\qquad lattice parameters {\tt rlattvec} ... are
+                          read in (see {\tt md.F})\\
+{\tt iPotFixed        }& switch for Madelung summation of substrate atoms\\
+   & read/write electrostatic potential from particles with imob=0,\\
+   &  so that their run-time calculation can be skipped\\
+   &   0 $\Longrightarrow$ do not read; calculate full potential at each iteration\\
+   &   1 $\Longrightarrow$ read in potFixedIon() from previously prepared file\\
+   &  -1 $\Longrightarrow$ calculate potFixedIon() write result to a file which can\\
+   &\qquad  be later read in by option 1, stop after that\\
+   &   2 $\Longrightarrow$ calculate potFixedIon() at the beginning, do not write\\
+{\tt ifmdshort} & includes short range interaction electron--substrate\\
+{\tt isrtyp(i,j)      }& type of interaction between the different kinds of particles\\
+{\tt                  }& 0   $\rightarrow$ no short range interaction\\
+{\tt                  }& 1   $\rightarrow$ GSM core\\
+{\tt                  }& 2   $\rightarrow$ GSM valence shell    =1 $\Longrightarrow$ Born-Mayer type\\
+{\tt                  }& 3   $\rightarrow$ GSM kation                   =2 $\Longrightarrow$ Argon case\\
+{\tt                  }& 4   $\rightarrow$ Na core\\
+{\tt                  }& 5   $\rightarrow$ DFT electron\\
+{\tt unfixCLateralRadx  }& radius of cylinder with mobile cores \\
+{\tt unfixELateralRadx  }& radius of cylinder with mobile valence electrons\\
+{\tt fixCBelowx       }&   fixes cores which lay below given x value\\
+\hline
+\end{tabular}
+
+
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt PERIO}} in {\tt for005.<name>} \\
+\hline
+{\tt ch}& effective charge of ion \\
+{\tt amu}& mass of ion in units of hydrogen mass\\
+{\tt dr1,dr2}& radii of soft local PsP\\
+{\tt prho1,prho2}& strenghts of soft local PsP\\
+{\tt crloc}& radius for local part of Goedecker PsP\\
+{\tt cc1,cc2}& strengths for local part of  Goedecker PsP\\
+{\tt r0g,r1g,r2g}& radii for non-local parts of  Goedecker PsP\\
+{\tt h0\_11g,h0\_22g,h0\_33g}& 
+  strenghts for non-local parts of  Goedecker PsP\\
+{\tt h1\_11g,h1\_22g,h2\_11g}&
+  strenghts for non-local parts of  Goedecker PsP\\
+{\tt radiong}& carrier radius for projecteor in non-local Goedecker PsP\\
+%deprecated option
+%{\tt nrow}&
+%  ``row'' of element $\longrightarrow$ defines level  of projectors\\
+\hline
+\end{tabular}
+
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt FSIC}} in {\tt for005.<name>} \\
+\hline
+{\tt step}& step size in iteration of localizing or symmetry condition \\
+{\tt precis}& precision in iteration of localizing or symmetry condition \\
+{\tt SymUtBegin}& nr. iteration where symmetry condition starts\\
+ &               for pure localizing step set {\tt  SymUtBegin} $>$ {\tt ismax}\\
+{\tt radmaxsym}& limiting value in radius division  for actucal step\\
+\hline
+\end{tabular}
+
+
+\vspace*{2cm}
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Ionic structure and $e^-$-initialization in {\tt for005ion.<name>}} \\
+\hline
+& This initialization does not use {\tt NAMELIST} but reads
+ input in fixed order.\\
+& Each line stands for one ion. Each column has a definite meaning.\\
+Col. 1 &  $x$-coordinate \\
+Col. 2 &  $y$-coordinate \\
+Col. 3 &  $z$-coordinate \\
+Col. 4 & 
+   number of element in periodic system (e.g.: Na$\leftrightarrow$11)\\
+Col. 5 & only {\tt init\_lcao=1}: ordering of nodes in repeated
+    initialization at this ion\\
+Col. 6 & only {\tt init\_lcao=1}: radius of initial Gaussian at 
+    this ion\\
+Col. 7 & only {\tt init\_lcao=1}: starting spin for initalization at
+    this ion\\
+\hline
+\end{tabular}
+\\[8pt]
+The handling of the initialization of electronic wavefunctions is
+rather involved. A more detailed explanation is given in appendix
+\ref{sec:inite}.
+
+\newpage
+
+\appendix
+
+\section{On the initialization of the electronic wavefunctions}
+\label{sec:inite}
+
+The basic switch is {\tt init\_lcao}. \underline{The case
+{\tt init\_lcao=0}} is the simpler option. This initializes harmonic
+oscillator wavefunctions about one common center. This center is
+usually the origin of the coordinte-space grid. It can be moved
+deliberately by {\tt shiftWFx}, {\tt shiftWFy}, and {\tt shiftWFz}.
+The initial oscillator may be deformed. Its deformation is given by
+the dimensionless quadrupole {\tt b2occ} and triaxiality {\tt gamocc}
+(in degree). The oscillator states are filled in order of
+increasing oscillator energies. A spin asymmtry can be enforced
+with {\tt ispinsep=1}. This option is useful when dealing with odd
+electron number. The upper end of initialization is determined by
+{\tt deocc}. A {\tt deocc $\approx$ 0} typically initializes just as many
+states as are occupied. If more is required, enhance {\tt deocc}.
+
+\underline{The case {\tt init\_lcao=1}} initializes wavefunctions
+which are localized at the ions. This option is richer and a bit hard
+to handle. In a first step, the total number of wavefunctions is
+estimated and it is computed how many wavefunctions have to be
+initialized then for each ion. At one given ion, initialization starts
+with the $1s$ oscillator state. The first choice of spin is taken from
+column 7 of {\tt for005ion.<name>} {which initializes the entry of the
+  actual ion in the the {\tt ipol}
+array. The value {\tt ipol=+1} sets a spin up (i.e. {\tt ispin=1} in
+the code) as the first choice, 
+while {\tt ipol=-1} sets a spin down (i.e. {\tt ispin=2}).} If more than one state is to be
+occupied, the next is then the $1s$ state with opposite spin. Next
+comes the $1p_i$ state with first spin where $i$ is the direction
+given as first entry in column 5. For example if column 5 selects
+{\tt 'yzx'}, the $1p_y$ comes here. Occupation continues in order
+given by column 5 and 7 until the wanted number of orbitals at this
+ion site is reached. Column 6 sets the oscillator radius for the
+initialization at this ion (which allows to deal efficiently with
+systems consisting of very different ions). Column 7 becomes important
+for ions associated with an odd number of electrons as, e.g.,
+hydrogen. One ought to distribute an equal collection of 
+%{\tt +1} and {\tt -1} entries
+{spins up and down over the whole system} to avoid unnaturally 
+polarized molecules.
+
+\newpage
+
+\section{Open ends and to-be-dones}
+
+{\Large\bf Status of Fortran90 code development:}
+\begin{itemize}
+  \item 
+    All {\tt common} blocks have been replaced by modules
+    and corresponding {\tt USE} command. The then appearing
+    dependences are mapped in the {\tt makefile}.
+  \item The code has been moved to {\tt IMPLICIT NONE}. All variables should
+    now be declared.
+  \item
+    All code is now genuinly double precision and can be
+    complied without the {\tt autodouble} option. Only exception
+    if the FFT package {\tt fftpack.F90} in connection with {\tt
+      NETLIB}
+    which still requires
+    the  {\tt autodouble}, as handled explicitely in the
+    {\tt Makefile}.
+    \\
+    Note that the precision is set at the header of {\tt params.F90}
+    and used as a {\tt KIND} parameter in typical Fortran90 fashion.
+    The name is set to {\tt DP}.
+  \item
+    The somewhat dangerous practice of reusing workspace has been
+    abandoned. Workspace is now associated dynamically with
+    the {\tt ALLOCATE}/{\tt DEALLOCATE} mechanisms.
+  \item
+    The compiled code works now for all box sizes and number of s.p.
+    states as long as memory allows. The box size and maximum number
+    of states is now entered in {\tt for005.<name>} in namelist
+    {\tt GLOBAL}.
+\end{itemize}
+
+{\Large\bf Next in Fortran90 code development:}
+\begin{itemize}
+  \item Remove numbered labels and {\tt GOTO} in favour of
+        {\tt CYCLE} or {\tt EXIT} switches.
+  \item Exploit compact vector operations to simplify
+        long (and nested) {\tt DO} loops.
+  \item The access {\tt USE kinetic} has been given too generously.
+        Confine that to routines which really need it.
+  \item The module {\tt params.F90} collects practically all
+        global variables. It should be disentangled to more
+        specific modules with restricted access. 
+  \item There are still problems with running substrates.
+        For example the leap-frog switch does not propagate the
+        substrate electrons.
+        This case has to be tested.
+        \\
+        In future, it may be that the whole subtrate part
+        is trated in a separate program connected to the electronic
+        part by a master routine written in {ttt python}.
+  \item Full SIC has yet to be implemented.
+  \end{itemize}
+
+\newpage
+
+{\Large\bf Open problems of general nature:}
+\begin{itemize}
+  \item The implementation of GSlat and full SIC needs to be checked
+        and updated if necessary.
+  \item Check PES and PAD for the option  {\tt parayes}.
+  \item Option {\tt iaddCluster} is presently questionable. 
+        It may be extended to allow
+        for initialization of cluster collisions.
+  \item The computation of pseudo-potentials from the substrates
+        valence electrons should be separated from the slower
+        atomic (ionic) parts. This concerns routine {\tt calcpseudo}.
+  \item The setting for the valence-electron mass in 'vstep'
+        may be wrong for the case of MgO.
+  \item Check proper setting of 'time' in outputs.
+  \item Exponential propagation should yet be certified to cooperate
+        with ionic motion.
+  \item Subgrids for Gaussian pseudo-densities have fixed grid size
+        of $\pm 7$ points. This should be made more flexible to
+        accommodate mesh size in relation for PsP radius.
+  \item Although not necessary for performance, one may replace
+        DO loops by the Fortran 95 SUM construct. This will make the
+        code more transparent. This also holds for other compact
+        Fortran 95 constructs.
+  \item Present parallele version  still needs to specify the number
+        of nodes at compile time. This should be 
+        changed to allow dynamical adjustment of number of nodes.
+  \item Spin-averaged code ({\tt numspin}=1) does not reproduce 
+        the results from full spin calculation in case of ADSIC.
+        Check.
+\end{itemize}
+
+
+
+
+
+
+\end{document}

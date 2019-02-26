@@ -1,0 +1,77 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: RTA.aux
+The style file: elsarticle-num.bst
+Database file #1: relaxtime.bib
+Warning--empty title in Per92
+Warning--empty title in Kue99
+Warning--empty title in Rub91
+Warning--empty title in Bra93
+Warning--empty title in Nil55
+Warning--empty title in Rei98a
+Warning--empty title in Koh65
+Warning--empty title in Blu92
+Warning--empty title in Fei82
+Warning--empty title in Ver67
+Warning--empty title in Wop14aR
+Warning--empty title in Kra92a
+Warning--empty title in Rei06c
+Warning--empty title in Poh04b
+Warning--empty title in Leg02
+Warning--empty title in Klu13
+Warning--empty title in Hil53
+Warning--empty title in Rei95b
+Warning--empty title in Yan95
+Warning--empty title in Cal97b
+Warning--empty title in Poh00
+Warning--empty title in Din13a
+Warning--empty title in Ber88
+Warning--empty title in Abe96
+Warning--empty title in Rei85f
+Warning--empty title in Goe86a
+Warning--empty title in Rei15a
+Warning--empty title in Gue88a
+Warning--empty title in Cal00
+Warning--empty title in Gig03a
+You've used 49 entries,
+            2937 wiz_defined-function locations,
+            971 strings with 9356 characters,
+and the built_in function-call counts, 12116 in all, are:
+= -- 1012
+> -- 449
+< -- 2
++ -- 182
+- -- 133
+* -- 863
+:= -- 1714
+add.period$ -- 51
+call.type$ -- 49
+change.case$ -- 11
+chr.to.int$ -- 0
+cite$ -- 79
+duplicate$ -- 401
+empty$ -- 1414
+format.name$ -- 175
+if$ -- 3125
+int.to.chr$ -- 0
+int.to.str$ -- 49
+missing$ -- 58
+newline$ -- 161
+num.names$ -- 51
+pop$ -- 351
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 768
+stack$ -- 0
+substring$ -- 425
+swap$ -- 50
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 30
+while$ -- 88
+width$ -- 51
+write$ -- 371
+(There were 30 warnings)

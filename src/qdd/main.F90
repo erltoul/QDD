@@ -188,8 +188,6 @@ CALL  init_dynamic
 
 CALL dyn_propag(psi,rho,aloc)
 
-CLOSE(805)
-
 #if(raregas)
 IF (iuselast == -3) THEN
   OPEN(89,STATUS='unknown',FILE='for005surf.cool')
@@ -401,7 +399,7 @@ IF(nclust > 0) THEN
 ! intialize protocols  
   IF(irest == 0) CALL info(psi,rho,aloc,0)
   IF(iangmo == 1 .AND. iexcit == 1)  CALL instit(psi)    ! notes
-  IF(ifrhoint_time == 1) THEN
+  IF(irhoint_time == 1) THEN
     CALL rhointxy(rho,0)
     CALL rhointxz(rho,0)
     CALL rhointyz(rho,0)

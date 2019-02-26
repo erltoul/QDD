@@ -104,7 +104,7 @@ DO it=irest,itmax   ! time-loop
       
 !            protocol of densities
       
-      IF(ifrhoint_time == 1) THEN
+      IF(irhoint_time == 1) THEN
         CALL rhointxy(rho,it)
         CALL rhointxz(rho,it)
         CALL rhointyz(rho,it)
@@ -1954,8 +1954,6 @@ IF(irest <= 0) THEN                    !  write file headers
     OPEN(23,STATUS='unknown',FORM='formatted', FILE='pescel.'//outnam)
     WRITE(23,'(a)') ' & '
     CLOSE(23)
-    
-    IF (jovlp /= 0) OPEN(805,STATUS='unknown',FILE='povlp.'//outnam)
     
     IF(jelf /= 0) THEN
       OPEN(33,STATUS='unknown',FORM='formatted', FILE='pelf.'//outnam)

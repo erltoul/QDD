@@ -1,0 +1,565 @@
+\documentclass{elsart}
+\usepackage{amssymb}
+\usepackage{stackrel}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{color}
+\usepackage{ulem}
+% \usepackage{caption,subcaption}
+%\usepackage{subeqnarray}
+ 
+
+\newcommand{\I}{\mathrm{i}}
+
+\newcommand{\PGR}[1]{{\color{black} #1}}
+%\newcommand{\PGRfoot}[1]{{\color{blue}\footnote{\color{blue} #1}}}
+%\newcommand{\ES}[1]{{\color{red} #1}}
+%\newcommand{\ESfoot}[1]{{\color{red}\footnote{\color{red} #1}}}
+\newcommand{\bmu}{{\mbox{\boldmath{$\mu$}}}}
+
+\begin{document}
+
+
+\begin{frontmatter}
+
+\title{A quantum relaxation-time approximation for finite fermion systems}
+
+\author{P.-G.~Reinhard$^a$}
+\author{E.~Suraud$^{b,c,d}$}
+\corauth[cor]{Corresponding author\\{\it Email-address}~:
+  paul-gerhard.reinhard@fau.de} 
+\address{$^a$Institut f{\"u}r Theoretische Physik, Universit{\"a}t
+  Erlangen, D-91058 Erlangen, Germany}
+\address{$^b$Universit\'e de Toulouse; UPS; Laboratoire de Physique
+             Th\'{e}orique, IRSAMC; F-31062 Toulouse Cedex, France}
+\address{$^c$Laboratoire de Physique Th\'eorique, Universit\'e Paul
+  Sabatier, CNRS, F-31062 Toulouse C\'edex, France}
+\address{$^d$Physics Department, University at Buffalo, The State University New York, Buffalo, NY 14260, USA}
+
+\date{\today}
+\begin{abstract}
+We propose a relaxation time approximation for the description of the
+dynamics of strongly excited fermion systems. Our approach is based on
+time-dependent density functional theory at the level of the local
+density approximation. This mean-field picture is augmented by
+collisional correlations handled in relaxation time approximation
+which is inspired from the corresponding semi-classical picture. The
+method involves the estimate of microscopic relaxation rates/times
+which is presently taken from the well established semi-classical
+experience.  The relaxation time approximation implies evaluation of
+the instantaneous equilibrium state towards which the dynamical state
+is progressively driven at the pace of the microscopic relaxation
+time.
+%
+As test case, we consider Na clusters of various sizes excited
+either by a swift ion projectile or by a short and intense laser pulse,
+driven in various dynamical regimes ranging from linear to 
+strongly non-linear reactions. We observe a strong effect of
+dissipation on sensitive observables such as net ionization and
+angular distributions of emitted electrons. The effect is especially
+large for moderate excitations where typical relaxation/dissipation
+time scales efficiently compete with ionization for dissipating the
+available excitation energy. Technical details on the actual procedure
+to implement a working recipe of such a quantum relaxation
+approximation are given in appendices for completeness.
+\end{abstract}
+
+\begin{keyword}
+%\PACS{05.30.Fk,31.70.Hq,34.10.+x,36.40.Cg}
+electron-electron collisions, electronic disspation, time-dependent
+density functional theory, metal cluster, plasmon, electron emission
+\end{keyword}
+\end{frontmatter}
+
+
+
+\section{Mean-field propagation}
+\label{sec:mf}
+
+The starting point and dominant feature of the dynamics is the
+propagation at the level of the mean field. In this paper, we are
+dealing with the electron dynamics in metal clusters and we describe
+it by time-dependent density functional theory at the level of the
+Time-Dependent Local-Density Approximation (TDLDA) treated in the real
+time domain \cite{Gro90,Gro96}.  It is augmented by a self-interaction
+correction (SIC) approximated by average-density SIC (ADSIC)
+\cite{Leg02} in order to attain correct ionization properties
+\cite{Klu13} in the course of the dynamical simulation. TDLDA is
+formulated within the usual Kohn-Sham picture in terms of a set of
+occupied single-particle (s.p.) wavefunctions
+$\{|\phi_\alpha\rangle,\alpha=1...N\}$. Their dynamics is described by
+the time-dependent Kohn-Sham equation
+\begin{equation}
+  \I\partial_t|\phi_\alpha\rangle
+  =
+  \hat{h}[\varrho]|\phi_\alpha\rangle
+\label{eq:KSwf}
+\end{equation}
+where $\hat{h}$ is the Kohn-Sham mean-field Hamiltonian which is a
+functional of the instantaneous local density
+$\varrho(\mathbf{r},t)=\sum_\alpha|\phi_\alpha(\mathbf{r},t)|^2$
+\cite{Rei04aB,Dre90}. The time evolution delivered by
+Eq. (\ref{eq:KSwf}) can be expressed formally by the
+unitary one-body  time-evolution operator 
+\begin{subequations}
+\begin{equation}
+  \hat{U}(t,t')
+  =
+  \hat{\mathcal{T}}\mathrm{ exp}\left(-i \int_t^{t'} \hat{h}(t'')dt''\right)
+\label{eq:KSpropag}
+\end{equation}
+where $\hat{\mathcal{T}}$ is the time-ordering operator.
+This yields a closed expression for the time-evolution of s.p. states
+\begin{equation}
+  |\phi_\alpha(t)\rangle
+  =
+  \hat{U}(t,t')|\phi_\alpha(t')\rangle.
+\label{eq:KSpropag2}
+\end{equation}
+\end{subequations}
+
+So far, TDLDA propagates pure states. Dissipation which we will add
+later on leads inevitably to mixed states. This requires to generalize
+the description from fully occupied s.p. wavefunctions to a one-body
+density operator $\hat{\rho}$.  \PGR{Its representation in
+  configuration space, i.e. in terms of a given set of s.p. states
+  $|\varphi_i\rangle$, reads in general
+  $\hat{\rho}=\sum_{ij}|\varphi_i\rangle\rho_{ij}\langle\varphi_j|$.
+  By appropriate transformation of the s.p. basis, one can diagonalize
+  the density matrix $\rho_{ij}$ which defines what are called natural
+  orbitals. The natural orbitals representation of the one-body
+  density operator then reads}
+\begin{equation}
+  \hat{\rho}
+  =
+  \sum_{\alpha=1}^\infty|\phi_\alpha\rangle W_\alpha\langle\phi_\alpha|
+  \quad.
+\label{eq:rhodiag}
+\end{equation}
+\PGR{The weights $W_\alpha$ represent} the probability with which a
+state $|\phi_\alpha\rangle$ is occupied. The mean-field propagation
+(\ref{eq:KSwf}) then becomes
+\begin{equation}
+  \I\partial_t\hat{\rho}
+  =
+  \left[\hat{h}[\varrho],\hat{\rho}\right]
+\label{eq:KSrho}
+\end{equation}
+where $\hat{h}[\varrho]$ is formally the same as before and the
+local density is now computed as
+\begin{equation}
+\varrho(\mathbf{r},t)=\sum_\alpha{W}_\alpha|\phi_\alpha(\mathbf{r},t)|^2 .
+\label{eq:rhoW}
+\end{equation}
+The \PGR{(coherent)} pure mean-field propagation (\ref{eq:KSrho})
+leaves the occupation weights $W_\alpha$ unchanged and propagates only
+the s.p. states.  The mean-field propagation of an initial state
+(\ref{eq:rhodiag}) then reads
+\begin{eqnarray}
+  \hat{\rho}(t)
+  &=&
+  \sum_{\alpha=1}^\infty
+  |\phi_\alpha(t)\rangle W_\alpha\langle\phi_\alpha(t)|
+%\nonumber\\  
+%  &=&
+  =
+  \hat{U}(t,0)\hat{\rho}(0)\hat{U}^{-1}(t,0)
+\label{eq:KSrhoevol}
+\end{eqnarray}
+where $\hat{U}$ is the mean-field evolution operator (\ref{eq:KSpropag}).
+
+\subsection{RTA in quantum-mechanical framework}
+
+The generalization of the one-body phase-space distribution
+$f(\mathbf{r},\mathbf{p})$ to a quantum-mechanical mean-field theory
+is the one-body density operator $\hat{\rho}$, or one-body density
+matrix $\rho(\mathbf{r},\mathbf{r}')$ respectively. The equation of
+motion for $\hat{\rho}$ including dynamical correlations reads in
+general \cite{Rei85f,Goe86a}
+\begin{eqnarray}
+  \mathrm{i}\partial_t\hat{\rho}
+  -
+  \big[\hat{h},\hat{\rho}\big]
+  &=&
+  \hat{I}[\hat{\rho}]
+  \quad.
+\label{eq:EoMfull}
+\end{eqnarray}
+The left hand side embraces the mean-field propagation. It may be
+time-dependent Hartree-Fock or the widely used LDA version of TDDFT.
+The right-hand side consists of the quantum-mechanical collision term.
+Motivated by the successful semi-classical RTA, we import
+Eq.~(\ref{eq:VUUrelax}) for the quantum case as
+%\begin{subequations}
+\begin{eqnarray}
+  \partial_t\hat{\rho}
+%  &=&
+%  -\mathrm{i}\big[\hat{h},\hat{\rho}\big]
+%  -
+%  \frac{1}{\tau_\mathrm{relax}}
+%  \left(\hat{\rho}-\hat{\rho}_\mathrm{eq}[\hat{\rho}]\right) \nonumber \\
+  &=&
+  -\mathrm{i}\big[\hat{h},\hat{\rho}\big]
+  -
+  \frac{1}{\tau_\mathrm{relax}}
+  \left(\hat{\rho}-\hat{\rho}_\mathrm{eq}[\varrho,\mathbf{j},E]\right)
+  \;,
+\label{eq:EoMbasic}
+\end{eqnarray}
+where $\hat{\rho}_\mathrm{eq}$ is the density operator of the thermal
+equilibrium for local density $\varrho(\mathbf{r},t)$, current
+distribution $\mathbf{j}(\mathbf{r},t)$ and total energy $E(t)$
+given at that instant of time $t$.  These
+constraining conditions are, in fact, functionals of the actual state
+$\hat{\rho}$, i.e. $\varrho[\hat{\rho}]$, $\mathbf{j}[\hat{\rho}]$,
+and $E[\hat{\rho}]$.  For the diagonal representation
+Eq.(\ref{eq:rhodiag}) of the density operator $\hat{\rho}$, they read
+%\begin{subequations}
+\begin{eqnarray}
+  \varrho(\mathbf{r})
+  =
+  \sum_\alpha \left|\phi_\alpha(\mathbf{r})\right|^2 W_\alpha
+  &\;,\;&
+%\\
+  \mathbf{j}(\mathbf{r})
+  =
+  \sum_\alpha W_\alpha\phi_\alpha^*(\mathbf{r})
+     \frac{\stackrel{\rightarrow}{\nabla}-\stackrel{\leftarrow}{\nabla}}
+          {2\mathrm{i}}
+     \phi_\alpha(\mathbf{r})
+  \quad.
+\end{eqnarray}
+%\end{subequations}
+The energy $E(t)$ is taken as the total energy because the
+semi-classical concept of a local kinetic energy is
+ambiguous in a quantum system.  This RTA equation (\ref{eq:EoMbasic})
+looks innocent, but is very involved because many entries depend in
+various ways on the actual state $\hat{\rho}(t)$. The self-consistent
+mean field is a functional of the actual local density,
+i.e. $\hat{h}=\hat{h}[\varrho]$. The instantaneous equilibrium density
+$\hat{\rho}_\mathrm{eq}$ is the solution of the stationary, thermal
+mean-field equations with constraint on the actual
+$\varrho(\mathbf{r})$, $\mathbf{j}(\mathbf{r})$ and energy $E$, for
+details see Appendix \ref{sec:hdenscurrE}.
+
+The relaxation time $\tau_\mathrm{relax}$ is estimated in
+semi-classical Fermi liquid theory, for details see appendix
+\ref{sec:relaxtime}. For the metal clusters serving as test examples
+in the following, it becomes
+\begin{equation}
+  \frac{\hbar}{\tau_\mathrm{relax}}
+  =
+  {0.40}\frac{\sigma_{ee}}{r_s^2}\frac{{E}^*_\mathrm{intr}}{N}
+  \quad,
+\label{eq:relaxtime}
+\end{equation}
+where $E^*_\mathrm{intr}$ is the intrinsic (thermal) energy of the
+system (appendix \ref{app:eintr}), $N$ the actual number of particles,
+$\sigma_{ee}$ the in-medium electron-electron cross section, and $r_s$
+the effective Wigner-Seitz radius of the electron cloud.  \PGR{Note
+  that $r_s$ is tuned to the average density of the electron cloud (appendix
+  \ref{app:eintr}), because a spatially varying $\tau_\mathrm{relax}$
+  would be very cumbersome to implement in a quantum mechanical
+  context. This approximation is legitimate for metallic systems where
+  the density remains generally close to the average.}
+
+
+\subsection{Summary of the procedure}
+\label{sec:summary}
+
+
+
+\begin{figure*}
+\setlength\unitlength{1.4mm}
+\thicklines
+\begin{center}
+\begin{sideways}
+\fbox{\small%\footnotesize
+%\begin{picture}(130,92)(0,108)
+\begin{picture}(143,96)(-2,107)
+\put(0,200){\mbox{starting point: 
+  $\hat{\rho}(t)
+  =
+  \sum_\alpha|\phi_\alpha(t)\rangle W_\alpha(t)\langle\phi_\alpha(t)|$
+}}
+%\put(0,181){\fbox{1}}
+\put(0.8,190.2){\mbox{1}}
+\put(1.42,191){\circle{3.5}}
+\put(5,198){\vector(0,-1){14}}
+\put(7,190){\mbox{mean-field propagation: 
+$\begin{array}{l}
+ |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t+\Delta t,t)|\phi_\alpha(t)\rangle
+\\
+ W_\alpha(t)=W_\alpha^{(mf)}=\mbox{const.}
+\end{array}$
+}}
+\put(0,180){\mbox{
+  $ \hat{\rho}_{mf} =\hat{\rho}_{mf}(t + \Delta t) 
+  =
+  \sum_\alpha|\phi_\alpha^{(mf)}\rangle W_\alpha^{(mf)}\langle\phi_\alpha^{(mf)}|$
+}}
+%\put(8,168){\line(1,-1){4}}
+%\put(12,164){\vector(1,0){58}}
+\put(65,181){\vector(1,0){20}}
+\put(90,180){\mbox{  $\varrho_{mf}(\mathbf{r},t+\Delta t)\,,\,\mathbf{j}_{mf}(\mathbf{r},t+\Delta t),E_{mf}$}}
+%\put(39.8,160.6){\mbox{2}}
+%\put(40.42,161.5){\circle{3.5}}
+\put(75.75,177.6){\mbox{2}}
+\put(76.42,178.5){\circle{3.5}}
+
+%\put(87.95,161){\line(1,0){3}}
+%\put(88,161){\line(0,-1){16.3}}
+%\put(88,154){\vector(1,0){3}}
+%\put(88,146){\line(0,-1){4.5}}
+%\put(88,144.5){\vector(1,0){3}}
+\put(106.8,169.5){\mbox{3}}
+\put(107.42,170.5){\circle{3.5}}
+%\put(82.8,154.5){\mbox{3}}
+%\put(83.42,155.5){\circle{3.5}}
+\put(110,178){\vector(0,-1){15}}
+\put(92,152){\mbox{
+\begin{minipage}{8cm}
+\begin{flushleft}
+%  $\varrho_{mf}(\mathbf{r},t+\Delta t)\,,\,\mathbf{j}_{mf}(\mathbf{r},t+\Delta t),E_{mf}$
+%\\[5pt]
+  density-constrained mean field (DCMF) %\\ $\hookrightarrow$ %$\Longrightarrow$
+\\[3pt]
+1. 
+$\begin{array}[t]{rcl}
+  \hat{\rho}_{eq}
+  &=&
+  \hat{\rho}_{eq}[\varrho_{mf}(\mathbf{r})\,,\,\mathbf{j}_{mf}(\mathbf{r}),E_{mf}]
+\\[3pt]
+  &=&
+  \sum_\alpha|\phi'_\alpha\rangle  W'_\alpha\langle\phi'_\alpha|
+\end{array}$
+\\[4pt]
+2. intrinsic excitation energy $E^*_\mathrm{intr}$
+\end{flushleft}
+\end{minipage}
+}}
+\put(132,143){\vector(-1,-2){6.5}}
+\put(95,129){\mbox{
+\begin{minipage}{8cm}
+\begin{flushleft}
+relaxation time:
+\\[4pt]
+$\hbar\tau_\mathrm{relax}^{-1}=0.40\,\sigma_{ee}r_s^{-2}\,E^*_\mathrm{intr}/N$
+\end{flushleft}
+\end{minipage}
+}}
+\put(4,177){\vector(0,-1){39}}
+%\put(80,149){\line(-3,-1){31}}
+%\put(80,149){\line(-3,-1){31}}
+\put(96,153.5){\line(-4,-1){55}}
+\put(54.7,145.1){\mbox{4}}
+\put(55.6,146.1){\circle{3.5}}
+\put(53.7,128.6){\mbox{4}}
+\put(54.6,129.6){\circle{3.5}}
+\put(0,154.5){\mbox{4}}
+\put(0.9,155.5){\circle{3.5}}
+\put(41,139.75){\vector(0,-1){3.9}}
+\put(0,121.5){\mbox{
+\begin{minipage}{8cm}
+\begin{flushleft}
+$\displaystyle
+\hat{\rho}(t\!+\!\Delta t) 
+= 
+\hat{\rho}_{mf} -
+\frac{\Delta t}{\tau_\mathrm{relax}}\left[\hat{\rho}_{mf}-\hat{\rho}_{eq}\right]
+$
+\\[12pt]
+\hspace*{1.8em}diagonalize to natural orbitals:
+\\[4pt]
+  $\hat{\rho}(t\!+\!\Delta t)
+  =
+  \sum_\alpha|\phi_\alpha(t\!+\!\Delta t)\rangle \tilde{W}_\alpha
+  \langle\phi_\alpha(t\!+\!\Delta t)|$
+\\[12pt]
+\hspace*{1.8em}final fine-tuning of $W_\alpha$ to reproduce $E_{mf}$
+\\[4pt]
+  $\hat{\rho}(t\!+\!\Delta t)
+  =
+  \sum_\alpha|\phi_\alpha(t\!+\!\Delta t)\rangle W_\alpha(t\!+\!\Delta t)
+  \langle\phi_\alpha(t\!+\!\Delta t)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(94,127.5){\line(-1,0){53}}
+\put(41,127.5){\vector(-2,1){6}}
+\put(4,131.5){\vector(0,-1){8.3}}
+\put(0.1,127.6){\mbox{5}}
+\put(0.9,128.5){\circle{3.5}}
+\put(4,119.5){\vector(0,-1){8.2}}
+\put(0.1,115.6){\mbox{6}}
+\put(0.9,116.5){\circle{3.5}}
+\end{picture}
+}
+\end{sideways}
+\end{center}
+\caption{\label{fig:summary} Sketch of the scheme for performing one
+  large time step $t\longrightarrow t\!+\!\Delta t$ in solving the RTA
+  equations.  The numbers in open circles indicate the steps as
+  outlined in the text.  }
+\end{figure*}
+
+
+
+
+The solution of the RTA equations is rather involved. We explain the
+necessary steps here from a practical side and unfold details in the
+appendices. We briefly summarize the actual scheme for one step from
+$t$ to $t\!+\!\Delta t$.  Note that mean-field propagation (actually
+TDLDA) runs at a much faster pace than relaxation.  We resolve it by
+standard techniques \cite{Cal00,Rei04aB} on a time step $\delta t$
+which is much smaller (factor 10--100) than the RTA step $\Delta
+t$. We summarize this TDLDA propagation in the evolution operator
+$\hat{U}$ from Eq.~(\ref{eq:KSpropag}) and discuss only one RTA
+step. Its sub-steps are sketched in Figure
+\ref{fig:summary} and
+explained in the following whereby the label here correspond to the
+ones in the Figure:
+\begin{enumerate}
+   \item\label{it:TDLDA} We first propagate $\hat{\rho}$ by pure
+     TDLDA.  This means that the s.p. states in representation
+     (\ref{eq:rhodiag}) evolve as
+     $|\phi_\alpha(t)\rangle\rightarrow
+     |\phi_\alpha^\mathrm{(mf)}\rangle=\hat{U}(t+\Delta
+     t,t)|\phi_\alpha(t)\rangle$, while the occupation weights
+     $W_\alpha$ are kept frozen (pure mean-field propagation).
+   \item\label{it:newrho} We compute density
+     $\varrho(\mathbf{r},t+\Delta t)$, current
+     $\mathbf{j}(\mathbf{r},t+\Delta t)$, and total energy
+     $E_\mathrm{mf}$ associated to the TDLDA-propagated density matrix
+     $\hat{\rho}_\mathrm{mf}$.
+   \item\label{it:DCMF} We determine the thermal mean-field
+     equilibrium state $\hat{\rho}_\mathrm{eq}$ constrained to the
+     given $\varrho$, $\mathbf{j}$, and $E_\mathrm{mf}$.  This is
+     achieved by Density-Constrained Mean Field (DCMF) iterations 
+     as outlined in
+     Appendix \ref{sec:hdenscurrE}.  The actual equilibrium state
+     $\hat{\rho}_\mathrm{eq}$ is represented by new s.p. states
+     $\{|\phi'_{\alpha}\rangle\}$ and new occupation numbers $W'_\alpha$
+     in diagonal form (\ref{eq:rhodiag}).
+   \item \label{it:compo} We compose the new density matrix from the
+     TDLDA propagated state $\hat{\rho}_\mathrm{mf}$ and the
+     equilibration driving term
+     $\hat{\rho}_\mathrm{mf}-\hat{\rho}_\mathrm{eq}$ with the
+     appropriate weight $\Delta t/\tau_\mathrm{relax}$, as outlined in
+     Appendix \ref{sec:mix}.  The relaxation time
+     Eq. (\ref{eq:relaxtime}) requires the actual intrinsic excitation
+     energy $E^*_\mathrm{intr}$ which is also obtained from DCMF, see
+     appendix \ref{app:eintr}.
+   \item \label{it:natural} 
+     We diagonalize the state emerging from
+     step \ref{it:compo} to natural-orbital representation
+     Eq. (\ref{eq:rhodiag}).  This yields the s.p. states
+     $\{|\phi_\alpha(t\!+\!\Delta{t})\rangle\}$ for the next step and
+     preliminary new occupations $\tilde{W}_\alpha$.
+   \item \label{it:therm} 
+     After all these steps, the initial energy
+     $E_\mathrm{mf}=E_\mathrm{TDLDA}(t)$ may not be exactly
+     reproduced. We may remain with a small energy mismatch as
+     compared to the goal $E_\mathrm{mf}$.  We now apply a small
+     iterative thermalization step to readjust the energy, as outlined
+     in Appendix \ref{sec:corriter}. This then yields the final
+     occupation weights $W_\alpha(t\!+\!\Delta{t})$ which comply with
+     energy conservation.
+\end{enumerate}
+The scheme can be used also in connection with absorbing boundary
+conditions \cite{Cal00,Rei06c}. The particle loss will be mapped
+automatically to loss of occupation weights in step \ref{it:compo}. A
+word is in order about the choice of the time steps. The $\delta t$ for
+propagation of TDLDA is limited by the maximal energy on the grid
+representation and thus very small (for Na clusters typically 0.005
+fs). The stepping for the relaxation term needs only to resolve the
+changes in the actual mean field which is achieved already with
+$\Delta t\approx 0.5$ fs. We have tested a sequence of $\Delta t$ and
+find the same results for all $\Delta t\leq 0.5$ fs. Changes appear
+slowly above that value.  For reasons of efficiency, we thus use the
+largest safe value of $\Delta t= 0.5$ fs.
+
+
+\PGR{A word is in order about the range of applicability of the RTA
+  for finite fermion systems. The relaxation time
+  $\tau_\mathrm{relax}$ is allowed to depend on time which allows to
+  accomodate changes of the dynamical state. But $\tau_\mathrm{relax}$
+  is at each instant if time one global number chosen according to the
+  average electron density.  This requires systems with only small
+  density variations in the bulk as it holds typically for metallic
+  bonds.  The RTA is insensitive to many details of the VUU collision
+  term as energy- and angle-dependent scattering cross sections or a
+  broad spectrum of relaxation rates. However, these details are
+  usually resolved only (if at all) for fast and energetic processes
+  which are anyway deep in the regime of semi-classical VUU. The grossly
+  averaged treatment of RTA is acceptable for not too fast and not too
+  energetic processes in compact metallic systems.}
+
+\subsection{Numerical representation and computation of relevant observables  }
+\label{sec:observ}
+
+The numerical implementation of TDLDA is done in standard
+manner~\cite{Cal00,Rei04aB}.  The coupling to the ions is mediated by
+soft local pseudopotentials~\cite{Kue99}.  The Kohn-Sham potential is
+handled in the Cylindrically Averaged Pseudo-potential Scheme (CAPS)
+\cite{Mon94a,Mon95a}, which has proven to be an efficient and reliable
+approximation for metal clusters close to axial symmetry.
+Wavefunctions and fields are thus represented on a 2D cylindrical grid
+in coordinate space \cite{Dav81a}.  For the typical example of the
+Na$_{40}$ cluster, the numerical box extends up to 104 a$_0$ in radial
+direction and 208 a$_0$ along the $z$-axis, while the grid spacing is
+0.8 a$_0$. To solve the (time-dependent) Kohn-Sham equations
+(\ref{eq:KSwf}) we use time-splitting for time
+propagation~\cite{Fei82} and accelerated gradient iterations for the
+stationary solution \cite{Blu92}. The Coulomb field is computed with
+successive over-relaxation \cite{Dav81a}.  We use absorbing boundary
+conditions~\cite{Cal00,Rei06c}, which gently absorb all outgoing
+electron flow reaching the bounds of the grid and thus prevent
+artifacts from reflection back into the reaction zone.  We take the
+exchange-correlation energy functional from Perdew and
+Wang~\cite{Per92}.
+
+A great manifold of observables can be deduced from the
+$\hat{\rho}(t)$ thus obtained. We will consider in the following the
+dipole signal, dipole spectrum, ionization, angular distribution of
+emitted electrons, and entropy. We focus here on the dipole moment
+along symmetry axis $z$, which is obtained from the local density as
+$\langle\hat{d}_z\rangle(t)=\int{d}^3r\,d_z(\mathrm{z})\varrho(\mathrm{r})$
+where $d_z(\mathrm{z})=z$ is the (local) dipole operator. The dipole
+strength distribution is computed with the methods of spectral
+analysis \cite{Cal97b}. It is attained by an instantaneous
+dipole-boost excitation, collecting $\langle\hat{d}_z\rangle(t)$
+during propagation, and finally Fourier transforming
+$\langle\hat{d}_z\rangle(t)$ into frequency domain. The angular
+  distribution of emitted electrons is obtained from recording the
+absorbed electrons as in TDLDA \cite{Poh04b,Rei06aR}. The angular
+distribution is characterized by the anisotropy parameter
+$\beta_2$, the leading parameter in the photo-electron angular cross
+section $d\sigma/d\Omega \propto (1+\beta_2 P_2(cos(\theta)+....)$
+\cite{Wop10a,Wop10b} where $P_2$ is the second order Legendre
+polynomial and $\theta$ the direction with respect to laser
+polarization axis (here $z$-axis in 2D cylindrical geometry). A
+specific quantity to track relaxation processes is the one-body
+entropy which is computed in diagonal representation
+(\ref{eq:rhodiag}) by the standard expression \cite{Rei98aB}
+\begin{equation}
+  S
+  =
+  - \sum_\alpha\left[
+    W_\alpha\log W_\alpha
+    +
+    (1\!-\!W_\alpha)\log (1\!-\!W_\alpha)
+  \right]
+\label{eq:entropy}
+\end{equation}
+in units of Boltzmann constant. 
+It serves as a direct indicator of thermalization and allows to 
+read off the typical time scale of relaxation processes. 
+
+
+
+
+\end{document}

@@ -621,14 +621,10 @@ END IF
 
 IF(myn == 0) THEN
   IF (jescmask .NE. 0 .AND. MOD(it,jescmask) == 0) THEN
-    IF (itof == 0) THEN
-      OPEN(589,STATUS='unknown',FILE='pescmask.'//outnam)
+    IF(it < 1000000000) THEN
+      OPEN(589,STATUS='unknown', FILE='pescmask.'//trim(adjustl(inttostring(it)))//'.'//outnam)
     ELSE
-      IF(it < 1000000000) THEN
-        OPEN(589,STATUS='unknown', FILE='pescmask.'//trim(adjustl(inttostring(it)))//'.'//outnam)
-      ELSE
-        STOP '::too many time steps::'
-      END IF
+      STOP '::too many time steps::'
     END IF
     CALL printfield(589,rhoabso,'x')
     CLOSE(589)
@@ -651,7 +647,7 @@ END SUBROUTINE escmask
 
 SUBROUTINE angabso
 
-! Collects information on particles lost in nagulaer cones,
+! Collects information on particles lost in angular cones,
 ! for later analysis of photo-electron angular distribution (PAD).
 
 USE params

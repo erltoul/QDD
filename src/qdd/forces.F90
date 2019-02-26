@@ -675,7 +675,7 @@ REAL(DP) :: dist2, dist3, forceloc, forcenonl, pch
 REAL(DP) :: sumfor,sumfulp, sumfulm,  sumslp, sumslm
 REAL(DP) :: xion, yion, zion 
 REAL(DP) :: zshift=0.001D0,yshift=0.001D0,xshift=0.001D0
-REAL(DP) :: zshinv=1D3,yshinv=1D3,xshinv=1D3
+REAL(DP) :: zshinv=1D3,yshinv=1D3,xshinv=1D3              ! must be inverse of zshift
 COMPLEX(DP),ALLOCATABLE :: q1(:)
 REAL(DP),ALLOCATABLE :: rhoslp(:),rhoslm(:)
 REAL(DP),ALLOCATABLE :: fxnl(:),fynl(:),fznl(:)

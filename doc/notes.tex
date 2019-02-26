@@ -1,0 +1,179 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+\usepackage{parskip}
+%\usepackage{physics}
+\geometry{top=1in,bottom=1in,left=1in,right=1.375in}
+\linespread{1.3}
+
+\newcommand{\PGR}[1]{\textcolor{blue}{#1}}
+
+
+\begin{document}
+	\section{Compilation}
+		\subsection{NETLIB}
+			Dependencies
+			\begin{itemize}
+				\item Fortran compiler (\texttt{ifort, gfortran, etc.})
+			\end{itemize}
+			
+		\subsection{FFTW}
+			Dependencies
+			\begin{itemize}
+				\item Fortran compiler (\texttt{ifort, gfortran, etc.}), for the main code
+				\item C compiler (\texttt{icc, gcc, etc.}), for the FFTW libraries
+				\item FFTW libraries
+			\end{itemize}
+			{\color{red}* \emph{For FFTW to make use of OpenMP, the compiler itself needs to be compiled with OpenMP support! This may sound trivial but e.g. this is not the case for the stock `\texttt{gcc}'} on macOS!}
+			
+			{\color{red}* \emph{The compiler suite you use to compile QDD has to match the one you used to compile FFTW! E.g., if you used the Intel compiler suite (`\texttt{icc}') to compile FFTW, you MUST use the same suite (`\texttt{ifort}') to compile QDD!}. Actually this only happens in this `direction'. When the FFTW libs are compiled with \texttt{gcc} and the QDD code with \texttt{ifort} everything works fine. Intel-specific problem?}
+			
+		\subsection{MKL}
+			Dependencies
+			\begin{itemize}
+				\item Fortran compiler (\texttt{ifort, gfortran, etc.}) for the main code
+				\item C compiler (\texttt{icc, gcc, etc.}) for the FFTW wrapper library
+				\item Intel MKL
+				\item Compiled FFTW wrappers to Intel MKL (\texttt{\$MKLROOT/interfaces/fftw3xf} for Fortran)
+			\end{itemize}
+			
+		\subsection{Preprocessor flags}
+			Flags from old `\texttt{define.h}'
+			\begin{itemize}
+				\item \texttt{IVERSION}
+                                 \PGR{Allows to communicate a version number}
+				\item \texttt{gridfft} 
+                                  \PGR{Switches
+                                  to Fourier definition of
+                                  derivatives. Excludes
+                                  \texttt{findiff/numerov}.}
+				\item \texttt{findiff}
+                                  \PGR{Switches
+                                  to 3-point finite differences for
+                                  derivatives. Excludes
+                                  \texttt{gridfft/numerov}.}
+				\item \texttt{numerov}
+                                  \PGR{Switches
+                                  to 5-point finite differences for
+                                  derivatives. Excludes
+                                  \texttt{gridfft/findiff}.}
+				\item \texttt{coufou}
+                                  \PGR{Switches
+                                  to Coulomb solver using FAlr.
+                                  Excludes \texttt{coudoub}.}
+				\item \texttt{coudoub}
+                                  \PGR{Switches
+                                  to exact Coulomb solver on doubled grid.
+                                  Excludes \texttt{coufou}.}
+				\item \texttt{coudoub3D}
+                                  \PGR{Switches
+                                  to 3D FFT in connection with exact
+                                  Coulomb solver. 
+                                  Requires \texttt{coudoub=1}.}
+				\item \texttt{twostsic}
+                                  \PGR{Includes all subroutines for
+                                    full SIC in compilation.}
+				\item \texttt{cmplxsic}
+                                  \PGR{Switches to full SIC using
+                                    complex wavefunctions. Requires
+                                    \texttt{twostsic=1}.} 
+				\item \texttt{raregas}
+                                  \PGR{Includes all subroutines for
+                                    polarizable environment (MgO,
+                                    raregases) in compilation.} 
+			\end{itemize}
+			
+			Flags from \texttt{*.F90}-files related to
+                        parallelisation \PGR{(all are set in {\tt makefile})}
+			\begin{itemize}
+				\item \texttt{dynopenmp}
+                                   \PGR{Deduced parameter, determined
+                                     in {\tt makefile}. Switches to
+                                     OpenMP arrangement which
+                                     associates CPU
+                                     wavefunction-wise. Relevant in
+                                     connection with
+                                    \texttt{paropenmp=1}.}
+				\item \texttt{parano}
+                                   \PGR{Switches to compilation for
+                                     purely sequential run.
+                                  Excludes \texttt{parayes/paropenmp/...}.}
+				\item \texttt{parayes}
+                                   \PGR{Switches to compilation for
+                                     MPI parallel run.
+                                  Excludes \texttt{parano/paropenmp/...}.}
+				\item \texttt{paraworld}
+                                   \PGR{Switches to compilation for
+                                     MPI parallel run. Similar to
+                                     \texttt{parayes}, but with more
+                                     communication statements (??).
+                                  Excludes
+                                  \texttt{parano/paropenmp/parayes/...}.} 
+				\item \texttt{paropenmp}	
+                                   \PGR{Switches to compilation for
+                                     OpneMp parallel run.
+                                  Excludes others as
+                                  \texttt{parano/parayes/...}.} 
+				\item \texttt{selpara}
+                                   \PGR{Obsolete and can be erased.}
+				\item \texttt{simpara}		
+                                   \PGR{Obsolete and can be erased.}
+			\end{itemize}
+
+			Miscellaneous flags from \texttt{*.F90}-files
+			\begin{itemize}
+				\item \texttt{COMPLEXSWITCH/REALSWITCH}
+                                   \PGR{These are internal switches
+                                     which are automatically set in
+                                     the {\tt makefile}. They serve to
+                                   compile independently a REAL and a
+                                   COMPLEX version of some
+                                   subroutines. The user cannot and
+                                   shoult not touch them.}
+				\item \texttt{exonly}
+                                   \PGR{Obsolete and not actually used.}
+				\item \texttt{fftw\_cpu}
+                                   \PGR{Deduced parameter, determined
+                                     in {\tt makefile}.}
+				\item \texttt{fftw\_gpu}
+                                   \PGR{Obsolete and must be erased.}
+				\item \texttt{fftwnomkl}
+                                   \PGR{Deduced parameter, determined
+                                     and used in {\tt makefile}.}
+				\item \texttt{gunnar}
+                                   \PGR{Obsolete and not actually used.}
+				\item \texttt{hamdiag}
+                                   \PGR{Obsolete and not actually used.}
+				\item \texttt{lda\_gpu}
+                                   \PGR{Obsolete and must be erased.}
+				\item \texttt{locsic}
+                                   \PGR{Obsolete and can be erased.}
+				\item \texttt{netlib\_fft}
+                                   \PGR{Deduced parameter, determined
+                                     and used in {\tt makefile}.}
+				\item \texttt{oldkinprop}
+                                   \PGR{Obsolete and can be erased.}
+				\item \texttt{pw92}
+                                   \PGR{Obsolete and can be erased.}
+				\item \texttt{symmcond}
+                                   \PGR{Somewhat mysterious. Seems to
+                                     be obsolete together with the
+                                     file {\tt symmcond\_step.F90}. Check
+                                   performance of full SIC.}
+				\item \texttt{tfindiff}
+                                    \PGR{Should be replaced by {\tt findiff}.}
+				\item \texttt{tnumerov} \PGR{Should be
+                                  replaced by {\tt numerov} where
+                                  'numerov' means derivates with
+                                  5-point precision. But we should
+                                  discuss whether we want to maintain
+                                  this option.  }
+			\end{itemize}
+			
+			
+
+
+
+	
+\end{document}

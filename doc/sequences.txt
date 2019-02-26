@@ -1,0 +1,34 @@
+RTA:
+
+        CALL dyn\_mfield(rho,aloc,psi,0D0) 
+        CALL info(psi,rho,aloc,iterat)
+	CALL OccupPerSpin('start rta',Occref)
+	CALL srhomat(psi,aloc,psiorth,occuporth)
+        CALL dyn\_mfield(rho,aloc,psiorth,1D-10,iterat)
+        CALL info(psiorth,rho,aloc,iterat)
+	CALL OccupPerSpin('start rta',Occref)
+ CALL eqstate(psiorth,aloc,rho,psieq,occuporth,iterat)
+ CALL OccupPerSpin('end eqstate',Occspin)
+ CALL occupT0(occup(1:nstate),amoy(1:nstate),Estar)
+        CALL dyn\_mfield(rho,aloc,psieq,0D0) 
+        CALL analyze\_elect(psieq,rho,aloc,iterat)
+ CALL calcrhoeq(psiorth(:,1:nspup),psieq(:,1:nspup),psi(:,1:nspup), occuporth(1:nspup)&
+               ,occup(1:nspup),nspup)
+ CALL calcrhoeq(psiorth(:,nspup+1:nstate),psieq(:,nspup+1:nstate),psi(:,nspup+1:nstate), occuporth(nspup+1:nstate)&
+               ,occup(nspup+1:nstate),nspdw)
+ CALL OccupPerSpin('end calcrhoeq',Occspin)
+       CALL dyn\_mfield(rho,aloc,psi,0D0) !update field to new density
+       CALL analyze\_elect(psi,rho,aloc,iterat)!to have energy
+        CALL calc\_Eref(occup,ispin,amoy,Eperspinref)
+        CALL CorrectEnergy2(occref(1),Eperspintarget(1),occup(1:nspup),amoy(1:nspup),occup(1:nspup),nspup)
+        CALL CorrectEnergy2(occref(2),Eperspintarget(2),occup(nspup+1:nstate),amoy(nspup+1:nstate),occup(nspup+1:nstate),nspdw)
+       CALL dyn\_mfield(rho,aloc,psi,0D0) !update field to new density
+       CALL analyze\_elect(psi,rho,aloc,iterat)!to have energy
+        CALL calc\_Eref(occup,ispin,amoy,Eperspinref)
+        CALL CorrectEnergy2(occref(1),Eperspintarget(1),occup(1:nspup),amoy(1:nspup),occup(1:nspup),nspup)
+        CALL CorrectEnergy2(occref(2),Eperspintarget(2),occup(nspup+1:nstate),amoy(nspup+1:nstate),occup(nspup+1:nstate),nspdw)
+        CALL OccupPerSpin('first correct nergy',Occspin)
+       CALL dyn\_mfield(rho,aloc,psi,0D0) !update field to new density
+       CALL analyze\_elect(psi,rho,aloc,iterat)
+       CALL OccupPerSpin('second correct nergy',Occspin)
+ CALL temperature(mu,T)

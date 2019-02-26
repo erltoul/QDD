@@ -1,0 +1,59 @@
+\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
+	\hline
+	\texttt{jrtaint} & interval for performing an RTA step. Set to value $n$, where $n$ is an integer, an RTA step will occur every $n$th iteration. Set to $n=0$ to disable RTA\\
+	\hline
+	\texttt{rtamu} & \\
+	\hline
+	\texttt{rtamuj} & \\
+	\hline
+	\texttt{rtasumvar2max} & \\
+	\hline
+	\texttt{rtaeps} & \\
+	\hline
+	\texttt{rtae0dmp} & \\
+	\hline
+	\texttt{rtasigee} & \\
+	\hline
+	\texttt{rtars} & \\
+	\hline
+	\texttt{rtatempinit} & \\
+	\hline
+\end{tabular}
+
+
+The {\tt NAMELIST dynamic} contains the following variables
+used in the RTA procedure:\PGRfoot{We should define a new {\tt
+    NAMELIST} and shift the RTA variables to there.}
+\begin{description}
+\item[\tt jrtaint:]
+   Modulus for calling the RTA subroutine, i.e., nr. of TDLDA steps
+   per one RTA step. Course time step $\Delta t$ for RTA and fine
+   time step for TDLDA {\tt dt1} are related as
+   $\Delta t=${\tt jrtaint}$*${\tt dt1}.
+\item[\tt rtamu:]
+   Parameter $\mu$ in front of the quadratic density constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
+\item[\tt rtamuj:]
+   Parameter $\mu_j$ in front of the quadratic current constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
+\item[\tt rtasumvar2max:] Termination criterion $\epsilon_0$ in the
+   RTA step as used
+   in figure \ref{fig:summaryDCMF}. 
+\item[\tt rtaeps:]
+  Step size $\delta$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
+\item[\tt rtae0dmp:]
+  Energy offset $E_00$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
+\item[\tt rtasigee:]
+  In medium $e^-$-$e^-$ cross section used for the relaxation time 
+  (\ref{eq:relaxtime}).
+\item[\tt rtars:]
+  Effective  Wigner-Seitz radius $r_s$ used for the relaxation time 
+  (\ref{eq:relaxtime}).
+\item[\tt rtatempinit:]
+  The value {\tt rtatempinit}/10 is used as lower value for the search
+  of temperature in {\tt SUBROUTINE ferm1}.
+\item[\tt rtaforcetemperature:]
+  \PGRcomm{Seems to be obsolete?}
+\end{description}

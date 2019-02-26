@@ -67,8 +67,8 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iexcit,iangmo,  &
     irotat,phirot,i3dz,i3dx,i3dstate,iflocaliz,  &
-    idyniter,ifrhoint_time,ifhamdiag,iffastpropag, &
-    modrho,jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
+    idyniter,irhoint_time,ifhamdiag,iffastpropag, &
+    jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
@@ -82,10 +82,10 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     ntref,iangabso,ipes,nangtheta,nangphi,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
     ifreezekspot,powabso,ispherabso,ifixcmion,  &
-    ekin0pp,vxn0,vyn0,vzn0,jescmask,itof,jescmaskorb,  &
+    ekin0pp,vxn0,vyn0,vzn0,jescmask,jescmaskorb,  &
     eproj,nproj,nproj_states,vpx,vpy,vpz,taccel,   &
     trequest,timefrac,  &
-    nmptheta,nmpphi,jmp,jovlp,  &
+    nmptheta,nmpphi,jmp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
     iscatterelectron,jattach,scatterelectronenergy,  &
