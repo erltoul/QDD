@@ -33,6 +33,9 @@ INTEGER,PARAMETER :: kdsub=(2*nxsg+1)*(2*nysg+1)*(2*nzsg+1)
 ! switches
 INTEGER :: ivdw=0,isurf=0
 
+INTEGER :: idielec=0                     !  switch to dielectricum
+REAL(DP) :: xdielec=0D0                  !  x below which dielectric zone is activated
+REAL(DP) :: epsdi=1D0                    ! dielectric constant in the dielectric zone
 
 ! sub-grid for V_elArcore
     

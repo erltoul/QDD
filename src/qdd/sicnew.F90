@@ -361,14 +361,18 @@ IF(numspin==2) THEN
   ELSE
     CALL solv_poisson_e(rho1,couldif,kdfull2)
   END IF
-  IF(idielec == 0 .AND. nion2 > 0) THEN
+#if(raregas)
+  IF(idielec == 0 .AND. nion2 > 0) THEN  
+#else
+  IF(nion2 > 0) THEN
+#endif
     coulsum = chpcoul
   ELSE
-  IF(tcoulfalr) THEN
-    CALL solv_poisson_f(rho2,coulsum,kdfull2)
-  ELSE
-    CALL solv_poisson_e(rho2,coulsum,kdfull2)
-  END IF
+    IF(tcoulfalr) THEN
+      CALL solv_poisson_f(rho2,coulsum,kdfull2)
+    ELSE
+      CALL solv_poisson_e(rho2,coulsum,kdfull2)
+    END IF
 !    CALL solv_poisson(rho2,coulsum,kdfull2)
   END IF
   facup = 1D0/npartup

@@ -226,9 +226,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(irotat,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(phirot,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
-    CALL mpi_send(i3dx,1,mpi_integer,nod,1,mpi_comm_world,ic)
-    CALL mpi_send(i3dz,1,mpi_integer,nod,1,mpi_comm_world,ic)
-    CALL mpi_send(i3dstate,1,mpi_integer,nod,1, mpi_comm_world,ic)
     CALL mpi_send(istream,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(jpos,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -252,7 +249,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(mzforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
 !~     CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(idenspl,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(itft,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(tnode,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -304,6 +300,10 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dpoly,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpolz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
 #if(extended)
+    CALL mpi_send(idenspl,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(i3dx,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(i3dz,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(i3dstate,1,mpi_integer,nod,1, mpi_comm_world,ic)
     CALL mpi_send(eproj,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(nproj,1,mpi_integer,nod,1, mpi_comm_world,ic)
     CALL mpi_send(nproj_states,1,mpi_integer,nod,1, mpi_comm_world,ic)
@@ -383,9 +383,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(phirot,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   
-  CALL mpi_recv(i3dx,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(i3dz,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(i3dstate,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(istream,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(jpos,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
@@ -413,8 +410,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
 !~   CALL mpi_recv(tempion2,1,mpi_double_precision,0,mpi_any_tag,  &
 !~       mpi_comm_world,is,ic)
-  CALL mpi_recv(idenspl,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  
   CALL mpi_recv(itft,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(tnode,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
@@ -487,6 +482,10 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(dpolz,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
 #if(extended)
+  CALL mpi_recv(idenspl,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(i3dx,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(i3dz,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(i3dstate,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(eproj,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(nproj,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)

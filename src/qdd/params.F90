@@ -167,7 +167,6 @@ REAL(DP) :: scaleClustz=1D0
 INTEGER :: iemomsRel=1   ! 1 = relative to c.m.,  0 = relative to box
 REAL(DP) :: shiftClustx=0D0,shiftClusty=0D0,shiftClustz=0D0
 REAL(DP) :: rotClustx=0D0,rotClusty=0D0,rotClustz=0D0
-INTEGER :: imob=1   ! fix (=0) or unfix (=1) ions
 INTEGER :: ifixcmion
 REAL(DP) :: shiftWFx=0D0,shiftWFy=0D0,shiftWFz=0D0
 INTEGER :: ispinsep=0
@@ -232,11 +231,8 @@ INTEGER :: isave=0            ! saves results after every ’isave’ steps
                               !   on file ’rsave’ in and after static iteration
                               !   on file ’save’ in dynamic propagation
                               
-INTEGER :: idenspl=0  ! print densities integrated over x, y and z in 3 separated files
-                      !  (at the end in static, every 'idenspl' steps in dynamic)
 INTEGER :: irhoint_time=0 ! print densities integrated over xy, xz, yz in 3 separated files
 
-INTEGER :: i3dz=0,i3dx=0,i3dstate=0
 INTEGER :: jpos=-9999,jvel=-9999,jener=10,jesc=-9999,jforce=0,jposcm=0,jgeomion=0
 INTEGER :: jinfo=10,jdip=-9999,jdiporb=0,jquad=0,jang=0,jspdp=0,jenergy=10
 INTEGER :: jgeomel=0
@@ -328,9 +324,6 @@ INTEGER :: modionstep=1                        ! modulus for ion step
 INTEGER :: inewforce
 INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
 INTEGER,ALLOCATABLE :: nfixed(:)                    !  Nr. of fixed ions
-INTEGER :: idielec=0                     !  switch to dielectricum
-REAL(DP) :: xdielec=0D0                  !  x below which dielectric zone is activated
-REAL(DP) :: epsdi=1D0                    ! dielectric constant in the dielectric zone
 LOGICAL,ALLOCATABLE :: tblock(:)
 REAL(DP),ALLOCATABLE :: cx(:),cy(:),cz(:) ,cpx(:),cpy(:),cpz(:) 
 REAL(DP),ALLOCATABLE :: dcx(:),dcy(:),dcz(:) ,dcpx(:),dcpy(:),dcpz(:) 
@@ -356,6 +349,9 @@ INTEGER,ALLOCATABLE :: rand_seed(:)
 
 
 !     parameters for external excitations by laser or projectile
+INTEGER :: idenspl=0  ! print densities integrated over x, y and z in 3 separated files
+                      !  (at the end in static, every 'idenspl' steps in dynamic)
+INTEGER :: i3dz=0,i3dx=0,i3dstate=0
 INTEGER :: itft=3
 REAL(DP) :: tnode=0D0,deltat=0D0,tpeak=0D0,omega=0D0,e0=0D0,time,tfs=0D0  
 REAL(DP) :: e1x=1D0,e1y=0D0,e1z=0D0,phi=0D0

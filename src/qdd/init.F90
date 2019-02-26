@@ -48,7 +48,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     tcoulfalr, &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
-    rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
+    rotclustx,rotclusty,rotclustz,iswitch_interpol,  &
     ishiftcmtoorigin,  &
     shiftwfx,shiftwfy,shiftwfz, ispinsep, &
     iplotorbitals
@@ -59,13 +59,13 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iexcit,iangmo,  &
-    irotat,phirot,i3dz,i3dx,i3dstate,iflocaliz,  &
+    irotat,phirot,iflocaliz,  &
     idyniter,irhoint_time,ifhamdiag,iffastpropag, &
     jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
-    tempion,idenspl,  &
+    tempion,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
     projinix,projiniy,projiniz, &
@@ -87,7 +87,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
 
 #if(extended)
 !NAMELIST /extended/ &
-NAMELIST /extensions/ &
+NAMELIST /extensions/ idenspl,i3dz,i3dx,i3dstate, &
     jescmask,jescmaskorb,&
     iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
@@ -318,13 +318,15 @@ INTEGER :: i,j
 #if(raregas)
 ne = nc
 #endif
-trequest=trequest*60D0
 phi=phi*pi/180D0              ! convert input 'phi' from degree
 
 
 
-
+#if(extended)
+trequest=trequest*60D0
 WRITE(6,*) 'i3dz,i3dx,i3dstate,idenspl=' ,i3dz,i3dx,i3dstate,idenspl
+#endif
+
 qold2=0.01D0
 qold3=0.01D0
 qold4=0.01D0
@@ -387,7 +389,7 @@ IF(nion2 == 2) THEN
   IF(ipseudo /= 0) STOP ' IPSEUDO=0 needed for external psp (NION2=2)'
   IF(iexcit /= 0) STOP ' IEXCIT=0 needed for external psp (NION2=2)'
   IF(ipsptyp /= 0) STOP ' IPSPTYP=0 needed for external psp (NION2=2)'
-  IF(imob /= 0) STOP ' fixed ions needed for external psp (IMOB=0)'
+  IF(ionmdtyp /= 0) STOP ' fixed ions needed for external psp (IONMDTYP=0)'
 END if
 
 IF(ABS(phangle) > small .AND. istat /= 1) &
@@ -1702,7 +1704,7 @@ WRITE (6,*) 'Entering initions()'
            close(120)
   
 ! optionally set ionic velocities to simulate given temperature
-  IF (tempion > 0D0 .AND.imob /= 0) THEN
+  IF (tempion > 0D0 .AND.ionmdtyp /= 0) THEN
     CALL givetemperature(cpx,cpy,cpz,nion,tempion, amu(np(1))*1836.0D0*ame,4)
   END IF
   

@@ -103,7 +103,7 @@ SUBROUTINE simann(psir,rho,aloc)
 !    aloc    = local KS potentials
 
 USE params
-USE util, ONLY:fmtv_fld, view3d
+USE util, ONLY: view3d
 IMPLICIT NONE
 
 REAL(DP), INTENT(IN OUT)   :: psir(kdfull2,kstate)
@@ -155,7 +155,9 @@ DO jrun = 1, nrun
     ismax = 200
     CALL statit(psir,rho,aloc)
     
+#if(extended)
     CALL fmtv_fld(cmplx(psir,0D0,DP),rho,0)
+#endif
     
     delbin = ABS(ebold-binerg)
     IF(loop1 >= 2) THEN

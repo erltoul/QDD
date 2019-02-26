@@ -1066,18 +1066,16 @@ IF(myn == 0) THEN
   WRITE(6,*) 'sim.ann.energy   = ',2*ecback+ecorr+enonlc
   WRITE(6,*) 'laser energy     = ',elaser
   WRITE(6,*) 'internal exc. energy per spin    = ',estar(1),estar(2)
-  IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
 #if(raregas)  
+  IF(idielec == 1) WRITE(6,*) 'image energy     = ',ecrhoimage
   IF(ivdw == 1) WRITE(6,*) 'vdw energy       = ',evdw
-#endif
-  WRITE(6,*) 'binding energy   = ',energy
-  WRITE(2743,*) 'binding energy   = ',energy
-  WRITE(6,*) 'total energy     = ',etot
-#if(raregas)
   IF (isurf /= 0) THEN
     WRITE(6,*) 'adsorb.energy = ',etot-enerinfty
   END IF
 #endif
+  WRITE(6,*) 'binding energy   = ',energy
+  WRITE(2743,*) 'binding energy   = ',energy
+  WRITE(6,*) 'total energy     = ',etot
   
   IF(jinfo > 0 .AND. MOD(it,jinfo) == 0) THEN
     INQUIRE(17,OPENED=topenf)
@@ -2367,7 +2365,7 @@ SUBROUTINE analyze_elect(psi,rho,aloc,it)
 !      it     = time step in calling routine
 
 USE params
-USE util, ONLY:fmtv_fld,safeopen,probab,phoverl,stateoverl, &
+USE util, ONLY:safeopen,probab,phoverl,stateoverl, &
                calcchargdist,getelectrongeometry
 IMPLICIT NONE
 
@@ -2391,8 +2389,9 @@ END IF
 
 !     ***** dynamic density plot *****
 
+#if(extended)
 IF(idenspl > 0 .AND. MOD(it,idenspl) == 0) CALL fmtv_fld(psi,rho,it)
-
+#endif
 !       Number of escaped electrons
 
 IF(myn == 0 .AND. jesc > 0 .AND. MOD(it,jesc) == 0) THEN

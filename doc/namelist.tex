@@ -95,11 +95,6 @@ They contain:\\
 &the grid size is defined before compilation in {\tt params.F90}\\
 &it has to be correlant with pseudopotentails\\
 &corresponds to ecut in solid state\\
-{\tt imob          }& global switch to allow ionic motion (if set to 1) \\
-{\tt isurf            }& switch for Ar or MgO surface (isurf=1 activates surface)\\
-{\tt iDielec          }& switch to dielectic support\\
-{\tt xDielec          }& x below which dielectric zone is activated\\
-{\tt epsDi            }& dielectric constant in the dielectric zone\\
 {\tt rotclustx,y,z } & vector fo angle of initial rotation of ions\\
 {\tt temp} &  electronic temperature in static iteration \\
 \hline
@@ -160,14 +155,6 @@ equations (of order of 0.5)\\
 {\tt iswitch\_interpol} &  switch to interpolated grid for PsP \\
 {\tt iplotorbitals} & switch to print plot-file {\tt pOrbitals} for
 all static states \\
-{\tt nproj\_states} &  nr. of electronic states in projectile \\
-\hline
-\multicolumn{2}{c}{\it QMMM substrate} \\
-\hline
-{\tt idielec } & switch to dielectric background  \\
-{\tt xdielec } & distance of dielectric background to lowest GSM layer \\
-{\tt epsdi } & dielectric constant of  dielectric background \\
-{\tt isurf } & switch to activate  dielectric background  \\
 \hline
 \end{tabular}
 
@@ -336,10 +323,6 @@ x-axis\\
 {\tt jplotdensity2d} &  modulus for printing 2D cuts of density  \\
 {\tt jstboostinv} & modulus for evaluating boost-invariant s.p. energy
 and variance \textcolor{red}{???}\\
-{\tt idenspl} & modulus for printing 2D cuts of density in MTV format \textcolor{red}{???} \\
-{\tt i3dz} &  print z-integrated 2D density, following {\tt idenspl} \textcolor{red}{???}\\
-{\tt i3dx} &  print x-integrated 2D density, following {\tt idenspl} \textcolor{red}{???}\\
-{\tt i3dstate} & print  x- and z-integrated density per state, following {\tt idenspl} \textcolor{red}{???}\\
 \hline
 \end{tabular}
 
@@ -444,6 +427,10 @@ wavepacket (relative to energy) \\
 {\tt nproj} & element number of atomic projectile \\
 {\tt nproj\_states} & nr. of eletronic states in atomic projectile \\
 \\
+{\tt idenspl} & modulus for printing 2D cuts of density in MTV format\\
+{\tt i3dz} &  print z-integrated 2D density, following {\tt idenspl}\\
+{\tt i3dx} &  print x-integrated 2D density, following {\tt idenspl}\\
+{\tt i3dstate} & print  x- and z-integrated density per state, following {\tt idenspl}\\
 \hline
 \end{tabular}
 
@@ -451,6 +438,11 @@ wavepacket (relative to energy) \\
 \begin{tabular}{ll}
 \hline
 \multicolumn{2}{c}{Namelist {\tt SURFACE}} in {\tt for005.<name>} \\
+\hline
+{\tt idielec } & switch to dielectric background  \\
+{\tt xdielec } & distance of dielectric background to lowest GSM layer \\
+{\tt epsdi } & dielectric constant of  dielectric background \\
+{\tt isurf } & switch to activate  dielectric background  \\
 \hline
 {\tt ne               }& Number of fixed shells in substrate\\
 {\tt nc               }& number of O cores in MgO(001)\\

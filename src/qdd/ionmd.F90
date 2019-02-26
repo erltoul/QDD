@@ -199,7 +199,7 @@ ELSE
   STOP 'this sort of PsP not yet implemented'
 END IF
 
-
+#if(raregas)
 IF(idielec /= 0) THEN
   
 !     each ion interacts with each image ion!!
@@ -233,6 +233,7 @@ IF(idielec /= 0) THEN
   END IF
   
 END IF
+#endif
 
 enii=sumion
 
@@ -477,7 +478,7 @@ IF (nk > 0) THEN
 END IF
 #endif
 
-IF (nion > 0 .AND.imob /= 0) THEN
+IF (nion > 0 .AND. ionmdtyp /= 0) THEN
 
 ! compute c.m. of ions
    IF(ifixcmion == 1) THEN
@@ -569,7 +570,7 @@ END IF
 
 
 !     propagation of cluster ions
-IF (nion > 0 .AND. imob /= 0) THEN
+IF (nion > 0 .AND. ionmdtyp /= 0) THEN
   IF(ALLOCATED(xm)) DEALLOCATE(xm)
   ALLOCATE(xm(1:nion))
   xm = 1D0               ! setting for propagation of momenta
@@ -720,7 +721,7 @@ END IF
 #endif
 
 
-IF (nion > 0 .AND.imob /= 0) THEN
+IF (nion > 0 .AND.ionmdtyp /= 0) THEN
 
 ! compute c.m. of ions
    IF(ifixcmion == 1) THEN
@@ -802,7 +803,7 @@ END IF
 
 
 !     propagation of cluster ions
-IF (nion > 0 .AND. imob /= 0) CALL velverlet2(cpx(1),cpy(1),cpz(1),  &
+IF (nion > 0 .AND. ionmdtyp /= 0) CALL velverlet2(cpx(1),cpy(1),cpz(1),  &
     fx(1),fy(1),fz(1), dt1*modionstep,nion,4)
 
 WRITE(6,'(a,3f15.6)') 'fionx,fiony,fionz',fx(1),fy(1),fz(1)

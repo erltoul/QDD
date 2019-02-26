@@ -24,7 +24,7 @@ SUBROUTINE statit(psir,rho,aloc)
 !     master routine for static iteration
 
 USE params
-USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz,mtv_fld
+USE util, ONLY:inttostring, pricm, printfield,prifld,prifldz
 USE coulsolv, ONLY:solv_poisson_f,solv_poisson_e,tcoulfalr
 !USE coulsolv_e, ONLY:solv_poisson
 
@@ -356,7 +356,9 @@ xcm=rvectmp(1)
 ycm=rvectmp(2)
 zcm=rvectmp(3)
 
+#if(extended)
 IF(idenspl /= 0) CALL mtv_fld(rho,1)
+#endif
 
 IF(itmax <= 0 .AND. isitmax <= 0) STOP ' terminate with static iteration '
 
@@ -1438,16 +1440,14 @@ IF(myn == 0) THEN
   WRITE(6,*)  'e_coul:total    =',ecback+ecrho+ecorr
   WRITE(6,*)  'rearge. energy  =',enrear
   WRITE(6,*)  'nonlocal energy =',enonlc
+#if(raregas)
   IF(idielec == 1) WRITE(6,*) 'dielect.Coul.e. =',ecrhoimage
-#if(raregas)
   IF(ivdw == 1) WRITE(6,*)  'vdw energy      =',evdw
-#endif
-  WRITE(6,*)  'binding energy  =',energy
-#if(raregas)
   IF (isurf /= 0) THEN
     WRITE(6,*)  'adsorption energy = ', energy-enerinfty
   END IF
 #endif
+  WRITE(6,*)  'binding energy  =',energy
   IF(directenergy) THEN
     WRITE(6,*)  'binding energy2 =',energ2
     WRITE(6,*)  'potential energ =',enerpw
@@ -1640,14 +1640,18 @@ IF(myn == 0) THEN
   WRITE(42,'(a,1pg12.4)') 'total variance  =',sumvar
   WRITE(42,'(a,4f11.5)') 'sp pot, sp kin, rearr, nonlocal=',  &
       espnb-esh1,esh1,enrear,enonlc  ! enonlc never affected a value ?  F.L 02/2017
+#if(raregas)
   IF(idielec == 1) THEN
     WRITE(42,'(a,5f11.5)') 'e_coul: i-i , e-i , e-e , e-eimage, total=',  &
         ecorr,2D0*ecback,ecrho-ecback-ecrhoimage,2D0*ecrhoimage,  &
         ecback+ecrho+ecorr+ecrhoimage
   ELSE
+#endif
     WRITE(42,'(a,4f11.5)') 'e_coul: i-i , e-i , e-e , total=',  &
         ecorr,2D0*ecback,ecrho-ecback,ecback+ecrho+ecorr
+#if(raregas)
   END IF
+#endif
   WRITE(42,'(a,f7.2)')    'mon.:',qe(1)
   WRITE(42,'(a,3f11.5)')  'dip.in  :',dpolx,dpoly,dpolz
   WRITE(42,'(a,3f11.5)')  'dip.out :',qe(2),qe(3),qe(4)

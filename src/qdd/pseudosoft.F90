@@ -44,13 +44,15 @@ END IF
 
 SELECT CASE(ipsptyp)
   CASE(0)   ! soft local PsP
+#if(raregas)
     IF(idielec == 0) THEN
       CALL pseudosoft()         ! soft Gaussian Psp
-#if(raregas)
     ELSE
       CALL pseudosoft_dielec()  ! Gaussian PsP with dielectric support
-#endif
     END IF
+#else
+    CALL pseudosoft()         ! soft Gaussian Psp
+#endif
     
   CASE(1:4)  ! Goedecker PsP (soft or local)
     CALL pseudogoed()       
