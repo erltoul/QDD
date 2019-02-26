@@ -179,13 +179,11 @@ REAL(DP) :: phangle=0D0,phphase=0D0         ! angle and phase of ph rotation
 
 INTEGER :: nhstate,npstate
 INTEGER :: ifreezekspot=0
-INTEGER :: jescmask=0,ishiftcmtoorigin=0,jescmaskorb=0
-INTEGER :: ishutdown=0
-! INTEGER :: icheckformessages=1,jcheckformessages=50
+INTEGER :: ishiftcmtoorigin=0
 INTEGER :: jplotdensitydiff=0,jplotdensity2d=0,jplotdensitydiff2d=0
 INTEGER :: nmptheta=2,nmpphi=1,nmps,jmp=0,imps(maxmps)
 INTEGER :: jnorms=50
-INTEGER :: iscatterelectron=0,jcharges=0,jattach=0
+INTEGER :: jcharges=0
 
 INTEGER,ALLOCATABLE :: ispin_target(:)
 REAL(DP),ALLOCATABLE :: occ_target(:)
@@ -199,16 +197,9 @@ INTEGER  :: nstate_target,nmatch
 INTEGER :: iplotorbitals=0
 !INTEGER ::  ievaluate=0    ! ????
 REAL(DP) :: ekin0pp=0D0,vxn0=0D0,vyn0=0D0,vzn0=-1D0
-REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
-INTEGER :: nproj=1,nproj_states=0
-INTEGER,ALLOCATABLE :: proj_states(:)
-REAL(DP) :: trequest=0D0,timefrac=0.98D0
 REAL(DP) :: rheatclust
-REAL(DP) :: igeneratesurffile
+!REAL(DP) :: igeneratesurffile
 !REAL(DP),ALLOCATABLE :: rnormsinit(kstate)
-REAL(DP) :: scatterelectronenergy=0D0,scatterelectronw=1D0
-REAL(DP) :: scatterelectronvxn=0D0,scatterelectronvyn=0D0,scatterelectronvzn=1D0
-REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz=0D0
 REAL(DP) :: reference_energy=0D0
 REAL(DP) :: drcharges=5D0
 
@@ -274,7 +265,6 @@ INTEGER :: ifhamdiag=20
 #endif
 
 
-
 !     spatial fields as densities and potentials
 REAL(DP),ALLOCATABLE :: rhojel(:)                !  jellium density
 REAL(DP),ALLOCATABLE :: potion(:)                !  pseudopotentials
@@ -305,7 +295,7 @@ REAL(DP),ALLOCATABLE :: rhoabsoorb(:,:)
 !      common /moment/ ql(kmom),
 INTEGER,PARAMETER :: kmom=35
 INTEGER :: nrmom
-REAL(DP) :: qe(kmom),qeproj(kmom),qetarget(kmom),se(5),ajx,ajy,ajz
+REAL(DP) :: qe(kmom),se(5),ajx,ajy,ajz
 REAL(DP),ALLOCATABLE :: qeorb_all(:,:)
 !COMMON /moment/ qe,se,ajx,ajy,ajz,nrmom
 
@@ -382,6 +372,26 @@ REAL(DP) :: projcharge=0D0                   ! projectile charge
 REAL(DP) :: projvelx=0D0,projvely=0D0,projvelz=0D0   ! projectile velocity
 REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile position
                    ! impact parameter = min(projinix,projiniy,projiniz)
+
+
+
+! parameters for extended cases and observables
+#if(extended)
+INTEGER :: ishutdown=0,jattach=0
+INTEGER :: jescmask=0,jescmaskorb=0
+REAL(DP) :: trequest=0D0,timefrac=0.98D0
+INTEGER :: nproj=1,nproj_states=0
+REAL(DP) :: eproj=0D0,vpx=0D0,vpy=0D0,vpz=-1D0,taccel=0D0
+REAL(DP) :: qeproj(kmom),qetarget(kmom)
+INTEGER,ALLOCATABLE :: proj_states(:)
+INTEGER :: iscatterelectron=0
+REAL(DP) :: scatterelectronenergy=0D0,scatterelectronw=1D0
+REAL(DP) :: scatterelectronvxn=0D0,scatterelectronvyn=0D0,scatterelectronvzn=1D0
+REAL(DP) :: scatterelectronx=0D0,scatterelectrony=0D0,scatterelectronz=0D0
+#endif
+
+
+
 
 !MV parameters for RTA calculation
 INTEGER  ::jrtaint=0		!MV interval to cal for a new search of equilibrium state

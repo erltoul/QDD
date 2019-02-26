@@ -86,6 +86,8 @@ COUDOUB=YES
 COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
+# Include private sector
+EXTENDED = YES
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
@@ -102,6 +104,9 @@ ifeq ($(COUDOUB3D),YES)
 endif
 ifeq ($(RAREGAS),YES)
     CODE_OPTIONS += -Draregas
+endif
+ifeq ($(EXTENDED),YES)
+    CODE_OPTIONS += -Dextended
 endif
 
 #####################################################################
@@ -593,6 +598,10 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
        parallele.o 2stUT.o attachement.o rta.o\
        HEeigensystem.o mini.o zdiag.o orthmat.o
+ifeq ($(EXTENDED),YES)
+    OBJINT += util_extended.o
+endif
+       
 ifeq ($(raregas), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o util_substrate.o
@@ -776,8 +785,15 @@ HEeigensystem.o: HEeigensystem.f
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
 
-attachement.o: private/attachement.F90
+ifeq ($(EXTENDED),YES)
+
+attachement.o: extended/attachement.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+util_extended.o: extended/util_extended.F90 params.o
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
+
+endif
 
 ifeq ($(raregas), YES)
 

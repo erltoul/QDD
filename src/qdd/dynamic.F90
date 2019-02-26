@@ -104,7 +104,7 @@ DO it=irest,itmax   ! time-loop
       
 !            protocol of densities
       
-      IF(irhoint_time == 1) THEN
+      IF(irhoint_time > 0) THEN
         CALL rhointxy(rho,it)
         CALL rhointxz(rho,it)
         CALL rhointyz(rho,it)
@@ -167,6 +167,8 @@ DO it=irest,itmax   ! time-loop
       ecorr = energ_ions()
       etot = ecorr + ekion
     END IF
+
+#if(extended)
     ! The calculation of an electron attachment on a water molecule should 
     ! proceed as follows:
     ! 1) Perform a static calculation for a water molecule alone, with a 
@@ -193,8 +195,20 @@ DO it=irest,itmax   ! time-loop
             tfs,nmatch,totalprob,totintegprob,totalovlp
        CALL FLUSH(809)
     END IF
-  
-    IF(nclust > 0) CALL savings(psi,it)
+#endif
+
+    IF(isave > 0 .AND. it /= 0) THEN
+      IF(MOD(it,isave) == 0 .OR. it == itmax) THEN
+        IF (irest /= 0 .AND. ABS(it-irest) <= 2) THEN
+           ! do nothing
+        ELSE
+          CALL SAVE(psi,it,outnam)
+        END IF
+      END IF
+    END IF
+#if(extended)
+    IF(trequest > 0D0) CALL savings(psi,it)   
+#endif
   END IF
 
 END DO
@@ -276,12 +290,14 @@ IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
 
 IF (ekin0pp > 0D0) CALL init_velocel(psi)
 
+#if(extended)
+!  atomic projectile wavefunctions   
 IF ( eproj > 0D0) CALL init_projwf(psi)
 
-!     optionally add scattering electron
-
+!  add scattering electron
 
 IF (iscatterelectron /= 0) CALL init_scattel(psi)
+#endif
 
 ! optionally reset occupation number by hand 
 ! (run first static, save on 'rsave.<name>', check occupation numbers,
@@ -401,147 +417,6 @@ END DO
 RETURN
 END SUBROUTINE init_velocel
 
-!-----init_projwf-------------------------------------------------
-
-SUBROUTINE init_projwf(psi)
-
-!  Boosts the electronic wavefunctions of the projectile 
-!  by the same velocity, whose norm is given by 'eproj' and
-!  the direction by 'vpx', 'vpy',and 'vpz'.
-!  This routine is similar to 'init_velocel', but applied
-!  only to projectile wavefunctions, distinguished by an
-!  entry in the array 'proj_states'.
-
-USE params
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(OUT)                     :: psi(kdfull2,kstate)
-
-INTEGER :: ind, ix, iy, iz, kk, nbe, nbee
-REAL(DP) :: arg, rnorm, v0, x1, y1, z1
-COMPLEX(DP) :: cfac
-
-
-!------------------------------------------------------------------
-! lionel : np(nion) ==> np(nproj)
-
-v0 = SQRT(2D0*eproj/(amu(np(nproj))*1836.0D0*ame))
-rnorm = vpx**2 + vpy**2+ vpz**2
-rnorm = SQRT(rnorm)
-
-IF (rnorm == 0) STOP 'Velocity vector not normalizable'
-
-vpx = vpx/rnorm*v0*ame
-vpy = vpy/rnorm*v0*ame
-vpz = vpz/rnorm*v0*ame
-
-IF(taccel>0D0) RETURN               ! boost is done adiabatically
-
-IF(init_lcao.NE.1) THEN
-  WRITE(*,*) ' instantaneous acceleration only for INIT_LCAO==1'
-  STOP  ' instantaneous acceleration only for INIT_LCAO==1'
-END IF
-IF(nproj_states==0) THEN
-  WRITE(*,*) ' CAUTION : atomic projectile without wf to boost'
-  WRITE(*,*) ' if there are electrons on the projectile, please use'
-  WRITE(*,*) ' nproj_states in GLOBAL, proj_states and nproj in DYNAMIC'
-ELSE
-  WRITE(*,*)'Input states of the projectile',proj_states(:)
-  ind = 0
-  DO iz=minz,maxz
-     z1=(iz-nzsh)*dz
-     DO iy=miny,maxy
-        y1=(iy-nysh)*dy
-        DO ix=minx,maxx
-           x1=(ix-nxsh)*dx
-           ind = ind + 1
-           arg = x1*vpx+y1*vpy+z1*vpz
-           cfac = CMPLX(COS(arg),SIN(arg),DP)
-           DO nbe=1,nstate
-              nbee=nrel2abs(nbe)
-              DO kk=1,nproj_states
-                 IF (nbee == proj_states(kk)) psi(ind,nbe)=cfac*psi(ind,nbe)
-              END DO
-           END DO
-        END DO
-     END DO
-  END DO
-END IF
-
-RETURN
-END SUBROUTINE init_projwf
-
-!-----init_scattel-------------------------------------------------
-
-SUBROUTINE init_scattel(psi)
-
-!  Adds one electron in scattering state as Gaussian wavepacket
-!  with a certain velocity given by 'scatterelectronv...'.
-!  The wavefunctions bookkeeping fields are extended accordingly.
-
-
-USE params
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
-
-
-INTEGER :: i, ind, ix, iy, iz
-REAL(DP) :: arg, fac, fr, pnorm, rr, x1, y1, z1
-!------------------------------------------------------------------
-
-pnorm = scatterelectronvxn**2+scatterelectronvyn**2+ scatterelectronvzn**2
-pnorm = SQRT(pnorm)
-
-IF (pnorm == 0D0) STOP 'Momentum of Scatt. Electron vanishes!'
-
-scatterelectronvxn = scatterelectronvxn/pnorm
-scatterelectronvyn = scatterelectronvyn/pnorm
-scatterelectronvzn = scatterelectronvzn/pnorm
-
-pnorm = SQRT(scatterelectronenergy*2D0*ame)
-
-scatterelectronvxn = scatterelectronvxn*pnorm
-scatterelectronvyn = scatterelectronvyn*pnorm
-scatterelectronvzn = scatterelectronvzn*pnorm
-
-nstate = nstate + 1
-IF(nstate > kstate) STOP ' insufficient KSTATE in INIT_SCATTEL'
-occup(nstate)=1D0
-nrel2abs(nstate)=nstate
-nabs2rel(nstate)=nstate
-ispin(nstate)=1
-
-! test actual number of active states, only occcupied states allowed
-DO i=1,nstate
-  IF(occup(i)<0.5D0) STOP "only occupied states allowed in case of attachement"
-END DO
-
-fac = 1D0/SQRT(pi**1.5D0*scatterelectronw**3)
-
-ind = 0
-
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    DO ix=minx,maxx
-      x1=(ix-nxsh)*dx
-      ind = ind + 1
-      arg = (x1-scatterelectronx)*scatterelectronvxn+  &
-          (y1-scatterelectrony)*scatterelectronvyn+  &
-          (z1-scatterelectronz)*scatterelectronvzn
-      rr = (x1 - scatterelectronx)**2 &
-          + (y1 - scatterelectrony)**2 &
-          + (z1 - scatterelectronz)**2
-      fr = fac*EXP(-rr/2D0/scatterelectronw**2)
-      psi(ind,nstate) = CMPLX(fr,0D0,DP)*CMPLX(COS(arg),SIN(arg),DP)
-    END DO
-  END DO
-END DO
-
-RETURN
-END SUBROUTINE init_scattel
 
 !-----tstep---------------------------------------------------------
 
@@ -730,12 +605,12 @@ IF(myn == 0)THEN
   CALL FLUSH(7)
 END IF
 
-IF (izforcecorr /= -1) THEN
-  CALL checkzeroforce(rho,aloc)
-END IF
+IF (izforcecorr /= -1) CALL checkzeroforce(rho,aloc)
 
+#if(extended)
 IF ((jescmask > 0 .AND. MOD(it,jescmask) == 0) .OR. &
     (jescmaskorb > 0 .AND. MOD(it,jescmaskorb) == 0)  ) CALL  escmask(it)
+#endif
 
 CALL flush(6)
 CALL flush(7)
@@ -1812,6 +1687,7 @@ REAl(DP),EXTERNAL :: getzval
 
 IF(irest <= 0) THEN                    !  write file headers
 
+#if(extended)
   IF(myn == 0 .AND. jdip /= 0 .AND. eproj/=0 ) THEN
     OPEN(88,STATUS='unknown',FORM='formatted',FILE='pprojdip.'//outnam)
     WRITE(88,'(a)') ' & '
@@ -1822,7 +1698,7 @@ IF(irest <= 0) THEN                    !  write file headers
     WRITE(88,'(a)') 'H:   X        Yl            Yd           Yq         Zl          Zd          Zq'
     CLOSE(88)
   END IF
-
+#endif
   
   IF(myn == 0 .AND. jdip /= 0) THEN
     OPEN(8,STATUS='unknown',FORM='formatted',FILE='pdip.'//outnam)
@@ -2586,11 +2462,13 @@ IF(myn==0) THEN
     CALL flush(8)
   END IF
 
+#if(extended)
   IF(jdip > 0 .AND. MOD(it,jdip) == 0 .AND. eproj /=0 ) THEN
     WRITE(88,'(f10.5,6e17.8)') tfs,qeproj(2),qeproj(3),qeproj(4),&
                                qetarget(2),qetarget(3),qetarget(4)
     CALL flush(88)
   END IF
+#endif
 
   IF(jdiporb > 0 .AND. MOD(it,jdiporb) == 0) THEN
     WRITE(810,'(f10.5,1000e17.8)') tfs,(qeorb_all(nbe,3),nbe=1,nstate_all)
@@ -2642,73 +2520,6 @@ END IF
 RETURN
 END SUBROUTINE analyze_elect
 
-
-!-----savings----------------------------------------------------
-
-SUBROUTINE savings(psi,it)
-
-!   Check status of computing resources and optionally save wavefunctions.
-!
-!   Input:
-!      psi    = set of complex s.p. wavefunctions
-!      it     = time step in calling routine
-
-USE params
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
-INTEGER, INTENT(IN)       :: it
-
-REAL(DP) :: time_act, time_elapse
-
-
-
-IF(isave > 0 .AND. it /= 0) THEN
- IF(MOD(it,isave) == 0 .OR. it == itmax) THEN
-  IF (irest /= 0 .AND. ABS(it-irest) <= 2) THEN
-! do nothing, change later if needed
-  ELSE
-    CALL SAVE(psi,it,outnam)
-  END IF
- END IF
-END IF
-
-!     if walltime has almost expired, save all relevant data to
-!     prepare for restart and stop:
-
-IF(trequest > 0D0) THEN
- IF(myn == 0) THEN                                                        ! cPW
-  CALL cpu_time(time_act)
-  time_elapse=time_act-time_absinit
-  WRITE(6,'(a,5(1pg13.5))') &
-   ' cpu_time: trequest,timefrac,t_elapse=',trequest,timefrac,time_elapse
-  CALL FLUSH(6)
- END IF
-#if(parayes)
- CALL pi_scatter(time_elapse)
-#endif
- IF (time_elapse > trequest*timefrac) THEN
-  CALL SAVE(psi,it,outnam)
-  IF(myn == 0) THEN
-    OPEN(660,STATUS='unknown',FILE='progstatus')
-    WRITE(660,*) '0'
-    CLOSE(660)
-  END IF
-#if(parayes)
-  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
-  !CALL mpi_finalize (mpi_ierror)
-#endif
-  STOP ' finish at TREQUEST'
- END IF
-END IF                                                                    ! cPW
-!     if program has received user message to shut down program, make it so!
-IF (ishutdown /= 0) THEN
-  CALL SAVE(psi,it,outnam)
-  STOP 'Terminated by user message.'
-END IF
-
-RETURN
-END SUBROUTINE savings
 
 
 

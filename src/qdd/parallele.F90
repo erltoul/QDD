@@ -143,8 +143,6 @@ CALL i_scatter(nangphi)
 CALL i_scatter(ifreezekspot)
 CALL i_scatter(ispherabso)
 CALL i_scatter(ifixcmion)
-CALL i_scatter(jescmask)
-CALL i_scatter(jescmaskorb)
 ! CALL i_scatter(icheckformessages)
 ! CALL i_scatter(jcheckformessages)
 CALL i_scatter(nmptheta)
@@ -155,7 +153,6 @@ CALL i_scatter(jplotdensitydiff)
 CALL i_scatter(jplotdensitydiff2d)
 CALL i_scatter(jplotdensity2d)
 CALL i_scatter(jcharges)
-CALL i_scatter(iscatterelectron)
 
 CALL pi_scatter(drcharges)
 CALL pi_scatter(tempion)
@@ -174,6 +171,11 @@ CALL pi_scatter(ekin0pp)
 CALL pi_scatter(vxn0)
 CALL pi_scatter(vyn0)
 CALL pi_scatter(vzn0)
+
+#if(extended)
+CALL i_scatter(jescmask)
+CALL i_scatter(jescmaskorb)
+CALL i_scatter(iscatterelectron)
 CALL pi_scatter(trequest)
 CALL pi_scatter(timefrac)
 CALL pi_scatter(scatterelectronenergy)
@@ -184,7 +186,7 @@ CALL pi_scatter(scatterelectronx)
 CALL pi_scatter(scatterelectrony)
 CALL pi_scatter(scatterelectronz)
 CALL pi_scatter(scatterelectronw)
-
+#endif
 
 
 IF(myn == 0 .AND. knode /= 1)THEN
@@ -195,13 +197,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     
     CALL mpi_send(nion2,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
-    CALL mpi_send(eproj,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nproj,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(nproj_states,1,mpi_integer,nod,1, mpi_comm_world,ic)
-    WRITE(*,*) 'proj_states=',proj_states
-    DO ii=1,nproj_states
-       CALL mpi_send(proj_states(ii),1,mpi_integer,nod,1, mpi_comm_world,ic)
-    END DO
 
     CALL mpi_send(nabsorb,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(ifsicp,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -251,7 +246,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(jspdp,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jinfo,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jenergy,1,mpi_integer,nod,1,mpi_comm_world,ic)
-    CALL mpi_send(ivdw,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
     CALL mpi_send(mxforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(myforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -259,7 +253,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     
 !~     CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     CALL mpi_send(idenspl,1,mpi_integer,nod,1,mpi_comm_world,ic)
-    CALL mpi_send(ekmat,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
     CALL mpi_send(itft,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(tnode,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
@@ -280,11 +273,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(nclust,1,mpi_integer,nod,2,mpi_comm_world,ic)
     
     CALL mpi_send(nion,1,mpi_integer,nod,2,mpi_comm_world,ic)
-#if(raregas)    
-    CALL mpi_send(nc,1,mpi_integer,nod,2,mpi_comm_world,ic)
-    CALL mpi_send(NE,1,mpi_integer,nod,2,mpi_comm_world,ic)
-    CALL mpi_send(nk,1,mpi_integer,nod,2,mpi_comm_world,ic)
-#endif    
     CALL mpi_send(scaleclust,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
     CALL mpi_send(charge,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -302,7 +290,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dy,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     
-!#if(raregas)
     CALL mpi_send(radjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(surjel,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(bbeta,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -316,7 +303,21 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(dpolx,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpoly,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(dpolz,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
+#if(extended)
+    CALL mpi_send(eproj,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(nproj,1,mpi_integer,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(nproj_states,1,mpi_integer,nod,1, mpi_comm_world,ic)
+    WRITE(*,*) 'proj_states=',proj_states
+    DO ii=1,nproj_states
+       CALL mpi_send(proj_states(ii),1,mpi_integer,nod,1, mpi_comm_world,ic)
+    END DO
+#endif
 #if(raregas)
+    CALL mpi_send(ivdw,1,mpi_integer,nod,1,mpi_comm_world,ic)
+    CALL mpi_send(ekmat,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
+    CALL mpi_send(nc,1,mpi_integer,nod,2,mpi_comm_world,ic)
+    CALL mpi_send(NE,1,mpi_integer,nod,2,mpi_comm_world,ic)
+    CALL mpi_send(nk,1,mpi_integer,nod,2,mpi_comm_world,ic)
     CALL mpi_send(surftemp,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmac,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
     CALL mpi_send(sigmav,1,mpi_double_precision,nod,2, mpi_comm_world,ic)
@@ -346,23 +347,8 @@ IF(myn == 0 .AND. knode /= 1)THEN
 ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   
   CALL mpi_recv(outnam,13,mpi_character,0,mpi_any_tag, mpi_comm_world,is,ic)
-  
+ 
   CALL mpi_recv(nion2,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-
-  CALL mpi_recv(eproj,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(nproj,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  WRITE(*,*) 'nproj=',nproj
-  CALL mpi_recv(nproj_states,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  WRITE(*,*) 'nproj_states=',nproj_states
-  IF (nproj_states>0)THEN
-    ALLOCATE(proj_states(nproj_states))
-    DO ii=1,nproj_states
-       CALL mpi_recv(proj_states(ii),1,mpi_integer,0,mpi_any_tag,  &
-         mpi_comm_world,is,ic)
-       WRITE(*,*) 'proj_states(',ii,')=',proj_states(ii)
-    END DO
-  END IF  
   
   CALL mpi_recv(nabsorb,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(ifsicp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
@@ -417,7 +403,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(jspdp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jinfo,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jenergy,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(ivdw,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   
   CALL mpi_recv(mxforce,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
@@ -429,8 +414,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
 !~   CALL mpi_recv(tempion2,1,mpi_double_precision,0,mpi_any_tag,  &
 !~       mpi_comm_world,is,ic)
   CALL mpi_recv(idenspl,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  CALL mpi_recv(ekmat,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
   
   CALL mpi_recv(itft,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(tnode,1,mpi_double_precision,0,mpi_any_tag,  &
@@ -461,11 +444,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(nclust,1,mpi_integer,0,2,mpi_comm_world,is,ic)
   
   CALL mpi_recv(nion,1,mpi_integer,0,2,mpi_comm_world,is,ic)
-#if(raregas)
-  CALL mpi_recv(nc,1,mpi_integer,0,2,mpi_comm_world,is,ic)
-  CALL mpi_recv(NE,1,mpi_integer,0,2,mpi_comm_world,is,ic)
-  CALL mpi_recv(nk,1,mpi_integer,0,2,mpi_comm_world,is,ic)
-#endif
   CALL mpi_recv(scaleclust,1,mpi_double_precision,0,2, mpi_comm_world,is,ic)
   
   CALL mpi_recv(charge,1,mpi_double_precision,0,2, mpi_comm_world,is,ic)
@@ -508,7 +486,29 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
       mpi_comm_world,is,ic)
   CALL mpi_recv(dpolz,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
+#if(extended)
+  CALL mpi_recv(eproj,1,mpi_double_precision,0,mpi_any_tag,  &
+      mpi_comm_world,is,ic)
+  CALL mpi_recv(nproj,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  WRITE(*,*) 'nproj=',nproj
+  CALL mpi_recv(nproj_states,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  WRITE(*,*) 'nproj_states=',nproj_states
+  IF (nproj_states>0)THEN
+    ALLOCATE(proj_states(nproj_states))
+    DO ii=1,nproj_states
+       CALL mpi_recv(proj_states(ii),1,mpi_integer,0,mpi_any_tag,  &
+         mpi_comm_world,is,ic)
+       WRITE(*,*) 'proj_states(',ii,')=',proj_states(ii)
+    END DO
+  END IF  
+#endif
 #if(raregas)
+  CALL mpi_recv(ivdw,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
+  CALL mpi_recv(nc,1,mpi_integer,0,2,mpi_comm_world,is,ic)
+  CALL mpi_recv(NE,1,mpi_integer,0,2,mpi_comm_world,is,ic)
+  CALL mpi_recv(nk,1,mpi_integer,0,2,mpi_comm_world,is,ic)
+  CALL mpi_recv(ekmat,1,mpi_double_precision,0,mpi_any_tag,  &
+      mpi_comm_world,is,ic)
   CALL mpi_recv(surftemp,1,mpi_double_precision,0,mpi_any_tag,  &
       mpi_comm_world,is,ic)
   CALL mpi_recv(sigmac,1,mpi_double_precision,0,mpi_any_tag,  &

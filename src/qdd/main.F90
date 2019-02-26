@@ -142,7 +142,9 @@ CALL init_boxpara()
 WRITE(*,*) 'lengnod:',lengnod
 #endif
 
-IF(ihome == 1) CALL init_homfield()  ! optional homogeneous exernal E field
+#if(extended)
+!IF(ihome == 1) CALL init_homfield()  ! optional homogeneous exernal E field
+#endif
 
 CALL timer(1)                        ! set timer
 
@@ -222,6 +224,7 @@ IF (isurf == 1) THEN
 END IF
 #endif
 
+#if(extended)
 if (jattach>0) THEN
   DEALLOCATE(psi_target)
   DEALLOCATE(ispin_target)
@@ -230,7 +233,7 @@ if (jattach>0) THEN
   DEALLOCATE(match)
 END IF
 IF(nproj_states>0) DEALLOCATE(proj_states)
-
+#endif
 
 CLOSE(163)
 CLOSE(68)
@@ -290,7 +293,11 @@ INTEGER :: i,ion,nspup
 !     optionally initialize wavefunction and work arrays
 ALLOCATE(psi(kdfull2,kstate))
 psi=CMPLX(0D0,0D0,DP)
+
+#if(extended)
 IF(nabsorb > 0 .AND. jescmaskorb /=0) ALLOCATE(rhoabsoorb(kdfull2,kstate))
+#endif
+
 IF(ifexpevol == 1) ALLOCATE(psiw(kdfull2,kstate))
 
 !     initialize protocol files
@@ -335,7 +342,9 @@ IF(nclust > 0) THEN
     IF(nabsorb > 0) CALL  init_abs_accum()
   ELSE
 !    IF (ievaluate /= 0) CALL evaluate(rho,aloc,psi)    ! ????
+#if(extended)
     IF (iscatterelectron /=0) CALL init_scattel(psi)
+#endif
     outnam=outname                                     ! ???
     CALL restart2(psi,outnam,.false.)
     WRITE(7,'(a,i3)') 'restart irest=',irest

@@ -22,10 +22,6 @@ MODULE util
 
 IMPLICIT NONE
 
-INTERFACE projmoms
-  MODULE PROCEDURE r_projmoms, c_projmoms
-END INTERFACE projmoms
-
 INTERFACE wfovlp
   MODULE PROCEDURE r_wfovlp, c_wfovlp
 END INTERFACE wfovlp
@@ -1702,15 +1698,15 @@ REAL(DP) ::acc
 REAL(DP) :: rhoint(minz:maxz)
 LOGICAL :: tfirst=.true.
 
-IF(irhoint == 0) THEN
+IF(irhoint_time == 0) THEN
   STOP 'irhoint must be larger than zero'
 END IF
-IF(MOD(itime,irhoint) /= 0) RETURN
+IF(MOD(itime,irhoint_time) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=28,FORM='unformatted',FILE='rhointxy')
-  WRITE(28) minz,maxz,nzsh,dz,centfz,dt1,itime,irhoint
+  WRITE(28) minz,maxz,nzsh,dz,centfz,dt1,itime,irhoint_time
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF
@@ -1759,12 +1755,12 @@ REAL(DP) :: rhoint(minx:maxx)
 
 DATA tfirst/.true./
 
-IF(MOD(itime,irhoint) /= 0) RETURN
+IF(MOD(itime,irhoint_time) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=29,FORM='unformatted',FILE='rhointyz')
-  WRITE(29) minx,maxx,nxsh,dx,centfx,dt1,itime,irhoint
+  WRITE(29) minx,maxx,nxsh,dx,centfx,dt1,itime,irhoint_time
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF
@@ -1810,12 +1806,12 @@ REAL(DP) :: rhoint(miny:maxy)
 
 DATA tfirst/.true./
 
-IF(MOD(itime,irhoint) /= 0) RETURN
+IF(MOD(itime,irhoint_time) /= 0) RETURN
 time=itime*dt1
 tfs=time*0.0484D0
 IF(tfirst) THEN
   OPEN(UNIT=27,FORM='unformatted',FILE='rhointxz')
-  WRITE(27) miny,maxy,nysh,dy,centfy,dt1,itime,irhoint
+  WRITE(27) miny,maxy,nysh,dy,centfy,dt1,itime,irhoint_time
   tfirst = .false.
   WRITE(6,*) ' output for integrated rho initialised'
 END IF
@@ -3637,220 +3633,6 @@ DEALLOCATE(spoverlaps)
 RETURN
 
 END SUBROUTINE stateoverl
-
-
-!-----projmoms-------------------------------------------------------projmoms
-! REAL version
-!-----------------------------------------------------------------------
-SUBROUTINE r_projmoms(rho,psi)
-
-! Multipole moments relative to c.m. on 'qetarget' and relative to 
-! projectile coordinate 'cz' on 'qeproj'.
-
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN) :: rho(2*kdfull2)
-REAL(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget
-REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
-
-#if(parano)
-INTEGER :: ik, ikk
-#else
-INTEGER :: kk,nbe,nbee
-REAL(DP) :: sprojec
-#endif
-!----------------------------------------------------------------------
-nrmom=35
-IF(nrmom > kmom) STOP ' too many moments in projmoms'
-
-DO k=1,nrmom
-  qetarget(k)=0D0
-  qeproj(k)=0D0
-END DO
-
-!     switch for calculating moments relative to center of mass (1)
-!     or center of box (0)
-rvectmp = 0D0
-IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
-
-
-ind=0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  z1t=z1-rvectmp(3)
-  z1p=z1-cz(nproj)
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    y1t=y1-rvectmp(2)
-    y1p=y1-cy(nproj)
-    DO ix=minx,maxx
-      ind=ind+1
-      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
-        x1=(ix-nxsh)*dx
-        x1t=x1-rvectmp(1)
-        x1p=x1-cx(nproj)
-        sproj=0D0
-#if(parano)
-        DO ik=1,nproj_states
-          ikk=proj_states(ik)
-          sproj=sproj+psi(ind,ikk)*psi(ind,ikk) 
-        END DO
-#else
-        sprojec=0D0 
-        DO nbe=1,nstate
-          nbee=nrel2abs(nbe)
-          DO kk=1,nproj_states
-            IF (nbee == proj_states(kk)) THEN
-              sprojec=sprojec+psi(ind,nbe)*psi(ind,nbe) 
-            END IF
-          END DO
-        END DO
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-                mpi_sum,mpi_comm_world,mpi_ierror)
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-#endif
-        starget=rho(ind)-sproj
-!                                                     monopole
-        qetarget(1)=qetarget(1)+starget
-        qeproj(1)=qeproj(1)+sproj
-!                                                     dipole
-        qetarget(2)=qetarget(2)+starget*x1t
-        qetarget(3)=qetarget(3)+starget*y1t
-        qetarget(4)=qetarget(4)+starget*z1t
-
-        qeproj(2)=qeproj(2)+sproj*x1p
-        qeproj(3)=qeproj(3)+sproj*y1p
-        qeproj(4)=qeproj(4)+sproj*z1p
-      END IF
-    END DO
-  END DO
-END DO
-
-DO k=1,nrmom
-  qetarget(k)=qetarget(k)*dvol
-  qeproj(k)=qeproj(k)*dvol
-END DO
-
-DO k=2,nrmom
-  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
-  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
-END DO
-
-RETURN
-END SUBROUTINE r_projmoms
-
-!-----------------------------------------------------------------------
-! COMPLEX version
-!-----------------------------------------------------------------------
-SUBROUTINE c_projmoms(rho,psi)
-USE params
-IMPLICIT NONE
-
-REAL(DP), INTENT(IN)    :: rho(2*kdfull2)
-COMPLEX(DP), INTENT(IN) :: psi(kdfull2,kstate)
-#if(parayes)
-INCLUDE 'mpif.h'
-INTEGER :: is(mpi_status_size)
-#endif
-
-INTEGER :: ind, ix, iy, iz, k
-REAL(DP) :: sproj,starget
-REAL(DP) :: x1, y1, z1, x1t, y1t, z1t, x1p, y1p, z1p 
-
-#if(parano)
-INTEGER :: ik, ikk
-#else
-INTEGER :: kk, nbe, nbee
-REAL(DP) :: sprojec
-#endif
-!----------------------------------------------------------------------
-nrmom=35
-IF(nrmom > kmom) STOP ' too many moments in projmoms'
-
-DO k=1,nrmom
-  qetarget(k)=0D0
-  qeproj(k)=0D0
-END DO
-
-!     switch for calculating moments relative to center of mass (1)
-!     or center of box (0)
-rvectmp = 0D0
-IF(iemomsrel == 1 .AND. nion2 > 0) CALL getcm(1,0,0)
-
-ind=0
-DO iz=minz,maxz
-  z1=(iz-nzsh)*dz
-  z1t=z1-rvectmp(3)
-  z1p=z1-cz(nproj)
-  DO iy=miny,maxy
-    y1=(iy-nysh)*dy
-    y1t=y1-rvectmp(2)
-    y1p=y1-cy(nproj)
-    DO ix=minx,maxx
-      ind=ind+1
-      IF((ix <= nx2).AND.(iy <= ny2).AND.(iz <= nz2)) THEN
-        x1=(ix-nxsh)*dx
-        x1t=x1-rvectmp(1)
-        x1p=x1-cx(nproj)
-        sproj=0D0
-#if(parano)
-        DO ik=1,nproj_states
-          ikk=proj_states(ik)
-          sproj=sproj+REAL(CONJG(psi(ind,ikk))*psi(ind,ikk),DP)
-        END DO
-#else
-        sprojec=0D0 
-        DO nbe=1,nstate
-          nbee=nrel2abs(nbe)
-          DO kk=1,nproj_states
-            IF (nbee == proj_states(kk)) THEN
-              sprojec=sprojec+REAL(CONJG(psi(ind,nbe))*psi(ind,nbe),DP)
-            END IF
-          END DO
-        END DO
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-        CALL mpi_allreduce(sprojec,sproj,1,mpi_double_precision,  &
-          mpi_sum,mpi_comm_world,mpi_ierror)
-        CALL mpi_barrier(mpi_comm_world, mpi_ierror)
-#endif
-        starget=rho(ind)-sproj
-!                                                     monopole
-        qetarget(1)=qetarget(1)+starget
-        qeproj(1)=qeproj(1)+sproj
-!                                                     dipole
-        qetarget(2)=qetarget(2)+starget*x1t
-        qetarget(3)=qetarget(3)+starget*y1t
-        qetarget(4)=qetarget(4)+starget*z1t
-
-        qeproj(2)=qeproj(2)+sproj*x1p
-        qeproj(3)=qeproj(3)+sproj*y1p
-        qeproj(4)=qeproj(4)+sproj*z1p
-      END IF
-    END DO
-  END DO
-END DO
-
-DO k=1,nrmom
-  qetarget(k)=qetarget(k)*dvol
-  qeproj(k)=qeproj(k)*dvol
-END DO
-
-DO k=2,nrmom
-  qetarget(k)=qetarget(k)/qetarget(1)      !normalization
-  qeproj(k)=qeproj(k)/qeproj(1)      !normalization
-END DO
-
-RETURN
-END SUBROUTINE c_projmoms
 
 
 

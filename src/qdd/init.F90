@@ -50,18 +50,11 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,imob,iswitch_interpol,  &
     ishiftcmtoorigin,  &
-    iplotorbitals, &
     shiftwfx,shiftwfy,shiftwfz, ispinsep, &
-    nproj_states, &
-#if(raregas)
-    isurf,epsdi,idielec,xdielec
-#endif
+    iplotorbitals
 
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
-#if(raregas)
-    ivdw, &
-#endif
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
@@ -72,7 +65,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
     jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
     jstboostinv,ifspemoms,iftransme,ifexpevol, &
-    tempion,idenspl,ekmat,  &
+    tempion,idenspl,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
     projinix,projiniy,projiniz, &
@@ -82,22 +75,32 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     ntref,iangabso,ipes,nangtheta,nangphi,  &
     delomega,angthetal,angthetah,angphil,angphih,  &
     ifreezekspot,powabso,ispherabso,ifixcmion,  &
-    ekin0pp,vxn0,vyn0,vzn0,jescmask,jescmaskorb,  &
-    eproj,nproj,nproj_states,vpx,vpy,vpz,taccel,   &
-    trequest,timefrac,  &
+    ekin0pp,vxn0,vyn0,vzn0, &
     nmptheta,nmpphi,jmp,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
+    phangle,phphase,nhstate,npstate, &
+    jstateoverlap,&    !MV: now follow parameters for rta
+    jrtaint,rtamu,rtamuj,rtasumvar2max,rtaeps,rtae0dmp,&
+    rtatempinit,rtaforcetemperature,&
+    rtasigee,rtars   !rta2 added rtasigee, rtars
+
+#if(extended)
+!NAMELIST /extended/ &
+NAMELIST /extensions/ &
+    jescmask,jescmaskorb,&
     iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw,jattach, &
-    phangle,phphase,nhstate,npstate, &
-    jstateoverlap,&    !MV: now follow parameters for rta
-    jrtaint,rtamu,rtamuj,rtasumvar2max,rtaeps,rtae0dmp,rtatempinit,rtaforcetemperature,rtasigee,rtars!rta2 added rtasigee, rtars
+    eproj,nproj,nproj_states,vpx,vpy,vpz,taccel,   &
+    trequest,timefrac
+#endif
 
 #if(raregas)
 NAMELIST /surface/  &
+    isurf,epsdi,idielec,xdielec, &
+    ivdw,ekmat, &
     ne,nc,nk,nrare,  &
     surftemp,ipotfixed,ifmdshort,ifadiadip,  &
     sigmac,sigmav,sigmak,isystem,jsavesurf, chgc0,chge0,chgk0, &
@@ -140,7 +143,9 @@ WRITE(6,*) 'Reading for005.// ...'
 delomega=(angthetah-angthetal)/4D0/nangtheta
 delomega=MIN(delomega,(angphih-angphil)/4D0/nangphi)
 
+#if(extended)
 scatterelectronz=nzsh*dz-4D0*scatterelectronw
+#endif
 
 #if(raregas)
 CALL init_raregas()
@@ -592,7 +597,7 @@ ELSE
   WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
 ENDIF
-WRITE(iu,'(a,4i3,f7.2)') ' ispidi,iexcit,irotat,phirot=',  &
+WRITE(iu,'(a,3i3,f7.2)') ' ispidi,iexcit,irotat,phirot=',  &
     ispidi,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
 WRITE(iu,'(a,3f8.2)') ' shift: shiftinix,y,z=',shiftinix,shiftiniy,shiftiniz
@@ -1765,10 +1770,9 @@ IF (ekin0pp > 0D0) THEN
   WRITE(*,*) ' EKIN0PP: initial CP:',cpx(1),cpy(1),cpz(1)
 END IF ! initial kinetic energy for ions
 
-
+#if(extended)
 !     Initialization of the projectile velocity
 !     In the case of an atom, the w.f. are boosted accordingly in tinit
-! lionel : np(nion)=> np(nproj)
 IF (eproj > 0D0 .AND. taccel<1D-5) THEN
   v0 = SQRT(2D0*eproj/(amu(np(nproj))*1836.0D0*ame))
   rnorm = vpx**2 + vpy**2+ vpz**2
@@ -1780,6 +1784,7 @@ IF (eproj > 0D0 .AND. taccel<1D-5) THEN
   cpz(nproj) = vpz*tempv
   WRITE(*,*) ' projectile momenta initialized: eproj,v0=',eproj,v0
 ENDIF
+#endif
 
 !     short protocol
 

@@ -590,58 +590,6 @@ END SUBROUTINE initmeasurepoints
 
 
 
-SUBROUTINE escmask(it)
-
-! Print collected information on escaping electrons.
-!
-! Input:
-!   it   = nr. of time step in calling routine.
-
-USE params
-USE util, ONLY: inttostring,printfield
-IMPLICIT NONE
-
-INTEGER, INTENT(IN)  :: it
-
-INTEGER :: nbe, nbeabs
-
-
-IF (jescmaskorb /=0 .AND. MOD(it,jescmaskorb) == 0) THEN
-  DO nbe=1,nstate
-    nbeabs = nrel2abs(nbe)
-    IF (nbeabs < 1000) THEN
-      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//trim(adjustl(inttostring(nbeabs)))//'.'//outnam)
-    ELSE
-      STOP 'ERROR: Too many states for jescmaskOrb'
-    END IF
-    CALL printfield(588,rhoabsoorb(1,nbe),'x')
-    CLOSE(588)
-  END DO
-END IF
-
-IF(myn == 0) THEN
-  IF (jescmask .NE. 0 .AND. MOD(it,jescmask) == 0) THEN
-    IF(it < 1000000000) THEN
-      OPEN(589,STATUS='unknown', FILE='pescmask.'//trim(adjustl(inttostring(it)))//'.'//outnam)
-    ELSE
-      STOP '::too many time steps::'
-    END IF
-    CALL printfield(589,rhoabso,'x')
-    CLOSE(589)
-  END IF
-
-
-  IF (it == 0) THEN
-    OPEN(589,STATUS='unknown',FILE='pescmask.0.'//outnam)    ! Why do it again ?? 
-    CALL printfield(589,rhoabso,'x')
-    CLOSE(589)
-  END IF
-
-END IF
-
-RETURN
-END SUBROUTINE escmask
-
 
 !------------------------------------------------------------
 

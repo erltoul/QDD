@@ -1,0 +1,111 @@
+
+!-----savings----------------------------------------------------
+
+SUBROUTINE savings(psi,it)
+
+!   Check status of computing resources and optionally save wavefunctions.
+!
+!   Input:
+!      psi    = set of complex s.p. wavefunctions
+!      it     = time step in calling routine
+
+USE params
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN)   :: psi(kdfull2,kstate)
+INTEGER, INTENT(IN)       :: it
+
+REAL(DP) :: time_act, time_elapse
+
+
+
+!     if walltime has almost expired, save all relevant data to
+!     prepare for restart and stop:
+
+IF(trequest > 0D0) THEN
+ IF(myn == 0) THEN                                                        ! cPW
+  CALL cpu_time(time_act)
+  time_elapse=time_act-time_absinit
+  WRITE(6,'(a,5(1pg13.5))') &
+   ' cpu_time: trequest,timefrac,t_elapse=',trequest,timefrac,time_elapse
+  CALL FLUSH(6)
+ END IF
+#if(parayes)
+ CALL pi_scatter(time_elapse)
+#endif
+ IF (time_elapse > trequest*timefrac) THEN
+  CALL SAVE(psi,it,outnam)
+  IF(myn == 0) THEN
+    OPEN(660,STATUS='unknown',FILE='progstatus')
+    WRITE(660,*) '0'
+    CLOSE(660)
+  END IF
+#if(parayes)
+  CALL mpi_barrier (mpi_comm_world, mpi_ierror)
+  !CALL mpi_finalize (mpi_ierror)
+#endif
+  STOP ' finish at TREQUEST'
+ END IF
+END IF                                                                    ! cPW
+!     if program has received user message to shut down program, make it so!
+IF (ishutdown /= 0) THEN
+  CALL SAVE(psi,it,outnam)
+  STOP 'Terminated by user message.'
+END IF
+
+RETURN
+END SUBROUTINE savings
+
+
+
+SUBROUTINE escmask(it)
+
+! Print collected information on escaping electrons.
+!
+! Input:
+!   it   = nr. of time step in calling routine.
+
+USE params
+USE util, ONLY: inttostring,printfield
+IMPLICIT NONE
+
+INTEGER, INTENT(IN)  :: it
+
+INTEGER :: nbe, nbeabs
+
+
+IF (jescmaskorb /=0 .AND. MOD(it,jescmaskorb) == 0) THEN
+  DO nbe=1,nstate
+    nbeabs = nrel2abs(nbe)
+    IF (nbeabs < 1000) THEN
+      OPEN(588,STATUS='unknown', FILE='pescmaskOrb.'//trim(adjustl(inttostring(nbeabs)))//'.'//outnam)
+    ELSE
+      STOP 'ERROR: Too many states for jescmaskOrb'
+    END IF
+    CALL printfield(588,rhoabsoorb(1,nbe),'x')
+    CLOSE(588)
+  END DO
+END IF
+
+IF(myn == 0) THEN
+  IF (jescmask .NE. 0 .AND. MOD(it,jescmask) == 0) THEN
+    IF(it < 1000000000) THEN
+      OPEN(589,STATUS='unknown', FILE='pescmask.'//trim(adjustl(inttostring(it)))//'.'//outnam)
+    ELSE
+      STOP '::too many time steps::'
+    END IF
+    CALL printfield(589,rhoabso,'x')
+    CLOSE(589)
+  END IF
+
+
+  IF (it == 0) THEN
+    OPEN(589,STATUS='unknown',FILE='pescmask.0.'//outnam)    ! Why do it again ?? 
+    CALL printfield(589,rhoabso,'x')
+    CLOSE(589)
+  END IF
+
+END IF
+
+RETURN
+END SUBROUTINE escmask

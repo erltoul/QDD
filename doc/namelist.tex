@@ -271,15 +271,6 @@ all static states \\
                       excitation\\
                      & this $1ph$ option can only be run from {\tt istat=1}
 \\
-{\tt eproj}& energy of incoming projectile (= last ion in the list)
-\\
-{\tt vpx,vpy,vpz}& direction of the incoming projectile
-\\
-{\tt taccel}& time span over which the projectile is accelerated to
-             {\tt eproj}
-\\
-& for {\tt taccel=0} one has to use {\tt init\_lcao=1}
-\\
 \hline
 \end{tabular}
 
@@ -349,8 +340,6 @@ and variance \textcolor{red}{???}\\
 {\tt i3dz} &  print z-integrated 2D density, following {\tt idenspl} \textcolor{red}{???}\\
 {\tt i3dx} &  print x-integrated 2D density, following {\tt idenspl} \textcolor{red}{???}\\
 {\tt i3dstate} & print  x- and z-integrated density per state, following {\tt idenspl} \textcolor{red}{???}\\
-{\tt jescmask} & modulus for detailed print of lost electrons  \textcolor{red}{???}  \\
-{\tt jescmaskorb} & modulus for state-wise detailed print of lost electrons \textcolor{red}{???} \\
 \hline
 \end{tabular}
 
@@ -362,8 +351,6 @@ and variance \textcolor{red}{???}\\
 \hline
 {\tt phi} & phase of laser pulse, inactive for electrons, strange
 for ions \textcolor{red}{???} \\
-{\tt nproj} & element number of atomic projectile \\
-{\tt nproj\_states} & nr. of eletronic states in atomic projectile \\
 {\tt projcharge} &  charge of ionic projectile \\
 {\tt projvelx} &  x-velocity of ionic point-charge  projectile\\
 {\tt projvely} &  y-velocity of ionic point-charge  projectile  \\
@@ -398,24 +385,8 @@ Gaussian pseudo-densities \textcolor{red}{check default}\\
 {\tt vxn0} & boost velocity x-direction relative to {\tt ekin0pp} \\
 {\tt vyn0} & boost velocity y-direction relative to {\tt ekin0pp}  \\
 {\tt vzn0} &  boost velocity z-direction relative to {\tt ekin0pp} \\
-{\tt trequest} &  variable checking CPU time to trigger save
-operations  \textcolor{red}{??}\\
-{\tt timefrac} &  variable checking CPU time to trigger save operations \textcolor{red}{??}  \\
 {\tt nmptheta} &  number of PES measuring points in $\theta$ direction  \\
 {\tt nmpphi} &   number of PES measuring points in $\phi$ direction  \\
-{\tt iscatterelectron} &  switch to scattering with electron wavepacket\\
-{\tt jattach} &  modulus to compute attachement probability\\
-{\tt scatterelectronenergy} &  kinetic energy of impinging electron wavepacket\\
-{\tt scatterelectronvxn} &  x-velocity  of impinging electron
-wavepacket (relative to {\tt scatterelectronenergy})\\
-{\tt scatterelectronvyn} &  y-velocity  of impinging electron
-wavepacket (relative to {\tt scatterelectronenergy}) \\
-{\tt scatterelectronvzn} &  z-velocity  of impinging electron
-wavepacket (relative to {\tt scatterelectronenergy}) \\
-{\tt scatterelectronx} & initial x-coordinate of impinging electron \\
-{\tt scatterelectrony} & initial y-coordinate of impinging electron  \\
-{\tt scatterelectronz} & initial z-coordinate of impinging electron  \\
-{\tt scatterelectronw} & initial width  of impinging electron \\
 \hline
 \end{tabular}
 
@@ -435,6 +406,44 @@ wavepacket (relative to {\tt scatterelectronenergy}) \\
 {\tt rtaforcetemperature} & \textcolor{red}{is that really used?} \\
 {\tt rtasigee} & effective electron-electron cross section in RTA \\
 {\tt rtars} & effective Wigner-Seitz radius for estimating damping rate \\
+\hline
+\end{tabular}
+
+
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Namelist {\tt EXTENSIONS}} in {\tt for005.<name>} \\
+\hline
+\multicolumn{2}{c}{\it extended options (not to appear in public version)} \\
+\hline
+{\tt trequest} &  variable checking CPU time to trigger save
+operations \\
+{\tt timefrac} &  variable checking CPU time to trigger save operations  \\
+{\tt iscatterelectron} &  switch to scattering with electron wavepacket\\
+{\tt jattach} &  modulus to compute attachement probability\\
+{\tt scatterelectronenergy} &  kinetic energy of impinging electron wavepacket\\
+{\tt scatterelectronvxn} &  x-velocity  of electron
+wavepacket (relative to energy)\\
+{\tt scatterelectronvyn} &  y-velocity  of electron
+wavepacket (relative to energy) \\
+{\tt scatterelectronvzn} &  z-velocity  of electron
+wavepacket (relative to energy) \\
+{\tt scatterelectronx} & initial x-coordinate of impinging electron \\
+{\tt scatterelectrony} & initial y-coordinate of impinging electron  \\
+{\tt scatterelectronz} & initial z-coordinate of impinging electron  \\
+{\tt scatterelectronw} & initial width  of impinging electron \\
+{\tt jescmask} & modulus for detailed print of lost electrons \\
+{\tt jescmaskorb} & modulus for state-wise detailed print of lost electrons \\
+{\tt eproj}& energy of incoming projectile (= last ion in the list)
+\\
+{\tt vpx,vpy,vpz}& direction of the incoming projectile
+\\
+{\tt taccel}& time span over which the projectile is accelerated to
+             {\tt eproj}\\
+& for {\tt taccel=0} one has to use {\tt init\_lcao=1}\\
+{\tt nproj} & element number of atomic projectile \\
+{\tt nproj\_states} & nr. of eletronic states in atomic projectile \\
+\\
 \hline
 \end{tabular}
 

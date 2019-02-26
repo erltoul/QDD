@@ -34,7 +34,7 @@ SUBROUTINE calcrho(rho,q0)
 !     rho    = local density for spin-down and spin-up separately
 
 USE params
-USE util, ONLY:emoms, projmoms
+USE util, ONLY:emoms
 IMPLICIT NONE
 
 #ifdef REALSWITCH
@@ -53,6 +53,24 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
 
 INTEGER :: ind, ishift, nb
 REAL(DP) :: rhodif, rhotot
+
+#if(extended)
+INTERFACE projmoms
+   SUBROUTINE c_projmoms(rho,psi)
+     USE params, ONLY: DP
+     REAL(DP), INTENT(IN)    :: rho(:)
+     COMPLEX(DP), INTENT(IN) :: psi(:,:)
+   END SUBROUTINE c_projmoms
+   SUBROUTINE r_projmoms(rho,psi)
+     USE params, ONLY: DP
+     REAL(DP), INTENT(IN)    :: rho(:)
+     REAL(DP), INTENT(IN) :: psi(:,:)
+   END SUBROUTINE r_projmoms
+
+!  MODULE PROCEDURE r_projmoms, c_projmoms
+END INTERFACE projmoms
+#endif
+
 
 !-----------------------------------------------------------------
 
@@ -121,8 +139,10 @@ END DO
 
 CALL emoms(rho)                    ! moments for the whole system (in qe)
 
+#if(extended)
 IF(eproj/=0) CALL projmoms(rho,q0) ! moments forprojectile and target,
                                    ! (in qeproj and qetarget)
+#endif
 
 !IF(istream == 1)  CALL stream(rho)
 
