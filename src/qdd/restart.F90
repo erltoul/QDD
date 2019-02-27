@@ -48,8 +48,10 @@ SUBROUTINE restart2(psi,outna,tstatin)
 
 USE params
 USE kinetic
+#if(fsic)
 USE twostr, ONLY: vecsr,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
+#endif
 IMPLICIT NONE
 
 
@@ -343,6 +345,7 @@ END IF
 #endif
 #endif
 
+#if(fsic)
 IF(ifsicp >= 6) THEN
 #ifdef REALSWITCH
   READ(ifile) vecsr(1:kstate,1:kstate,1:2),ndims(1:2)
@@ -375,6 +378,7 @@ IF(ifsicp >= 6) THEN
   END DO
 #endif
 END IF
+#endif
 
 #if(extended)
 #ifdef COMPLEXSWITCH
@@ -440,8 +444,10 @@ SUBROUTINE SAVE(psi,isa,outna)
 USE params
 USE kinetic
 !#ifdef REALSWITCH
+#if(fsic)
 USE twostr, ONLY: vecsr,vecsc,ndims
 USE twost, ONLY: vecs,expdabold,wfrotate
+#endif
 !#endif
 IMPLICIT NONE
 
@@ -660,6 +666,7 @@ IF(mynact==0) THEN
     END IF
 END IF    
     
+#if(fsic)
 #ifdef REALSWITCH
     IF(ifsicp ==9) THEN
       WRITE(ifile) vecsc(1:kstate,1:kstate,1:2),ndims(1:2)
@@ -695,6 +702,7 @@ END IF
         WRITE(*,'(5(2f10.5,2x))') vecs(1:ndims(2),n,2)
       END DO
     END IF
+#endif
 #endif
 
 #if(extended)

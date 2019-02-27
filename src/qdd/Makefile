@@ -4,7 +4,6 @@
 # Available options:
 #   * GFORT (serial version only)
 #   * IFORT (serial & parallel & debug version)
-#   * XLF_R (serial & parallel version)
 #   * MPIF90 (parallel version only)
 CF90 = GFORT
 
@@ -88,6 +87,7 @@ COUDOUB3D=NO
 RAREGAS = NO
 # Include private sector
 EXTENDED = YES
+FSIC=YES
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
@@ -107,6 +107,9 @@ ifeq ($(RAREGAS),YES)
 endif
 ifeq ($(EXTENDED),YES)
     CODE_OPTIONS += -Dextended
+endif
+ifeq ($(FSIC),YES)
+    CODE_OPTIONS += -Dfsic
 endif
 
 #####################################################################
@@ -356,10 +359,6 @@ COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(COD
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 
 # This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
-IDRIS =
-ifeq "$(CF90)" "XLF_R"
-	IDRIS    = -WF,
-endif
 
 #####################################################################
 #                             Linker                                #
@@ -596,12 +595,14 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        carlo.o localize.o localizer.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
-       parallele.o 2stUT.o rta.o\
+       parallele.o rta.o\
        HEeigensystem.o mini.o zdiag.o orthmat.o
 ifeq ($(EXTENDED),YES)
     OBJINT += util_extended.o attachement.o
 endif
-       
+ifeq ($(FSIC),YES)
+    OBJINT += 2stUT.o 2st_util.o 2stUTc.o
+endif       
 ifeq ($(raregas), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o util_substrate.o
@@ -621,9 +622,9 @@ ifeq ($(calls_FFTW), YES)
   FFT_OBJ = fftw.o
   MODLIST += fftw.mod
 endif
-# Sic objects:
-OBJINT  += 2st_util.o 2stUTc.o
+ifeq ($(FSIC),YES)
 MODLIST += 2st_util.mod twostr.mod twost.mod
+endif
 
 OBJS = $(OBJINT) $(FFT_OBJ)
 
@@ -688,27 +689,26 @@ $(EXEC): initial_checks $(OBJS)
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
 # Additions for twostsic:
-ifneq ($(twostsic_value), 0)
+ifeq ($(FSIC),YES)
 
-OBJS_2ST_UTIL = main.o static.o
-OBJS_TWOSTSIC     = dynamic.F90 main.o
-OBJS_TWOSTSIC_R   = dynamic.o main.o restart.o static.o
+FSICDEPEND = 2st_util.o 2stUTc.o 2stUT.o
+#OBJS_2ST_UTIL = main.o static.o
+#OBJS_TWOSTSIC     = dynamic.F90 main.o
+#OBJS_TWOSTSIC_R   = dynamic.o main.o restart.o static.o
 
-$(OBJS_2ST_UTIL): 2st_util.mod
-$(OBJS_TWOSTSIC):     twost.mod
-$(OBJS_TWOSTSIC_R):   twostr.mod
+#$(OBJS_2ST_UTIL): 2st_util.mod
+#$(OBJS_TWOSTSIC):     twost.mod
+#$(OBJS_TWOSTSIC_R):   twostr.mod
 
-2st_util.o 2st_util.mod: 2st_util.F90 kinetic.mod orthmat.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2st_util.o -c $<
+2st_util.o 2st_util.mod: fsic/2st_util.F90 kinetic.mod orthmat.o 
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o 2st_util.o -c $<
 
-2stUTc.o twost.mod: 2stUT.F90 kinetic.mod twostr.mod 
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o 2stUTc.o -c $<
+2stUTc.o twost.mod: fsic/2stUT.F90 kinetic.mod twostr.mod 
+	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o 2stUTc.o -c $<
 
-2stUT.o twostr.mod: 2stUT.F90 kinetic.mod 2st_util.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o 2stUT.o -c $<
-else
-2stUT.o: 2stUT.F90 kinetic.mod orthmat.o
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+2stUT.o twostr.mod: fsic/2stUT.F90 kinetic.mod 2st_util.mod
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o 2stUT.o -c $<
+
 endif
 
 # Particular rules
@@ -716,34 +716,36 @@ endif
 
 kinetic.o : kinetic.F90 fft.F90 findiff/findiff.F90 $(FFT_OBJ)
 
-#  ifneq "$(TYPE_FFT)" "cuFFT"
 coulsolv.o: coulsolv.F90 falr.o coulex.o kinetic.mod $(FFT_OBJ)
-#  endif
-static.o: pseudosoft.F90 $(DEPS_KINCOUL)
+
+static.o: static.F90 pseudosoft.F90 $(DEPS_KINCOUL) $(FSICDEPEND)
+
+
+dyanamic.o: dynamic.F90 pseudosoft.F90 $(DEPS_KINCOUL) $(FSICDEPEND)
 
 rho.o: rho.F90
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o $@ -c $<
 
 rhoc.o: rho.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
 
 localizer.o: localize.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o $@ -c $<
 
 localize.o: localize.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
 
 sicnew.o: sicnew.F90 $(DEPS_KINCOUL)
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o $@ -c $<
 
 sicnewc.o: sicnew.F90 $(DEPS_KINCOUL)
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
 
 nonloc.o: nonloc.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o $@ -c $<
 
 nonlocc.o: nonloc.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS1) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
 
 ifeq ($(TYPE_FFT), NETLIB)
 fftpack.o: fftpack.F90 fftpack2.F90
@@ -751,7 +753,7 @@ fftpack.o: fftpack.F90 fftpack2.F90
 endif
 
 
-main.o: main.F90 util.o 
+main.o: main.F90 util.o  $(FSICDEPEND)
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 givens.o: givens.F90
@@ -760,11 +762,11 @@ givens.o: givens.F90
 #multi_exp.o: multi_exp.F90 params.mod
 #	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
-restart.o: restart.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DREALSWITCH    -o $@ -c $<
+restart.o: restart.F90 kinetic.mod $(FSICDEPEND)
+	$(COMPILER) $(COMPILERFLAGS3) -DREALSWITCH    -o $@ -c $<
 
-restartc.o: restart.F90 kinetic.mod
-	$(COMPILER) $(COMPILERFLAGS3) $(IDRIS)-DCOMPLEXSWITCH -o $@ -c $<
+restartc.o: restart.F90 kinetic.mod $(FSICDEPEND)
+	$(COMPILER) $(COMPILERFLAGS3) -DCOMPLEXSWITCH -o $@ -c $<
 
 parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<

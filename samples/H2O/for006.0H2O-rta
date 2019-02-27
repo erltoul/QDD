@@ -1,0 +1,237 @@
+  title is now: H2O-rta      
+ kxbox,kybox,kzbox:          64          64          64
+ h bar squared over two m electron   1.0000000000000000     
+  testprint EYE= (  0.0000000000000000     ,  1.0000000000000000     )
+  dkx,dky,dkz=  0.16676394870891367       0.16676394870891367       0.16676394870891367     
+  testprint: nx2,ny2,nz2=          64          64          64
+  testprint: kdfull2,kfft2=      262144         257
+ x-fft initialized 
+ y-fft initialized 
+ z-fft initialized 
+the following options are used:
+
+Perdew-Wang 92 exchange-correlation functional
+ serial code: max. number of wf=          64
+ spin code 
+ static step: Hamiltonian in subspace diagonalized
+Fourier propagation
+using netlib ffts
+exact coulomb solver
+faster TV propagator
+time step by T-V splitting
+ _______________________________________________
+
+ compiled parameters
+
+ maximum compiled sizes x y z          64          64          64
+ maximum number of ions           3
+
+ units
+
+ h bar   1.0000000000000000     
+ e2   2.0000000000000000     
+ m electron  0.50000000000000000     
+ _______________________________________________
+
+full Goedecker pseudopotentials
+ initialize wavefunctions with h.o.
+ spherical absorbing b.c.: nabsorb,powabso=   4  0.12500    
+no molecular dynamics 
+ energy computed directly
+sic activated: double-set SIC
+ kxbox,kybox,kzbox=    64    64    64
+ nelect,nion,nstate=     8     3    64
+ ispidi,iforce,iexcit,irotat,phirot=  0  0  0  0   0.00
+ boost: centfx,centfy,centfz=    0.00    0.00    0.00
+ shift: shiftinix,y,z=    0.00    0.00    0.00
+ irest,istat,dt1=  0  0  0.013
+ laser:
+ itft,tnode,deltat,tpeak,omega,e0=  3   0.025  36.000   0.000   0.790   0.080
+ e1x,e1y,e1z,e2x,e2y,e2z,phi=   0.000   0.000   1.000   0.000   0.000   0.000   0.000
+ CODE VERSION:           74
+     # electr.:  8# ions:  3
+==========
+
+number of alkali wave-fkts nstate =   1
+initialisation : osfac=1.00
+quantumnumbers :  
+    0   0   0
+temperature kt=    0.00500Ry,   occmix=0.50
+epsoro=  0.10000E-08
+number of wave-fkts nclust =   8
+nx=  32   ny=  32   nz=  32
+dx=0.59   dy=0.59   dz=0.59
+damped gradient step :
+epswf=  0.6000       e0dmp=   3.000    
+jellium background :
+radjel=   4.000       surjel=   1.000    
+set of fixed deformation parameters (in hill-wheeler-coordinates) :
+bbeta=0.00   gamma=   0.
+
+
+
+ np(           1 )=           8
+ amu(           8 )=   16.000000000000000     
+  PsP parameters for ion:
+ch=   6.00000    
+amu=   16.0000    
+cc1=  0.734537    
+cc2=  -2.05088    
+crloc=  0.500000    
+crs=   0.00000    
+chs=   0.00000    
+h0_11g=   1.75051    
+h0_12g= -1.000000E+20
+h0_22g=   0.00000    
+h0_33g=   0.00000    
+h1_11g=   0.00000    
+h1_22g=   0.00000    
+h2_11g=   0.00000    
+sgm1=   0.00000    
+sgm2=   0.00000    
+chg1=   0.00000    
+chg2=   0.00000    
+r0g=  0.500000    
+r1g=  0.500000    
+r2g=   0.00000    
+radiong=   2.20000    
+ tblock= F
+ tnonloc= T
+  optimal grid spacing for this element=  0.58870501145737697     
+ np(           2 )=           1
+ amu(           1 )=   1.0000000000000000     
+  PsP parameters for ion:
+ch=   1.00000    
+amu=   1.00000    
+cc1=  0.288977    
+cc2= -8.386485E-02
+crloc=  0.500000    
+crs=   0.00000    
+chs=   0.00000    
+h0_11g= -0.499418    
+h0_12g= -1.000000E+20
+h0_22g=   0.00000    
+h0_33g=   0.00000    
+h1_11g=   0.00000    
+h1_22g=   0.00000    
+h2_11g=   0.00000    
+sgm1=   0.00000    
+sgm2=   0.00000    
+chg1=   0.00000    
+chg2=   0.00000    
+r0g=  0.500000    
+r1g=  0.500000    
+r2g=   0.00000    
+radiong=   2.20000    
+ tblock= F
+ tnonloc= T
+  optimal grid spacing for this element=  0.58870501145737697     
+ np(           3 )=           1
+ amu(           1 )=   1.0000000000000000     
+  PsP parameters for ion:
+ch=   1.00000    
+amu=   1.00000    
+cc1=  0.288977    
+cc2= -8.386485E-02
+crloc=  0.500000    
+crs=   0.00000    
+chs=   0.00000    
+h0_11g= -0.499418    
+h0_12g= -1.000000E+20
+h0_22g=   0.00000    
+h0_33g=   0.00000    
+h1_11g=   0.00000    
+h1_22g=   0.00000    
+h2_11g=   0.00000    
+sgm1=   0.00000    
+sgm2=   0.00000    
+chg1=   0.00000    
+chg2=   0.00000    
+r0g=  0.500000    
+r1g=  0.500000    
+r2g=   0.00000    
+radiong=   2.20000    
+ tblock= F
+ tnonloc= T
+  optimal grid spacing for this element=  0.58870501145737697     
+ dx=  0.58870500000000003       absolute optimal grid spacing =  0.58870501145737697     
+sumion=          13.5491
+
+initial ionic positions and velocities:
+ion 1=   0.2283   0.0000   0.0000   0.0000   0.0000   0.0000
+ion 2=  -0.9135   1.4742   0.0000   0.0000   0.0000   0.0000
+ion 3=  -0.9135  -1.4742   0.0000   0.0000   0.0000   0.0000
+
+ speact   0.0000000000000000      n          11 isp           2
+ no           0           0           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.12647435956421679      n          12 isp           2
+ no           1           0           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.25294871912843359      n          13 isp           2
+ no           2           0           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.12747331718806143      n          14 isp           2
+ no           0           1           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.25394767675227825      n          15 isp           2
+ no           1           1           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.25494663437612286      n          16 isp           2
+ no           0           2           0  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.12123445705236383      n          17 isp           2
+ no           0           0           1  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.24770881661658062      n          18 isp           2
+ no           1           0           1  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.24870777424042526      n          19 isp           2
+ no           0           1           1  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+
+ speact  0.24246891410472765      n          20 isp           2
+ no           0           0           2  0.12123445705236383       0.12747331718806143       0.12647435956421679     
+ nstate ininqb          20
+  0 0 0     0.100E+01         0.000    1
+  1 0 0     0.100E+01         0.126    1
+  2 0 0     0.100E+01         0.253    1
+  0 1 0     0.100E+01         0.127    1
+  1 1 0     0.000E+00         0.254    1
+  0 2 0     0.000E+00         0.255    1
+  0 0 1     0.000E+00         0.121    1
+  1 0 1     0.000E+00         0.248    1
+  0 1 1     0.000E+00         0.249    1
+  0 0 2     0.000E+00         0.242    1
+  0 0 0     0.100E+01         0.000    2
+  1 0 0     0.100E+01         0.016    2
+  2 0 0     0.100E+01         0.032    2
+  0 1 0     0.100E+01         0.016    2
+  1 1 0     0.000E+00         0.032    2
+  0 2 0     0.000E+00         0.032    2
+  0 0 1     0.000E+00         0.015    2
+  1 0 1     0.000E+00         0.031    2
+  0 1 1     0.000E+00         0.031    2
+  0 0 2     0.000E+00         0.030    2
+after ordering:
+nstate,nclust 20  8
+after oscillator initialization:
+wf   1 occ      1.0000 sp 1 knots:  0  0  0
+wf   2 occ      1.0000 sp 1 knots:  1  0  0
+wf   3 occ      1.0000 sp 1 knots:  2  0  0
+wf   4 occ      1.0000 sp 1 knots:  0  1  0
+wf   5 occ      0.0000 sp 1 knots:  1  1  0
+wf   6 occ      0.0000 sp 1 knots:  0  2  0
+wf   7 occ      0.0000 sp 1 knots:  0  0  1
+wf   8 occ      0.0000 sp 1 knots:  1  0  1
+wf   9 occ      0.0000 sp 1 knots:  0  1  1
+wf  10 occ      0.0000 sp 1 knots:  0  0  2
+wf  11 occ      1.0000 sp 2 knots:  0  0  0
+wf  12 occ      1.0000 sp 2 knots:  1  0  0
+wf  13 occ      1.0000 sp 2 knots:  2  0  0
+wf  14 occ      1.0000 sp 2 knots:  0  1  0
+wf  15 occ      0.0000 sp 2 knots:  1  1  0
+wf  16 occ      0.0000 sp 2 knots:  0  2  0
+wf  17 occ      0.0000 sp 2 knots:  0  0  1
+wf  18 occ      0.0000 sp 2 knots:  1  0  1
+wf  19 occ      0.0000 sp 2 knots:  0  1  1
+wf  20 occ      0.0000 sp 2 knots:  0  0  2

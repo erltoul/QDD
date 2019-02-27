@@ -30,9 +30,11 @@ USE params
 USE kinetic
 USE util
 USE coulsolv
+#if(fsic)
 USE twostr
 USE twost
 USE twost_util
+#endif
 USE orthmat
 IMPLICIT NONE
 
@@ -148,9 +150,11 @@ WRITE(*,*) 'lengnod:',lengnod
 
 CALL timer(1)                        ! set timer
 
+#if(fsic)
 IF(nclust > 0 .AND. ifsicp > 7) THEN
   CALL init_fsicr()                  ! initialize parameters for full SIC
 END IF
+#endif
 
 
 !       *******************************************
@@ -318,10 +322,12 @@ IF (surftemp > 0) CALL init_surftemp()
 
 IF(nclust > 0) THEN
 
+#if(fsic)
   IF(ifsicp >= 7) THEN
     CALL init_fsic()
 !    CALL end_fsicr()                !??    check and correct
   END IF
+#endif
   
   IF(nabsorb > 0) CALL init_absbc(rho)
   IF(jmp > 0) CALL initmeasurepoints

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.10.15)  27 FEB 2019 12:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.10.15)  27 FEB 2019 15:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -326,19 +326,19 @@ LaTeX Info: Redefining \nameref on input line 36.
 \openout3 = `namelist.out'.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 58--60
+Underfull \hbox (badness 10000) in paragraph at lines 67--69
 
  []
 
 
-Overfull \hbox (30.66791pt too wide) in paragraph at lines 74--126
+Overfull \hbox (30.66791pt too wide) in paragraph at lines 83--135
 [] 
  []
 
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-Overfull \hbox (51.98212pt too wide) in paragraph at lines 127--161
+Overfull \hbox (51.98212pt too wide) in paragraph at lines 136--170
 [][] 
  []
 
@@ -347,17 +347,17 @@ Overfull \vbox (0.20699pt too high) has occurred while \output is active []
 
 
 [4]
-Overfull \hbox (39.20251pt too wide) in paragraph at lines 278--342
+Overfull \hbox (39.20251pt too wide) in paragraph at lines 287--351
 [][] 
  []
 
 [5]
-Overfull \hbox (89.24744pt too wide) in paragraph at lines 343--386
+Overfull \hbox (89.24744pt too wide) in paragraph at lines 352--395
 [][] 
  []
 
 [6]
-Overfull \hbox (53.2234pt too wide) in paragraph at lines 407--449
+Overfull \hbox (53.2234pt too wide) in paragraph at lines 416--458
 [][] 
  []
 
@@ -366,19 +366,19 @@ Overfull \vbox (44.14168pt too high) has occurred while \output is active []
 
 
 [9]
-Underfull \hbox (badness 10000) in paragraph at lines 548--569
+Underfull \hbox (badness 10000) in paragraph at lines 557--578
 
  []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 572.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 581.
 [10]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 572.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 581.
  (./namelist.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 572.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 572.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 581.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 581.
 Package rerunfilecheck Info: File `namelist.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 572.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 581.
  ) 
 Here is how much of TeX's memory you used:
  6160 strings out of 494901
@@ -399,7 +399,7 @@ ic/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
 fonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
 m/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt
 12.pfb>
-Output written on namelist.pdf (10 pages, 131759 bytes).
+Output written on namelist.pdf (10 pages, 132427 bytes).
 PDF statistics:
  97 PDF objects out of 1000 (max. 8388607)
  73 compressed objects within 1 object stream

@@ -242,7 +242,9 @@ SUBROUTINE init_dynwf(psi)
 
 USE params
 USE util, ONLY:phstate,stateoverl,dipole_qp,prifld,testcurrent
+#if(fsic)
 USE twost
+#endif
 USE orthmat
 
 IMPLICIT NONE
@@ -258,7 +260,9 @@ LOGICAL,PARAMETER :: ttestrho=.TRUE.
 !----------------------------------------------------
 
 
+#if(fsic)
 IF(ifsicp .GE. 8) CALL expdabvol_rotate_init ! MV initialise ExpDabOld
+#endif
 
 IF(ifsicp.EQ.5 .AND. ifexpevol .NE. 1) &
    STOP ' exact exchange requires exponential evolution'
@@ -435,8 +439,11 @@ SUBROUTINE tstep(q0,aloc,rho,it)
 
 USE params
 USE kinetic
-USE twost, ONLY:tnearest
-USE twost_util, ONLY:eval_unitrot
+
+#if(fsic)
+USE twost, ONLY:tnearest,eval_unitrot
+!USE twost_util, ONLY:
+#endif
 
 IMPLICIT NONE
 
@@ -556,13 +563,14 @@ END IF
 DEALLOCATE(q1)
 DEALLOCATE(q2)
 
+#if(fsic)
 IF(tnearest .AND. ifsicp.GE.8) THEN
   ALLOCATE(qwork(kdfull2,kstate))
   qwork=q0
   CALL eval_unitrot(q0,qwork)
   DEALLOCATE(qwork)
 END IF
-
+#endif
 
 
 ! New density and local potential (this is already the density 
@@ -637,7 +645,9 @@ SUBROUTINE dyn_mfield(rho,aloc,psi,dt,it)
 !      aloc   = local mean-field potential
 
 USE params
+#if(fsic)
 USE twost
+#endif
 
 IMPLICIT NONE
 
@@ -669,6 +679,7 @@ CALL calclocal(rho,aloc)
 ! SIC
 IF(ifsicp > 0 .AND.ifsicp <= 6) THEN
   CALL calc_sic(rho,aloc,psi)
+#if(fsic)
 ELSE IF(ifsicp >= 7)THEN
   CALL calc_utwfc(psi,psiut,NINT(tfs/(dt1*0.0484D0)))   
   IF(ifsicp == 7)THEN
@@ -678,6 +689,7 @@ ELSE IF(ifsicp >= 7)THEN
   ELSE IF(ifsicp .GE. 8) THEN
     CALL calc_fullsic(psiut,qnewut)
   END IF
+#endif
 ELSE IF(ifsicp == 6) THEN
   STOP ' that kind of SIC not valid for dynamics'
 END IF
@@ -1126,8 +1138,10 @@ SUBROUTINE calc_epot(psin,alocact,enonlocout,nb)
 
 USE params
 USE util, ONLY:wfovlp
+#if(fsic)
 USE twost
 USE twostr, ONLY: ndims
+#endif
 
 IMPLICIT NONE
 
@@ -1173,20 +1187,21 @@ END IF
 
 IF(ttest) WRITE(*,*) ' in CALC_EPOT 2'
 ! subtract SIC potential for state NB
+#if(fsic)
 IF(ifsicp .GE. 8) THEN
   is=ispin(nrel2abs(nb))
   DO na=1,ndims(is)
     nbe = nb - (is-1)*ndims(1)
     nae = na + (is-1)*ndims(1)
-            write(*,*)   ' nb,is,na,nbe,vecs=',nb,is,na,nbe,vecs(nbe,na,is)
+    WRITE(*,*)   ' nb,is,na,nbe,vecs=',nb,is,na,nbe,vecs(nbe,na,is)
     cf = CONJG(vecs(nbe,na,is))
-            write(*,*)   ' nb,is,na,nbe,cf=',nb,is,na,nbe,cf
+    WRITE(*,*)   ' nb,is,na,nbe,cf=',nb,is,na,nbe,cf
     DO i=1,nxyz
       psi2(i)=psi2(i)-qnewut(i,nae)*cf
     END DO
   END DO
 END IF
-
+#endif
 
 IF(ifsicp==5) THEN
   ALLOCATE(qex(kdfull2))
@@ -2545,8 +2560,11 @@ SUBROUTINE tstep_exp(q0,aloc,rho,it,qwork,timagtime)
 
 
 USE params
-USE twost, ONLY:tnearest
-USE twost_util, ONLY:eval_unitrot
+
+#if(fsic)
+USE twost, ONLY:tnearest,eval_unitrot
+!USE twost_util, ONLY:
+#endif
 
 IMPLICIT NONE
 
@@ -2601,12 +2619,16 @@ IF(.NOT.timagtime) THEN
       qwork(:,nb) = q0(:,nb)
       CALL exp_evol(qwork(:,nb),aloc,nb,4,cdtact,q1)
     END DO
+#if(fsic)
   ELSE
     qwork = q0
     CALL exp_evolp(qwork,aloc,4,cdtact,q1,q0)
+#endif
   END IF
 
+#if(fsic)
   IF(tnearest .AND. ifsicp.GE.8) CALL eval_unitrot(qwork,q0)
+#endif
 
 !     compute mean field at half time step
   CALL dyn_mfield(rho,aloc,qwork,dt1*0.5D0,it)
@@ -2628,12 +2650,16 @@ IF(tnorotate .OR. ifsicp < 8) THEN
   DO nb=1,nstate
     CALL exp_evol(q0(:,nb),aloc,nb,nterms,cdtact,q1)
   END DO
+#if(fsic)
 ELSE
   qwork = q0
   CALL exp_evolp(q0,aloc,nterms,cdtact,q1,qwork)
+#endif
 END IF
 
+#if(fsic)
 IF(tnearest .AND. ifsicp.GE.8 .AND. .NOT.timagtime) CALL eval_unitrot(q0,qwork)
+#endif
 
 ! switch of absorption after times step 'ntref'
 IF (ntref > 0 .AND. it > ntref) nabsorb = 0
@@ -2830,7 +2856,9 @@ SUBROUTINE hpsi(qact,aloc,nbe,itpri)
 USE params
 USE util, ONLY:wfovlp
 USE kinetic
+#if(fsic)
 USE twost
+#endif
 
 IMPLICIT NONE
 
@@ -2900,7 +2928,7 @@ IF(ifsicp==5) THEN
   DEALLOCATE(qex)
 END IF
 
-
+#if(fsic)
 ! subtract SIC potential for state NBE
 IF(ifsicp.GE. 8) THEN
   is=ispin(nrel2abs(nbe))
@@ -2912,9 +2940,8 @@ IF(ifsicp.GE. 8) THEN
       END DO
     END IF
   END DO
-  
 END IF
-
+#endif
 
 IF(tpri) THEN
   epotsp(nbe) = wfovlp(qact,q1)

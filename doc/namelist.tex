@@ -44,13 +44,22 @@
 These notes serve to explain the input structure of the
 cluster/molecule 3D code. It explains the full capabilities of the
 code. We want to publish only a subset.  All options addressed in
-namelist {\tt EXTENSIONS} and {\tt SURFACE} should not appear in the
-public version. The switches to these parts are immersed in the code
-with preproccesor variables {\tt extended} and {\tt raregas}. We
-should keep the code in the repository always in its complete version
-and write a little piece of software which reads the source files and
-produces new sources without the line enclosed be the
-{\tt\#if(extended)} and {\tt\#if(raregas)} closures.
+namelist {\tt EXTENSIONS}, {\tt FSIC2}, and {\tt SURFACE} should not
+appear in the public version. The switches to these parts are immersed
+in the code with preproccesor variables {\tt extended}, {\tt fsic},
+and {\tt raregas}. We should keep the code in the repository always in
+its complete version and write a little piece of software which reads
+the source files and produces new sources without the line enclosed be
+the {\tt\#if(extended)}, {\tt\#if(extended)}, and {\tt\#if(raregas)}
+closures.
+\\
+Note also the old input files have to changed. The namelist
+``\&EXTENSIONS'' has to follow namelist ``\&DYNAMIC'' and all non-public
+input parameters have to be moved to there. Moreover,
+The namelist ``\&FSIC'' has to renamed ``\&FSIC2''.
+A few examples with input in old style are collected in the directory
+{\tt examples} while examples with input in new style com in
+{\tt samples}.
 
 \bigskip
 

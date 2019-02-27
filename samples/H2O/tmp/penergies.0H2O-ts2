@@ -1,0 +1,12 @@
+ col 1: time (fs), col 2:  total sp en.
+ col 3: rearr. en, col 4:  kin. en. Na ions
+ col 5:  pot. energy of ions
+ col 6: ion-ion pot., col 7: ion-surf pot
+ col 8: intra-surf. pot
+ col 9: el-ion energy,col 10:  external en.
+ col 11: Hartree en.,col 12:  nonloc. en
+ col 13: sim.ann. en.,col 14:  binding en.
+ col 15: total en. [Ry]
+ col 16: energy absorbed from laser [Ry]
+ col 17/18: internal exc. energy (spin up/down)
+ col 21/22: direct energy, kinetic energy

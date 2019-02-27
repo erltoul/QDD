@@ -1,0 +1,6 @@
+ & 
+x:time
+y:dipole-momenta
+s: dist(4.0) scal(0.8) thickn(0.6) xmin(0.0)
+n: time in fs  dipole-momenta: x   y   z
+H:   X        Yl              Yd             Yq
