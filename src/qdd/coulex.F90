@@ -55,7 +55,7 @@ REAL(DP),ALLOCATABLE,PRIVATE :: akv2r(:),akv2i(:)
 #endif
 INTEGER,ALLOCATABLE,PRIVATE :: ikm(:,:)
 REAL(DP),PRIVATE :: dkx,dky,dkz,akmax,dksp,ecut
-INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz
+INTEGER,PRIVATE :: nxk,nxklo,nxkhi,nksp,nkxyz,iret
 
 #if(netlib_fft)
 REAL(DP),ALLOCATABLE,PRIVATE :: wrkx(:),wrky(:),wrkz(:)

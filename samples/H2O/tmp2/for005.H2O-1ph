@@ -21,13 +21,14 @@ ionmdtyp=0,
 istinf=10,
 jenergy=10,
 ismax=000,isitmax=0,isave=999,istat=1,
-itmax=2000,centfx=0.0,centfy=0.0,centfz=0.0,
+itmax=10000,centfx=0.0,centfy=0.0,centfz=0.0,
 ifsicp=2,
 ipsptyp=1,
 jinfo=10,
 nabsorb=4,
-jdip=10,jenergy=10,
-jesc=10,
+jcharges=50,drcharges=0.5,
+jdip=10,jenergy=10,jspdp=10,
+jesc=10,jquad=10,jang=10,
 ipasinf=10,
 jnorms=10,
 jpos=0,jvel=0,
@@ -36,7 +37,8 @@ jPlotDensityDiff2D=0,
 jPlotDensity2D=0,
 jelf=0,
 nhstate=1,npstate=10,
-ipasinf=1/
+phangle=90.0,phphase=0.0,
+ipasinf=1
 &END
 &EXTENSIONS
 jescmaskorb=0,jescmask=0,jattach=0

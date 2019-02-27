@@ -176,8 +176,8 @@ equations (of order of 0.5)\\
 \hline
 {\tt dpolx} & add stationary dipole field in x-direction
 \textcolor{red}{(better placed in {\tt dynamic}?)}\\
-{\tt dpoly} & add stationary dipole field in y-direction    \\
-{\tt dpolz} & add stationary dipole field in z-direction    \\
+{\tt dpoly} & add stationary dipole field in y-direction  \textcolor{red}{(better placed in {\tt dynamic}?)}  \\
+{\tt dpolz} & add stationary dipole field in z-direction  \textcolor{red}{(better placed in {\tt dynamic}?)}  \\
 \hline
 \end{tabular}
 
@@ -220,9 +220,9 @@ equations (of order of 0.5)\\
                        & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
 {\tt ifsicp           }& selects type of self-interaction correction\\
     &  0 = pure LDA, 1 = SIC-GAM, 2 = ADSIC; 3 = SIC-Slater; \\
-    &  4 = SIC-KLI; 5 = exact exchange, 7 = localized SIC,\\
-    &  8 = full SIC (real), 9 = full SIC(complex)\\
-    & \textcolor{red}{???: Options IFSICP=7,8,9 yet to ``extended'' version.}\\
+    &  4 = SIC-KLI; 5 = exact exchange. \\
+    & 7 = localized SIC, 8 = full SIC (real), 9 = full SIC(complex)
+     in extended branch {\tt fsic}\\
 {\tt icooltyp         }& type of cooling (0=none, 1=pseudo-dynamics,\\
 {\tt                  }& 2=steepest descent, 3=Monte Carlo)\\
 {\tt ifredmas         }& switch to use reduced mass for ions in dynamics\\
@@ -274,13 +274,14 @@ equations (of order of 0.5)\\
 {\tt iangmo} & switch to compute angular momentum\\
 {\tt irotat} & axis of rotation for excitation (x=1,y=2,z=2,xyz=4)\\
 {\tt phirot} & angle of rotation for excitation (in units of degree)\\
-{\tt phangle}        & angle of ``rotation'' into a $1ph$ state\\
-{\tt phphase}        & phase of ``rotation'' into a $1ph$ state\\
 {\tt nhstate,npstate}& nr. of hole and particle state for $1ph$
                       excitation\\
                      & this option can only be run from {\tt istat=1}
-\textcolor{red}{to be checked}
 \\
+{\tt phangle}        & angle of ``rotation'' into a $1ph$ state\\
+{\tt phphase}        & phase of ``rotation'' into a $1ph$ state\\
+& {\tt phangle} and {\tt phphase} must be different, ideally
+ {\tt phangle}-{\tt phphase}=90\\
 \hline
 \end{tabular}
 
@@ -452,7 +453,7 @@ wavepacket (relative to energy) \\
 {\tt i3dx} &  print x-integrated 2D density, following {\tt idenspl}\\
 {\tt i3dstate} & print  x- and z-integrated density per state, following {\tt idenspl}\\
 {\tt jstboostinv} & modulus for evaluating boost-invariant s.p. energy
-and variance \textcolor{red}{???}\\
+and variance\\
 \hline
 \end{tabular}
 

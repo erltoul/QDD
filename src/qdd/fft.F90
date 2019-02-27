@@ -106,7 +106,7 @@ INTEGER:: ind
 #endif
 
 #if(fftw_cpu)
-INTEGER :: i, nacthr
+INTEGER :: i  !, nacthr
 #endif
 
 #if(paropenmp && !dynopenmp)

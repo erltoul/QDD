@@ -290,7 +290,8 @@ IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) psisavex = psi
 
 !     optionally rotate a 1ph state
 
-IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
+!IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
+ CALL phstate(psi)
 
 !     boost the wavefunctions
 
@@ -1890,7 +1891,7 @@ IF(irest <= 0) THEN                    !  write file headers
       WRITE(323,'(a,2i6)') '# Column 1 : time [fs]'
       WRITE(323,'(a,2i6)') '# Column 2 : total nr of electrons in box'
       DO i=1,INT(nzsh*dz/drcharges)
-        WRITE(323,'(a,i6,f8.3)') 'Column ',i+2,i*drcharges
+        WRITE(323,'(a,i6,f8.3)') '#Column ',i+2,i*drcharges
       END DO
       CLOSE(323)
     END IF

@@ -32,3 +32,37 @@ xy,zx,zy:     0.0000     0.0000     0.0000
 spindip.:     0.0000     0.0000     0.0000
 omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
 
+final protocol of static for IFSICP=  2
+level:  1  spin,occup,ekin,esp,variance =  1  1.00000  1.31912 -2.33723  5.8481E-10
+level:  2  spin,occup,ekin,esp,variance =  1  1.00000  2.51534 -1.59199  5.3733E-10
+level:  3  spin,occup,ekin,esp,variance =  1  1.00000  2.46317 -1.25959  5.3220E-10
+level:  4  spin,occup,ekin,esp,variance =  1  1.00000  2.74713 -1.11479  5.7244E-10
+level:  5  spin,occup,ekin,esp,variance =  1  0.00000  0.71328 -0.42203  7.7313E-07
+level:  6  spin,occup,ekin,esp,variance =  1  0.00000  0.73195 -0.26481  2.9550E-03
+level:  7  spin,occup,ekin,esp,variance =  1  0.00000  0.30830 -0.21468  5.6298E-03
+level:  8  spin,occup,ekin,esp,variance =  1  0.00000  0.31976 -0.21151  6.3903E-03
+level:  9  spin,occup,ekin,esp,variance =  1  0.00000  0.35431 -0.15832  7.9917E-03
+level: 10  spin,occup,ekin,esp,variance =  1  0.00000  0.20732 -0.12894  1.4731E-03
+level: 11  spin,occup,ekin,esp,variance = -1  1.00000  1.31912 -2.33723  5.8481E-10
+level: 12  spin,occup,ekin,esp,variance = -1  1.00000  2.51534 -1.59199  5.3733E-10
+level: 13  spin,occup,ekin,esp,variance = -1  1.00000  2.46317 -1.25959  5.3220E-10
+level: 14  spin,occup,ekin,esp,variance = -1  1.00000  2.74713 -1.11479  5.7244E-10
+level: 15  spin,occup,ekin,esp,variance = -1  0.00000  0.71328 -0.42203  7.7313E-07
+level: 16  spin,occup,ekin,esp,variance = -1  0.00000  0.73195 -0.26481  2.9550E-03
+level: 17  spin,occup,ekin,esp,variance = -1  0.00000  0.30830 -0.21468  5.6298E-03
+level: 18  spin,occup,ekin,esp,variance = -1  0.00000  0.31976 -0.21151  6.3903E-03
+level: 19  spin,occup,ekin,esp,variance = -1  0.00000  0.35431 -0.15832  7.9917E-03
+level: 20  spin,occup,ekin,esp,variance = -1  0.00000  0.20732 -0.12894  1.4731E-03
+binding energy  =  -32.6355092
+total variance  =  5.5715E-10
+sp pot, sp kin, rearr, nonlocal=  -30.69673   18.08954   -1.06211    0.00000
+e_coul: i-i , e-i , e-e , total=   13.54907  -97.56193   39.39447  -44.61839
+mon.:   8.00
+dip.in  :    0.00000    0.00000    0.00000
+dip.out :   -0.06362    0.00000    0.00000
+quadrupole moments:
+xx,yy,zz:     0.9037     0.9913     0.7949
+xy,zx,zy:     0.0000     0.0000     0.0000
+spindip.:     0.0000     0.0000     0.0000
+omegam,rhops,N_el,rhomix:     0.0000     0.0000     0.0000     0.0000
+

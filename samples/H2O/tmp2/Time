@@ -7,3 +7,9 @@
  FFTW
  Box :          64          64          64
  Walltime =   1267.3363749999999     
+ FFTW
+ Box :          64          64          64
+ Walltime =   14.658969000000001     
+ FFTW
+ Box :          64          64          64
+ Walltime =   15.311036000000000     

@@ -1928,7 +1928,7 @@ INTEGER  :: it,ion
      CALL tstep_exp(psi,aloc,rho,it,psiw,.TRUE.)
    ELSE
      STOP 'imaginary-time step requires exponential evolution'
-!       CALL tstep(psi,aloc,rho,it)
+       CALL tstep(psi,aloc,rho,it)
    END IF
    CALL cschmidt(psi)    ! schmidt normalization  of results
    IF(MOD(it,istinf)==0)   CALL info(psi,rho,aloc,it)

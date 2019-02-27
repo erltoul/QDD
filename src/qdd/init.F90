@@ -814,7 +814,7 @@ CHARACTER(len=80) ::  a
 WRITE(6,*) 'Entering iperio'
 
 
-DO iel=-99,99
+DO iel=kpspm,kpsp
   amu(iel)= 0D0   ! masses as a function of atomic number
 END DO
 
@@ -1352,13 +1352,13 @@ END IF
 WRITE(6,*) 'resetting ionic masses...'
 IF(ifredmas == 1) THEN
   IF (ipsptyp == 0) THEN
-     DO i=-92,92
+     DO iel=kpspm,kpsp
         !           amu(i)=0.0484
         amu(i)=0.5D0
      END DO
   ELSE
      amfac = 1D0/amu(6)
-     DO i=-92,92
+     DO i=kpspm,kpsp
         amu(i) = amu(i)*amfac
         amu(i)=0.5D0
      ENDDO

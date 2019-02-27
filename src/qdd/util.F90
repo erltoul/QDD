@@ -1098,6 +1098,11 @@ INTEGER,INTENT(IN)::iflagk
 INTEGER :: i
 REAL(DP) :: summ, sumx, sumy, sumz
 
+IF(nion2==0) THEN
+  rvectmp=0D0
+  RETURN
+END IF
+
 summ = 0D0
 sumx = 0D0
 sumy = 0D0
@@ -3219,6 +3224,9 @@ COMPLEX(DP), INTENT(IN OUT)   :: psi(kdfull2,kstate)
 
 REAL(DP) :: phangpi, ca, sa, cb, sb
 
+!  WRITE(*,*) 'PHSTATE entered:',npstate,nhstate,occup(npstate),occup(nhstate),phangle,phphase
+
+
   IF(npstate > nstate) STOP ' PHSTATE: particle state out of range'
   IF(nhstate > nstate) STOP ' PHSTATE: hole state out of range'
   IF(occup(npstate) > 0.5D0) STOP 'PHSTATE: particle state already occupied'
@@ -3241,6 +3249,9 @@ REAL(DP) :: phangpi, ca, sa, cb, sb
 
   newhole = psi(:,nhstate)
 
+!  WRITE(6,'(a,2i4,6(1pg13.5))') ' 1ph state mixed:',nhstate,npstate,&
+!    phangle,phphase,ca*cb,sa*sb,sa*cb,ca*sb
+!  CALL flush(6)
 
 END SUBROUTINE phstate
 
@@ -3964,9 +3975,11 @@ END DO
 
 chtotal = chtotal * dvol
 
-WRITE(323,'(f15.5,101e17.7)') tfs, chtotal,  &
-    (chfld(n),n=1,INT(nzsh*dz/drcharges))
-
+WRITE(323,'(a,f15.5,1pg13.5)') '# time,total charge=',tfs,chtotal
+WRITE(323,'(2(0pf10.3),1pg13.5)') &
+   (tfs,n*drcharges,(chfld(n)-chfld(n-1))/drcharges,n=2,INT(nzsh*dz/drcharges))
+WRITE(323,'(1x)')
+CALL flush(323)
 
 RETURN
 END SUBROUTINE calcchargdist
