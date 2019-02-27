@@ -277,6 +277,7 @@ IF(mynact==0) THEN
         READ(ifile) rhoabso(1:kdfull2)
         IF(ttest) WRITE(*,*) ' rhoabso read in'
       END IF
+#if(extended)
       IF(jescmaskorb /=0) THEN
 #if(parayes)
         ALLOCATE(rhoabsoorb_all(kdfull2,nstate_all))
@@ -298,6 +299,7 @@ IF(mynact==0) THEN
         ENDIF
 #endif
       END IF
+#endif
     END IF
 !   reading accumulators for laser field
     IF(ttest) WRITE(*,*) ' before laser switch:',tstatin
@@ -374,6 +376,7 @@ IF(ifsicp >= 6) THEN
 #endif
 END IF
 
+#if(extended)
 #ifdef COMPLEXSWITCH
   IF(mynact==0) THEN
      IF(.NOT.tstatin .AND. jattach /=0) THEN
@@ -384,6 +387,7 @@ END IF
         WRITE(*,*) reference_energy
      END IF
   END IF
+#endif
 #endif
 
 IF(tstatin) THEN 
@@ -631,6 +635,7 @@ IF(mynact==0) THEN
 #ifdef COMPLEXSWITCH
       IF (isa>0 .AND. nabsorb > 0) THEN
         WRITE(ifile) rhoabso(1:kdfull2)
+#if(extended)
         IF(jescmaskorb /=0) THEN
 #if(parayes)
           DO nbe=1,nstate_all
@@ -642,6 +647,7 @@ IF(mynact==0) THEN
           ENDDO
 #endif
         END IF
+#endif
         WRITE(*,*) ' RHOABSO written'
       END IF
 !     writing cumulators for laser field
@@ -691,11 +697,13 @@ END IF
     END IF
 #endif
 
+#if(extended)
 #ifdef COMPLEXSWITCH
 IF (jattach /=0) THEN
    WRITE(ifile) totintegprob
    WRITE(ifile) reference_energy
 END IF
+#endif
 #endif
 
 IF(mynact==0 .AND. isave > 0) CLOSE(UNIT=ifile,STATUS='keep')

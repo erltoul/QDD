@@ -239,7 +239,6 @@ INTEGER :: jgeomel=0
 INTEGER :: jangabso=0
 INTEGER :: jelf=0
 INTEGER :: jstinf=10
-INTEGER :: jstboostinv=0
 INTEGER :: jstateoverlap=0
 INTEGER :: nabsorb=0,ifsicp=2,ifredmas=0,ionmdtyp=0,icooltyp=0
 INTEGER :: init_lcao=0,ipsptyp=0,idenfunc=1
@@ -322,7 +321,6 @@ INTEGER :: ndims(2)
 INTEGER,PARAMETER :: nxsg=7,nysg=7,nzsg=7      ! size of subgrids
 INTEGER :: modionstep=1                        ! modulus for ion step
 INTEGER :: inewforce
-INTEGER :: mzforce=0,myforce=0,mxforce=0       ! symmetrized forces
 INTEGER,ALLOCATABLE :: nfixed(:)                    !  Nr. of fixed ions
 LOGICAL,ALLOCATABLE :: tblock(:)
 REAL(DP),ALLOCATABLE :: cx(:),cy(:),cz(:) ,cpx(:),cpy(:),cpz(:) 
@@ -373,7 +371,7 @@ REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile positi
 
 ! parameters for extended cases and observables
 #if(extended)
-INTEGER :: ishutdown=0,jattach=0
+INTEGER :: ishutdown=0,jattach=0,jstboostinv=0
 INTEGER :: jescmask=0,jescmaskorb=0
 REAL(DP) :: trequest=0D0,timefrac=0.98D0
 INTEGER :: nproj=1,nproj_states=0

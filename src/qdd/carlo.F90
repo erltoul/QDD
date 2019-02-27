@@ -311,10 +311,6 @@ DO loop2 = 1,nloop2
       delta2 = deltax*deltax + deltay*deltay + deltaz*deltaz
       IF (delta2 > delps3*delps3) CYCLE infinite
       
-      IF(mxforce == 1) deltax = 0D0
-      IF(myforce == 1) deltay = 0D0
-      IF(mzforce == 1) deltaz = 0D0
-      
       xvar   = cx(ionvar) + deltax
       yvar   = cy(ionvar) + deltay
       zvar   = cz(ionvar) + deltaz

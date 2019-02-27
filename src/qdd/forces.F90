@@ -703,117 +703,91 @@ DO ion = 1,nion
   yion = cy(ion)
   zion = cz(ion)
   
-!     enforce symmetry of cluster arrangement
-!     mzforce = 1, myforce = 1, mxforce = 1
-  IF(mzforce == 0) THEN
-    CALL rhopsg(xion,yion,zion+zshift*0.5D0,rhoslp,ion)
-    CALL rhopsg(xion,yion,zion-zshift*0.5D0,rhoslm,ion)
-    sumfor = 0D0
-    DO i = 1, nxyz
-      sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+  CALL rhopsg(xion,yion,zion+zshift*0.5D0,rhoslp,ion)
+  CALL rhopsg(xion,yion,zion-zshift*0.5D0,rhoslm,ion)
+  sumfor = 0D0
+  DO i = 1, nxyz
+    sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+  END DO
+  fz(ion) = sumfor*dvol * zshinv
+    
+  IF(tnonloc(ion)) THEN
+    CALL calc_proj(xion,yion,zion+zshift*0.5D0,xion,yion,zion,ion)
+    sumslp = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
     END DO
-    fz(ion) = sumfor*dvol * zshinv
     
-    IF(tnonloc(ion)) THEN
-      CALL calc_proj(xion,yion,zion+zshift*0.5D0,xion,yion,zion,ion)
-      sumslp = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
-      END DO
-    
-      CALL calc_proj(xion,yion,zion-zshift*0.5D0,xion,yion,zion,ion)
-      sumslm = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
-      END DO
+    CALL calc_proj(xion,yion,zion-zshift*0.5D0,xion,yion,zion,ion)
+    sumslm = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
+    END DO
+    fznl(ion) = (sumslm - sumslp) * zshinv
+  END IF
 
-      fznl(ion) = (sumslm - sumslp) * zshinv
-    END IF
+  CALL rhopsg(xion,yion+yshift*0.5D0,zion,rhoslp,ion)
+  CALL rhopsg(xion,yion-yshift*0.5D0,zion,rhoslm,ion)
+  sumfor = 0D0
+  DO i = 1, nxyz
+    sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+  END DO
+  fy(ion) = sumfor*dvol * yshinv
     
-  ELSE
-    fz(ion) = 0D0
-    fznl(ion) = 0D0
-  END IF
-  
-  IF(myforce == 0) THEN
-    CALL rhopsg(xion,yion+yshift*0.5D0,zion,rhoslp,ion)
-    CALL rhopsg(xion,yion-yshift*0.5D0,zion,rhoslm,ion)
-    sumfor = 0D0
-    DO i = 1, nxyz
-      sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+  IF(tnonloc(ion)) THEN
+    CALL calc_proj(xion,yion+yshift*0.5D0,zion,xion,yion,zion,ion)
+    sumslp = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
     END DO
-    fy(ion) = sumfor*dvol * yshinv
-    
-    IF(tnonloc(ion)) THEN
-      CALL calc_proj(xion,yion+yshift*0.5D0,zion,xion,yion,zion,ion)
-      sumslp = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
-      END DO
-    
-      CALL calc_proj(xion,yion-yshift*0.5D0,zion,xion,yion,zion,ion)
-      sumslm = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
-      END DO
-    
-      fynl(ion) = (sumslm - sumslp) * yshinv
-    END IF
-    
-  ELSE
-    fy(ion) = 0D0
-    fynl(ion) = 0D0
-  END IF
-  
-  IF(mxforce == 0) THEN
-    CALL rhopsg(xion+xshift*0.5D0,yion,zion,rhoslp,ion)
-    CALL rhopsg(xion-xshift*0.5D0,yion,zion,rhoslm,ion)
-    sumfor = 0D0
-    DO i = 1, nxyz
-      sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+    CALL calc_proj(xion,yion-yshift*0.5D0,zion,xion,yion,zion,ion)
+    sumslm = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
     END DO
-    fx(ion) = sumfor*dvol * xshinv
-    forceloc = sumfor * xshinv              ! for testing
+    fynl(ion) = (sumslm - sumslp) * yshinv
+  END IF
     
-    
-    IF(tnonloc(ion)) THEN
-      CALL calc_proj(xion+xshift*0.5D0,yion,zion,xion,yion,zion,ion)
-      sumslp = 0D0
-      sumfulp = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
-        sumfulp = realoverlap(psi(1,nb),q1) + sumfulp
-      END DO
-    
-      CALL calc_proj(xion-xshift*0.5D0,yion,zion,xion,yion,zion,ion)
-      sumslm = 0D0
-      sumfulm = 0D0
-      DO nb=1,nstate
-        CALL nonlocalc(psi(1,nb),q1,ion)
-        sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
-        sumfulm = realoverlap(psi(1,nb),q1) + sumfulm
-      END DO
-      fxnl(ion) = (sumslm - sumslp) * xshinv
+  CALL rhopsg(xion+xshift*0.5D0,yion,zion,rhoslp,ion)
+  CALL rhopsg(xion-xshift*0.5D0,yion,zion,rhoslm,ion)
+  sumfor = 0D0
+  DO i = 1, nxyz
+    sumfor = sumfor + rho(i)*(rhoslp(i)-rhoslm(i))
+  END DO
+  fx(ion) = sumfor*dvol * xshinv
+  forceloc = sumfor * xshinv              ! for testing
+  IF(tnonloc(ion)) THEN
+    CALL calc_proj(xion+xshift*0.5D0,yion,zion,xion,yion,zion,ion)
+    sumslp = 0D0
+    sumfulp = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslp = realovsubgrid(psi(1,nb),q1,ion) + sumslp
+      sumfulp = realoverlap(psi(1,nb),q1) + sumfulp
+    END DO
+    CALL calc_proj(xion-xshift*0.5D0,yion,zion,xion,yion,zion,ion)
+    sumslm = 0D0
+    sumfulm = 0D0
+    DO nb=1,nstate
+      CALL nonlocalc(psi(1,nb),q1,ion)
+      sumslm = realovsubgrid(psi(1,nb),q1,ion) + sumslm
+      sumfulm = realoverlap(psi(1,nb),q1) + sumfulm
+    END DO
+    fxnl(ion) = (sumslm - sumslp) * xshinv
 !           sudiff = (sumfulm - sumfulp)
 !      sumfor = sumfor + sudiff
-    END IF
-    
-!    fx(ion) = sumfor * xshinv
-    forcenonl = fxnl(ion) 
-    sumslm =  sumslm * xshinv
-    sumslp =  sumslp * xshinv
-    sumfulp =  sumfulp * xshinv
-    sumfulm =  sumfulm * xshinv
-  ELSE
-    fx(ion) = 0D0
-    fxnl(ion) = 0D0
   END IF
+!    fx(ion) = sumfor * xshinv
+  forcenonl = fxnl(ion) 
 
+  sumslm =  sumslm * xshinv
+  sumslp =  sumslp * xshinv
+  sumfulp =  sumfulp * xshinv
+  sumfulm =  sumfulm * xshinv
   
 !       optional prints
   

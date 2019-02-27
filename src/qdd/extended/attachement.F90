@@ -16,7 +16,7 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
-
+#if(extended)
 !-----init_occ_target--------------------------------------------
 SUBROUTINE init_occ_target()
 
@@ -348,3 +348,4 @@ DEALLOCATE(ipoint,ipoi_act)
 
 RETURN
 END SUBROUTINE attach_prob
+#endif

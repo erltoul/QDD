@@ -522,6 +522,7 @@ END IF
 
 !     compute forces on rare gas cores with new positions
 CALL getforces(rho,psi,it,0)
+#if(extended)
   IF(tfs < taccel-1D-6) THEN
     ALLOCATE(tfac(1:nion))
     tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
@@ -541,7 +542,7 @@ CALL getforces(rho,psi,it,0)
     END IF
     DEALLOCATE(tfac)
   END IF
-
+#endif
 
 !     compute forces on cluster ions with new positions
 
@@ -763,6 +764,7 @@ END IF
 !     compute forces with new positions
 CALL getforces(rho,psi,it,0)
 
+#if(extended)
   IF(tfs < taccel-1D-6) THEN
     ALLOCATE(tfac(1:nion))
     tfac(:) = ame*amu(np(:))*1836D0*0.048D0/taccel
@@ -782,7 +784,7 @@ CALL getforces(rho,psi,it,0)
     END IF
     DEALLOCATE(tfac)
   END IF
-
+#endif
 
 !     second half of propagation of momenta
 

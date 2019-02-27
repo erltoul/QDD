@@ -596,10 +596,10 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        carlo.o localize.o localizer.o\
        sicnew.o sicnewc.o rho.o rhoc.o nonloc.o nonlocc.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
-       parallele.o 2stUT.o attachement.o rta.o\
+       parallele.o 2stUT.o rta.o\
        HEeigensystem.o mini.o zdiag.o orthmat.o
 ifeq ($(EXTENDED),YES)
-    OBJINT += util_extended.o
+    OBJINT += util_extended.o attachement.o
 endif
        
 ifeq ($(raregas), YES)

@@ -73,13 +73,15 @@ DO it=irest,itmax   ! time-loop
       CALL rta(psi,aloc,rho,it)!MV
     END IF
   END IF
-  
+
+#if(extended)  
   IF(jattach/=0 .AND. it==irest) THEN
      CALL init_occ_target()
      WRITE(*,*) 'nstate_target, after init_occ_target:', nstate_target
      ALLOCATE(psi_target(kdfull2,nstate_target))
      CALL init_psitarget()
   END IF
+#endif
 
   IF(it > irest)THEN
     
@@ -877,6 +879,7 @@ IF(tstinf) then
 #endif
 ENDIF
 
+#if(extended)
 IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
   IF(.NOT.ALLOCATED(akv)) STOP "jstboostinv NOT YET FOR FINITE DIFFERENCE"
   ALLOCATE(current(kdfull2,3))
@@ -900,6 +903,7 @@ IF(jstboostinv>0 .AND. MOD(it,jstboostinv)==0) THEN
   CLOSE(92)
   DEALLOCATE(current,qtmp)
 END IF
+#endif
 
 #if(parayes)
 CALL  prispe_parallele(6,it)
@@ -1855,6 +1859,7 @@ IF(irest <= 0) THEN                    !  write file headers
       WRITE(75,'(a)') '# s.p. energy variances (1ph-projected)'
       CLOSE(75)
     ENDIF
+#if(extended)
     IF(jstboostinv /= 0) then
       OPEN(91,status='unknown',form='formatted',file='pspenergybi.'//outnam)
       WRITE(91,'(a)') '# Single particle energies -- boost invariant'
@@ -1863,6 +1868,7 @@ IF(irest <= 0) THEN                    !  write file headers
       WRITE(92,'(a)') '# s.p. energy variances -- boost invariant'
       CLOSE(92)
     ENDIF
+#endif
     
     IF(jcharges /= 0) THEN
       OPEN(323,STATUS='unknown',FILE='pcharges.'//outnam)
@@ -2937,71 +2943,3 @@ RETURN
 END SUBROUTINE hpsi
 
 
-
-
-SUBROUTINE hpsi_boostinv(qact,aloc,current,rho,nbe)
-
-!     Action of boost-invariant Hamiltonian on one s.p. wavefunction:
-!       qact     = wavefunction on which H acts and resulting w.f.
-!       aloc     = local potential for the actual spin component
-!       current  = average local momentum in x,y, and z-direction
-!       nbe      = number of state
-!     The routine requires that 'current' has been accumulated before.
-
-
-USE params
-USE kinetic
-IMPLICIT NONE
-
-COMPLEX(DP), INTENT(IN OUT)              :: qact(kdfull2)
-REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
-REAL(DP), INTENT(IN)                     :: current(kdfull2,3)
-REAL(DP), INTENT(IN)                     :: rho(2*kdfull2)
-INTEGER, INTENT(IN)                  :: nbe
-
-!                                   workspaces
-COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
-
-COMPLEX(DP) :: cf
-
-
-
-!----------------------------------------------------------------------
-
-
-! check availability of FFT
-IF(.NOT.ALLOCATED(akv)) STOP "HPSI_BOOSTINVARIANT requires FFT"
-ALLOCATE(q1(kdfull2),q2(kdfull2))
-
-q1=qact
-CALL hpsi(qact,aloc,nbe,0)
-
-CALL xgradient_rspace(q1,q2)
-qact = qact - h2m*current(:,1)*q2 
-q2 = current(:,1)*q1
-CALL xgradient_rspace(q2,q2)
-qact = qact - h2m*q2 
-
-
-CALL ygradient_rspace(q1,q2)
-qact = qact - h2m*current(:,2)*q2 
-q2 = current(:,2)*q1
-CALL ygradient_rspace(q2,q2)
-qact = qact - h2m*q2 
-
-
-CALL zgradient_rspace(q1,q2)
-qact = qact - eye*h2m*current(:,3)*q2 
-q2 = current(:,3)*q1
-CALL zgradient_rspace(q2,q2)
-qact = qact - eye* h2m*q2 
-
-qact = qact + h2m* &
- (current(:,1)**2+current(:,2)**2+current(:,3)**2)
-
-WRITE(*,*) ' HPSI_BOOSTINV: E_coll=',dvol*h2m*SUM(rho(:)* &
- (current(:,1)**2+current(:,2)**2+current(:,3)**2))
-
-
-RETURN
-END SUBROUTINE hpsi_boostinv

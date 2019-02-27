@@ -91,6 +91,7 @@ END IF
 
 !     apply mask function (and accumulate absorption per state)
 
+#if(extended)
 IF(jescmaskorb /=0) THEN
   DO nbe=1,nstate
     DO ind=1,kdfull2
@@ -102,6 +103,7 @@ IF(jescmaskorb /=0) THEN
     END DO
   END DO
 END IF
+#endif
 
 DO nbe=1,nstate
   DO ind=1,kdfull2
@@ -146,8 +148,9 @@ DO ind=1,kdfull2
   rhoabso(ind)=0D0
 END DO
 
-
+#if(extended)
 IF(jescmaskorb /=0)  rhoabsoorb(1:kdfull2,1:nstate)=0D0
+#endif
 
 RETURN
 END SUBROUTINE init_abs_accum

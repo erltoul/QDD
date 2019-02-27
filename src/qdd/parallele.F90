@@ -244,10 +244,6 @@ IF(myn == 0 .AND. knode /= 1)THEN
     CALL mpi_send(jinfo,1,mpi_integer,nod,1,mpi_comm_world,ic)
     CALL mpi_send(jenergy,1,mpi_integer,nod,1,mpi_comm_world,ic)
     
-    CALL mpi_send(mxforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(myforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    CALL mpi_send(mzforce,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
-    
 !~     CALL mpi_send(tempion2,1,mpi_double_precision,nod,1, mpi_comm_world,ic)
     
     CALL mpi_send(itft,1,mpi_integer,nod,1,mpi_comm_world,ic)
@@ -400,13 +396,6 @@ ELSE IF(myn /= 0 .AND. knode /= 1)THEN
   CALL mpi_recv(jspdp,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jinfo,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
   CALL mpi_recv(jenergy,1,mpi_integer,0,mpi_any_tag, mpi_comm_world,is,ic)
-  
-  CALL mpi_recv(mxforce,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(myforce,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
-  CALL mpi_recv(mzforce,1,mpi_double_precision,0,mpi_any_tag,  &
-      mpi_comm_world,is,ic)
   
 !~   CALL mpi_recv(tempion2,1,mpi_double_precision,0,mpi_any_tag,  &
 !~       mpi_comm_world,is,ic)

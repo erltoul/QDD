@@ -50,8 +50,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,iswitch_interpol,  &
     ishiftcmtoorigin,  &
-    shiftwfx,shiftwfy,shiftwfz, ispinsep, &
-    iplotorbitals
+    shiftwfx,shiftwfy,shiftwfz, ispinsep 
 
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
@@ -59,12 +58,12 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iexcit,iangmo,  &
-    irotat,phirot,iflocaliz,  &
+    irotat,phirot,iflocaliz,iplotorbitals,  &
     idyniter,irhoint_time,ifhamdiag,iffastpropag, &
     jpos,jvel,jener,jesc,jforce,istat,jgeomion,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
-    jposcm,mxforce,myforce,mzforce,jgeomel,jelf,jstinf, &
-    jstboostinv,ifspemoms,iftransme,ifexpevol, &
+    jposcm,jgeomel,jelf,jstinf, &
+    ifspemoms,iftransme,ifexpevol, &
     tempion,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
@@ -94,7 +93,7 @@ NAMELIST /extensions/ idenspl,i3dz,i3dx,i3dstate, &
     scatterelectronvzn,scatterelectronx,  &
     scatterelectrony,scatterelectronz,scatterelectronw,jattach, &
     eproj,nproj,nproj_states,vpx,vpy,vpz,taccel,   &
-    trequest,timefrac
+    trequest,timefrac,jstboostinv
 #endif
 
 #if(raregas)
@@ -212,13 +211,17 @@ outname=trim(num)//trim(outnam)
         WRITE(7,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
       ENDIF
     ENDIF
-            
+
+    READ(5,dynamic,END=99999)
+    WRITE(*,*) ' DYNAMIC read'
+#if(extended)
+    READ(5,extensions,END=99999)
+    WRITE(*,*) ' extended opionts read'
     IF(nproj_states>0)THEN
       ALLOCATE(proj_states(nproj_states))
       proj_states(:)=0
     END IF
-    READ(5,dynamic,END=99999)
-    WRITE(*,*) ' DYNAMIC read'
+#endif
 #if(raregas)    
     READ(5,surface,END=99999)
     WRITE(*,*) ' SURFACE read'
@@ -227,10 +230,6 @@ outname=trim(num)//trim(outnam)
 
     IF(jdip<0) STOP "you must specify JDIP in namelist DYNAMIC"
     IF(jesc<0) STOP "you must specify JESC in namelist DYNAMIC"
-    IF(nclust<=0) THEN ! total charge of the cluster is read
-      WRITE(*,*) 'zero or negative nclust : global charge of',nclust
-    ENDIF
-
 
   END IF
   
@@ -586,19 +585,11 @@ END IF
 
 
 WRITE(iu,'(a,3i6)') ' kxbox,kybox,kzbox=',kxbox,kybox,kzbox
-IF(nclust<=0) then
-#if(raregas)
-  WRITE(iu,'(a,4i6)') ' charge,nion,nrare,nstate=',nclust,nion,nrare,nstate
-#else
-  WRITE(iu,'(a,3i6)') ' charge,nion,nstate=',nclust,nion,kstate
-#endif
-ELSE
 #if(raregas)
   WRITE(iu,'(a,4i6)') ' nelect,nion,nrare,nstate=',nclust,nion,nrare,nstate
 #else
   WRITE(iu,'(a,3i6)') ' nelect,nion,nstate=',nclust,nion,kstate
 #endif
-ENDIF
 WRITE(iu,'(a,3i3,f7.2)') ' ispidi,iexcit,irotat,phirot=',  &
     ispidi,iexcit,irotat,phirot
 WRITE(iu,'(a,3f8.2)') ' boost: centfx,centfy,centfz=',centfx,centfy,centfz
@@ -682,19 +673,9 @@ WRITE(6,'(a,3i5,i8,g12.4)') ' INIT: nx,ny,nz,nxyz,dvol=',  &
 
 !       output static parameters (traditional sodium case)
 
-IF(nclust>0) THEN
-  WRITE(7,'(5x,a,i2,a,i2/a/)')  &
+WRITE(7,'(5x,a,i2,a,i2/a/)')  &
   '# electr.: ',nclust,'# ions: ',nion,'=========='
-ELSE
-  WRITE(7,'(5x,a,i2,a,i2/a/)')  &
-  '# charge.: ',nclust,'# ions: ',nion,'=========='
-       nstate=nion+nclust
-  IF(ipsptyp<1  .AND. ipseudo<1) THEN
-    nclust=nstate
-    nspdw=nstate/2
-  ENDIF
-ENDIF
-WRITE(7,'(a,i3)') 'number of alkali wave-fkts nstate = ',nstate
+WRITE(7,'(a,i3)') 'number of wave-functions nstate = ',nstate
 
 WRITE(7,'(a,f4.2)') 'initialisation : osfac=',osfac
 WRITE(7,'(a,10(/t2,3(3i4,5x),3i4))')  &
@@ -705,7 +686,6 @@ IF(temp > 0D0) THEN
   WRITE(6,'(a,f10.5,a,f4.2)') 'temperature kt= ',temp,'Ry,   occmix=',occmix
   WRITE(6,'(a,1g13.5)') 'epsoro=',epsoro
 END IF
-WRITE(7,'(a,i3)') 'number of wave-fkts nclust = ',nclust
 WRITE(7,'(3(a,i4,3x))') 'nx=',nx,'ny=',ny,'nz=',nz
 WRITE(7,'(3(a,f4.2,3x))') 'dx=',dx,'dy=',dy,'dz=',dz
 WRITE(7,'(a)') 'damped gradient step :'
@@ -1487,17 +1467,6 @@ WRITE (6,*) 'Entering initions()'
   CLOSE(UNIT=9)
   
   WRITE(6,*) 'total number of valence electrons',totvalec
-  IF(nclust<=0) THEN
-    nstate=totvalec+nclust
-    nclust=nstate
-    nspdw=nclust/2
-    WRITE(6,*) 'nstate set to',nstate
-    WRITE(6,*) 'kstate*knode is',kstate*knode
-    WRITE(6,*) 'nclust set to',nclust
-    WRITE(6,*) 'nspdw set to',nspdw
-    IF(nstate>kstate*knode) STOP 'kstate too small - increase' 
-  END IF
-
   
 !       re-scale cluster if desired
   
@@ -2269,7 +2238,7 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 !     compute equidistribution of wfs on nodes
 
 nstate_all = nstate
-IF (init_lcao==1) nstate_all = nclust !lionel
+IF (init_lcao==1) nstate_all = nclust    ! ??
 nstpernode = nstate_all/knode
 nodeplus   = nstate_all-nstpernode*knode
 nstaccum = 0

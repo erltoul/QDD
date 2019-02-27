@@ -753,3 +753,71 @@ RETURN
 END SUBROUTINE mtv_3dfld
 
 
+
+
+SUBROUTINE hpsi_boostinv(qact,aloc,current,rho,nbe)
+
+!     Action of boost-invariant Hamiltonian on one s.p. wavefunction:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       current  = average local momentum in x,y, and z-direction
+!       nbe      = number of state
+!     The routine requires that 'current' has been accumulated before.
+
+
+USE params
+USE kinetic
+IMPLICIT NONE
+
+COMPLEX(DP), INTENT(IN OUT)  :: qact(kdfull2)
+REAL(DP), INTENT(IN)         :: aloc(2*kdfull2)
+REAL(DP), INTENT(IN)         :: current(kdfull2,3)
+REAL(DP), INTENT(IN)         :: rho(2*kdfull2)
+INTEGER, INTENT(IN)          :: nbe
+
+!                                   workspaces
+COMPLEX(DP),ALLOCATABLE :: q1(:),q2(:)
+
+COMPLEX(DP) :: cf
+
+
+
+!----------------------------------------------------------------------
+
+
+! check availability of FFT
+IF(.NOT.ALLOCATED(akv)) STOP "HPSI_BOOSTINVARIANT requires FFT"
+ALLOCATE(q1(kdfull2),q2(kdfull2))
+
+q1=qact
+CALL hpsi(qact,aloc,nbe,0)
+
+CALL xgradient_rspace(q1,q2)
+qact = qact - h2m*current(:,1)*q2 
+q2 = current(:,1)*q1
+CALL xgradient_rspace(q2,q2)
+qact = qact - h2m*q2 
+
+
+CALL ygradient_rspace(q1,q2)
+qact = qact - h2m*current(:,2)*q2 
+q2 = current(:,2)*q1
+CALL ygradient_rspace(q2,q2)
+qact = qact - h2m*q2 
+
+
+CALL zgradient_rspace(q1,q2)
+qact = qact - eye*h2m*current(:,3)*q2 
+q2 = current(:,3)*q1
+CALL zgradient_rspace(q2,q2)
+qact = qact - eye* h2m*q2 
+
+qact = qact + h2m* &
+ (current(:,1)**2+current(:,2)**2+current(:,3)**2)
+
+WRITE(*,*) ' HPSI_BOOSTINV: E_coll=',dvol*h2m*SUM(rho(:)* &
+ (current(:,1)**2+current(:,2)**2+current(:,3)**2))
+
+
+RETURN
+END SUBROUTINE hpsi_boostinv

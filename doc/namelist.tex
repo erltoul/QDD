@@ -35,19 +35,27 @@
 
 \begin{document}
 
-\title{Input parameters for the cluster 3D code}
-\author{The Erlangen--Toulouse collaboratopm}
+\title{Namelist input parameters for the cluster 3D code}
+\author{The Erlangen--Toulouse collaboration}
 \date{Started 26. February 2019}
 \maketitle
 
-\tableofcontents
-\newpage
+
+These notes serve to explain the input structure of the
+cluster/molecule 3D code. It explains the full capabilities of the
+code. We want to publish only a subset.  All options addressed in
+namelist {\tt EXTENSIONS} and {\tt SURFACE} should not appear in the
+public version. The switches to these parts are immersed in the code
+with preproccesor variables {\tt extended} and {\tt raregas}. We
+should keep the code in the repository always in its complete version
+and write a little piece of software which reads the source files and
+produces new sources without the line enclosed be the
+{\tt\#if(extended)} and {\tt\#if(raregas)} closures.
+
+\bigskip
 
 
-\section{Input files}
-\label{sec:inputs}
-
-The cluster 3D code has the following input files:
+The input is arranged in the following three input files:
 \\[-28pt]
 \begin{center}
 \begin{tabular}{ll}
@@ -61,8 +69,14 @@ The cluster 3D code has the following input files:
 \hline
 \end{tabular}
 \end{center}
-The input for {\tt for005.<name>} is sorted into namelists.
-They contain:\\
+
+
+The input for {\tt for005.<name>} is sorted into Fortran namelists.
+The following tables list all input variables entered through these
+namelists and gives a short explanation. Comments and issues for
+development are marked in red. A mere \textcolor{red}{???} indicates a
+variable which should be considered to be shifted to namelist {\tt extension}.
+\\
 \begin{tabular}{ll}
 \hline
 \multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
@@ -73,30 +87,40 @@ They contain:\\
 {\tt kybox            }& nr. of grid points in $y$ direction\\
 {\tt kzbox            }& nr. of grid points in $z$ direction\\
 & box sizes must fulfill {\tt kxbox}$\geq${\tt kybox}$\geq$ {\tt kzbox}\\
-{\tt numspin}          & number of spin components (2=full spin treatment)\\
-                       & (1=spin averaged, possible problem for ADSIC)\\
-{\tt kstate           }& maximum nr. of s.p. states which is possible (greater than {\tt nclust})\\
-{\tt nclust           }& number of QM electrons - if set to 0 or a negative value (charge) this \\
-&will be automatically calculated\\
-& {\tt nclust} = $\sum_{i=1}^{nion} Z_{ion} = charge$, where $Z_{ion}$ is charge of each ion\\
-{\tt nion             }& number of cluster ions\\
-{\tt nspdw            }& number of spin down electrons \\
-{\tt nion2            }& selects type of ionic background \\
-                       &  0 $\rightarrow$ jellium background \\
-                       &  1 $\rightarrow$ background from ionic pseudo-potentials\\
-                       &  2 $\rightarrow$ background read in from {\tt potion.dat}\\
-{\tt radjel           }& Wigner-Seitz radius of jellium background\\
-{\tt surjel         }& surface thickness of jellium background\\
-{\tt bbeta         }& quadrupole deformation of jellium background\\
-{\tt gamma         }& triaxiality of jellium background\\
 {\tt dx,dy,dz,        }& grid spacing (in  Bohr) for the 3D numerical grid - if negative this will \\
 &be set to an optimal value and a value will be suggested for KXBOX \\
 &in file NX - the code stops and has to be restarted\\
 &the grid size is defined before compilation in {\tt params.F90}\\
 &it has to be correlant with pseudopotentails\\
 &corresponds to ecut in solid state\\
-{\tt rotclustx,y,z } & vector fo angle of initial rotation of ions\\
+{\tt tcoulfalr} & switch to FALR Coulomb solver (else exact solver)  \\
+{\tt iswitch\_interpol} &  switch to interpolated grid for PsP \\
+{\tt numspin}          & number of spin components (2=full spin treatment)\\
+                       & (1=spin averaged, possible problem for ADSIC)
+\textcolor{red}{???}\\
+{\tt kstate           }& maximum nr. of s.p. states which is possible (greater than {\tt nclust})\\
+{\tt nclust           }& number of QM electrons \\
+\\
+{\tt nion2            }& selects type of ionic background \\
+                       &  0 $\rightarrow$ jellium background \\
+                       &  1 $\rightarrow$ background from ionic pseudo-potentials\\
+                       &  2 $\rightarrow$ background read in from {\tt potion.dat}\\
 {\tt temp} &  electronic temperature in static iteration \\
+{\tt nion             }& number of cluster ions\\
+{\tt nspdw            }& number of spin down electrons \\
+{\tt radjel           }& Wigner-Seitz radius of jellium background\\
+{\tt surjel         }& surface thickness of jellium background\\
+{\tt bbeta         }& quadrupole deformation of jellium background\\
+{\tt gamma         }& triaxiality of jellium background\\
+{\tt itback} &  nr. of iterations for jellium background \\
+{\tt rotclustx,y,z } & vector fo angle of initial rotation of ions\\
+{\tt scaleclustx} & scaling of ionic configuration along x-axis  \\
+{\tt scaleclusty} & scaling of ionic configuration along y-axis   \\
+{\tt scaleclustz} & scaling of ionic configuration along z-axis   \\
+{\tt scaleclust} & if $\neq 1$: scaling of ionic configuration along x-y-z  \\
+{\tt shiftclustx} & shift of ionic configuration along x-axis  \\
+{\tt shiftclusty} & shift of ionic configuration along y-axis  \\
+{\tt shiftclustz} & shift of ionic configuration along z-axis  \\
 \hline
 \end{tabular}
 
@@ -112,7 +136,8 @@ They contain:\\
 {\tt deocc            }& nr. of states above Fermi energy (determines nr. of
 states)\\
 {\tt shiftWFx         }& shift of initial wavefunctions in x direction \\
-{\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to origin\\
+{\tt ishiftCMtoOrigin }& switch to shift center of mass of cluster to
+origin of box\\
 {\tt ispinsep         }& initialize wavefunctiosn with some spin asymmetry\\
 {\tt init\_lcao       }& choice of basis for wavefunction initialization \\
 & =0 $\Longrightarrow$ harmonic oscillator functions (center can be
@@ -121,7 +146,6 @@ moved
 \\
 & =1 $\Longrightarrow$ atomic orbitals = WFs centered at ionic sites
 \\
-{\tt itback} &  nr. of iterations for jellium background \\
 \hline
 \multicolumn{2}{c}{\it convergence issues} \\
 \hline
@@ -139,22 +163,12 @@ equations (of order of 0.5)\\
 \hline
 \multicolumn{2}{c}{Namelist {\tt GLOBAL}} in {\tt for005.<name>} \\
 \hline
-\multicolumn{2}{c}{\it yet unsorted} \\
+\multicolumn{2}{c}{\it yet to be sorted} \\
 \hline
-{\tt tcoulfalr} & switch to FALR Coulomb solver (else exact solver)  \\
-{\tt dpolx} & add stationary dipole field in x-direction  \\
+{\tt dpolx} & add stationary dipole field in x-direction
+\textcolor{red}{(better placed in {\tt dynamic}?)}\\
 {\tt dpoly} & add stationary dipole field in y-direction    \\
 {\tt dpolz} & add stationary dipole field in z-direction    \\
-{\tt scaleclustx} & scaling of cluster configuration along x-axis  \\
-{\tt scaleclusty} & scaling of cluster configuration along y-axis   \\
-{\tt scaleclustz} & scaling of cluster configuration along z-axis   \\
-{\tt scaleclust} & if $\neq 1$: scaling of cluster configuration along x-y-z  \\
-{\tt shiftclustx} & shift of cluster configuration along x-axis  \\
-{\tt shiftclusty} & shift of cluster configuration along y-axis  \\
-{\tt shiftclustz} & shioft of cluster configuration along z-axis  \\
-{\tt iswitch\_interpol} &  switch to interpolated grid for PsP \\
-{\tt iplotorbitals} & switch to print plot-file {\tt pOrbitals} for
-all static states \\
 \hline
 \end{tabular}
 
@@ -197,16 +211,15 @@ all static states \\
                        & (only for {\tt LDA}, {\tt Slater}, {\tt KLI})\\
 {\tt ifsicp           }& selects type of self-interaction correction\\
     &  0 = pure LDA, 1 = SIC-GAM, 2 = ADSIC; 3 = SIC-Slater; \\
-    &  4 = SIC-KLI; 5 = exact exchange; 6 = inactive;\\
-    &  7 = localized SIC;  8 = full SIC (double set).\\
-    & IFSICP=7 or 8 requires switch
-     {\tt twostsic=1} in {\tt define.h}.\\
-    & Option IFSICP=7 needs yet testing.\\
+    &  4 = SIC-KLI; 5 = exact exchange, 7 = localized SIC,\\
+    &  8 = full SIC (real), 9 = full SIC(complex)\\
+    & \textcolor{red}{???: Options IFSICP=7,8,9 yet to ``extended'' version.}\\
 {\tt icooltyp         }& type of cooling (0=none, 1=pseudo-dynamics,\\
 {\tt                  }& 2=steepest descent, 3=Monte Carlo)\\
 {\tt ifredmas         }& switch to use reduced mass for ions in dynamics\\
 {\tt ionmdtyp         }& ionic propagation
                          (0=none, 1=leap-frog, 2=velocity Verlet)\\
+ & \textcolor{red}{(Should we move ``leap-frog'' to the extended version???)}\\
 {\tt ntref}& nr. time step after which absorbing bounds are deactivated
 \\
 {\tt nabsorb}          & number of absorbing points on boundary (0 switches off) 
@@ -256,7 +269,8 @@ all static states \\
 {\tt phphase}        & phase of ``rotation'' into a $1ph$ state\\
 {\tt nhstate,npstate}& nr. of hole and particle state for $1ph$
                       excitation\\
-                     & this $1ph$ option can only be run from {\tt istat=1}
+                     & this option can only be run from {\tt istat=1}
+\textcolor{red}{to be checked}
 \\
 \hline
 \end{tabular}
@@ -267,7 +281,9 @@ all static states \\
 \hline
 \multicolumn{2}{c}{\it flags for observables} \\
 \hline
-{\tt iemomsRel        }& calculates multipole momentes of electron density \\
+{\tt iplotorbitals} & switch to print plot-file {\tt pOrbitals} for
+all static states \\
+{\tt iemomsRel        }& multipole momentes of electron density \\
 {\tt                  }& relative to origin (0) or c.m. of cluster (1)\\
 {\tt istinf           }& modulus for printing information in static iteration \\
 {\tt ifspemoms        }& switch to compute and print spatial s.p. moments\\
@@ -310,7 +326,7 @@ localization in statics
 electrons\\
 {\tt jspdp} &  modulus for printing spin dipole momenta \\
 {\tt jposcm} &  modulus for printing electronic center of mass \\
-{\tt ipasinf} &  modulus for printing information on general observables\\
+{\tt ipasinf} &  modulus for printing general information along dynamics\\
 {\tt jgeomel} &   modulus for printing global measures of electronic geometry \\
 {\tt jelf} &  modulus for evaluating an printing electron localization\\
 {\tt jmp} & modulus for storing information for PES \\
@@ -321,8 +337,6 @@ electrons\\
 x-axis\\
 {\tt jplotdensitydiff2d} &   modulus for printing 2D cuts of $\rho(t)-\rho(0)$ \\
 {\tt jplotdensity2d} &  modulus for printing 2D cuts of density  \\
-{\tt jstboostinv} & modulus for evaluating boost-invariant s.p. energy
-and variance \textcolor{red}{???}\\
 \hline
 \end{tabular}
 
@@ -344,9 +358,6 @@ for ions \textcolor{red}{???} \\
 {\tt modionstep} & modulus for ion step (nr. of electron steps per ion
 step)\\
 {\tt ispidi} & =1  switches to initialization by spin-dipole boost\\
-{\tt mxforce} & =1 zeroes forces in x-direction for nonlocal PsP \textcolor{red}{???} \\
-{\tt myforce} & =1 zeroes forces in y-direction for nonlocal PsP \textcolor{red}{???}  \\
-{\tt mzforce} & =1 zeroes forces in z-direction for nonlocal PsP \textcolor{red}{???}  \\
 {\tt izforcecorr} & =1 enforce zero-force condition, =0 tests
 condition, =-1 disables all  \\
 {\tt dinmargin} & margin defining inner box in connection with
@@ -431,6 +442,8 @@ wavepacket (relative to energy) \\
 {\tt i3dz} &  print z-integrated 2D density, following {\tt idenspl}\\
 {\tt i3dx} &  print x-integrated 2D density, following {\tt idenspl}\\
 {\tt i3dstate} & print  x- and z-integrated density per state, following {\tt idenspl}\\
+{\tt jstboostinv} & modulus for evaluating boost-invariant s.p. energy
+and variance \textcolor{red}{???}\\
 \hline
 \end{tabular}
 
@@ -553,56 +566,6 @@ Col. 7 & only {\tt init\_lcao=1}: starting spin for initalization at
 \hline
 \end{tabular}
 \\[8pt]
-The handling of the initialization of electronic wavefunctions is
-rather involved. A more detailed explanation is given in appendix
-\ref{sec:inite}.
-
-\newpage
-
-\appendix
-
-\section{On the initialization of the electronic wavefunctions}
-\label{sec:inite}
-
-The basic switch is {\tt init\_lcao}. \underline{The case
-{\tt init\_lcao=0}} is the simpler option. This initializes harmonic
-oscillator wavefunctions about one common center. This center is
-usually the origin of the coordinte-space grid. It can be moved
-deliberately by {\tt shiftWFx}, {\tt shiftWFy}, and {\tt shiftWFz}.
-The initial oscillator may be deformed. Its deformation is given by
-the dimensionless quadrupole {\tt b2occ} and triaxiality {\tt gamocc}
-(in degree). The oscillator states are filled in order of
-increasing oscillator energies. A spin asymmtry can be enforced
-with {\tt ispinsep=1}. This option is useful when dealing with odd
-electron number. The upper end of initialization is determined by
-{\tt deocc}. A {\tt deocc $\approx$ 0} typically initializes just as many
-states as are occupied. If more is required, enhance {\tt deocc}.
-
-\underline{The case {\tt init\_lcao=1}} initializes wavefunctions
-which are localized at the ions. This option is richer and a bit hard
-to handle. In a first step, the total number of wavefunctions is
-estimated and it is computed how many wavefunctions have to be
-initialized then for each ion. At one given ion, initialization starts
-with the $1s$ oscillator state. The first choice of spin is taken from
-column 7 of {\tt for005ion.<name>} {which initializes the entry of the
-  actual ion in the the {\tt ipol}
-array. The value {\tt ipol=+1} sets a spin up (i.e. {\tt ispin=1} in
-the code) as the first choice, 
-while {\tt ipol=-1} sets a spin down (i.e. {\tt ispin=2}).} If more than one state is to be
-occupied, the next is then the $1s$ state with opposite spin. Next
-comes the $1p_i$ state with first spin where $i$ is the direction
-given as first entry in column 5. For example if column 5 selects
-{\tt 'yzx'}, the $1p_y$ comes here. Occupation continues in order
-given by column 5 and 7 until the wanted number of orbitals at this
-ion site is reached. Column 6 sets the oscillator radius for the
-initialization at this ion (which allows to deal efficiently with
-systems consisting of very different ions). Column 7 becomes important
-for ions associated with an odd number of electrons as, e.g.,
-hydrogen. One ought to distribute an equal collection of 
-%{\tt +1} and {\tt -1} entries
-{spins up and down over the whole system} to avoid unnaturally 
-polarized molecules.
-
 
 
 
