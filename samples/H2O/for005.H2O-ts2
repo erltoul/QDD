@@ -18,7 +18,7 @@ ifexpevol=0,
 ionmdtyp=0,
 istinf=10,
 jenergy=10,
-ismax=20,isitmax=0,isave=999,istat=0,
+ismax=20,isave=999,istat=0,
 itmax=20,centfx=0.0,centfy=0.0,centfz=0.0,
 ifsicp=8,
 ipsptyp=1,
@@ -70,6 +70,8 @@ jescmaskorb=0,
  radiong(8)=2.2,
  h0_11g(8)= 1.750506,
  h1_11g(8) = 0.0,
+&END
+&EXTENSIONS
 &END
 &FSIC2
 step=0.3,

@@ -208,7 +208,6 @@ INTEGER :: iflocaliz=0           ! evaluate localization
 INTEGER :: myn                   ! nr. of actual node
 INTEGER :: ismax=1000       ! maximum number of static iterations
 INTEGER :: itmax=1000       ! number of time steps for electronic propagation
-INTEGER :: isitmax=0        ! number of imaginary-time steps (afterburn)
 INTEGER :: idyniter=0       ! number iterations to start dynamic E0DMP 
 
 ! Printing informations 
@@ -371,6 +370,7 @@ REAL(DP) :: projinix=0D0,projiniy=0D0,projiniz=0D0   ! initial projectile positi
 
 ! parameters for extended cases and observables
 #if(extended)
+INTEGER :: isitmax=0        ! number of imaginary-time steps (afterburn)
 INTEGER :: ishutdown=0,jattach=0,jstboostinv=0
 INTEGER :: jescmask=0,jescmaskorb=0
 REAL(DP) :: trequest=0D0,timefrac=0.98D0

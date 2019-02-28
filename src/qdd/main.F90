@@ -177,12 +177,13 @@ END IF
 DEALLOCATE(psir)
 !outnam=outname
 
+#if(extended)
 !          imaginary-time iteration (to improve statics)
 IF(imaginary_time .AND. isitmax>0 .AND. ismax>0) THEN
   ifexpevol = 1
   CALL afterburn(psir,rho,aloc)
 END IF
-
+#endif
 
 !       *******************************************
 !

@@ -290,8 +290,7 @@ IF(ifsicp.EQ.5 .OR. jstateoverlap == 1) psisavex = psi
 
 !     optionally rotate a 1ph state
 
-!IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
- CALL phstate(psi)
+IF(ABS(phangle)+ABS(phphase) > small) CALL phstate(psi)
 
 !     boost the wavefunctions
 
@@ -305,27 +304,6 @@ IF ( eproj > 0D0) CALL init_projwf(psi)
 
 IF (iscatterelectron /= 0) CALL init_scattel(psi)
 #endif
-
-! optionally reset occupation number by hand 
-! (run first static, save on 'rsave.<name>', check occupation numbers,
-!  start dynamics with 'istat=1', reset occupation numbers here).
-! (present example for Na-8 with 12  states):
-ifreset = 0
-IF(ifreset==1) THEN
-  occup(1) = 1D0
-  occup(2) = 1D0
-  occup(3) = 1D0
-  occup(4) = 1D0
-  occup(5) = 1D0
-  occup(6) = 0D0
-  occup(7) = 1D0
-  occup(8) = 1D0
-  occup(9) = 1D0
-  occup(10) = 0D0
-  occup(11) = 1D0
-  occup(12) = 0D0
-END IF
-
 
 !rvectmp(1)=1D0             ! ??? what for ?
 

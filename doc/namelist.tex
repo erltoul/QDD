@@ -194,7 +194,6 @@ equations (of order of 0.5)\\
 {\tt idyniter         }& switch to s.p. energy as E0DMP for 'iter$>$idyniter'\\
 {\tt ifhamdiag} & diagonalization of m.f. Hamiltonian in static step\\
 & (presently limited to fully occupied configurations)\\
-{\tt isitmax          }& nr. of imaginary-time steps to improve static solution\\
 {\tt itmax            }& number of time steps for electronic propagation\\
 {\tt ifexpevol} & exponential evolution 4. order instead of TV splitting\\
 {\tt iffastpropag} & accelerated time step in TV splitting\\
@@ -354,7 +353,7 @@ x-axis\\
 \hline
 \multicolumn{2}{c}{Namelist {\tt DYNAMIC}} in {\tt for005.<name>} \\
 \hline
-\multicolumn{2}{c}{\it yet unsorted} \\
+\multicolumn{2}{c}{\it excitation and observables mixed} \\
 \hline
 {\tt phi} & phase of laser pulse, inactive for electrons, strange
 for ions \textcolor{red}{???} \\
@@ -420,6 +419,10 @@ Gaussian pseudo-densities \textcolor{red}{check default}\\
 \hline
 \multicolumn{2}{c}{\it extended options (not to appear in public version)} \\
 \hline
+{\tt isitmax          }& nr. of imaginary-time steps to improve static
+solution
+\\
+& used with routine {\tt afterburn}, still to be improved\\
 {\tt trequest} &  variable checking CPU time to trigger save
 operations \\
 {\tt timefrac} &  variable checking CPU time to trigger save operations  \\

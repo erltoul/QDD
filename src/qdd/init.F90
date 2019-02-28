@@ -55,7 +55,7 @@ NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
-    ipseudo,ismax,itmax,isitmax,isave,istinf,ipasinf,dt1,irest,  &
+    ipseudo,ismax,itmax,isave,istinf,ipasinf,dt1,irest,  &
     centfx,centfy,centfz, shiftinix,shiftiniy,shiftiniz, &
     ispidi,iexcit,iangmo,  &
     irotat,phirot,iflocaliz,iplotorbitals,  &
@@ -86,8 +86,8 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
 
 #if(extended)
 !NAMELIST /extended/ &
-NAMELIST /extensions/ idenspl,i3dz,i3dx,i3dstate, &
-    jescmask,jescmaskorb,&
+NAMELIST /extensions/ isitmax,&
+    idenspl,i3dz,i3dx,i3dstate,jescmask,jescmaskorb,&
     iscatterelectron,jattach,scatterelectronenergy,  &
     scatterelectronvxn,scatterelectronvyn, &
     scatterelectronvzn,scatterelectronx,  &
@@ -371,7 +371,9 @@ IF(ifsicp>7) STOP ' TWOSTSIC cannot yet run in MPI parallel code'
 IF(ifsicp>7 .AND. .NOT.directenergy) &
    STOP 'full SIC (IFSICP=8&9) requires DIRECTENERGY=.TRUE.'
 
+#if(extended)
 IF(ifsicp<8 .AND. isitmax.NE.0) STOP 'ISITMAX.NE.0 only for full SIC'
+#endif
 
 IF(ifexpevol == 1 .AND. ionmdtyp /= 0)  &
     STOP ' exponential evolution not with ionic motion'    !  why?

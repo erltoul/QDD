@@ -108,7 +108,10 @@ INTEGER:: ind
 #if(fftw_cpu)
 INTEGER :: i  !, nacthr
 #endif
-
+#if(paropenmp && dynopenmp)
+#else
+INTEGER :: nacthr
+#endif
 #if(paropenmp && !dynopenmp)
 INTEGER :: omp_get_num_threads
 #endif

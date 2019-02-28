@@ -18,7 +18,7 @@ ifexpevol=0,
 ionmdtyp=0,
 istinf=10,
 jenergy=10,
-ismax=1000,isitmax=0,isave=999,istat=0,
+ismax=1000,isave=999,istat=0,
 itmax=21000,centfx=0.0,centfy=0.0,centfz=0.0,
 ifsicp=8,
 ipsptyp=1,
@@ -48,7 +48,7 @@ rtatempinit=5.d-3,
 ipasinf=1/
 &END
 &EXTENSIONS
-jescmaskorb=0,
+jescmaskorb=0,isitmax=0,
 &END
 &SURFACE
 &END
