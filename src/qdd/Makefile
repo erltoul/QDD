@@ -1,3 +1,4 @@
+
 # Makefile
 
 # CF90: Fortran compiler
@@ -86,8 +87,8 @@ COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 # Include private sector
-EXTENDED = NO
-FSIC=NO
+EXTENDED = YES
+FSIC=YES
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
@@ -526,7 +527,6 @@ initial_checks: makefile
 	@echo "parano        $(parano_value)"
 	@echo "netlib_fft    $(netlib_fft_value)"
 	@echo "fftw_cpu      $(fftw_cpu_value)"
-	@echo "fftw_gpu      $(fftw_gpu_value)"
 	@echo "fftwnomkl     $(fftwnomkl_value)"
 	@echo "paropenmp     $(paropenmp_value)"
 	@echo "dynopenmp     $(dynopenmp_value)"
@@ -721,7 +721,7 @@ coulsolv.o: coulsolv.F90 falr.o coulex.o kinetic.mod $(FFT_OBJ)
 static.o: static.F90 pseudosoft.F90 $(DEPS_KINCOUL) $(FSICDEPEND)
 
 
-dyanamic.o: dynamic.F90 pseudosoft.F90 $(DEPS_KINCOUL) $(FSICDEPEND)
+dyanamic.o: dynamic.F90 pseudosoft.o twostr.o twost.o $(DEPS_KINCOUL) $(FSICDEPEND)
 
 rho.o: rho.F90
 	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o $@ -c $<
@@ -753,7 +753,7 @@ fftpack.o: fftpack.F90 fftpack2.F90
 endif
 
 
-main.o: main.F90 util.o  $(FSICDEPEND)
+main.o: main.F90 util.o orthmat.o $(FSICDEPEND)
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 givens.o: givens.F90
