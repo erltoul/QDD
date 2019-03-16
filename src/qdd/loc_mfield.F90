@@ -81,7 +81,11 @@ IF(idielec == 1) THEN
   
   CALL addimage(rho,0)
   
-  CALL solv_poisson(rho,chpcoul,kdfull2)   ! probably to be corrected
+IF(tcoulfalr) THEN
+  CALL solv_poisson_f(rho,chpcoul,kdfull2)
+ELSE
+  CALL solv_poisson_e(rho,chpcoul,kdfull2)
+END IF
   
   DO ii=1,kdfull2
     CALL conv1to3(ii)

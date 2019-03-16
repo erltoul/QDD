@@ -35,7 +35,9 @@ SUBROUTINE dyn_propag(psi,rho,aloc)
 USE params
 USE kinetic
 USE util, ONLY: stimer,timer,safeopen,testcurrent,rhointxy,rhointyz,rhointxz
+#if(fsic)
 USE twost, ONLY:tnearest
+#endif
 
 IMPLICIT NONE
 
@@ -115,7 +117,7 @@ DO it=irest,itmax   ! time-loop
 
 #if(raregas)
     ELSE
-      IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt,.true.)
+      IF(isurf /= 0 .AND. NE > 0) CALL valence_step(rho,dt1,.true.)
 #endif
     END IF
     

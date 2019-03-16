@@ -87,8 +87,8 @@ COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 # Include private sector
-EXTENDED = YES
-FSIC=YES
+EXTENDED = NO
+FSIC=NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
@@ -420,6 +420,7 @@ else
 	#FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
 	#FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
 	FFTWFLAGS += -lfftw3 -lm 
+	#FFTWFLAGS += -L/apps/fftw3/3.3.5-intel17.0/lib -lfftw3 -lm
 
   endif
 endif
@@ -603,7 +604,7 @@ endif
 ifeq ($(FSIC),YES)
     OBJINT += 2stUT.o 2st_util.o 2stUTc.o
 endif       
-ifeq ($(raregas), YES)
+ifeq ($(RAREGAS), YES)
 OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o util_substrate.o
 endif
@@ -797,7 +798,7 @@ util_extended.o: extended/util_extended.F90 params.o
 
 endif
 
-ifeq ($(raregas), YES)
+ifeq ($(RAREGAS), YES)
 
 # QM/MM routines
 

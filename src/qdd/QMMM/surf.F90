@@ -54,7 +54,7 @@ INTEGER :: ippointer1(3*ngpar),ippointer2(3*ngpar)
 INTEGER :: ipointer(3*ngpar),ipointerfix(3*ngpar), ipointermob(3*ngpar)
 INTEGER :: isrtyp(5,5)=0,isrtypall=0
 INTEGER :: ndfull2,nmob,nmobc,nmobe,nmobk,ionthefly
-INTEGER :: iposevry,ienevry,iobsevry,ithermevry,ifile
+INTEGER :: iposevry,ienevry,iobsevry,ithermevry !,ifile
 INTEGER :: icool, icoolevry, icoolsteps, itindex
 
 
