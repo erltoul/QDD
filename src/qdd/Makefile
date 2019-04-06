@@ -87,7 +87,7 @@ COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 # Include private sector
-EXTENDED = NO
+EXTENDED = YES
 FSIC=NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'

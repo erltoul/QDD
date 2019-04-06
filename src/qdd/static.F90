@@ -507,7 +507,7 @@ INTEGER :: ni
 
 
 #if(parano)
-DATA tocc,tcpu/.TRUE.,.true./
+DATA tocc,tcpu/.true.,.true./
 #endif
 
 #if(parayes)
@@ -839,8 +839,8 @@ CALL schmidt(q0)
 
 !     readjust occupations numbers to actual s.p. energies
 
-
-IF(tocc .AND. nclust < nstate*nph .AND. iter > 10*istinf) CALL reocc()
+!WRITE(*,*) 'before REOCC:',tocc,nclust,nstate*nph,iter,istinf
+IF(tocc .AND. nclust < nstate*nph .AND. iter > 3*istinf) CALL reocc()
 
 
 
@@ -1269,7 +1269,7 @@ CALL schmidt(q0)
 
 !     readjust occupations numbers to actual s.p. energies
 
-
+!WRITE(*,*) 'before REOCC:',tocc,nclusrt,nstate*nph,iter,istinf
 IF(tocc .AND. nclust < nstate*nph .AND. iter > 10*istinf) CALL reocc()
 
 
@@ -1331,7 +1331,7 @@ INTEGER :: ind, nb
 REAL(DP) :: eshell, enonlc, ensav, ekin, ehilf
 REAL(DP), PARAMETER :: alpha_ar=10.6D0
 REAL(DP),SAVE :: energyold=0D0
-INTEGER,PARAMETER :: idebug=1        ! set to 1 for testprint KS potentials
+INTEGER,PARAMETER :: idebug=0        ! set to 1 for testprint KS potentials
 
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -1804,18 +1804,22 @@ SUBROUTINE reocc()
 
 
 !     Readjust occupations numbers to actual s.p. energies.
-!     I/O through modeul 'params'.     
+!     I/O through module 'params'.     
+!
+!     !! Testing version.
 
 USE params
 USE util, ONLY:pair
 IMPLICIT NONE
 
 INTEGER :: is,nbe
-INTEGER :: nelecs(2)
+INTEGER :: nelecs(2),nstspin(2,2)
 REAL(DP) :: epstmp, occo, partnm, gp
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
 REAL(DP),SAVE :: efermsav(2)=(/0D0,0D0/)
+LOGICAL,PARAMETER :: tprintp=.FALSE.
+LOGICAL :: tdown
 
 !--------------------------------------------------------------------
 
@@ -1829,19 +1833,46 @@ occo = 1D0-occmix
 IF(numspin==2) THEN
   nelecs(1) = nclust-nspdw
   nelecs(2) = nspdw
-  DO is=1,numspin
+  ph=1D0
+!  DO is=1,numspin
+    nstspin(1,1)=1
+    nstspin(2,1)=0
+    tdown=.FALSE.
     DO nbe=1,nstate
-      IF(ispin(nbe) == is) THEN
-        ph(nbe) = 1D0
+      IF(ispin(nbe) .NE. 1) THEN
+        tdown=.TRUE.
       ELSE
-        ph(nbe) = 0D0
+        IF(.NOT.tdown) nstspin(2,1)=nbe
+        IF(nbe>nstspin(2,1)) STOP "non-continguous spin"
       END IF
+      nstspin(1,2)=nstspin(2,1)+1
+      nstspin(2,2)=nstate
+!      IF(ispin(nbe) == is) THEN
+!        ph(nbe) = 1D0
+!      ELSE
+!        ph(nbe) = 0D0
+!      END IF
     END DO
 !    eferm  = 0D0         ! restart search of eferm from scratch
+  DO is=1,numspin
     eferm=efermsav(is)
-    CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
-        partnm,200,4,epstmp,-1,ksttot)
+!    CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
+!        partnm,200,4,epstmp,-1,ksttot)
+    IF(tprintp)  WRITE(*,*) 'REOCC: is,etc=',&
+                is,nstspin(1:2,is),nstspin(2,is)-nstspin(1,is)+1
+    CALL pair(amoy(nstspin(1,is):nstspin(2,is)),&
+              ocwork(nstspin(1,is):nstspin(2,is)),&
+              ph(nstspin(1,is):nstspin(2,is)),&
+              nelecs(is),nstspin(2,is)-nstspin(1,is)+1,  &
+              gp,eferm,temp,partnm,200,4,epstmp,-1,ksttot)
     efermsav(is)=eferm
+    IF(tprintp) THEN
+      WRITE(6,'(a,2i5,4(1pg13.5))') 'REOCC basic:',nelecs(is),nstate, &
+             eferm,temp,partnm,occmix
+      WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ:',amoy(nstspin(1,is):nstspin(2,is))
+      WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC phase:',ph(nstspin(1,is):nstspin(2,is))
+      WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC occup:',ocwork(nstspin(1,is):nstspin(2,is))
+    END IF
     DO nbe=1,nstate
       IF(ispin(nbe) == is) THEN
         occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
@@ -1851,8 +1882,15 @@ IF(numspin==2) THEN
   END DO
 ELSE
   eferm  = 0D0         ! restart search of eferm from scratch
+  IF(tprintp) THEN
+    WRITE(6,'(a,2i5,3(1pg13.5))') 'REOCC basic:',nelecs(is),nstate, &
+             eferm,temp,partnm
+    WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ:',amoy(1:nstate)
+  END IF
+  ph=2D0
   CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
       60,4,epstmp,-1,ksttot)
+    WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC occup:',ocwork(1:nstate)
   DO nbe=1,nstate
     occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
   END DO

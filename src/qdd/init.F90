@@ -1996,7 +1996,7 @@ REAL(DP),ALLOCATABLE :: ph(:)             ! degeneracy of wavefunction, for
 REAL(DP) :: occu(ksttot)
 REAL(DP) :: ecutdw, ecutup, efrmup, efrmdw
 INTEGER  :: nelup,neldw
-REAL(DP) :: gp,partnm,epstmp,sav
+REAL(DP) :: gp,partnm,epstmp=1D-5,sav
 LOGICAL :: tocc
 DATA tocc/.false./
 

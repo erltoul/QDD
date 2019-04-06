@@ -2505,7 +2505,7 @@ DATA gr,dparn,dgap/10*0D0/
 !           particle energies are given in units of [mev] and display
 !           a reasonable nuclear spectrum.
 
-DATA dampin,deferm,ddelta/0.9D0,1D0,0.1D0/
+DATA dampin,deferm,ddelta/0.9D0,0.1D0,0.1D0/
 DATA efmax,dlmax,detmin,defmin,ddlmin/3D0,.6D0,.1D-3,.1D-3,.1D-3/
 !clust      data dampin,deferm,ddelta/0.9,0.01,0.1/
 !clust      data efmax,dlmax,detmin,defmin,ddlmin/0.03,.6,.1e-3,.1e-3,.1
@@ -2516,12 +2516,12 @@ DATA xmaxlw,x10lw/1.0D-30,1.0D-10/
 
 IF(iab > 1) THEN
   
-  WRITE(7,'(/a,i4,3(a,f9.4)/a,10(/1x,10f8.3))')  &
-      ' *** pair entered with: iter=',iter,'  delta=',delta,  &
+  WRITE(7,'(/a,2i4,3(a,f9.4)/a,10(/1x,10f8.3))')  &
+      ' *** pair entered with: iter,ipair=',iter,ipair,'  delta=',delta,  &
       '  eferm=',eferm,'  gp=',gp,  &
       '                        single particle energies:', (e(i),i=1,nmax)
-  WRITE(6,'(/a,i4,3(a,f9.4)/a,10(/1x,10f8.3))')  &
-      ' *** pair entered with: iter=',iter,'  delta=',delta,  &
+  WRITE(6,'(/a,2i4,3(a,f9.4)/a,10(/1x,10f8.3))')  &
+      ' *** pair entered with: iter,ipair=',iter,ipair,'  delta=',delta,  &
       '  eferm=',eferm,'  gp=',gp,  &
       '                        single particle energies:', (e(i),i=1,nmax)
   WRITE(6,*) 'kstate',kstate
@@ -2662,6 +2662,8 @@ ELSE
   
 !      determine upper and lower bound for secant step
   
+  IF(iab>1) WRITE(*,*) ' bracketing branch'
+  converged=.FALSE.
   emin = +1.0D30
   emax = -1.0D30
   DO i=1,nmax
@@ -2803,7 +2805,7 @@ IF(iab >= 0) THEN
     gapeq = zero
   END IF
   
-  WRITE(7,'(a,i4,2(a,g13.5))')  &
+  WRITE(7,'(a,i8,2(a,g13.5))')  &
       ' pair finished with ',it,' iterations: gap-eq.=',gapeq, '  part.nr=',partnm
 END IF
 
@@ -2854,10 +2856,11 @@ IF(ipair == 0) THEN
   END DO
 ELSE IF(ipair == 4) THEN            ! case of temperature
   DO i=1,nmax
+    IF(ph(i)==0D0) CYCLE
     equasi = (e(i)-elam)/delta
-    IF(equasi > one*50D0) THEN
+    IF(equasi > 50D0) THEN
       gw(i) = 0D0
-    ELSE IF(equasi < -one*50D0) THEN
+    ELSE IF(equasi < -50D0) THEN
       gw(i)  = 1D0
     ELSE
       gw(i)  = 1D0/(1D0+EXP(equasi))
