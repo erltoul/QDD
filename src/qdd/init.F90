@@ -2782,6 +2782,10 @@ DO j=1,n1
         val(j)=v*16D0*(8D0*tau**7-84D0*tau**5+210D0*tau**3-105D0*tau)
       CASE(8)
         val(j)=v*tau**8              ! ortho-normalize later
+      CASE(9)
+        val(j)=v*tau**9              ! ortho-normalize later
+      CASE(10)
+        val(j)=v*tau**10              ! ortho-normalize later
       CASE DEFAULT
         WRITE(6,'(a,1pg12.4)') ' wrong radial quantum number in clust: in=',in
         STOP 'wrong radial quantum number in clust'

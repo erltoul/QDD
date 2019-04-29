@@ -1383,11 +1383,11 @@ ecorr=energ_ions()
 DO nb=1,nstate
   ekin = ekinsp(nb)
   IF(numspin==2) THEN
-    WRITE(6,'(a,i2,a,i3,3f9.5,2(1pg12.4))')  &
+    WRITE(6,'(a,i3,a,i3,3f9.5,2(1pg12.4))')  &
       'level:',nrel2abs(nb),'  spin,occup,ekin,esp,var=',  &
       3-2*ispin(nrel2abs(nb)),occup(nb),ekin,amoy(nb), evarsp(nb),evarsp2(nb)
   ELSE
-    WRITE(6,'(a,i2,a,3f9.5,1pg12.4)')  &
+    WRITE(6,'(a,i3,a,3f9.5,1pg12.4)')  &
       'level:',nrel2abs(nb),'  occup,ekin,esp,var=',  &
       occup(nb),ekin,amoy(nb),evarsp(nb)
   END IF
@@ -1859,7 +1859,7 @@ IF(numspin==2) THEN
 !    CALL pair(amoy,ocwork,ph,nelecs(is),nstate,gp,eferm,temp,  &
 !        partnm,200,4,epstmp,-1,ksttot)
     IF(tprintp)  WRITE(*,*) 'REOCC: is,etc=',&
-                is,nstspin(1:2,is),nstspin(2,is)-nstspin(1,is)+1
+                is,nstspin(1:2,is),nstspin(2,is)-nstspin(1,is)+1,temp
     CALL pair(amoy(nstspin(1,is):nstspin(2,is)),&
               ocwork(nstspin(1,is):nstspin(2,is)),&
               ph(nstspin(1,is):nstspin(2,is)),&

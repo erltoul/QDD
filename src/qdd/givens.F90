@@ -101,7 +101,7 @@ INTEGER, INTENT(IN)                      :: nx
 INTEGER, INTENT(IN)                      :: nrootx
 INTEGER, INTENT(IN OUT)                  :: njx
 
-INTEGER, PARAMETER :: n1=200
+INTEGER, PARAMETER :: n1=300
 
 INTEGER :: i, ia, ic, id, ii, im, iter, j, j1, jj, jp2, jump, k, l, n, nroot, nsize, nm1, nm2, nom, nomtch
 REAL(DP) :: acc, ak, anorm, alimit, aroot, bb, del1, delbig, delta

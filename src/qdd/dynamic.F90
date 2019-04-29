@@ -2290,10 +2290,14 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
   sumz=0D0
   DO ion=1,nion
     r2iona = SQRT(cx(ion)**2+cy(ion)**2+cz(ion)**2)
-    IF(MOD(it,jpos) == 0) WRITE(21,'(1f13.5,3e17.8,1pg13.5)')  &
-        tfs,cx(ion),cy(ion),cz(ion),r2iona   !  ecorr
-    IF(MOD(it,jvel) == 0) WRITE(22,'(1f13.5,3e17.8,1pg13.5)')  &
-        tfs,cpx(ion),cpy(ion),cpz(ion),ekion
+    IF(MOD(it,jpos) == 0) THEN
+      WRITE(21,'(1f13.5,3e17.8,1pg13.5)') tfs,cx(ion),cy(ion),cz(ion),r2iona
+      CALL FLUSH(21)
+    END IF
+    IF(MOD(it,jvel) == 0) THEN
+      WRITE(22,'(1f13.5,3e17.8,1pg13.5)') tfs,cpx(ion),cpy(ion),cpz(ion),ekion
+      CALL flush(22)
+    END IF
     sumx = sumx + (cpx(ion)**2)/amu(np(ion))/1836D0
     sumy = sumy + cpy(ion)**2/amu(np(ion))/1836D0
     sumz = sumz + cpz(ion)**2/amu(np(ion))/1836D0
@@ -2301,6 +2305,7 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
   IF(MOD(it,jvel) == 0) THEN
     WRITE(149,'(1f13.5,4e17.8,i5)') tfs,sumx,sumy,sumz,sumx+sumy+sumz,nion
     CALL gettemperature(4)
+    CALL flush(149)
   END IF
   
   IF(jgeomion > 0 .AND. MOD(it,jgeomion) == 0) THEN
@@ -2308,6 +2313,7 @@ IF(((jpos > 0 .AND. MOD(it,jpos) == 0)  &
     WRITE(621,'(12e15.5)') tfs,comx,comy,comz,rmsion,  &
         qtion(1,1),qtion(2,2),qtion(3,3),  &
         qtion(1,2),qtion(1,3),qtion(2,3),dmdistion
+    CALL flush(621)
   END IF
   
   CALL flush(21)
