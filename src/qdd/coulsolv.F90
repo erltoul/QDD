@@ -16,6 +16,18 @@
 !You should have received a copy of the GNU General Public License
 !along with PW-Teleman.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
+#if(netlib_fft|fftw_cpu)
+#include "falr.F90"
+#include "coulex.F90"
+#endif
+
+#if(findiff|numerov)
+#include "solv_poisson.F90"
+#endif
+
+
 MODULE coulsolv
 
 ! Driver for Coulomb solver. Switches to FALR or exact.
@@ -63,20 +75,3 @@ END SUBROUTINE solv_poisson
 
 END MODULE coulsolv
 
-
-#if(netlib_fft|fftw_cpu)
-
-!#if(coufou)
-#include "falr.F90"
-!#endif
-
-!#if(coudoub)
-#include "coulex.F90"
-!#endif
-
-#endif
-
-#if(findiff|numerov)
-!INCLUDE "gridcoul.F90"
-#include "solv_poisson.F90"
-#endif
