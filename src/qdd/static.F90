@@ -798,6 +798,7 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
       psistate = 0D0
       DO nbes=1,nstsp(iactsp)
         nbe = npoi(nbes,iactsp)
+        amoy(nbe)=heigen(nbes)
 !      IF(tprham .AND. ii==1) WRITE(6,'(a,3i5,a)')  &
 !          ' iactsp,nbes,nbe=',iactsp,nbes,nbe,'  vect:'
 !      IF(tprham) WRITE(6,'(10(1pg12.4))') (vect(nbc,nbe),nbc=1,nstsp(iactsp))
@@ -1818,11 +1819,12 @@ REAL(DP) :: epstmp, occo, partnm, gp
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
 REAL(DP),SAVE :: efermsav(2)=(/0D0,0D0/)
-LOGICAL,PARAMETER :: tprintp=.FALSE.
+LOGICAL,PARAMETER :: tprintp=.TRUE.
 LOGICAL :: tdown
 
 !--------------------------------------------------------------------
 
+IF(tprintp) WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ0:',amoy(nstspin(1,is):nstspin(2,is))
 DO nbe=1,nstate
   amoy(nbe)   = ekinsp(nbe)+epotsp(nbe)
   occold(nbe) = occup(nbe)

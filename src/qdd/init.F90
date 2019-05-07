@@ -1354,7 +1354,7 @@ END IF
 WRITE(6,*) 'resetting ionic masses...'
 IF(ifredmas == 1) THEN
   IF (ipsptyp == 0) THEN
-     DO iel=kpspm,kpsp
+     DO i=kpspm,kpsp
         !           amu(i)=0.0484
         amu(i)=0.5D0
      END DO
@@ -1997,8 +1997,7 @@ REAL(DP) :: occu(ksttot)
 REAL(DP) :: ecutdw, ecutup, efrmup, efrmdw
 INTEGER  :: nelup,neldw
 REAL(DP) :: gp,partnm,epstmp=1D-5,sav
-LOGICAL :: tocc
-DATA tocc/.false./
+LOGICAL,PARAMETER :: tocc=.FALSE.
 
 REAL(DP),PARAMETER :: third=1D0/3D0
 
@@ -2626,7 +2625,7 @@ REAL(DP),PARAMETER :: sixth=1D0/6D0
 
 
 an  = REAL(2*nclust,DP)
-IF(temp > 0D0) THEN
+!IF(temp > 0D0) THEN
   homx = omeg*an**(-third)*xfac
   homy = omeg*an**(-third)*yfac
   homz = omeg*an**(-third)*zfac
@@ -2636,11 +2635,11 @@ IF(temp > 0D0) THEN
   bxx  = osfac*(bxx**sixth)
   bxy  = osfac*(bxy**sixth)
   bxz  = osfac*(bxz**sixth)
-ELSE
-  hom  = omeg*an**(-third)
-  bk1  = (2D0*h2m/hom)**3
-  bk1   = osfac*(bk1**sixth)
-END IF
+!ELSE
+!  hom  = omeg*an**(-third)
+!  bk1  = (2D0*h2m/hom)**3
+!  bk1   = osfac*(bk1**sixth)
+!END IF
 
 DO nb=1,nstate
 
@@ -2659,15 +2658,15 @@ DO nb=1,nstate
     ipar(i,nb)=1-2*MOD(nq(i,nrel2abs(nb)),2)
   END DO
   
-  IF(temp > 0D0) THEN
+!  IF(temp > 0D0) THEN
     CALL clust(inx,bxx,0D0,xval,valx,nx2)
     CALL clust(iny,bxy,0D0,yval,valy,ny2)
     CALL clust(inz,bxz,0D0,zval,valz,nz2)
-  ELSE IF(temp <= 0D0) THEN
-    CALL clust(inx,bk1,0D0,xval,valx,nx2)
-    CALL clust(iny,bk1,0D0,yval,valy,ny2)
-    CALL clust(inz,bk1,0D0,zval,valz,nz2)
-  END IF
+!  ELSE IF(temp <= 0D0) THEN
+!    CALL clust(inx,bk1,0D0,xval,valx,nx2)
+!    CALL clust(iny,bk1,0D0,yval,valy,ny2)
+!    CALL clust(inz,bk1,0D0,zval,valz,nz2)
+!  END IF
   
 !       composition of the factorised wave-function
 !       occupies only upper box (1/8 part), but is returned on 'psir'

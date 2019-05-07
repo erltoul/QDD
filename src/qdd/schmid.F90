@@ -43,7 +43,7 @@ REAL(DP) :: cs, emin
 REAL(DP) :: eord(kstate)
 INTEGER :: isort(kstate)
 
-LOGICAL, PARAMETER :: tord=.false.
+LOGICAL, PARAMETER :: tord=.true.
 
 !*********************************************************
 

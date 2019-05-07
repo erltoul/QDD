@@ -19,7 +19,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = YES
+OMP_THREADS = NO
 
 # TYPE_FFT: FFT solver
 # Available options:
@@ -87,7 +87,7 @@ COUDOUB3D=NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 # Include private sector
-EXTENDED = YES
+EXTENDED = NO
 FSIC=NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
