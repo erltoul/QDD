@@ -68,7 +68,7 @@ nthr=numthr-1
 #else
 nthr = 0
 #endif
-WRITE(*,*) ' INIT_PARALLELE: nthr=',nthr
+WRITE(*,*) ' INIT_PARALLELE: numthr=',numthr
 
 
 RETURN

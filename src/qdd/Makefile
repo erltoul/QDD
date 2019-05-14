@@ -6,7 +6,7 @@
 #   * GFORT (serial version only)
 #   * IFORT (serial & parallel & debug version)
 #   * MPIF90 (parallel version only)
-CF90 = GFORT
+CF90 = IFORT
 
 # MPI_PARALLEL: Variable for parallel processing (only for some compilers)
 # Available options:
@@ -19,14 +19,14 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = NO
+OMP_THREADS = YES
 
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
 #   * FFTW
 #   * MKL
-TYPE_FFT = FFTW
+TYPE_FFT = MKL
 
 # DEBUG: enable debugging
 # Available options:
@@ -45,12 +45,12 @@ LINK_STATIC = NO
 # Available options:
 #   * YES
 #   * NO
-MKL_THREADS = NO
+MKL_THREADS = YES
 
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
 #MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
-MKL_WRAPPERS = $(HOME)/code/fftw3xf-wrapper-icc
+MKL_WRAPPERS = $(HOME)/code/fftw3xf
 
 FFTW3_LIBDIR = $(HOME)/code/fftw-3.3.8-icc/lib
 

@@ -40,7 +40,7 @@ CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
 
-NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
+NAMELIST /global/  numthr,nclust,nion,nspdw,nion2,numspin,  &
     temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &

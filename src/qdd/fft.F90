@@ -106,7 +106,7 @@ INTEGER:: ind
 #endif
 
 #if(fftw_cpu)
-INTEGER :: i  !, nacthr
+INTEGER :: i
 #endif
 #if(paropenmp && dynopenmp)
 #else
@@ -237,8 +237,7 @@ END DO;  END DO;  END DO
   WRITE(*,*) ' dfftw_init_threads: iret=',iret
 !  numthr = 4
   call dfftw_plan_with_nthreads(numthr)
-  WRITE(*,*) ' init fft FFTW threads: iret=',iret,', nr. of threads=',numthr,&
-   omp_get_num_threads()
+  WRITE(*,*) ' init fft FFTW threads: iret=',iret,', nr. of threads=',numthr,omp_get_num_threads()
 #endif
 IF (nini==0) THEN
 #if(fftwnomkl)
