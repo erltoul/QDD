@@ -1883,7 +1883,7 @@ REAL(DP) :: epstmp, occo, partnm, gp
 REAL(DP) :: occold(kstate),ocwork(kstate)
 REAL(DP) :: ph(ksttot)             ! degeneracy of wavefunction, for
 REAL(DP),SAVE :: efermsav(2)=(/0D0,0D0/)
-LOGICAL,PARAMETER :: tprintp=.TRUE.
+LOGICAL,PARAMETER :: tprintp=.FALSE.
 LOGICAL :: tdown
 
 !--------------------------------------------------------------------

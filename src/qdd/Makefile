@@ -50,31 +50,25 @@ MKL_THREADS = NO
 # MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
 # Default value:
 #MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
-#for CCC
-MKL_WRAPPERS = $(HOME)/Developer/fftw3xf
+MKL_WRAPPERS = $(HOME)/code/fftw3xf-wrapper-icc
 
-FFTW3_LIBDIR = /Users/fmgjcoppens/fftw3-icc/lib
+FFTW3_LIBDIR = $(HOME)/code/fftw-3.3.8-icc/lib
 
 # MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
 # Default value:
 #MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
-#for CCC
 MKLPATH = $(MKLROOT)/lib
-# Path for hyperion:
-# MKLPATH = /divers/intel/Compiler/12.1/mkl/lib/intel64
 
 # MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
 # Default value:
 #MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
-#for CCC
 MKLINCLUDE = $(MKLROOT)/include/fftw
-
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
 
 #####################################################################
-#               Code selection					                    #
+#               Code selection										#
 #####################################################################
 
 # Code version
@@ -137,18 +131,16 @@ endif
 
 # Insert the run command for invoking your compiler
 # ifeq "$(CF90)" "OWN"
-# 	COMPILER  = ...
-# 	LDLIBS    =
+#	COMPILER  = ...
+#	LDLIBS    =
 #   ifeq "$(OMP)" "YES"
-# 	OMPADDL = ...
+#	OMPADDL = ...
 #   endif
 # endif
 
 OMPADDL =
 
 ifeq "$(CF90)" "MPIF90"
-#	COMPILER  = /opt/mpich2-intel/bin/mpif90
-#	LDLIBS    =
 	COMPILER  = mpif90
 	LDLIBS    =
 endif
@@ -162,16 +154,6 @@ ifeq "$(CF90)" "GFORT"
   endif
 endif
 
-
-ifeq "$(CF90)" "GFORT1"
-	COMPILER  = gfortran
-	LDLIBS    =
-  ifeq "$(OMP)" "YES"
-	OMPADDL = -fopenmp
-  endif
-endif
-
-
 ifeq "$(CF90)" "IFORT"
 	COMPILER  = ifort
 	LDLIBS    =
@@ -183,29 +165,6 @@ ifeq "$(CF90)" "IFORT"
   endif
 endif
 
-
-ifeq "$(CF90)" "IFORT1"
-	COMPILER  = ifort
-	LDLIBS    =
-  ifeq "$(USE_MPI)" "YES"
-	LDLIBS    = -lmpi
-  endif
-  ifeq "$(OMP)" "YES"
-	OMPADDL = -qopenmp
-  endif
-endif
-
-
-ifeq "$(CF90)" "XLF_R"
-	COMPILER  = xlf90_r
-	LDLIBS    =
-  ifeq "$(USE_MPI)" "YES"
-	COMPILER  = mpxlf90_r
-	LDLIBS    = -lpesslsmp -lesslsmp
-  endif
-endif
-
-
 #####################################################################
 #                    Compiler-dependent options                     #
 #####################################################################
@@ -216,23 +175,18 @@ endif
 # Insert your actual compiler her with its options.
 # If wanted fill also the debugging options.
 # ifeq "$(OWN)" "YES"
-# 	OPT1  = ...
-# 	OPT2  = ...
-# 	OPT3  = ...
+#	OPT1  = ...
+#	OPT2  = ...
+#	OPT3  = ...
 # ifeq "$(DEBUG)" "YES"
-# 	OPT1  = ...
-# 	OPT2  = ...
-# 	OPT3  = ...
+#	OPT1  = ...
+#	OPT2  = ...
+#	OPT3  = ...
 # endif
 # endif
 
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -mcmodel=large
-	OPT2  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
-#	OPT1  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse
-#	OPT2  = -cpp -w -O3 -march=k8-sse3 -mfpmath=sse -fdefault-real-8
-#	OPT3  = -cpp -w -g
   ifeq "$(DEBUG)" "YES"
 	OPT1  =  -pg -w -g -fbacktrace -fcheck=bounds -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
 	OPT2  =  -pg -w -g -fbacktrace -fcheck=bounds -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
@@ -240,47 +194,13 @@ ifeq "$(CF90)" "GFORT"
   endif
 endif
 
-
-ifeq "$(CF90)" "GFORT1"
-	OPT1  = $(OMPADDL) -w -O3 -msse4.2 -mfpmath=sse -ffast-math -fdefault-real-8 -fdefault-double-8 -finline-functions -funroll-loops
-	OPT2  = $(OPT1) -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -w -g  -fdefault-real-8 -fdefault-double-8
-  ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-	OPT2  =  -pg -cpp -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8
-	OPT3  =  -pg -cpp -w -g
-  endif
-endif
-
-
 ifeq "$(CF90)" "IFORT"
 	STATIC = -static
-#	OPT1  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT2  = -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble -static
-#	OPT3  = -fpp -w  -pg      -g               -align all -autodouble -static
 	OPT1  = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  =  -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-	OPT3  =  -fpp -w       -g                 -align all -autodouble
   ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-	OPT2  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-	OPT3  =  -pg -fpp -w -g                -align all -autodouble
+		OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
   endif
 endif
-
-
-ifeq "$(CF90)" "IFORT1"
-	STATIC = -static
-	OPT1  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT2  = -fpp -w -axAVX -msse4.2 -O3 -ip -no-prec-div -align all -autodouble
-	OPT3  = -fpp -w        -g                            -align all -autodouble
-  ifeq "$(DEBUG)" "YES"
-	OPT1  =  -fpp -w -g -CB -traceback -align all -autodouble
-	OPT2  =   $(OPT1)
-	OPT3  =  -fpp -w -g -align all -autodouble
-  endif
-endif
-
 
 ifeq "$(CF90)" "MPIF90"
         STATIC = -static
@@ -296,14 +216,6 @@ ifeq "$(CF90)" "MPIF90"
         OPT3  =  -pg -fpp -w -g                -align all -autodouble
   endif
 endif
-
-
-ifeq "$(CF90)" "XLF_R"
-	OPT1  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict
-	OPT2  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6 -O3 -qstrict -qdpc -qautodbl=dbl
-	OPT3  = -d -w -qport=mod -q64 -qarch=pwr6 -qtune=pwr6
-endif
-
 
 #####################################################################
 #                        Compilation rules                          #
@@ -373,17 +285,19 @@ ifeq ($(TYPE_FFT), MKL)
 	MKLFLAGS =
 	FFTWFLAGS =
 
-
   ifneq "$(MKL_WRAPPERS)" ""
-	MKLFLAGS += -L$(MKL_WRAPPERS)
+		MKLFLAGS += -L$(MKL_WRAPPERS)
   endif
+
 	MKLFLAGS += -lfftw3xf_intel
+#MKLFLAGS += -lfftw3xf_gnu
 
   ifneq "$(MKLPATH)" ""
-	MKLFLAGS += -L$(MKLPATH)
+		MKLFLAGS += -L$(MKLPATH)
   endif
+
   ifneq "$(MKLINCLUDE)" ""
-	MKLFLAGS += -I$(MKLINCLUDE)
+		MKLFLAGS += -I$(MKLINCLUDE)
   endif
 
   ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
@@ -408,25 +322,22 @@ ifeq ($(TYPE_FFT), MKL)
 	MKLFLAGS += -liomp5
   endif
 
-	MKLFLAGS += -lpthread
-	FFTWFLAGS = $(MKLFLAGS) -L$(FFTW3_LIBDIR)
+#MKLFLAGS += -lpthread
+	MKLFLAGS +=
+	FFTWFLAGS = $(MKLFLAGS)
 
 # Flags for directly linking the original FFTW libraries.
 else
+	FFTWFLAGS = 
   ifeq ($(TYPE_FFT), FFTW)
+		FFTWFLAGS += -L$(FFTW3_LIBDIR) -lfftw3
     ifeq ($(OMP), YES)
-	FFTWFLAGS += -lfftw3_omp
-    endif
-	#FFTWFLAGS += -lfftw3 -lm -L/usr/local/FFTW/fftw-3.3.3/lib -L$(FFTW3_LIBDIR)
-	#FFTWFLAGS += -lfftw3 -lm -L$(FFTW3_LIBDIR)
-	FFTWFLAGS += -lfftw3 -lm 
-	#FFTWFLAGS += -L/apps/fftw3/3.3.5-intel17.0/lib -lfftw3 -lm
-
+			FFTWFLAGS += -lfftw3_omp
+		endif
   endif
 endif
 
-
-LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1) $(OMPADDL)
+LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1)
 
 ifeq ($(LINK_STATIC), YES)
 	LINKERFLAGS += $(STATIC)
@@ -562,13 +473,6 @@ ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 	$(error ERROR: Unknown $(strip MKL         value) in makefile / define.mk ($(MKL)))
 endif
 
-# coufou, coudoub: only one can be enabled.
-#ifneq ($(COUFOU),NO)
-#  ifneq ($(COUDOUB),NO)
-#	$(error ERROR: coufou and coudoub cannot be enabled simultaneously in define.h)
-#  endif
-#endif
-
 # coudoub3D is only enabled when using FFTW calls.
 ifneq ($(COUDOUB3D),NO)
   ifneq ($(calls_FFTW), YES)
@@ -598,14 +502,17 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        schmid.o zeroforce.o loc_mfield.o givens.o subgrids.o\
        parallele.o rta.o\
        HEeigensystem.o mini.o zdiag.o orthmat.o
+
 ifeq ($(EXTENDED),YES)
     OBJINT += util_extended.o attachement.o
 endif
+
 ifeq ($(FSIC),YES)
     OBJINT += 2stUT.o 2st_util.o 2stUTc.o
 endif       
+
 ifeq ($(RAREGAS), YES)
-OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
+    OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
        short.o image.o lattice.o util_substrate.o
 endif
 
@@ -773,7 +680,7 @@ parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 rta.o: rta.F90 kinetic.mod params.mod
-	$(COMPILER) $(COMPILERFLAGS3) -c $<
+	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
 orthmat.o: orthmat.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
