@@ -424,3 +424,253 @@ END DO
 
 RETURN
 END SUBROUTINE cschmidt
+
+
+!     ******************************
+
+SUBROUTINE sortwf_energ(q0)
+
+!     ******************************
+
+
+!   Sorts wavefunctions accorting to energies.
+!   Many copying operations makes that a bit expensive.
+!   Thus to be used only occcassionally.
+!
+!     Input/Output:
+!       q0   = set of real s.p. wavefunctions to be ortho-normalized
+
+USE params
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
+
+
+INTEGER :: i, imin, isav, n, nbe, nbes, ncc, ncs,ispact,ii
+REAL(DP) :: cs, emin
+REAL(DP) :: eord(kstate)
+REAL(DP) :: psistate(kstate)
+INTEGER :: isort(kstate)
+
+!*********************************************************
+
+!     sort the s.p. energies
+
+DO n=1,nstate
+  eord(n)   = amoy(n)
+  isort(n) = n
+END DO
+  
+DO ispact=1,numspin
+  DO n=1,nstate
+    IF(ispin(n)==ispact) THEN
+      emin   = 1D32
+      imin   = n
+      DO i=n,nstate
+        IF(ispin(i)==ispact .AND. eord(i) < emin) THEN
+          emin   = eord(i)
+          imin   = i
+        END IF
+      END DO
+      isav         = isort(imin)
+      eord(imin)   = eord(n)
+      isort(imin)  = isort(n)
+      eord(n)      = emin
+      isort(n)     = isav
+    END IF
+  END DO
+END DO
+
+WRITE(*,*) 'isort:',isort(1:nstate)
+WRITE(*,*) 'amoy:',amoy(1:nstate)
+WRITE(*,*) 'eord:',eord(1:nstate)
+
+amoy(1:nstate)=eord(1:nstate)
+DO ii=1,nxyz
+  psistate = 0D0
+  DO nbe=1,nstate
+    psistate(nbe) = q0(ii,isort(nbe))
+  END DO
+  DO nbe=1,nstate
+    q0(ii,nbe) = psistate(nbe)
+  END DO
+END DO
+
+
+END SUBROUTINE sortwf_energ
+
+
+
+SUBROUTINE hamdiag(q0,aloc)
+!     ******************************
+
+
+!  Diagonalization  of actual mean field
+!
+!     Input/Output:
+!       q0    = set of real s.p. wavefunctions, already ortho-normalized
+!       aloc  = given local potential 
+!               (non-local part indirectly through 'rhpsi')
+!       tdiag = switch to Hamiltonian diagonalization
+
+USE params
+USE util, ONLY: wfovlp
+IMPLICIT NONE
+
+REAL(DP), INTENT(IN OUT) :: q0(kdfull2,kstate)
+REAL(DP), INTENT(IN)      :: aloc(2*kdfull2)
+
+INTEGER ::  nbe, nbes
+REAL(DP) :: cs, emin
+REAL(DP) :: eord(kstate)
+INTEGER :: isort(kstate)
+
+
+REAL(DP),ALLOCATABLE :: tmatr(:)   ! tridiagonal storage
+REAL(DP),ALLOCATABLE :: eigen(:)
+REAL(DP),ALLOCATABLE :: vect(:,:),hmatr(:,:)
+REAL(DP),ALLOCATABLE :: psistate(:),hpsi(:)
+INTEGER,ALLOCATABLE :: npoi(:,:)
+INTEGER :: ishift,ispact,ii,nbc,nbcs,ntridig,nlower,nupper,nstsp(2),ktridig
+INTEGER :: ncc,ncs,n
+
+LOGICAL, PARAMETER :: tprint=.TRUE.
+
+!*********************************************************
+
+  IF(tprint) WRITE(*,*) 'HAMDIAG entered: nstate=',nstate
+
+CALL sortwf_energ(q0)
+DO n=1,nstate
+  isort(n) = n
+END DO
+
+! check that states come in contiguous blocks of spin
+  ALLOCATE(npoi(nstate,2))
+  ispact=1
+  nstsp=0
+  npoi=0
+  DO nbe=1,nstate
+    IF(ispin(nbe)==ispact) THEN
+      nstsp(ispact)=1+nstsp(ispact) 
+      npoi(nstsp(ispact),ispact) = nbe
+    ELSE
+      IF(ispact==1) THEN
+        ispact=2
+        nstsp(ispact)=1+nstsp(ispact) 
+        npoi(nstsp(ispact),ispact) = nbe
+      ELSE
+        STOP "HAMDIAG: states not sorted with spin"
+      END IF
+    END IF
+  END DO
+IF(tprint) WRITE(*,*) 'HAMDIAG: nstsp,npoi=',nstsp,npoi
+
+
+! allocate work spaces
+  ktridig=(nstate+nstate*nstate)/2
+  ALLOCATE(tmatr(ktridig),eigen(nstate))
+  ALLOCATE(vect(nstate,nstate),hmatr(nstate,nstate),psistate(nstate))
+  ALLOCATE(hpsi(kdfull2))
+
+! work up spin-wise
+  DO ispact=1,numspin
+
+! set limits
+    IF(nstsp(ispact)==0) CYCLE
+    IF(ispact==1) THEN
+      nlower=1
+      nupper=nstsp(1)
+    ELSE
+      nlower=nstsp(1)+1
+      nupper=nstsp(1)+nstsp(2)
+    END IF
+
+! compute Hamiltonian matrix
+    DO nbes=1,nstsp(ispact)
+      nbe = npoi(nbes,ispact)
+      ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
+      hpsi=q0(:,nbe)
+      CALL rhpsi(hpsi,aloc(1+ishift),nbe,0)
+      DO nbcs=1,nstsp(ispact)
+        nbc = npoi(nbcs,ispact)
+        hmatr(nbcs,nbes) = wfovlp(q0(:,nbc),hpsi)
+        IF(nbcs==nbes) hmatr(nbcs,nbes) =  hmatr(nbcs,nbes) !+ amoy(nbes)
+      END DO
+      IF(tprint) WRITE(*,*) ' variance b:',nbe,&
+              SQRT(wfovlp(hpsi,hpsi)-hmatr(nbes,nbes)**2)
+    END DO
+
+!   map to upper triangular storage
+    ntridig=0
+    cs=0D0
+    DO nbes=1,nstsp(ispact)
+      DO nbcs=1,nbes
+        IF(nbcs.NE.nbes) cs = hmatr(nbcs,nbes)**2+cs
+        ntridig = 1+ntridig
+        tmatr(ntridig) = hmatr(nbcs,nbes) 
+      END DO    
+    END DO    
+    IF(tprint) WRITE(*,'(a,200(1pg13.5))') '# H variance, s.p.energies:',&
+        cs/(nstsp(ispact)*nstsp(ispact)-nstsp(ispact)),&
+        (hmatr(nbes,nbes),nbes=1,nstsp(ispact))
+
+ 
+
+! diagonalize
+    CALL givens(tmatr,eigen,vect,nstsp(ispact),nstsp(ispact),nstate)
+    IF(tprint) WRITE(*,'(a,200(1pg13.5))') ' new s.p.energies:',&
+            eigen(1:nstsp(ispact))
+    amoy(1:nstsp(ispact))= eigen(1:nstsp(ispact))
+
+  
+
+! compose new wavefunctions
+    DO ii=1,nxyz
+        psistate = 0D0
+        DO nbes=1,nstsp(ispact)
+          nbe = npoi(nbes,ispact)
+          DO nbcs=1,nstsp(ispact)
+            nbc = npoi(nbcs,ispact)
+            psistate(nbe) = psistate(nbe) + q0(ii,nbc)*vect(nbcs,nbes)
+          END DO
+        END DO
+        DO nbes=1,nstsp(ispact)
+          nbe = npoi(nbes,ispact)
+          q0(ii,nbe) = psistate(nbe)
+        END DO
+    END DO
+
+
+! test Hamiltonian matrix
+    IF(tprint) THEN
+     cs=0D0 
+     DO nbes=1,nstsp(ispact)
+        nbe = npoi(nbes,ispact)
+        ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
+        hpsi=q0(:,nbe)
+        CALL rhpsi(hpsi,aloc(1+ishift),nbe,0)
+        DO nbcs=1,nstsp(ispact)
+          nbc = npoi(nbcs,ispact)
+          hmatr(nbcs,nbes) = wfovlp(q0(:,nbc),hpsi)
+          IF(nbcs.NE.nbes) cs = hmatr(nbcs,nbes)**2+cs
+        END DO
+        WRITE(*,*) ' variance a:',nbe,SQRT(wfovlp(hpsi,hpsi)-hmatr(nbes,nbes)**2)
+      END DO
+!      IF(tprint)  WRITE(*,'(a,200(1pg13.5))') ' H matrix after:'
+!      DO nbes=1,nstsp(ispact)
+!        IF(tprint) WRITE(*,'(200(1pg13.5))') hmatr(1:nstsp(ispact),nbes)
+!      END DO    
+      IF(tprint) WRITE(*,'(a,200(1pg13.5))') '# H after: ',&
+          cs/(nstsp(ispact)*nstsp(ispact)-nstsp(ispact)),&
+          (hmatr(nbes,nbes),nbes=1,nstsp(ispact))
+    END IF
+
+  END DO
+
+
+  DEALLOCATE(tmatr,eigen,vect,hpsi)
+  DEALLOCATE(npoi)
+  DEALLOCATE(psistate)
+
+END SUBROUTINE hamdiag

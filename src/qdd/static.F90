@@ -177,7 +177,8 @@ DO iter1=1,ismax
 #endif
   
   CALL sstep(psir,aloc,iter1)
-  CALL static_mfield(rho,aloc,psir,iter1)
+!  IF(.NOT.(ifhamdiag>0 .AND. MOD(iter1-1,ifhamdiag)==0 .AND. iter1-1>49)) &
+    CALL static_mfield(rho,aloc,psir,iter1)
   CALL pricm(rho)
   IF(myn == 0) WRITE(6,'(a,3e17.7)') 'rhoCM: ',  &
       rvectmp(1),rvectmp(2),rvectmp(3)
@@ -393,7 +394,7 @@ SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 !      aloc   = local mean-field potential
 
 USE params
- 
+
 #if(fsic)
 USE twostr
 USE twost_util
@@ -406,10 +407,12 @@ REAL(DP), INTENT(OUT)     :: aloc(2*kdfull2)
 REAL(DP), INTENT(IN)      :: psir(kdfull2,kstate)
 INTEGER, INTENT(IN)       :: iter1
 
-
 !----------------------------------------------------------------
 
+!aloc=rho
 CALL calcrhor(rho,psir)
+!rho=0.5D0*rho+0.5D0*aloc
+
 CALL coul_mfield(rho)
 
 
@@ -498,9 +501,9 @@ REAL(DP),ALLOCATABLE :: vect(:,:)
 REAL(DP),ALLOCATABLE :: psistate(:)
 INTEGER,ALLOCATABLE :: npoi(:,:)
 INTEGER :: ntridig(2),nstsp(2)
-LOGICAL, PARAMETER :: tprham=.false.
+LOGICAL, PARAMETER :: tprham=.TRUE.
 
-REAL(DP):: espbef, espaft
+REAL(DP):: espbef, espaft,sumvarold=1D10
 #if(parano)
 INTEGER :: ni
 #endif
@@ -522,11 +525,13 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: q1
 REAL(DP),DIMENSION(:),ALLOCATABLE :: w4
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: psipr
 COMPLEX(DP),DIMENSION(:),ALLOCATABLE :: q2
+LOGICAL :: thamdiag,talert=.FALSE.
 
 !-------------------------------------------------------------------------
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
 
+thamdiag = ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0 .AND. iter>49
 
 nph=3-numspin
 
@@ -569,7 +574,7 @@ END IF
 !-----------------------------------------------------------------------
 !     NETLIB_FFT | FFTW_CPU
 !-----------------------------------------------------------------------
-
+sumvar=0D0
 DO nbe=1,nstate
   ishift = (ispin(nbe)-1)*nxyz        ! store spin=2 in upper block
   
@@ -606,7 +611,8 @@ DO nbe=1,nstate
   
 !       optionally compute expectation value of potential energy
   
-  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
+!  IF(MOD(iter,istinf) == 0) epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
+  epotsp(nbe) = wfovlp(q0(:,nbe),q1) + amoy(nbe)
   
   ALLOCATE(psipr(kdfull2))
   
@@ -626,17 +632,21 @@ DO nbe=1,nstate
 !       Variance 'evarsp2' excludes non-diagonal elements within
 !       occupied space.
   
-  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
+!  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
     
 #if(parano)
+  IF(MOD(iter,istinf) == 0 .AND. ifsicp /= 6) THEN
     ALLOCATE(w4(kdfull2))
-    CALL rfftback(psipr,w4)     !  ???
+!    CALL rfftback(psipr,w4)     !  ???
     CALL rfftback(q2,w4)
     CALL project(w4,w4,ispin(nbe),q0)
     evarsp2(nbe) =  SQRT(wfovlp(w4,w4))
     DEALLOCATE(w4)
+  ELSE
+    evarsp2(nbe) =  0D0
+  END IF
 #endif
-    
+
     sum0 = 0D0
     sumk = 0D0
     sume = 0D0
@@ -653,22 +663,31 @@ DO nbe=1,nstate
     ekinsp(nbe) = sumk/sum0
     sume = sume/sum0
     sum2 = sum2/sum0
-!          amoy(nbe)   = sume
+    amoy(nbe)   = sume+amoy(nbe)
     evarsp(nbe) = SQRT(MAX(sum2-sume**2,small))
-
+    sumvar = sumvar +  occup(nbe)*evarsp(nbe)**2
 #if(parayes)
     evarsp2(nbe) = evarsp(nbe)
 #endif
-  END IF
+!  END IF
 
   
 #if(parano)
-  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
+!  IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
+  IF(ifhamdiag>10000 .AND. MOD(iter,ifhamdiag)==0) THEN
 !       accumulate mean-field Hamiltonian within occupied states,
 !       for later diagonalization
 
     IF(iter > 0) THEN  
       CALL rfftback(q2,q1)
+!!  test RHPSI
+!      ALLOCATE(w4(kdfull2))
+!      w4=q0(:,nbe)
+!      CALL rhpsi(w4,aloc(1+ishift),nbe,1)
+!      vol=wfovlp(w4,q1)**2/(wfovlp(w4,w4)*wfovlp(q1,q1))
+!      WRITE(*,*) 'test RHPSI:',nbe,vol,wfovlp(w4,q0(:,nbe))&
+!            ,wfovlp(q1,q0(:,nbe)),amoy(nbe)
+!      DEALLOCATE(w4)
       iactsp = ispin(nbe)
       nstsp(iactsp) = 1+nstsp(iactsp)
       npoi(nstsp(iactsp),iactsp) = nbe
@@ -697,6 +716,7 @@ DO nbe=1,nstate
   END IF
 #endif
   
+!IF(ifhamdiag==0 .OR. MOD(iter,ifhamdiag).NE.0) THEN
 !     perform the damped gradient step and orthogonalize the new basis
   
   IF(idyniter /= 0 .AND. iter > 100) e0dmp = MAX(ABS(amoy(nbe)),0.5D0)
@@ -720,20 +740,24 @@ DO nbe=1,nstate
     CALL rfftback(psipr,q0(1,nbe))
 !  END IF
   END IF  
+!END IF
 DEALLOCATE(psipr)
 END DO                                            ! end loop over states
+sumvar = SQRT(sumvar/REAL(nclust,DP))
 
 DEALLOCATE(q1)
 
 IF(ifsicp == 5)  DEALLOCATE(qex)
 
-IF(tcpu) THEN
+
+ IF(tcpu) THEN
   CALL cpu_time(time_step)
   CALL system_clock(ncount_step,ncount_rate,ncount_max)
 END IF
 
 #if(parano)
-IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
+!IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
+IF(ifhamdiag>10000 .AND. MOD(iter,ifhamdiag)==0) THEN
 
 #if(fsic)
 !  symmetrize Hamiltonian matrix
@@ -794,6 +818,14 @@ IF(ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0) THEN
 !    WRITE(7,*) ' PSISTATE allocated, thread=',OMP_GET_THREAD_NUM()
 !$OMP DO SCHEDULE(STATIC)
 #endif
+    IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' amoy before:',  &
+        (amoy(nbe),nbe=1,nstsp(iactsp))
+    DO nbes=1,nstsp(iactsp)
+      nbe = npoi(nbes,iactsp)
+      amoy(nbe)=heigen(nbes)
+    END DO
+    IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' amoy after: ',  &
+        (amoy(nbe),nbe=1,nstsp(iactsp))
     DO ii=1,nxyz
       psistate = 0D0
       DO nbes=1,nstsp(iactsp)
@@ -836,6 +868,20 @@ IF(tcpu) THEN
 END IF
 
 CALL schmidt(q0)
+! invoke Hamiltonian diagonalization only if actual variance 
+! is factor 'variance_gain' lower than last value before diagonalization.
+IF(thamdiag.OR.talert) THEN
+  IF(sumvar<sumvarold*variance_gain) THEN
+    sumvarold = sumvar
+    thamdiag=.TRUE.
+    talert=.FALSE.
+    IF(tprham) WRITE(*,*) 'Hamiltonian diag. at iter=',iter,sumvar
+  ELSE
+    thamdiag=.FALSE.
+    talert=.TRUE.
+  END IF
+END IF
+IF(thamdiag) CALL hamdiag(q0,aloc)
 
 
 !     readjust occupations numbers to actual s.p. energies
@@ -869,13 +915,12 @@ END IF
 
 RETURN
 END SUBROUTINE sstep
-#endif                   FFT switch finished
-!             
+#endif                   
+!             FFT switch finished
 
 #if(findiff|numerov)
 !-----sstep----------------------------------------------------------
 !                                  version for finite differences
-
 SUBROUTINE sstep(q0,aloc,iter)
 
 !     Performs one static step for all wavefunctions and for given
@@ -957,10 +1002,13 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: w4
 REAL(DP),DIMENSION(:),ALLOCATABLE :: q2
 REAL(DP),DIMENSION(:),ALLOCATABLE :: psipr
 REAL(DP)::vol
+LOGICAL :: thamdiag
+
 !-------------------------------------------------------------------------
 
 !      write(*,*) ' SSTEP with IFSICP=',ifsicp
 
+thamdiag = ifhamdiag>0 .AND. MOD(iter,ifhamdiag)==0
 
 nph=3-numspin
 
@@ -1266,6 +1314,21 @@ IF(tcpu) THEN
 END IF
 
 CALL schmidt(q0)
+!CALL loewdin(q0,aloc,thamdiag)
+! invoke Hamiltonian diagonalization only if actual variance 
+! is factor 'variance_gain' lower than last value before diagonalization.
+IF(thamdiag.OR.talert) THEN
+  IF(sumvar<sumvarold*variance_gain) THEN
+    sumvarold = sumvar
+    thamdiag=.TRUE.
+    talert=.FALSE.
+    IF(tprham) WRITE(*,*) 'Hamiltonian diag. at iter=',iter,sumvar
+  ELSE
+    thamdiag=.FALSE.
+    talert=.TRUE.
+  END IF
+END IF
+IF(thamdiag) CALL hamdiag(q0,aloc)
 
 
 !     readjust occupations numbers to actual s.p. energies
@@ -1365,7 +1428,8 @@ DO nb=1,nstate
   ehilf    = epot
   epot     = epot+ekin
   espnb    = espnb + (epotsp(nb) + ekinsp(nb))*occup(nb)
-  amoy(nb) = epot
+!  amoy(nb) = epot
+!  WRITE(*,*) ' test spes:',nb,ekin,epot,amoy(nb)
   epot     = epot+ekin
   en(nb)   = epot*occup(nb)
   eshell   = eshell+en(nb)
@@ -1502,7 +1566,7 @@ IF(myn == 0) THEN
   WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
   WRITE(6,'(a)') ' '
   
-  IF(jinfo > 0 .AND. MOD(i,jinfo) == 0) THEN
+  IF(istinf > 0 .AND. MOD(i,istinf) == 0) THEN
     CALL cleanfile(17)
     OPEN(17,POSITION='append',FILE='infosp.'//outnam)
     WRITE(17,'(a,i5,4(1pg13.5))') 'iteration,energy,variances=',  &
@@ -1824,9 +1888,9 @@ LOGICAL :: tdown
 
 !--------------------------------------------------------------------
 
-IF(tprintp) WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ0:',amoy(nstspin(1,is):nstspin(2,is))
+!IF(tprintp) WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ0:',amoy(1:nstate)
 DO nbe=1,nstate
-  amoy(nbe)   = ekinsp(nbe)+epotsp(nbe)
+!  amoy(nbe)   = ekinsp(nbe)+epotsp(nbe)
   occold(nbe) = occup(nbe)
   ocwork(nbe)= occold(nbe)
 END DO
@@ -1885,19 +1949,145 @@ IF(numspin==2) THEN
 ELSE
   eferm  = 0D0         ! restart search of eferm from scratch
   IF(tprintp) THEN
-    WRITE(6,'(a,2i5,3(1pg13.5))') 'REOCC basic:',nelecs(is),nstate, &
+    WRITE(6,'(a,2i5,3(1pg13.5))') 'REOCC basic:',nelecs(1),nstate, &
              eferm,temp,partnm
-    WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC energ:',amoy(1:nstate)
+    WRITE(6,'(a,200(1pg13.5))') 'REOCC energ:',amoy(1:nstate)
   END IF
   ph=2D0
   CALL pair(amoy,ocwork,ph,nclust,nstate,gp,eferm,temp,partnm,  &
       60,4,epstmp,-1,ksttot)
-    WRITE(6,'(a//20(5(1pg13.5)/))') 'REOCC occup:',ocwork(1:nstate)
+    IF(tprintp) WRITE(6,'(a,200(1pg13.5))') 'REOCC occup:',ocwork(1:nstate)
   DO nbe=1,nstate
     occup(nbe) = occmix*ocwork(nbe)*ph(nbe) + occo*occold(nbe)
   END DO
 END IF
 RETURN
 END SUBROUTINE reocc
+
+
+
+!-----rhpsi  -------------------------------------------------------------
+
+SUBROUTINE rhpsi(qact,aloc,nbe,itpri)
+
+!     Action of mean-field Hamiltonian on A REAL s.p. wavefunction:
+!       qact     = wavefunction on which H acts and resulting w.f.
+!       aloc     = local potential for the actual spin component
+!       ak       = kinetic energies in momentum space
+!       nbe      = number of state
+!       itpri    = switch for computing s.p. energies (for ABVS(itpri)=1)
+!                  <0 switches to subtract mean-value of s.p. energy
+#if(fsic)
+!  case 'ifsicp=6' to be checked
+#endif
+!  
+
+USE params
+USE util, ONLY:wfovlp
+USE kinetic
+#if(fsic)
+USE twost
+#endif
+
+IMPLICIT NONE
+
+
+
+REAL(DP), INTENT(IN OUT)              :: qact(kdfull2)
+REAL(DP), INTENT(IN)                     :: aloc(2*kdfull2)
+!REAL(DP), INTENT(IN)                    :: akv(kdfull2)
+INTEGER, INTENT(IN)                      :: nbe
+INTEGER, INTENT(IN)                      :: itpri
+REAL(DP),ALLOCATABLE :: qex(:)
+
+!                                   workspaces
+REAL(DP),ALLOCATABLE :: q1fine(:),q2fine(:),qactfine(:),q1(:),q2(:)
+COMPLEX,ALLOCATABLE :: qc(:)
+REAL(DP),ALLOCATABLE :: qarray (:,:,:),qarrayfine (:,:,:)
+REAL(DP) :: wnorm
+LOGICAL :: tpri
+LOGICAL,PARAMETER :: tsubmean=.TRUE.
+LOGICAL,PARAMETER :: ttest=.FALSE.
+INTEGER :: i, is, na
+REAL(DP) :: cf
+
+
+!----------------------------------------------------------------------
+
+
+tpri =  ABS(itpri)==1
+
+
+
+ALLOCATE(q1(kdfull2),q2(kdfull2))
+q1=0D0
+q2=0D0
+!     action of kinetic energy
+
+
+#if(netlib_fft|fftw_cpu)
+ALLOCATE(qc(kdfull2))
+CALL rftf(qact,qc)
+DO  i=1,nxyz
+  qc(i) = akv(i)*qc(i)
+END DO
+CALL rfftback(qc,q2)
+DEALLOCATE(qc)
+#else
+CALL rkin3d(qact,q2)
+#endif
+
+
+
+!     action of potential and non-local PsP (optionally)
+
+IF(ipsptyp == 1) THEN
+    CALL nonlocalr(qact,q1)
+
+  IF(tpri) enonlo(nbe) = wfovlp(qact,q1)
+  DO  i=1,nxyz
+!    q1(i)=q1(i)+qact(i)*(aloc(i)-amoy(nbe))
+    q1(i)=q1(i)+qact(i)*aloc(i)
+  END DO
+ELSE
+  DO  i=1,nxyz
+!    q1(i)=qact(i)*(aloc(i)-amoy(nbe))
+    q1(i)=qact(i)*aloc(i)
+  END DO
+END IF
+
+IF(ifsicp==5) THEN
+  ALLOCATE(qex(kdfull2))
+  CALL exchgr(qact,qex,nbe)
+  q1 = q1 + qex
+  DEALLOCATE(qex)
+END IF
+
+! subtract SIC potential for state NBE
+#if(fsic)
+IF(ifsicp .GE. 8) CALL subtr_sicpot(q1,nbe)
+#endif
+
+IF(tpri) THEN
+!  epotsp(nbe) = wfovlp(qact,q1)+amoy(nbe)
+!  amoy(nbe) = ekinsp(nbe)+epotsp(nbe)
+  q2 = q1+q2
+  spvariance(nbe) = SQRT(MAX(REAL(wfovlp(q2,q2),DP)-ABS(wfovlp(qact,q2))**2,1D-99))
+  is=ispin(nrel2abs(nbe))
+  IF(ttest) WRITE(*,'(a,2i4,5(1pg13.5))') &
+   ' HPSI: nbe,is,esp,var=',nbe,is,amoy(nbe),spvariance(nbe), &
+      ekinsp(nbe),epotsp(nbe),REAL(wfovlp(q2,q2),DP)
+  CALL flush(6)
+ELSE
+  q2 = q1+q2
+END IF
+
+qact=q2
+
+DEALLOCATE(q1,q2)
+
+
+RETURN
+END SUBROUTINE rhpsi
 
 

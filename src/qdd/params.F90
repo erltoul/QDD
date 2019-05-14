@@ -252,12 +252,12 @@ REAL(DP) :: centfx=0D0,centfy=0D0,centfz=0D0
 REAL(DP) :: shiftinix=0D0,shiftiniy=0D0,shiftiniz=0D0
 
 #if(parayes)
-INTEGER :: ifhamdiag=0
+INTEGER :: ifhamdiag=0              ! modulus for Hamiltonian diagonalization
 #endif
 #if(parano)
-INTEGER :: ifhamdiag=20
+INTEGER :: ifhamdiag=20             ! modulus for Hamiltonian diagonalization
 #endif
-
+REAL(DP) :: variance_gain=0.33333D0 ! variance criterion for diagonalization
 
 !     spatial fields as densities and potentials
 REAL(DP),ALLOCATABLE :: rhojel(:)                !  jellium density

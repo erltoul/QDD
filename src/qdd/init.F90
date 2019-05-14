@@ -64,7 +64,7 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     jdip,jdiporb,jquad,jang,jangabso,jspdp,jinfo,jenergy,  &
     jposcm,jgeomel,jelf,jstinf, &
     ifspemoms,iftransme,ifexpevol, &
-    tempion,  &
+    tempion,variance_gain,  &
     itft,tnode,deltat,tpeak,omega,e0,  &
     projcharge,projvelx,projvely,projvelz, &
     projinix,projiniy,projiniz, &
@@ -1836,7 +1836,7 @@ SUBROUTINE initwf(psir)
 !  Master routine to initialize the electronic wavefunctions
 
 USE params
-USE util, ONLY:shiftfield
+USE util, ONLY:shiftfield,wfovlp
 IMPLICIT NONE
 #if(parayes)
 INCLUDE 'mpif.h'
@@ -2595,6 +2595,7 @@ SUBROUTINE initho(psir)
 !  Initializes harmonic oscillator wavefunctions
 
 USE params
+USE util, ONLY: wfovlp
 IMPLICIT NONE
 
 #if(parayes)

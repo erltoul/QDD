@@ -1152,9 +1152,9 @@ END SUBROUTINE calc_sicsp
 !     ******************************
 
 #ifdef REALSWITCH
-SUBROUTINE exchgr(q0,qex)
+SUBROUTINE exchgr(q0,qex,nbel)
 #else
-SUBROUTINE exchg(q0,qex,nbe)
+SUBROUTINE exchg(q0,qex,nbel)
 #endif
 
 !     ******************************
@@ -1177,12 +1177,13 @@ IMPLICIT NONE
 #ifdef REALSWITCH
 REAL(DP), INTENT(IN)                         :: q0(kdfull2,kstate)
 REAL(DP), INTENT(OUT)                        :: qex(kdfull2,kstate)
-INTEGER :: i,nbe
+INTEGER,INTENT(IN),OPTIONAL                  :: nbel
+INTEGER :: i
 REAL(DP) :: sump
 #else
 COMPLEX(DP), INTENT(IN)                         :: q0(kdfull2)
 COMPLEX(DP), INTENT(OUT)                        :: qex(kdfull2)
-INTEGER,INTENT(IN)                              :: nbe
+INTEGER,INTENT(IN)                           :: nbel
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acli
 REAL(DP),DIMENSION(:),ALLOCATABLE :: rhi
 COMPLEX(DP) :: rhoc
@@ -1194,7 +1195,7 @@ REAL(DP),DIMENSION(:),ALLOCATABLE :: rh
 REAL(DP),DIMENSION(:),ALLOCATABLE :: acl
 
 LOGICAL,PARAMETER :: ttest=.false.
-INTEGER :: ind,nb2
+INTEGER :: ind,nb2,nbe
 
 
 IF(ifsicp /= 5) STOP ' in EXCHANGE: wrong option IFSICP'
@@ -1205,6 +1206,7 @@ ALLOCATE(rh(2*kdfull2))
 #ifdef COMPLEXSWITCH
 ALLOCATE(rhi(2*kdfull2))
 ALLOCATE(acli(2*kdfull2))
+nbe=nbel
 #endif
 
 qex = 0D0
@@ -1216,6 +1218,7 @@ qex = 0D0
 dvol=dx*dy*dz
 #ifdef REALSWITCH
 DO nbe=1,nstate
+  IF(PRESENT(nbel) .AND. nbel.NE.nbe) CYCLE
 #endif
   DO nb2=1,nstate
     IF(ispin(nrel2abs(nbe)) == ispin(nrel2abs(nb2)) &
