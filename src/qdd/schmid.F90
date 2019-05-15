@@ -43,11 +43,12 @@ REAL(DP) :: cs, emin
 REAL(DP) :: eord(kstate)
 INTEGER :: isort(kstate)
 
-LOGICAL, PARAMETER :: tord=.true.
+LOGICAL, PARAMETER :: tord=.FALSE.
 
 !*********************************************************
 
 !     sort the s.p. energies
+CALL sortwf_energ(q0)
 
 DO n=1,nstate
   eord(n)   = amoy(n)
@@ -68,6 +69,9 @@ IF(tord) THEN
     isort(imin)  = isort(n)
     eord(n)      = emin
     isort(n)     = isav
+    cs           = occup(n)
+    occup(n)     = occup(imin)
+    occup(imin)  = cs
   END DO
 END IF
 
@@ -451,6 +455,7 @@ REAL(DP) :: cs, emin
 REAL(DP) :: eord(kstate)
 REAL(DP) :: psistate(kstate)
 INTEGER :: isort(kstate)
+LOGICAL,PARAMETER :: tprint=.TRUE.
 
 !*********************************************************
 
@@ -477,13 +482,20 @@ DO ispact=1,numspin
       isort(imin)  = isort(n)
       eord(n)      = emin
       isort(n)     = isav
+      cs           = occup(n)
+      occup(n)     = occup(imin)
+      occup(imin)  = cs
     END IF
   END DO
 END DO
 
-WRITE(*,*) 'isort:',isort(1:nstate)
-WRITE(*,*) 'amoy:',amoy(1:nstate)
-WRITE(*,*) 'eord:',eord(1:nstate)
+IF(tprint) THEN
+  WRITE(*,*) 'isort:',isort(1:nstate)
+  WRITE(*,*) 'amoy:',amoy(1:nstate)
+  WRITE(*,*) 'eord:',eord(1:nstate)
+  WRITE(*,*) 'etest:',(amoy(isort(nbe)),nbe=1,nstate)
+  WRITE(*,*) 'occup:',occup(1:nstate)
+END IF
 
 amoy(1:nstate)=eord(1:nstate)
 DO ii=1,nxyz

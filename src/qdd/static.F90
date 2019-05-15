@@ -411,7 +411,7 @@ INTEGER, INTENT(IN)       :: iter1
 
 !aloc=rho
 CALL calcrhor(rho,psir)
-!rho=0.5D0*rho+0.5D0*aloc
+!rho=0.3D0*rho+0.7D0*aloc
 
 CALL coul_mfield(rho)
 
@@ -1380,7 +1380,7 @@ SUBROUTINE infor(rho,i)
 !        i     = iteration number
 
 USE params
-USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile
+USE util, ONLY:printfieldx, printfieldy, printfieldz, cleanfile, emoms
 
 #if(fsic)
 USE twost_util
@@ -1412,7 +1412,7 @@ REAL(DP) :: en(kstate)
 
 REAL(DP),EXTERNAL :: energ_ions
 
-!   compute h*psi
+!   compute s.p. energies
 
 eshell=0D0
 esh1=0D0
@@ -1539,6 +1539,7 @@ binerg = energy
 #if(parayes)
 IF(myn == 0) THEN
 #endif
+  CALL emoms(rho)
   WRITE(6,*)  'sp pot. energy  =',espnb-esh1
   WRITE(6,*)  'sp kin. energy  =',esh1
   WRITE(6,*)  'tot sp energy   =',espnb
@@ -1564,6 +1565,7 @@ IF(myn == 0) THEN
     energy = ensav
   END IF
   WRITE(6,'(a,i5,a,f12.6)') 'iter= ',i,'  binding energy',binerg
+  WRITE(6,'(a,3(1pg13.5))') 'quadrupole:',qe(5),qe(6),qe(7)
   WRITE(6,'(a)') ' '
   
   IF(istinf > 0 .AND. MOD(i,istinf) == 0) THEN
