@@ -368,8 +368,8 @@ EXEC = qdd
 #                 Phony targets and empty recipes                   #
 #####################################################################
 
-#.PHONY: all initial_checks clean
-.PHONY: initial_checks clean
+.PHONY: all initial_checks clean
+#.PHONY: initial_checks clean
 
 #.DEFAULT_GOAL: all
 
