@@ -368,9 +368,10 @@ EXEC = qdd
 #                 Phony targets and empty recipes                   #
 #####################################################################
 
-.PHONY: all initial_checks clean $(EXEC)
+#.PHONY: all initial_checks clean
+.PHONY: initial_checks clean
 
-.DEFAULT_GOAL: all
+#.DEFAULT_GOAL: all
 
 all: $(EXEC)
 
@@ -378,7 +379,7 @@ clean:
 	@rm -rfv *.o *.mod *.il ../../bin/$(EXEC)
 
 # Prevent make from trying to update the source files:
-makefile: ;
+Makefile: ;
 #define.mk: ;
 #define.h: ;
 *.F90: ;
@@ -407,7 +408,7 @@ valid_FFT := FFTW NETLIB MKL
 #coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 #raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
 
-initial_checks: makefile
+initial_checks: Makefile
 	@echo "#######################################################"
 	@echo  Lists of known compilation parameters.
 	@echo "#######################################################"
@@ -420,7 +421,7 @@ initial_checks: makefile
 	@echo "coudoub3D     $(COUDOUB3D)"
 	@echo "raregas       $(RAREGAS)"
 	@echo "#######################################################"
-	@echo  Parameters defined in makefile / define.mk:
+	@echo  Parameters defined in Makefile / define.mk:
 	@echo "--------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
@@ -433,7 +434,7 @@ initial_checks: makefile
 	@echo "MKLPATH       $(MKLPATH)"
 	@echo "MKLINCLUDE    $(MKLINCLUDE)"
 	@echo "#######################################################"
-	@echo "-D flags enabled (1) by makefile rules:"
+	@echo "-D flags enabled (1) by Makefile rules:"
 	@echo "--------------------------------------------"
 	@echo "parayes       $(parayes_value)"
 	@echo "parano        $(parano_value)"
@@ -446,31 +447,31 @@ initial_checks: makefile
 
 # Check that the fortran compiler is defined.
 ifneq ($(CF90), $(filter $(CF90), $(valid_CF90)))
-	$(error ERROR: Unknown fortran compiler in makefile / define.mk (CF90=$(CF90)))
+	$(error ERROR: Unknown fortran compiler in Makefile / define.mk (CF90=$(CF90)))
 endif
 
 # Check that the TYPE_FFT is valid:
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
-	$(error ERROR: Unknown TYPE_FFT in makefile / define.mk ($(TYPE_FFT)))
+	$(error ERROR: Unknown TYPE_FFT in Makefile / define.mk ($(TYPE_FFT)))
 endif
 
 # Check that the parallelization and threading options are valid:
 ifneq ($(MPI_PARALLEL), $(filter $(MPI_PARALLEL), $(valid_MPI_PARALLEL)))
-	$(error ERROR: Unknown MPI_PARALLEL value in makefile / define.mk ($(MPI_PARALLEL)))
+	$(error ERROR: Unknown MPI_PARALLEL value in Makefile / define.mk ($(MPI_PARALLEL)))
 endif
 ifneq ($(OMP_THREADS), $(filter $(OMP_THREADS), $(valid_OMP_THREADS)))
-	$(error ERROR: Unknown OMP_THREADS value in makefile / define.mk ($(OMP_THREADS)))
+	$(error ERROR: Unknown OMP_THREADS value in Makefile / define.mk ($(OMP_THREADS)))
 endif
 
 # Check that variables which should be either YES or NO have proper values:
 ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
-	$(error ERROR: Unknown $(strip DEBUG       value) in makefile / define.mk ($(DEBUG)))
+	$(error ERROR: Unknown $(strip DEBUG       value) in Makefile / define.mk ($(DEBUG)))
 endif
 ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
-	$(error ERROR: Unknown $(strip LINK_STATIC value) in makefile / define.mk ($(LINK_STATIC)))
+	$(error ERROR: Unknown $(strip LINK_STATIC value) in Makefile / define.mk ($(LINK_STATIC)))
 endif
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
-	$(error ERROR: Unknown $(strip MKL         value) in makefile / define.mk ($(MKL)))
+	$(error ERROR: Unknown $(strip MKL         value) in Makefile / define.mk ($(MKL)))
 endif
 
 # coudoub3D is only enabled when using FFTW calls.
@@ -550,15 +551,15 @@ DEPS_KINCOUL = kinetic.mod coulsolv.mod
 #  DEPS_KINCOUL = kinetic.mod
 #  endif
 
-# Dependencies on makefile, define.mk, define.h and params.mod
+# Dependencies on Makefile, define.mk, define.h and params.mod
 # Dependencies are inherited, so there's no need to repeat them
 # in the targets below.
-#$(MODLIST):   makefile define.mk define.h
-#params.o:     makefile define.mk define.h
-#$(OBJS_NPAR): makefile define.mk define.h params.mod
-$(MODLIST):   makefile 
-params.o:     makefile 
-$(OBJS_NPAR): makefile params.mod
+#$(MODLIST):   Makefile define.mk define.h
+#params.o:     Makefile define.mk define.h
+#$(OBJS_NPAR): Makefile define.mk define.h params.mod
+$(MODLIST):   Makefile 
+params.o:     Makefile 
+$(OBJS_NPAR): Makefile params.mod
 
 # Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
 # with no other special requirements:

@@ -883,7 +883,6 @@ IF(thamdiag.OR.talert) THEN
 END IF
 IF(thamdiag) CALL hamdiag(q0,aloc)
 
-
 !     readjust occupations numbers to actual s.p. energies
 
 !WRITE(*,*) 'before REOCC:',tocc,nclust,nstate*nph,iter,istinf

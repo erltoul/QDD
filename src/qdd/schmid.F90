@@ -456,6 +456,7 @@ REAL(DP) :: eord(kstate)
 REAL(DP) :: psistate(kstate)
 INTEGER :: isort(kstate)
 LOGICAL,PARAMETER :: tprint=.TRUE.
+LOGICAL :: treord
 
 !*********************************************************
 
@@ -493,9 +494,18 @@ IF(tprint) THEN
   WRITE(*,*) 'isort:',isort(1:nstate)
   WRITE(*,*) 'amoy:',amoy(1:nstate)
   WRITE(*,*) 'eord:',eord(1:nstate)
-  WRITE(*,*) 'etest:',(amoy(isort(nbe)),nbe=1,nstate)
+!  WRITE(*,*) 'etest:',(amoy(isort(nbe)),nbe=1,nstate)
   WRITE(*,*) 'occup:',occup(1:nstate)
 END IF
+
+! check whether reshuffling is needed
+treord=.FALSE.
+DO n=1,nstate
+  IF(isort(n).NE.n) treord=.TRUE.
+END DO
+
+IF(.NOT.treord) RETURN
+IF(tprint) WRITE(*,*) 'SORTWF: reshuffling=',treord
 
 amoy(1:nstate)=eord(1:nstate)
 DO ii=1,nxyz
