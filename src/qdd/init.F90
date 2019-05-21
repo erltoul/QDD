@@ -40,11 +40,33 @@ CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
 
-NAMELIST /global/  numthr,nclust,nion,nspdw,nion2,numspin,  &
+! Set the number of OpenMP threads to use equal to the number of CPUs or,
+! if the OMP_NUM_THREADS env. var. is set, use that value.
+! Also, the dynamic adjustment of the number of threads
+! available for execution of parallel regions is enabled to prevent 
+! creating more threads than there are CPU's
+#if(paropenmp)
+  call OMP_SET_DYNAMIC(setdyn)
+  numthr = OMP_GET_MAX_THREADS()
+  #ifdef omp_debug
+    write(*,*) "setdyn = ", setdyn
+    write(*,*) "numthr = ", numthr
+    write(*,*) "OMP_GET_MAX_THREADS() = ", OMP_GET_MAX_THREADS()
+    write(*,*) "OMP_GET_NUM_PROCS() = ", OMP_GET_NUM_PROCS()
+    write(*,*) "OMP_GET_DYNAMIC() = ", OMP_GET_DYNAMIC()
+    write(*,*) "OMP_GET_NESTED() = ", OMP_GET_NESTED()
+    !$OMP PARALLEL
+    write(*,*) "OMP_GET_NUM_THREADS() = ", OMP_GET_NUM_THREADS()
+    write(*,*) "OMP_GET_THREAD_NUM() = ", OMP_GET_THREAD_NUM()
+    !$OMP END PARALLEL
+  #endif
+#endif
+
+NAMELIST /global/  setdyn,numthr,nclust,nion,nspdw,nion2,numspin,  &
     temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
-    epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
+    epswf,e0dmp,epsoro,dpolx,dpoly,dpolz,  &
     tcoulfalr, &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
@@ -212,6 +234,23 @@ outname=trim(num)//trim(outnam)
       ENDIF
     ENDIF
 
+! Update Dynamic thread adjustment if set in input file
+#if(paropenmp)
+  call OMP_SET_DYNAMIC(setdyn)
+  #if(omp_debug)
+    write(*,*) "setdyn = ", setdyn
+    write(*,*) "numthr = ", numthr
+    write(*,*) "OMP_GET_MAX_THREADS() = ", OMP_GET_MAX_THREADS()
+    write(*,*) "OMP_GET_NUM_PROCS() = ", OMP_GET_NUM_PROCS()
+    write(*,*) "OMP_GET_DYNAMIC() = ", OMP_GET_DYNAMIC()
+    write(*,*) "OMP_GET_NESTED() = ", OMP_GET_NESTED()
+    !$OMP PARALLEL
+    write(*,*) "OMP_GET_NUM_THREADS() = ", OMP_GET_NUM_THREADS()
+    write(*,*) "OMP_GET_THREAD_NUM() = ", OMP_GET_THREAD_NUM()
+    !$OMP END PARALLEL
+  #endif
+#endif
+
     READ(5,dynamic,END=99999)
     WRITE(*,*) ' DYNAMIC read'
 #if(extended)
@@ -250,8 +289,8 @@ outname=trim(num)//trim(outnam)
   
   tdipolxyz = dpolx*dpolx+dpoly*dpoly+dpolz*dpolz .GT. 0D0
   
-  RETURN
-  
+
+RETURN  
 END SUBROUTINE initnamelists
 
 

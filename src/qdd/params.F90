@@ -42,10 +42,12 @@ INTEGER :: ksttot
 
 !  settings ad definitions for openmp parallel computing
 #if(paropenmp)
-INTEGER :: numthr = 28  ! actual number of threads in openmp
 INTEGER,EXTERNAL :: OMP_GET_MAX_THREADS, OMP_GET_NUM_PROCS, OMP_NUM_THREADS
 INTEGER,EXTERNAL :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
-EXTERNAL :: OMP_SET_NUM_THREADS
+LOGICAL,EXTERNAL :: OMP_GET_DYNAMIC, OMP_GET_NESTED
+EXTERNAL :: OMP_SET_NUM_THREADS, OMP_SET_DYNAMIC
+INTEGER :: numthr  ! actual number of threads in openmp
+LOGICAL :: setdyn=.TRUE.
 #else
 INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
 #endif

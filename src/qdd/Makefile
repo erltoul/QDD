@@ -21,6 +21,9 @@ MPI_PARALLEL = NO
 #   * NO
 OMP_THREADS = YES
 
+# OpenMP debugging, just for me... To be deleted after testing...
+OMP_DEBUG = NO
+
 # TYPE_FFT: FFT solver
 # Available options:
 #   * NETLIB
@@ -262,6 +265,10 @@ ifeq ($(OMP), YES)
   endif
 else
 	OMPADD :=
+endif
+
+ifeq ($(OMP_DEBUG), YES)
+	OMPADD += -Domp_debug
 endif
 
 # Compiler flags
