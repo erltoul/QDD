@@ -1,4 +1,7 @@
+CF90 = IFORT
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # Makefile
 
 # CF90: Fortran compiler
@@ -12,8 +15,16 @@ CF90 = IFORT
 # Available options:
 #   * YES
 #   * NO
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 MPI_PARALLEL = NO
+OMP_THREADS = YES
+MKL_THREADS = YES
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # OMP_THREADS: Invoke OpenMP
 # Available options:
 #   * DYN: wave function parallelization (threads)
@@ -35,15 +46,13 @@ TYPE_FFT = MKL
 # Available options:
 #   * YES
 #   * NO
+=======
+TYPE_FFT = MKL
+>>>>>>> Stashed changes
 DEBUG = NO
-
-
-# LINK_STATIC: select static linkage of the binary
-# Available options:
-#   * YES
-#   * NO
 LINK_STATIC = NO
 
+<<<<<<< Updated upstream
 # MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
 # Available options:
 #   * YES
@@ -55,17 +64,20 @@ MKL_THREADS = YES
 #MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
 MKL_WRAPPERS = $(HOME)/code/fftw3xf
 
+=======
+MKL_WRAPPERS = $(HOME)/code/fftw3xf-wrapper-icc
+>>>>>>> Stashed changes
+=======
+TYPE_FFT = MKL
+DEBUG = NO
+LINK_STATIC = NO
+
+MKL_WRAPPERS = $(HOME)/code/fftw3xf-wrapper-icc
+>>>>>>> Stashed changes
 FFTW3_LIBDIR = $(HOME)/code/fftw-3.3.8-icc/lib
-
-# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
-# Default value:
-#MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
 MKLPATH = $(MKLROOT)/lib
-
-# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
-# Default value:
-#MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
 MKLINCLUDE = $(MKLROOT)/include/fftw
+FFTWINCLUDE = $(HOME)code/fftw-3.3.8-icc/include
 
 # For large boxe sizes, try option
 # '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
@@ -89,7 +101,7 @@ FSIC=NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
-    CODE_OPTIONS += -Dfindiff
+	CODE_OPTIONS += -Dfindiff
 endif
 ifeq ($(NUMEROV),YES)
     CODE_OPTIONS += -Dnumerov
@@ -115,17 +127,17 @@ endif
 #####################################################################
 
 # MPI
-ifeq ($(MPI_PARALLEL), NO)
-	USE_MPI = NO
-else
+ifeq ($(MPI_PARALLEL), YES)
 	USE_MPI = YES
+else
+	USE_MPI = NO
 endif
 
 # OpenMP
-ifeq ($(OMP_THREADS), NO)
-	OMP = NO
-else
+ifeq ($(OMP_THREADS), YES)
 	OMP = YES
+else
+	OMP = NO
 endif
 
 #####################################################################
@@ -152,20 +164,20 @@ endif
 ifeq "$(CF90)" "GFORT"
 	COMPILER  = gfortran
 	LDLIBS    =
-  ifeq "$(OMP)" "YES"
-	OMPADDL = -fopenmp
-  endif
+	ifeq "$(OMP)" "YES"
+		OMPADDL = -fopenmp
+	endif
 endif
 
 ifeq "$(CF90)" "IFORT"
 	COMPILER  = ifort
 	LDLIBS    =
-  ifeq "$(USE_MPI)" "YES"
-	LDLIBS    = -lmpi
-  endif
-  ifeq "$(OMP)" "YES"
-	OMPADDL =  -qopenmp
-  endif
+	ifeq "$(USE_MPI)" "YES"
+		LDLIBS    = -lmpi
+  	endif
+ 	ifeq "$(OMP)" "YES"
+		OMPADDL =  -qopenmp
+  	endif
 endif
 
 #####################################################################
@@ -190,32 +202,28 @@ endif
 
 ifeq "$(CF90)" "GFORT"
 	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -mcmodel=large
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   ifeq "$(DEBUG)" "YES"
 		OPT1  =  -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
   endif
+=======
+	ifeq "$(DEBUG)" "YES"
+		OPT1  =  $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+  	endif
+>>>>>>> Stashed changes
+=======
+	ifeq "$(DEBUG)" "YES"
+		OPT1  =  $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+  	endif
+>>>>>>> Stashed changes
 endif
 
 ifeq "$(CF90)" "IFORT"
-	STATIC = -static
 	OPT1  = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-  ifeq "$(DEBUG)" "YES"
-		OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-  endif
-endif
-
-ifeq "$(CF90)" "MPIF90"
-        STATIC = -static
-        OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble
-	ifeq "$(FCOMP)" "gfortran"
-		OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	ifeq "$(DEBUG)" "YES"
+		OPT1  =  $(OMPADDL) -pg -fpp -w -g -CB -traceback -align all -autodouble
 	endif
-        OPT2  =  $(OPT1)
-        OPT3  =  -fpp -w -g               -align all -autodouble
-  ifeq "$(DEBUG)" "YES"
-        OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-        OPT2  =  $(OPT1) -autodouble
-        OPT3  =  -pg -fpp -w -g                -align all -autodouble
-  endif
 endif
 
 #####################################################################
@@ -225,27 +233,23 @@ endif
 # MKL only used to provide FFTW support through wrappers.
 ifeq ($(TYPE_FFT), FFTW)
 	calls_FFTW = YES
-else
-  ifeq ($(TYPE_FFT), MKL)
+else ifeq ($(TYPE_FFT), MKL)
 	calls_FFTW = YES
-  else
+else
 	calls_FFTW = NO
-  endif
 endif
 
 # Switches used to preprocess files.
 ifeq ($(calls_FFTW), YES)
 	FFTWADD = -Dfftw_cpu
 	fftw_cpu_value := 1
-  ifeq ($(TYPE_FFT), FFTW)
-	FFTWADD += -Dfftwnomkl
-	fftwnomkl_value := 1
-  endif
-else
-  ifeq ($(TYPE_FFT), NETLIB)
+	ifeq ($(TYPE_FFT), FFTW)
+		FFTWADD += -Dfftwnomkl
+		fftwnomkl_value := 1
+	endif
+else ifeq ($(TYPE_FFT), NETLIB)
 	FFTWADD = -Dnetlib_fft
 	netlib_fft_value := 1
-  endif
 endif
 
 ifeq ($(MPI_PARALLEL), YES)
@@ -256,19 +260,21 @@ else
 	parano_value := 1
 endif
 
+OMPADD =
 ifeq ($(OMP), YES)
 	OMPADD = -Dparopenmp
 	paropenmp_value := 1
-  ifeq ($(OMP_THREADS), DYN)
-	OMPADD += -Ddynopenmp
-	dynopenmp_value :=1
-  endif
-else
-	OMPADD :=
+	ifeq ($(OMP_THREADS), DYN)
+		OMPADD += -Ddynopenmp
+		dynopenmp_value :=1
+	endif
+<<<<<<< Updated upstream
 endif
 
 ifeq ($(OMP_DEBUG), YES)
 	OMPADD += -Domp_debug
+=======
+>>>>>>> Stashed changes
 endif
 
 # Compiler flags
@@ -290,56 +296,83 @@ ifeq ($(TYPE_FFT), MKL)
 	MKLFLAGS =
 	FFTWFLAGS =
 
-  ifneq "$(MKL_WRAPPERS)" ""
+	ifneq "$(MKL_WRAPPERS)" ""
 		MKLFLAGS += -L$(MKL_WRAPPERS)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   endif
 	
 	MKLFLAGS += -lfftw3xf_intel
 	#MKLFLAGS += -lfftw3xf_gnu
+=======
+=======
+>>>>>>> Stashed changes
+  	endif
+	
+	ifeq ($(CF90), IFORT)
+		MKLFLAGS += -lfftw3xf_intel
+	else
+		MKLFLAGS += -lfftw3xf_gnu
+	endif
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 
-  ifneq "$(MKLPATH)" ""
+ 	ifneq "$(MKLPATH)" ""
 		MKLFLAGS += -L$(MKLPATH)
+<<<<<<< Updated upstream
   endif
+=======
+	endif
+>>>>>>> Stashed changes
+=======
+
+ 	ifneq "$(MKLPATH)" ""
+		MKLFLAGS += -L$(MKLPATH)
+	endif
+>>>>>>> Stashed changes
   
 	ifneq "$(MKLINCLUDE)" ""
 		MKLFLAGS += -I$(MKLINCLUDE)
-  endif
+	endif
 
-  ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
-	MKLFLAGS += -Wl,--start-group
-  endif
+	ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
+		MKLFLAGS += -Wl,--start-group
+  	endif
 
 	MKLFLAGS += -lmkl_intel_lp64
 
-  ifeq ($(MKL_THREADS), YES)
-	MKLFLAGS += -lmkl_intel_thread
-  else
-	MKLFLAGS += -lmkl_sequential
-  endif
+	ifeq ($(MKL_THREADS), YES)
+		MKLFLAGS += -lmkl_intel_thread
+  	else
+		MKLFLAGS += -lmkl_sequential
+	endif
 
 	MKLFLAGS += -lmkl_core
 
-  ifeq ($(LINK_STATIC), YES) # Static MKL
-	MKLFLAGS += -Wl,--end-group
-  endif
+	ifeq ($(LINK_STATIC), YES) # Static MKL
+		MKLFLAGS += -Wl,--end-group
+	endif
 
-  ifeq ($(MKL_THREADS), YES)
-	MKLFLAGS += -liomp5
-  endif
+	ifeq ($(MKL_THREADS), YES)
+		MKLFLAGS += -liomp5
+	endif
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	#MKLFLAGS += -lpthread
 	MKLFLAGS +=
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 	FFTWFLAGS = $(MKLFLAGS)
 
 # Flags for directly linking the original FFTW libraries.
-else
-	FFTWFLAGS = 
-  ifeq ($(TYPE_FFT), FFTW)
-		FFTWFLAGS += -L$(FFTW3_LIBDIR) -lfftw3
-    ifeq ($(OMP), YES)
-			FFTWFLAGS += -lfftw3_omp
-		endif
-  endif
+else ifeq ($(TYPE_FFT), FFTW)
+	FFTWFLAGS += -L$(FFTW3_LIBDIR) -lfftw3
+	ifeq ($(OMP), YES)
+		FFTWFLAGS += -lfftw3_omp
+	endif
 endif
 
 LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1)
@@ -353,27 +386,21 @@ endif
 #                          Executable name                          #
 #####################################################################
 
-# Set the date
-DATE =$(shell date +%d.%m.%y)
-
-# Set type of parallelization.
-ifeq ($(MPI_PARALLEL), YES)
-	MPI_NAME = MPI
-else
-  ifeq ($(OMP), YES)
-	MPI_NAME = OMP
-  else
-	MPI_NAME = Mono
-  endif
-endif
-
 EXEC = qdd
 
 #####################################################################
 #                 Phony targets and empty recipes                   #
 #####################################################################
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 .PHONY: all initial_checks clean $(EXEC)
+=======
+.PHONY: clean
+>>>>>>> Stashed changes
+=======
+.PHONY: clean
+>>>>>>> Stashed changes
 
 .DEFAULT_GOAL: all
 
@@ -382,6 +409,8 @@ all: $(EXEC)
 clean:
 	@rm -rfv *.o *.mod *.il ../../bin/$(EXEC)
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # Prevent make from trying to update the source files:
 makefile: ;
 #define.mk: ;
@@ -389,6 +418,10 @@ makefile: ;
 *.F90: ;
 #*.cu: ;
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 #####################################################################
 #                             Checks                                #
 #####################################################################
@@ -531,10 +564,10 @@ MODLIST += coulsolv.mod
 ifeq ($(TYPE_FFT), NETLIB)
   FFT_OBJ = fftpack.o
 endif
-ifeq ($(calls_FFTW), YES)
-  FFT_OBJ = fftw.o
-  MODLIST += fftw.mod
-endif
+#ifeq ($(calls_FFTW), YES)
+#  FFT_OBJ = fftw.o
+#  MODLIST += fftw.mod
+#endif
 ifeq ($(FSIC),YES)
 MODLIST += 2st_util.mod twostr.mod twost.mod
 endif
@@ -624,7 +657,7 @@ FSICDEPEND = 2st_util.o 2stUTc.o 2stUT.o
 
 endif
 
-# Particular rules
+# Explicit rules
 # (complex dependencies, REAL/COMPLEX switch, non-default COMPILERFLAGS).
 
 kinetic.o : kinetic.F90 fft.F90 findiff/findiff.F90 $(FFT_OBJ)
@@ -659,6 +692,9 @@ nonloc.o: nonloc.F90 kinetic.mod
 
 nonlocc.o: nonloc.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
+
+fftw.o: fftw.F90
+	$(COMPILER) $(COMPILERFLAGS1) -I$(MKLINCLUDE) -c $<
 
 ifeq ($(TYPE_FFT), NETLIB)
 fftpack.o: fftpack.F90 fftpack2.F90
