@@ -812,20 +812,20 @@ IF(ifhamdiag>10000 .AND. MOD(iter,ifhamdiag)==0) THEN
      WRITE(*,*) ' 2st-SIC unitary matrix reshuffled after Hamiltonian diag.'
    END IF
 #endif
-#if(paropenmp)
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(ii,psistate,nbes,nbe,nbcs,nbc)
-    ALLOCATE(psistate(kstate))
-!    WRITE(7,*) ' PSISTATE allocated, thread=',OMP_GET_THREAD_NUM()
-!$OMP DO SCHEDULE(STATIC)
-#endif
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' amoy before:',  &
-        (amoy(nbe),nbe=1,nstsp(iactsp))
+        (amoy(nbes),nbes=1,nstsp(iactsp))
     DO nbes=1,nstsp(iactsp)
       nbe = npoi(nbes,iactsp)
       amoy(nbe)=heigen(nbes)
     END DO
     IF(tprham) WRITE(6,'(a/20(1pg13.5))') ' amoy after: ',  &
         (amoy(nbe),nbe=1,nstsp(iactsp))
+#if(paropenmp)
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(ii,psistate,nbes,nbe,nbcs,nbc)
+    ALLOCATE(psistate(kstate))
+!    WRITE(7,*) ' PSISTATE allocated, thread=',OMP_GET_THREAD_NUM()
+!$OMP DO SCHEDULE(STATIC)
+#endif
     DO ii=1,nxyz
       psistate = 0D0
       DO nbes=1,nstsp(iactsp)

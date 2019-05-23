@@ -455,7 +455,7 @@ REAL(DP) :: cs, emin
 REAL(DP) :: eord(kstate)
 REAL(DP) :: psistate(kstate)
 INTEGER :: isort(kstate)
-LOGICAL,PARAMETER :: tprint=.TRUE.
+LOGICAL,PARAMETER :: tprint=.FALSE.
 LOGICAL :: treord
 
 !*********************************************************
