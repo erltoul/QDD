@@ -51,7 +51,7 @@ LOGICAL :: setdyn=.TRUE.
 #else
 INTEGER,PARAMETER :: numthr = 1  ! actual number of threads in openmp
 #endif
-INTEGER :: nthr                ! max number of threads -- 1
+INTEGER :: nthr                ! iterator over num. of OMP threads. Starts counting at 0, so 1 less than the actual number of threads
 
 ! maximum number of ions
 !fix! INTEGER,PARAMETER :: ng=8

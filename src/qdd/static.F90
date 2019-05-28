@@ -393,7 +393,7 @@ SUBROUTINE static_mfield(rho,aloc,psir,iter1)
 !      aloc   = local mean-field potential
 
 USE params
- 
+
 #if(fsic)
 USE twostr
 USE twost_util

@@ -40,29 +40,10 @@ CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
 
-! Set the number of OpenMP threads to use equal to the number of CPUs or,
-! if the OMP_NUM_THREADS env. var. is set, use that value.
-! Also, the dynamic adjustment of the number of threads
-! available for execution of parallel regions is enabled to prevent 
-! creating more threads than there are CPU's
-#if(paropenmp)
-  call OMP_SET_DYNAMIC(setdyn)
-  numthr = OMP_GET_MAX_THREADS()
-  #ifdef omp_debug
-    write(*,*) "setdyn = ", setdyn
-    write(*,*) "numthr = ", numthr
-    write(*,*) "OMP_GET_MAX_THREADS() = ", OMP_GET_MAX_THREADS()
-    write(*,*) "OMP_GET_NUM_PROCS() = ", OMP_GET_NUM_PROCS()
-    write(*,*) "OMP_GET_DYNAMIC() = ", OMP_GET_DYNAMIC()
-    write(*,*) "OMP_GET_NESTED() = ", OMP_GET_NESTED()
-    !$OMP PARALLEL
-    write(*,*) "OMP_GET_NUM_THREADS() = ", OMP_GET_NUM_THREADS()
-    write(*,*) "OMP_GET_THREAD_NUM() = ", OMP_GET_THREAD_NUM()
-    !$OMP END PARALLEL
-  #endif
+NAMELIST /global/ nclust,nion,nspdw,nion2,numspin,  &
+#ifdef paropenmp
+    setdyn,numthr,  &
 #endif
-
-NAMELIST /global/  setdyn,numthr,nclust,nion,nspdw,nion2,numspin,  &
     temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
@@ -71,9 +52,8 @@ NAMELIST /global/  setdyn,numthr,nclust,nion,nspdw,nion2,numspin,  &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,iswitch_interpol,  &
-    ishiftcmtoorigin,  &
-    shiftwfx,shiftwfy,shiftwfz, ispinsep 
-
+    ishiftcmtoorigin, &
+    shiftwfx,shiftwfy,shiftwfz,ispinsep
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
@@ -101,13 +81,12 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
     phangle,phphase,nhstate,npstate, &
-    jstateoverlap,&    !MV: now follow parameters for rta
+    jstateoverlap,&
     jrtaint,rtamu,rtamuj,rtasumvar2max,rtaeps,rtae0dmp,&
     rtatempinit,rtaforcetemperature,&
-    rtasigee,rtars   !rta2 added rtasigee, rtars
+    rtasigee,rtars
 
 #if(extended)
-!NAMELIST /extended/ &
 NAMELIST /extensions/ isitmax,&
     idenspl,i3dz,i3dx,i3dstate,jescmask,jescmaskorb,&
     iscatterelectron,jattach,scatterelectronenergy,  &
@@ -233,23 +212,6 @@ outname=trim(num)//trim(outnam)
         WRITE(7,*) 'KXBOX KYBOX KZBOX changed to',nnx2,'from file NX'
       ENDIF
     ENDIF
-
-! Update Dynamic thread adjustment if set in input file
-#if(paropenmp)
-  call OMP_SET_DYNAMIC(setdyn)
-  #if(omp_debug)
-    write(*,*) "setdyn = ", setdyn
-    write(*,*) "numthr = ", numthr
-    write(*,*) "OMP_GET_MAX_THREADS() = ", OMP_GET_MAX_THREADS()
-    write(*,*) "OMP_GET_NUM_PROCS() = ", OMP_GET_NUM_PROCS()
-    write(*,*) "OMP_GET_DYNAMIC() = ", OMP_GET_DYNAMIC()
-    write(*,*) "OMP_GET_NESTED() = ", OMP_GET_NESTED()
-    !$OMP PARALLEL
-    write(*,*) "OMP_GET_NUM_THREADS() = ", OMP_GET_NUM_THREADS()
-    write(*,*) "OMP_GET_THREAD_NUM() = ", OMP_GET_THREAD_NUM()
-    !$OMP END PARALLEL
-  #endif
-#endif
 
     READ(5,dynamic,END=99999)
     WRITE(*,*) ' DYNAMIC read'

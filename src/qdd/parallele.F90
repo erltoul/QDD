@@ -31,7 +31,7 @@ INCLUDE 'mpif.h'
 INTEGER :: is(mpi_status_size)
 INTEGER :: nb
 #endif
-INTEGER :: nprocs, numprocs, numprocm
+INTEGER :: nprocs, numprocm
 
 !------------------------------------------------------------------
 
@@ -49,27 +49,33 @@ CALL  mpi_comm_rank(mpi_comm_world,myn,mpi_ierror)
 nb=myn
 #endif
 
-
+! Set the number of OpenMP threads to use equal to the number of CPUs or,
+! if the OMP_NUM_THREADS env. var. is set, use that value.
+! Also, the dynamic adjustment of the number of threads
+! available for execution of parallel regions is enabled to prevent 
+! creating more threads than there are CPU's
 #if(paropenmp)
-#if(fftwnomkl)
-numprocs = OMP_GET_NUM_THREADS()
-numprocm = OMP_GET_MAX_THREADS()
-numthr=numprocm
+  call OMP_SET_DYNAMIC(setdyn)
+  numthr = OMP_GET_MAX_THREADS()
+  call OMP_SET_NUM_THREADS(numthr) ! To also set the system wide number of OMP threads
+  nthr = numthr-1
+#if(omp_debug)
+    write(*,*) 'setdyn = ', setdyn
+    write(*,*) 'numthr = ', numthr
+    write(*,*) 'OMP_GET_MAX_THREADS() = ', OMP_GET_MAX_THREADS()
+    write(*,*) 'OMP_GET_NUM_PROCS() = ', OMP_GET_NUM_PROCS()
+    write(*,*) 'OMP_GET_DYNAMIC() = ', OMP_GET_DYNAMIC()
+    write(*,*) 'OMP_GET_NESTED() = ', OMP_GET_NESTED()
+!$OMP PARALLEL
+    write(*,*) 'OMP_GET_NUM_THREADS() = ', OMP_GET_NUM_THREADS()
+    write(*,*) 'OMP_GET_THREAD_NUM() = ', OMP_GET_THREAD_NUM()
+!$OMP END PARALLEL
 #endif
-nthr=numthr-1  
-#if(fftwnomkl)
-WRITE(*,*) 'max. num. procs from system=',numprocm
-CALL OMP_SET_NUM_THREADS(numthr)
-WRITE(*,*) ' init. OMP:  Nr. threads=',numthr,OMP_GET_NUM_THREADS(),OMP_GET_MAX_THREADS()
-nthr = OMP_GET_MAX_THREADS()-1
+  WRITE(*,*) 'INIT_PARALLELE(): numthr=',numthr
+  WRITE(*,*) 'INIT_PARALLELE(): nthr=',nthr
 #else
-nthr=numthr-1
+  nthr = 0
 #endif
-#else
-nthr = 0
-#endif
-WRITE(*,*) ' INIT_PARALLELE: numthr=',numthr
-
 
 RETURN
 END SUBROUTINE init_parallele
