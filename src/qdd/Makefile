@@ -1,4 +1,3 @@
-
 # Makefile
 
 # CF90: Fortran compiler
@@ -14,19 +13,28 @@ CF90 = GFORT
 #   * NO
 MPI_PARALLEL = NO
 
-# OMP_THREADS: Invoke OpenMP
+# OMP_THREADS: Use OpenMP for threading
 # Available options:
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
 OMP_THREADS = YES
 
-# TYPE_FFT: FFT solver
+# OpenMP debugging, just for me... To be deleted after testing...
+OMP_DEBUG = NO
+
+# TYPE_FFT: FFT solvers
 # Available options:
 #   * NETLIB
 #   * FFTW
 #   * MKL
 TYPE_FFT = FFTW
+
+# MKL_THREADS: Enable MKL OpenMP threading (only used if TYPE_FFT=MKL)
+# Available options:
+#   * YES
+#   * NO
+MKL_THREADS = YES
 
 # DEBUG: enable debugging
 # Available options:
@@ -34,38 +42,22 @@ TYPE_FFT = FFTW
 #   * NO
 DEBUG = NO
 
-
 # LINK_STATIC: select static linkage of the binary
 # Available options:
 #   * YES
 #   * NO
 LINK_STATIC = NO
 
-# MKL_THREADS: Enable MKL threading (only used for TYPE_FFT=FFTW)
-# Available options:
-#   * YES
-#   * NO
-MKL_THREADS = NO
+### SET MAIN LIBRARY LOCATIONS
+# Set the location to the root of the FFTW subroutine package
+FFTW_PATH = $(HOME)/Developer/fftw-3.3.8-intel
+#FFTW_PATH = /usr
 
-# MKL_WRAPPERS: Path to the MKL FFTW wrappers (only used for TYPE_FFT=FFTW)
-# Default value:
-#MKL_WRAPPERS = /usr/local/FFTW/FFTW3/mkl/interfaces/fftw3xf
-MKL_WRAPPERS = $(HOME)/code/fftw3xf-wrapper-icc
+# Set the location to the root of Intel's MKL distribution
+MKL_PATH = $(MKLROOT)
 
-FFTW3_LIBDIR = $(HOME)/code/fftw-3.3.8-icc/lib
-
-# MKLPATH: Path to the MKL libraries (only used for TYPE_FFT=FFTW)
-# Default value:
-#MKLPATH = /usr/local/FFTW/FFTW3/mkl/lib/em64t
-MKLPATH = $(MKLROOT)/lib
-
-# MKLINCLUDE: Include path for the MKL (only used for TYPE_FFT=FFTW )
-# Default value:
-#MKLINCLUDE = /usr/local/FFTW/FFTW3/mkl/include/fftw
-MKLINCLUDE = $(MKLROOT)/include/fftw
-
-# For large boxe sizes, try option
-# '-i-dynamic -mcmodel=medium' or '-shared-intel -mcmodel=medium'
+# Set the location to the MKL FFTW wrappers in case MKL is used
+MKLFFTWW_PATH = $(HOME)/Developer/fftw3xf
 
 #####################################################################
 #               Code selection										#
@@ -76,23 +68,23 @@ CODE_VERSION = 74
 # grid: FFT or finite difference (FFT options must be NO for finite differences)
 FINDIFF = NO
 NUMEROV = NO
-COUDOUB=YES
-COUDOUB3D=NO
+COUDOUB = YES
+COUDOUB3D = NO
 # Switch to extended model with polarizable raregas
 RAREGAS = NO
 # Include private sector
 EXTENDED = NO
-FSIC=NO
+FSIC = NO
 
 CODE_OPTIONS = '-DIVERSION=$(CODE_VERSION)'
 ifeq ($(FINDIFF),YES)
-    CODE_OPTIONS += -Dfindiff
+	CODE_OPTIONS += -Dfindiff
 endif
 ifeq ($(NUMEROV),YES)
     CODE_OPTIONS += -Dnumerov
 endif
 ifeq ($(COUDOUB),YES)
-    CODE_OPTIONS += -Dcoudoub
+	CODE_OPTIONS += -Dcoudoub
 endif
 ifeq ($(COUDOUB3D),YES)
     CODE_OPTIONS += -Dcoudoub3D
@@ -112,139 +104,115 @@ endif
 #####################################################################
 
 # MPI
-ifeq ($(MPI_PARALLEL), NO)
-	USE_MPI = NO
-else
+ifeq ($(MPI_PARALLEL), YES)
 	USE_MPI = YES
+else
+	USE_MPI = NO
 endif
 
 # OpenMP
-ifeq ($(OMP_THREADS), NO)
-	OMP = NO
-else
+ifeq ($(OMP_THREADS), YES)
 	OMP = YES
+else
+	OMP = NO
 endif
 
 #####################################################################
-#                             Compiler                              #
+#                     Parallelisation activation 	                #
 #####################################################################
-
-# Insert the run command for invoking your compiler
-# ifeq "$(CF90)" "OWN"
-#	COMPILER  = ...
-#	LDLIBS    =
-#   ifeq "$(OMP)" "YES"
-#	OMPADDL = ...
-#   endif
-# endif
 
 OMPADDL =
 
 ifeq "$(CF90)" "MPIF90"
-	COMPILER  = mpif90
-	LDLIBS    =
+	COMPILER = mpif90
 endif
 
-
 ifeq "$(CF90)" "GFORT"
-	COMPILER  = gfortran
-	LDLIBS    =
-  ifeq "$(OMP)" "YES"
-	OMPADDL = -fopenmp
-  endif
+	COMPILER = gfortran
+	ifeq "$(OMP)" "YES"
+		OMPADDL = -fopenmp
+	endif
 endif
 
 ifeq "$(CF90)" "IFORT"
-	COMPILER  = ifort
-	LDLIBS    =
-  ifeq "$(USE_MPI)" "YES"
-	LDLIBS    = -lmpi
-  endif
-  ifeq "$(OMP)" "YES"
-	OMPADDL =  -qopenmp
-  endif
+	COMPILER = ifort
+	ifeq "$(USE_MPI)" "YES"
+		LDLIBS = -lmpi
+	endif
+	ifeq "$(OMP)" "YES"
+		OMPADDL = -qopenmp
+	endif
 endif
 
 #####################################################################
-#                    Compiler-dependent options                     #
+#            Compiler- and subroutine-dependent options             #
 #####################################################################
 
 #OPT2: setting for the FFT package, needs forced double precision
 #OPT3: setting for critical soubroutines which do not stand optimization
 
-# Insert your actual compiler her with its options.
-# If wanted fill also the debugging options.
-# ifeq "$(OWN)" "YES"
-#	OPT1  = ...
-#	OPT2  = ...
-#	OPT3  = ...
-# ifeq "$(DEBUG)" "YES"
-#	OPT1  = ...
-#	OPT2  = ...
-#	OPT3  = ...
-# endif
-# endif
-
 ifeq "$(CF90)" "GFORT"
-	OPT1  =  $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8 -mcmodel=large
-  ifeq "$(DEBUG)" "YES"
-	OPT1  =  -pg -w -g -fbacktrace -fcheck=bounds -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
-	OPT2  =  -pg -w -g -fbacktrace -fcheck=bounds -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
-	OPT3  =  -pg -w -g -fbacktrace -fcheck=bounds -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
-  endif
+	OPT1 = $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT2 = $(OMPADDL) -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+	OPT3 = $(OMPADDL) -w -g -fdefault-real-8 -fdefault-double-8
+	ifeq "$(DEBUG)" "YES"
+		OPT1 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+		OPT2 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+		OPT3 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
+	endif
 endif
 
 ifeq "$(CF90)" "IFORT"
 	STATIC = -static
-	OPT1  = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
-  ifeq "$(DEBUG)" "YES"
-		OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-  endif
+	OPT1 = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT2 = $(OMPADDL) -fpp -w -xW -O3 -ip -no-prec-div -align all -autodouble
+	OPT3 = $(OMPADDL) -fpp -w -g -align all -autodouble
+	ifeq "$(DEBUG)" "YES"
+		OPT1 = $(OMPADDL) -pg -fpp -w -g -CB -traceback -align all -autodouble
+		OPT2 =$(OMPADDL) -pg -fpp -w -g -CB -traceback -align all -autodouble
+		OPT3 =$(OMPADDL) -pg -fpp -w -g -align all -autodouble
+	endif
 endif
 
 ifeq "$(CF90)" "MPIF90"
-        STATIC = -static
-        OPT1  =  -fpp -w -O2 -no-prec-div -align all -autodouble
+	STATIC = -static
+	OPT1 = -fpp -w -O2 -no-prec-div -align all -autodouble
 	ifeq "$(FCOMP)" "gfortran"
-		OPT1  =  -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
+		OPT1 = -w -O3 -mfpmath=sse -fdefault-real-8 -fdefault-double-8
 	endif
-        OPT2  =  $(OPT1)
-        OPT3  =  -fpp -w -g               -align all -autodouble
-  ifeq "$(DEBUG)" "YES"
-        OPT1  =  -pg -fpp -w -g -CB -traceback -align all -autodouble
-        OPT2  =  $(OPT1) -autodouble
-        OPT3  =  -pg -fpp -w -g                -align all -autodouble
-  endif
+	OPT2 = $(OPT1)
+	OPT3 = -fpp -w -g -align all -autodouble
+	ifeq "$(DEBUG)" "YES"
+		OPT1 = -pg -fpp -w -g -CB -traceback -align all -autodouble
+		OPT2 = $(OPT1) -autodouble
+		OPT3 = -pg -fpp -w -g -align all -autodouble
+	endif
 endif
 
 #####################################################################
-#                        Compilation rules                          #
+#  Final pre-processor and compiler flags for MPI/OMP/FFT and MKL   #
 #####################################################################
 
-# MKL only used to provide FFTW support through wrappers.
+# (MKL is used to provide FFTW-support through its wrappers)
 ifeq ($(TYPE_FFT), FFTW)
 	calls_FFTW = YES
-else
-  ifeq ($(TYPE_FFT), MKL)
+else ifeq ($(TYPE_FFT), MKL)
 	calls_FFTW = YES
-  else
+else
 	calls_FFTW = NO
-  endif
 endif
 
 # Switches used to preprocess files.
 ifeq ($(calls_FFTW), YES)
 	FFTWADD = -Dfftw_cpu
 	fftw_cpu_value := 1
-  ifeq ($(TYPE_FFT), FFTW)
-	FFTWADD += -Dfftwnomkl
-	fftwnomkl_value := 1
-  endif
-else
-  ifeq ($(TYPE_FFT), NETLIB)
+	ifeq ($(TYPE_FFT), FFTW)
+		FFTWADD += -Dfftwnomkl
+		fftwnomkl_value := 1
+	endif
+else ifeq ($(TYPE_FFT), NETLIB)
 	FFTWADD = -Dnetlib_fft
 	netlib_fft_value := 1
-  endif
 endif
 
 ifeq ($(MPI_PARALLEL), YES)
@@ -255,29 +223,36 @@ else
 	parano_value := 1
 endif
 
+OMPADD =
 ifeq ($(OMP), YES)
 	OMPADD = -Dparopenmp
 	paropenmp_value := 1
-  ifeq ($(OMP_THREADS), DYN)
-	OMPADD += -Ddynopenmp
-	dynopenmp_value :=1
-  endif
-else
-	OMPADD :=
+	ifeq ($(OMP_THREADS), DYN)
+		OMPADD += -Ddynopenmp
+		dynopenmp_value :=1
+	endif
 endif
 
-# Compiler flags
+ifeq ($(OMP_DEBUG), YES)
+	OMPADD += -Domp_debug
+endif
+
+# Final compiler flags
 COMPILERFLAGS1 = $(LDLIBS) $(OPT1) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 COMPILERFLAGS2 = $(LDLIBS) $(OPT2) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 COMPILERFLAGS3 = $(LDLIBS) $(OPT3) $(strip $(MPIADD) $(OMPADD) $(FFTWADD)) $(CODE_OPTIONS)
 
-# This will also be used in the compilation (with -DREALSWITCH / -DCOMPLEXSWITCH)
-
 #####################################################################
-#                             Linker                                #
+#                Linker configuration for FFT and MKL               #
 #####################################################################
 
 LINKER = $(COMPILER)
+
+### DERIVED FROM MAIN LIBRARY LOCATIONS AT TOP OF MAKEFILE
+FFTW_LIBDIR = $(FFTW_PATH)/lib
+FFTW_INCLUDE = $(FFTW_PATH)/include
+MKL_LIBDIR = $(MKL_PATH)/lib
+MKL_INCLUDE = $(MKL_PATH)/include/fftw
 
 # Flags for linking using the MKL libraries.
 ifeq ($(TYPE_FFT), MKL)
@@ -285,56 +260,54 @@ ifeq ($(TYPE_FFT), MKL)
 	MKLFLAGS =
 	FFTWFLAGS =
 
-  ifneq "$(MKL_WRAPPERS)" ""
-		MKLFLAGS += -L$(MKL_WRAPPERS)
-  endif
+	ifneq "$(MKLFFTWW_PATH)" ""
+		MKLFLAGS += -L$(MKLFFTWW_PATH)
+	endif
 
-	MKLFLAGS += -lfftw3xf_intel
-#MKLFLAGS += -lfftw3xf_gnu
+	ifeq ($(CF90), IFORT)
+		MKLFLAGS += -lfftw3xf_intel
+	else
+		MKLFLAGS += -lfftw3xf_gnu
+	endif
 
-  ifneq "$(MKLPATH)" ""
-		MKLFLAGS += -L$(MKLPATH)
-  endif
+	ifneq "$(MKL_LIBDIR)" ""
+		MKLFLAGS += -L$(MKL_LIBDIR)
+	endif
+  
+	ifneq "$(MKL_INCLUDE)" ""
+		MKLFLAGS += -I$(MKL_INCLUDE)
+	endif
 
-  ifneq "$(MKLINCLUDE)" ""
-		MKLFLAGS += -I$(MKLINCLUDE)
-  endif
-
-  ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
-	MKLFLAGS += -Wl,--start-group
-  endif
+	ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
+		MKLFLAGS += -Wl,--start-group
+	endif
 
 	MKLFLAGS += -lmkl_intel_lp64
 
-  ifeq ($(MKL_THREADS), YES)
-	MKLFLAGS += -lmkl_intel_thread
-  else
-	MKLFLAGS += -lmkl_sequential
-  endif
+	ifeq ($(MKL_THREADS), YES) # OpenMP threading support in MKL: Threading layer
+		MKLFLAGS += -lmkl_intel_thread
+	else
+		MKLFLAGS += -lmkl_sequential
+	endif
 
 	MKLFLAGS += -lmkl_core
 
-  ifeq ($(LINK_STATIC), YES) # Static MKL
-	MKLFLAGS += -Wl,--end-group
-  endif
+	ifeq ($(LINK_STATIC), YES) # Static MKL
+		MKLFLAGS += -Wl,--end-group
+	endif
 
-  ifeq ($(MKL_THREADS), YES)
-	MKLFLAGS += -liomp5
-  endif
+	ifeq ($(MKL_THREADS), YES) # OpenMP threading support in MKL: Run-time lib
+		MKLFLAGS += -liomp5
+	endif
 
-#MKLFLAGS += -lpthread
-	MKLFLAGS +=
 	FFTWFLAGS = $(MKLFLAGS)
 
 # Flags for directly linking the original FFTW libraries.
-else
-	FFTWFLAGS = 
-  ifeq ($(TYPE_FFT), FFTW)
-		FFTWFLAGS += -L$(FFTW3_LIBDIR) -lfftw3
-    ifeq ($(OMP), YES)
-			FFTWFLAGS += -lfftw3_omp
-		endif
-  endif
+else ifeq ($(TYPE_FFT), FFTW)
+	FFTWFLAGS += -L$(FFTW_LIBDIR) -lfftw3
+	ifeq ($(OMP), YES)
+		FFTWFLAGS += -lfftw3_omp
+	endif
 endif
 
 LINKERFLAGS = $(LDLIBS) $(FFTWFLAGS) $(OPT1)
@@ -343,47 +316,37 @@ ifeq ($(LINK_STATIC), YES)
 	LINKERFLAGS += $(STATIC)
 endif
 
-
 #####################################################################
 #                          Executable name                          #
 #####################################################################
 
-# Set the date
-DATE =$(shell date +%d.%m.%y)
-
-# Set type of parallelization.
-ifeq ($(MPI_PARALLEL), YES)
-	MPI_NAME = MPI
-else
-  ifeq ($(OMP), YES)
-	MPI_NAME = OMP
-  else
-	MPI_NAME = Mono
-  endif
-endif
-
 EXEC = qdd
 
 #####################################################################
-#                 Phony targets and empty recipes                   #
+#                 Phony- and default targets                        #
 #####################################################################
 
-.PHONY: all initial_checks clean
-#.PHONY: initial_checks clean
+.PHONY: all clean cleanall cleanobj cleanmod # NO TRUE FILE TARGET PREREQUISITS MAY
+											 # APPEAR HERE, UNLESS YOU WANT THEM TO BE
+											 # REBUILT EVERY TIME!
 
-#.DEFAULT_GOAL: all
+.DEFAULT_GOAL := all # In this case the default target is already pointing to 'all'
+					 # because it is setup to be the first target. However, if 'all'
+					 # weren't to be the first target, this statement will enforce it to
+					 # be still the default target.
 
 all: $(EXEC)
 
-clean:
-	@rm -rfv *.o *.mod *.il ../../bin/$(EXEC)
+clean: cleanall
 
-# Prevent make from trying to update the source files:
-Makefile: ;
-#define.mk: ;
-#define.h: ;
-*.F90: ;
-#*.cu: ;
+cleanall : cleanobj cleanmod
+	@rm -vf ../../bin/$(EXEC)
+
+cleanobj :
+	@rm -vf *.o
+
+cleanmod :
+	@rm -vf *.mod
 
 #####################################################################
 #                             Checks                                #
@@ -401,41 +364,43 @@ valid_OMP_THREADS := DYN YES NO
 # List of valid TYPE_FFT values.
 valid_FFT := FFTW NETLIB MKL
 
-#findiff_value  :=$(shell echo -e "\\n\#if(findiff)  \\nfindiff  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#numerov_value  :=$(shell echo -e "\\n\#if(numerov)  \\nnumerov  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#coufou_value   :=$(shell echo -e "\\n\#if(coufou)   \\ncoufou   \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#coudoub_value  :=$(shell echo -e "\\n\#if(coudoub)  \\ncoudoub  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#coudoub3D_value:=$(shell echo -e "\\n\#if(coudoub3D)\\ncoudoub3D\\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-#raregas_value  :=$(shell echo -e "\\n\#if(raregas)  \\nraregas  \\n\#else\\n0\\n\#endif" | cat define.h - | gcc -E -undef - 2>/dev/null | tail -n1)
-
-initial_checks: Makefile
-	@echo "#######################################################"
-	@echo  Lists of known compilation parameters.
-	@echo "#######################################################"
-	@echo  Parameters defined in define.h:
-	@echo "--------------------------------------------"
+#initial_checks: Makefile
+initial_checks:
+	@echo "##############################################################################"
+	@echo "Lists of known compilation parameters."
+	@echo "##############################################################################"
+	@echo "Parameters defined in Makefile (Solvers and extensions):"
+	@echo "------------------------------------------------------------------------------"
 	@echo "findiff       $(FINDIFF)"
 	@echo "numerov       $(NUMEROV)"
-	@echo "coufou        $(COUFOU)"
 	@echo "coudoub       $(COUDOUB)"
 	@echo "coudoub3D     $(COUDOUB3D)"
 	@echo "raregas       $(RAREGAS)"
-	@echo "#######################################################"
-	@echo  Parameters defined in Makefile / define.mk:
-	@echo "--------------------------------------------"
+	@echo "##############################################################################"
+	@echo "Parameters defined in Makefile (Parallelization, includes and libs):"
+	@echo "------------------------------------------------------------------------------"
 	@echo "CF90          $(CF90)"
 	@echo "MPI_PARALLEL  $(MPI_PARALLEL)"
 	@echo "OMP_THREADS   $(OMP_THREADS)"
 	@echo "TYPE_FFT      $(TYPE_FFT)"
 	@echo "DEBUG         $(DEBUG)"
 	@echo "LINK_STATIC   $(LINK_STATIC)"
+ifneq ($(TYPE_FFT), NETLIB)
+ifeq ($(TYPE_FFT), MKL)
 	@echo "MKL_THREADS   $(MKL_THREADS)"
-	@echo "MKL_WRAPPERS  $(MKL_WRAPPERS)"
-	@echo "MKLPATH       $(MKLPATH)"
-	@echo "MKLINCLUDE    $(MKLINCLUDE)"
-	@echo "#######################################################"
+	@echo "MKL_PATH      $(MKL_PATH)"
+	@echo "MKLFFTWW_PATH $(MKLFFTWW_PATH)"
+	@echo "MKL_LIBDIR    $(MKL_LIBDIR)"
+	@echo "MKL_INCLUDE   $(MKL_INCLUDE)"
+else
+	@echo "FFTW_PATH     $(FFTW_PATH)"
+	@echo "FFTW_LIBDIR   $(FFTW_LIBDIR)"
+	@echo "FFTW_INCLUDE  $(FFTW_INCLUDE)"
+endif
+endif
+	@echo "##############################################################################"
 	@echo "-D flags enabled (1) by Makefile rules:"
-	@echo "--------------------------------------------"
+	@echo "------------------------------------------------------------------------------"
 	@echo "parayes       $(parayes_value)"
 	@echo "parano        $(parano_value)"
 	@echo "netlib_fft    $(netlib_fft_value)"
@@ -443,35 +408,35 @@ initial_checks: Makefile
 	@echo "fftwnomkl     $(fftwnomkl_value)"
 	@echo "paropenmp     $(paropenmp_value)"
 	@echo "dynopenmp     $(dynopenmp_value)"
-	@echo "#######################################################"
+	@echo "##############################################################################"
 
 # Check that the fortran compiler is defined.
 ifneq ($(CF90), $(filter $(CF90), $(valid_CF90)))
-	$(error ERROR: Unknown fortran compiler in Makefile / define.mk (CF90=$(CF90)))
+	$(error ERROR: Unknown fortran compiler in Makefile (CF90=$(CF90)))
 endif
 
 # Check that the TYPE_FFT is valid:
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
-	$(error ERROR: Unknown TYPE_FFT in Makefile / define.mk ($(TYPE_FFT)))
+	$(error ERROR: Unknown TYPE_FFT in Makefile ($(TYPE_FFT)))
 endif
 
 # Check that the parallelization and threading options are valid:
 ifneq ($(MPI_PARALLEL), $(filter $(MPI_PARALLEL), $(valid_MPI_PARALLEL)))
-	$(error ERROR: Unknown MPI_PARALLEL value in Makefile / define.mk ($(MPI_PARALLEL)))
+	$(error ERROR: Unknown MPI_PARALLEL value in Makefile ($(MPI_PARALLEL)))
 endif
 ifneq ($(OMP_THREADS), $(filter $(OMP_THREADS), $(valid_OMP_THREADS)))
-	$(error ERROR: Unknown OMP_THREADS value in Makefile / define.mk ($(OMP_THREADS)))
+	$(error ERROR: Unknown OMP_THREADS value in Makefile ($(OMP_THREADS)))
 endif
 
 # Check that variables which should be either YES or NO have proper values:
 ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
-	$(error ERROR: Unknown $(strip DEBUG       value) in Makefile / define.mk ($(DEBUG)))
+	$(error ERROR: Unknown $(strip DEBUG       value) in Makefile ($(DEBUG)))
 endif
 ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
-	$(error ERROR: Unknown $(strip LINK_STATIC value) in Makefile / define.mk ($(LINK_STATIC)))
+	$(error ERROR: Unknown $(strip LINK_STATIC value) in Makefile ($(LINK_STATIC)))
 endif
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
-	$(error ERROR: Unknown $(strip MKL         value) in Makefile / define.mk ($(MKL)))
+	$(error ERROR: Unknown $(strip MKL         value) in Makefile ($(MKL)))
 endif
 
 # coudoub3D is only enabled when using FFTW calls.
@@ -495,7 +460,7 @@ endif
 #                  Targets and common dependencies                  #
 #####################################################################
 
-OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
+OBJINT = params.o main.o kinetic.o restart.o restartc.o init.o\
        static.o dynamic.o lda.o util.o abso_bc.o\
        pseudosoft.o pseudogoed.o ionmd.o forces.o\
        carlo.o localize.o localizer.o\
@@ -505,34 +470,30 @@ OBJINT = main.o params.o kinetic.o restart.o restartc.o init.o\
        HEeigensystem.o mini.o zdiag.o orthmat.o
 
 ifeq ($(EXTENDED),YES)
-    OBJINT += util_extended.o attachement.o
+	OBJINT += util_extended.o attachement.o
 endif
 
 ifeq ($(FSIC),YES)
-    OBJINT += 2stUT.o 2st_util.o 2stUTc.o
+	OBJINT += 2stUT.o 2st_util.o 2stUTc.o
 endif       
 
 ifeq ($(RAREGAS), YES)
-    OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
-       short.o image.o lattice.o util_substrate.o
+	OBJINT +=  functions.o pot_substrate.o forces_substrate.o md_substrate.o\
+		short.o image.o lattice.o util_substrate.o
 endif
 
 # List of modules:
 MODLIST = params.mod kinetic.mod
-#   ifneq ($(TYPE_FFT), cuFFT)
 OBJINT += coulsolv.o
 MODLIST += coulsolv.mod
-#   endif
+
 # Object file for FFT:
 ifeq ($(TYPE_FFT), NETLIB)
-  FFT_OBJ = fftpack.o
+	FFT_OBJ = fftpack.o
 endif
-ifeq ($(calls_FFTW), YES)
-  FFT_OBJ = fftw.o
-  MODLIST += fftw.mod
-endif
+
 ifeq ($(FSIC),YES)
-MODLIST += 2st_util.mod twostr.mod twost.mod
+	MODLIST += 2st_util.mod twostr.mod twost.mod
 endif
 
 OBJS = $(OBJINT) $(FFT_OBJ)
@@ -545,28 +506,22 @@ OBJS_NPAR = $(filter-out params.o, $(OBJS))
 OBJS_KIN  = dynamic.o ionmd.o util.o zeroforce.o
 OBJS_COUL = image.o lda.o loc_mfield.o
 OBJS_KINCOUL = init.o main.o pseudosoft.o
-#  ifneq ($(TYPE_FFT), cuFFT)
 DEPS_KINCOUL = kinetic.mod coulsolv.mod
-#  else
-#  DEPS_KINCOUL = kinetic.mod
-#  endif
 
-# Dependencies on Makefile, define.mk, define.h and params.mod
+### I AM NOT SURE WHAT THIS IS FOR. IT JUST SEEM THAT EVERYTHING GETS REBUILT WHENEVER THE
+### THE MAKEFILE IS TOUCHED
+# Dependencies on Makefile and params.mod
 # Dependencies are inherited, so there's no need to repeat them
 # in the targets below.
-#$(MODLIST):   Makefile define.mk define.h
-#params.o:     Makefile define.mk define.h
-#$(OBJS_NPAR): Makefile define.mk define.h params.mod
-$(MODLIST):   Makefile 
-params.o:     Makefile 
-$(OBJS_NPAR): Makefile params.mod
+# $(MODLIST):   Makefile 
+# params.o:     Makefile 
+# $(OBJS_NPAR): Makefile params.mod
+
 
 # Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
 # with no other special requirements:
 $(OBJS_KIN):     kinetic.mod
-#  ifneq ($(TYPE_FFT), cuFFT)
 $(OBJS_COUL):    coulsolv.mod
-#  endif
 $(OBJS_KINCOUL): $(DEPS_KINCOUL)
 
 # Set FFTW-dependent modules:
@@ -575,60 +530,68 @@ coulsolv.mod: fftw.mod
 kinetic.mod: fftw.mod
 endif
 
+### DEBUG INFO
+# $(info $$FFT_OBJ is [${FFT_OBJ}])
+# $(info )
+# $(info $$OBJINT is [${OBJINT}])
+# $(info )
+# $(info $$OBJS is [${OBJS}])
+# $(info )
+# $(info $$OBJS_NPAR is [${OBJS_NPAR}])
+# $(info )
+# $(info $$OBJS_KIN is [${OBJS_KIN}])
+# $(info )
+# $(info $$OBJS_COUL is [${OBJS_COUL}])
+# $(info )
+# $(info $$OBJS_KINCOUL is [${OBJS_KINCOUL}])
+# $(info )
+# $(info $$DEPS_KINCOUL is [${DEPS_KINCOUL}])
+# $(info )
+
 #####################################################################
 #                   Compilation and linkage rules                   #
 #####################################################################
-
-.SUFFIXES:
-.SUFFIXES: .F90 .f .o .mod
 
 $(EXEC): initial_checks $(OBJS)
 	@echo Linking executable $@
 	$(LINKER) -o $@ $(strip $(OBJS) $(LINKERFLAGS))
 	mv -fv $(EXEC) ../../bin/
 
-%.o: %.mod
-
-# Implicit rule for objects:
-%.o: %.F90
-	$(COMPILER) $(COMPILERFLAGS1) -c $<
-
-# Implicit rule for modules:
+# Implicit rule for objects and modules together:
 %.o %.mod: %.F90
+#	@echo " "
+#	@echo "IMPLICIT compilation selected for object or module:" $<
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
+#	@echo " "
 
 # Additions for twostsic:
 ifeq ($(FSIC),YES)
-
 FSICDEPEND = 2st_util.o 2stUTc.o 2stUT.o
-#OBJS_2ST_UTIL = main.o static.o
-#OBJS_TWOSTSIC     = dynamic.F90 main.o
-#OBJS_TWOSTSIC_R   = dynamic.o main.o restart.o static.o
 
-#$(OBJS_2ST_UTIL): 2st_util.mod
-#$(OBJS_TWOSTSIC):     twost.mod
-#$(OBJS_TWOSTSIC_R):   twostr.mod
+2st_util.o 2st_util.mod: fsic/2st_util.F90 kinetic.mod orthmat.o
+# 	@echo " "
+# 	@echo "EXPLICIT compilation for file..."
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH -o 2st_util.o -c $<
+# 	@echo " "
 
-2st_util.o 2st_util.mod: fsic/2st_util.F90 kinetic.mod orthmat.o 
-	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o 2st_util.o -c $<
-
-2stUTc.o twost.mod: fsic/2stUT.F90 kinetic.mod twostr.mod 
+2stUTc.o twost.mod: fsic/2stUT.F90 kinetic.mod twostr.mod
+# 	@echo " "
+# 	@echo "EXPLICIT compilation for file..."
 	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o 2stUTc.o -c $<
+# 	@echo " "
 
 2stUT.o twostr.mod: fsic/2stUT.F90 kinetic.mod 2st_util.mod
-	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH    -o 2stUT.o -c $<
-
+# 	@echo "EXPLICIT compilation for file..."
+	$(COMPILER) $(COMPILERFLAGS1) -DREALSWITCH -o 2stUT.o -c $<
 endif
 
-# Particular rules
+# Explicit rules
 # (complex dependencies, REAL/COMPLEX switch, non-default COMPILERFLAGS).
-
 kinetic.o : kinetic.F90 fft.F90 findiff/findiff.F90 $(FFT_OBJ)
 
 coulsolv.o: coulsolv.F90 falr.o coulex.o kinetic.mod $(FFT_OBJ)
 
 static.o: static.F90 pseudosoft.F90 $(DEPS_KINCOUL) $(FSICDEPEND)
-
 
 dyanamic.o: dynamic.F90 pseudosoft.o twostr.o twost.o $(DEPS_KINCOUL) $(FSICDEPEND)
 
@@ -656,20 +619,23 @@ nonloc.o: nonloc.F90 kinetic.mod
 nonlocc.o: nonloc.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS1) -DCOMPLEXSWITCH -o $@ -c $<
 
+fftw.o fftw.mod: fftw.F90
+ifeq ($(TYPE_FFT), MKL)
+	$(COMPILER) $(COMPILERFLAGS1) -I$(MKL_INCLUDE) -c $<
+else ifeq ($(TYPE_FFT), FFTW)
+	$(COMPILER) $(COMPILERFLAGS1) -I$(FFTW_INCLUDE) -c $<
+endif
+
 ifeq ($(TYPE_FFT), NETLIB)
 fftpack.o: fftpack.F90 fftpack2.F90
 	$(COMPILER) $(COMPILERFLAGS2) -c $<
 endif
-
 
 main.o: main.F90 util.o orthmat.o $(FSICDEPEND)
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 givens.o: givens.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
-
-#multi_exp.o: multi_exp.F90 params.mod
-#	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 restart.o: restart.F90 kinetic.mod $(FSICDEPEND)
 	$(COMPILER) $(COMPILERFLAGS3) -DREALSWITCH    -o $@ -c $<
@@ -695,21 +661,16 @@ mini.o: mini.f
 HEeigensystem.o: HEeigensystem.f
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
 
-
 ifeq ($(EXTENDED),YES)
-
 attachement.o: extended/attachement.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 util_extended.o: extended/util_extended.F90 params.o
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
-
 endif
 
-ifeq ($(RAREGAS), YES)
-
 # QM/MM routines
-
+ifeq ($(RAREGAS), YES)
 forces_substrate.o: QMMM/forces_substrate.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
 
@@ -736,6 +697,4 @@ lattice.o: QMMM/lattice.F90 params.mod
 
 subgrids.o: subgrids.F90 params.mod
 	$(COMPILER) $(COMPILERFLAGS1) -c $<
-
 endif
-

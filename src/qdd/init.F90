@@ -40,18 +40,20 @@ CHARACTER (LEN=3) :: num
 
 REAL(DP)::dx2
 
-NAMELIST /global/   nclust,nion,nspdw,nion2,numspin,  &
+NAMELIST /global/ nclust,nion,nspdw,nion2,numspin,  &
+#ifdef paropenmp
+    setdyn,numthr,  &
+#endif
     temp,occmix,b2occ,gamocc,deocc,osfac,  &
     init_lcao,kstate,kxbox,kybox,kzbox,dx,dy,dz,  &
     radjel,surjel,bbeta,gamma,beta4,endcon,itback,  &
-    epswf,e0dmp,epsoro,  dpolx,dpoly,dpolz,  &
+    epswf,e0dmp,epsoro,dpolx,dpoly,dpolz,  &
     tcoulfalr, &
     scaleclust,scaleclustx,scaleclusty,scaleclustz, &
     shiftclustx,shiftclusty,shiftclustz,  &
     rotclustx,rotclusty,rotclustz,iswitch_interpol,  &
-    ishiftcmtoorigin,  &
-    shiftwfx,shiftwfy,shiftwfz, ispinsep 
-
+    ishiftcmtoorigin, &
+    shiftwfx,shiftwfy,shiftwfz,ispinsep
 
 NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     iemomsrel,ifsicp,ionmdtyp,ifredmas,modionstep,icooltyp,ipsptyp,  &
@@ -79,13 +81,12 @@ NAMELIST /dynamic/ directenergy,nabsorb,idenfunc,  &
     jnorms,jplotdensitydiff,jplotdensitydiff2d,  &
     jplotdensity2d,jcharges,drcharges, &
     phangle,phphase,nhstate,npstate, &
-    jstateoverlap,&    !MV: now follow parameters for rta
+    jstateoverlap,&
     jrtaint,rtamu,rtamuj,rtasumvar2max,rtaeps,rtae0dmp,&
     rtatempinit,rtaforcetemperature,&
-    rtasigee,rtars   !rta2 added rtasigee, rtars
+    rtasigee,rtars
 
 #if(extended)
-!NAMELIST /extended/ &
 NAMELIST /extensions/ isitmax,&
     idenspl,i3dz,i3dx,i3dstate,jescmask,jescmaskorb,&
     iscatterelectron,jattach,scatterelectronenergy,  &
@@ -250,8 +251,8 @@ outname=trim(num)//trim(outnam)
   
   tdipolxyz = dpolx*dpolx+dpoly*dpoly+dpolz*dpolz .GT. 0D0
   
-  RETURN
-  
+
+RETURN  
 END SUBROUTINE initnamelists
 
 

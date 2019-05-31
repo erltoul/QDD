@@ -82,6 +82,25 @@ CALL init_parallele()
 
 CALL initnamelists          ! read all input parameters
 
+! Update Dynamic thread adjustment and global no. of threads IF set in input file
+#ifdef paropenmp
+  call OMP_SET_NUM_THREADS(numthr) ! To also set the system wide number of OMP threads
+  call OMP_SET_DYNAMIC(setdyn)
+#ifdef omp_debug
+    write(*,*) "setdyn = ", setdyn
+    write(*,*) "numthr = ", numthr
+    write(*,*) "OMP_GET_MAX_THREADS() = ", OMP_GET_MAX_THREADS()
+    write(*,*) "OMP_GET_NUM_PROCS() = ", OMP_GET_NUM_PROCS()
+    write(*,*) "OMP_GET_DYNAMIC() = ", OMP_GET_DYNAMIC()
+    write(*,*) "OMP_GET_NESTED() = ", OMP_GET_NESTED()
+!$OMP PARALLEL
+    write(*,*) "OMP_GET_NUM_THREADS() = ", OMP_GET_NUM_THREADS()
+    write(*,*) "OMP_GET_THREAD_NUM() = ", OMP_GET_THREAD_NUM()
+!$OMP END PARALLEL
+#endif
+  nthr = numthr-1
+#endif
+
 CALL checkoptions()         !check coherence of preprocessor option
 
 IF(icooltyp == 3) CALL init_simann() ! initialize simulated annealing
