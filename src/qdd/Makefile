@@ -18,7 +18,7 @@ MPI_PARALLEL = NO
 #   * DYN: wave function parallelization (threads)
 #   * YES: use threads for FFT
 #   * NO
-OMP_THREADS = YES
+OMP_THREADS = NO
 
 # OpenMP debugging, just for me... To be deleted after testing...
 OMP_DEBUG = NO
@@ -30,7 +30,7 @@ OMP_DEBUG = NO
 #   * MKL
 TYPE_FFT = FFTW
 
-# MKL_THREADS: Enable MKL OpenMP threading (only used if TYPE_FFT=MKL)
+# MKL_THREADS: Enable OpenMP threading in MKL (only used if TYPE_FFT=MKL)
 # Available options:
 #   * YES
 #   * NO
@@ -50,8 +50,7 @@ LINK_STATIC = NO
 
 ### SET MAIN LIBRARY LOCATIONS
 # Set the location to the root of the FFTW subroutine package
-FFTW_PATH = $(HOME)/Developer/fftw-3.3.8-intel
-#FFTW_PATH = /usr
+FFTW_PATH = $(HOME)/Developer/fftw-3.3.8-gnu
 
 # Set the location to the root of Intel's MKL distribution
 MKL_PATH = $(MKLROOT)
@@ -111,7 +110,7 @@ else
 endif
 
 # OpenMP
-ifeq ($(OMP_THREADS), YES)
+ifneq ($(OMP_THREADS), NO)
 	OMP = YES
 else
 	OMP = NO
@@ -138,10 +137,10 @@ ifeq "$(CF90)" "IFORT"
 	COMPILER = ifort
 	ifeq "$(USE_MPI)" "YES"
 		LDLIBS = -lmpi
-	endif
-	ifeq "$(OMP)" "YES"
+  	endif
+ 	ifeq "$(OMP)" "YES"
 		OMPADDL = -qopenmp
-	endif
+  	endif
 endif
 
 #####################################################################
@@ -159,7 +158,7 @@ ifeq "$(CF90)" "GFORT"
 		OPT1 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
 		OPT2 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
 		OPT3 = $(OMPADDL) -pg -w -g -fbacktrace -fdefault-real-8 -fdefault-double-8 -fcheck=bounds
-	endif
+  	endif
 endif
 
 ifeq "$(CF90)" "IFORT"
@@ -256,21 +255,21 @@ MKL_INCLUDE = $(MKL_PATH)/include/fftw
 
 # Flags for linking using the MKL libraries.
 ifeq ($(TYPE_FFT), MKL)
-
+			
 	MKLFLAGS =
 	FFTWFLAGS =
 
 	ifneq "$(MKLFFTWW_PATH)" ""
 		MKLFLAGS += -L$(MKLFFTWW_PATH)
-	endif
-
+  	endif
+	
 	ifeq ($(CF90), IFORT)
 		MKLFLAGS += -lfftw3xf_intel
 	else
 		MKLFLAGS += -lfftw3xf_gnu
 	endif
 
-	ifneq "$(MKL_LIBDIR)" ""
+ 	ifneq "$(MKL_LIBDIR)" ""
 		MKLFLAGS += -L$(MKL_LIBDIR)
 	endif
   
@@ -280,13 +279,13 @@ ifeq ($(TYPE_FFT), MKL)
 
 	ifeq ($(LINK_STATIC), YES) # Static MKL => group flags must be passed to the linker
 		MKLFLAGS += -Wl,--start-group
-	endif
+  	endif
 
 	MKLFLAGS += -lmkl_intel_lp64
 
 	ifeq ($(MKL_THREADS), YES) # OpenMP threading support in MKL: Threading layer
 		MKLFLAGS += -lmkl_intel_thread
-	else
+  	else
 		MKLFLAGS += -lmkl_sequential
 	endif
 
@@ -326,7 +325,7 @@ EXEC = qdd
 #                 Phony- and default targets                        #
 #####################################################################
 
-.PHONY: all clean cleanall cleanobj cleanmod # NO TRUE FILE TARGET PREREQUISITS MAY
+.PHONY: all clean distclean cleanall cleanobj cleanmod # NO TRUE FILE TARGET PREREQUISITS MAY
 											 # APPEAR HERE, UNLESS YOU WANT THEM TO BE
 											 # REBUILT EVERY TIME!
 
@@ -339,13 +338,15 @@ all: $(EXEC)
 
 clean: cleanall
 
-cleanall : cleanobj cleanmod
+cleanall: cleanobj cleanmod
+
+distclean: cleanall
 	@rm -vf ../../bin/$(EXEC)
 
-cleanobj :
+cleanobj:
 	@rm -vf *.o
 
-cleanmod :
+cleanmod:
 	@rm -vf *.mod
 
 #####################################################################
@@ -353,7 +354,7 @@ cleanmod :
 #####################################################################
 
 # List of valid compilers.
-valid_CF90 := GFORT GFORT1 IFORT IFORT1 MPIF90 XLF_R
+valid_CF90 := GFORT IFORT MPIF90
 
 # List of valid MPI_PARALLEL:
 valid_MPI_PARALLEL := YES NO
@@ -415,6 +416,13 @@ ifneq ($(CF90), $(filter $(CF90), $(valid_CF90)))
 	$(error ERROR: Unknown fortran compiler in Makefile (CF90=$(CF90)))
 endif
 
+# Check that NETLIB and OpenMP are not both active.
+ifeq ($(TYPE_FFT), NETLIB)
+  ifeq ($(OMP), YES)
+    $(error ERROR: NETLIB does not support OpenMP threading. Please use either FFTW or MKL, or disable OpenMP threading)
+  endif
+endif
+
 # Check that the TYPE_FFT is valid:
 ifneq ($(TYPE_FFT), $(filter $(TYPE_FFT), $(valid_FFT)))
 	$(error ERROR: Unknown TYPE_FFT in Makefile ($(TYPE_FFT)))
@@ -424,6 +432,7 @@ endif
 ifneq ($(MPI_PARALLEL), $(filter $(MPI_PARALLEL), $(valid_MPI_PARALLEL)))
 	$(error ERROR: Unknown MPI_PARALLEL value in Makefile ($(MPI_PARALLEL)))
 endif
+
 ifneq ($(OMP_THREADS), $(filter $(OMP_THREADS), $(valid_OMP_THREADS)))
 	$(error ERROR: Unknown OMP_THREADS value in Makefile ($(OMP_THREADS)))
 endif
@@ -432,9 +441,11 @@ endif
 ifneq ($(DEBUG),       $(filter $(DEBUG),       YES NO))
 	$(error ERROR: Unknown $(strip DEBUG       value) in Makefile ($(DEBUG)))
 endif
+
 ifneq ($(LINK_STATIC), $(filter $(LINK_STATIC), YES NO))
 	$(error ERROR: Unknown $(strip LINK_STATIC value) in Makefile ($(LINK_STATIC)))
 endif
+
 ifneq ($(MKL),         $(filter $(MKL)        , YES NO))
 	$(error ERROR: Unknown $(strip MKL         value) in Makefile ($(MKL)))
 endif
@@ -516,7 +527,6 @@ DEPS_KINCOUL = kinetic.mod coulsolv.mod
 # $(MODLIST):   Makefile 
 # params.o:     Makefile 
 # $(OBJS_NPAR): Makefile params.mod
-
 
 # Dependencies for objects that depend on kinetic.o and/or coulsolv.o,
 # with no other special requirements:
@@ -647,7 +657,7 @@ parallele.o: parallele.F90 kinetic.mod
 	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 rta.o: rta.F90 kinetic.mod params.mod
-	$(COMPILER) $(COMPILERFLAGS1) -c $<
+	$(COMPILER) $(COMPILERFLAGS3) -c $<
 
 orthmat.o: orthmat.F90
 	$(COMPILER) $(COMPILERFLAGS3) -c -cpp $<
